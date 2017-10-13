@@ -32,9 +32,15 @@ def _system_add(system, molecule):
 def _system_fileformat(system):
     return system.property("fileformat").value()
 
+def _system_take(system, molid):
+    molecule = system[ molid ]
+    system.remove(molecule.number())
+    return molecule
+
 Sire.System.System._old_add = Sire.System.System.add
 Sire.System.System.add = _system_add
 Sire.System.System.fileFormat = _system_fileformat
+Sire.System.System.take = _system_take
 
 class MolWithResName(Sire.Mol.MolWithResID):
     def __init__(self, resname):
