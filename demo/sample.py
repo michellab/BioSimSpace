@@ -1,5 +1,4 @@
 import BioSimSpace as BSS
-import time
 
 # Load the molecular system.
 print("\nLoading molecules...")

@@ -7,7 +7,6 @@
 import Sire.Base
 import Sire.IO
 
-import os
 import tempfile
 
 class NamdProcess(Sire.Base.Process):
@@ -25,10 +24,10 @@ class NamdProcess(Sire.Base.Process):
         self.tmp_dir = tempfile.TemporaryDirectory()
 
         # The names of the input files.
-        self.namd_file = "%s.namd" % name
-        self.psf_file = "%s.psf" % name
-        self.pdb_file = "%s.pdb" % name
-        self.param_file = "%s.params" % name
+        self.namd_file = "%s/%s.namd" % (self.tmp_dir.name, name)
+        self.psf_file = "%s/%s.psf" % (self.tmp_dir.name, name)
+        self.pdb_file = "%s/%s.pdb" % (self.tmp_dir.name, name)
+        self.param_file = "%s/%s.params" % (self.tmp_dir.name, name)
 
         # Create the list of input files.
         self.input_files = [self.namd_file, self.psf_file, self.pdb_file, self.param_file]
@@ -36,18 +35,15 @@ class NamdProcess(Sire.Base.Process):
     def setup(self):
         """ Setup the input files and working directory ready for simulation. """
 
-        # Change to the temporary workspace.
-        os.chdir(self.tmp_dir.name)
-
         # Create the input files...
 
         # PSF and parameter files.
         psf = Sire.IO.CharmmPSF(self.system)
-        psf.writeToFile("%s.psf" % self.name)
+        psf.writeToFile(self.psf_file)
 
         # PDB file.
         pdb = Sire.IO.CharmmPSF(self.system)
-        pdb.writeToFile("%s.pdb" % self.name)
+        pdb.writeToFile(self.pdb_file)
 
         # NAMD requires donor and acceptor record entries in the PSF file.
         # We check that these are present and append blank records if not.
