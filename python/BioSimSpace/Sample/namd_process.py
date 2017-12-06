@@ -1,7 +1,7 @@
 """
 @package biosimspace
-@author Lester Hedges
-@brief A class for running simulations using NAMD.
+@author  Lester Hedges
+@brief   A class for running simulations using NAMD.
 """
 
 import Sire.Base
@@ -12,13 +12,24 @@ import tempfile
 class NamdProcess(Sire.Base.Process):
     """ A class for running simulations using NAMD. """
 
-    def __init__(self, system, protocol, name = "namd"):
-        """ Constructor. """
+    def __init__(self, system, protocol, exe=None, name="namd"):
+        """ Constructor.
+
+        system   -- The molecular system.
+        protocol -- The protocol for the NAMD process.
+        exe      -- The full path to the NAMD executable.
+        name     -- The Name of the process.
+        """
 
         # Copy the passed system, protocol, and process name.
         self.system = system
         self.protocol = protocol
         self.name = name
+
+        # If the path to the executable wasn't specified, then search
+        # for it in $PATH.
+        if exe is None:
+            exe = Sire.Base.findExe("namd2").absoluteFilePath()
 
         # Create a temporary working directory and store the directory name.
         self.tmp_dir = tempfile.TemporaryDirectory()
