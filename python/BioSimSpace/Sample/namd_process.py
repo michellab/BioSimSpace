@@ -22,26 +22,28 @@ class NamdProcess(Sire.Base.Process):
         """
 
         # Copy the passed system, protocol, and process name.
-        self.system = system
-        self.protocol = protocol
-        self.name = name
+        self._system = system
+        self._protocol = protocol
+        self._name = name
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
         if exe is None:
-            exe = Sire.Base.findExe("namd2").absoluteFilePath()
+            self._exe = Sire.Base.findExe("namd2").absoluteFilePath()
+        else:
+            self._exe = exe
 
         # Create a temporary working directory and store the directory name.
-        self.tmp_dir = tempfile.TemporaryDirectory()
+        self._tmp_dir = tempfile.TemporaryDirectory()
 
         # The names of the input files.
-        self.namd_file = "%s/%s.namd" % (self.tmp_dir.name, name)
-        self.psf_file = "%s/%s.psf" % (self.tmp_dir.name, name)
-        self.pdb_file = "%s/%s.pdb" % (self.tmp_dir.name, name)
-        self.param_file = "%s/%s.params" % (self.tmp_dir.name, name)
+        self._namd_file = "%s/%s.namd" % (self._tmp_dir.name, name)
+        self._psf_file = "%s/%s.psf" % (self._tmp_dir.name, name)
+        self._pdb_file = "%s/%s.pdb" % (self._tmp_dir.name, name)
+        self._param_file = "%s/%s.params" % (self._tmp_dir.name, name)
 
         # Create the list of input files.
-        self.input_files = [self.namd_file, self.psf_file, self.pdb_file, self.param_file]
+        self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
 
     def setup(self):
         """ Setup the input files and working directory ready for simulation. """
@@ -49,12 +51,12 @@ class NamdProcess(Sire.Base.Process):
         # Create the input files...
 
         # PSF and parameter files.
-        psf = Sire.IO.CharmmPSF(self.system)
-        psf.writeToFile(self.psf_file)
+        psf = Sire.IO.CharmmPSF(self._system)
+        psf.writeToFile(self._psf_file)
 
         # PDB file.
-        pdb = Sire.IO.CharmmPSF(self.system)
-        pdb.writeToFile(self.pdb_file)
+        pdb = Sire.IO.PDB2(self._system)
+        pdb.writeToFile(self._pdb_file)
 
         # NAMD requires donor and acceptor record entries in the PSF file.
         # We check that these are present and append blank records if not.
@@ -62,7 +64,7 @@ class NamdProcess(Sire.Base.Process):
         has_acceptors = False
 
         # Open the PSF file for reading.
-        with open(self.psf_file) as f:
+        with open(self._psf_file) as f:
 
             # Read the next line.
             line = f.readline()
@@ -77,15 +79,21 @@ class NamdProcess(Sire.Base.Process):
 
         # Append empty donor record.
         if not has_donors:
-            f = open(self.psf_file, "a")
+            f = open(self._psf_file, "a")
             f.write("\n%8d !NDON: donors\n" % 0)
             f.close()
 
         # Append empty acceptor record.
         if not has_acceptors:
-            f = open(self.psf_file, "a")
+            f = open(self._psf_file, "a")
             f.write("\n%8d !NACC: acceptors\n" % 0)
             f.close()
 
         # Return the list of input files.
-        return self.input_files
+        return self._input_files
+
+    def start(self):
+        """ Start the NAMD simulation. """
+
+        # Start the simulation.
+        self.run(self._exe, self._namd_file)
