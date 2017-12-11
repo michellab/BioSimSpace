@@ -8,7 +8,7 @@ system = BSS.readMolecules( ["namd/tiny/tiny.psf", \
 
 # Initialise the NAMD process.
 print("\nInitialising NAMD process...")
-proc = BSS.Sample.NamdProcess(system, BSS.Protocol.NamdProtocol, "test")
+proc = BSS.Sample.NamdProcess(system, BSS.Protocol.NamdProtocol, name="test")
 
 # Setup the simulation workspace.
 print("\nSetting up simulation...")
