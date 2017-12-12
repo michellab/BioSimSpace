@@ -7,6 +7,7 @@
 import Sire.Base
 import Sire.IO
 
+import os
 import tempfile
 
 class NamdProcess(Sire.Base.Process):
@@ -41,6 +42,7 @@ class NamdProcess(Sire.Base.Process):
         self._psf_file = "%s/%s.psf" % (self._tmp_dir.name, name)
         self._pdb_file = "%s/%s.pdb" % (self._tmp_dir.name, name)
         self._param_file = "%s/%s.params" % (self._tmp_dir.name, name)
+        self._velocity_file = None
 
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
@@ -57,6 +59,22 @@ class NamdProcess(Sire.Base.Process):
         # PDB file.
         pdb = Sire.IO.PDB2(self._system)
         pdb.writeToFile(self._pdb_file)
+
+        # Try to write a PDB "velocity" restart file.
+        # The file will only be generated if all atoms in self._system have
+        # a "velocity" property.
+
+        # First generate a name for the velocity file.
+        velocity_file = os.path.splitext(self._pdb_file)[0] + ".vel"
+
+        # Write the velocity file.
+        has_velocities = pdb.writeVelocityFile(velocity_file)
+
+        # If a file was written, store the name of the file and update the
+        # list of input files.
+        if has_velocities:
+            self._velocity_file = velocity_file
+            self._input_files.append(self._velocity_file)
 
         # NAMD requires donor and acceptor record entries in the PSF file.
         # We check that these are present and append blank records if not.
