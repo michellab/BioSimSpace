@@ -16,10 +16,12 @@ class NamdProcess(Sire.Base.Process):
     def __init__(self, system, protocol, exe=None, name="namd"):
         """ Constructor.
 
+        Keyword arguments:
+
         system   -- The molecular system.
         protocol -- The protocol for the NAMD process.
         exe      -- The full path to the NAMD executable.
-        name     -- The Name of the process.
+        name     -- The name of the process.
         """
 
         # Copy the passed system, protocol, and process name.
