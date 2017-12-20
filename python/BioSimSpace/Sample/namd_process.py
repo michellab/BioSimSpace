@@ -53,7 +53,10 @@ class NamdProcess(Sire.Base.Process):
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
 
-    def setup(self):
+        # Now set up the working directory for the process.
+        self._setup()
+
+    def _setup(self):
         """ Setup the input files and working directory ready for simulation. """
 
         # Create the input files...
@@ -114,6 +117,10 @@ class NamdProcess(Sire.Base.Process):
             f.close()
 
         # Return the list of input files.
+        return self._input_files
+
+    def input_files(self):
+        """ Return the list of input files. """
         return self._input_files
 
     def start(self):
