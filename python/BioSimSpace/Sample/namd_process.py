@@ -46,6 +46,10 @@ class NamdProcess(Sire.Base.Process):
         self._param_file = "%s/%s.params" % (self._tmp_dir.name, name)
         self._velocity_file = None
 
+        # Files for redirection of stdout and stderr.
+        self._stdout = "%s/%s.out" % (self._tmp_dir.name, name)
+        self._stderr = "%s/%s.err" % (self._tmp_dir.name, name)
+
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
 
@@ -115,5 +119,8 @@ class NamdProcess(Sire.Base.Process):
     def start(self):
         """ Start the NAMD simulation. """
 
+        # Create a string for the command line arguments.
+        args = "%s 1> %s 2> %s" % (self._namd_file, self._stdout, self._stderr)
+
         # Start the simulation.
-        self.run(self._exe, self._namd_file)
+        self.run(self._exe, args)
