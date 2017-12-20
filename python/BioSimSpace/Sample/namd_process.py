@@ -7,6 +7,8 @@
 import Sire.Base
 import Sire.IO
 
+from . import process
+
 import os
 import tempfile
 
@@ -52,6 +54,9 @@ class NamdProcess(Sire.Base.Process):
 
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
+
+        # Determine the box size and origin from the atomic coordinates.
+        self._box_size, self._box_origin = process._compute_box_size(self._system)
 
         # Now set up the working directory for the process.
         self._setup()
