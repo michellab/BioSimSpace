@@ -10,9 +10,8 @@ import Sire.IO
 from . import process
 
 import os
-import tempfile
 
-class NamdProcess(Sire.Base.Process):
+class NamdProcess(process.Process):
     """ A class for running simulations using NAMD. """
 
     def __init__(self, system, protocol, exe=None, name="namd"):
@@ -26,10 +25,8 @@ class NamdProcess(Sire.Base.Process):
         name     -- The name of the process.
         """
 
-        # Copy the passed system, protocol, and process name.
-        self._system = system
-        self._protocol = protocol
-        self._name = name
+        # Call the base class constructor.
+        super().__init__(system, protocol, name)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
@@ -38,19 +35,12 @@ class NamdProcess(Sire.Base.Process):
         else:
             self._exe = exe
 
-        # Create a temporary working directory and store the directory name.
-        self._tmp_dir = tempfile.TemporaryDirectory()
-
         # The names of the input files.
         self._namd_file = "%s/%s.namd" % (self._tmp_dir.name, name)
         self._psf_file = "%s/%s.psf" % (self._tmp_dir.name, name)
         self._pdb_file = "%s/%s.pdb" % (self._tmp_dir.name, name)
         self._param_file = "%s/%s.params" % (self._tmp_dir.name, name)
         self._velocity_file = None
-
-        # Files for redirection of stdout and stderr.
-        self._stdout = "%s/%s.out" % (self._tmp_dir.name, name)
-        self._stderr = "%s/%s.err" % (self._tmp_dir.name, name)
 
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]

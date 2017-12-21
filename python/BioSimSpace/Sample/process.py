@@ -1,13 +1,46 @@
 """
 @package biosimspace
 @author  Lester Hedges
-@brief   Common helper functions for the various "*_process.py" modules.
+@brief   Base class and helper functions for the various sample modules.
 """
 
-from Sire.Base import *
-from Sire.Mol import *
+import Sire.Base
+import Sire.Mol
 
 from operator import add, sub
+import tempfile
+
+class Process(Sire.Base.Process):
+    """ Base class for running different biomolecular simulation processes. """
+
+    def __init__(self, system, protocol, name="process"):
+        """ Constructor.
+
+        Keyword arguments:
+
+        system   -- The molecular system.
+        protocol -- The protocol for the process.
+        name     -- The name of the process.
+        """
+
+	# Don't allow user to create an instance of this base class.
+        # Since we have multiple inheritance (the base inherits from Process,
+        # which itself inherits from Sire.Base.Process) it's diffult to
+        # use the "abc" library.
+        if type(self) == Process:
+            raise Exception("<Process> must be subclassed.")
+
+	# Copy the passed system, protocol, and process name.
+        self._system = system
+        self._protocol = protocol
+        self._name = name
+
+        # Create a temporary working directory and store the directory name.
+        self._tmp_dir = tempfile.TemporaryDirectory()
+
+        # Files for redirection of stdout and stderr.
+        self._stdout = "%s/%s.out" % (self._tmp_dir.name, name)
+        self._stderr = "%s/%s.err" % (self._tmp_dir.name, name)
 
 def _compute_box_size(system, tol=0.3, buffer=0.1):
     """ Compute the box size and origin from the atomic coordinates.
