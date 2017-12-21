@@ -122,7 +122,7 @@ class NamdProcess(process.Process):
         """ Start the NAMD simulation. """
 
         # Create a string for the command line arguments.
-        args = "%s 1> %s 2> %s" % (self._namd_file, self._stdout, self._stderr)
+        args = "%s 1> %s 2> %s" % (self._namd_file, self._stdout_file, self._stderr_file)
 
         # Start the simulation.
         self.run(self._exe, args)

@@ -8,6 +8,7 @@ import Sire.Base
 import Sire.Mol
 
 from operator import add, sub
+from pygtail import Pygtail
 import tempfile
 
 class Process(Sire.Base.Process):
@@ -39,8 +40,62 @@ class Process(Sire.Base.Process):
         self._tmp_dir = tempfile.TemporaryDirectory()
 
         # Files for redirection of stdout and stderr.
-        self._stdout = "%s/%s.out" % (self._tmp_dir.name, name)
-        self._stderr = "%s/%s.err" % (self._tmp_dir.name, name)
+        self._stdout_file = "%s/%s.out" % (self._tmp_dir.name, name)
+        self._stderr_file = "%s/%s.err" % (self._tmp_dir.name, name)
+
+        # The contents of stdout and stderr.
+        self._stdout = []
+        self._stderr = []
+
+    def stdout(self, n=10):
+        """ Print the last n lines of the stdout buffer.
+
+            Keyword arguments:
+
+            n -- The number of lines to print.
+        """
+
+        # Append any new lines to the stdout list.
+        for line in Pygtail(self._stdout_file):
+            self._stdout.append(line.rstrip())
+
+        # Get the current number of lines.
+        num_lines = len(self._stdout)
+
+        # Set the line from which to start printing.
+        if num_lines < n:
+            start = 0
+        else:
+            start = num_lines - n
+
+        # Print the lines.
+        for x in range(start, num_lines):
+            print(self._stdout[x])
+
+    def stderr(self, n=10):
+        """ Print the last n lines of the stderr buffer.
+
+            Keyword arguments:
+
+            n -- The number of lines to print.
+        """
+
+        # Append any new lines to the stdout list.
+        for line in Pygtail(self._stderr_file):
+            self._stderr.append(line.rstrip())
+
+        # Get the current number of lines.
+        num_lines = len(self._stderr)
+
+        # Set the line from which to start printing.
+        if num_lines < n:
+            start = 0
+        else:
+            start = num_lines - n
+
+        # Print the lines.
+        for x in range(start, num_lines):
+            print(self._stderr[x])
 
 def _compute_box_size(system, tol=0.3, buffer=0.1):
     """ Compute the box size and origin from the atomic coordinates.
