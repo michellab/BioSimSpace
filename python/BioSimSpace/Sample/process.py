@@ -8,8 +8,12 @@ import Sire.Base
 import Sire.Mol
 
 from operator import add, sub
-from pygtail import Pygtail
 import tempfile
+
+try:
+    pygtail = Sire.try_import("pygtail")
+except ImportError:
+    raise ImportError('Pygtail is not installed. Please install pygtail in order to use BioSimSpace.')
 
 class Process(Sire.Base.Process):
     """ Base class for running different biomolecular simulation processes. """
@@ -65,7 +69,7 @@ class Process(Sire.Base.Process):
             raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
-        for line in Pygtail(self._stdout_file):
+        for line in pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
 
         # Get the current number of lines.
@@ -94,7 +98,7 @@ class Process(Sire.Base.Process):
             raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
-        for line in Pygtail(self._stderr_file):
+        for line in pygtail.Pygtail(self._stderr_file):
             self._stderr.append(line.rstrip())
 
         # Get the current number of lines.
