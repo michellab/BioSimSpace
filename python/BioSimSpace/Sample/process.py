@@ -60,6 +60,10 @@ class Process(Sire.Base.Process):
             n -- The number of lines to print.
         """
 
+        # Ensure that the number of lines is positive.
+        if n < 0:
+            raise ValueError("The number of lines must be positive!")
+
         # Append any new lines to the stdout list.
         for line in Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
@@ -84,6 +88,10 @@ class Process(Sire.Base.Process):
 
             n -- The number of lines to print.
         """
+
+        # Ensure that the number of lines is positive.
+        if n < 0:
+            raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
         for line in Pygtail(self._stderr_file):
