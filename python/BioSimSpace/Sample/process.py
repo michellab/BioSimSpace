@@ -43,7 +43,12 @@ class Process(Sire.Base.Process):
         self._stdout_file = "%s/%s.out" % (self._tmp_dir.name, name)
         self._stderr_file = "%s/%s.err" % (self._tmp_dir.name, name)
 
-        # The contents of stdout and stderr.
+        # Create the files. This makes sure that the 'stdout' and 'stderr'
+        # methods can be called when the files are empty.
+        open(self._stdout_file, 'a').close()
+        open(self._stderr_file, 'a').close()
+
+        # Initialise lists to store the contents of stdout and stderr.
         self._stdout = []
         self._stderr = []
 
