@@ -9,12 +9,12 @@ import Sire.IO
 
 from . import process
 
-import os
+from os import path
 
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd"):
+    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None):
         """Constructor.
 
            Keyword arguments:
@@ -23,10 +23,11 @@ class NamdProcess(process.Process):
            protocol -- The protocol for the NAMD process.
            exe      -- The full path to the NAMD executable.
            name     -- The name of the process.
+           work_dir -- The working directory for the process.
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name)
+        super().__init__(system, protocol, name, work_dir)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
@@ -36,10 +37,10 @@ class NamdProcess(process.Process):
             self._exe = exe
 
         # The names of the input files.
-        self._namd_file = "%s/%s.namd" % (self._tmp_dir.name, name)
-        self._psf_file = "%s/%s.psf" % (self._tmp_dir.name, name)
-        self._pdb_file = "%s/%s.pdb" % (self._tmp_dir.name, name)
-        self._param_file = "%s/%s.params" % (self._tmp_dir.name, name)
+        self._namd_file = "%s/%s.namd" % (self._work_dir.name, name)
+        self._psf_file = "%s/%s.psf" % (self._work_dir.name, name)
+        self._pdb_file = "%s/%s.pdb" % (self._work_dir.name, name)
+        self._param_file = "%s/%s.params" % (self._work_dir.name, name)
         self._velocity_file = None
 
         # Create the list of input files.
@@ -69,7 +70,7 @@ class NamdProcess(process.Process):
         # a "velocity" property.
 
         # First generate a name for the velocity file.
-        velocity_file = os.path.splitext(self._pdb_file)[0] + ".vel"
+        velocity_file = path.splitext(self._pdb_file)[0] + ".vel"
 
         # Write the velocity file.
         has_velocities = pdb.writeVelocityFile(velocity_file)

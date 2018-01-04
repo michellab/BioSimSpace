@@ -10,6 +10,7 @@ import Sire.Mol
 from ..Protocol.protocol_type import ProtocolType
 
 from operator import add, sub
+from os import path
 import tempfile
 
 try:
@@ -20,7 +21,7 @@ except ImportError:
 class Process(Sire.Base.Process):
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name="process"):
+    def __init__(self, system, protocol, name="process", work_dir=None):
         """Constructor.
 
            Keyword arguments:
@@ -28,6 +29,7 @@ class Process(Sire.Base.Process):
            system   -- The molecular system.
            protocol -- The protocol for the process.
            name     -- The name of the process.
+           work_dir -- The working directory for the process.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -43,11 +45,19 @@ class Process(Sire.Base.Process):
         self._name = name
 
         # Create a temporary working directory and store the directory name.
-        self._tmp_dir = tempfile.TemporaryDirectory()
+        if work_dir is None:
+            self._work_dir = tempfile.TemporaryDirectory()
+
+        # Check that the user supplied working directory exists.
+        else:
+            if path.isdir(work_dir):
+                self._work_dir = work_dir
+            else:
+                raise IOError(('Directory doesn\'t exist: "{x}"').format(x=work_dir))
 
         # Files for redirection of stdout and stderr.
-        self._stdout_file = "%s/%s.out" % (self._tmp_dir.name, name)
-        self._stderr_file = "%s/%s.err" % (self._tmp_dir.name, name)
+        self._stdout_file = "%s/%s.out" % (self._work_dir.name, name)
+        self._stderr_file = "%s/%s.err" % (self._work_dir.name, name)
 
         # Create the files. This makes sure that the 'stdout' and 'stderr'
         # methods can be called when the files are empty.
