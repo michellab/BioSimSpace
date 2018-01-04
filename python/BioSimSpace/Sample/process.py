@@ -7,6 +7,8 @@
 import Sire.Base
 import Sire.Mol
 
+from ..Protocol.protocol_type import ProtocolType
+
 from operator import add, sub
 import tempfile
 
