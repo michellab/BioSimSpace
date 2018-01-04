@@ -40,3 +40,7 @@ class Minimisation():
     def type(self):
         """Return the protocol type."""
         return self._type
+
+    def conjugate_gradient(self):
+        """Whether the minimisation method is conjugate gradient."""
+        return self._method == "conjugate-gradient"
