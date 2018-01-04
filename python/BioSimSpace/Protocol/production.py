@@ -7,7 +7,7 @@
 from .protocol_type import ProtocolType
 
 class Production():
-    """ A class for storing production protocols. """
+    """A class for storing production protocols."""
 
     def __init__(self):
         """ Constructor. """
@@ -16,5 +16,5 @@ class Production():
         self._type = ProtocolType.PRODUCTION
 
     def type(self):
-        """ Return the protocol type. """
+        """Return the protocol type."""
         return self._type

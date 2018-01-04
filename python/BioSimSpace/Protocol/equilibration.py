@@ -7,7 +7,7 @@
 from .protocol_type import ProtocolType
 
 class Equilibration():
-    """ A class for storing equilibration protocols. """
+    """A class for storing equilibration protocols."""
 
     def __init__(self):
         """ Constructor. """
@@ -16,5 +16,5 @@ class Equilibration():
         self._type = ProtocolType.EQUILIBRATION
 
     def type(self):
-        """ Return the protocol type. """
+        """Return the protocol type."""
         return self._type

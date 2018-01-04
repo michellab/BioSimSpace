@@ -12,17 +12,17 @@ from . import process
 import os
 
 class NamdProcess(process.Process):
-    """ A class for running simulations using NAMD. """
+    """A class for running simulations using NAMD."""
 
     def __init__(self, system, protocol, exe=None, name="namd"):
-        """ Constructor.
+        """Constructor.
 
-        Keyword arguments:
+           Keyword arguments:
 
-        system   -- The molecular system.
-        protocol -- The protocol for the NAMD process.
-        exe      -- The full path to the NAMD executable.
-        name     -- The name of the process.
+           system   -- The molecular system.
+           protocol -- The protocol for the NAMD process.
+           exe      -- The full path to the NAMD executable.
+           name     -- The name of the process.
         """
 
         # Call the base class constructor.
@@ -52,7 +52,7 @@ class NamdProcess(process.Process):
         self._setup()
 
     def _setup(self):
-        """ Setup the input files and working directory ready for simulation. """
+        """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
 
@@ -119,7 +119,7 @@ class NamdProcess(process.Process):
         return self._input_files
 
     def start(self):
-        """ Start the NAMD simulation. """
+        """Start the NAMD simulation."""
 
         # Create a string for the command line arguments.
         args = "%s 1> %s 2> %s" % (self._namd_file, self._stdout_file, self._stderr_file)

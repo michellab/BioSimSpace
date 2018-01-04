@@ -15,19 +15,19 @@ import tempfile
 try:
     pygtail = Sire.try_import("pygtail")
 except ImportError:
-    raise ImportError('Pygtail is not installed. Please install pygtail in order to use BioSimSpace.')
+    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
 class Process(Sire.Base.Process):
-    """ Base class for running different biomolecular simulation processes. """
+    """Base class for running different biomolecular simulation processes."""
 
     def __init__(self, system, protocol, name="process"):
-        """ Constructor.
+        """Constructor.
 
-        Keyword arguments:
+           Keyword arguments:
 
-        system   -- The molecular system.
-        protocol -- The protocol for the process.
-        name     -- The name of the process.
+           system   -- The molecular system.
+           protocol -- The protocol for the process.
+           name     -- The name of the process.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -59,11 +59,11 @@ class Process(Sire.Base.Process):
         self._stderr = []
 
     def stdout(self, n=10):
-        """ Print the last n lines of the stdout buffer.
+        """Print the last n lines of the stdout buffer.
 
-            Keyword arguments:
+           Keyword arguments:
 
-            n -- The number of lines to print.
+           n -- The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -88,11 +88,11 @@ class Process(Sire.Base.Process):
             print(self._stdout[x])
 
     def stderr(self, n=10):
-        """ Print the last n lines of the stderr buffer.
+        """Print the last n lines of the stderr buffer.
 
-            Keyword arguments:
+           Keyword arguments:
 
-            n -- The number of lines to print.
+           n -- The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -117,15 +117,15 @@ class Process(Sire.Base.Process):
             print(self._stderr[x])
 
 def _compute_box_size(system, tol=0.3, buffer=0.1):
-    """ Compute the box size and origin from the atomic coordinates.
+    """Compute the box size and origin from the atomic coordinates.
 
-        Keyword arguments:
+       Keyword arguments:
 
-        system -- A Sire molecular system.
-        tol    -- The tolerance for determining whether the box is square
-                  and whether the origin lies at (0, 0, 0).
-        buffer -- The percentage by which to expand the box to account for
-                  periodic wrapping.
+       system -- A Sire molecular system.
+       tol    -- The tolerance for determining whether the box is square
+                 and whether the origin lies at (0, 0, 0).
+       buffer -- The percentage by which to expand the box to account for
+                 periodic wrapping.
     """
 
     # Store the list of molecule indices.
