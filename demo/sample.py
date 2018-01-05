@@ -20,3 +20,5 @@ print("\nCreated NAMD input files: %s" % filenames)
 # Start the NAMD simulation.
 print("\nStarting simulation...")
 proc.start()
+
+print("\nDone!")

@@ -24,6 +24,27 @@ class Minimisation():
         # Set the protocol type.
         self._type = ProtocolType.MINIMISATION
 
+        # Set the minimisation method.
+        self._method = method
+
+        # Set the number of steps.
+        self._steps = steps
+
+        # Set the system temperature.
+        self._temperature = temperature
+
+    def type(self):
+        """Return the protocol type."""
+        return self._type
+
+    @property
+    def method(self):
+        """Return the minimisation method."""
+        return self._method
+
+    @method.setter
+    def method(self, method):
+        """Set the 'method' member variable."""
         # Check that the minimisation method is valid.
         if method not in ["conjugate-gradient", "steepest-descent"]:
             msg = ('Invalid minimisation method: "{x}". '
@@ -37,9 +58,37 @@ class Minimisation():
         else:
             self._method = method
 
-    def type(self):
-        """Return the protocol type."""
-        return self._type
+    @property
+    def steps(self):
+        """Return the maximum number of steps."""
+        return self._steps
+
+    @steps.setter
+    def steps(self, steps):
+        """Set the maximum number of steps."""
+
+        if steps <= 0:
+            warn("Number of steps must be greater than zero. Using default (5000).")
+            self._steps = 5000
+
+        else:
+            self._steps = steps
+
+    @property
+    def temperature(self):
+        """Return the system temperature."""
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, temperature):
+        """Set the system temperature."""
+
+        if temperature <= 0:
+            warn("Temperature must be positive. Using default (300 K).")
+            self._temperature = 300
+
+        else:
+            self._temperature = temperature
 
     def conjugate_gradient(self):
         """Whether the minimisation method is conjugate gradient."""

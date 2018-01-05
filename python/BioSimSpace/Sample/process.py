@@ -4,7 +4,6 @@
 @brief   Base class and helper functions for the various sample modules.
 """
 
-import Sire.Base
 import Sire.Mol
 
 from ..Protocol.protocol_type import ProtocolType
@@ -18,10 +17,10 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class Process(Sire.Base.Process):
+class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name="process", work_dir=None):
+    def __init__(self, system, protocol, name="process", work_dir=None, max_time=60):
         """Constructor.
 
            Keyword arguments:
@@ -30,23 +29,25 @@ class Process(Sire.Base.Process):
            protocol -- The protocol for the process.
            name     -- The name of the process.
            work_dir -- The working directory for the process.
+           max_time -- The maximum running time in minutes.
         """
 
 	# Don't allow user to create an instance of this base class.
-        # Since we have multiple inheritance (the base inherits from Process,
-        # which itself inherits from Sire.Base.Process) it's diffult to
-        # use the "abc" library.
         if type(self) == Process:
             raise Exception("<Process> must be subclassed.")
 
-	# Copy the passed system, protocol, and process name.
+        # Set the process to None.
+        self._process = None
+
+	# Copy the passed system, protocol, process name, and wall time.
         self._system = system
         self._protocol = protocol
         self._name = name
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
-            self._work_dir = tempfile.TemporaryDirectory()
+            self._tmp_dir = tempfile.TemporaryDirectory()
+            self._work_dir = self._tmp_dir.name
 
         # Check that the user supplied working directory exists.
         else:
@@ -56,8 +57,8 @@ class Process(Sire.Base.Process):
                 raise IOError(('Directory doesn\'t exist: "{x}"').format(x=work_dir))
 
         # Files for redirection of stdout and stderr.
-        self._stdout_file = "%s/%s.out" % (self._work_dir.name, name)
-        self._stderr_file = "%s/%s.err" % (self._work_dir.name, name)
+        self._stdout_file = "%s/%s.out" % (self._work_dir, name)
+        self._stderr_file = "%s/%s.err" % (self._work_dir, name)
 
         # Create the files. This makes sure that the 'stdout' and 'stderr'
         # methods can be called when the files are empty.
@@ -67,6 +68,25 @@ class Process(Sire.Base.Process):
         # Initialise lists to store the contents of stdout and stderr.
         self._stdout = []
         self._stderr = []
+
+        # Set the maximum running time.
+        self._max_time = max_time
+
+    @property
+    def max_time(self):
+        """Return maximum running time."""
+        return self._max_time
+
+    @max_time.setter
+    def max_time(self, max_time):
+        """Set the 'max_time' member variable."""
+
+        if temperature <= 0:
+            warn("Max running time must be positive. Using default (60 mins).")
+            self._max_time = 60
+
+        else:
+            self._max_time = max_time
 
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
