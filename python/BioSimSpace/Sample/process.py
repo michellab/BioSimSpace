@@ -9,7 +9,7 @@ import Sire.Mol
 from ..Protocol.protocol_type import ProtocolType
 
 from operator import add, sub
-from os import path
+from os import path, remove
 import tempfile
 
 try:
@@ -67,6 +67,17 @@ class Process():
         # Initialise lists to store the contents of stdout and stderr.
         self._stdout = []
         self._stderr = []
+
+        # Clean up any existing offset files.
+
+        stdout_offset = "%s.offset" % self._stdout_file
+        stderr_offset = "%s.offset" % self._stderr_file
+
+        if path.isfile(stdout_offset):
+            remove(stdout_offset)
+
+        if path.isfile(stderr_offset):
+            remove(stderr_offset)
 
     def wait(self, max_time=None):
         """Wait for the process to finish.
@@ -153,6 +164,24 @@ class Process():
         # Print the lines.
         for x in range(start, num_lines):
             print(self._stderr[x])
+
+    def getOutput(self):
+        """Return the entire stdout for the process as a list of strings."""
+
+        # Append any new lines to the stdout list.
+        for line in pygtail.Pygtail(self._stdout_file):
+            self._stdout.append(line.rstrip())
+
+        return self._stdout
+
+    def getError(self):
+        """Return the entire stderr for the process as a list of strings."""
+
+        # Append any new lines to the stdout list.
+        for line in pygtail.Pygtail(self._stderr_file):
+            self._stderr.append(line.rstrip())
+
+        return self._stderr
 
 def _compute_box_size(system, tol=0.3, buffer=0.1):
     """Compute the box size and origin from the atomic coordinates.
