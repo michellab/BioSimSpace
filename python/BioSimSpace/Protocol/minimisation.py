@@ -90,6 +90,6 @@ class Minimisation():
         else:
             self._temperature = temperature
 
-    def conjugate_gradient(self):
+    def conjugateGradient(self):
         """Whether the minimisation method is conjugate gradient."""
         return self._method == "conjugate-gradient"
