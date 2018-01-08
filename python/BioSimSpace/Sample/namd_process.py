@@ -17,7 +17,7 @@ import os
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, max_time=60):
+    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None):
         """Constructor.
 
            Keyword arguments:
@@ -27,11 +27,10 @@ class NamdProcess(process.Process):
            exe      -- The full path to the NAMD executable.
            name     -- The name of the process.
            work_dir -- The working directory for the process.
-           max_time -- The maximum running time in minutes.
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, max_time)
+        super().__init__(system, protocol, name, work_dir)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
@@ -197,8 +196,3 @@ class NamdProcess(process.Process):
 
         # Change back to the original working directory.
         os.chdir(dir)
-
-        # Wait for the process to finish if not running interactively.
-        if hasattr(main, '__file__'):
-            max_time = self._max_time * 60 * 1000
-            self._process.wait(max_time)

@@ -20,7 +20,7 @@ except ImportError:
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name="process", work_dir=None, max_time=60):
+    def __init__(self, system, protocol, name="process", work_dir=None):
         """Constructor.
 
            Keyword arguments:
@@ -29,7 +29,6 @@ class Process():
            protocol -- The protocol for the process.
            name     -- The name of the process.
            work_dir -- The working directory for the process.
-           max_time -- The maximum running time in minutes.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -69,24 +68,28 @@ class Process():
         self._stdout = []
         self._stderr = []
 
-        # Set the maximum running time.
-        self._max_time = max_time
+    def wait(self, max_time=None):
+        """Wait for the process to finish.
 
-    @property
-    def max_time(self):
-        """Return maximum running time."""
-        return self._max_time
+           Keyword arguments:
 
-    @max_time.setter
-    def max_time(self, max_time):
-        """Set the 'max_time' member variable."""
+           max_time -- The maximimum time to wait (in minutes).
+        """
 
-        if temperature <= 0:
-            warn("Max running time must be positive. Using default (60 mins).")
-            self._max_time = 60
+        if not max_time is None:
+            if max_time <= 0:
+                warn("Maximum running time must be greater than zero. Using default (60 mins).")
+                max_time = 60
+
+            # Convert the time to milliseconds.
+            max_time = max_time * 60 * 1000
+
+            # Wait for the desired amount of time.
+            self._process.wait(max_time)
 
         else:
-            self._max_time = max_time
+            # Wait for the process to finish.
+            self._process.wait()
 
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.

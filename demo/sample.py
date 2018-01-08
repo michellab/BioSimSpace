@@ -21,4 +21,7 @@ print("\nCreated NAMD input files: %s" % filenames)
 print("\nStarting simulation...")
 proc.start()
 
+# Wait for the process to end.
+proc.wait()
+
 print("\nDone!")
