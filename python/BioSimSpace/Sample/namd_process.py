@@ -196,3 +196,16 @@ class NamdProcess(process.Process):
 
         # Change back to the original working directory.
         os.chdir(dir)
+
+    def getSystem(self):
+        """Get the latest molecular configuration as a Sire system."""
+
+        # Read the PDB coordinate file and construct a parameterised molecular
+        # system using the original PSF and param files.
+
+        # List of files.
+        files = [ "%s/%s_out.coor" % (self._work_dir, self._name),
+                  self._psf_file, self._pdb_file, self._param_file ]
+
+        # Create and return the molecular system.
+        return Sire.IO.MoleculeParser.read(files)

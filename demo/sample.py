@@ -28,4 +28,12 @@ proc.wait()
 if proc.isError():
     print("The process failed!")
 
+else:
+    # Get the minimised molecular structure.
+    min_structure = proc.getSystem()
+
+    # Write the minimised structure to file.
+    filenames = BSS.saveMolecules("minimised", min_structure, system.fileFormat())
+    print("\nWritten minimised structure to: %s" % filenames)
+
 print("\nDone!")
