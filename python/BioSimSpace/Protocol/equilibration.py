@@ -25,7 +25,10 @@ class Equilibration(Protocol):
         # Call the base class constructor.
         super().__init__(ProtocolType.EQUILIBRATION)
 
-        # Set the start temeperature.
+        # Set the running time.
+        self._runtime = runtime
+
+        # Set the start temperature.
         self._temperature_start = temperature_start
 
         # Set the final temperature.
@@ -40,6 +43,9 @@ class Equilibration(Protocol):
         # Constant temperature simulation.
         else:
             self._is_const_temp = True
+
+        # Set the backbone restraint.
+        self._is_restrained = restrain_backbone
 
     @property
     def runtime(self):
@@ -89,6 +95,26 @@ class Equilibration(Protocol):
         else:
             self._temperature_end = temperature
 
+    @property
+    def is_restrained(self):
+        """Return whether the backbone is restrained."""
+        return self._is_restrained
+
+    @is_restrained.setter
+    def is_restrained(self, restrain_backbone):
+        """Set the backbone restraint."""
+
+        if type(restrain_backbone) is bool:
+            self._is_restrained = restrain_backbone
+
+        else:
+            warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
+            self._is_restrained = False
+
     def type(self):
         """Return the protocol type."""
         return self._type
+
+    def isConstantTemp():
+        """Return whether the protocol has a constant temperature."""
+        return self._is_const_temp
