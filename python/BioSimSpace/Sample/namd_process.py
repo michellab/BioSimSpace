@@ -8,11 +8,13 @@ import Sire.Base
 import Sire.IO
 
 from . import process
-from ..Protocol.protocol_type import ProtocolType
+from ..Protocol.protocol import Protocol, ProtocolType
 
 from contextlib import redirect_stdout
 import __main__ as main
 import os
+
+from warnings import warn
 
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
@@ -22,11 +24,11 @@ class NamdProcess(process.Process):
 
            Keyword arguments:
 
-           system   -- The molecular system.
-           protocol -- The protocol for the NAMD process.
-           exe      -- The full path to the NAMD executable.
-           name     -- The name of the process.
-           work_dir -- The working directory for the process.
+           system    -- The molecular system.
+           protocol  -- The protocol for the NAMD process.
+           exe       -- The full path to the NAMD executable.
+           name      -- The name of the process.
+           work_dir  -- The working directory for the process.
         """
 
         # Call the base class constructor.
@@ -36,15 +38,34 @@ class NamdProcess(process.Process):
         # for it in $PATH.
         if exe is None:
             self._exe = Sire.Base.findExe("namd2").absoluteFilePath()
+
         else:
-            self._exe = exe
+            # Make sure executable exists.
+            if path.isfile(exe):
+                self._exe = protocol
+            else:
+                raise IOError(('NAMD executable doesn\'t exist: "{x}"').format(x=exe))
 
         # The names of the input files.
-        self._namd_file = "%s/%s.namd" % (self._work_dir, name)
         self._psf_file = "%s/%s.psf" % (self._work_dir, name)
         self._pdb_file = "%s/%s.pdb" % (self._work_dir, name)
         self._param_file = "%s/%s.params" % (self._work_dir, name)
         self._velocity_file = None
+
+        # Set the path for the NAMD configuration file.
+        # The 'protocol' argument may contain the path to a custom file.
+
+        # Generate the path name.
+        if not self._is_custom:
+            self._namd_file = "%s/%s.namd" % (self._work_dir, name)
+
+        # The user has supplied a custom config file.
+        else:
+            # Make sure the file exists.
+            if path.isfile(protocol):
+                self._namd_file = protocol
+            else:
+                raise IOError(('NAMD configuration file doesn\'t exist: "{x}"').format(x=namd_file))
 
         # Create the list of input files.
         self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
@@ -128,7 +149,9 @@ class NamdProcess(process.Process):
             f.close()
 
         # Generate the NAMD configuration file.
-        self._generate_config_file()
+        # Skip if the user has passed a custom config.
+        if not self._is_custom:
+            self._generate_config_file()
 
         # Return the list of input files.
         return self._input_files

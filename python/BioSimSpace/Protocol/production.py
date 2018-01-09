@@ -4,16 +4,16 @@
 @brief   A class for storing production protocols.
 """
 
-from .protocol_type import ProtocolType
+from .protocol import Protocol, ProtocolType
 
-class Production():
+class Production(Protocol):
     """A class for storing production protocols."""
 
     def __init__(self):
         """ Constructor. """
 
-        # Set the protocol type.
-        self._type = ProtocolType.PRODUCTION
+        # Call the base class constructor.
+        super().__init__(ProtocolType.PRODUCTION)
 
     def type(self):
         """Return the protocol type."""

@@ -6,7 +6,7 @@
 
 import Sire.Mol
 
-from ..Protocol.protocol_type import ProtocolType
+from ..Protocol.protocol import Protocol
 
 from operator import add, sub
 from os import path, remove
@@ -38,10 +38,17 @@ class Process():
         # Set the process to None.
         self._process = None
 
-	# Copy the passed system, protocol, process name, and wall time.
+	# Copy the passed system, protocol, and process name.
         self._system = system
         self._protocol = protocol
         self._name = name
+
+        # Check whether this is a Protocol object.
+        # If not, we assume that the user has passed a custom configuration file.
+        if isinstance(protocol, Protocol):
+            self._is_custom = False
+        else:
+            self._is_custom = True
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:

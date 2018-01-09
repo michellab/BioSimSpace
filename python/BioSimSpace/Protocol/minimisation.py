@@ -4,11 +4,11 @@
 @brief   A class for storing minimisation protocols.
 """
 
-from .protocol_type import ProtocolType
+from .protocol import Protocol, ProtocolType
 
 from warnings import warn
 
-class Minimisation():
+class Minimisation(Protocol):
     """A class for storing minimisation protocols."""
 
     def __init__(self, method="conjugate-gradient", steps=1000, temperature=300):
@@ -21,8 +21,8 @@ class Minimisation():
            temperature -- The system temperature (in Kelvin).
         """
 
-        # Set the protocol type.
-        self._type = ProtocolType.MINIMISATION
+        # Call the base class constructor.
+        super().__init__(ProtocolType.MINIMISATION)
 
         # Set the minimisation method.
         self._method = method
