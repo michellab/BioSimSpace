@@ -20,7 +20,8 @@ import os
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, charmm_params=True):
+    def __init__(self, system, protocol, exe=None, name="namd",
+            work_dir=None, charmm_params=True, seed=None):
         """Constructor.
 
            Keyword arguments:
@@ -31,6 +32,7 @@ class NamdProcess(process.Process):
            name          -- The name of the process.
            work_dir      -- The working directory for the process.
            charmm_params -- Whether the parameter file is in CHARMM format.
+           seed          -- A random number seed.
         """
 
         # Call the base class constructor.
@@ -123,9 +125,11 @@ class NamdProcess(process.Process):
             self._velocity_file = velocity_file
             self._input_files.append(self._velocity_file)
 
-        # NAMD requires donor, acceptor, and non-bonded exclusion
-        # record entries in the PSF file. We check that these
-        # are present and append blank records if not.
+        # NAMD requires donor, acceptor, and non-bonded exclusion record entries
+        # in the PSF file. We check that these are present and append blank
+        # records if not. The records are actually redundant (they have no
+        # affect on the MD) so could be stripped (or zeroed) by the CharmmPSF
+        # parser.
         has_donors = False
         has_acceptors = False
         has_non_bonded = False
@@ -211,10 +215,15 @@ class NamdProcess(process.Process):
             f.write("paraTypeCharmm        on\n")
         f.write("parameters            %s.params\n\n" % self._name)
 
+        # Random number seed.
+        if not self._seed is None:
+            f.write("seed                  %s\n" % self._seed)
+
         # Non-bonded potential parameters.
         f.write("exclude               scaled1-4\n")
         if not has_water:
             # Gas phase.
+            f.write("zeroMomentum          yes\n")
             f.write("switching             off\n")
             f.write("cutoff                999.\n\n")
 
@@ -325,6 +334,11 @@ class NamdProcess(process.Process):
         # Change to the working directory for the process.
         # This avoid problems with relative paths.
         os.chdir(self._work_dir)
+
+        # Write the command-line process to a README.txt file.
+        with open("README.txt", "w") as f:
+            f.write("# NAMDProcess was run with the following command:\n")
+            f.write("%s %s.namd\n" % (self._exe, self._name))
 
         # Start the simulation.
         self._process = Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
