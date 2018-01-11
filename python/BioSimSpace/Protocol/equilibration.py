@@ -115,6 +115,6 @@ class Equilibration(Protocol):
         """Return the protocol type."""
         return self._type
 
-    def isConstantTemp():
+    def isConstantTemp(self):
         """Return whether the protocol has a constant temperature."""
         return self._is_const_temp

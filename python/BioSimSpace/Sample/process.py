@@ -209,11 +209,25 @@ def _compute_box_size(system, tol=0.3, buffer=0.1):
     box_min = [1000000]  * 3
     box_max = [-1000000] * 3
 
+    # The number of water molecules.
+    # We'll assume that all 3- or 4-atom molecules are water.
+    num_water = 0
+
     # Loop over all of the molecules.
     for num in mol_nums:
 
+        # Store the molecule.
+        mol = system[num]
+
+        # Get the number of atoms.
+        num_atoms = mol.nAtoms()
+
+        # Is this a water molecule?
+        if num_atoms is 3 or num_atoms is 4:
+            num_water += 1
+
         # Loop over all atoms in the molecule.
-        for atom in system[num].atoms():
+        for atom in mol.atoms():
 
             # Extract the atomic coordinates.
             try:
@@ -237,8 +251,14 @@ def _compute_box_size(system, tol=0.3, buffer=0.1):
     # Calculate the centre of the box.
     box_origin = [x * 0.5 for x in list(map(add, box_min, box_max))]
 
-    # Store the base length with the maximum size.
-    max_size = max(box_size)
+    # Store the base length with the maximum size and its index.
+    max_size, index = box_max[0], 0
+    for ind, size in enumerate(box_max):
+        if size > max_size:
+            max_size, index = size, ind
+
+    # Store the index of the maximum value.
+    index = box_max.index(max_size)
 
     # Loop over all box dimensions.
     for x in range(0, 3):
@@ -246,13 +266,15 @@ def _compute_box_size(system, tol=0.3, buffer=0.1):
         # Assume the box is square if the base lengths are similar.
         if box_size[x] > (1 - tol) * max_size:
             box_size[x] = max_size
+            box_origin[x] = box_origin[index]
 
         # Assume the origin is at zero if the centre of mass is
-        # close  to (0, 0, 0)
+        # close to (0, 0, 0)
         if box_origin[x] / box_size[x] < tol:
             box_origin[x] = 0
 
     # Add a buffer to the box size to account for atom wrapping.
     box_size = [x * (1 + buffer) for x in box_size]
 
-    return (tuple(box_size), tuple(box_origin))
+    # Return the box size, origin, and whether the system is solvated.
+    return (tuple(box_size), tuple(box_origin), num_water > 0)
