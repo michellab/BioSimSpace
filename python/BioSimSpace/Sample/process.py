@@ -20,7 +20,7 @@ except ImportError:
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name="process", work_dir=None):
+    def __init__(self, system, protocol, name="process", work_dir=None, seed=None):
         """Constructor.
 
            Keyword arguments:
@@ -29,6 +29,7 @@ class Process():
            protocol -- The protocol for the process.
            name     -- The name of the process.
            work_dir -- The working directory for the process.
+           seed     -- A random number seed.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -42,6 +43,9 @@ class Process():
         self._system = system
         self._protocol = protocol
         self._name = name
+
+        # Set the random number seed.
+        self._seed = seed
 
         # Check whether this is a Protocol object.
         # If not, we assume that the user has passed a custom configuration file.
@@ -85,6 +89,22 @@ class Process():
 
         if path.isfile(stderr_offset):
             remove(stderr_offset)
+
+    @property
+    def seed(self):
+        """Return the random number seed."""
+        return self._seed
+
+    @seed.setter
+    def seed(self, seed):
+        """Set the random number seed."""
+
+        if type(seed) is not int:
+            warn("The seed must be an integer. Disabling seeding.")
+            self._seed = None
+
+        else:
+            self._seed = seed
 
     def wait(self, max_time=None):
         """Wait for the process to finish.
