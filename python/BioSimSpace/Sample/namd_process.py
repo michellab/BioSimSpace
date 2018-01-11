@@ -11,7 +11,6 @@ from Sire.Maths import Vector
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
-from contextlib import redirect_stdout
 from math import ceil
 from warnings import warn
 
