@@ -225,25 +225,24 @@ class NamdProcess(process.Process):
 
         # Non-bonded potential parameters.
 
+        # Gas phase.
         if not has_water:
-            # Gas phase.
             f.write("cutoff                999.\n")
             f.write("zeroMomentum          yes\n")
             f.write("switching             off\n")
 
+        # Solvated.
         else:
-            # Solvated.
-
             # Only use a cutoff if the box is large enough.
-            if has_box:
-                if min(box_size) > 26:
-                    f.write("cutoff                12.\n")
-                    f.write("pairlistdist          14.\n")
-                    f.write("switching             on\n")
-                    f.write("switchdist            10.\n")
+            if min(box_size) > 26:
+                f.write("cutoff                12.\n")
+                f.write("pairlistdist          14.\n")
+                f.write("switching             on\n")
+                f.write("switchdist            10.\n")
 
-        # For now, we only set the cell properties if the system contains a box.
-        if has_box:
+        # For now, we only set the cell properties if the system contains a
+        # box, or is solvated.
+        if has_box or has_water:
             # Periodic boundary conditions.
             f.write("cellBasisVector1     %.1f   0.    0.\n" % box_size[0])
             f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
