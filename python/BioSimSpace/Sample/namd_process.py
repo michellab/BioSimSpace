@@ -205,34 +205,42 @@ class NamdProcess(process.Process):
 
         # Topology.
         f.write("structure             %s.psf\n" % self._name)
-        f.write("coordinates           %s.pdb\n\n" % self._name)
+        f.write("coordinates           %s.pdb\n" % self._name)
 
         # Velocities.
         if not self._velocity_file is None:
-            f.write("velocities            %s.vel\n\n" % self._name)
+            f.write("velocities            %s.vel\n" % self._name)
 
         # Parameters.
         if self._is_charmm_params:
             f.write("paraTypeCharmm        on\n")
-        f.write("parameters            %s.params\n\n" % self._name)
+        f.write("parameters            %s.params\n" % self._name)
 
         # Random number seed.
         if not self._seed is None:
             f.write("seed                  %s\n" % self._seed)
 
-        # Non-bonded potential parameters.
+        # Exclusion policy.
         f.write("exclude               scaled1-4\n")
+
+        # Non-bonded potential parameters.
+
         if not has_water:
             # Gas phase.
+            f.write("cutoff                999.\n")
             f.write("zeroMomentum          yes\n")
             f.write("switching             off\n")
-            f.write("cutoff                999.\n\n")
 
         else:
             # Solvated.
-            f.write("switching             on\n")
-            f.write("switchdist            10.\n")
-            f.write("cutoff                12.\n\n")
+
+            # Only use a cutoff if the box is large enough.
+            if has_box:
+                if min(box_size) > 26:
+                    f.write("cutoff                12.\n")
+                    f.write("pairlistdist          14.\n")
+                    f.write("switching             on\n")
+                    f.write("switchdist            10.\n")
 
         # For now, we only set the cell properties if the system contains a box.
         if has_box:
@@ -241,47 +249,47 @@ class NamdProcess(process.Process):
             f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
             f.write("cellBasisVector3      0.    0.   %.1f\n" % box_size[2])
             f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
-            f.write("wrapAll               on\n\n")
+            f.write("wrapAll               on\n")
 
             # Periodic electrostatics.
             f.write("PME                   yes\n")
-            f.write("PMEGridSpacing        1.\n\n")
+            f.write("PMEGridSpacing        1.\n")
 
         # Output file parameters.
         f.write("outputName            %s_out\n" % self._name)
-        f.write("binaryOutput          no\n\n")
+        f.write("binaryOutput          no\n")
 
         # Output frequency.
         f.write("restartfreq           500\n")
         f.write("dcdunitcell           no\n")
-        f.write("xstFreq               500\n\n")
+        f.write("xstFreq               500\n")
 
         # Printing frequency.
         f.write("outputEnergies        100\n")
-        f.write("outputTiming          1000\n\n")
+        f.write("outputTiming          1000\n")
 
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
-            f.write("temperature           %s\n\n" % self._protocol.temperature)
+            f.write("temperature           %s\n" % self._protocol.temperature)
             f.write("minimize              %s\n" % self._protocol.steps)
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
             f.write("set temperature       %s\n" % self._protocol.temperature_start)
-            f.write("temperature           $temperature\n\n")
+            f.write("temperature           $temperature\n")
 
             # Integrator parameters.
             f.write("timestep              2.\n")
             f.write("rigidBonds            all\n")
             f.write("nonbondedFreq         1\n")
-            f.write("fullElectFrequency    2\n\n")
+            f.write("fullElectFrequency    2\n")
 
             # Constant temperature control.
             f.write("langevin              on\n")
             f.write("langevinDamping       1.\n")
             f.write("langevinTemp          $temperature\n")
-            f.write("langevinHydrogen      no\n\n")
+            f.write("langevinHydrogen      no\n")
 
             # Constant pressure control.
             if not self._protocol.isConstantTemp():
@@ -292,7 +300,7 @@ class NamdProcess(process.Process):
                 f.write("langevinPistonTemp    $temperature\n")
                 f.write("useGroupPressure      yes\n")
                 f.write("useFlexibleCell       no\n")
-                f.write("useConstantArea       no\n\n")
+                f.write("useConstantArea       no\n")
 
             # Restrain the backbone.
             if self._protocol.is_restrained:
@@ -300,7 +308,7 @@ class NamdProcess(process.Process):
                 pass
 
             # First perform a short minimisation to eliminate bad contacts.
-            f.write("minimize              1000\n\n")
+            f.write("minimize              1000\n")
 
             # Work out number of steps needed to exceed desired running time.
             steps = ceil(self._protocol.runtime / 0.002)
