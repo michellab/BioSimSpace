@@ -258,6 +258,7 @@ class NamdProcess(process.Process):
         # Output file parameters.
         f.write("outputName            %s_out\n" % self._name)
         f.write("binaryOutput          no\n")
+        f.write("binaryRestart         no\n")
 
         # Output frequency.
         f.write("restartfreq           500\n")
@@ -367,12 +368,23 @@ class NamdProcess(process.Process):
         # Read the PDB coordinate file and construct a parameterised molecular
         # system using the original PSF and param files.
 
-        # List of files.
-        files = [ "%s/%s_out.coor" % (self._work_dir, self._name),
-                  self._psf_file, self._pdb_file, self._param_file ]
+        is_coor = False
 
-        # Make sure a coordinate file exists.
-        if path.isfile(files[0]):
+        # First check for final configuration.
+        if path.isfile("%s/%s_out.coor" % (self._work_dir, self._name)):
+            file = "%s/%s_out.coor" % (self._work_dir, self._name)
+            is_coor = True
+
+        # Otherwise check for a restart file.
+        elif path.isfile("%s/%s_out.restart.coor" % (self._work_dir, self._name)):
+            file = "%s/%s_out.restart.coor" % (self._work_dir, self._name)
+            is_coor = True
+
+        # We found a coordinate file.
+        if is_coor:
+            # List of files.
+            files = [ "%s/%s_out.coor" % (self._work_dir, self._name),
+                    self._psf_file, self._pdb_file, self._param_file ]
 
             # Create and return the molecular system.
             return Sire.IO.MoleculeParser.read(files)
