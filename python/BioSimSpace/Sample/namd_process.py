@@ -12,6 +12,7 @@ from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil
+from os import path
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -464,7 +465,7 @@ class NamdProcess(process.Process):
         return self._get_nrg_record('VOLUME')
 
     def eta(self):
-        """Get the estimated time for the process to finish (in hours)."""
+        """Get the estimated time for the process to finish (in minutes)."""
 
         # Make sure the list of stdout records is up to date.
         # Print the last zero lines, i.e. no output.
@@ -483,7 +484,7 @@ class NamdProcess(process.Process):
                     # Try to find the "hours" record.
                     # If found, return the entry preceeding it.
                     try:
-                        return data[data.index("hours") - 1]
+                        return float(data[data.index("hours") - 1]) * 60
 
                     # No record found.
                     except ValueError:

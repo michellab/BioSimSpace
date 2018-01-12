@@ -149,6 +149,10 @@ class Process():
         """Return whether the process errored."""
         return self._process.isError()
 
+    def kill(self):
+        """Kill the running process."""
+        self._process.kill()
+
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
@@ -238,18 +242,18 @@ class Process():
         return self._command
 
     def runTime(self):
-        """Return the running time for the process."""
+        """Return the running time for the process (in minutes)."""
 
         # The process is still running.
         if self._process.isRunning():
-            self._runtime = timer() - self._timer
+            self._runtime = (timer() - self._timer) / 60
             return self._runtime
 
         # The process has finished.
         else:
             # Return the runtime and reset the timer.
             if self._timer is not None:
-                self._runtime = timer() - self._timer
+                self._runtime = (timer() - self._timer) / 60
                 self._timer = None
                 return self._runtime
 
