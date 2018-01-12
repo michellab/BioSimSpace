@@ -9,7 +9,7 @@ import Sire.Mol
 from ..Protocol.protocol import Protocol
 
 from operator import add, sub
-from os import path, remove
+from os import makedirs, path, remove
 from timeit import default_timer as timer
 
 import tempfile
@@ -71,12 +71,13 @@ class Process():
             self._tmp_dir = tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
-        # Check that the user supplied working directory exists.
+        # User specified working directory.
         else:
-            if path.isdir(work_dir):
-                self._work_dir = work_dir
-            else:
-                raise IOError(('Directory doesn\'t exist: "{x}"').format(x=work_dir))
+            self._work_dir = work_dir
+
+            # Create the directory if it doesn't already exist..
+            if not path.isdir(work_dir):
+                makedirs(work_dir)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
