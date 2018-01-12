@@ -141,9 +141,12 @@ class Process():
             # Wait for the process to finish.
             self._process.wait()
 
+    def isRunning(self):
+        """Return whether the process is running"""
+        return self._process.isRunning()
+
     def isError(self):
         """Return whether the process errored."""
-
         return self._process.isError()
 
     def stdout(self, n=10):
