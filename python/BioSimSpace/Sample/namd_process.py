@@ -370,8 +370,14 @@ class NamdProcess(process.Process):
         files = [ "%s/%s_out.coor" % (self._work_dir, self._name),
                   self._psf_file, self._pdb_file, self._param_file ]
 
-        # Create and return the molecular system.
-        return Sire.IO.MoleculeParser.read(files)
+        # Make sure a coordinate file exists.
+        if path.isfile(files[0]):
+
+            # Create and return the molecular system.
+            return Sire.IO.MoleculeParser.read(files)
+
+        else:
+            return None
 
     def getTimeStep(self):
         """Get the current time step."""
@@ -458,7 +464,7 @@ class NamdProcess(process.Process):
         return self._get_nrg_record('VOLUME')
 
     def eta(self):
-        """Get the estimated time for the process to finish."""
+        """Get the estimated time for the process to finish (in hours)."""
 
         # Make sure the list of stdout records is up to date.
         # Print the last zero lines, i.e. no output.
