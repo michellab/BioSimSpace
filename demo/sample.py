@@ -38,6 +38,6 @@ else:
 
     # Print final energy and timing information.
     print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
-    print("Simulation took %.2f seconds." % proc.runTime())
+    print("Simulation took %.2f minutes." % proc.runTime())
 
 print("\nDone!")
