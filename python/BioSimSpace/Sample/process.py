@@ -10,6 +10,8 @@ from ..Protocol.protocol import Protocol
 
 from operator import add, sub
 from os import path, remove
+from timeit import default_timer as timer
+
 import tempfile
 
 try:
@@ -46,6 +48,16 @@ class Process():
 
         # Set the random number seed.
         self._seed = seed
+
+        # Set the timer and running time None.
+        self._timer = None
+        self._runtime = None
+
+        # Set the command-line string to None
+        self._command = None
+
+        # Set the list of input files to None.
+        self._input_files = None
 
         # Check whether this is a Protocol object.
         # If not, we assume that the user has passed a custom configuration file.
@@ -192,6 +204,14 @@ class Process():
         for x in range(start, num_lines):
             print(self._stderr[x])
 
+    def inputFiles(self):
+        """Return the list of input files."""
+        return self._input_files
+
+    def workDir(self):
+        """Return the working directory."""
+        return self._work_dir
+
     def getOutput(self):
         """Return the entire stdout for the process as a list of strings."""
 
@@ -209,6 +229,30 @@ class Process():
             self._stderr.append(line.rstrip())
 
         return self._stderr
+
+    def command(self):
+        """Return the command-line string used to run the process."""
+        return self._command
+
+    def runTime(self):
+        """Return the running time for the process."""
+
+        # The process is still running.
+        if self._process.isRunning():
+            self._runtime = timer() - self._timer
+            return self._runtime
+
+        # The process has finished.
+        else:
+            # Return the runtime and reset the timer.
+            if self._timer is not None:
+                self._runtime = timer() - self._timer
+                self._timer = None
+                return self._runtime
+
+            # The process has finished. Return the previous run time.
+            else:
+                return self._runtime
 
 def _compute_box_size(system, tol=0.3, buffer=0.1):
     """Compute the box size and origin from the atomic coordinates.

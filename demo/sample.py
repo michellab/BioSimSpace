@@ -14,7 +14,7 @@ print("\nInitialising NAMD process...")
 proc = BSS.Sample.NamdProcess(system, protocol, name="test", work_dir="tmp", charmm_params=False)
 
 # Get the list of auto-generated input files.
-filenames = proc.input_files()
+filenames = proc.inputFiles()
 print("\nCreated NAMD input files: %s" % filenames)
 
 # Start the NAMD simulation.
@@ -32,9 +32,12 @@ else:
     # Get the final molecular structure.
     new_system = proc.getSystem()
 
-    # Write the minimised structure to file.
+    # Write the final structure to file.
     filenames = BSS.saveMolecules("final", new_system, system.fileFormat())
     print("\nWritten final molecular system to: %s" % filenames)
+
+    # Print final energy and timing information.
     print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+    print("Simulation took %.2f seconds." % proc.runTime())
 
 print("\nDone!")

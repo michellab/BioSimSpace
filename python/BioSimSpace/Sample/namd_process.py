@@ -12,6 +12,7 @@ from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil
+from timeit import default_timer as timer
 from warnings import warn
 
 import __main__ as main
@@ -321,10 +322,6 @@ class NamdProcess(process.Process):
         # Close the configuration file.
         f.close()
 
-    def input_files(self):
-        """Return the list of input files."""
-        return self._input_files
-
     def start(self):
         """Start the NAMD simulation."""
 
@@ -337,8 +334,16 @@ class NamdProcess(process.Process):
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
+
+            # Set the command-line string.
+            self._command = "%s %s.namd" % (self._exe, self._name)
+
+            # Write the command to file.
             f.write("# NAMDProcess was run with the following command:\n")
-            f.write("%s %s.namd\n" % (self._exe, self._name))
+            f.write("%s\n" % self._command)
+
+        # Start the timer.
+        self._timer = timer()
 
         # Start the simulation.
         self._process = Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
