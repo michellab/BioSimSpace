@@ -450,6 +450,32 @@ class NamdProcess(process.Process):
         """Get the volume."""
         return self._get_nrg_record('VOLUME')
 
+    def eta(self):
+        """Get the estimated time for the process to finish."""
+
+        # Make sure the list of stdout records is up to date.
+        # Print the last zero lines, i.e. no output.
+        self.stdout(0)
+
+        # Now search backwards through the list to find the last TIMING record.
+        for x, record in reversed(list(enumerate(self._stdout))):
+
+            # Split the record using whitespace.
+            data = record.split()
+
+            # We've found a TIMING record.
+            if len(data) > 0:
+                if data[0] == "TIMING:":
+
+                    # Try to find the "hours" record.
+                    # If found, return the entry preceeding it.
+                    try:
+                        return data[data.index("hours") - 1]
+
+                    # No record found.
+                    except ValueError:
+                        return None
+
     def _create_energy_dict(self):
         """Helper function to generate a dictionary of energy records from stdout."""
 
