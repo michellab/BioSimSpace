@@ -1,24 +1,27 @@
 import BioSimSpace as BSS
 
+from sys import exit
+
 # Load the molecular system.
 print("\nLoading molecules...")
 system = BSS.readMolecules( ["namd/alanin/alanin.psf",
                              "namd/alanin/alanin.pdb",
                              "namd/alanin/alanin.params"] )
 
-# Create a default minimisation protocol.
-protocol = BSS.Protocol.Equilibration()
+# Create a minimisation protocol.
+protocol = BSS.Protocol.Minimisation(steps=1000)
 
 # Initialise the NAMD process.
-print("\nInitialising NAMD process...")
-proc = BSS.Sample.NamdProcess(system, protocol, name="test", work_dir="tmp", charmm_params=False)
+print("\nInitialising minimisation process...")
+proc = BSS.Sample.NamdProcess(system, protocol, name="minimise",
+        work_dir="minimise", charmm_params=False)
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
 print("\nCreated NAMD input files: %s" % filenames)
 
-# Start the NAMD simulation.
-print("\nStarting simulation...")
+# Start the minimisation.
+print("\nStarting minimisation...")
 proc.start()
 
 # Wait for the process to end.
@@ -27,17 +30,52 @@ proc.wait()
 # Check for errors.
 if proc.isError():
     print("The process failed!")
+    exit()
 
-else:
-    # Get the final molecular structure.
-    new_system = proc.getSystem()
+# Get the minimised molecular structure.
+minimised = proc.getSystem()
 
-    # Write the final structure to file.
-    filenames = BSS.saveMolecules("final", new_system, system.fileFormat())
-    print("\nWritten final molecular system to: %s" % filenames)
+# Write the minimised structure to file.
+filenames = BSS.saveMolecules("minimised", minimised, system.fileFormat())
+print("\nWritten minimised molecular structure to: %s" % filenames)
 
-    # Print final energy and timing information.
-    print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
-    print("Simulation took %.2f minutes." % proc.runTime())
+# Print final energy and timing information.
+print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("Minimisation took %.2f minutes." % proc.runTime())
+
+# Create a default equilibration protocol.
+protocol = BSS.Protocol.Equilibration()
+
+# Initialise the NAMD process.
+print("\nInitialising equilibration process...")
+proc = BSS.Sample.NamdProcess(minimised, protocol, name="equilibrate",
+        work_dir="equilibrate", charmm_params=False)
+
+# Get the list of auto-generated input files.
+filenames = proc.inputFiles()
+print("\nCreated NAMD input files: %s" % filenames)
+
+# Start the equlibration.
+print("\nStarting equlibration...")
+proc.start()
+
+# Wait for the process to end.
+proc.wait()
+
+# Check for errors.
+if proc.isError():
+    print("The process failed!")
+    exit()
+
+# Get the minimised molecular structure.
+equilibrated = proc.getSystem()
+
+# Write the equilibrated structure to file.
+filenames = BSS.saveMolecules("equilibrated", equilibrated, system.fileFormat())
+print("\nWritten equilibrated molecular structure to: %s" % filenames)
+
+# Print final energy and timing information.
+print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("Equilibration took %.2f minutes." % proc.runTime())
 
 print("\nDone!")

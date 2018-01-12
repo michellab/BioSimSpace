@@ -308,9 +308,6 @@ class NamdProcess(process.Process):
                 # TODO: Need to create a restraint file here.
                 pass
 
-            # First perform a short minimisation to eliminate bad contacts.
-            f.write("minimize              1000\n")
-
             # Work out number of steps needed to exceed desired running time.
             steps = ceil(self._protocol.runtime / 0.002)
 
@@ -383,8 +380,7 @@ class NamdProcess(process.Process):
         # We found a coordinate file.
         if is_coor:
             # List of files.
-            files = [ "%s/%s_out.coor" % (self._work_dir, self._name),
-                    self._psf_file, self._pdb_file, self._param_file ]
+            files = [ file, self._psf_file, self._param_file ]
 
             # Create and return the molecular system.
             return Sire.IO.MoleculeParser.read(files)
