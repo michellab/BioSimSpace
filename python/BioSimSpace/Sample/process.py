@@ -254,7 +254,7 @@ class Process():
             else:
                 return self._runtime
 
-def _compute_box_size(system, tol=0.3, buffer=0.1):
+def _compute_box_size(system, tol=0.05, buffer=0):
     """Compute the box size and origin from the atomic coordinates.
 
        Keyword arguments:
@@ -316,13 +316,10 @@ def _compute_box_size(system, tol=0.3, buffer=0.1):
     box_origin = [x * 0.5 for x in list(map(add, box_min, box_max))]
 
     # Store the base length with the maximum size and its index.
-    max_size, index = box_max[0], 0
-    for ind, size in enumerate(box_max):
+    max_size = 0
+    for index, size in enumerate(box_size):
         if size > max_size:
-            max_size, index = size, ind
-
-    # Store the index of the maximum value.
-    index = box_max.index(max_size)
+            max_size, index = size, index
 
     # Loop over all box dimensions.
     for x in range(0, 3):
