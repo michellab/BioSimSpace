@@ -4,14 +4,14 @@
 @brief   A class for running simulations using NAMD.
 """
 
-import Sire.Base
-import Sire.IO
+from Sire.Base import findExe, Process
+from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 from Sire.Maths import Vector
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
-from math import ceil
+from math import ceil, floor
 from os import path
 from timeit import default_timer as timer
 from warnings import warn
@@ -43,7 +43,7 @@ class NamdProcess(process.Process):
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
         if exe is None:
-            self._exe = Sire.Base.findExe("namd2").absoluteFilePath()
+            self._exe = findExe("namd2").absoluteFilePath()
 
         else:
             # Make sure executable exists.
@@ -60,6 +60,7 @@ class NamdProcess(process.Process):
         self._pdb_file = "%s/%s.pdb" % (self._work_dir, name)
         self._param_file = "%s/%s.params" % (self._work_dir, name)
         self._velocity_file = None
+        self._restraint_file = None
 
         # Set the path for the NAMD configuration file.
         # The 'protocol' argument may contain the path to a custom file.
@@ -104,11 +105,11 @@ class NamdProcess(process.Process):
         # Create the input files...
 
         # PSF and parameter files.
-        psf = Sire.IO.CharmmPSF(self._system)
+        psf = CharmmPSF(self._system)
         psf.writeToFile(self._psf_file)
 
         # PDB file.
-        pdb = Sire.IO.PDB2(self._system)
+        pdb = PDB2(self._system)
         pdb.writeToFile(self._pdb_file)
 
         # Try to write a PDB "velocity" restart file.
@@ -277,7 +278,7 @@ class NamdProcess(process.Process):
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
-            f.write("set temperature       %s\n" % self._protocol.temperature_start)
+            f.write("set temperature       %s\n" % self._protocol.temperature_target)
             f.write("temperature           $temperature\n")
 
             # Integrator parameters.
@@ -305,8 +306,21 @@ class NamdProcess(process.Process):
 
             # Restrain the backbone.
             if self._protocol.is_restrained:
-                # TODO: Need to create a restraint file here.
-                pass
+                # Create a restrained system.
+                restrained = process._restrain_backbone(self._system)
+
+                # Create a PDB object, mapping the "occupancy" property to "restrained".
+                p = PDB2(restrained, {"occupancy" : "restrained"})
+
+                # File name for the restraint file.
+                self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
+
+                # Write the PDB file.
+                p.writeToFile(self._restraint_file)
+
+                # Update the configuration file.
+                f.write("fixedAtoms            yes\n")
+                f.write("fixedAtomsFile        %s.restrained\n" % self._name)
 
             # Work out number of steps needed to exceed desired running time.
             steps = ceil(self._protocol.runtime / 0.002)
@@ -314,13 +328,13 @@ class NamdProcess(process.Process):
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self.protcol.temperature_end - self.protocol.temperature_start)
-                temp_step = ceil(steps / denom)
+                denom = abs(self._protocol.temperature_target - self._protocol.temperature_start)
+                freq = floor(steps / denom)
 
-                f.write("reassignFreq          %s\n" % steps)
-                f.write("reassignTemp          %s\n" % self.protocol.temperature_start)
-                f.write("reassignIncr          %s\n" % temp_step)
-                f.write("reassignHold          %s\n" % self.protocol.temperature_end)
+                f.write("reassignFreq          %s\n" % freq)
+                f.write("reassignTemp          %s\n" % self._protocol.temperature_start)
+                f.write("reassignIncr          1.\n")
+                f.write("reassignHold          %s\n" % self._protocol.temperature_target)
 
             # Run the simulation.
             f.write("run                   %s\n" % steps)
@@ -352,9 +366,9 @@ class NamdProcess(process.Process):
         self._timer = timer()
 
         # Start the simulation.
-        self._process = Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
-                                                         "%s.out"  % self._name,
-                                                         "%s.err"  % self._name)
+        self._process = Process.run(self._exe, "%s.namd" % self._name,
+                                               "%s.out"  % self._name,
+                                               "%s.err"  % self._name)
 
         # Change back to the original working directory.
         os.chdir(dir)
@@ -383,7 +397,7 @@ class NamdProcess(process.Process):
             files = [ file, self._psf_file, self._param_file ]
 
             # Create and return the molecular system.
-            return Sire.IO.MoleculeParser.read(files)
+            return MoleculeParser.read(files)
 
         else:
             return None

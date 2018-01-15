@@ -4,7 +4,9 @@
 @brief   Base class and helper functions for the various sample modules.
 """
 
-import Sire.Mol
+from Sire import try_import
+from Sire.ID import CaseInsensitive
+from Sire.Mol import AtomName
 
 from ..Protocol.protocol import Protocol
 
@@ -15,7 +17,7 @@ from timeit import default_timer as timer
 import tempfile
 
 try:
-    pygtail = Sire.try_import("pygtail")
+    pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
@@ -347,3 +349,58 @@ def _compute_box_size(system, tol=0.05, buffer=0):
 
     # Return the box size, origin, and whether the system is solvated.
     return (tuple(box_size), tuple(box_origin), num_water > 0)
+
+def _restrain_backbone(system):
+    """Restrain protein backbone atoms.
+
+        Keyword arguments:
+
+        system -- A Sire molecular system.
+    """
+
+    # Copy the original system.
+    s = system
+
+    # A list of amino acid name abbreviations.
+    # Since we only want to restrain atoms in protein backbones, we compare
+    # molecule residue names against this list in order to determine whether
+    # the molecule is a protein.
+    amino_acids = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
+        'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'SEC',
+        'VAL', 'TRP', 'TYR']
+
+    # Loop over all molecules by number.
+    for n in s.molNums():
+
+        # Extract the molecule and make it editable.
+        m = s.molecule(n).edit()
+
+        # Protein flag.
+        is_protein = False
+
+        # Compare each residue name against the amino acid list.
+        for res in m.residues():
+
+            # This residue is an amino acid.
+            if res.name().value().upper() in amino_acids:
+                is_protein = True
+                break
+
+        # Restrain the protein backbone.
+        if is_protein:
+
+            # Select the backbone.
+            backbone = m.atoms(AtomName("CA", CaseInsensitive) *
+                               AtomName("N",  CaseInsensitive) *
+                               AtomName("C",  CaseInsensitive) *
+                               AtomName("O",  CaseInsensitive))
+
+            # Set the restrained property for each atom in the backbone.
+            for atom in backbone:
+                m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
+
+            # Update the system.
+            s.update(m.commit())
+
+    # Return the new system.
+    return s
