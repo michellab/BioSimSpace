@@ -263,7 +263,6 @@ class NamdProcess(process.Process):
 
         # Output frequency.
         f.write("restartfreq           500\n")
-        f.write("dcdunitcell           no\n")
         f.write("xstFreq               500\n")
 
         # Printing frequency.
@@ -335,6 +334,44 @@ class NamdProcess(process.Process):
                 f.write("reassignTemp          %s\n" % self._protocol.temperature_start)
                 f.write("reassignIncr          1.\n")
                 f.write("reassignHold          %s\n" % self._protocol.temperature_target)
+
+            # Run the simulation.
+            f.write("run                   %s\n" % steps)
+
+        # Add configuration variables for a production simulation.
+        elif self._protocol.type() == ProtocolType.PRODUCTION:
+            # Set the Tcl temperature variable.
+            f.write("set temperature       %s\n" % self._protocol.temperature)
+            f.write("temperature           $temperature\n")
+
+            # Integrator parameters.
+            f.write("timestep              2.\n")
+            f.write("rigidBonds            all\n")
+            f.write("nonbondedFreq         1\n")
+            f.write("fullElectFrequency    2\n")
+
+            # Constant temperature control.
+            f.write("langevin              on\n")
+            f.write("langevinDamping       1.\n")
+            f.write("langevinTemp          $temperature\n")
+            f.write("langevinHydrogen      no\n")
+
+            # Constant pressure control.
+            if self._protocol.ensemble is 'NPT':
+                f.write("langevinPiston        on\n")
+                f.write("langevinPistonTarget  1.01325\n")
+                f.write("langevinPistonPeriod  100.\n")
+                f.write("langevinPistonDecay   50.\n")
+                f.write("langevinPistonTemp    $temperature\n")
+                f.write("useGroupPressure      yes\n")
+                f.write("useFlexibleCell       no\n")
+                f.write("useConstantArea       no\n")
+
+            # Work out number of steps needed to exceed desired running time.
+            steps = ceil((1000 * self._protocol.runtime) / 0.002)
+
+            # Trajectory output frequency.
+            f.write("DCDfreq                   %s\n" % floor(steps / self._protocol.frames))
 
             # Run the simulation.
             f.write("run                   %s\n" % steps)
