@@ -11,15 +11,15 @@ from warnings import warn
 class Equilibration(Protocol):
     """A class for storing equilibration protocols."""
 
-    def __init__(self, runtime=200, temperature_start=300, temperature_target=None, restrain_backbone=False):
+    def __init__(self, runtime=0.2, temperature_start=300, temperature_end=None, restrain_backbone=False):
         """Constructor.
 
            Keyword arguments:
 
-           runtime            -- The running time (in picoseconds).
-           temperature_start  -- The starting temperature (in Kelvin).
-           temperature_target -- The target temperature (in Kelvin).
-           restrain_backbone  -- Whether the atoms in the backbone are fixed.
+           runtime           -- The running time (in nanoseconds).
+           temperature_start -- The starting temperature (in Kelvin).
+           temperature_end   -- The final temperature (in Kelvin).
+           restrain_backbone -- Whether the atoms in the backbone are fixed.
         """
 
         # Call the base class constructor.
@@ -30,14 +30,13 @@ class Equilibration(Protocol):
 
         # Set the start temperature.
         self._temperature_start = temperature_start
-        self._is_const_temp = False
 
         # Set the final temperature.
-        if not temperature_target is None:
-            self._temperature_target = temperature_target
+        if not temperature_end is None:
+            self._temperature_end = temperature_end
 
             # Start and end temperature is the same.
-            if (self._temperature_start == self._temperature_target):
+            if (self._temperature_start == self._temperature_end):
                 warn("Start and end temperatures are the same!")
                 self._is_const_temp = True
 
@@ -58,8 +57,8 @@ class Equilibration(Protocol):
         """Set the running time."""
 
         if runtime <= 0:
-            warn("The running time must be positive. Using default (200 ps).")
-            self._runtime = 200
+            warn("The running time must be positive. Using default (0.2 ns).")
+            self._runtime = 0.2
 
         else:
             self._runtime = runtime
@@ -81,20 +80,20 @@ class Equilibration(Protocol):
             self._temperature_start = temperature
 
     @property
-    def temperature_target(self):
-        """Return the target temperature."""
-        return self._temperature_target
+    def temperature_end(self):
+        """Return the final temperature."""
+        return self._temperature_end
 
-    @temperature_target.setter
-    def temperature_target(self, temperature):
+    @temperature_end.setter
+    def temperature_end(self, temperature):
         """Set the final temperature."""
 
         if temperature <= 0:
             warn("Final temperature must be positive. Using default (300 K).")
-            self._temperature_target = 300
+            self._temperature_end = 300
 
         else:
-            self._temperature_target = temperature
+            self._temperature_end = temperature
 
     @property
     def is_restrained(self):
