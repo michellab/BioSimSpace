@@ -1,0 +1,402 @@
+remark - parameter file PARAM19 -
+remark PEPTIDE GEOMETRY FROM RAMACHANDRAN ET AL BBA 359:298 (1974)
+remark TORSIONS FROM HAGLER ET AL JACS 98:4600 (1976)
+remark JORGENSEN NONBOND PARAMETERS JACS 103:3976-3985 WITH 1-4 RC=1.80/0.1
+
+set echo=false end
+!! - PEPTIDE GEOMETRY TO GIVE RAMACHANDRAN ET AL BBA 359:298 (1974)
+!! - PEPTIDE TORSIONS FROM HAGLER ET AL JACS 98:4600 (1976)
+!! - NONBONDED TERMS JORGENSEN JACS 103:3976 W/ RC1-4 = 1.80 EC1-4 = 0.1
+!!  The default h-bond exponents are now 6-repul 4-attr
+!! ++++++++ ATOMTYPE OS (IN METHYL ESTER) ADDED FOR CHARMM COURSE /LN ++++
+!! Switched from Slater-Kirkwood to simple mixing rules - AB
+!! Hbond parameters based on comparisons of dimer results with
+!!   ab initio calculations. - WER  12/19/84
+!! Grouping of atom types for VDW parameters - BRB 1/3/85
+
+
+bond C    C      450.0  1.38!  B. R. GELIN THESIS AMIDE AND DIPEPTIDES
+bond C    CH1E   405.0  1.52!  EXCEPT WHERE NOTED.  CH1E,CH2E,CH3E, AND CT
+bond C    CH2E   405.0  1.52!  ALL TREATED THE SAME. UREY BRADLEY TERMS ADDED
+bond C    CH3E   405.0  1.52
+bond C    CR1E   450.0  1.38
+bond C    CT     405.0  1.53
+bond C    N      471.0  1.33
+bond C    NC2    400.0  1.33!  BOND LENGTH FROM PARMFIX9 FORCE K APROXIMATE
+bond C    NH1    471.0  1.33
+bond C    NH2    471.0  1.33
+bond C    NP     471.0  1.33
+bond C    NR     471.0  1.33
+bond C    O      580.0  1.23
+bond C    OC     580.0  1.23!  FORCE DECREASE AND LENGTH INCREASE FROM C O
+bond C    OH1    450.0  1.38!  FROM PARMFIX9 (NO VALUE IN GELIN THESIS)
+bond C    OS     292.0  1.43!  FROM DEP NORMAL MODE FIT
+bond CH1E CH1E   225.0  1.53
+bond CH1E CH2E   225.0  1.52
+bond CH1E CH3E   225.0  1.52
+bond CH1E N      422.0  1.45
+bond CH1E NH1    422.0  1.45
+bond CH1E NH2    422.0  1.45
+bond CH1E NH3    422.0  1.45
+bond CH1E OH1    400.0  1.42!  FROM PARMFIX9 (NO VALUE IN GELIN THESIS)
+bond CH2E CH2E   225.0  1.52
+bond CH2E CH3E   225.0  1.54
+bond CH2E CR1E   250.0  1.45!  FROM WARSHEL AND KARPLUS 1972 JACS 96:5612
+bond CH2E N      422.0  1.45
+bond CH2E NH1    422.0  1.45
+bond CH2E NH2    422.0  1.45
+bond CH2E NH3    422.0  1.45
+bond CH2E OH1    400.0  1.42
+bond CH2E S      450.0  1.81!  FROM PARMFIX9
+bond CH2E SH1E   450.0  1.81
+bond CH3E NH1    422.0  1.49
+bond CH3E NR     422.0  1.49 ! FOR NETROPSIN
+bond CH3E S      450.0  1.77!  FROM PARMFIX9
+bond CH3E OS     292.0  1.38!  FROM DEP NORMAL MODE FIT
+bond CM   OM    1115.0  1.128!  FROM CAUGHEY ET AL(1978),CARBON MONOXIDE
+bond CR1E CR1E   450.0  1.38
+bond CR1E NH1    450.0  1.305
+bond CR1E NR     450.0  1.305
+bond CT   CT     200.0  1.53
+bond CT   N      422.0  1.45
+bond CT   NC2    422.0  1.45
+bond CT   NH1    422.0  1.45
+bond CT   NH2    422.0  1.45
+bond CT   NH3    422.0  1.45
+bond CT   OH1    400.0  1.42
+bond CT   S      450.0  1.81
+!bond FE   CM     258.0  1.79!   FROM KROEKER ET AL(JCP:72:4846)
+!bond FE   NP     500.0  2.09
+!bond FE   NR      65.0  1.98!   FROM NAGAI ET AL(1980)
+!bond FE   OM     250.0  1.8!    JUST A GUESS.
+bond H    NH1    405.0  0.98!  GELIN AND IR STRETCH 3200 CM 1
+bond H    NH2    405.0  0.98
+bond H    OH1    450.0  0.96!  FROM IR STRETCH 3400 CM 1
+bond HA   C      350.0  1.08
+bond HA   CT     300.0  1.08
+bond HC   NC2    405.0  1.00
+bond HC   NH1    405.0  0.98
+bond HC   NH3    405.0  1.04
+bond OC   S      400.0  1.43
+bond OM   OM     600.0  1.23!   STRETCHING CONSTANT JUST A GUESS.
+bond S    S      500.0  2.02
+
+
+angle C    C    C       70.0 106.5!  FROM B. R. GELIN THESIS WITH HARMONIC
+angle C    C    CH2E    65.0 126.5!  PART OF F TERMS INCORPORATED. ATOMS
+angle C    C    CH3E    65.0 126.5!  WITH EXTENDED H COMPENSATED FOR LACK
+angle C    C    CR1E    70.0 122.5!  OF H ANGLES.
+angle C    C    CT      70.0 126.5
+angle C    C    HA      40.0 120.0!  AMIDE PARAMETERS FIT BY LEAST SQUARES
+angle C    C    NH1     65.0 109.0!  TO N-METHYL ACETAMIDE VIBRATIONS.
+angle C    C    NP      65.0 112.5!  MINIMIZATION OF N-METHYL ACETAMIDE.
+angle C    C    NR      65.0 112.5
+angle C    C    OH1     65.0 119.0
+angle C    C    O       65.0 119.0 ! FOR NETROPSIN
+angle CH1E C    N       20.0 117.5
+angle CH1E C    NH1     20.0 117.5
+angle CH1E C    O       85.0 121.5
+angle CH1E C    OC      85.0 117.5
+angle CH1E C    OH1     85.0 120.0
+angle CH2E C    CR1E    70.0 121.5
+angle CH2E C    N       20.0 117.5
+angle CH2E C    NH1     20.0 117.5
+angle CH2E C    NH2     20.0 117.5
+angle CH2E C    NC2     20.0 117.5 ! FOR NETROPSIN
+angle CH2E C    NR      60.0 116.0
+angle CH2E C    O       85.0 121.6
+angle CH2E C    OC      85.0 118.5
+angle CH2E C    OH1     85.0 120.0
+angle CH3E C    N       20.0 117.5
+angle CH3E C    NH1     20.0 117.5
+angle CH3E C    O       85.0 121.5
+angle CR1E C    CR1E    65.0 120.5
+angle CR1E C    NH1     65.0 110.5! USED ONLY IN HIS, NOT IT TRP
+angle CR1E C    NP      65.0 122.5
+angle CR1E C    NR      65.0 122.5
+angle CR1E C    OH1     65.0 119.0
+angle CT   C    N       20.0 117.5
+angle CT   C    NH1     20.0 117.5
+angle CT   C    NH2     20.0 117.5
+angle CT   C    O       85.0 121.5
+angle CT   C    OC      85.0 118.5
+angle CT   C    OH1     85.0 120.0
+angle HA   C    NH1     40.0 120.0
+angle HA   C    NH2     40.0 120.0
+angle HA   C    NR      40.0 120.0
+angle HA   C    O       85.0 121.5
+angle N    C    O       85.0 121.0
+angle NC2  C    NC2     70.0 120.0
+angle NC2  C    NH1     70.0 120.0
+angle NH1  C    NR      70.0 120.0
+angle NH1  C    O       65.0 121.0
+angle NH2  C    O       65.0 121.0
+angle O    C    OH1     85.0 120.0
+angle OC   C    OC      85.0 122.5
+angle OS   C    CH1E    70.0 125.3! FROM PARDNA10
+angle OS   C    CH2E    70.0 125.3!   - " -
+angle OS   C    O       70.0 120.0!   - " -
+angle C    CH1E CH1E    70.0 110.0
+angle C    CH1E CH2E    70.0 109.5
+angle C    CH1E CH3E    70.0 106.5
+angle C    CH1E N       45.0 111.6
+angle C    CH1E NH1     45.0 111.6
+angle C    CH1E NH2     45.0 111.6
+angle C    CH1E NH3     45.0 111.6
+angle CH1E CH1E CH2E    45.0 112.5
+angle CH1E CH1E CH3E    45.0 111.0
+angle CH1E CH1E NH1     50.0 110.0
+angle CH1E CH1E NH2     50.0 109.5
+angle CH1E CH1E NH3     50.0 107.5
+angle CH1E CH1E OH1     50.0 104.5
+angle CH2E CH1E CH3E    50.0 111.5
+angle CH2E CH1E N       65.0 104.0
+angle CH2E CH1E NH1     65.0 110.0
+angle CH2E CH1E NH2     65.0 110.0
+angle CH2E CH1E NH3     65.0 110.0
+angle CH3E CH1E CH3E    50.0 111.0
+angle CH3E CH1E NH1     65.0 108.5
+angle CH3E CH1E NH2     65.0 109.5
+angle CH3E CH1E NH3     65.0 109.5
+angle CH3E CH1E OH1     60.0 110.5
+angle C    CH2E CH1E    70.0 112.5
+angle C    CH2E CH2E    70.0 113.0
+angle C    CH2E NH1     70.0 111.6
+angle C    CH2E NH2     70.0 111.6
+angle C    CH2E NH3     70.0 111.6
+angle CH1E CH2E CH1E    45.0 117.0
+angle CH1E CH2E CH2E    45.0 112.5
+angle CH1E CH2E CH3E    45.0 113.0
+angle CH1E CH2E OH1     45.0 111.0
+angle CH3E CH2E OH1     45.0 111.0
+angle CH1E CH2E S       50.0 112.5
+angle CH1E CH2E SH1E    50.0 112.5
+angle CH2E CH2E CH2E    45.0 110.0
+angle CH2E CH2E CH3E    45.0 111.0
+angle CH2E CH2E N       65.0 105.0
+angle CH2E CH2E NH1     65.0 111.0
+angle CH2E CH2E NH2     65.0 109.5
+angle CH2E CH2E NH3     65.0 110.5
+angle CH2E CH2E S       50.0 112.5
+angle C    CR1E C       90.0 126.5
+angle C    CR1E CH2E    90.0 122.0
+angle C    CR1E CR1E    90.0 119.0
+angle C    CR1E NH1     90.0 109.5
+angle C    CR1E NR      90.0 106.5
+angle CR1E CR1E CR1E    90.0 120.5
+angle NH1  CR1E NH1     70.0 109.0
+angle NH1  CR1E NR      70.0 109.0
+angle C    CT   CT      70.0 109.5
+angle C    CT   HA      70.0 109.5
+angle C    CT   N       70.0 111.6
+angle C    CT   NH1     70.0 111.6
+angle C    CT   NH2     70.0 111.6
+angle C    CT   NH3     70.0 111.6
+angle CT   CT   CT      45.0 111.00
+angle CT   CT   HA      40.0 109.50
+angle CT   CT   N       65.0 105.00
+angle CT   CT   NC2     65.0 110.00
+angle CT   CT   NH1     65.0 110.00
+angle CT   CT   NH2     65.0 110.00
+angle CT   CT   NH3     65.0 110.00
+angle CT   CT   OH1     50.0 109.50
+angle CT   CT   S       50.0 112.50
+angle HA   CT   HA      40.0 109.5
+angle HA   CT   N       50.0 109.5
+angle HA   CT   NC2     50.0 109.5
+angle HA   CT   NH1     50.0 109.5
+angle HA   CT   NH3     50.0 109.5
+angle HA   CT   OH1     50.0 109.5
+angle HA   CT   S       40.0 109.5
+!angle FE   CM   OM       5.0  90.0!       FROM KROEKER ET AL(1980)
+angle C    N    CH1E    80.0 120.0
+angle C    N    CH2E    80.0 120.0
+angle C    N    CT      80.0 120.0
+angle CH1E N    CH2E    60.0 110.0
+angle CH1E N    CH3E    60.0 110.0
+angle CH2E N    CH3E    60.0 109.5
+angle CT   N    CT      60.0 110.0
+angle C    NC2  CT      80.0 120.0
+angle C    NC2  HC      35.0 120.0
+angle CT   NC2  HC      35.0 120.0
+angle HC   NC2  HC      40.0 120.0
+angle C    NH1  C       60.0 102.5  ! UNUSED (AND PROBABLY WRONG)
+angle C    NH1  CH1E    77.5 120.0
+angle C    NH1  CH2E    77.5 120.0
+angle C    NH1  CH3E    77.5 120.0
+angle C    NH1  CR1E    60.0 108.0
+angle C    NH1  CT      80.0 120.0
+angle C    NH1  H       30.0 120.0
+angle CH1E NH1  CH3E    60.0 120.0
+angle CH1E NH1  H       35.0 120.0
+angle CH2E NH1  CH3E    60.0 120.0
+angle CH2E NH1  H       35.0 120.0
+angle CH3E NH1  H       35.0 120.0
+angle CR1E NH1  CR1E    65.0 110.0
+angle CR1E NH1  H       35.0 120.0
+angle CT   NH1  H       35.0 120.0
+angle C    NH2  H       30.0 120.0
+angle CH1E NH2  CH2E    60.0 120.0
+angle CH1E NH2  H       35.0 120.0
+angle CH2E NH2  H       35.0 120.0
+angle CT   NH2  H       35.0 120.0
+angle H    NH2  H       40.0 125.0
+angle C    NP   C       70.0 102.5
+!angle C    NP   FE      50.0 128.0!  FORCE CONSTANT FROM PARMFIX9
+angle C    NR   C       70.0 102.5
+angle C    NR   CR1E    70.0 109.5
+angle CH3E NR   CR1E    70.0 109.5 ! FOR NETROPSIN
+angle CH3E NR   C       70.0 109.5 ! FOR NETROPSIN
+angle CR1E NR   CR1E    65.0 110.0
+!angle CR1E NR   FE      30.0 124.8!  FORCE CONSTANT FROM PARMFIX9
+angle CH1E NH3  HC      35.0 109.5
+angle CH1E NH3  CH2E    35.0 109.5
+angle CH2E NH3  HC      35.0 109.5
+angle CT   NH3  HC      35.0 109.5
+angle HC   NH3  HC      40.0 109.5
+angle C    OH1  H       50.0 109.5
+angle CH1E OH1  H       35.0 109.5
+angle CH2E OH1  H       35.0 109.5
+angle CT   OH1  H       35.0 109.5
+!angle FE   OM   OM       0.0 180.0!  DUMMY PARAMETER FOR PATCH AND ANALYSIS.
+angle C    OS   CH3E    46.5 120.5!   FROM PARDNA10
+angle CH2E S    CH3E    50.0  99.5! FROM PARMFIX9, CHECK WITH IR
+angle CH2E S    S       50.0 104.2
+angle CT   S    CT      50.0  99.5!  FORCE CONSTANTS FROM PARMFIX9
+angle CT   S    S       50.0 104.2
+angle OC   S    OC      85.0 109.5! FORCE CONSTANT JST A GUESS.
+!angle NP   FE   CM      5.0   90.0
+!angle NP   FE   NP      50.0  90.0
+!angle NP   FE   NR      5.0  115.0
+!angle NP   FE   OM      5.0   90.0! JUST A GUESS FROM EXISTING FE CM DATA
+!angle NR   FE   CM      5.0      180.0
+!angle NR   FE   OM      5.0  180.0! JUST A GUESS FROM EXISTING FE CM DATA
+
+
+dihe CH1E C    N    CH1E 10.0      2     180.0! PRO ISOM. BARRIER 20 KCAL/MOL.
+dihe CH2E C    N    CH1E 10.0       2     180.0
+dihe CR1E C    C    CR1E 5.0       2     180.0! => TRP OOP. VIB 170CM 1
+dihe CR1E C    C    C    2.5       2     180.0! SEE BEHLEN ET AL JCP 75:5685 81
+dihe CR1E C    C    NH1  2.5       2     180.0
+dihe X    C    CH1E X    0.0       3       0.0! FROM GELIN THESIS AMIDES
+dihe X    C    CH2E X    0.0       3       0.0! USING A SINGLE
+dihe X    C    CR1E X   10.0       2     180.0! DIHEDRAL PER BOND RATHER
+dihe X    C    CT   X    0.0       3       0.0! THAN MULTIPLE TORSIONS.
+dihe X    C    N    X    8.2       2     180.0! ALKANE TORSION REDUCED TO
+dihe X    C    NC2  X    8.2       2     180.0! 1.6 FROM 1.8 TO COINCIDE WITH
+dihe X    C    NH1  X    8.2       2     180.0! THE EXPERIMENTAL BARRIER.
+dihe X    C    NH2  X    8.2       2     180.0
+dihe X    C    OH1  X    1.8       2     180.0
+dihe X    C    OS   X    1.8       2     180.0 ! INFERRED FROM C-OH1
+dihe X    CH1E CH1E X    1.6       3       0.0
+dihe X    CH1E CH2E X    1.6       3       0.0
+dihe X    CH1E N    X    0.3       3       0.0! FROM HAGLER ET AL TABULATION OF
+dihe X    CH1E NH1  X    0.3       3       0.0! EXP. DATA AND 6 31G CALC.
+dihe X    CH1E NH2  X    1.8       3       0.0! PROTONATED SECONDARY AMINE
+dihe X    CH1E NH3  X    0.6       3       0.0! 1/PROTON SO 3 FOR THE BOND
+dihe X    CH1E OH1  X    0.5       3       0.0! CHANGED TO ROUGHLY MEOH
+dihe X    CH2E CH2E X    1.6       3       0.0
+dihe X    CH2E N    X    0.3       3       0.0! SEE CH1E COMMENTS
+dihe X    CH2E NH1  X    0.3       3       0.0
+dihe X    CH2E NH2  X    0.6       3       0.0
+dihe X    CH2E NH3  X    0.6       3       0.0
+dihe X    CH2E OH1  X    0.5       3       0.0
+dihe X    CH2E S    X    1.2       2       0.0
+dihe X    CT   CT   X    1.6       3       0.0
+dihe X    CT   N    X    0.3       3       0.0! SEE CH1E COMMENTS
+dihe X    CT   NC2  X    0.3       3       0.0
+dihe X    CT   NH1  X    0.3       3       0.0
+dihe X    CT   NH2  X    0.6       3       0.0
+dihe X    CT   NH3  X    0.6       3       0.0
+dihe X    CT   OH1  X    0.5       3       0.0
+dihe X    CT   S    X    1.2       2       0.0
+!dihe X    FE   NR   X    0.05      4       0.0
+!dihe X    FE   CM   X    0.05      4       0.0
+!dihe X    FE   OM   X    0.00      4       0.0
+dihe X    S    S    X    4.0       2       0.0! FROM EXP.R BARRI
+
+
+impr C    C    CR1E CH2E  90.0    0   0.0!GIVE 220 CM 1 METHYL OOP FOR TOLUENE.
+impr C    CR1E C    CH2E  90.0    0   0.0!USED HERE FOR TRP CG OUT OF PLANE
+impr C    CR1E CR1E CH2E  90.0    0   0.0!               PHE, AND TYR CG OOP
+impr C    CR1E NH1  CH2E  90.0    0   0.0!               HIS CG RING OOP
+impr C    NH1  CR1E CH2E  90.0    0   0.0!
+impr C    CR1E CR1E OH1  150.0    0   0.0! GIVE 249 CM 1 PHENOL OH OOP.
+impr C    H    H    NH2   45.0    0   0.0! PRIMARY AMIDES (ASN AND GLN) OOP
+impr C    OC   OC   CH1E 100.0    0   0.0! CARBOXYL OUT OF PLANE.
+impr C    OC   OC   CH2E 100.0    0   0.0!
+impr C    X    X    C     25.0    0   0.0! FROM BENZENE NORMAL MODE ANALYSIS
+impr C    X    X    CH2E  90.0    0   0.0! FROM TOLUENE METHYL OOP. 217 CM 1
+impr C    X    X    CH3E  90.0    0   0.0
+impr C    X    X    CR1E  25.0    0   0.0
+impr C    X    X    H     75.0    0   0.0! FROM BENZENE NORMAL MODE ANALYSIS
+impr C    X    X    HA    75.0    0   0.0!
+impr C    X    X    NH1  100.0    0   0.0! AMIDES FIT TO N METHYL ACETAMIDE.
+impr C    X    X    O    100.0    0   0.0
+impr C    X    X    OC   100.0    0   0.0
+impr C    X    X    OH1  150.0    0   0.0! USED FOR TYR HYDROXYL OOP
+impr CH1E X    X    CH1E  55.0    0 35.26439! CALCULATED TO  BE THE SAME AS THE 3
+impr CH1E X    X    CH2E  55.0    0 35.26439! H CH1E X ANGLES WITH K=40
+impr CH1E X    X    CH3E  55.0    0 35.26439
+impr CR1E X    X    CR1E  25.0    0   0.0! EXTENDED ATOM VERSION OF BENZENE
+impr CR1E X    X    NH1   25.0    0   0.0! SAME AS ABOVE FOR LACK OF VALUES
+!impr FE   X    X    NP    20.0    0   0.0! FROM PARMFIX9
+impr H    X    X    O     45.0    0   0.0
+impr N    CH1E CH2E C     45.0    0   0.0! PROLINE NITROGENS
+impr N    X    X    CH2E  45.0    0   0.0
+impr N    X    X    CT    45.0    0   0.0
+impr NC2  X    X    CT    45.0    0   0.0
+impr NC2  X    X    HC    45.0    0   0.0
+impr NH1  X    X    CH1E  45.0    0   0.0
+impr NH1  X    X    CH2E  45.0    0   0.0
+impr NH1  X    X    CH3E  45.0    0   0.0
+impr NH1  X    X    CT    45.0    0   0.0
+impr NH1  X    X    H     45.0    0   0.0! AMIDES PROTON OOP
+impr NH1  X    X    NH1   25.0    0   0.0! 
+impr NH1  X    X    NR    25.0    0   0.0
+impr NH2  X    X    H     45.0    0   0.0
+impr NR   X    X    C     25.0    0   0.0
+impr NR   X    X    CR1E  25.0    0   0.0
+impr NR   X    X    CT    25.0    0   0.0
+impr NR   X    X    CH3E  25.0    0   0.0 ! FOR NETROPSIN
+
+
+
+{* nonbonding parameter section *}
+{* ============================ *}
+
+ !                  eps     sigma       eps(1:4) sigma(1:4)
+ !                  (kcal/mol) (A)
+ !                  ---------------------------------------
+ NONBonded  H       0.0498   1.4254      0.0498   1.4254
+ NONBonded  HA      0.0450   2.6157      0.0450   2.6157 !- charged group.
+ NONBonded  HC      0.0498   1.0691      0.0498   1.0691 !   Reduced vdw radius
+ !
+ NONBonded  C       0.1200   3.7418      0.1000   3.3854 ! carbonyl carbon
+ NONBonded  CH1E    0.0486   4.2140      0.1000   3.3854 ! \
+ NONBonded  CH2E    0.1142   3.9823      0.1000   3.3854 !  extended carbons
+ NONBonded  CH3E    0.1811   3.8576      0.1000   3.3854 ! /
+!! NONBonded  CM      0.0262   4.4367      0.1000   3.3854 
+ NONBonded  CR1E    0.1200   3.7418      0.1000   3.3854 !  ring carbons
+!! NONBonded  CT      0.0262   4.4367      0.1000   3.3854
+ !
+ NONBonded  N       0.2384   2.8509      0.2384   2.8509
+ NONBonded  NC2     0.2384   2.8509      0.2384   2.8509
+ NONBonded  NH1     0.2384   2.8509      0.2384   2.8509
+ NONBonded  NH2     0.2384   2.8509      0.2384   2.8509
+ NONBonded  NH3     0.2384   2.8509      0.2384   2.8509
+ NONBonded  NP      0.2384   2.8509      0.2384   2.8509
+ NONBonded  NR      0.2384   2.8509      0.2384   2.8509
+ !
+ NONBonded  O       0.1591   2.8509      0.1591   2.8509
+ NONBonded  OC      0.6469   2.8509      0.6469   2.8509
+ NONBonded  OH1     0.1591   2.8509      0.1591   2.8509
+!! NONBonded  OM      0.1591   2.8509      0.1591   2.8509
+ NONBonded  OS      0.1591   2.8509      0.1591   2.8509
+ !
+ NONBonded  S       0.0430   3.3676      0.0430   3.3676
+ NONBonded  SH1E    0.0430   3.3676      0.0430   3.3676
+ !
+!! NONBONDED FE        0.0000    1.1582      0.0000 1.1582
+
+set echo=true end
