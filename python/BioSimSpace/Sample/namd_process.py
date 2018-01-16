@@ -19,6 +19,18 @@ from warnings import warn
 import __main__ as main
 import os
 
+try:
+    from Sire import try_import
+    pygtail = try_import("pygtail")
+except ImportError:
+    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
+
+class MDict(dict):
+    """A multi-valued dictionary."""
+    def __setitem__(self, key, value):
+        """Add the given value to the list of values for this key."""
+        self.setdefault(key, []).append(value)
+
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
 
@@ -54,6 +66,10 @@ class NamdProcess(process.Process):
 
         # Set the parameter type.
         self._is_charmm_params = charmm_params
+
+        # Initialise the energy dictionary and header.
+        self._nrg_dict = MDict()
+        self._nrg_title = None
 
         # The names of the input files.
         self._psf_file = "%s/%s.psf" % (self._work_dir, name)
@@ -272,12 +288,19 @@ class NamdProcess(process.Process):
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
             f.write("temperature           %s\n" % self._protocol.temperature)
-            f.write("minimize              %s\n" % self._protocol.steps)
+
+            # Work out the number of steps. This must be a multiple of
+            # stepspercycle, which is set the default of 20.
+            steps = 20 * ceil(self._protocol.steps / 20)
+            f.write("minimize              %s\n" % steps)
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
-            f.write("set temperature       %s\n" % self._protocol.temperature_target)
+            if self._protocol.isConstantTemp():
+                f.write("set temperature       %s\n" % self._protocol.temperature_start)
+            else:
+                f.write("set temperature       %s\n" % self._protocol.temperature_end)
             f.write("temperature           $temperature\n")
 
             # Integrator parameters.
@@ -321,8 +344,10 @@ class NamdProcess(process.Process):
                 f.write("fixedAtoms            yes\n")
                 f.write("fixedAtomsFile        %s.restrained\n" % self._name)
 
-            # Work out number of steps needed to exceed desired running time.
-            steps = ceil(self._protocol.runtime / 0.002)
+            # Work out number of steps needed to exceed desired running time,
+            # rounded up to the nearest 20.
+            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = 20 * ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
@@ -346,6 +371,8 @@ class NamdProcess(process.Process):
 
             # Integrator parameters.
             f.write("timestep              2.\n")
+            if self._protocol.first_step is not 0:
+                f.write("firsttimestep         %s\n" % self._protocol.first_step)
             f.write("rigidBonds            all\n")
             f.write("nonbondedFreq         1\n")
             f.write("fullElectFrequency    2\n")
@@ -367,11 +394,13 @@ class NamdProcess(process.Process):
                 f.write("useFlexibleCell       no\n")
                 f.write("useConstantArea       no\n")
 
-            # Work out number of steps needed to exceed desired running time.
-            steps = ceil((1000 * self._protocol.runtime) / 0.002)
+            # Work out number of steps needed to exceed desired running time,
+            # rounded up to the nearest 20.
+            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = 20 * ceil(steps / 20)
 
             # Trajectory output frequency.
-            f.write("DCDfreq                   %s\n" % floor(steps / self._protocol.frames))
+            f.write("DCDfreq               %s\n" % floor(steps / self._protocol.frames))
 
             # Run the simulation.
             f.write("run                   %s\n" % steps)
@@ -439,89 +468,128 @@ class NamdProcess(process.Process):
         else:
             return None
 
-    def getTimeStep(self):
-        """Get the current time step."""
-        return self._get_nrg_record('TS')
+    def getTime(self, time_series=False):
+        """Get the time (in nanoseconds)."""
 
-    def getBondEnergy(self):
+        if self._protocol.type == ProtocolType.MINIMISATION:
+            return None
+
+        else:
+            # Get the list of time steps.
+            self.stdout(0)
+            time_steps = self._get_nrg_record('TS', time_series)
+
+            # Multiply by the integration time step (2fs).
+            if time_steps is not None:
+                if time_series:
+                    return [x * 2e-6 for x in time_steps]
+                else:
+                    return 2e-6 * time_steps
+
+    def getStep(self, time_series=False):
+        """Get the number of integration steps."""
+        self.stdout(0)
+        return self._get_nrg_record('TS', time_series)
+
+    def getBondEnergy(self, time_series=False):
         """Get the bond energy."""
-        return self._get_nrg_record('BOND')
+        self.stdout(0)
+        return self._get_nrg_record('BOND', time_series)
 
-    def getAngleEnergy(self):
+    def getAngleEnergy(self, time_series=False):
         """Get the angle energy."""
-        return self._get_nrg_record('ANGLE')
+        self.stdout(0)
+        return self._get_nrg_record('ANGLE', time_series)
 
-    def getDihedralEnergy(self):
+    def getDihedralEnergy(self, time_series=False):
         """Get the dihedral energy."""
-        return self._get_nrg_record('DIHED')
+        self.stdout(0)
+        return self._get_nrg_record('DIHED', time_series)
 
-    def getImproperEnergy(self):
+    def getImproperEnergy(self, time_series=False):
         """Get the improper energy."""
-        return self._get_nrg_record('IMPRP')
+        self.stdout(0)
+        return self._get_nrg_record('IMPRP', time_series)
 
-    def getElectrostaticEnergy(self):
+    def getElectrostaticEnergy(self, time_series=False):
         """Get the electrostatic energy."""
-        return self._get_nrg_record('ELECT')
+        self.stdout(0)
+        return self._get_nrg_record('ELECT', time_series)
 
-    def getVanDerWaalsEnergy(self):
+    def getVanDerWaalsEnergy(self, time_series=False):
         """Get the Van der Vaals energy."""
-        return self._get_nrg_record('VDW')
+        self.stdout(0)
+        return self._get_nrg_record('VDW', time_series)
 
-    def getBoundaryEnergy(self):
+    def getBoundaryEnergy(self, time_series=False):
         """Get the boundary energy."""
-        return self._get_nrg_record('BOUNDARY')
+        self.stdout(0)
+        return self._get_nrg_record('BOUNDARY', time_series)
 
-    def getMiscEnergy(self):
+    def getMiscEnergy(self, time_series=False):
         """Get the external energy."""
-        return self._get_nrg_record('MISC')
+        self.stdout(0)
+        return self._get_nrg_record('MISC', time_series)
 
-    def getKineticEnergy(self):
+    def getKineticEnergy(self, time_series=False):
         """Get the kinetic energy."""
-        return self._get_nrg_record('KINETIC')
+        self.stdout(0)
+        return self._get_nrg_record('KINETIC', time_series)
 
-    def getPotentialEnergy(self):
+    def getPotentialEnergy(self, time_series=False):
         """Get the potential energy."""
-        return self._get_nrg_record('POTENTIAL')
+        self.stdout(0)
+        return self._get_nrg_record('POTENTIAL', time_series)
 
-    def getTotalEnergy(self):
+    def getTotalEnergy(self, time_series=False):
         """Get the total energy."""
-        return self._get_nrg_record('TOTAL')
+        self.stdout(0)
+        return self._get_nrg_record('TOTAL', time_series)
 
-    def getTotal2Energy(self):
+    def getTotal2Energy(self, time_series=False):
         """Get the total energy. (Better KE conservation.)"""
-        return self._get_nrg_record('TOTAL2')
+        self.stdout(0)
+        return self._get_nrg_record('TOTAL2', time_series)
 
-    def getTotal3Energy(self):
+    def getTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)"""
-        return self._get_nrg_record('TOTAL3')
+        self.stdout(0)
+        return self._get_nrg_record('TOTAL3', time_series)
 
-    def getTemperature(self):
+    def getTemperature(self, time_series=False):
         """Get the temperature."""
-        return self._get_nrg_record('TEMP')
+        self.stdout(0)
+        return self._get_nrg_record('TEMP', time_series)
 
-    def getTemperatureAverage(self):
+    def getTemperatureAverage(self, time_series=False):
         """Get the average temperature."""
-        return self._get_nrg_record('TEMPAVG')
+        self.stdout(0)
+        return self._get_nrg_record('TEMPAVG', time_series)
 
-    def getPressure(self):
+    def getPressure(self, time_series=False):
         """Get the pressure."""
-        return self._get_nrg_record('PRESSURE')
+        self.stdout(0)
+        return self._get_nrg_record('PRESSURE', time_series)
 
-    def getPressureAverage(self):
+    def getPressureAverage(self, time_series=False):
         """Get the average pressure."""
-        return self._get_nrg_record('PRESSAVG')
+        self.stdout(0)
+        return self._get_nrg_record('PRESSAVG', time_series)
 
-    def getGPressure(self):
+    def getGPressure(self, time_series=False):
         """Get the pressure. (Hydrogens incorporated into bonded atoms.)"""
-        return self._get_nrg_record('GPRESSURE')
+        self.stdout(0)
+        return self._get_nrg_record('GPRESSURE', time_series)
 
-    def getGPressureAverage(self):
+    def getGPressureAverage(self, time_series=False):
         """Get the average pressure. (Hydrogens incorporated into bonded atoms.)"""
-        return self._get_nrg_record('GPRESSAVG')
+        self.stdout(0)
+        return self._get_nrg_record('GPRESSAVG', time_series)
 
-    def getVolume(self):
+    def getVolume(self, time_series=False):
         """Get the volume."""
-        return self._get_nrg_record('VOLUME')
+        self.stdout(0)
+        return self._get_nrg_record('VOLUME', time_series)
 
     def eta(self):
         """Get the estimated time for the process to finish (in minutes)."""
@@ -549,63 +617,84 @@ class NamdProcess(process.Process):
                     except ValueError:
                         return None
 
-    def _create_energy_dict(self):
-        """Helper function to generate a dictionary of energy records from stdout."""
+    def stdout(self, n=10):
+        """Print the last n lines of the stdout buffer.
 
-        # Make sure the list of stdout records is up to date.
-        # Print the last zero lines, i.e. no output.
-        self.stdout(0)
+           Keyword arguments:
 
-        # Now search backwards through the list to find the last ENERGY record.
-        for x, record in reversed(list(enumerate(self._stdout))):
+           n -- The number of lines to print.
+        """
+
+        # Ensure that the number of lines is positive.
+        if n < 0:
+            raise ValueError("The number of lines must be positive!")
+
+        # Append any new lines to the stdout list.
+        for line in pygtail.Pygtail(self._stdout_file):
+            self._stdout.append(line.rstrip())
 
             # Split the record using whitespace.
-            data = record.split()
+            data = self._stdout[-1].split()
 
-            # We've found an energy record.
+            # Make sure there is at least one record.
             if len(data) > 0:
-                if data[0] == "ENERGY:":
-                    # Store the record data.
+
+                # Store the updated energy title.
+                if data[0] == "ETITLE:":
+                    self._nrg_title = data[1:]
+
+                # This is an energy record.
+                elif data[0] == "ENERGY:":
+                    # Extract the data.
                     nrg_data = data[1:]
 
-                elif data[0] == "ETITLE:":
-                    # Store the title data.
-                    # This should be above the ENERGY record, so it's safe
-                    # to break at this point.
-                    nrg_title = data[1:]
-                    break
+                    # Add the records to the dictionary.
+                    if (len(nrg_data) == len(self._nrg_title)):
+                        for title, data in zip(self._nrg_title, nrg_data):
+                            self._nrg_dict[title] = data
 
-        # Now create the energy record dictionary.
+        # Get the current number of lines.
+        num_lines = len(self._stdout)
 
-        # If there is a mismatch in the size of the lists, just return.
-        if len(nrg_data) is not len(nrg_title):
-            return None
-
-        # Update the energy dictionary.
+        # Set the line from which to start printing.
+        if num_lines < n:
+            start = 0
         else:
-            nrg_dict = {}
+            start = num_lines - n
 
-            for title, data in zip(nrg_title, nrg_data):
-                nrg_dict[title] = data
+        # Print the lines.
+        for x in range(start, num_lines):
+            print(self._stdout[x])
 
-            return nrg_dict
-
-    def _get_nrg_record(self, key):
+    def _get_nrg_record(self, key, time_series=False):
         """Helper function to get an energy record from the dictionary."""
 
-        # Get the dictionary of current energy records.
-        nrg_dict = self._create_energy_dict()
-
         # No data!
-        if nrg_dict is None:
+        if len(self._nrg_dict) is 0:
             return None
 
-        # Try to find the key.
-        try:
-            if key is 'TS':
-                return int(nrg_dict[key])
-            else:
-                return float(nrg_dict[key])
+        if type(time_series) is not bool:
+            warn("Non-boolean time-series flag. Defaulting to False!")
+            time_seris = False
 
-        except KeyError:
-            return None
+        # Return the list of dictionary values.
+        if time_series:
+            try:
+                if key is 'TS':
+                    return [int(x) for x in self._nrg_dict[key]]
+                else:
+                    return [float(x) for x in self._nrg_dict[key]]
+
+            except KeyError:
+                return None
+
+        # Return the most recent dictionary value.
+        else:
+            try:
+                if key is 'TS':
+                    return int(self._nrg_dict[key][-1])
+                else:
+                    return float(self._nrg_dict[key][-1])
+
+            except KeyError:
+                return None
