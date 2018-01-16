@@ -2,11 +2,18 @@ import BioSimSpace as BSS
 
 from sys import exit
 
+try:
+    from Sire import try_import
+    matplotlib = try_import("matplotlib")
+    import matplotlib.pyplot as plt
+except ImportError:
+    raise ImportError("Matplotlib is not installed. Please install matplotlib in order to use BioSimSpace.")
+
 # Load the molecular system.
 print("\nLoading molecules...")
-system = BSS.readMolecules( ["namd/alanin/alanin.psf",
-                             "namd/alanin/alanin.pdb",
-                             "namd/alanin/alanin.params"] )
+system = BSS.readMolecules( ["namd/ubiquitin/ubiquitin.psf",
+                             "namd/ubiquitin/ubiquitin.pdb",
+                             "namd/ubiquitin/par_all27_prot_lipid.inp"] )
 
 # Create a minimisation protocol.
 protocol = BSS.Protocol.Minimisation(steps=1000)
@@ -14,7 +21,7 @@ protocol = BSS.Protocol.Minimisation(steps=1000)
 # Initialise the NAMD process.
 print("\nInitialising minimisation process...")
 proc = BSS.Sample.NamdProcess(system, protocol, name="minimise",
-        work_dir="minimise", charmm_params=False)
+        work_dir="minimise", charmm_params=True)
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
@@ -43,13 +50,13 @@ print("\nWritten minimised molecular structure to: %s" % filenames)
 print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
-# Create a default equilibration protocol.
-protocol = BSS.Protocol.Equilibration()
+# Create a short equilibration protocol (0.005 ns = 5 ps).
+protocol = BSS.Protocol.Equilibration(runtime=0.005)
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
 proc = BSS.Sample.NamdProcess(minimised, protocol, name="equilibrate",
-        work_dir="equilibrate", charmm_params=False)
+        work_dir="equilibrate", charmm_params=True)
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
@@ -78,13 +85,13 @@ print("\nWritten equilibrated molecular structure to: %s" % filenames)
 print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Equilibration took %.2f minutes." % proc.runTime())
 
-# Create a default production protocol.
-protocol = BSS.Protocol.Production()
+# Create a production protocol.
+protocol = BSS.Protocol.Production(runtime=0.01)
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")
 proc = BSS.Sample.NamdProcess(equilibrated, protocol, name="production",
-        work_dir="production", charmm_params=False)
+        work_dir="production", charmm_params=True)
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
@@ -109,8 +116,23 @@ final = proc.getSystem()
 filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
-# Print final energy and timing information.
-print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
-print("Production run took %.2f minutes." % proc.runTime())
+# Print final timing information.
+print("\nProduction run took %.2f minutes." % proc.runTime())
+
+# Get a list of the time-steps and the corresponding total energies.
+time = proc.getTime(time_series=True)
+energy = proc.getTotalEnergy(time_series=True)
+
+print("Plotting total energy vs time.")
+
+# Create a plot of the total energy vs time step.
+fig, ax = plt.subplots()
+ax.plot(time, energy)
+
+ax.set(xlabel='Time (ns)', ylabel='Total Energy (kcal/mol)')
+ax.grid()
+
+fig.savefig("energy.png")
+plt.show()
 
 print("\nDone!")
