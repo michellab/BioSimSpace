@@ -4,7 +4,6 @@
 @brief   Base class and helper functions for the various sample modules.
 """
 
-from Sire import try_import
 from Sire.ID import CaseInsensitive
 from Sire.Mol import AtomName
 
@@ -17,6 +16,7 @@ from timeit import default_timer as timer
 import tempfile
 
 try:
+    from Sire import try_import
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
