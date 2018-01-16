@@ -15,7 +15,7 @@ _ensembles = ['NVT', 'NPT']
 class Production(Protocol):
     """A class for storing production protocols."""
 
-    def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT"):
+    def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT", first_step=0):
         """Constructor.
 
            Keyword arguments:
@@ -24,6 +24,7 @@ class Production(Protocol):
            temperature -- The temperature (in Kelvin).
            frames      -- The number of trajectory frames to record.
            ensemble    -- The thermodynamic ensemble.
+           first_step  -- The initial time step (for restart simulations).
         """
 
         # Call the base class constructor.
@@ -40,6 +41,9 @@ class Production(Protocol):
 
         # Set the thermodynamic ensemble.
         self._ensemble = ensemble
+
+        # Set the first time step.
+        self._first_step = first_step
 
     def type(self):
         """Return the protocol type."""
@@ -107,3 +111,18 @@ class Production(Protocol):
 
         else:
             self._ensemble = ensemble
+    @property
+    def first_step(self):
+        """Return the first time step."""
+        return self._first_step
+
+    @first_step.setter
+    def first_step(self, first_step):
+        """Set the initial time step."""
+
+        if first_step <= 0:
+            warn("The initial time step must be positive. Using default (0).")
+            self._first_step = 0
+
+        else:
+            self._first_step = ceil(first_step)
