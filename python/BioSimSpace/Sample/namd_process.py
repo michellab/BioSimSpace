@@ -213,8 +213,8 @@ class NamdProcess(process.Process):
             origin   = self._system.property('space').getBoxCenter(Vector(0))
 
         # Work out the box from the atomic coordinates.
-        else:
-            box_size, origin, has_water = process._compute_box_size(self._system)
+        elif not self._protocol.gas_phase:
+            box_size, origin = process._compute_box_size(self._system)
 
         # Open the configuration file for writing.
         f = open(self._namd_file, "w")
@@ -244,7 +244,7 @@ class NamdProcess(process.Process):
         # Non-bonded potential parameters.
 
         # Gas phase.
-        if not has_water:
+        if self._protocol.gas_phase:
             f.write("cutoff                999.\n")
             f.write("zeroMomentum          yes\n")
             f.write("switching             off\n")
@@ -258,9 +258,18 @@ class NamdProcess(process.Process):
                 f.write("switching             on\n")
                 f.write("switchdist            10.\n")
 
-        # For now, we only set the cell properties if the system contains a
-        # box, or is solvated.
-        if has_box or has_water:
+        # Load the XSC file.
+        if has_box:
+            # Periodic boundary conditions.
+            f.write("extendedSystem        %s.xsc\n" % self._name)
+            f.write("wrapAll               on\n")
+
+            # Periodic electrostatics.
+            f.write("PME                   yes\n")
+            f.write("PMEGridSpacing        1.\n")
+
+        # Write periodic box information.
+        elif not self._protocol.gas_phase:
             # Periodic boundary conditions.
             f.write("cellBasisVector1     %.1f   0.    0.\n" % box_size[0])
             f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
@@ -449,18 +458,36 @@ class NamdProcess(process.Process):
 
         # First check for final configuration.
         if path.isfile("%s/%s_out.coor" % (self._work_dir, self._name)):
-            file = "%s/%s_out.coor" % (self._work_dir, self._name)
+            coor_file = "%s/%s_out.coor" % (self._work_dir, self._name)
             is_coor = True
 
         # Otherwise check for a restart file.
         elif path.isfile("%s/%s_out.restart.coor" % (self._work_dir, self._name)):
-            file = "%s/%s_out.restart.coor" % (self._work_dir, self._name)
+            coor_file = "%s/%s_out.restart.coor" % (self._work_dir, self._name)
             is_coor = True
+
+        # Try to find an XSC file.
+
+        is_xsc = False
+
+        # First check for final XSC file.
+        if path.isfile("%s/%s_out.xsc" % (self._work_dir, self._name)):
+            xsc_file = "%s/%s_out.xsc" % (self._work_dir, self._name)
+            is_xsc = True
+
+        # Otherwise check for a restart XSC file.
+        elif path.isfile("%s/%s_out.restart.xsc" % (self._work_dir, self._name)):
+            xsc_file = "%s/%s_out.restart.xsc" % (self._work_dir, self._name)
+            is_xsc = True
 
         # We found a coordinate file.
         if is_coor:
             # List of files.
-            files = [ file, self._psf_file, self._param_file ]
+            files = [ coor_file, self._psf_file, self._param_file ]
+
+            # Add the box information.
+            if is_xsc:
+                files.append(xsc_file)
 
             # Create and return the molecular system.
             return MoleculeParser.read(files)

@@ -15,7 +15,8 @@ _ensembles = ['NVT', 'NPT']
 class Production(Protocol):
     """A class for storing production protocols."""
 
-    def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT", first_step=0):
+    def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT",
+            first_step=0, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
@@ -25,10 +26,11 @@ class Production(Protocol):
            frames      -- The number of trajectory frames to record.
            ensemble    -- The thermodynamic ensemble.
            first_step  -- The initial time step (for restart simulations).
+           gas_phase   -- Whether this a gas phase simulation.
         """
 
         # Call the base class constructor.
-        super().__init__(ProtocolType.PRODUCTION)
+        super().__init__(ProtocolType.PRODUCTION, gas_phase)
 
         # Set the runtime.
         self._runtime = runtime

@@ -11,7 +11,8 @@ from warnings import warn
 class Equilibration(Protocol):
     """A class for storing equilibration protocols."""
 
-    def __init__(self, runtime=0.2, temperature_start=300, temperature_end=None, restrain_backbone=False):
+    def __init__(self, runtime=0.2, temperature_start=300, temperature_end=None,
+            restrain_backbone=False, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
@@ -20,10 +21,11 @@ class Equilibration(Protocol):
            temperature_start -- The starting temperature (in Kelvin).
            temperature_end   -- The final temperature (in Kelvin).
            restrain_backbone -- Whether the atoms in the backbone are fixed.
+           gas_phase         -- Whether this a gas phase simulation.
         """
 
         # Call the base class constructor.
-        super().__init__(ProtocolType.EQUILIBRATION)
+        super().__init__(ProtocolType.EQUILIBRATION, gas_phase)
 
         # Set the running time.
         self._runtime = runtime

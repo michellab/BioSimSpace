@@ -29,11 +29,11 @@ class Process():
 
            Keyword arguments:
 
-           system   -- The molecular system.
-           protocol -- The protocol for the process.
-           name     -- The name of the process.
-           work_dir -- The working directory for the process.
-           seed     -- A random number seed.
+           system    -- The molecular system.
+           protocol  -- The protocol for the process.
+           name      -- The name of the process.
+           work_dir  -- The working directory for the process.
+           seed      -- A random number seed.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -283,10 +283,6 @@ def _compute_box_size(system, tol=0.05, buffer=0):
     box_min = [1000000]  * 3
     box_max = [-1000000] * 3
 
-    # The number of water molecules.
-    # We'll assume that all 3- or 4-atom molecules are water.
-    num_water = 0
-
     # Loop over all of the molecules.
     for num in mol_nums:
 
@@ -295,10 +291,6 @@ def _compute_box_size(system, tol=0.05, buffer=0):
 
         # Get the number of atoms.
         num_atoms = mol.nAtoms()
-
-        # Is this a water molecule?
-        if num_atoms is 3 or num_atoms is 4:
-            num_water += 1
 
         # Loop over all atoms in the molecule.
         for atom in mol.atoms():
@@ -348,7 +340,7 @@ def _compute_box_size(system, tol=0.05, buffer=0):
     box_size = [x * (1 + buffer) for x in box_size]
 
     # Return the box size, origin, and whether the system is solvated.
-    return (tuple(box_size), tuple(box_origin), num_water > 0)
+    return (tuple(box_size), tuple(box_origin))
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.

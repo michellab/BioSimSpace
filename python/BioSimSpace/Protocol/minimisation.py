@@ -11,7 +11,7 @@ from warnings import warn
 class Minimisation(Protocol):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, method="conjugate-gradient", steps=1000, temperature=300):
+    def __init__(self, method="conjugate-gradient", steps=1000, temperature=300, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
@@ -19,10 +19,11 @@ class Minimisation(Protocol):
            method      -- The minimisation method.
            step        -- The maximum number of steps to perform.
            temperature -- The system temperature (in Kelvin).
+           gas_phase   -- Whether this a gas phase simulation.
         """
 
         # Call the base class constructor.
-        super().__init__(ProtocolType.MINIMISATION)
+        super().__init__(ProtocolType.MINIMISATION, gas_phase)
 
         # Set the minimisation method.
         self._method = method

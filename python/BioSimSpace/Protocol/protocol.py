@@ -15,12 +15,13 @@ class ProtocolType(Enum):
 class Protocol():
     """A base class for holding simulation protocols."""
 
-    def __init__(self, protocol_type):
+    def __init__(self, protocol_type, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
 
            protocol_type -- The type of protocol.
+           gas_phase     -- Whether this is a gas phase simulation.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -29,3 +30,22 @@ class Protocol():
 
         # Set the protocol type.
         self._type = protocol_type
+
+        # Set the gas phase flag.
+        self._gas_phase = gas_phase
+
+    @property
+    def gas_phase(self):
+        """Return whether this is a gas phase simulation."""
+        return self._gas_phase
+
+    @gas_phase.setter
+    def gas_phase(self, gas_phase):
+        """Set gas phase flag."""
+
+        if type(gas_phase) is bool:
+            self._gas_phase = gas_phase
+
+        else:
+            warn("Non-boolean gas phase flag. Defaulting to False!")
+            self._gas_phase = False
