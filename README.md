@@ -8,7 +8,7 @@ To install into a [Sire](https://github.com/michellab/Sire) package, use:
 python setup.py install
 ```
 
-Note that this assumes that the Sire's `bin` directory, `$HOME/sire.app/bin`,
+Note that this assumes that Sire's `bin` directory, `$HOME/sire.app/bin`,
 has been added to your path. Alternatively, run:
 
 ```bash
