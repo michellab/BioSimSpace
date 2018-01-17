@@ -112,7 +112,7 @@ class Production(Protocol):
             self._ensemble = 'NPT'
 
         else:
-            self._ensemble = ensemble
+            self._ensemble = ensemble.upper()
     @property
     def first_step(self):
         """Return the first time step."""
