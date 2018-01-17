@@ -50,8 +50,8 @@ print("\nWritten minimised molecular structure to: %s" % filenames)
 print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
-# Create a short equilibration protocol (0.005 ns = 5 ps).
-protocol = BSS.Protocol.Equilibration(runtime=0.005)
+# Create a short equilibration protocol.
+protocol = BSS.Protocol.Equilibration(runtime=0.1)
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
@@ -86,7 +86,7 @@ print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Equilibration took %.2f minutes." % proc.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.01)
+protocol = BSS.Protocol.Production(runtime=0.1)
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")
@@ -127,7 +127,7 @@ print("Plotting total energy vs time.")
 
 # Create a plot of the total energy vs time step.
 fig, ax = plt.subplots()
-ax.plot(time, energy)
+ax.plot(time, energy, '-bo')
 
 ax.set(xlabel='Time (ns)', ylabel='Total Energy (kcal/mol)')
 ax.grid()
