@@ -60,9 +60,9 @@ class NamdProcess(process.Process):
         # Set the parameter type.
         self._is_charmm_params = charmm_params
 
-        # Initialise the energy dictionary and header.
-        self._nrg_dict = process._MDict()
-        self._nrg_title = None
+        # Initialise the stdout dictionary and title header.
+        self._stdout_dict = process._MDict()
+        self._stdout_title = None
 
         # The names of the input files.
         self._psf_file = "%s/%s.psf" % (self._work_dir, name)
@@ -506,7 +506,7 @@ class NamdProcess(process.Process):
         else:
             # Get the list of time steps.
             self.stdout(0)
-            time_steps = self._get_nrg_record('TS', time_series)
+            time_steps = self._get_stdout_record('TS', time_series)
 
             # Multiply by the integration time step (2fs).
             if time_steps is not None:
@@ -518,107 +518,107 @@ class NamdProcess(process.Process):
     def getStep(self, time_series=False):
         """Get the number of integration steps."""
         self.stdout(0)
-        return self._get_nrg_record('TS', time_series)
+        return self._get_stdout_record('TS', time_series)
 
     def getBondEnergy(self, time_series=False):
         """Get the bond energy."""
         self.stdout(0)
-        return self._get_nrg_record('BOND', time_series)
+        return self._get_stdout_record('BOND', time_series)
 
     def getAngleEnergy(self, time_series=False):
         """Get the angle energy."""
         self.stdout(0)
-        return self._get_nrg_record('ANGLE', time_series)
+        return self._get_stdout_record('ANGLE', time_series)
 
     def getDihedralEnergy(self, time_series=False):
         """Get the dihedral energy."""
         self.stdout(0)
-        return self._get_nrg_record('DIHED', time_series)
+        return self._get_stdout_record('DIHED', time_series)
 
     def getImproperEnergy(self, time_series=False):
         """Get the improper energy."""
         self.stdout(0)
-        return self._get_nrg_record('IMPRP', time_series)
+        return self._get_stdout_record('IMPRP', time_series)
 
     def getElectrostaticEnergy(self, time_series=False):
         """Get the electrostatic energy."""
         self.stdout(0)
-        return self._get_nrg_record('ELECT', time_series)
+        return self._get_stdout_record('ELECT', time_series)
 
     def getVanDerWaalsEnergy(self, time_series=False):
         """Get the Van der Vaals energy."""
         self.stdout(0)
-        return self._get_nrg_record('VDW', time_series)
+        return self._get_stdout_record('VDW', time_series)
 
     def getBoundaryEnergy(self, time_series=False):
         """Get the boundary energy."""
         self.stdout(0)
-        return self._get_nrg_record('BOUNDARY', time_series)
+        return self._get_stdout_record('BOUNDARY', time_series)
 
     def getMiscEnergy(self, time_series=False):
         """Get the external energy."""
         self.stdout(0)
-        return self._get_nrg_record('MISC', time_series)
+        return self._get_stdout_record('MISC', time_series)
 
     def getKineticEnergy(self, time_series=False):
         """Get the kinetic energy."""
         self.stdout(0)
-        return self._get_nrg_record('KINETIC', time_series)
+        return self._get_stdout_record('KINETIC', time_series)
 
     def getPotentialEnergy(self, time_series=False):
         """Get the potential energy."""
         self.stdout(0)
-        return self._get_nrg_record('POTENTIAL', time_series)
+        return self._get_stdout_record('POTENTIAL', time_series)
 
     def getTotalEnergy(self, time_series=False):
         """Get the total energy."""
         self.stdout(0)
-        return self._get_nrg_record('TOTAL', time_series)
+        return self._get_stdout_record('TOTAL', time_series)
 
     def getTotal2Energy(self, time_series=False):
         """Get the total energy. (Better KE conservation.)"""
         self.stdout(0)
-        return self._get_nrg_record('TOTAL2', time_series)
+        return self._get_stdout_record('TOTAL2', time_series)
 
     def getTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)"""
         self.stdout(0)
-        return self._get_nrg_record('TOTAL3', time_series)
+        return self._get_stdout_record('TOTAL3', time_series)
 
     def getTemperature(self, time_series=False):
         """Get the temperature."""
         self.stdout(0)
-        return self._get_nrg_record('TEMP', time_series)
+        return self._get_stdout_record('TEMP', time_series)
 
     def getTemperatureAverage(self, time_series=False):
         """Get the average temperature."""
         self.stdout(0)
-        return self._get_nrg_record('TEMPAVG', time_series)
+        return self._get_stdout_record('TEMPAVG', time_series)
 
     def getPressure(self, time_series=False):
         """Get the pressure."""
         self.stdout(0)
-        return self._get_nrg_record('PRESSURE', time_series)
+        return self._get_stdout_record('PRESSURE', time_series)
 
     def getPressureAverage(self, time_series=False):
         """Get the average pressure."""
         self.stdout(0)
-        return self._get_nrg_record('PRESSAVG', time_series)
+        return self._get_stdout_record('PRESSAVG', time_series)
 
     def getGPressure(self, time_series=False):
         """Get the pressure. (Hydrogens incorporated into bonded atoms.)"""
         self.stdout(0)
-        return self._get_nrg_record('GPRESSURE', time_series)
+        return self._get_stdout_record('GPRESSURE', time_series)
 
     def getGPressureAverage(self, time_series=False):
         """Get the average pressure. (Hydrogens incorporated into bonded atoms.)"""
         self.stdout(0)
-        return self._get_nrg_record('GPRESSAVG', time_series)
+        return self._get_stdout_record('GPRESSAVG', time_series)
 
     def getVolume(self, time_series=False):
         """Get the volume."""
         self.stdout(0)
-        return self._get_nrg_record('VOLUME', time_series)
+        return self._get_stdout_record('VOLUME', time_series)
 
     def eta(self):
         """Get the estimated time for the process to finish (in minutes)."""
@@ -670,17 +670,17 @@ class NamdProcess(process.Process):
 
                 # Store the updated energy title.
                 if data[0] == "ETITLE:":
-                    self._nrg_title = data[1:]
+                    self._stdout_title = data[1:]
 
                 # This is an energy record.
                 elif data[0] == "ENERGY:":
                     # Extract the data.
-                    nrg_data = data[1:]
+                    stdout_data = data[1:]
 
                     # Add the records to the dictionary.
-                    if (len(nrg_data) == len(self._nrg_title)):
-                        for title, data in zip(self._nrg_title, nrg_data):
-                            self._nrg_dict[title] = data
+                    if (len(stdout_data) == len(self._stdout_title)):
+                        for title, data in zip(self._stdout_title, stdout_data):
+                            self._stdout_dict[title] = data
 
         # Get the current number of lines.
         num_lines = len(self._stdout)
@@ -695,11 +695,11 @@ class NamdProcess(process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
-    def _get_nrg_record(self, key, time_series=False):
-        """Helper function to get an energy record from the dictionary."""
+    def _get_stdout_record(self, key, time_series=False):
+        """Helper function to get a stdout record from the dictionary."""
 
         # No data!
-        if len(self._nrg_dict) is 0:
+        if len(self._stdout_dict) is 0:
             return None
 
         if type(time_series) is not bool:
@@ -710,9 +710,9 @@ class NamdProcess(process.Process):
         if time_series:
             try:
                 if key is 'TS':
-                    return [int(x) for x in self._nrg_dict[key]]
+                    return [int(x) for x in self._stdout_dict[key]]
                 else:
-                    return [float(x) for x in self._nrg_dict[key]]
+                    return [float(x) for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -721,9 +721,9 @@ class NamdProcess(process.Process):
         else:
             try:
                 if key is 'TS':
-                    return int(self._nrg_dict[key][-1])
+                    return int(self._stdout_dict[key][-1])
                 else:
-                    return float(self._nrg_dict[key][-1])
+                    return float(self._stdout_dict[key][-1])
 
             except KeyError:
                 return None
