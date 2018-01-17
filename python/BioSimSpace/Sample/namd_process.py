@@ -74,20 +74,20 @@ class NamdProcess(process.Process):
         # Set the path for the NAMD configuration file.
         # The 'protocol' argument may contain the path to a custom file.
 
-        # Generate the path name.
+        # Set the config file name.
         if not self._is_custom:
-            self._namd_file = "%s/%s.namd" % (self._work_dir, name)
+            self._config_file = "%s/%s.namd" % (self._work_dir, name)
 
         # The user has supplied a custom config file.
         else:
             # Make sure the file exists.
             if path.isfile(protocol):
-                self._namd_file = protocol
+                self._config_file = protocol
             else:
-                raise IOError(('NAMD configuration file doesn\'t exist: "{x}"').format(x=namd_file))
+                raise IOError(('NAMD configuration file doesn\'t exist: "{x}"').format(x=config_file))
 
         # Create the list of input files.
-        self._input_files = [self._namd_file, self._psf_file, self._pdb_file, self._param_file]
+        self._input_files = [self._config_file, self._psf_file, self._pdb_file, self._param_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -220,7 +220,7 @@ class NamdProcess(process.Process):
             origin = tuple(aabox.center())
 
         # Open the configuration file for writing.
-        f = open(self._namd_file, "w")
+        f = open(self._config_file, "w")
 
         # Write generic configuration variables.
 
