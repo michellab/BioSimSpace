@@ -6,7 +6,6 @@
 
 from Sire.Base import findExe, Process
 from Sire.IO import CharmmPSF, MoleculeParser, PDB2
-from Sire.Maths import Vector
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
@@ -208,13 +207,23 @@ class NamdProcess(process.Process):
             # Flag that we have found a box.
             has_box = True
 
-            # Get the box size and origin.
+            # Get the box size.
             box_size = self._system.property('space').dimensions()
-            origin   = self._system.property('space').getBoxCenter(Vector(0))
+
+            # Since the box is translationally invariant, we set the cell
+            # origin to be the average of the atomic coordinates. This
+            # ensures a consistent wrapping for coordinates in the  NAMD
+            # output files.
+            origin = tuple(process._getAABox(self._system).center())
 
         # Work out the box from the atomic coordinates.
         elif not self._protocol.gas_phase:
-            box_size, origin = process._compute_box_size(self._system)
+            # Get the axis-aligned bounding box for the molecular system.
+            aabox = process._getAABox(self._system)
+
+            # Work out the box size and origin.
+            box_size = 2 * aabox.halfExtents()
+            origin = tuple(aabox.center())
 
         # Open the configuration file for writing.
         f = open(self._namd_file, "w")
@@ -258,23 +267,22 @@ class NamdProcess(process.Process):
                 f.write("switching             on\n")
                 f.write("switchdist            10.\n")
 
-        # Load the XSC file.
-        if has_box:
-            # Periodic boundary conditions.
-            f.write("extendedSystem        %s.xsc\n" % self._name)
-            f.write("wrapAll               on\n")
+            # Load the XSC file.
+            if has_box:
+                f.write("extendedSystem        %s.xsc\n" % self._name)
+                # We force the cell origin to be located at the system's centre
+                # of geometry. This ensures a consistent periodic wrapping for
+                # all NAMD output.
+                f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
 
-            # Periodic electrostatics.
-            f.write("PME                   yes\n")
-            f.write("PMEGridSpacing        1.\n")
+            # Set the cell using the axis-aligned bounding box.
+            else:
+                f.write("cellBasisVector1     %.1f   0.    0.\n" % box_size[0])
+                f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
+                f.write("cellBasisVector3      0.    0.   %.1f\n" % box_size[2])
+                f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
 
-        # Write periodic box information.
-        elif not self._protocol.gas_phase:
-            # Periodic boundary conditions.
-            f.write("cellBasisVector1     %.1f   0.    0.\n" % box_size[0])
-            f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
-            f.write("cellBasisVector3      0.    0.   %.1f\n" % box_size[2])
-            f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
+            # Wrap all molecular coordinates to the periodic box.
             f.write("wrapAll               on\n")
 
             # Periodic electrostatics.

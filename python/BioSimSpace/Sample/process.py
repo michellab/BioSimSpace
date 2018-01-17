@@ -6,6 +6,7 @@
 
 from Sire.ID import CaseInsensitive
 from Sire.Mol import AtomName
+from Sire.Vol import AABox
 
 from ..Protocol.protocol import Protocol
 
@@ -264,83 +265,29 @@ class Process():
             else:
                 return self._runtime
 
-def _compute_box_size(system, tol=0.05, buffer=0):
-    """Compute the box size and origin from the atomic coordinates.
+def _getAABox(system):
+    """Get the axis-aligned bounding box for the molecular system.
 
        Keyword arguments:
 
        system -- A Sire molecular system.
-       tol    -- The tolerance for determining whether the box is square
-                 and whether the origin lies at (0, 0, 0).
-       buffer -- The percentage by which to expand the box to account for
-                 periodic wrapping.
     """
 
-    # Store the list of molecule indices.
-    mol_nums = system.molNums()
-
-    # Initialise the min and max box size for each dimension.
-    box_min = [1000000]  * 3
-    box_max = [-1000000] * 3
+    # Initialise the coordinates vector.
+    coord = []
 
     # Loop over all of the molecules.
-    for num in mol_nums:
+    for n in system.molNums():
 
-        # Store the molecule.
-        mol = system[num]
+        # Extract the atomic coordinates and append them to the vector.
+        try:
+            coord.extend(system[n].property("coordinates").toVector())
 
-        # Get the number of atoms.
-        num_atoms = mol.nAtoms()
+        except UserWarning:
+            raise
 
-        # Loop over all atoms in the molecule.
-        for atom in mol.atoms():
-
-            # Extract the atomic coordinates.
-            try:
-                coord = atom.property("coordinates")
-
-            except UserWarning:
-               raise
-
-            # Check coordinates against the current min/max.
-            for x in range(0, 3):
-
-               if coord[x] < box_min[x]:
-                   box_min[x] = coord[x]
-
-               elif coord[x] > box_max[x]:
-                   box_max[x] = coord[x]
-
-    # Calculate the base length of the simulation box.
-    box_size = list(map(sub, box_max, box_min))
-
-    # Calculate the centre of the box.
-    box_origin = [x * 0.5 for x in list(map(add, box_min, box_max))]
-
-    # Store the base length with the maximum size and its index.
-    max_size = 0
-    for index, size in enumerate(box_size):
-        if size > max_size:
-            max_size, index = size, index
-
-    # Loop over all box dimensions.
-    for x in range(0, 3):
-
-        # Assume the box is square if the base lengths are similar.
-        if box_size[x] > (1 - tol) * max_size:
-            box_size[x] = max_size
-            box_origin[x] = box_origin[index]
-
-        # Assume the origin is at zero if the centre of mass is
-        # close to (0, 0, 0)
-        if box_origin[x] / box_size[x] < tol:
-            box_origin[x] = 0
-
-    # Add a buffer to the box size to account for atom wrapping.
-    box_size = [x * (1 + buffer) for x in box_size]
-
-    # Return the box size, origin, and whether the system is solvated.
-    return (tuple(box_size), tuple(box_origin))
+    # Return the AABox for the coordinates.
+    return AABox(coord)
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
