@@ -24,12 +24,6 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class MDict(dict):
-    """A multi-valued dictionary."""
-    def __setitem__(self, key, value):
-        """Add the given value to the list of values for this key."""
-        self.setdefault(key, []).append(value)
-
 class NamdProcess(process.Process):
     """A class for running simulations using NAMD."""
 
@@ -67,7 +61,7 @@ class NamdProcess(process.Process):
         self._is_charmm_params = charmm_params
 
         # Initialise the energy dictionary and header.
-        self._nrg_dict = MDict()
+        self._nrg_dict = process._MDict()
         self._nrg_title = None
 
         # The names of the input files.
