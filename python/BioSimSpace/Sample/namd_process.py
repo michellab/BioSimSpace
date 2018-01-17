@@ -436,7 +436,7 @@ class NamdProcess(process.Process):
             self._command = "%s %s.namd" % (self._exe, self._name)
 
             # Write the command to file.
-            f.write("# NAMDProcess was run with the following command:\n")
+            f.write("# NamdProcess was run with the following command:\n")
             f.write("%s\n" % self._command)
 
         # Start the timer.
