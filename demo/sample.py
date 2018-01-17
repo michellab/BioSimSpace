@@ -129,10 +129,10 @@ print("Plotting total energy vs time.")
 fig, ax = plt.subplots()
 ax.plot(time, energy, '-bo')
 
-ax.set(xlabel='Time (ns)', ylabel='Total Energy (kcal/mol)')
+ax.set(xlabel="Time (ns)", ylabel="Total Energy (kcal/mol)")
 ax.grid()
 
-fig.savefig("energy.png")
+fig.savefig("energy.pdf", bbox_inches="tight")
 plt.show()
 
 print("\nDone!")
