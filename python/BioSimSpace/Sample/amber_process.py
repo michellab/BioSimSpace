@@ -109,3 +109,14 @@ class AmberProcess(process.Process):
 
     def getSystem(self):
         """Get the latest molecular configuration as a Sire system."""
+
+        # Create the name of the restart CRD file.
+        restart = "%s/%s.restart.crd" % (self._work_dir, self._name)
+
+        # Check that the file exists.
+        if path.isfile(restart):
+            # Create and return the molecular system.
+            return MoleculeParser.read(restart, self._top_file)
+
+        else:
+            return None
