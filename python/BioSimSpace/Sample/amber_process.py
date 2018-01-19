@@ -45,7 +45,10 @@ class AmberProcess(process.Process):
         super().__init__(system, protocol, name, work_dir)
 
         # If the path to the executable wasn't specified, then search
-        # for it in $PATH.
+        # for it in $PATH. For now, we'll just search for 'sander', which
+        # is available free as part of AmberTools. In future, we will
+        # look for all possible executables in order of preference: pmemd.cuda,
+        # pmemd, sander, etc., as well as their variants, e.g. pmemd.MPI.
         if exe is None:
             self._exe = findExe("sander").absoluteFilePath()
 
