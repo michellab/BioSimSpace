@@ -295,6 +295,16 @@ def _getAABox(system):
     # Return the AABox for the coordinates.
     return AABox(coord)
 
+def _get_box_size(system):
+    """Get the size of the periodic box."""
+
+    try:
+        box = system.property("space")
+        return box.dimensions()
+
+    except UserWarning:
+        return None
+
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
