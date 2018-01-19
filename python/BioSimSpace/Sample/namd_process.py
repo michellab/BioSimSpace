@@ -11,12 +11,11 @@ from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
-from os import path
+from os import chdir, getcwd, path
 from timeit import default_timer as timer
 from warnings import warn
 
 import __main__ as main
-import os
 
 try:
     from Sire import try_import
@@ -126,7 +125,7 @@ class NamdProcess(process.Process):
         # a "velocity" property.
 
         # First generate a name for the velocity file.
-        velocity_file = os.path.splitext(self._pdb_file)[0] + ".vel"
+        velocity_file = path.splitext(self._pdb_file)[0] + ".vel"
 
         # Write the velocity file.
         has_velocities = pdb.writeVelocityFile(velocity_file)
@@ -225,17 +224,17 @@ class NamdProcess(process.Process):
         # Write generic configuration variables.
 
         # Topology.
-        f.write("structure             %s.psf\n" % self._name)
-        f.write("coordinates           %s.pdb\n" % self._name)
+        f.write("structure             %s\n" % path.basename(self._psf_file))
+        f.write("coordinates           %s\n" % path.basename(self._pdb_file))
 
         # Velocities.
         if not self._velocity_file is None:
-            f.write("velocities            %s.vel\n" % self._name)
+            f.write("velocities            %s\n" % path.basename(self._velocity_file))
 
         # Parameters.
         if self._is_charmm_params:
             f.write("paraTypeCharmm        on\n")
-        f.write("parameters            %s.params\n" % self._name)
+        f.write("parameters            %s\n" % path.basename(self._param_file))
 
         # Random number seed.
         if not self._seed is None:
@@ -423,11 +422,11 @@ class NamdProcess(process.Process):
         """Start the NAMD simulation."""
 
         # Store the current working directory.
-        dir = os.getcwd()
+        dir = getcwd()
 
         # Change to the working directory for the process.
         # This avoid problems with relative paths.
-        os.chdir(self._work_dir)
+        chdir(self._work_dir)
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
@@ -448,7 +447,7 @@ class NamdProcess(process.Process):
                                                "%s.err"  % self._name)
 
         # Change back to the original working directory.
-        os.chdir(dir)
+        chdir(dir)
 
     def getSystem(self):
         """Get the latest molecular configuration as a Sire system."""
