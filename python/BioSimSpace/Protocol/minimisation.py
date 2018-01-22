@@ -47,7 +47,7 @@ class Minimisation(Protocol):
     def method(self, method):
         """Set the 'method' member variable."""
         # Check that the minimisation method is valid.
-        if method not in ["conjugate-gradient", "steepest-descent"]:
+        if method.strip().lower() not in ["conjugate-gradient", "steepest-descent"]:
             msg = ('Invalid minimisation method: "{x}". '
                    'Allowed values are "conjugate-gradient" or "steepest-descent". '
                    'Using default: "conjugate-gradient".'
@@ -57,7 +57,7 @@ class Minimisation(Protocol):
             self._method = "conjugate-gradient"
 
         else:
-            self._method = method
+            self._method = method.strip().upper()
 
     @property
     def steps(self):
