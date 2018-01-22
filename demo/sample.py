@@ -1,5 +1,6 @@
 import BioSimSpace as BSS
 
+from glob import glob
 from sys import exit
 
 try:
@@ -9,11 +10,12 @@ try:
 except ImportError:
     raise ImportError("Matplotlib is not installed. Please install matplotlib in order to use BioSimSpace.")
 
+# Glob the input files.
+files = glob("namd/ubiquitin/*")
+
 # Load the molecular system.
 print("\nLoading molecules...")
-system = BSS.readMolecules( ["namd/ubiquitin/ubiquitin.psf",
-                             "namd/ubiquitin/ubiquitin.pdb",
-                             "namd/ubiquitin/par_all27_prot_lipid.inp"] )
+system = BSS.readMolecules(files)
 
 # Create a minimisation protocol.
 protocol = BSS.Protocol.Minimisation(steps=1000)
