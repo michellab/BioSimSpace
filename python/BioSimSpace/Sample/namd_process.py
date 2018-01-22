@@ -42,7 +42,7 @@ class NamdProcess(process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir)
+        super().__init__(system, protocol, name, work_dir, seed)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
