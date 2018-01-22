@@ -166,6 +166,10 @@ class AmberProcess(process.Process):
                 "-r", "%s.restart.crd" % self._name, # Restart file.
                 "-inf", "%s.nrg" % self._name]       # Energy info file.
 
+        # Append a trajectory file if this is a production run.
+        if self._protocol.type() == ProtocolType.PRODUCTION:
+            args.append("-x %s.trajectory.crd" % self._name)
+
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
 
