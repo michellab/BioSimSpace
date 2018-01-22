@@ -42,7 +42,7 @@ class AmberProcess(process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir)
+        super().__init__(system, protocol, name, work_dir, seed)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH. For now, we'll just search for 'sander', which
@@ -127,18 +127,51 @@ class AmberProcess(process.Process):
         if self._protocol.type() == ProtocolType.MINIMISATION:
             f.write("Minimisation.\n")
             f.write(" &cntrl\n")
-            f.write("  imin=1,\n")                               # Minisation simulation.
-            f.write("  ntx=1,\n")                                # Only read coordinates from file.
-            f.write("  ntxo=1,\n")                               # Output coordinates in ASCII.
-            f.write("  ntpr=100,\n")                             # Output energies every 100 steps.
-            f.write("  irest=0,\n")                              # Don't restart.
-            f.write("  maxcyc=%s,\n" % self._protocol.steps)     # Set the number of steps.
-            f.write("  cut=8.0,\n")                              # Non-bonded cut-off.
+            f.write("  imin=1,\n")                      # Minisation simulation.
+            f.write("  ntx=1,\n")                       # Only read coordinates from file.
+            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
+            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
+            if not self._protocol.conjugateGradient():
+                f.write("  ntmin=2,\n")                 # Steepest descent minimmisation.
+            f.write("  irest=0,\n")                     # Don't restart.
+            f.write("  maxcyc=%s,\n"
+                    % self._protocol.steps)             # Set the number of steps.
+            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
             f.write(" /\n")
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
-            pass
+            # Work out the number of integration steps.
+            steps = ceil(self._protocol.runtime / 2e-6)
+
+            # Set the random number seed.
+            if self._seed is None:
+                seed = -1
+            else:
+                seed = self._seed
+
+            f.write("Equilibration.\n")
+            f.write(" &cntrl\n")
+            f.write("  ntx=1,\n")                       # Only read coordinates from file.
+            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
+            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
+            f.write("  irest=0,\n")                     # Don't restart.
+            f.write("  dt=0.002,\n")                    # Time step (2fs).
+            f.write("  nstlim=%s,\n" % steps)           # Number of integration steps.
+            f.write("  ntc=2,\n")                       # Enable SHAKE.
+            f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
+            f.write("  ntt=3,\n")                       # Langevin dynamics.
+            f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
+            f.write("  ntp=1,\n")                       # Isotropic pressure scaling.
+            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
+            f.write("  ig=%s,\n" % seed)                # Random number seed.
+                                                        # Start and end temperatures.
+            if not self._protocol.isConstantTemp():
+                f.write("  tempi=%s,\n" % self._protocol.temperature_start)
+                f.write("  temp0=%s,\n" % self._protocol.temperature_end)
+            else:
+                f.write("  temp0=%s,\n" % self._protocol.temperature_start)
+            f.write(" /\n")
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
@@ -158,13 +191,13 @@ class AmberProcess(process.Process):
         chdir(self._work_dir)
 
         # Create a list of the command-line arguments.
-        args = ["-O",                                # Overwrite.
-                "-i", "%s.amber" % self._name,       # Input file.
-                "-p", "%s.top" % self._name,         # Topology file.
-                "-c", "%s.crd" % self._name,         # Coordinate file.
-                "-o", "stdout",                      # Redirect to stdout.
-                "-r", "%s.restart.crd" % self._name, # Restart file.
-                "-inf", "%s.nrg" % self._name]       # Energy info file.
+        args = ["-O",                                   # Overwrite.
+                "-i", "%s.amber" % self._name,          # Input file.
+                "-p", "%s.top" % self._name,            # Topology file.
+                "-c", "%s.crd" % self._name,            # Coordinate file.
+                "-o", "stdout",                         # Redirect to stdout.
+                "-r", "%s.restart.crd" % self._name,    # Restart file.
+                "-inf", "%s.nrg" % self._name]          # Energy info file.
 
         # Append a trajectory file if this is a production run.
         if self._protocol.type() == ProtocolType.PRODUCTION:
