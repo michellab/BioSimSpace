@@ -11,7 +11,7 @@ from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
-from os import path
+from os import chdir, getcwd, path
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -101,14 +101,90 @@ class AmberProcess(process.Process):
         top = AmberPrm(self._system)
         top.writeToFile(self._top_file)
 
+        # Generate the AMBER configuration file.
+        # Skip if the user has passed a custom config.
+        if not self._is_custom:
+            self._generate_config_file()
+
         # Return the list of input files.
         return self._input_files
 
     def _generate_config_file(self):
         """Generate an AMBER configuration file."""
 
+        # Check whether the system contains periodic box information.
+        # For now, well not attempt to generate a box if the system property
+        # is missing. If no box is present, we'll assume a non-periodic simulation.
+        if 'space' in self._system.propertyKeys():
+            has_box = True
+        else:
+            has_box = False
+
+        # Open the configuration file for writing.
+        f = open(self._config_file, "w")
+
+        # Add configuration variables for a minimisation simulation.
+        if self._protocol.type() == ProtocolType.MINIMISATION:
+            f.write("Minimisation.\n")
+            f.write(" &cntrl\n")
+            f.write("  imin=1,\n")                               # Minisation simulation.
+            f.write("  ntx=1,\n")                                # Only read coordinates from file.
+            f.write("  ntxo=1,\n")                               # Output coordinates in ASCII.
+            f.write("  ntpr=100,\n")                             # Output energies every 100 steps.
+            f.write("  irest=0,\n")                              # Don't restart.
+            f.write("  maxcyc=%s,\n" % self._protocol.steps)     # Set the number of steps.
+            f.write("  cut=8.0,\n")                              # Non-bonded cut-off.
+            f.write(" /\n")
+
+        # Add configuration variables for an equilibration simulation.
+        elif self._protocol.type() == ProtocolType.EQUILIBRATION:
+            pass
+
+        # Add configuration variables for a production simulation.
+        elif self._protocol.type() == ProtocolType.PRODUCTION:
+            pass
+
+        # Close the configuration file.
+        f.close()
+
     def start(self):
         """Start the AMBER simulation."""
+
+        # Store the current working directory.
+        dir = getcwd()
+
+        # Change to the working directory for the process.
+        # This avoid problems with relative paths.
+        chdir(self._work_dir)
+
+        # Create a list of the command-line arguments.
+        args = ["-O",                                # Overwrite.
+                "-i", "%s.amber" % self._name,       # Input file.
+                "-p", "%s.top" % self._name,         # Topology file.
+                "-c", "%s.crd" % self._name,         # Coordinate file.
+                "-o", "stdout",                      # Redirect to stdout.
+                "-r", "%s.restart.crd" % self._name, # Restart file.
+                "-inf", "%s.nrg" % self._name]       # Energy info file.
+
+        # Write the command-line process to a README.txt file.
+        with open("README.txt", "w") as f:
+
+            # Set the command-line string.
+            self._command = "%s " % self._exe + ' '.join(args)
+
+            # Write the command to file.
+            f.write("# AmberProcess was run with the following command:\n")
+            f.write("%s\n" % self._command)
+
+        # Start the timer.
+        self._timer = timer()
+
+        # Start the simulation.
+        self._process = Process.run(self._exe, args,
+            "%s.out"  % self._name, "%s.err"  % self._name)
+
+        # Change back to the original working directory.
+        chdir(dir)
 
     def getSystem(self):
         """Get the latest molecular configuration as a Sire system."""
