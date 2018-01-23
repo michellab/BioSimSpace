@@ -496,6 +496,17 @@ class NamdProcess(process.Process):
         else:
             return None
 
+    def getRecord(self, record, time_series=False):
+        """Get a record from the stdout dictionary.
+
+           Keyword arguments:
+
+           record      -- The record keyword.
+           time_series -- Whether to return a list of time series records.
+        """
+        self.stdout(0)
+        return self._get_stdout_record(record, time_series)
+
     def getTime(self, time_series=False):
         """Get the time (in nanoseconds)."""
 
