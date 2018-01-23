@@ -152,6 +152,7 @@ class AmberProcess(process.Process):
 
             f.write("Equilibration.\n")
             f.write(" &cntrl\n")
+            f.write("  ig=%d,\n" % seed)                # Random number seed.
             f.write("  ntx=1,\n")                       # Only read coordinates from file.
             f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
             f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
@@ -162,10 +163,9 @@ class AmberProcess(process.Process):
             f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
             f.write("  ntt=3,\n")                       # Langevin dynamics.
             f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
+            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
             f.write("  ntp=1,\n")                       # Isotropic pressure scaling.
             f.write("  pres0=1.01325,\n")               # Atompspheric pressure.
-            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
-            f.write("  ig=%d,\n" % seed)                # Random number seed.
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -184,7 +184,40 @@ class AmberProcess(process.Process):
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
-            pass
+            # Work out the number of integration steps.
+            steps = ceil(self._protocol.runtime / 2e-6)
+
+            # Set the random number seed.
+            if self._seed is None:
+                seed = -1
+            else:
+                seed = self._seed
+
+            f.write("Production.\n")
+            f.write(" &cntrl\n")
+            f.write("  ig=%d,\n" % seed)                # Random number seed.
+            f.write("  ntx=1,\n")                       # Only read coordinates from file.
+            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
+            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
+            f.write("  ntwx=%d,\n"                      # Trajectory sampling frequency.
+                % floor(steps / self._protocol.frames))
+            f.write("  irest=0,\n")                     # Don't restart.
+            f.write("  dt=0.002,\n")                    # Time step (2fs).
+            f.write("  nstlim=%d,\n" % steps)           # Number of integration steps.
+            f.write("  ntc=2,\n")                       # Enable SHAKE.
+            f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
+            f.write("  ntt=3,\n")                       # Langevin dynamics.
+            f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
+            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
+            f.write("  temp0=%.2f,\n"                   # Temperature.
+                    % self._protocol.temperature)
+
+            # Constant pressure control.
+            if self._protocol.ensemble is 'NPT':
+                f.write("  ntp=1,\n")                   # Isotropic pressure scaling.
+                f.write("  pres0=1.01325,\n")           # Atompspheric pressure.
+
+            f.write(" /\n")
 
         # Close the configuration file.
         f.close()
@@ -210,7 +243,8 @@ class AmberProcess(process.Process):
 
         # Append a trajectory file if this is a production run.
         if self._protocol.type() == ProtocolType.PRODUCTION:
-            args.append("-x %s.trajectory.crd" % self._name)
+            args.append("-x")
+            args.append("%s.trajectory.crd" % self._name)
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
