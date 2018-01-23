@@ -167,6 +167,12 @@ class AmberProcess(process.Process):
             f.write("  ntp=1,\n")                       # Isotropic pressure scaling.
             f.write("  pres0=1.01325,\n")               # Atompspheric pressure.
 
+            # Restrain the backbone.
+            if self._protocol.is_restrained:
+                f.write("  ntr=1,\n")
+                f.write("  restraint_wt = 2,\n")
+                f.write("  restraintmask = '@CA,C,O,N',\n")
+
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
                 f.write("  tempi=%.2f,\n" % self._protocol.temperature_start)
@@ -241,8 +247,14 @@ class AmberProcess(process.Process):
                 "-r", "%s.restart.crd" % self._name,    # Restart file.
                 "-inf", "%s.nrg" % self._name]          # Energy info file.
 
+        # Append a reference file if this a constrained equilibration.
+        if self._protocol.type() == ProtocolType.EQUILIBRATION:
+            if self._protocol.is_restrained:
+                args.append("-ref")
+                args.append("%s.crd" % self._name)
+
         # Append a trajectory file if this is a production run.
-        if self._protocol.type() == ProtocolType.PRODUCTION:
+        elif self._protocol.type() == ProtocolType.PRODUCTION:
             args.append("-x")
             args.append("%s.trajectory.crd" % self._name)
 
