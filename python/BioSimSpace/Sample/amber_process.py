@@ -134,7 +134,7 @@ class AmberProcess(process.Process):
             if not self._protocol.conjugateGradient():
                 f.write("  ntmin=2,\n")                 # Steepest descent minimmisation.
             f.write("  irest=0,\n")                     # Don't restart.
-            f.write("  maxcyc=%s,\n"
+            f.write("  maxcyc=%d,\n"
                     % self._protocol.steps)             # Set the number of steps.
             f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
             f.write(" /\n")
@@ -157,21 +157,30 @@ class AmberProcess(process.Process):
             f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
             f.write("  irest=0,\n")                     # Don't restart.
             f.write("  dt=0.002,\n")                    # Time step (2fs).
-            f.write("  nstlim=%s,\n" % steps)           # Number of integration steps.
+            f.write("  nstlim=%d,\n" % steps)           # Number of integration steps.
             f.write("  ntc=2,\n")                       # Enable SHAKE.
             f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
             f.write("  ntt=3,\n")                       # Langevin dynamics.
             f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
             f.write("  ntp=1,\n")                       # Isotropic pressure scaling.
+            f.write("  pres0=1.01325,\n")               # Atompspheric pressure.
             f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
-            f.write("  ig=%s,\n" % seed)                # Random number seed.
-                                                        # Start and end temperatures.
+            f.write("  ig=%d,\n" % seed)                # Random number seed.
+
+            # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                f.write("  tempi=%s,\n" % self._protocol.temperature_start)
-                f.write("  temp0=%s,\n" % self._protocol.temperature_end)
+                f.write("  tempi=%.2f,\n" % self._protocol.temperature_start)
+                f.write("  temp0=%.2f,\n" % self._protocol.temperature_end)
+                f.write("  nmropt=1,\n")
+                f.write(" /\n")
+                f.write("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /\n"
+                        % (steps, self._protocol.temperature_start, self._protocol.temperature_end))
+                f.write("&wt TYPE='END' /\n")
+
+            # Constant temperature equilibration.
             else:
-                f.write("  temp0=%s,\n" % self._protocol.temperature_start)
-            f.write(" /\n")
+                f.write("  temp0=%.2f,\n" % self._protocol.temperature_start)
+                f.write(" /\n")
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:

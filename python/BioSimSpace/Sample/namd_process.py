@@ -238,7 +238,7 @@ class NamdProcess(process.Process):
 
         # Random number seed.
         if not self._seed is None:
-            f.write("seed                  %s\n" % self._seed)
+            f.write("seed                  %d\n" % self._seed)
 
         # Exclusion policy.
         f.write("exclude               scaled1-4\n")
@@ -297,20 +297,20 @@ class NamdProcess(process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
-            f.write("temperature           %s\n" % self._protocol.temperature)
+            f.write("temperature           %.2f\n" % self._protocol.temperature)
 
             # Work out the number of steps. This must be a multiple of
             # stepspercycle, which is set the default of 20.
             steps = 20 * ceil(self._protocol.steps / 20)
-            f.write("minimize              %s\n" % steps)
+            f.write("minimize              %d\n" % steps)
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
-                f.write("set temperature       %s\n" % self._protocol.temperature_start)
+                f.write("set temperature       %.2f\n" % self._protocol.temperature_start)
             else:
-                f.write("set temperature       %s\n" % self._protocol.temperature_end)
+                f.write("set temperature       %.2f\n" % self._protocol.temperature_end)
             f.write("temperature           $temperature\n")
 
             # Integrator parameters.
@@ -362,27 +362,27 @@ class NamdProcess(process.Process):
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.temperature_target - self._protocol.temperature_start)
+                denom = abs(self._protocol.temperature_end - self._protocol.temperature_start)
                 freq = floor(steps / denom)
 
-                f.write("reassignFreq          %s\n" % freq)
-                f.write("reassignTemp          %s\n" % self._protocol.temperature_start)
+                f.write("reassignFreq          %d\n" % freq)
+                f.write("reassignTemp          %.2f\n" % self._protocol.temperature_start)
                 f.write("reassignIncr          1.\n")
-                f.write("reassignHold          %s\n" % self._protocol.temperature_target)
+                f.write("reassignHold          %.2f\n" % self._protocol.temperature_end)
 
             # Run the simulation.
-            f.write("run                   %s\n" % steps)
+            f.write("run                   %d\n" % steps)
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
             # Set the Tcl temperature variable.
-            f.write("set temperature       %s\n" % self._protocol.temperature)
+            f.write("set temperature       %.2f\n" % self._protocol.temperature)
             f.write("temperature           $temperature\n")
 
             # Integrator parameters.
             f.write("timestep              2.\n")
             if self._protocol.first_step is not 0:
-                f.write("firsttimestep         %s\n" % self._protocol.first_step)
+                f.write("firsttimestep         %d\n" % self._protocol.first_step)
             f.write("rigidBonds            all\n")
             f.write("nonbondedFreq         1\n")
             f.write("fullElectFrequency    2\n")
@@ -410,10 +410,10 @@ class NamdProcess(process.Process):
             steps = 20 * ceil(steps / 20)
 
             # Trajectory output frequency.
-            f.write("DCDfreq               %s\n" % floor(steps / self._protocol.frames))
+            f.write("DCDfreq               %d\n" % floor(steps / self._protocol.frames))
 
             # Run the simulation.
-            f.write("run                   %s\n" % steps)
+            f.write("run                   %d\n" % steps)
 
         # Close the configuration file.
         f.close()
