@@ -36,6 +36,7 @@ class Equilibration(Protocol):
         # Set the final temperature.
         if not temperature_end is None:
             self._temperature_end = temperature_end
+            self._is_const_temp = False
 
             # Start and end temperature is the same.
             if (self._temperature_start == self._temperature_end):
