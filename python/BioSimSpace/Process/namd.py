@@ -23,7 +23,7 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class NamdProcess(process.Process):
+class Namd(process.Process):
     """A class for running simulations using NAMD."""
 
     def __init__(self, system, protocol, exe=None, name="namd",
@@ -435,7 +435,7 @@ class NamdProcess(process.Process):
             self._command = "%s %s.namd" % (self._exe, self._name)
 
             # Write the command to file.
-            f.write("# NamdProcess was run with the following command:\n")
+            f.write("# NAMD was run with the following command:\n")
             f.write("%s\n" % self._command)
 
         # Start the timer.

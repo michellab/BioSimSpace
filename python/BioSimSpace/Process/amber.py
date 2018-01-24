@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class AmberProcess(process.Process):
+class Amber(process.Process):
     """A class for running simulations using AMBER."""
 
     def __init__(self, system, protocol, exe=None, name="amber",
@@ -263,7 +263,7 @@ class AmberProcess(process.Process):
             self._command = "%s " % self._exe + ' '.join(args)
 
             # Write the command to file.
-            f.write("# AmberProcess was run with the following command:\n")
+            f.write("# AMBER was run with the following command:\n")
             f.write("%s\n" % self._command)
 
         # Start the timer.

@@ -22,7 +22,7 @@ protocol = BSS.Protocol.Minimisation(steps=1000)
 
 # Initialise the NAMD process.
 print("\nInitialising minimisation process...")
-proc = BSS.Sample.NamdProcess(system, protocol, name="minimise",
+proc = BSS.Process.Namd(system, protocol, name="minimise",
         work_dir="minimise", charmm_params=True)
 
 # Get the list of auto-generated input files.
@@ -57,7 +57,7 @@ protocol = BSS.Protocol.Equilibration(runtime=0.01)
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
-proc = BSS.Sample.NamdProcess(minimised, protocol, name="equilibrate",
+proc = BSS.Process.Namd(minimised, protocol, name="equilibrate",
         work_dir="equilibrate", charmm_params=True)
 
 # Get the list of auto-generated input files.
@@ -92,7 +92,7 @@ protocol = BSS.Protocol.Production(runtime=0.01)
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")
-proc = BSS.Sample.NamdProcess(equilibrated, protocol, name="production",
+proc = BSS.Process.Namd(equilibrated, protocol, name="production",
         work_dir="production", charmm_params=True)
 
 # Get the list of auto-generated input files.

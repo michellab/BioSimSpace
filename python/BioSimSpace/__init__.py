@@ -1,5 +1,5 @@
+import BioSimSpace.Process
 import BioSimSpace.Protocol
-import BioSimSpace.Sample
 
 import Sire.IO
 import Sire.Base
