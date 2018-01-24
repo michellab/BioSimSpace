@@ -297,7 +297,7 @@ class NamdProcess(process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
-            f.write("temperature           %.2f\n" % self._protocol.temperature)
+            f.write("temperature           300\n")
 
             # Work out the number of steps. This must be a multiple of
             # stepspercycle, which is set the default of 20.

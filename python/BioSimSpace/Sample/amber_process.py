@@ -131,8 +131,6 @@ class AmberProcess(process.Process):
             f.write("  ntx=1,\n")                       # Only read coordinates from file.
             f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
             f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
-            if not self._protocol.conjugateGradient():
-                f.write("  ntmin=2,\n")                 # Steepest descent minimmisation.
             f.write("  irest=0,\n")                     # Don't restart.
             f.write("  maxcyc=%d,\n"
                     % self._protocol.steps)             # Set the number of steps.
