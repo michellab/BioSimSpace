@@ -84,7 +84,7 @@ class Process():
         else:
             self._work_dir = work_dir
 
-            # Create the directory if it doesn't already exist..
+            # Create the directory if it doesn't already exist.
             if not path.isdir(work_dir):
                 makedirs(work_dir)
 
