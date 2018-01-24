@@ -226,8 +226,13 @@ class Amber(process.Process):
         # Close the configuration file.
         f.close()
 
-    def start(self):
-        """Start the AMBER simulation."""
+    def start(self, optargs=None):
+        """Start the AMBER simulation.
+
+           Keyword arguments:
+
+           optargs -- A list of optional argument strings.
+        """
 
         # Store the current working directory.
         dir = getcwd()
@@ -245,16 +250,31 @@ class Amber(process.Process):
                 "-r", "%s.restart.crd" % self._name,    # Restart file.
                 "-inf", "%s.nrg" % self._name]          # Energy info file.
 
-        # Append a reference file if this a constrained equilibration.
-        if self._protocol.type() == ProtocolType.EQUILIBRATION:
-            if self._protocol.is_restrained:
-                args.append("-ref")
-                args.append("%s.crd" % self._name)
+        # Skip if the user has passed a custom config.
+        if not self._is_custom:
 
-        # Append a trajectory file if this is a production run.
-        elif self._protocol.type() == ProtocolType.PRODUCTION:
-            args.append("-x")
-            args.append("%s.trajectory.crd" % self._name)
+            # Append a reference file if this a constrained equilibration.
+            if self._protocol.type() == ProtocolType.EQUILIBRATION:
+                if self._protocol.is_restrained:
+                    args.append("-ref")
+                    args.append("%s.crd" % self._name)
+
+            # Append a trajectory file if this is a production run.
+            elif self._protocol.type() == ProtocolType.PRODUCTION:
+                args.append("-x")
+                args.append("%s.trajectory.crd" % self._name)
+
+        # Append optional arguments.
+        if optargs is not None:
+            # Multiple arguments.
+            if type(optargs) is list or type(optargs) is tuple:
+                for arg in optargs:
+                    args.append(str(arg))
+            # Single arguments.
+            elif type(optargs) is str:
+                args.append(str(optargs))
+            else:
+                warn("optargs must be of type 'str', 'list', or 'tuple'.")
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
