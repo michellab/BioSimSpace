@@ -264,17 +264,8 @@ class Amber(process.Process):
         # This avoid problems with relative paths.
         chdir(self._work_dir)
 
-        # Initalise the arguments list.
-        args = []
-
-        # Create the list of command-line arguments strings.
-        for key, value in self._args.items():
-            # Boolean flag.
-            if type(value) is bool:
-                args.append(str(key))
-            else:
-                args.append(str(key))
-                args.append(str(value))
+        # Create the arguments string list.
+        args = self._generate_args_string()
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:

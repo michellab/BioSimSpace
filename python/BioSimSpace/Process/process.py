@@ -342,6 +342,23 @@ class Process():
             else:
                 return self._runtime
 
+    def _generate_args_string(self):
+        """ Convert the argument dictionary into a list of strings."""
+
+        # Create an empty list.
+        args = []
+
+        # Add the arguments to the list.
+        for key, value in self._args.items():
+            # Boolean flag.
+            if type(value) is bool:
+                args.append(str(key))
+            else:
+                args.append(str(key))
+                args.append(str(value))
+
+        return args
+
 def _getAABox(system):
     """Get the axis-aligned bounding box for the molecular system.
 
