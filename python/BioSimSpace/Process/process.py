@@ -112,6 +112,12 @@ class Process():
         if path.isfile(stderr_offset):
             remove(stderr_offset)
 
+        # Initialise the configuration file string list.
+        self._config = []
+
+        # Initaliae the command-line argument dictionary.
+        self._args = {}
+
     @property
     def seed(self):
         """Return the random number seed."""
@@ -251,6 +257,71 @@ class Process():
         """Return the command-line string used to run the process."""
         return self._command
 
+    def getConfig(self):
+        """Get the list of configuration file strings."""
+        return self._config
+
+    def setConfig(self, config):
+        """Set the list of configuration file strings."""
+
+        # Check that the passed configuration is a list of strings.
+        if _is_list_of_strings(config):
+            self._config = config
+            self._generate_config()
+
+        else:
+            warn("The configuration must be a list of strings.")
+
+    def addToConfig(self, config):
+        """Add a string to the configuration list."""
+        # Append a single string.
+        if type(config) is str:
+            self._config.append(config)
+
+        # Extend the list with the additional strings.
+        elif _is_list_of_strings(config):
+            self._config.extend(config)
+
+    def writeConfig(self, file):
+        """Write the configuration to file."""
+        with open(file, "w") as f:
+            for line in self._config:
+                f.write("%s\n" % line)
+
+    def getArgs(self):
+        """Get the dictionary of command-line arguments."""
+        return self._args
+
+    def setArgs(self, args):
+        """Set the dictionary of command-line arguments."""
+        if type(args) is dict:
+            self._args = args
+
+    def setArg(self, arg, value):
+        """Set a specific command-line argument.
+
+           Keyword arguments:
+
+           arg   -- The argument to set.
+           value -- The value of the argument.
+
+           For command-line flags, i.e. boolean arguments, the key should
+           specify whether the flag is enabled (True) or not (False).
+        """
+        self._args[arg] = value
+
+    def deleteArg(self, arg):
+        """Delete an argument from the dictionary."""
+        try:
+            del self._args[arg]
+
+        except KeyError:
+            pass
+
+    def clearArgs(self):
+        """Clear all of the command-line arguments."""
+        self._args.clear()
+
     def runTime(self):
         """Return the running time for the process (in minutes)."""
 
@@ -359,3 +430,10 @@ def _restrain_backbone(system):
 
     # Return the new system.
     return s
+
+def _is_list_of_strings(lst):
+    """Check whether the passed argument is a list of strings."""
+    if lst and isinstance(lst, list):
+        return all(isinstance(elem, basestring) for elem in lst)
+    else:
+        return False

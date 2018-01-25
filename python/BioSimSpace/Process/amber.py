@@ -104,13 +104,20 @@ class Amber(process.Process):
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
         if not self._is_custom:
-            self._generate_config_file()
+            self._generate_config()
+            self.writeConfig(self._config_file)
+
+        # Generate the dictionary of command-line arguments.
+        self._generate_args()
 
         # Return the list of input files.
         return self._input_files
 
-    def _generate_config_file(self):
-        """Generate an AMBER configuration file."""
+    def _generate_config(self):
+        """Generate AMBER configuration file strings."""
+
+        # Clear the existing configuration list.
+        self._config = []
 
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
@@ -120,22 +127,19 @@ class Amber(process.Process):
         else:
             has_box = False
 
-        # Open the configuration file for writing.
-        f = open(self._config_file, "w")
-
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
-            f.write("Minimisation.\n")
-            f.write(" &cntrl\n")
-            f.write("  imin=1,\n")                      # Minisation simulation.
-            f.write("  ntx=1,\n")                       # Only read coordinates from file.
-            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
-            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
-            f.write("  irest=0,\n")                     # Don't restart.
-            f.write("  maxcyc=%d,\n"
-                    % self._protocol.steps)             # Set the number of steps.
-            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
-            f.write(" /\n")
+            self.addToConfig("Minimisation")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  imin=1,")                   # Minisation simulation.
+            self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
+            self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=100,")                  # Output energies every 100 steps.
+            self.addToConfig("  irest=0,")                   # Don't restart.
+            self.addToConfig("  maxcyc=%d,"
+                    % self._protocol.steps)                 # Set the number of steps.
+            self.addToConfig("  cut=8.0,")                   # Non-bonded cut-off.
+            self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
@@ -148,43 +152,43 @@ class Amber(process.Process):
             else:
                 seed = self._seed
 
-            f.write("Equilibration.\n")
-            f.write(" &cntrl\n")
-            f.write("  ig=%d,\n" % seed)                # Random number seed.
-            f.write("  ntx=1,\n")                       # Only read coordinates from file.
-            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
-            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
-            f.write("  irest=0,\n")                     # Don't restart.
-            f.write("  dt=0.002,\n")                    # Time step (2fs).
-            f.write("  nstlim=%d,\n" % steps)           # Number of integration steps.
-            f.write("  ntc=2,\n")                       # Enable SHAKE.
-            f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
-            f.write("  ntt=3,\n")                       # Langevin dynamics.
-            f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
-            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
-            f.write("  ntp=1,\n")                       # Isotropic pressure scaling.
-            f.write("  pres0=1.01325,\n")               # Atompspheric pressure.
+            self.addToConfig("Equilibration.")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  ig=%d," % seed)             # Random number seed.
+            self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
+            self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  irest=0,")                  # Don't restart.
+            self.addToConfig("  dt=0.002,")                 # Time step (2fs).
+            self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
+            self.addToConfig("  ntc=2,")                    # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                    # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
+            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
+            self.addToConfig("  pres0=1.01325,")            # Atompspheric pressure.
 
             # Restrain the backbone.
             if self._protocol.is_restrained:
-                f.write("  ntr=1,\n")
-                f.write("  restraint_wt = 2,\n")
-                f.write("  restraintmask = '@CA,C,O,N',\n")
+                self.addToConfig("  ntr=1,")
+                self.addToConfig("  restraint_wt = 2,")
+                self.addToConfig("  restraintmask = '@CA,C,O,N',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                f.write("  tempi=%.2f,\n" % self._protocol.temperature_start)
-                f.write("  temp0=%.2f,\n" % self._protocol.temperature_end)
-                f.write("  nmropt=1,\n")
-                f.write(" /\n")
-                f.write("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /\n"
+                self.addToConfig("  tempi=%.2f," % self._protocol.temperature_start)
+                self.addToConfig("  temp0=%.2f," % self._protocol.temperature_end)
+                self.addToConfig("  nmropt=1,")
+                self.addToConfig(" /")
+                self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
                         % (steps, self._protocol.temperature_start, self._protocol.temperature_end))
-                f.write("&wt TYPE='END' /\n")
+                self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
             else:
-                f.write("  temp0=%.2f,\n" % self._protocol.temperature_start)
-                f.write(" /\n")
+                self.addToConfig("  temp0=%.2f," % self._protocol.temperature_start)
+                self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
@@ -197,42 +201,61 @@ class Amber(process.Process):
             else:
                 seed = self._seed
 
-            f.write("Production.\n")
-            f.write(" &cntrl\n")
-            f.write("  ig=%d,\n" % seed)                # Random number seed.
-            f.write("  ntx=1,\n")                       # Only read coordinates from file.
-            f.write("  ntxo=1,\n")                      # Output coordinates in ASCII.
-            f.write("  ntpr=100,\n")                    # Output energies every 100 steps.
-            f.write("  ntwx=%d,\n"                      # Trajectory sampling frequency.
+            self.addToConfig("Production.")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  ig=%d," % seed)             # Random number seed.
+            self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
+            self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
                 % floor(steps / self._protocol.frames))
-            f.write("  irest=0,\n")                     # Don't restart.
-            f.write("  dt=0.002,\n")                    # Time step (2fs).
-            f.write("  nstlim=%d,\n" % steps)           # Number of integration steps.
-            f.write("  ntc=2,\n")                       # Enable SHAKE.
-            f.write("  ntf=2,\n")                       # Don't calculate forces for constrained bonds.
-            f.write("  ntt=3,\n")                       # Langevin dynamics.
-            f.write("  gamma_ln=2,\n")                  # Collision frequency (ps).
-            f.write("  cut=8.0,\n")                     # Non-bonded cut-off.
-            f.write("  temp0=%.2f,\n"                   # Temperature.
+            self.addToConfig("  irest=0,")                  # Don't restart.
+            self.addToConfig("  dt=0.002,")                 # Time step (2fs).
+            self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
+            self.addToConfig("  ntc=2,")                    # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                    # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
+            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            self.addToConfig("  temp0=%.2f,"                # Temperature.
                     % self._protocol.temperature)
 
             # Constant pressure control.
             if self._protocol.ensemble is 'NPT':
-                f.write("  ntp=1,\n")                   # Isotropic pressure scaling.
-                f.write("  pres0=1.01325,\n")           # Atompspheric pressure.
+                self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
 
-            f.write(" /\n")
+            self.addToConfig(" /")
 
-        # Close the configuration file.
-        f.close()
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
 
-    def start(self, optargs=None):
-        """Start the AMBER simulation.
+        # Clear the existing arguments.
+        self.clearArgs()
 
-           Keyword arguments:
+        # Add the default arguments.
+        self.setArg("-O", True)                             # Overwrite.
+        self.setArg("-i", "%s.amber" % self._name)          # Input file.
+        self.setArg("-p", "%s.top" % self._name)            # Topology file.
+        self.setArg("-c", "%s.crd" % self._name)            # Coordinate file.
+        self.setArg("-o", "stdout")                         # Redirect to stdout.
+        self.setArg("-r", "%s.restart.crd" % self._name)    # Restart file.
+        self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
-           optargs -- A list of optional argument strings.
-        """
+        # Skip if the user has passed a custom config.
+        if not self._is_custom:
+
+            # Append a reference file if this a constrained equilibration.
+            if self._protocol.type() == ProtocolType.EQUILIBRATION:
+                if self._protocol.is_restrained:
+                    self.setArg("-ref", "%s.crd" % self._name)
+
+            # Append a trajectory file if this is a production run.
+            elif self._protocol.type() == ProtocolType.PRODUCTION:
+                self.setArg("-x", "%s.trajectory.crd" % self._name)
+
+    def start(self):
+        """Start the AMBER simulation. """
 
         # Store the current working directory.
         dir = getcwd()
@@ -241,40 +264,17 @@ class Amber(process.Process):
         # This avoid problems with relative paths.
         chdir(self._work_dir)
 
-        # Create a list of the command-line arguments.
-        args = ["-O",                                   # Overwrite.
-                "-i", "%s.amber" % self._name,          # Input file.
-                "-p", "%s.top" % self._name,            # Topology file.
-                "-c", "%s.crd" % self._name,            # Coordinate file.
-                "-o", "stdout",                         # Redirect to stdout.
-                "-r", "%s.restart.crd" % self._name,    # Restart file.
-                "-inf", "%s.nrg" % self._name]          # Energy info file.
+        # Initalise the arguments list.
+        args = []
 
-        # Skip if the user has passed a custom config.
-        if not self._is_custom:
-
-            # Append a reference file if this a constrained equilibration.
-            if self._protocol.type() == ProtocolType.EQUILIBRATION:
-                if self._protocol.is_restrained:
-                    args.append("-ref")
-                    args.append("%s.crd" % self._name)
-
-            # Append a trajectory file if this is a production run.
-            elif self._protocol.type() == ProtocolType.PRODUCTION:
-                args.append("-x")
-                args.append("%s.trajectory.crd" % self._name)
-
-        # Append optional arguments.
-        if optargs is not None:
-            # Multiple arguments.
-            if type(optargs) is list or type(optargs) is tuple:
-                for arg in optargs:
-                    args.append(str(arg))
-            # Single arguments.
-            elif type(optargs) is str:
-                args.append(str(optargs))
+        # Create the list of command-line arguments strings.
+        for key, value in self._args.items():
+            # Boolean flag.
+            if type(value) is bool:
+                args.append(key)
             else:
-                warn("optargs must be of type 'str', 'list', or 'tuple'.")
+                args.append(str(key))
+                args.append(str(value))
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
