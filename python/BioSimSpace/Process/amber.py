@@ -134,11 +134,11 @@ class Amber(process.Process):
             self.addToConfig("  imin=1,")                   # Minisation simulation.
             self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
-            self.addToConfig("  ntpr=100,")                  # Output energies every 100 steps.
-            self.addToConfig("  irest=0,")                   # Don't restart.
+            self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  maxcyc=%d,"
-                    % self._protocol.steps)                 # Set the number of steps.
-            self.addToConfig("  cut=8.0,")                   # Non-bonded cut-off.
+                % self._protocol.steps)                     # Set the number of steps.
+            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
@@ -182,7 +182,7 @@ class Amber(process.Process):
                 self.addToConfig("  nmropt=1,")
                 self.addToConfig(" /")
                 self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                        % (steps, self._protocol.temperature_start, self._protocol.temperature_end))
+                    % (steps, self._protocol.temperature_start, self._protocol.temperature_end))
                 self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
@@ -218,7 +218,7 @@ class Amber(process.Process):
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
             self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  temp0=%.2f,"                # Temperature.
-                    % self._protocol.temperature)
+                % self._protocol.temperature)
 
             # Constant pressure control.
             if self._protocol.ensemble is 'NPT':
