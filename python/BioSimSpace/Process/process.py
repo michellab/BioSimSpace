@@ -352,7 +352,8 @@ class Process():
         for key, value in self._args.items():
             # Boolean flag.
             if type(value) is bool:
-                args.append(str(key))
+                if value:
+                    args.append(str(key))
             else:
                 args.append(str(key))
                 args.append(str(value))
