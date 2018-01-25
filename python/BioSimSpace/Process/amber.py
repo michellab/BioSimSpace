@@ -271,7 +271,7 @@ class Amber(process.Process):
         for key, value in self._args.items():
             # Boolean flag.
             if type(value) is bool:
-                args.append(key)
+                args.append(str(key))
             else:
                 args.append(str(key))
                 args.append(str(value))
