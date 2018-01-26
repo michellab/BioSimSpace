@@ -1,7 +1,6 @@
 import BioSimSpace as BSS
 
 from glob import glob
-from shutil import copyfile
 from sys import exit
 
 try:
@@ -24,7 +23,6 @@ protocol = BSS.Protocol.Minimisation(steps=1000)
 # Initialise the AMBER process.
 print("\nInitialising minimisation process...")
 proc = BSS.Process.Amber(system, protocol, name="minimise", work_dir="minimise")
-copyfile("amber/ala/ala.top", "minimise/minimise.top")
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
@@ -59,7 +57,6 @@ protocol = BSS.Protocol.Equilibration(runtime=0.01, temperature_start=0, tempera
 # Initialise the AMBER process.
 print("\nInitialising equilibration process...")
 proc = BSS.Process.Amber(minimised, protocol, name="equilibrate", work_dir="equilibrate")
-copyfile("amber/ala/ala.top", "equilibrate/equilibrate.top")
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
@@ -94,7 +91,6 @@ protocol = BSS.Protocol.Production(runtime=0.01)
 # Initialise the AMBER process.
 print("\nInitialising production process...")
 proc = BSS.Process.Amber(equilibrated, protocol, name="production", work_dir="production")
-copyfile("amber/ala/ala.top", "production/production.top")
 
 # Get the list of auto-generated input files.
 filenames = proc.inputFiles()
