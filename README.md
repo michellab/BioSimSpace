@@ -23,18 +23,18 @@ Please create a feature branch for development work. We use the following
 formatting conventions:
 
 * Branches related to a particular feature should be prefixed with `feature`,
-i.e. for the BioSimSpace.Sample module:
+i.e. for the BioSimSpace.Process module:
 
 ```bash
-feature-sample
+feature-process
 ```
 
 * If you wish to use sub-branches for a feature, they can be identified by
 using a backslash, e.g.:
 
 ```bash
-feature-sample/namd
-feature-sample/amber
+feature-process/namd
+feature-process/amber
 ```
 
 When you are happy with your feature, merge sub-branches into the main feature
