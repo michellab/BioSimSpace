@@ -112,7 +112,7 @@ if proc.isError():
 final = proc.getSystem()
 
 # Write the final structure to file.
-#filenames = BSS.saveMolecules("final", final, system.fileFormat())
+filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
