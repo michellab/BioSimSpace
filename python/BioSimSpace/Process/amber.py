@@ -64,8 +64,8 @@ class Amber(process.Process):
         self._stdout_title = None
 
         # The names of the input files.
-        self._crd_file = "%s/%s.crd" % (self._work_dir, name)
-        self._top_file = "%s/%s.top" % (self._work_dir, name)
+        self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
+        self._prm_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # Set the path for the AMBER configuration file.
         # The 'protocol' argument may contain the path to a custom file.
@@ -83,7 +83,7 @@ class Amber(process.Process):
                 raise IOError(('AMBER configuration file doesn\'t exist: "{x}"').format(x=config_file))
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._crd_file, self._top_file]
+        self._input_files = [self._config_file, self._rst_file, self._prm_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -93,13 +93,13 @@ class Amber(process.Process):
 
         # Create the input files...
 
-        # CRD file (coordinates).
-        crd = AmberRst7(self._system)
-        crd.writeToFile(self._crd_file)
+        # RST file (coordinates).
+        rst = AmberRst7(self._system)
+        rst.writeToFile(self._rst_file)
 
-        # TOP file (topology).
-        top = AmberPrm(self._system)
-        top.writeToFile(self._top_file)
+        # PRM file (topology).
+        prm = AmberPrm(self._system)
+        prm.writeToFile(self._prm_file)
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
@@ -236,8 +236,8 @@ class Amber(process.Process):
         # Add the default arguments.
         self.setArg("-O", True)                             # Overwrite.
         self.setArg("-i", "%s.amber" % self._name)          # Input file.
-        self.setArg("-p", "%s.top" % self._name)            # Topology file.
-        self.setArg("-c", "%s.crd" % self._name)            # Coordinate file.
+        self.setArg("-p", "%s.prm7" % self._name)           # Topology file.
+        self.setArg("-c", "%s.rst7" % self._name)           # Coordinate file.
         self.setArg("-o", "stdout")                         # Redirect to stdout.
         self.setArg("-r", "%s.restart.crd" % self._name)    # Restart file.
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
@@ -296,7 +296,7 @@ class Amber(process.Process):
         # Check that the file exists.
         if path.isfile(restart):
             # Create and return the molecular system.
-            return MoleculeParser.read(restart, self._top_file)
+            return MoleculeParser.read(restart, self._prm_file)
 
         else:
             return None
