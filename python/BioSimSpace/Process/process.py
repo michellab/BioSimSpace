@@ -13,6 +13,7 @@ from ..Protocol.protocol import Protocol
 from collections import OrderedDict
 from operator import add, sub
 from os import makedirs, path, remove
+from shutil import copyfile
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -270,6 +271,10 @@ class Process():
         if _is_list_of_strings(config):
             self._config = config
             self.writeConfig(self._config_file)
+
+        # The user has passed a file, overwrite the configuration file.
+        elif path.isfile(config):
+            copyfile(config, self._config_file)
 
         else:
             warn("The configuration must be a list of strings.")
