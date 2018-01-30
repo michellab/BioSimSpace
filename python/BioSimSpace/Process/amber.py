@@ -12,6 +12,8 @@ from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
 from os import chdir, getcwd, path
+from re import findall
+from time import sleep
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -23,6 +25,75 @@ try:
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
+
+try:
+    watchdog = try_import("watchdog")
+    from watchdog.events import PatternMatchingEventHandler
+    from watchdog.observers import Observer
+except ImportError:
+    raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
+
+class Watcher:
+    """A class to watch for changes to the AMBER energy info file. An event handler
+       is used trigger updates to the energy dictionary each time the file is modified.
+    """
+    def __init__(self, process):
+        """Constructor.
+
+           Keyword arguments:
+
+           process -- The Amber Process object.
+        """
+        self._process = process
+
+        self._observer = Observer()
+        self._process = process
+
+    def run(self):
+        """Run the file watcher."""
+        # Setup.
+        event_handler = Handler(self._process)
+        self._observer.schedule(event_handler, self._process._work_dir)
+        self._observer.start()
+
+        # Keep running until the process finishes.
+        while self._process.isRunning():
+            sleep(1)
+
+        # Cleanup.
+        self._observer.stop()
+        self._observer.join()
+
+class Handler(PatternMatchingEventHandler):
+    """An event handler to trigger updates to the energy dictionary each time
+       the log file is changed.
+    """
+
+    # Overwrite defaults.
+    case_sensitive = False
+    ignore_directories = True
+    ignore_patterns = []
+    patterns = "*.nrg"
+
+    def __init__(self, process):
+        """Constructor.
+
+           Keyword arguments:
+
+           process -- The Amber Process object.
+        """
+        self._process = process
+
+    def on_any_event(self, event):
+        """Update the dictionary when the file is changed."""
+        if event.is_directory:
+            return None
+
+        elif event.event_type == 'created':
+            self._process._update_energy_dict()
+
+        elif event.event_type == 'modified':
+            self._process._update_energy_dict()
 
 class Amber(process.Process):
     """A class for running simulations using AMBER."""
@@ -61,7 +132,12 @@ class Amber(process.Process):
 
         # Initialise the energy dictionary and header.
         self._stdout_dict = process._MDict()
-        self._stdout_title = None
+
+        # The name of the energy output file.
+        self._nrg_file = "%s/%s.nrg" % (self._work_dir, name)
+
+        # Initialise the energy watcher.
+        self._watcher = None
 
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
@@ -287,6 +363,10 @@ class Amber(process.Process):
         # Change back to the original working directory.
         chdir(dir)
 
+	# Watch the energy info file for changes.
+        self._watcher = Watcher(self)
+        self._watcher.run()
+
     def getSystem(self):
         """Get the latest molecular configuration as a Sire system."""
 
@@ -300,3 +380,144 @@ class Amber(process.Process):
 
         else:
             return None
+
+    def getRecord(self, record, time_series=False):
+        """Get a record from the stdout dictionary.
+
+           Keyword arguments:
+
+           record      -- The record keyword.
+           time_series -- Whether to return a list of time series records.
+        """
+        self._update_energy_dict()
+        return self._get_stdout_record(record, time_series)
+
+    def getTime(self, time_series=False):
+        """Get the time (in nanoseconds)."""
+
+        self._update_energy_dict()
+
+        # Get the list of time steps.
+        time_steps = self._get_stdout_record('NSTEP', time_series)
+
+        # Multiply by the integration time step (2fs).
+        if time_steps is not None:
+            if time_series:
+                return [x * 2e-6 for x in time_steps]
+            else:
+                return 2e-6 * time_steps
+
+    def getStep(self, time_series=False):
+        """Get the number of integration steps."""
+        self._update_energy_dict()
+        return self._get_stdout_record('NSTEP', time_series)
+
+    def getTotalEnergy(self, time_series=False):
+        """Get the total energy."""
+        self._update_energy_dict()
+
+        if self._protocol.type() == ProtocolType.MINIMISATION:
+            return self._get_stdout_record('ENERGY', time_series)
+        else:
+            return self._get_stdout_record('ETOT', time_series)
+
+    def _update_energy_dict(self):
+        """Read the energy info file and update the dictionary."""
+
+        # Flag that this isn't a header line.
+        is_header = False
+
+        # Open the file for reading.
+        with open(self._nrg_file, "r") as f:
+
+            # Loop over all of the lines.
+            for line in f:
+
+                # Skip empty lines and summary reports.
+                if len(line) > 0 and line[0] is not '|':
+
+                    # The output format is different for minimisation protocols.
+                    if self._protocol.type() == ProtocolType.MINIMISATION:
+
+                        # No equals sign in the line.
+                        if "=" not in line:
+
+                            # Split the line using whitespace.
+                            data = line.upper().split()
+
+                            # If we find a header, jump to the top of the loop.
+                            if len(data) > 0:
+                                if data[0] == 'NSTEP':
+                                    is_header = True
+                                    continue
+
+                        # Process the header record.
+                        if is_header:
+
+                            # Split the line using whitespace.
+                            data = line.upper().split()
+
+                            # The file hasn't been updated.
+                            if 'NSTEP' in self._stdout_dict and data[0] == self._stdout_dict['NSTEP'][-1]:
+                                return
+
+                            else:
+                                # Add the timestep and energy records to the dictionary.
+                                self._stdout_dict['NSTEP'] = data[0]
+                                self._stdout_dict['ENERGY'] = data[1]
+
+                                # Turn off the header flag now that the data has been recorded.
+                                is_header = False
+
+                    # All other protocols have output that is formatted as RECORD = VALUE.
+
+                    # Use a regex search to split the line into record names and values.
+                    records = findall("(\d*\-*\d*\s*[A-Z]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)", line.upper())
+
+                    # Append each record to the dictionary.
+                    for key, value in records:
+
+                        # Strip whitespace from the record key.
+                        key = key.strip()
+
+                        # The file hasn't been updated.
+                        if key == 'NSTEP':
+                            if 'NSTEP' in self._stdout_dict and value == self._stdout_dict['NSTEP'][-1]:
+                                return
+                            else:
+                                self._stdout_dict[key] = value
+                        else:
+                            self._stdout_dict[key] = value
+
+    def _get_stdout_record(self, key, time_series=False):
+        """Helper function to get a stdout record from the dictionary."""
+
+        # No data!
+        if len(self._stdout_dict) is 0:
+            return None
+
+        if type(time_series) is not bool:
+            warn("Non-boolean time-series flag. Defaulting to False!")
+            time_series = False
+
+        # Return the list of dictionary values.
+        if time_series:
+            try:
+                if key is 'NSTEP':
+                    return [int(x) for x in self._stdout_dict[key]]
+                else:
+                    return [float(x) for x in self._stdout_dict[key]]
+
+            except KeyError:
+                return None
+
+        # Return the most recent dictionary value.
+        else:
+            try:
+                if key is 'NSTEP':
+                    return int(self._stdout_dict[key][-1])
+                else:
+                    return float(self._stdout_dict[key][-1])
+
+            except KeyError:
+                return None

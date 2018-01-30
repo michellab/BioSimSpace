@@ -48,7 +48,7 @@ filenames = BSS.saveMolecules("minimised", minimised, system.fileFormat())
 print("\nWritten minimised molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-#print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
 # Create a short equilibration protocol.
@@ -82,7 +82,7 @@ filenames = BSS.saveMolecules("equilibrated", equilibrated, system.fileFormat())
 print("\nWritten equilibrated molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-#print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Equilibration took %.2f minutes." % proc.runTime())
 
 # Create a production protocol.
@@ -116,22 +116,23 @@ filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
-print("\nProduction run took %.2f minutes." % proc.runTime())
+print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("Production run took %.2f minutes." % proc.runTime())
 
 # Get a list of the time-steps and the corresponding total energies.
-#time = proc.getTime(time_series=True)
-#energy = proc.getTotalEnergy(time_series=True)
+time = proc.getTime(time_series=True)
+energy = proc.getTotalEnergy(time_series=True)
 
-#print("Plotting total energy vs time.")
+print("Plotting total energy vs time.")
 
 # Create a plot of the total energy vs time step.
-#fig, ax = plt.subplots()
-#ax.plot(time, energy, '-bo')
+fig, ax = plt.subplots()
+ax.plot(time, energy, '-bo')
 
-#ax.set(xlabel="Time (ns)", ylabel="Total Energy (kcal/mol)")
-#ax.grid()
+ax.set(xlabel="Time (ns)", ylabel="Total Energy (kcal/mol)")
+ax.grid()
 
-#fig.savefig("energy.pdf", bbox_inches="tight")
-#plt.show()
+fig.savefig("energy.pdf", bbox_inches="tight")
+plt.show()
 
 print("\nDone!")

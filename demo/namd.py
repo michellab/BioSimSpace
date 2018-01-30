@@ -119,7 +119,8 @@ filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
-print("\nProduction run took %.2f minutes." % proc.runTime())
+print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("Production run took %.2f minutes." % proc.runTime())
 
 # Get a list of the time-steps and the corresponding total energies.
 time = proc.getTime(time_series=True)

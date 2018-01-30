@@ -677,11 +677,11 @@ class Namd(process.Process):
             if len(data) > 0:
 
                 # Store the updated energy title.
-                if data[0] == "ETITLE:":
+                if data[0] == 'ETITLE:':
                     self._stdout_title = data[1:]
 
                 # This is an energy record.
-                elif data[0] == "ENERGY:":
+                elif data[0] == 'ENERGY:':
                     # Extract the data.
                     stdout_data = data[1:]
 
@@ -712,7 +712,7 @@ class Namd(process.Process):
 
         if type(time_series) is not bool:
             warn("Non-boolean time-series flag. Defaulting to False!")
-            time_seris = False
+            time_series = False
 
         # Return the list of dictionary values.
         if time_series:
