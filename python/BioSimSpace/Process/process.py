@@ -14,6 +14,7 @@ from collections import OrderedDict
 from operator import add, sub
 from os import makedirs, path, remove
 from timeit import default_timer as timer
+from warnings import warn
 
 import tempfile
 
@@ -268,7 +269,7 @@ class Process():
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
             self._config = config
-            self._generate_config()
+            self.writeConfig(self._config_file)
 
         else:
             warn("The configuration must be a list of strings.")
@@ -278,10 +279,12 @@ class Process():
         # Append a single string.
         if type(config) is str:
             self._config.append(config)
+            self.writeConfig(self._config_file)
 
         # Extend the list with the additional strings.
         elif _is_list_of_strings(config):
             self._config.extend(config)
+            self.writeConfig(self._config_file)
 
     def writeConfig(self, file):
         """Write the configuration to file."""
@@ -475,7 +478,7 @@ def _restrain_backbone(system):
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
     if lst and isinstance(lst, list):
-        return all(isinstance(elem, basestring) for elem in lst)
+        return all(isinstance(elem, str) for elem in lst)
     else:
         return False
 
