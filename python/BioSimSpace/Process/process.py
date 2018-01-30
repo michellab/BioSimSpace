@@ -13,7 +13,6 @@ from ..Protocol.protocol import Protocol
 from collections import OrderedDict
 from operator import add, sub
 from os import makedirs, path, remove
-from shutil import copyfile
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -272,12 +271,22 @@ class Process():
             self._config = config
             self.writeConfig(self._config_file)
 
-        # The user has passed a file, overwrite the configuration file.
+        # The user has passed a path to a file.
         elif path.isfile(config):
-            copyfile(config, self._config_file)
+
+            # Clear the existing config.
+            self._config = []
+
+            # Read the contents of the file.
+            with open(config, "r") as f:
+                for line in f:
+                    self._config.append(line.rstrip())
+
+            # Write the new configuration file.
+            self.writeConfig(self._config_file)
 
         else:
-            warn("The configuration must be a list of strings.")
+            raise ValueError("'config' must be a list of strings, or a file path.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list."""
@@ -290,6 +299,20 @@ class Process():
         elif _is_list_of_strings(config):
             self._config.extend(config)
             self.writeConfig(self._config_file)
+
+        # A path to a file.
+        elif path.isfile(config):
+
+            # Read the contents of the file.
+            with open(file, "r") as f:
+                for line in f:
+                    self._config.append(line)
+
+            # Write the new configuration file.
+            self.writeConfig(self._config_file)
+
+        else:
+            raise ValueError("'config' must be a string, list of strings, or a file path.")
 
     def writeConfig(self, file):
         """Write the configuration to file."""
