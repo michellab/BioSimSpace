@@ -10,6 +10,7 @@ from Sire.Vol import AABox
 
 from ..Protocol.protocol import Protocol
 
+from collections import OrderedDict
 from operator import add, sub
 from os import makedirs, path, remove
 from timeit import default_timer as timer
@@ -116,7 +117,7 @@ class Process():
         self._config = []
 
         # Initaliae the command-line argument dictionary.
-        self._args = {}
+        self._args = OrderedDict()
 
     @property
     def seed(self):
@@ -294,7 +295,7 @@ class Process():
 
     def setArgs(self, args):
         """Set the dictionary of command-line arguments."""
-        if type(args) is dict:
+        if isinstance(args, OrderedDict):
             self._args = args
 
     def setArg(self, arg, value):
@@ -309,6 +310,28 @@ class Process():
            specify whether the flag is enabled (True) or not (False).
         """
         self._args[arg] = value
+
+    def insertArg(self, arg, value, index):
+        """Insert a command-line argument at a specific index.
+
+           Keyword arguments:
+
+           arg   -- The argument to set.
+           value -- The value of the argument.
+           index -- The index in the dictionary.
+        """
+        _odict_insert(self._args, arg, value, index)
+
+    def addArgs(self, args):
+        """Append additional command-line arguments.
+
+           Keyword arguments:
+
+           args -- A dictionary of arguments.
+        """
+        if isinstance(args, dict) or isinstance(args, OrderedDict):
+            for arg, value in args.items():
+                self._args[arg] = value
 
     def deleteArg(self, arg):
         """Delete an argument from the dictionary."""
@@ -455,3 +478,30 @@ def _is_list_of_strings(lst):
         return all(isinstance(elem, basestring) for elem in lst)
     else:
         return False
+
+def _odict_insert(dct, key, value, index):
+    """Insert an item into an ordered dictionary."""
+
+    # Store the original size of the dictionary.
+    n = len(dct)
+
+    # Make sure the index is within range.
+    if index < 0 or index > n+1:
+        raise IndexError("Dictionary index out of range!")
+
+    # Insert the new item at the end.
+    dct[key] = value
+
+    # Now loop over the original dict, moving any items
+    # beyond 'index' to the end.
+
+    # Index counter
+    i = 0
+
+    for item in list(dct):
+        i += 1
+
+        if i > n:
+            break
+        elif i > index:
+            dct.move_to_end(item)
