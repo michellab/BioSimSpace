@@ -52,7 +52,7 @@ print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
 # Create a short equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.01, temperature_start=0, temperature_end=300)
+protocol = BSS.Protocol.Equilibration(runtime=0.01)
 
 # Initialise the AMBER process.
 print("\nInitialising equilibration process...")

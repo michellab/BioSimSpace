@@ -505,6 +505,10 @@ class Namd(process.Process):
         self.stdout(0)
         return self._get_stdout_record(record, time_series)
 
+    def getRecords(self):
+        """Return the dictionary of stdout time-series records."""
+        return self._stdout_dict
+
     def getTime(self, time_series=False):
         """Get the time (in nanoseconds)."""
 

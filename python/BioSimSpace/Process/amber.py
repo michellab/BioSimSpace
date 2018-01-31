@@ -390,7 +390,11 @@ class Amber(process.Process):
            time_series -- Whether to return a list of time series records.
         """
         self._update_energy_dict()
-        return self._get_stdout_record(record, time_series)
+        return self._get_stdout_record(record.strip().upper(), time_series)
+
+    def getRecords(self):
+        """Return the dictionary of stdout time-series records."""
+        return self._stdout_dict
 
     def getTime(self, time_series=False):
         """Get the time (in nanoseconds)."""
@@ -416,6 +420,61 @@ class Amber(process.Process):
         self._update_energy_dict()
         return self._get_stdout_record('NSTEP', time_series)
 
+    def getBondEnergy(self, time_series=False):
+        """Get the bond energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('BOND', time_series)
+
+    def getAngleEnergy(self, time_series=False):
+        """Get the angle energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('ANGLE', time_series)
+
+    def getDihedralEnergy(self, time_series=False):
+        """Get the dihedral energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('DIHED', time_series)
+
+    def getElectrostaticEnergy(self, time_series=False):
+        """Get the electrostatic energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('EELECT', time_series)
+
+    def getElectrostaticEnergy14(self, time_series=False):
+        """Get the electrostatic energy between atoms 1 and 4."""
+        self._update_energy_dict()
+        return self._get_stdout_record('1-4 EEL', time_series)
+
+    def getVanDerWaalsEnergy(self, time_series=False):
+        """Get the Van der Vaals energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('VDWAALS', time_series)
+
+    def getHydrogenBondEnergy(self, time_series=False):
+        """Get the Van der Vaals energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('EHBOND', time_series)
+
+    def getRestraintEnergy(self, time_series=False):
+        """Get the restraint energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('RESTRAINT', time_series)
+
+    def getPotentialEnergy(self, time_series=False):
+        """Get the potential energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('EPTOT', time_series)
+
+    def getKineticEnergy(self, time_series=False):
+        """Get the kinetic energy."""
+        self._update_energy_dict()
+        return self._get_stdout_record('EKTOT', time_series)
+
+    def getNonBondedEnergy14(self, time_series=False):
+        """Get the non-bonded energy between atoms 1 and 4."""
+        self._update_energy_dict()
+        return self._get_stdout_record('1-4 NB', time_series)
+
     def getTotalEnergy(self, time_series=False):
         """Get the total energy."""
         self._update_energy_dict()
@@ -424,6 +483,36 @@ class Amber(process.Process):
             return self._get_stdout_record('ENERGY', time_series)
         else:
             return self._get_stdout_record('ETOT', time_series)
+
+    def getCentreOfMassKineticEnergy(self, time_series=False):
+        """Get the kinetic energy of the centre of mass in translation."""
+        self._update_energy_dict()
+        return self._get_stdout_record('EKCMT', time_series)
+
+    def getVirial(self, time_series=False):
+        """Get the virial."""
+        self._update_energy_dict()
+        return self._get_stdout_record('VIRIAL', time_series)
+
+    def getTemperature(self, time_series=False):
+        """Get the temperature."""
+        self._update_energy_dict()
+        return self._get_stdout_record('TEMP(K)', time_series)
+
+    def getPressure(self, time_series=False):
+        """Get the temperature."""
+        self._update_energy_dict()
+        return self._get_stdout_record('PRESS', time_series)
+
+    def getVolume(self, time_series=False):
+        """Get the volume."""
+        self._update_energy_dict()
+        return self._get_stdout_record('VOLUME', time_series)
+
+    def getDensity(self, time_series=False):
+        """Get the density."""
+        self._update_energy_dict()
+        return self._get_stdout_record('DENSITY', time_series)
 
     def _update_energy_dict(self):
         """Read the energy info file and update the dictionary."""
