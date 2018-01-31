@@ -90,7 +90,7 @@ class Handler(PatternMatchingEventHandler):
             return None
 
         elif event.event_type == 'created':
-            self._process._update_energy_dict()
+            self.process._stdout_dict = process._MDict()
 
         elif event.event_type == 'modified':
             self._process._update_energy_dict()
@@ -133,8 +133,10 @@ class Amber(process.Process):
         # Initialise the energy dictionary and header.
         self._stdout_dict = process._MDict()
 
-        # The name of the energy output file.
+        # Create the name of the energy output file and wipe the
+        # contents of any existing file.
         self._nrg_file = "%s/%s.nrg" % (self._work_dir, name)
+        open(self._nrg_file, 'w').close()
 
         # Initialise the energy watcher.
         self._watcher = None
@@ -280,12 +282,18 @@ class Amber(process.Process):
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
             self.addToConfig("  ig=%d," % seed)             # Random number seed.
-            self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
+            if self._protocol.restart:
+                self.addToConfig("  ntx=5,")                # Read coordinates and velocities.
+            else:
+                self.addToConfig("  ntx=1,")                # Only read coordinates.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
                 % floor(steps / self._protocol.frames))
-            self.addToConfig("  irest=0,")                  # Don't restart.
+            if self._protocol.restart:
+                self.addToConfig("  irest=1,")              # Restart using previous velocities.
+            else:
+                self.addToConfig("  irest=0,")              # Don't restart.
             self.addToConfig("  dt=0.002,")                 # Time step (2fs).
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
             self.addToConfig("  ntc=2,")                    # Enable SHAKE.
@@ -293,7 +301,10 @@ class Amber(process.Process):
             self.addToConfig("  ntt=3,")                    # Langevin dynamics.
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
             self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
-            self.addToConfig("  temp0=%.2f,"                # Temperature.
+            if not self._protocol.restart:
+                self.addToConfig("  tempi=%.2f,"            # Initial temperature.
+                    % self._protocol.temperature)
+            self.addToConfig("  temp0=%.2f,"                # Target temperature.
                 % self._protocol.temperature)
 
             # Constant pressure control.
@@ -406,14 +417,14 @@ class Amber(process.Process):
         self._update_energy_dict()
 
         # Get the list of time steps.
-        time_steps = self._get_stdout_record('NSTEP', time_series)
+        time_steps = self._get_stdout_record('TIME(PS)', time_series)
 
-        # Multiply by the integration time step (2fs).
+        # Convert from picoseconds to nanoseconds.
         if time_steps is not None:
             if time_series:
-                return [x * 2e-6 for x in time_steps]
+                return [x * 1e-3 for x in time_steps]
             else:
-                return 2e-6 * time_steps
+                return 1e-3 * time_steps
 
     def getStep(self, time_series=False):
         """Get the number of integration steps."""

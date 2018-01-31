@@ -51,8 +51,8 @@ print("\nWritten minimised molecular structure to: %s" % filenames)
 print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
-# Create a short equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.01)
+# Create a short heating equilibration protocol.
+protocol = BSS.Protocol.Equilibration(runtime=0.01, temperature_start=0, temperature_end=300)
 
 # Initialise the AMBER process.
 print("\nInitialising equilibration process...")
@@ -86,7 +86,7 @@ print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Equilibration took %.2f minutes." % proc.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.01)
+protocol = BSS.Protocol.Production(runtime=0.01, restart=True)
 
 # Initialise the AMBER process.
 print("\nInitialising production process...")

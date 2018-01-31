@@ -114,10 +114,6 @@ class Equilibration(Protocol):
             warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
             self._is_restrained = False
 
-    def type(self):
-        """Return the protocol type."""
-        return self._type
-
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature."""
         return self._is_const_temp

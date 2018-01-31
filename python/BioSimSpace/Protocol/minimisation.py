@@ -26,10 +26,6 @@ class Minimisation(Protocol):
         # Set the number of steps.
         self._steps = steps
 
-    def type(self):
-        """Return the protocol type."""
-        return self._type
-
     @property
     def steps(self):
         """Return the maximum number of steps."""
