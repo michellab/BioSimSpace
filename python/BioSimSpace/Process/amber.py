@@ -395,6 +395,10 @@ class Amber(process.Process):
     def getTime(self, time_series=False):
         """Get the time (in nanoseconds)."""
 
+        # No time records for minimisation protocols.
+        if self._protocol.type() == ProtocolType.MINIMISATION:
+            return None
+
         self._update_energy_dict()
 
         # Get the list of time steps.
