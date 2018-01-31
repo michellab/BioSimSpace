@@ -3,7 +3,7 @@
 This directory contains several examples from the NAMD
 [utilities](http://www.ks.uiuc.edu/Research/namd/utilities) and
 [tutorials](http://www.ks.uiuc.edu/Training/Tutorials/) that are used to test
-the BioSimSpace sampler.
+BioSimSpace.
 
 The original links to the specific files used are given below:
 
