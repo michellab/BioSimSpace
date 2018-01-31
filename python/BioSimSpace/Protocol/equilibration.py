@@ -36,6 +36,7 @@ class Equilibration(Protocol):
         # Set the final temperature.
         if not temperature_end is None:
             self._temperature_end = temperature_end
+            self._is_const_temp = False
 
             # Start and end temperature is the same.
             if (self._temperature_start == self._temperature_end):
@@ -112,10 +113,6 @@ class Equilibration(Protocol):
         else:
             warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
             self._is_restrained = False
-
-    def type(self):
-        """Return the protocol type."""
-        return self._type
 
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature."""

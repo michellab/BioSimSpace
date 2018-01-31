@@ -34,6 +34,10 @@ class Protocol():
         # Set the gas phase flag.
         self._gas_phase = gas_phase
 
+    def type(self):
+        """Return the protocol type."""
+        return self._type
+
     @property
     def gas_phase(self):
         """Return whether this is a gas phase simulation."""
@@ -41,7 +45,7 @@ class Protocol():
 
     @gas_phase.setter
     def gas_phase(self, gas_phase):
-        """Set gas phase flag."""
+        """Set the gas phase flag."""
 
         if type(gas_phase) is bool:
             self._gas_phase = gas_phase

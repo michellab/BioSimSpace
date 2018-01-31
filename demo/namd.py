@@ -1,5 +1,6 @@
 import BioSimSpace as BSS
 
+from glob import glob
 from sys import exit
 
 try:
@@ -9,18 +10,19 @@ try:
 except ImportError:
     raise ImportError("Matplotlib is not installed. Please install matplotlib in order to use BioSimSpace.")
 
+# Glob the input files.
+files = glob("namd/ubiquitin/*")
+
 # Load the molecular system.
 print("\nLoading molecules...")
-system = BSS.readMolecules( ["namd/ubiquitin/ubiquitin.psf",
-                             "namd/ubiquitin/ubiquitin.pdb",
-                             "namd/ubiquitin/par_all27_prot_lipid.inp"] )
+system = BSS.readMolecules(files)
 
 # Create a minimisation protocol.
 protocol = BSS.Protocol.Minimisation(steps=1000)
 
 # Initialise the NAMD process.
 print("\nInitialising minimisation process...")
-proc = BSS.Sample.NamdProcess(system, protocol, name="minimise",
+proc = BSS.Process.Namd(system, protocol, name="minimise",
         work_dir="minimise", charmm_params=True)
 
 # Get the list of auto-generated input files.
@@ -51,11 +53,11 @@ print("\nMinimised energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Minimisation took %.2f minutes." % proc.runTime())
 
 # Create a short equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.1)
+protocol = BSS.Protocol.Equilibration(runtime=0.01)
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
-proc = BSS.Sample.NamdProcess(minimised, protocol, name="equilibrate",
+proc = BSS.Process.Namd(minimised, protocol, name="equilibrate",
         work_dir="equilibrate", charmm_params=True)
 
 # Get the list of auto-generated input files.
@@ -86,11 +88,11 @@ print("\nEquilibrated energy is %.2f kcal/mol." % proc.getTotalEnergy())
 print("Equilibration took %.2f minutes." % proc.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.1)
+protocol = BSS.Protocol.Production(runtime=0.01)
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")
-proc = BSS.Sample.NamdProcess(equilibrated, protocol, name="production",
+proc = BSS.Process.Namd(equilibrated, protocol, name="production",
         work_dir="production", charmm_params=True)
 
 # Get the list of auto-generated input files.
@@ -117,7 +119,8 @@ filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
-print("\nProduction run took %.2f minutes." % proc.runTime())
+print("\nFinal energy is %.2f kcal/mol." % proc.getTotalEnergy())
+print("Production run took %.2f minutes." % proc.runTime())
 
 # Get a list of the time-steps and the corresponding total energies.
 time = proc.getTime(time_series=True)

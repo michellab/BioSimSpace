@@ -10,9 +10,11 @@ from Sire.Vol import AABox
 
 from ..Protocol.protocol import Protocol
 
+from collections import OrderedDict
 from operator import add, sub
 from os import makedirs, path, remove
 from timeit import default_timer as timer
+from warnings import warn
 
 import tempfile
 
@@ -84,7 +86,7 @@ class Process():
         else:
             self._work_dir = work_dir
 
-            # Create the directory if it doesn't already exist..
+            # Create the directory if it doesn't already exist.
             if not path.isdir(work_dir):
                 makedirs(work_dir)
 
@@ -111,6 +113,12 @@ class Process():
 
         if path.isfile(stderr_offset):
             remove(stderr_offset)
+
+        # Initialise the configuration file string list.
+        self._config = []
+
+        # Initaliae the command-line argument dictionary.
+        self._args = OrderedDict()
 
     @property
     def seed(self):
@@ -251,6 +259,123 @@ class Process():
         """Return the command-line string used to run the process."""
         return self._command
 
+    def getConfig(self):
+        """Get the list of configuration file strings."""
+        return self._config
+
+    def setConfig(self, config):
+        """Set the list of configuration file strings."""
+
+        # Check that the passed configuration is a list of strings.
+        if _is_list_of_strings(config):
+            self._config = config
+            self.writeConfig(self._config_file)
+
+        # The user has passed a path to a file.
+        elif path.isfile(config):
+
+            # Clear the existing config.
+            self._config = []
+
+            # Read the contents of the file.
+            with open(config, "r") as f:
+                for line in f:
+                    self._config.append(line.rstrip())
+
+            # Write the new configuration file.
+            self.writeConfig(self._config_file)
+
+        else:
+            raise ValueError("'config' must be a list of strings, or a file path.")
+
+    def addToConfig(self, config):
+        """Add a string to the configuration list."""
+        # Append a single string.
+        if type(config) is str:
+            self._config.append(config)
+            self.writeConfig(self._config_file)
+
+        # Extend the list with the additional strings.
+        elif _is_list_of_strings(config):
+            self._config.extend(config)
+            self.writeConfig(self._config_file)
+
+        # A path to a file.
+        elif path.isfile(config):
+
+            # Read the contents of the file.
+            with open(file, "r") as f:
+                for line in f:
+                    self._config.append(line)
+
+            # Write the new configuration file.
+            self.writeConfig(self._config_file)
+
+        else:
+            raise ValueError("'config' must be a string, list of strings, or a file path.")
+
+    def writeConfig(self, file):
+        """Write the configuration to file."""
+        with open(file, "w") as f:
+            for line in self._config:
+                f.write("%s\n" % line)
+
+    def getArgs(self):
+        """Get the dictionary of command-line arguments."""
+        return self._args
+
+    def setArgs(self, args):
+        """Set the dictionary of command-line arguments."""
+        if isinstance(args, OrderedDict):
+            self._args = args
+
+    def setArg(self, arg, value):
+        """Set a specific command-line argument.
+
+           Keyword arguments:
+
+           arg   -- The argument to set.
+           value -- The value of the argument.
+
+           For command-line flags, i.e. boolean arguments, the key should
+           specify whether the flag is enabled (True) or not (False).
+        """
+        self._args[arg] = value
+
+    def insertArg(self, arg, value, index):
+        """Insert a command-line argument at a specific index.
+
+           Keyword arguments:
+
+           arg   -- The argument to set.
+           value -- The value of the argument.
+           index -- The index in the dictionary.
+        """
+        _odict_insert(self._args, arg, value, index)
+
+    def addArgs(self, args):
+        """Append additional command-line arguments.
+
+           Keyword arguments:
+
+           args -- A dictionary of arguments.
+        """
+        if isinstance(args, dict) or isinstance(args, OrderedDict):
+            for arg, value in args.items():
+                self._args[arg] = value
+
+    def deleteArg(self, arg):
+        """Delete an argument from the dictionary."""
+        try:
+            del self._args[arg]
+
+        except KeyError:
+            pass
+
+    def clearArgs(self):
+        """Clear all of the command-line arguments."""
+        self._args.clear()
+
     def runTime(self):
         """Return the running time for the process (in minutes)."""
 
@@ -270,6 +395,24 @@ class Process():
             # The process has finished. Return the previous run time.
             else:
                 return self._runtime
+
+    def _generate_args_string(self):
+        """ Convert the argument dictionary into a list of strings."""
+
+        # Create an empty list.
+        args = []
+
+        # Add the arguments to the list.
+        for key, value in self._args.items():
+            # Boolean flag.
+            if type(value) is bool:
+                if value:
+                    args.append(str(key))
+            else:
+                args.append(str(key))
+                args.append(str(value))
+
+        return args
 
 def _getAABox(system):
     """Get the axis-aligned bounding box for the molecular system.
@@ -294,6 +437,16 @@ def _getAABox(system):
 
     # Return the AABox for the coordinates.
     return AABox(coord)
+
+def _get_box_size(system):
+    """Get the size of the periodic box."""
+
+    try:
+        box = system.property("space")
+        return box.dimensions()
+
+    except UserWarning:
+        return None
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
@@ -349,3 +502,37 @@ def _restrain_backbone(system):
 
     # Return the new system.
     return s
+
+def _is_list_of_strings(lst):
+    """Check whether the passed argument is a list of strings."""
+    if lst and isinstance(lst, list):
+        return all(isinstance(elem, str) for elem in lst)
+    else:
+        return False
+
+def _odict_insert(dct, key, value, index):
+    """Insert an item into an ordered dictionary."""
+
+    # Store the original size of the dictionary.
+    n = len(dct)
+
+    # Make sure the index is within range.
+    if index < 0 or index > n+1:
+        raise IndexError("Dictionary index out of range!")
+
+    # Insert the new item at the end.
+    dct[key] = value
+
+    # Now loop over the original dict, moving any items
+    # beyond 'index' to the end.
+
+    # Index counter
+    i = 0
+
+    for item in list(dct):
+        i += 1
+
+        if i > n:
+            break
+        elif i > index:
+            dct.move_to_end(item)

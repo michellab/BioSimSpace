@@ -16,7 +16,7 @@ class Production(Protocol):
     """A class for storing production protocols."""
 
     def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT",
-            first_step=0, gas_phase=False):
+            first_step=0, restart=False, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
@@ -26,6 +26,7 @@ class Production(Protocol):
            frames      -- The number of trajectory frames to record.
            ensemble    -- The thermodynamic ensemble.
            first_step  -- The initial time step (for restart simulations).
+           restart     -- Whether this is a continuation of a previous simulation.
            gas_phase   -- Whether this a gas phase simulation.
         """
 
@@ -44,12 +45,12 @@ class Production(Protocol):
         # Set the thermodynamic ensemble.
         self._ensemble = ensemble
 
+        # Set the restart flag.
+        self._restart = restart
+
         # Set the first time step.
         self._first_step = first_step
 
-    def type(self):
-        """Return the protocol type."""
-        return self._type
     @property
     def runtime(self):
         """Return the running time."""
@@ -107,12 +108,12 @@ class Production(Protocol):
     def ensemble(self, ensemble):
         """Set the thermodynamic ensemble."""
 
-        if ensemble.upper() not in _ensembles:
+        if ensemble.strip().upper() not in _ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
             self._ensemble = 'NPT'
 
         else:
-            self._ensemble = ensemble.upper()
+            self._ensemble = ensemble.strip().upper()
     @property
     def first_step(self):
         """Return the first time step."""
@@ -128,3 +129,19 @@ class Production(Protocol):
 
         else:
             self._first_step = ceil(first_step)
+
+    @property
+    def restart(self):
+        """Return whether this restart simulation."""
+        return self._restart
+
+    @restart.setter
+    def restart(self, restart):
+        """Set the restart flag."""
+
+        if type(restart) is bool:
+            self._restart = restart
+
+        else:
+            warn("Non-boolean restart flag. Defaulting to False!")
+            self._restart = False

@@ -23,7 +23,7 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class NamdProcess(process.Process):
+class Namd(process.Process):
     """A class for running simulations using NAMD."""
 
     def __init__(self, system, protocol, exe=None, name="namd",
@@ -42,7 +42,7 @@ class NamdProcess(process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir)
+        super().__init__(system, protocol, name, work_dir, seed)
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
@@ -184,13 +184,17 @@ class NamdProcess(process.Process):
         # Generate the NAMD configuration file.
         # Skip if the user has passed a custom config.
         if not self._is_custom:
-            self._generate_config_file()
+            self._generate_config()
+            self.writeConfig(self._config_file)
 
         # Return the list of input files.
         return self._input_files
 
-    def _generate_config_file(self):
-        """Generate a NAMD configuration file."""
+    def _generate_config(self):
+        """Generate NAMD configuration file strings."""
+
+        # Clear the existing configuration list.
+        self._config = []
 
         # Flag that the system doesn't contain a box.
         has_box = False
@@ -218,123 +222,120 @@ class NamdProcess(process.Process):
             box_size = 2 * aabox.halfExtents()
             origin = tuple(aabox.center())
 
-        # Open the configuration file for writing.
-        f = open(self._config_file, "w")
-
-        # Write generic configuration variables.
+        # Append generic configuration variables.
 
         # Topology.
-        f.write("structure             %s\n" % path.basename(self._psf_file))
-        f.write("coordinates           %s\n" % path.basename(self._pdb_file))
+        self.addToConfig("structure             %s" % path.basename(self._psf_file))
+        self.addToConfig("coordinates           %s" % path.basename(self._pdb_file))
 
         # Velocities.
         if not self._velocity_file is None:
-            f.write("velocities            %s\n" % path.basename(self._velocity_file))
+            self.addToConfig("velocities            %s" % path.basename(self._velocity_file))
 
         # Parameters.
         if self._is_charmm_params:
-            f.write("paraTypeCharmm        on\n")
-        f.write("parameters            %s\n" % path.basename(self._param_file))
+            self.addToConfig("paraTypeCharmm        on")
+        self.addToConfig("parameters            %s" % path.basename(self._param_file))
 
         # Random number seed.
         if not self._seed is None:
-            f.write("seed                  %s\n" % self._seed)
+            self.addToConfig("seed                  %d" % self._seed)
 
         # Exclusion policy.
-        f.write("exclude               scaled1-4\n")
+        self.addToConfig("exclude               scaled1-4")
 
         # Non-bonded potential parameters.
 
         # Gas phase.
         if self._protocol.gas_phase:
-            f.write("cutoff                999.\n")
-            f.write("zeroMomentum          yes\n")
-            f.write("switching             off\n")
+            self.addToConfig("cutoff                999.")
+            self.addToConfig("zeroMomentum          yes")
+            self.addToConfig("switching             off")
 
         # Solvated.
         else:
             # Only use a cutoff if the box is large enough.
             if min(box_size) > 26:
-                f.write("cutoff                12.\n")
-                f.write("pairlistdist          14.\n")
-                f.write("switching             on\n")
-                f.write("switchdist            10.\n")
+                self.addToConfig("cutoff                12.")
+                self.addToConfig("pairlistdist          14.")
+                self.addToConfig("switching             on")
+                self.addToConfig("switchdist            10.")
 
             # Load the XSC file.
             if has_box:
-                f.write("extendedSystem        %s.xsc\n" % self._name)
+                self.addToConfig("extendedSystem        %s.xsc" % self._name)
                 # We force the cell origin to be located at the system's centre
                 # of geometry. This ensures a consistent periodic wrapping for
                 # all NAMD output.
-                f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
+                self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
 
             # Set the cell using the axis-aligned bounding box.
             else:
-                f.write("cellBasisVector1     %.1f   0.    0.\n" % box_size[0])
-                f.write("cellBasisVector2      0.   %.1f   0.\n" % box_size[1])
-                f.write("cellBasisVector3      0.    0.   %.1f\n" % box_size[2])
-                f.write("cellOrigin            %.1f   %.1f   %.1f\n" % origin)
+                self.addToConfig("cellBasisVector1     %.1f   0.    0." % box_size[0])
+                self.addToConfig("cellBasisVector2      0.   %.1f   0." % box_size[1])
+                self.addToConfig("cellBasisVector3      0.    0.   %.1f" % box_size[2])
+                self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
 
             # Wrap all molecular coordinates to the periodic box.
-            f.write("wrapAll               on\n")
+            self.addToConfig("wrapAll               on")
 
             # Periodic electrostatics.
-            f.write("PME                   yes\n")
-            f.write("PMEGridSpacing        1.\n")
+            self.addToConfig("PME                   yes")
+            self.addToConfig("PMEGridSpacing        1.")
 
         # Output file parameters.
-        f.write("outputName            %s_out\n" % self._name)
-        f.write("binaryOutput          no\n")
-        f.write("binaryRestart         no\n")
+        self.addToConfig("outputName            %s_out" % self._name)
+        self.addToConfig("binaryOutput          no")
+        self.addToConfig("binaryRestart         no")
 
         # Output frequency.
-        f.write("restartfreq           500\n")
-        f.write("xstFreq               500\n")
+        self.addToConfig("restartfreq           500")
+        self.addToConfig("xstFreq               500")
 
         # Printing frequency.
-        f.write("outputEnergies        100\n")
-        f.write("outputTiming          1000\n")
+        self.addToConfig("outputEnergies        100")
+        self.addToConfig("outputTiming          1000")
 
         # Add configuration variables for a minimisation simulation.
         if self._protocol.type() == ProtocolType.MINIMISATION:
-            f.write("temperature           %s\n" % self._protocol.temperature)
+            self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
             # stepspercycle, which is set the default of 20.
             steps = 20 * ceil(self._protocol.steps / 20)
-            f.write("minimize              %s\n" % steps)
+            self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
-                f.write("set temperature       %s\n" % self._protocol.temperature_start)
+                self.addToConfig("set temperature       %.2f" % self._protocol.temperature_start)
             else:
-                f.write("set temperature       %s\n" % self._protocol.temperature_end)
-            f.write("temperature           $temperature\n")
+                self.addToConfig("set temperature       %.2f" % self._protocol.temperature_end)
+            self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            f.write("timestep              2.\n")
-            f.write("rigidBonds            all\n")
-            f.write("nonbondedFreq         1\n")
-            f.write("fullElectFrequency    2\n")
+            self.addToConfig("timestep              2.")
+            self.addToConfig("rigidBonds            all")
+            self.addToConfig("nonbondedFreq         1")
+            self.addToConfig("fullElectFrequency    2")
 
             # Constant temperature control.
-            f.write("langevin              on\n")
-            f.write("langevinDamping       1.\n")
-            f.write("langevinTemp          $temperature\n")
-            f.write("langevinHydrogen      no\n")
+            self.addToConfig("langevin              on")
+            self.addToConfig("langevinDamping       1.")
+            self.addToConfig("langevinTemp          $temperature")
+            self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
             if not self._protocol.isConstantTemp():
-                f.write("langevinPiston        on\n")
-                f.write("langevinPistonTarget  1.01325\n")
-                f.write("langevinPistonPeriod  100.\n")
-                f.write("langevinPistonDecay   50.\n")
-                f.write("langevinPistonTemp    $temperature\n")
-                f.write("useGroupPressure      yes\n")
-                f.write("useFlexibleCell       no\n")
-                f.write("useConstantArea       no\n")
+                self.addToConfig("langevinPiston        on")
+                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonPeriod  100.")
+                self.addToConfig("langevinPistonDecay   50.")
+                self.addToConfig("langevinPistonTemp    $temperature")
+                self.addToConfig("useGroupPressure      yes")
+                self.addToConfig("useFlexibleCell       no")
+                self.addToConfig("useConstantArea       no")
 
             # Restrain the backbone.
             if self._protocol.is_restrained:
@@ -351,8 +352,8 @@ class NamdProcess(process.Process):
                 p.writeToFile(self._restraint_file)
 
                 # Update the configuration file.
-                f.write("fixedAtoms            yes\n")
-                f.write("fixedAtomsFile        %s.restrained\n" % self._name)
+                self.addToConfig("fixedAtoms            yes")
+                self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
@@ -362,47 +363,47 @@ class NamdProcess(process.Process):
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.temperature_target - self._protocol.temperature_start)
+                denom = abs(self._protocol.temperature_end - self._protocol.temperature_start)
                 freq = floor(steps / denom)
 
-                f.write("reassignFreq          %s\n" % freq)
-                f.write("reassignTemp          %s\n" % self._protocol.temperature_start)
-                f.write("reassignIncr          1.\n")
-                f.write("reassignHold          %s\n" % self._protocol.temperature_target)
+                self.addToConfig("reassignFreq          %d" % freq)
+                self.addToConfig("reassignTemp          %.2f" % self._protocol.temperature_start)
+                self.addToConfig("reassignIncr          1.")
+                self.addToConfig("reassignHold          %.2f" % self._protocol.temperature_end)
 
             # Run the simulation.
-            f.write("run                   %s\n" % steps)
+            self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
             # Set the Tcl temperature variable.
-            f.write("set temperature       %s\n" % self._protocol.temperature)
-            f.write("temperature           $temperature\n")
+            self.addToConfig("set temperature       %.2f" % self._protocol.temperature)
+            self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            f.write("timestep              2.\n")
+            self.addToConfig("timestep              2.")
             if self._protocol.first_step is not 0:
-                f.write("firsttimestep         %s\n" % self._protocol.first_step)
-            f.write("rigidBonds            all\n")
-            f.write("nonbondedFreq         1\n")
-            f.write("fullElectFrequency    2\n")
+                self.addToConfig("firsttimestep         %d" % self._protocol.first_step)
+            self.addToConfig("rigidBonds            all")
+            self.addToConfig("nonbondedFreq         1")
+            self.addToConfig("fullElectFrequency    2")
 
             # Constant temperature control.
-            f.write("langevin              on\n")
-            f.write("langevinDamping       1.\n")
-            f.write("langevinTemp          $temperature\n")
-            f.write("langevinHydrogen      no\n")
+            self.addToConfig("langevin              on")
+            self.addToConfig("langevinDamping       1.")
+            self.addToConfig("langevinTemp          $temperature")
+            self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
             if self._protocol.ensemble is 'NPT':
-                f.write("langevinPiston        on\n")
-                f.write("langevinPistonTarget  1.01325\n")
-                f.write("langevinPistonPeriod  100.\n")
-                f.write("langevinPistonDecay   50.\n")
-                f.write("langevinPistonTemp    $temperature\n")
-                f.write("useGroupPressure      yes\n")
-                f.write("useFlexibleCell       no\n")
-                f.write("useConstantArea       no\n")
+                self.addToConfig("langevinPiston        on")
+                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonPeriod  100.")
+                self.addToConfig("langevinPistonDecay   50.")
+                self.addToConfig("langevinPistonTemp    $temperature")
+                self.addToConfig("useGroupPressure      yes")
+                self.addToConfig("useFlexibleCell       no")
+                self.addToConfig("useConstantArea       no")
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
@@ -410,13 +411,10 @@ class NamdProcess(process.Process):
             steps = 20 * ceil(steps / 20)
 
             # Trajectory output frequency.
-            f.write("DCDfreq               %s\n" % floor(steps / self._protocol.frames))
+            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.frames))
 
             # Run the simulation.
-            f.write("run                   %s\n" % steps)
-
-        # Close the configuration file.
-        f.close()
+            self.addToConfig("run                   %d" % steps)
 
     def start(self):
         """Start the NAMD simulation."""
@@ -435,7 +433,7 @@ class NamdProcess(process.Process):
             self._command = "%s %s.namd" % (self._exe, self._name)
 
             # Write the command to file.
-            f.write("# NamdProcess was run with the following command:\n")
+            f.write("# NAMD was run with the following command:\n")
             f.write("%s\n" % self._command)
 
         # Start the timer.
@@ -495,6 +493,21 @@ class NamdProcess(process.Process):
 
         else:
             return None
+
+    def getRecord(self, record, time_series=False):
+        """Get a record from the stdout dictionary.
+
+           Keyword arguments:
+
+           record      -- The record keyword.
+           time_series -- Whether to return a list of time series records.
+        """
+        self.stdout(0)
+        return self._get_stdout_record(record, time_series)
+
+    def getRecords(self):
+        """Return the dictionary of stdout time-series records."""
+        return self._stdout_dict
 
     def getTime(self, time_series=False):
         """Get the time (in nanoseconds)."""
@@ -668,11 +681,11 @@ class NamdProcess(process.Process):
             if len(data) > 0:
 
                 # Store the updated energy title.
-                if data[0] == "ETITLE:":
+                if data[0] == 'ETITLE:':
                     self._stdout_title = data[1:]
 
                 # This is an energy record.
-                elif data[0] == "ENERGY:":
+                elif data[0] == 'ENERGY:':
                     # Extract the data.
                     stdout_data = data[1:]
 
@@ -703,7 +716,7 @@ class NamdProcess(process.Process):
 
         if type(time_series) is not bool:
             warn("Non-boolean time-series flag. Defaulting to False!")
-            time_seris = False
+            time_series = False
 
         # Return the list of dictionary values.
         if time_series:
