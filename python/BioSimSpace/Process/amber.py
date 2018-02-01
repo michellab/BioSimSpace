@@ -92,7 +92,7 @@ class Handler(PatternMatchingEventHandler):
             # process started, then wipe the dictionary and flag that the file
             # is now being watched.
             if not self._process._is_watching:
-                self._process._stdout_dict = process.MDict()
+                self._process._stdout_dict = process.MultiDict()
                 self._process._is_watching = True
 
             # Now update the dictionary with any new records.
@@ -134,7 +134,7 @@ class Amber(process.Process):
                 raise IOError(('AMBER executable doesn\'t exist: "{x}"').format(x=exe))
 
         # Initialise the energy dictionary and header.
-        self._stdout_dict = process.MDict()
+        self._stdout_dict = process.MultiDict()
 
         # Create the name of the energy output file and wipe the
         # contents of any existing file.
