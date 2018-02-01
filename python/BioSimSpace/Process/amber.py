@@ -37,17 +37,17 @@ class Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
        is used trigger updates to the energy dictionary each time the file is modified.
     """
-    def __init__(self, process):
+    def __init__(self, proc):
         """Constructor.
 
            Keyword arguments:
 
-           process -- The Amber Process object.
+           proc -- The Amber Process object.
         """
-        self._process = process
+        self._process = proc
 
         self._observer = Observer()
-        self._process = process
+        self._process = proc
 
     def run(self):
         """Run the file watcher."""
@@ -75,24 +75,27 @@ class Handler(PatternMatchingEventHandler):
     ignore_patterns = []
     patterns = "*.nrg"
 
-    def __init__(self, process):
+    def __init__(self, proc):
         """Constructor.
 
            Keyword arguments:
 
-           process -- The Amber Process object.
+           proc -- The Amber Process object.
         """
-        self._process = process
+        self._process = proc
 
     def on_any_event(self, event):
-        """Update the dictionary when the file is changed."""
-        if event.is_directory:
-            return None
+        """Update the dictionary when the file is modified."""
 
-        elif event.event_type == 'created':
-            self.process._stdout_dict = process._MDict()
+        if event.event_type == 'modified':
+            # If this is the first time the file has been modified since the
+            # process started, then wipe the dictionary and flag that the file
+            # is now being watched.
+            if not self._process._is_watching:
+                self._process._stdout_dict = process._MDict()
+                self._process._is_watching = True
 
-        elif event.event_type == 'modified':
+            # Now update the dictionary with any new records.
             self._process._update_energy_dict()
 
 class Amber(process.Process):
@@ -104,12 +107,12 @@ class Amber(process.Process):
 
            Keyword arguments:
 
-           system        -- The molecular system.
-           protocol      -- The protocol for the AMBER process.
-           exe           -- The full path to the AMBER executable.
-           name          -- The name of the process.
-           work_dir      -- The working directory for the process.
-           seed          -- A random number seed.
+           system   -- The molecular system.
+           protocol -- The protocol for the AMBER process.
+           exe      -- The full path to the AMBER executable.
+           name     -- The name of the process.
+           work_dir -- The working directory for the process.
+           seed     -- A random number seed.
         """
 
         # Call the base class constructor.
@@ -140,6 +143,7 @@ class Amber(process.Process):
 
         # Initialise the energy watcher.
         self._watcher = None
+        self._is_watching = False
 
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
@@ -343,6 +347,9 @@ class Amber(process.Process):
 
     def start(self):
         """Start the AMBER simulation. """
+
+        # Reset the watcher.
+        self._is_watching = False
 
         # Store the current working directory.
         dir = getcwd()
