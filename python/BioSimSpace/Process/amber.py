@@ -365,7 +365,7 @@ class Amber(process.Process):
         with open("README.txt", "w") as f:
 
             # Set the command-line string.
-            self._command = "%s " % self._exe + ' '.join(args)
+            self._command = "%s " % self._exe + self.getArgString()
 
             # Write the command to file.
             f.write("# AMBER was run with the following command:\n")

@@ -324,6 +324,10 @@ class Process():
         """Get the dictionary of command-line arguments."""
         return self._args
 
+    def getArgString(self):
+        """Get the command-line arguments string."""
+        return ' '.join(self._generate_args_string())
+
     def setArgs(self, args):
         """Set the dictionary of command-line arguments."""
         if isinstance(args, OrderedDict):
@@ -397,7 +401,7 @@ class Process():
                 return self._runtime
 
     def _generate_args_string(self):
-        """ Convert the argument dictionary into a list of strings."""
+        """Convert the argument dictionary into a list of strings."""
 
         # Create an empty list.
         args = []
