@@ -326,7 +326,25 @@ class Process():
 
     def getArgString(self):
         """Get the command-line arguments string."""
-        return ' '.join(self._generate_args_string())
+        return ' '.join(self.getArgStringList())
+
+    def getArgStringList(self):
+        """Convert the argument dictionary into a list of strings."""
+
+        # Create an empty list.
+        args = []
+
+        # Add the arguments to the list.
+        for key, value in self._args.items():
+            # Boolean flag.
+            if type(value) is bool:
+                if value:
+                    args.append(str(key))
+            else:
+                args.append(str(key))
+                args.append(str(value))
+
+        return args
 
     def setArgs(self, args):
         """Set the dictionary of command-line arguments."""
@@ -399,24 +417,6 @@ class Process():
             # The process has finished. Return the previous run time.
             else:
                 return self._runtime
-
-    def _generate_args_string(self):
-        """Convert the argument dictionary into a list of strings."""
-
-        # Create an empty list.
-        args = []
-
-        # Add the arguments to the list.
-        for key, value in self._args.items():
-            # Boolean flag.
-            if type(value) is bool:
-                if value:
-                    args.append(str(key))
-            else:
-                args.append(str(key))
-                args.append(str(value))
-
-        return args
 
 def _getAABox(system):
     """Get the axis-aligned bounding box for the molecular system.

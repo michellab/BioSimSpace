@@ -359,7 +359,7 @@ class Amber(process.Process):
         chdir(self._work_dir)
 
         # Create the arguments string list.
-        args = self._generate_args_string()
+        args = self.getArgStringList()
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
