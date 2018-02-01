@@ -61,7 +61,7 @@ class Namd(process.Process):
         self._is_charmm_params = charmm_params
 
         # Initialise the stdout dictionary and title header.
-        self._stdout_dict = process._MDict()
+        self._stdout_dict = process.MDict()
         self._stdout_title = None
 
         # The names of the input files.

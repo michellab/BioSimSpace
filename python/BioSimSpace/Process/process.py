@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class _MDict(dict):
+class MDict(dict):
     """A multi-valued dictionary."""
     def __setitem__(self, key, value):
         """Add the given value to the list of values for this key."""
