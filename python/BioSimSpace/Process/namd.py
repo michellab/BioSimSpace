@@ -12,6 +12,7 @@ from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
 from os import chdir, getcwd, path
+from pytest import approx
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -311,7 +312,11 @@ class Namd(process.Process):
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f" % self._protocol.temperature_start)
             else:
-                self.addToConfig("set temperature       %.2f" % self._protocol.temperature_end)
+                # Cannot have a target temperature of exactly zero.
+                if self._protocol.temperature_end == approx(0):
+                    self.addToConfig("set temperature       0.01")
+                else:
+                    self.addToConfig("set temperature       %.2f" % self._protocol.temperature_end)
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
