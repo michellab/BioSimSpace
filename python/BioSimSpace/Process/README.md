@@ -213,6 +213,12 @@ system = process.getSystem()
 
 This could then be saved to file:
 
-```
+```python
 BSS.saveMolecules("configuration", system, system.fileFormat())
+```
+
+To safely kill a running process:
+
+```python
+process.kill()
 ```
