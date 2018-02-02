@@ -351,6 +351,9 @@ class Process():
         if isinstance(args, OrderedDict):
             self._args = args
 
+        elif isinstance(args, dict):
+            self._args = OrderedDict(args)
+
     def setArg(self, arg, value):
         """Set a specific command-line argument.
 
