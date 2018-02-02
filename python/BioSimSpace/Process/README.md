@@ -203,3 +203,16 @@ step = process.getStep(time_series=True)
 time = process.getTime(time_series=True)
 energy = process.getTotalEnergy(time_series=True)
 ```
+
+It is also possible to get the latest molecular system from the running process:
+
+```python
+# Return the latest molecular configuration as a Sire.System.
+system = process.getSystem()
+```
+
+This could then be saved to file:
+
+```
+BSS.saveMolecules("configuration", system, system.fileFormat())
+```
