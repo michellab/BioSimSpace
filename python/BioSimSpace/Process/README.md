@@ -44,6 +44,8 @@ To use a custom protocol, the constructor could be called as follows:
 process = BSS.Process.Amber(system, protocol="config.amber")
 ```
 
+### _Working directory_
+
 By default, each process is run in a temporary workspace. To specify
 the working directory the user can pass an appropriate keyword argument:
 
@@ -54,6 +56,8 @@ process = BSS.Process.Amber(system, work_dir="/my/custom/path")
 
 The directory will be created if it doesn't already exist (assuming write
 privileges on the path).
+
+### _Configuration parameters_
 
 Once initialised, the process object will have set up all of the appropriate
 input and configuration files needed to run the desired simulation protocol
