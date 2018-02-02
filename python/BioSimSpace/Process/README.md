@@ -53,7 +53,7 @@ process = BSS.Process.Amber(system, work_dir="/my/custom/path")
 ```
 
 The directory will be created if it doesn't already exist (assuming write
-priviledes on the path).
+privileges on the path).
 
 Once initialised, the process object will have set up all of the appropriate
 input and configuration files needed to run the desired simulation protocol
