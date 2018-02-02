@@ -57,6 +57,18 @@ process = BSS.Process.Amber(system, work_dir="/my/custom/path")
 The directory will be created if it doesn't already exist (assuming write
 privileges on the path).
 
+### _Executable_
+
+BioSimSpace will search your `PATH` to find an appropriate executable to run
+the process. An `IOError` will be raised if the executable is missing.
+Alternatively, the location of the executable can be specified when creating
+the process object, e.g.
+
+```python
+# Initialise the AMBER process and specify the executable path.
+process = BSS.Process.Amber(system, exe="/home/amber/bin/sander")
+```
+
 ### _Configuration parameters_
 
 Once initialised, the process object will have set up all of the appropriate
