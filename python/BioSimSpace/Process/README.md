@@ -178,6 +178,19 @@ process.isRunning()
 # programs that provide regular timing statistics.
 process.eta()
 
+# Get the current runtime of the process (in minutes).
+runtime = process.runTime()
+
+# Print the last 10 lines from stdout.
+process.stdout()
+
+# Print the last 20 lines from stderr.
+process.stderr(20)
+
+# Get the whole of stdout and stderr a list of strings.
+stdout = process.getOutput()
+stderr = process.getError()
+
 # Get the current number of steps, the run time (in nanoseconds) and energy (in kcal/mol).
 # Many other record types are supported. The options available depend on the nature of the
 # program and simulation protocol.
