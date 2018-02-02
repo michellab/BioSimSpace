@@ -37,12 +37,12 @@ system = BSS.readMolecules(files)
 protocol = BSS.Protocol.Minimisation()
 
 # Initialise the NAMD process.
-proc = BSS.Process.Namd(system, protocol)
+process = BSS.Process.Namd(system, protocol)
 ```
 
 To use a custom protocol, the constructor could be called as follows:
 
 ```python
 # Initialise the NAMD process using a custom protocol.
-proc = BSS.Process.Namd(system, protocol="config.namd")
+process = BSS.Process.Namd(system, protocol="config.namd")
 ```
