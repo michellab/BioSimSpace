@@ -46,3 +46,14 @@ To use a custom protocol, the constructor could be called as follows:
 # Initialise the NAMD process using a custom protocol.
 process = BSS.Process.Namd(system, protocol="config.namd")
 ```
+
+By default, each process is run in a temporary workspace. To specify
+the working directory the user can pass an appropriate keyword argument:
+
+```python
+# Initialise the NAMD process using a custom working directory.
+process = BSS.Process.Namd(system, work_dir="/my/custom/path")
+```
+
+The directory will be created if it doesn't already exist (assuming write
+priviledes on the path).
