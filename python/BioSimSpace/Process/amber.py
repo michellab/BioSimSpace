@@ -87,6 +87,16 @@ class Handler(PatternMatchingEventHandler):
     def on_any_event(self, event):
         """Update the dictionary when the file is modified."""
 
+        # N.B.
+        #
+        # Since the watchdog package is cross-platform it doesn't support
+        # detection of "close-write" operations, so multiple "modified" events
+        # can be triggered while the log file is being written. As such, we
+        # check to see if the file has been updated by seeing whether the
+        # NSTEP record is different to the most recent entry in the dictionary.
+        # So far, no issues have been found with processing partially written
+        # files, i.e. duplicate or missing records.
+
         if event.event_type == 'modified':
             # If this is the first time the file has been modified since the
             # process started, then wipe the dictionary and flag that the file
