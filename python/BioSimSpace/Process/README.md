@@ -22,37 +22,34 @@ user who wishes to run a custom process can simply replace the protocol
 argument with the path to an appropriate configuration file.
 
 For example, to initialise an object to run a default minimistion protocol
-using NAMD:
+using AMBER:
 
 ```python
 import BioSimSpace as BSS
 
-# Create a list of the input files.
-files = ["alanin.psf", "alanin.pdb", "alanin.params"]
-
 # Create a molecular system.
-system = BSS.readMolecules(files)
+system = BSS.readMolecules(["ala.crd", "ala.top"])
 
 # Create a default minimisation protocol.
 protocol = BSS.Protocol.Minimisation()
 
-# Initialise the NAMD process.
-process = BSS.Process.Namd(system, protocol)
+# Initialise the AMBER process.
+process = BSS.Process.Amber(system, protocol)
 ```
 
 To use a custom protocol, the constructor could be called as follows:
 
 ```python
-# Initialise the NAMD process using a custom protocol.
-process = BSS.Process.Namd(system, protocol="config.namd")
+# Initialise the AMBER process using a custom protocol.
+process = BSS.Process.Amber(system, protocol="config.amber")
 ```
 
 By default, each process is run in a temporary workspace. To specify
 the working directory the user can pass an appropriate keyword argument:
 
 ```python
-# Initialise the NAMD process using a custom working directory.
-process = BSS.Process.Namd(system, work_dir="/my/custom/path")
+# Initialise the AMBER process using a custom working directory.
+process = BSS.Process.Amber(system, work_dir="/my/custom/path")
 ```
 
 The directory will be created if it doesn't already exist (assuming write
