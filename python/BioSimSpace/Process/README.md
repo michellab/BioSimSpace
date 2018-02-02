@@ -100,3 +100,49 @@ process.setConfig("params.txt")   # Using a parameter file.
 # Write the current configuration parameters to a file.
 process.writeConfig("params.txt")
 ```
+
+### _Command-line arguments_
+
+If necessary, BioSimSpace also configures all of the command-line arguments
+needed to run the process. To get the arguments:
+
+```python
+# Get the arguments as an OrderedDict, i.e. ([arg, value], ...)
+arg_dict = process.getArgs()
+
+# Get the arguments as a list of strings.
+arg_strings = process.getArgStringList()
+
+# Get the arguments as a single single string.
+arg_string = process.getArgString()
+```
+
+As with configuration parameters, we provide a flexible means of configuring
+the command-line arguments.
+
+```python
+# Add a single additional command-line argument. (This overwrites any existing argument with the same name.)
+process.setArg("-inf", "mdinfo.txt")    # Regular argument, i.e. arg / value.
+process.setArg("-O", True)              # Boolean flag.
+
+# Add a dictionary of arguments. (A regular 'dict' is allowed, although argument ordering is lost.)
+args = OrderedDict([('-inf', 'mdinfo.txt'), ('-O', True)])
+process.addArgs(args)
+
+# Insert an additional argument at a specfic position.
+process.insertArg("-inf", "mdinfo.txt", 3)
+
+# Delete an argument.
+process.deleteArg("-inf")
+
+# Disable/enable a boolean argument.
+process.setArg("-O", False)
+process.setArg("-O", True)
+
+# Overwrite all command-line arguments. (A regular 'dict' is allowed, although argument ordering is lost.)
+args = OrderedDict([('-inf', 'mdinfo.txt'), ('-O', True)])
+process.setArgs(args)
+
+# Clear the command-line arguments.
+process.clearArgs()
+```
