@@ -146,3 +146,47 @@ process.setArgs(args)
 # Clear the command-line arguments.
 process.clearArgs()
 ```
+
+## Running a process
+
+Once you are happy with the way a process is configured it can be started using:
+
+```python
+# Start the process in the background and return to the main thread.
+process.start()
+```
+
+If you are using BioSimSpace from a regular python script then you will need to
+wait for the process to finish before the interpreter exits.
+
+```python
+process.wait()
+```
+
+If you are using BioSimSpace interactively, e.g. using a [Jupyter](http://jupyter.org)
+notebook, you can carry on with your work and query the running process in
+real time. Each BioSimSpace.Process object collects output from `stdout` and `stderr`
+and monitors log files for updates to thermodynamic measures, such as energy
+and pressure. Some examples of how to interactively query a running process
+are given below.
+
+```python
+# Check whether the process is still running.
+process.isRunning()
+
+# Get the estimated number of minutes until completion. This is supported for all
+# programs that provide regular timing statistics.
+process.eta()
+
+# Get the current number of steps, the run time (in nanoseconds) and energy (in kcal/mol).
+# Many other record types are supported. The options available depend on the nature of the
+# program and simulation protocol.
+step = process.getStep()
+time = process.getTime()
+energy = process.getTotalEnergy()
+
+# Since the output is recorded periodically, we can also get a time series of records.
+step = process.getStep(time_series=True)
+time = process.getTime(time_series=True)
+energy = process.getTotalEnergy(time_series=True)
+```
