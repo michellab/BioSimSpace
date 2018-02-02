@@ -5,7 +5,11 @@ BioSimSpace. If you have already installed BioSimSpace into a Sire package then
 you can run any of the scripts directly, i.e.
 
 ```bash
+# Run an example AMBER workflow.
 $HOME/sire.app/bin/python amber.py
+
+# Run an example NAMD workflow.
+$HOME/sire.app/bin/python namd.py
 ```
 
 Alternatively, set the `PYTHONPATH` environment so that the python interpreter
