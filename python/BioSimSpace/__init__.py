@@ -1,3 +1,9 @@
+import __main__ as main
+
+# Interactive tools.
+if not hasattr(main, '__file__'):
+    import BioSimSpace.Notebook
+
 import BioSimSpace.Process
 import BioSimSpace.Protocol
 
