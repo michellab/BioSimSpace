@@ -14,8 +14,17 @@ has been added to your path. Alternatively, run:
 ```bash
 $HOME/sire.app/bin/python setup.py install
 ```
-We recommend using the `devel` branch of [Sire](https://github.com/michellab/Sire)
+At present you will need to use the `devel` branch of [Sire](https://github.com/michellab/Sire)
 to make sure that you have access to the latest features and bug-fixes.
+
+## Dependencies
+
+BioSimSpace makes use of several external python packages. When using BioSimSpace
+these should be automatically installed into your Sire package using
+`try_import` from `Sire.Base`. In some instances it may appear that the
+import has failed even though the package was installed successfully. If this
+occurs, simply re-run your script (the module should now be imported without
+error.)
 
 ## Developing
 
