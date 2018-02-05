@@ -11,7 +11,7 @@ from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
-from os import chdir, getcwd, path
+from os import chdir, environ, getcwd, path
 from re import findall
 from time import sleep
 from timeit import default_timer as timer
@@ -134,7 +134,15 @@ class Amber(process.Process):
         # look for all possible executables in order of preference: pmemd.cuda,
         # pmemd, sander, etc., as well as their variants, e.g. pmemd.MPI.
         if exe is None:
-            self._exe = findExe("sander").absoluteFilePath()
+            # Search AMBERHOME, if set.
+            if "AMBERHOME" in environ:
+                amber_home = environ.get("AMBERHOME")
+                if path.isfile("%s/bin/sander" % amber_home):
+                    self._exe = "%s/bin/sander" % amber_home
+
+            # Search PATH.
+            else:
+                self._exe = findExe("sander").absoluteFilePath()
 
         else:
             # Make sure executable exists.
