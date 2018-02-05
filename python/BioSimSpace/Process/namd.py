@@ -3,7 +3,7 @@
 @author  Lester Hedges
 @brief   A class for running simulations using NAMD.
 """
-from Sire import try_import
+
 from Sire.Base import findExe, Process
 from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 
@@ -18,15 +18,10 @@ from warnings import warn
 import __main__ as main
 
 try:
+    from Sire import try_import
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
-try: 
-    pytest = try_import("pytest")
-    from pytest import approx
-except ImportError:
-    raise ImportError("Pytest is not installed. Please install pytest in order to use BioSimSpace.")
-
 
 class Namd(process.Process):
     """A class for running simulations using NAMD."""
