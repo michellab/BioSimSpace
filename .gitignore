@@ -1,8 +1,9 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files.
 __pycache__/
 *.py[cod]
 
-# C extensions
+# C extensions.
 *.so
 
+# macOS folder attributes.
 .DS_Store
