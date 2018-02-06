@@ -1,7 +1,20 @@
 import __main__ as main
 
+# Determine whether we're being imported from a Jupyter notebook.
+def _is_notebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
+
 # Interactive tools.
-if not hasattr(main, '__file__'):
+if _is_notebook():
     import BioSimSpace.Notebook
 
 import BioSimSpace.Process
@@ -53,4 +66,3 @@ Sire.System.System.take = _system_take
 class MolWithResName(Sire.Mol.MolWithResID):
     def __init__(self, resname):
         super().__init__( Sire.Mol.ResName(resname) )
-
