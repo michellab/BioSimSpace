@@ -72,6 +72,50 @@ class View():
         # Create and return the view.
         return self._create_view(system)
 
+    def molecules(self, indices=None):
+        """View specific molecules.
+
+           Keyword arguments:
+
+           indices -- A list of molecule indices.
+        """
+
+        # Return a view of the entire system.
+        if indices is None:
+            return self.system()
+
+        # Get the latest system from the process.
+        if self._is_process:
+            system = self._handle.getSystem()
+
+            # No system.
+            if system is None:
+                return
+
+        else:
+            system = handle
+
+        # Extract the molecule numbers.
+        molnums = system.molNums()
+
+        # Create a new system.
+        s = Sire.System.System("BioSimSpace molecule")
+        m = Sire.Mol.MoleculeGroup("all")
+
+        # Loop over all of the indices.
+        for index in indices:
+            if index < 0 or index > len(molnums):
+                raise ValueError("Molecule index is out of range!")
+
+            # Add the molecule.
+            m.add(system[molnums[index]])
+
+        # Add all of the molecules to the system.
+        s._old_add(m)
+
+        # Create and return the view.
+        return self._create_view(s)
+
     def molecule(self, index=0):
         """View a specific molecule.
 
@@ -94,6 +138,7 @@ class View():
         # Extract the molecule numbers.
         molnums = system.molNums()
 
+        # Make sure the index is valid.
         if index < 0 or index > len(molnums):
             raise ValueError("Molecule index is out of range!")
 
