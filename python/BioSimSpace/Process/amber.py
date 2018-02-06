@@ -14,6 +14,7 @@ from math import ceil, floor
 from os import chdir, environ, getcwd, path
 from re import findall
 from time import sleep
+from threading import Thread
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -49,9 +50,18 @@ class Watcher:
         self._observer = Observer()
         self._process = proc
 
-    def run(self):
-        """Run the file watcher."""
-        # Setup.
+    def start(self):
+        """Start the file watcher."""
+
+        # Start a new thread.
+        self._thread = Thread(target=self._watch)
+        self._thread.daemon = True
+        self._thread.start()
+
+    def _watch(self):
+        """Helper function to run the watcher in a thread."""
+
+        # Setup the even handler and observer.
         event_handler = Handler(self._process)
         self._observer.schedule(event_handler, self._process._work_dir)
         self._observer.start()
@@ -401,7 +411,7 @@ class Amber(process.Process):
 
 	# Watch the energy info file for changes.
         self._watcher = Watcher(self)
-        self._watcher.run()
+        self._watcher.start()
 
     def getSystem(self):
         """Get the latest molecular configuration as a Sire system."""
