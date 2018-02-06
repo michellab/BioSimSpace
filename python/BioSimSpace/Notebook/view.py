@@ -4,12 +4,15 @@
 @brief   A class for handling interactive molecular visualisations.
 """
 
+import Sire.Mol
+import Sire.System
+
 from Sire.IO import PDB2
-from Sire.System import System
 
 from ..Process.process import Process
 
 from os import chdir, getcwd
+from shutil import copyfile
 
 import tempfile
 
@@ -38,7 +41,7 @@ class View():
             self._is_process = True
 
         # Sire system.
-        elif handle.__class__ == System:
+        elif handle.__class__ == Sire.System.System:
             self._handle = handle
             self._is_process = False
 
@@ -66,30 +69,95 @@ class View():
         else:
             system = handle
 
+        # Create and return the view.
+        return self._create_view(system)
+
+    def molecule(self, index=0):
+        """View a specific molecule.
+
+           Keyword arguments:
+
+           index -- The molecule index.
+        """
+
+        # Get the latest system from the process.
+        if self._is_process:
+            system = self._handle.getSystem()
+
+            # No system.
+            if system is None:
+                return
+
+        else:
+            system = handle
+
+        # Extract the molecule numbers.
+        molnums = system.molNums()
+
+        if index < 0 or index > len(molnums):
+            raise ValueError("Molecule index is out of range!")
+
+        # Create a new system and add a single molecule.
+        s = Sire.System.System("BioSimSpace molecule")
+        m = Sire.Mol.MoleculeGroup("all")
+        m.add(system[molnums[index]])
+        s._old_add(m)
+
+        # Create and return the view.
+        return self._create_view(s)
+
+    def reload(self, index=None):
+        """Reload a particular view.
+
+           Keyword arguments:
+
+           index -- The view index.
+        """
+
+        if index < 1 or index > self._num_views:
+            raise ValueError("View index (%d) is out of range: [1--%d]" % (index, self._num_views))
+
+        # Default to the most recent view.
+        if index is None:
+            index = self._num_views
+
+        # Create and return the view.
+        return self._create_view(view=index)
+
+    def nViews(self):
+        """Return the number of views."""
+        return self._num_views
+
+    def _create_view(self, system=None, view=None):
+        """Helper function to create the NGLview object.
+
+           Keyword arguments:
+
+           system -- A Sire molecular system.
+           view   -- The index of an existing view.
+        """
+
+        if system is None and view is None:
+            raise ValueError("Both 'system' and 'view' cannot be 'None'.")
+
+        elif system is not None and view is not None:
+            raise ValueError("One of 'system' or 'view' must be 'None'.")
+
         # Increment the number of views.
-        self._num_views += 1
+        if view is None:
+            self._num_views += 1
+            view = self._num_views
 
         # Create the file name.
-        filename = "%s/view_%04d.pdb" % (self._work_dir, self._num_views)
+        filename = "%s/view_%04d.pdb" % (self._work_dir, view)
 
-        # Create a PDB object.
-        pdb = PDB2(system)
-
-        # Write the PDB to file.
-        pdb.writeToFile(filename)
-
-        # Store the current working directory.
-        dir = getcwd()
-
-        # Change to the working directory for the process.
-        # For some reason, nglview cannot read /tmp from another directory.
-        chdir(self._work_dir)
+        # Create a PDB object and write to file.
+        if not system is None:
+            pdb = PDB2(system)
+            pdb.writeToFile(filename)
 
         # Create the NGLview object.
-        view = nv.show_file(filename, gui=True)
-
-        # Change back to the original working directory.
-        chdir(dir)
+        view = nv.show_file(filename)
 
         # Return the view and display it.
         return view.display()
