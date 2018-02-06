@@ -268,6 +268,7 @@ class Amber(process.Process):
             self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  dt=0.002,")                 # Time step (2fs).
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
@@ -320,6 +321,7 @@ class Amber(process.Process):
                 self.addToConfig("  ntx=1,")                # Only read coordinates.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
                 % floor(steps / self._protocol.frames))
             if self._protocol.restart:
