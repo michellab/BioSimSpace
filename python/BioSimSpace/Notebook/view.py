@@ -9,6 +9,8 @@ from Sire.System import System
 
 from ..Process.process import Process
 
+from os import chdir, getcwd
+
 import tempfile
 
 try:
@@ -76,6 +78,18 @@ class View():
         # Write the PDB to file.
         pdb.writeToFile(filename)
 
-        # Create the NGLview.
+        # Store the current working directory.
+        dir = getcwd()
+
+        # Change to the working directory for the process.
+        # For some reason, nglview cannot read /tmp from another directory.
+        chdir(self._work_dir)
+
+        # Create the NGLview object.
         view = nv.show_file(filename, gui=True)
-        view
+
+        # Change back to the original working directory.
+        chdir(dir)
+
+        # Return the view and display it.
+        return view.display()
