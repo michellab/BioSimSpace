@@ -55,8 +55,13 @@ class View():
         # Zero the number of views.
         self._num_views = 0
 
-    def system(self):
-        """View the entire molecular system."""
+    def system(self, gui=True):
+        """View the entire molecular system.
+
+           Keyword arguments:
+
+           gui -- Whether to display the gui.
+        """
 
         # Get the latest system from the process.
         if self._is_process:
@@ -70,19 +75,20 @@ class View():
             system = handle
 
         # Create and return the view.
-        return self._create_view(system)
+        return self._create_view(system, gui=gui)
 
-    def molecules(self, indices=None):
+    def molecules(self, indices=None, gui=True):
         """View specific molecules.
 
            Keyword arguments:
 
            indices -- A list of molecule indices.
+           gui     -- Whether to display the gui.
         """
 
         # Return a view of the entire system.
         if indices is None:
-            return self.system()
+            return self.system(gui=gui)
 
         # Get the latest system from the process.
         if self._is_process:
@@ -114,14 +120,15 @@ class View():
         s._old_add(m)
 
         # Create and return the view.
-        return self._create_view(s)
+        return self._create_view(s, gui=gui)
 
-    def molecule(self, index=0):
+    def molecule(self, index=0, gui=True):
         """View a specific molecule.
 
            Keyword arguments:
 
            index -- The molecule index.
+           gui   -- Whether to display the gui.
         """
 
         # Get the latest system from the process.
@@ -149,14 +156,15 @@ class View():
         s._old_add(m)
 
         # Create and return the view.
-        return self._create_view(s)
+        return self._create_view(s, gui=gui)
 
-    def reload(self, index=None):
+    def reload(self, index=None, gui=True):
         """Reload a particular view.
 
            Keyword arguments:
 
            index -- The view index.
+           gui   -- Whether to display the gui.
         """
 
         if index < 1 or index > self._num_views:
@@ -167,19 +175,20 @@ class View():
             index = self._num_views
 
         # Create and return the view.
-        return self._create_view(view=index)
+        return self._create_view(view=index, gui=gui)
 
     def nViews(self):
         """Return the number of views."""
         return self._num_views
 
-    def _create_view(self, system=None, view=None):
+    def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
 
            Keyword arguments:
 
            system -- A Sire molecular system.
            view   -- The index of an existing view.
+           gui    -- Whether to display the gui.
         """
 
         if system is None and view is None:
@@ -187,6 +196,10 @@ class View():
 
         elif system is not None and view is not None:
             raise ValueError("One of 'system' or 'view' must be 'None'.")
+
+        # Make sure gui flag is valid.
+        if gui not in [True, False]:
+            gui = True
 
         # Increment the number of views.
         if view is None:
@@ -205,4 +218,4 @@ class View():
         view = nv.show_file(filename)
 
         # Return the view and display it.
-        return view.display()
+        return view.display(gui=gui)
