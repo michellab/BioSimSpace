@@ -11,7 +11,7 @@ from warnings import warn
 class Minimisation(Protocol):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, method="conjugate-gradient", steps=1000, gas_phase=False):
+    def __init__(self, method="conjugate-gradient", steps=10000, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
@@ -36,8 +36,8 @@ class Minimisation(Protocol):
         """Set the maximum number of steps."""
 
         if steps <= 0:
-            warn("Number of steps must be greater than zero. Using default (5000).")
-            self._steps = 5000
+            warn("Number of steps must be greater than zero. Using default (10000).")
+            self._steps = 10000
 
         else:
             self._steps = steps
