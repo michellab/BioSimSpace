@@ -229,6 +229,10 @@ class Process():
         for x in range(start, num_lines):
             print(self._stderr[x])
 
+    def exe(self):
+        """Return the executable."""
+        return self._exe
+
     def inputFiles(self):
         """Return the list of input files."""
         return self._input_files
