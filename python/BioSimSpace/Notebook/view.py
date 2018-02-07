@@ -14,13 +14,8 @@ from ..Process.process import Process
 from os import chdir, getcwd
 from shutil import copyfile
 
+import nglview as nv
 import tempfile
-
-try:
-    from Sire import try_import
-    nv = try_import("nglview")
-except ImportError:
-    raise ImportError("NGLview is not installed. Please install nglview in order to use BioSimSpace.Notebook.")
 
 class View():
     """A class for handling interactive molecular visualisations."""
