@@ -283,8 +283,8 @@ class Amber(process.Process):
             # Restrain the backbone.
             if self._protocol.is_restrained:
                 self.addToConfig("  ntr=1,")
-                self.addToConfig("  restraint_wt = 2,")
-                self.addToConfig("  restraintmask = '@CA,C,O,N',")
+                self.addToConfig("  restraint_wt=2,")
+                self.addToConfig("  restraintmask='@CA,C,O,N',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
