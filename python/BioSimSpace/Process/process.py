@@ -405,6 +405,10 @@ class Process():
         """Clear all of the command-line arguments."""
         self._args.clear()
 
+    def resetArgs(self):
+        """Reset the command-line arguments."""
+        self._generate_args()
+
     def runTime(self):
         """Return the running time for the process (in minutes)."""
 
@@ -513,6 +517,10 @@ def _restrain_backbone(system):
 
     # Return the new system.
     return s
+
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
+        self.clearArgs()
 
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
