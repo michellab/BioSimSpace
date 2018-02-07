@@ -14,7 +14,7 @@ from ..Process.process import Process
 from os import chdir, getcwd
 from shutil import copyfile
 
-import nglview as nv
+import nglview
 import tempfile
 
 class View():
@@ -210,7 +210,7 @@ class View():
             pdb.writeToFile(filename)
 
         # Create the NGLview object.
-        view = nv.show_file(filename)
+        view = nglview.show_file(filename)
 
         # Return the view and display it.
         return view.display(gui=gui)
