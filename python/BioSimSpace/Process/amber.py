@@ -378,6 +378,11 @@ class Amber(process.Process):
     def start(self):
         """Start the AMBER simulation. """
 
+        # Process is already running.
+        if not self._process is None:
+            if self._process.isRunning():
+                return
+
         # Reset the watcher.
         self._is_watching = False
 

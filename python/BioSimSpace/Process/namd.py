@@ -423,6 +423,11 @@ class Namd(process.Process):
     def start(self):
         """Start the NAMD simulation."""
 
+        # Process is already running.
+        if not self._process is None:
+            if self._process.isRunning():
+                return
+
         # Store the current working directory.
         dir = getcwd()
 
