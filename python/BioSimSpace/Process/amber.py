@@ -369,7 +369,7 @@ class Amber(process.Process):
             # Append a reference file if this a constrained equilibration.
             if self._protocol.type() == ProtocolType.EQUILIBRATION:
                 if self._protocol.is_restrained:
-                    self.setArg("-ref", "%s.crd" % self._name)
+                    self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is a production run.
             elif self._protocol.type() == ProtocolType.PRODUCTION:
