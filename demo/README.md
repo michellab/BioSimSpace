@@ -69,6 +69,10 @@ although you may want to back them up:
 rm -r ~/.jupyter ~/.local/share/jupyter
 ```
 
+(In future, we probably want to set different `JUPYTER_CONFIG_DIR` and
+`JUPYTER_PATH` environment variables for BioSimSpace, or provide a custom
+`jupyter` executable that sets the variables before launching Jupyter.)
+
 Phew!
 
 You should now be able to launch Jupyter:
