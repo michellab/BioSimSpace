@@ -12,6 +12,7 @@ from ..Protocol.protocol import Protocol, ProtocolType
 
 from math import ceil, floor
 from os import chdir, getcwd, path
+from pytest import approx
 from timeit import default_timer as timer
 from warnings import warn
 
