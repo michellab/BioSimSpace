@@ -229,7 +229,7 @@ class Namd(process.Process):
         self.addToConfig("coordinates           %s" % path.basename(self._pdb_file))
 
         # Velocities.
-        if not self._velocity_file is None:
+        if self._velocity_file is not None:
             self.addToConfig("velocities            %s" % path.basename(self._velocity_file))
 
         # Parameters.
@@ -238,7 +238,7 @@ class Namd(process.Process):
         self.addToConfig("parameters            %s" % path.basename(self._param_file))
 
         # Random number seed.
-        if not self._seed is None:
+        if self._seed is not None:
             self.addToConfig("seed                  %d" % self._seed)
 
         # Exclusion policy.
@@ -424,7 +424,7 @@ class Namd(process.Process):
         """Start the NAMD simulation."""
 
         # Process is already running.
-        if not self._process is None:
+        if self._process is not None:
             if self._process.isRunning():
                 return
 

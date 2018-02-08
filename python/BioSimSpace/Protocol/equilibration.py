@@ -34,7 +34,7 @@ class Equilibration(Protocol):
         self._temperature_start = temperature_start
 
         # Set the final temperature.
-        if not temperature_end is None:
+        if temperature_end is not None:
             self._temperature_end = temperature_end
             self._is_const_temp = False
 
