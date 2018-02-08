@@ -163,12 +163,13 @@ class View():
            gui   -- Whether to display the gui.
         """
 
-        if index < 1 or index > self._num_views:
-            raise ValueError("View index (%d) is out of range: [1--%d]" % (index, self._num_views))
-
         # Default to the most recent view.
         if index is None:
-            index = self._num_views
+            index = self._num_views - 1
+
+        # Make sure the view index is valid.
+        if index < 0 or index >= self._num_views:
+            raise ValueError("View index (%d) is out of range: [0--%d]" % (index, self._num_views-1))
 
         # Create and return the view.
         return self._create_view(view=index, gui=gui)
@@ -176,6 +177,26 @@ class View():
     def nViews(self):
         """Return the number of views."""
         return self._num_views
+
+    def savePDB(self, file, index=None):
+        """Save a specific view as a PDB file.
+
+           Keyword arguments:
+
+           file  -- The name of the file to write to.
+           index -- The view index.
+        """
+
+        # Default to the most recent view.
+        if index is None:
+            index = self._num_views - 1
+
+        # Make sure the view index is valid.
+        if index < 0 or index >= self._num_views:
+            raise ValueError("View index (%d) is out of range: [0--%d]" % (index, self._num_views-1))
+
+        # Copy the file to the chosen location.
+        copyfile("%s/view_%04d.pdb" % (self._work_dir, index), file)
 
     def reset(self):
         """Reset the object, clearing all view files."""
@@ -210,13 +231,16 @@ class View():
         if gui not in [True, False]:
             gui = True
 
-        # Increment the number of views.
+        # Default to the most recent view.
         if view is None:
-            self._num_views += 1
-            view = self._num_views
+            view = self._num_views - 1
 
         # Create the file name.
         filename = "%s/view_%04d.pdb" % (self._work_dir, view)
+
+        # Increment the view number.
+        if view is None:
+            self._num_views += 1
 
         # Create a PDB object and write to file.
         if not system is None:
