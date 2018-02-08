@@ -1,5 +1,3 @@
-import __main__ as main
-
 # Determine whether we're being imported from a Jupyter notebook.
 def _is_notebook():
     try:

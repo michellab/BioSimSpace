@@ -15,8 +15,6 @@ from os import chdir, getcwd, path
 from timeit import default_timer as timer
 from warnings import warn
 
-import __main__ as main
-
 try:
     from Sire import try_import
     pygtail = try_import("pygtail")

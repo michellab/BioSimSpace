@@ -18,7 +18,6 @@ from threading import Thread
 from timeit import default_timer as timer
 from warnings import warn
 
-import __main__ as main
 import os
 
 try:
