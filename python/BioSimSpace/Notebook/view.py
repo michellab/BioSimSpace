@@ -163,13 +163,17 @@ class View():
            gui   -- Whether to display the gui.
         """
 
+        # Return if there are no views.
+        if self._num_views == 0:
+            return
+
         # Default to the most recent view.
         if index is None:
             index = self._num_views - 1
 
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
-            raise ValueError("View index (%d) is out of range: [0--%d]" % (index, self._num_views-1))
+            raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
 
         # Create and return the view.
         return self._create_view(view=index, gui=gui)
@@ -193,7 +197,7 @@ class View():
 
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
-            raise ValueError("View index (%d) is out of range: [0--%d]" % (index, self._num_views-1))
+            raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
 
         # Copy the file to the chosen location.
         copyfile("%s/view_%04d.pdb" % (self._work_dir, index), file)
@@ -239,11 +243,11 @@ class View():
         filename = "%s/view_%04d.pdb" % (self._work_dir, view)
 
         # Increment the view number.
-        if view is None:
+        if view is not None:
             self._num_views += 1
 
         # Create a PDB object and write to file.
-        if not system is None:
+        if system is not None:
             pdb = PDB2(system)
             pdb.writeToFile(filename)
 
