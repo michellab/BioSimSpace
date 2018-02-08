@@ -13,12 +13,8 @@ from ..Protocol.protocol import Protocol, ProtocolType
 from math import ceil, floor
 from os import chdir, environ, getcwd, path
 from re import findall
-from time import sleep
-from threading import Thread
 from timeit import default_timer as timer
 from warnings import warn
-
-import os
 
 try:
     from Sire import try_import
@@ -52,26 +48,11 @@ class Watcher:
     def start(self):
         """Start the file watcher."""
 
-        # Start a new thread.
-        self._thread = Thread(target=self._watch)
-        self._thread.daemon = True
-        self._thread.start()
-
-    def _watch(self):
-        """Helper function to run the watcher in a thread."""
-
-        # Setup the even handler and observer.
+        # Setup the event handler and observer.
         event_handler = Handler(self._process)
         self._observer.schedule(event_handler, self._process._work_dir)
+        self._observer.daemon = True
         self._observer.start()
-
-        # Keep running until the process finishes.
-        while self._process.isRunning():
-            sleep(1)
-
-        # Cleanup.
-        self._observer.stop()
-        self._observer.join()
 
 class Handler(PatternMatchingEventHandler):
     """An event handler to trigger updates to the energy dictionary each time
@@ -95,6 +76,10 @@ class Handler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified."""
+
+        # Stop the observer when the process finishes.
+        if not self._process.isRunning():
+            self._process._watcher._observer.stop()
 
         # N.B.
         #
@@ -633,6 +618,26 @@ class Amber(process.Process):
                                 self._stdout_dict[key] = value
                         else:
                             self._stdout_dict[key] = value
+
+    def kill(self):
+        """Kill the running process."""
+
+        # Stop and join the watchdog observer.
+        if self._watcher is not None:
+            self._watcher._observer.stop()
+            self._watcher._observer.join()
+
+        # Kill the process.
+        self._process.kill()
+
+    def wait(self):
+        """Wait for the process to finish."""
+
+        # Join the watchdog observer.
+        self._watcher._observer.join()
+
+        # Wait for the process to finish.
+        self._process.wait()
 
     def _get_stdout_record(self, key, time_series=False):
         """Helper function to get a stdout record from the dictionary."""
