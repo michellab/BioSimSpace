@@ -11,7 +11,8 @@ from Sire.IO import PDB2
 
 from ..Process.process import Process
 
-from os import chdir, getcwd
+from glob import glob
+from os import chdir, getcwd, remove
 from shutil import copyfile
 
 import nglview
@@ -175,6 +176,19 @@ class View():
     def nViews(self):
         """Return the number of views."""
         return self._num_views
+
+    def reset(self):
+        """Reset the object, clearing all view files."""
+
+        # Glob all of the view PDB structure files.
+        files = glob("%s/*.pdb" % self._work_dir)
+
+        # Remove all of the files.
+        for file in files:
+            remove(file)
+
+        # Reset the number of views.
+        self._num_views = 0
 
     def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
