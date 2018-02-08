@@ -119,13 +119,13 @@ print("\nWritten final molecular structure to: %s" % filenames)
 print("\nFinal energy is %.2f kcal/mol." % process.getTotalEnergy())
 print("Production run took %.2f minutes." % process.runTime())
 
-# Get a list of the time-steps and the corresponding total energies.
+# Get a list of the time records and the corresponding total energies.
 time = process.getTime(time_series=True)
 energy = process.getTotalEnergy(time_series=True)
 
 print("Plotting total energy vs time.")
 
-# Create a plot of the total energy vs time step.
+# Create a plot of the total energy vs time.
 fig, ax = plt.subplots()
 ax.plot(time, energy, '-bo')
 
