@@ -237,13 +237,15 @@ class View():
 
         # Default to the most recent view.
         if view is None:
-            view = self._num_views - 1
+            index = self._num_views
+        else:
+            index = view
 
         # Create the file name.
-        filename = "%s/view_%04d.pdb" % (self._work_dir, view)
+        filename = "%s/view_%04d.pdb" % (self._work_dir, index)
 
-        # Increment the view number.
-        if view is not None:
+        # Increment the number of views.
+        if view is None:
             self._num_views += 1
 
         # Create a PDB object and write to file.
