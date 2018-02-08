@@ -35,7 +35,7 @@ $HOME/sire.app/bin/pip install matplotlib
 Molecular visualisation requires [NGLview](https://github.com/arose/nglview),
 which is a bit of a pain to configure. It is not possible to use the regular
 `try_import` function from `Sire`, since `conda` will install the incorrect
-version. At present, manual installation via `pip` is required:
+version. At present, manual installation via `pip` is required.
 
 First install Jupyter:
 ```bash
@@ -58,7 +58,7 @@ structures from file. This can be fixed by running the provided helper
 script:
 
 ```bash
-./nglview_fix.sh $HOME/sire.app
+./nglview_patch.sh $HOME/sire.app
 ```
 
 Finally, we need to clean any existing Jupyter configuration folders, which

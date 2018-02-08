@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ $# -lt 1 ]; then
-    echo "usage: ./nglview_fix /path/to/sire.app"
+    echo "usage: ./nglview_patch /path/to/sire.app"
     exit
 fi
 
@@ -23,9 +23,11 @@ if [ ! -f "$FIX_FILE" ]; then
     exit
 fi
 
-# Fix the file, accounting for different sed behaviour on macOS and FreeBSD
+# Patch the file, accounting for different sed behaviour on macOS and FreeBSD
 if [ "$os_name" = "Darwin" ] || [ "$os_name" = "FreeBSD" ]; then
     sed -i "" "s#'rb'#'r'#g" $FIX_FILE
 else
     sed -i "s#'rb'#'r'#g" $FIX_FILE
 fi
+
+echo "File patched!"
