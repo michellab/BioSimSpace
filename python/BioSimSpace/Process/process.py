@@ -58,7 +58,12 @@ class Process():
         self._name = name
 
         # Set the random number seed.
-        self.seed = seed
+        if seed is None:
+            self._is_seeded = False
+            self.seed = 0
+        else:
+            self._is_seeded = True
+            self.seed = seed
 
         # Set the timer and running time None.
         self._timer = None

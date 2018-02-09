@@ -241,10 +241,10 @@ class Amber(process.Process):
             steps = ceil(self._protocol.runtime / 2e-6)
 
             # Set the random number seed.
-            if self._seed is None:
-                seed = -1
-            else:
+            if self._is_seeded:
                 seed = self._seed
+            else:
+                seed = -1
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")

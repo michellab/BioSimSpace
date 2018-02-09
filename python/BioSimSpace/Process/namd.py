@@ -236,7 +236,7 @@ class Namd(process.Process):
         self.addToConfig("parameters            %s" % path.basename(self._param_file))
 
         # Random number seed.
-        if self._seed is not None:
+        if self._is_seeded:
             self.addToConfig("seed                  %d" % self._seed)
 
         # Exclusion policy.
