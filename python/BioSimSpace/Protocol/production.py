@@ -34,22 +34,22 @@ class Production(Protocol):
         super().__init__(ProtocolType.PRODUCTION, gas_phase)
 
         # Set the runtime.
-        self._runtime = runtime
+        self.runtime = runtime
 
         # Set the system temperature.
-        self._temperature = temperature
+        self.temperature = temperature
 
         # Set the number of trajectory frames.
-        self._frames = frames
+        self.frames = frames
 
         # Set the thermodynamic ensemble.
-        self._ensemble = ensemble
+        self.ensemble = ensemble
 
         # Set the restart flag.
-        self._restart = restart
+        self.restart = restart
 
         # Set the first time step.
-        self._first_step = first_step
+        self.first_step = first_step
 
     @property
     def runtime(self):
@@ -123,7 +123,7 @@ class Production(Protocol):
     def first_step(self, first_step):
         """Set the initial time step."""
 
-        if first_step <= 0:
+        if first_step < 0:
             warn("The initial time step must be positive. Using default (0).")
             self._first_step = 0
 

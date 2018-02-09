@@ -24,7 +24,7 @@ class Minimisation(Protocol):
         super().__init__(ProtocolType.MINIMISATION, gas_phase)
 
         # Set the number of steps.
-        self._steps = steps
+        self.steps = steps
 
     @property
     def steps(self):

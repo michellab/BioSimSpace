@@ -6,6 +6,7 @@
 
 from .protocol import Protocol, ProtocolType
 
+from pytest import approx
 from warnings import warn
 
 class Equilibration(Protocol):
@@ -28,14 +29,14 @@ class Equilibration(Protocol):
         super().__init__(ProtocolType.EQUILIBRATION, gas_phase)
 
         # Set the running time.
-        self._runtime = runtime
+        self.runtime = runtime
 
         # Set the start temperature.
-        self._temperature_start = temperature_start
+        self.temperature_start = temperature_start
 
         # Set the final temperature.
         if temperature_end is not None:
-            self._temperature_end = temperature_end
+            self.temperature_end = temperature_end
             self._is_const_temp = False
 
             # Start and end temperature is the same.
@@ -48,7 +49,7 @@ class Equilibration(Protocol):
             self._is_const_temp = True
 
         # Set the backbone restraint.
-        self._is_restrained = restrain_backbone
+        self.is_restrained = restrain_backbone
 
     @property
     def runtime(self):
@@ -75,9 +76,12 @@ class Equilibration(Protocol):
     def temperature_start(self, temperature):
         """Set the starting temperature."""
 
-        if temperature <= 0:
+        if temperature < 0:
             warn("Starting temperature must be positive. Using default (300 K).")
             self._temperature_start = 300
+
+        elif temperature == approx(0):
+            self._temperature_start = 0.01
 
         else:
             self._temperature_start = temperature
@@ -91,9 +95,12 @@ class Equilibration(Protocol):
     def temperature_end(self, temperature):
         """Set the final temperature."""
 
-        if temperature <= 0:
+        if temperature < 0:
             warn("Final temperature must be positive. Using default (300 K).")
             self._temperature_end = 300
+
+        elif temperature == approx(0):
+            self._temperature_end = 0.01
 
         else:
             self._temperature_end = temperature

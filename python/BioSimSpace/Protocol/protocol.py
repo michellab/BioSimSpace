@@ -32,7 +32,7 @@ class Protocol():
         self._type = protocol_type
 
         # Set the gas phase flag.
-        self._gas_phase = gas_phase
+        self.gas_phase = gas_phase
 
     def type(self):
         """Return the protocol type."""
