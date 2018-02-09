@@ -12,7 +12,7 @@ from Sire.IO import PDB2
 from ..Process.process import Process
 
 from glob import glob
-from os import chdir, getcwd, remove
+from os import remove
 from shutil import copyfile
 
 import nglview
