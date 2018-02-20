@@ -44,7 +44,7 @@ $HOME/sire.app/bin/pip install jupyter
 
 Now install NGLview, overwriting any dependencies that were already installed above:
 ```bash
-$HOME/sire.app/bin/pip --no-cache-dir --ignore-installed install nglview
+$HOME/sire.app/bin/pip install --no-cache-dir --ignore-installed nglview
 ```
 
 We now need to enable the notebook extension:
