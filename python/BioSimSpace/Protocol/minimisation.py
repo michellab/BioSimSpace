@@ -11,7 +11,7 @@ from warnings import warn
 class Minimisation(Protocol):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, method="conjugate-gradient", steps=10000, gas_phase=False):
+    def __init__(self, steps=10000, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
