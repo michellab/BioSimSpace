@@ -217,7 +217,10 @@ class Amber(process.Process):
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
         if 'space' in self._system.propertyKeys():
-            has_box = True
+            if self._protocol.gas_phase
+                has_box = False
+            else:
+                has_box = True
         else:
             has_box = False
 
@@ -232,7 +235,11 @@ class Amber(process.Process):
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  maxcyc=%d,"
                 % self._protocol.steps)                     # Set the number of steps.
-            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            if not has_box:
+                self.addToConfig("  ntb=0,")                # No periodic box.
+                self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+            else:
+                self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
@@ -260,7 +267,11 @@ class Amber(process.Process):
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
             self.addToConfig("  ntt=3,")                    # Langevin dynamics.
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
-            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            if not has_box:
+                self.addToConfig("  ntb=0,")                # No periodic box.
+                self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+            else:
+                self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
             self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
             self.addToConfig("  pres0=1.01325,")            # Atompspheric pressure.
 
@@ -318,7 +329,11 @@ class Amber(process.Process):
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
             self.addToConfig("  ntt=3,")                    # Langevin dynamics.
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
-            self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            if not has_box:
+                self.addToConfig("  ntb=0,")                # No periodic box.
+                self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+            else:
+                self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
             if not self._protocol.restart:
                 self.addToConfig("  tempi=%.2f,"            # Initial temperature.
                     % self._protocol.temperature)
