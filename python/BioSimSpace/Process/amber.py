@@ -13,6 +13,7 @@ from ..Protocol.protocol import Protocol, ProtocolType
 from math import ceil, floor
 from os import chdir, environ, getcwd, path
 from re import findall
+from time import sleep
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -76,10 +77,6 @@ class Handler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified."""
-
-        # Stop the observer when the process finishes.
-        if not self._process.isRunning():
-            self._process._watcher._observer.stop()
 
         # N.B.
         #
@@ -648,11 +645,16 @@ class Amber(process.Process):
     def wait(self):
         """Wait for the process to finish."""
 
-        # Join the watchdog observer.
-        self._watcher._observer.join()
+        # Loop until the process is finished.
+        # For some reason we can't use Sire.Base.Process.wait() since it
+        # doesn't work properly with the background threads used for the
+        # watchdog observer.
+        while self._process.isRunning():
+            sleep(1)
 
-        # Wait for the process to finish.
-        self._process.wait()
+        # Stop and join the watchdog observer.
+        self._watcher._observer.stop()
+        self._watcher._observer.join()
 
     def _get_stdout_record(self, key, time_series=False):
         """Helper function to get a stdout record from the dictionary."""
