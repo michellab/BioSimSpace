@@ -217,7 +217,7 @@ class Amber(process.Process):
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
         if 'space' in self._system.propertyKeys():
-            if self._protocol.gas_phase
+            if self._protocol.gas_phase:
                 has_box = False
             else:
                 has_box = True
