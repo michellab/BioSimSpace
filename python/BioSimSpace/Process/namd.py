@@ -153,11 +153,20 @@ class Namd(process.Process):
         has_acceptors = False
         has_non_bonded = False
 
+        # When converting forcefields, improper terms may be represented as
+        # dihedrals (cosine impropers). As such, there will be no improper
+        # records in the PSF file.
+        has_impropers = False
+
         # Open the PSF file for reading.
         with open(self._psf_file) as f:
 
             # Read the next line.
             line = f.readline()
+
+            # There are improper records.
+            if "!NIMPHI" in line:
+                has_impropers = True
 
             # There are donor records.
             if "!NDON" in line:
@@ -170,6 +179,12 @@ class Namd(process.Process):
             # There are non-bonded exclusion records.
             elif "NNB" in line:
                 has_non_bonded = True
+
+        # Append empty improper record.
+        if not has_impropers:
+            f = open(self._psf_file, "a")
+            f.write("\n%8d !NIMPHI: impropers\n" % 0)
+            f.close()
 
         # Append empty donor record.
         if not has_donors:
