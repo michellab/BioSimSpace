@@ -9,6 +9,7 @@ from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
+from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, environ, getcwd, path
@@ -356,7 +357,7 @@ class Amber(process.Process):
         self.setArg("-p", "%s.prm7" % self._name)           # Topology file.
         self.setArg("-c", "%s.rst7" % self._name)           # Coordinate file.
         self.setArg("-o", "stdout")                         # Redirect to stdout.
-        self.setArg("-r", "%s.restart.crd" % self._name)    # Restart file.
+        self.setArg("-r", "%s.crd" % self._name)            # Restart file.
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
         # Skip if the user has passed a custom config.
@@ -369,7 +370,7 @@ class Amber(process.Process):
 
             # Append a trajectory file if this is a production run.
             elif self._protocol.type() == ProtocolType.PRODUCTION:
-                self.setArg("-x", "%s.trajectory.crd" % self._name)
+                self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
         """Start the AMBER simulation. """
@@ -420,7 +421,7 @@ class Amber(process.Process):
         """Get the latest molecular configuration as a Sire system."""
 
         # Create the name of the restart CRD file.
-        restart = "%s/%s.restart.crd" % (self._work_dir, self._name)
+        restart = "%s/%s.crd" % (self._work_dir, self._name)
 
         # Check that the file exists.
         if path.isfile(restart):
