@@ -111,6 +111,9 @@ if process.isError():
 # Get the final molecular structure.
 final = process.getSystem()
 
+# Get an MDTraj trajectory object.
+traj = process.getTrajectory()
+
 # Write the final structure to file.
 filenames = BSS.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)

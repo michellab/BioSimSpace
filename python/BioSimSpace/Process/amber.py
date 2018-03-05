@@ -9,11 +9,11 @@ from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
-from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
-from os import chdir, environ, getcwd, path
+from os import chdir, environ, getcwd, path, remove
 from re import findall
+from shutil import copyfile
 from time import sleep
 from timeit import default_timer as timer
 from warnings import warn
@@ -30,6 +30,16 @@ try:
     from watchdog.observers import Observer
 except ImportError:
     raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
+
+try:
+    mdtraj = try_import("mdtraj")
+except ImportError:
+    raise ImportError("MDTraj is not installed. Please install mdtraj in order to use BioSimSpace.")
+
+try:
+    mdanalysis = try_import("MDAnalysis")
+except ImportError:
+    raise ImportError("MDAnalysis is not installed. Please install mdanalysis in order to use BioSimSpace.")
 
 class Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -430,6 +440,49 @@ class Amber(process.Process):
 
         else:
             return None
+
+    def getTrajectory(self, format='mdtraj'):
+        """Get the current trajectory object.
+
+           Keyword arguments:
+
+           format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
+        """
+
+        if format.upper() not in ['MDTRAJ', 'MDANALYSIS']:
+            warn("Invalid trajectory format. Using default (mdtraj).")
+            format = mdtraj
+
+        # Check for a trajectory file.
+        has_traj = False
+        if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
+            traj_file = "%s/%s.nc" % (self._work_dir, self._name)
+            has_traj = True
+
+        # We found a trajectory file.
+        if has_traj:
+
+            # Return an MDTraj object.
+            if format is 'mdtraj':
+
+                # MDTraj currently doesn't support the .prm7 extension, so we
+                # need to copy the topology file to a temporary .parm7 file.
+                # I've submitted a pull request to add support for the alternative
+                # .prm7 extension.
+                top_file = "%s/tmp.parm7" % self._work_dir
+                copyfile(self._prm_file, top_file)
+
+                # Create the MDTraj object.
+                traj = mdtraj.load(traj_file, top=top_file)
+
+                # Delete the temporary .parm7 file.
+                remove("%s/tmp.parm7" % self._work_dir)
+
+                return traj
+
+            # Return an MDAnalysis Universe.
+            else:
+                return mdanalysis.Universe(self._prm_file, traj_file, topology_format='PARM7')
 
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.

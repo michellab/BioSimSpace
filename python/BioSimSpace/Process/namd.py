@@ -21,6 +21,16 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
+try:
+    mdtraj = try_import("mdtraj")
+except ImportError:
+    raise ImportError("MDTraj is not installed. Please install mdtraj in order to use BioSimSpace.")
+
+try:
+    mdanalysis = try_import("MDAnalysis")
+except ImportError:
+    raise ImportError("MDAnalysis is not installed. Please install mdanalysis in order to use BioSimSpace.")
+
 class Namd(process.Process):
     """A class for running simulations using NAMD."""
 
@@ -456,39 +466,39 @@ class Namd(process.Process):
         # Read the PDB coordinate file and construct a parameterised molecular
         # system using the original PSF and param files.
 
-        is_coor = False
+        has_coor = False
 
         # First check for final configuration.
         if path.isfile("%s/%s_out.coor" % (self._work_dir, self._name)):
             coor_file = "%s/%s_out.coor" % (self._work_dir, self._name)
-            is_coor = True
+            has_coor = True
 
         # Otherwise check for a restart file.
         elif path.isfile("%s/%s_out.restart.coor" % (self._work_dir, self._name)):
             coor_file = "%s/%s_out.restart.coor" % (self._work_dir, self._name)
-            is_coor = True
+            has_coor = True
 
         # Try to find an XSC file.
 
-        is_xsc = False
+        has_xsc = False
 
         # First check for final XSC file.
         if path.isfile("%s/%s_out.xsc" % (self._work_dir, self._name)):
             xsc_file = "%s/%s_out.xsc" % (self._work_dir, self._name)
-            is_xsc = True
+            has_xsc = True
 
         # Otherwise check for a restart XSC file.
         elif path.isfile("%s/%s_out.restart.xsc" % (self._work_dir, self._name)):
             xsc_file = "%s/%s_out.restart.xsc" % (self._work_dir, self._name)
-            is_xsc = True
+            has_xsc = True
 
         # We found a coordinate file.
-        if is_coor:
+        if has_coor:
             # List of files.
             files = [ coor_file, self._psf_file, self._param_file ]
 
             # Add the box information.
-            if is_xsc:
+            if has_xsc:
                 files.append(xsc_file)
 
             # Create and return the molecular system.
@@ -496,6 +506,35 @@ class Namd(process.Process):
 
         else:
             return None
+
+    def getTrajectory(self, format='mdtraj'):
+        """Get the current trajectory object.
+
+           Keyword arguments:
+
+           format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
+        """
+
+        if format.upper() not in ['MDTRAJ', 'MDANALYSIS']:
+            warn("Invalid trajectory format. Using default (mdtraj).")
+            format = mdtraj
+
+        # Check for a trajectory file.
+        has_traj = False
+        if path.isfile("%s/%s_out.dcd" % (self._work_dir, self._name)):
+            traj_file = "%s/%s_out.dcd" % (self._work_dir, self._name)
+            has_traj = True
+
+        # We found a trajectory file.
+        if has_traj:
+
+            # Return an MDTraj object.
+            if format is 'mdtraj':
+                return mdtraj.load(traj_file, top=self._pdb_file)
+
+            # Return an MDAnalysis Universe.
+            else:
+                return mdanalysis.Universe(self._pdb_file, traj_file)
 
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.
