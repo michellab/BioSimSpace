@@ -9,6 +9,7 @@ from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
+from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, environ, getcwd, path, remove
@@ -483,6 +484,74 @@ class Amber(process.Process):
             # Return an MDAnalysis Universe.
             else:
                 return mdanalysis.Universe(self._prm_file, traj_file, topology_format='PARM7')
+
+        else:
+            return None
+
+    def getFrames(self, indices=None):
+        """Get trajectory frames as a list of Sire systems.
+
+           Keyword arguments:
+
+           indices -- A list of trajectory frame indices.
+        """
+
+        # First get the current MDTraj object.
+        traj = self.getTrajectory()
+
+        # There is no trajectory.
+        if traj is None:
+            return None
+
+        # Create the indices array.
+
+        # Default to all frames.
+        if indices is None:
+            indices = [x for x in range(0, traj.n_frames)]
+
+        # Insert the single frame into a list.
+        elif type(indices) is int:
+            indices = [indices]
+
+        # Make sure all entries are of type int.
+        elif all(isinstance(item, int) for item in indices):
+            pass
+
+        # Unsupported argument.
+        else:
+            raise ValueError("Unsupported index. Indices must be an 'int', or list of 'int' types.")
+
+        # Intialise the list of frames.
+        frames = []
+
+        # Store the maximum frame number.
+        max_frame = traj.n_frames - 1
+
+        # Loop over all indices.
+        for x in indices:
+
+            # Make sure the frame index is within range.
+            if abs(x) > max_frame:
+                raise ValueError("Frame index (%d) of of range (0-%d)." %s (x, max_frame))
+
+            # The name of the frame coordinate file.
+            frame_file = "%s/frame.nc" % self._work_dir
+
+            # Write the current frame as a NetCDF file.
+            # MDTraj is unable to write a CRD file that is compatible with the original topology!
+            traj[x].save(frame_file)
+
+            # Create a Sire system.
+            system = MoleculeParser.read([self._prm_file, frame_file])
+
+            # Append the system to the list of frames.
+            frames.append(system)
+
+        # Remove the temporary frame coordinate file.
+        remove(frame_file)
+
+        # Return the frames.
+        return frames
 
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.
