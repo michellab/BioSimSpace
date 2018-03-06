@@ -52,10 +52,9 @@ class Watcher:
 
            proc -- The Amber Process object.
         """
-        self._process = proc
 
-        self._observer = Observer()
         self._process = proc
+        self._observer = Observer()
 
     def start(self):
         """Start the file watcher."""
