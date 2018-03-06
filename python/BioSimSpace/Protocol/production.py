@@ -15,12 +15,13 @@ _ensembles = ['NVT', 'NPT']
 class Production(Protocol):
     """A class for storing production protocols."""
 
-    def __init__(self, runtime=1, temperature=300, frames=20, ensemble="NPT",
-            first_step=0, restart=False, gas_phase=False):
+    def __init__(self, timestep=2, runtime=1, temperature=300, frames=20,
+            ensemble="NPT", first_step=0, restart=False, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
 
+           timestep    -- The integration timestep (in femtoseconds).
            runtime     -- The running time (in nanoseconds).
            temperature -- The temperature (in Kelvin).
            frames      -- The number of trajectory frames to record.
@@ -32,6 +33,9 @@ class Production(Protocol):
 
         # Call the base class constructor.
         super().__init__(ProtocolType.PRODUCTION, gas_phase)
+
+        # Set the time step.
+        self.timestep = timestep
 
         # Set the runtime.
         self.runtime = runtime
@@ -50,6 +54,22 @@ class Production(Protocol):
 
         # Set the first time step.
         self.first_step = first_step
+
+    @property
+    def timestep(self):
+        """Return the time step."""
+        return self._timestep
+
+    @timestep.setter
+    def timestep(self, timestep):
+        """Set the time step."""
+
+        if timestep <= 0:
+            warn("The time step must be positive. Using default (2 fs).")
+            self._timestep = 2
+
+        else:
+            self._timestep = timestep
 
     @property
     def runtime(self):

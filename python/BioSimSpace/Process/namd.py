@@ -341,7 +341,7 @@ class Namd(process.Process):
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              2.")
+            self.addToConfig("timestep              %s." % self._protocol.timestep)
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -407,7 +407,7 @@ class Namd(process.Process):
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              2.")
+            self.addToConfig("timestep              %s." % self._protocol.timestep)
             if self._protocol.first_step is not 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.first_step)
             self.addToConfig("rigidBonds            all")
@@ -664,12 +664,15 @@ class Namd(process.Process):
             self.stdout(0)
             time_steps = self._get_stdout_record('TS', time_series)
 
-            # Multiply by the integration time step (2fs).
+            # Convert the time step to nanoseconds.
+            timestep = self._protocol.timestep * 1e-6
+
+            # Multiply by the integration time step.
             if time_steps is not None:
                 if time_series:
-                    return [x * 2e-6 for x in time_steps]
+                    return [x * timestep for x in time_steps]
                 else:
-                    return 2e-6 * time_steps
+                    return timestep * time_steps
 
     def getStep(self, time_series=False):
         """Get the number of integration steps."""

@@ -12,12 +12,13 @@ from warnings import warn
 class Equilibration(Protocol):
     """A class for storing equilibration protocols."""
 
-    def __init__(self, runtime=0.2, temperature_start=300, temperature_end=None,
-            restrain_backbone=False, gas_phase=False):
+    def __init__(self, timestep=2, runtime=0.2, temperature_start=300,
+            temperature_end=None, restrain_backbone=False, gas_phase=False):
         """Constructor.
 
            Keyword arguments:
 
+           timestep          -- The integration timestep (in femtoseconds).
            runtime           -- The running time (in nanoseconds).
            temperature_start -- The starting temperature (in Kelvin).
            temperature_end   -- The final temperature (in Kelvin).
@@ -27,6 +28,9 @@ class Equilibration(Protocol):
 
         # Call the base class constructor.
         super().__init__(ProtocolType.EQUILIBRATION, gas_phase)
+
+        # Set the time step.
+        self.timestep = timestep
 
         # Set the running time.
         self.runtime = runtime
@@ -50,6 +54,22 @@ class Equilibration(Protocol):
 
         # Set the backbone restraint.
         self.is_restrained = restrain_backbone
+
+    @property
+    def timestep(self):
+        """Return the time step."""
+        return self._timestep
+
+    @timestep.setter
+    def timestep(self, timestep):
+        """Set the time step."""
+
+        if timestep <= 0:
+            warn("The time step must be positive. Using default (2 fs).")
+            self._timestep = 2
+
+        else:
+            self._timestep = timestep
 
     @property
     def runtime(self):

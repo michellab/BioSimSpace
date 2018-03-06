@@ -259,14 +259,21 @@ class Amber(process.Process):
 
         # Add configuration variables for an equilibration simulation.
         elif self._protocol.type() == ProtocolType.EQUILIBRATION:
+
+            # Convert the timestep to nanoseconds.
+            timestep = self._protocol.timestep * 1e-6
+
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = ceil(self._protocol.runtime / timestep)
 
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
             else:
                 seed = -1
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.timestep * 1e-3
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
@@ -276,7 +283,7 @@ class Amber(process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  irest=0,")                  # Don't restart.
-            self.addToConfig("  dt=0.002,")                 # Time step (2fs).
+            self.addToConfig("  dt=%.3f," % timestep)       # Time step.
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
             self.addToConfig("  ntc=2,")                    # Enable SHAKE.
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
@@ -313,14 +320,21 @@ class Amber(process.Process):
 
         # Add configuration variables for a production simulation.
         elif self._protocol.type() == ProtocolType.PRODUCTION:
+
+            # Convert the timestep to nanoseconds.
+            timestep = self._protocol.timestep * 1e-6
+
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = ceil(self._protocol.runtime / timestep)
 
             # Set the random number seed.
             if self._seed is None:
                 seed = -1
             else:
                 seed = self._seed
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.timestep * 1e-3
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -338,7 +352,7 @@ class Amber(process.Process):
                 self.addToConfig("  irest=1,")              # Restart using previous velocities.
             else:
                 self.addToConfig("  irest=0,")              # Don't restart.
-            self.addToConfig("  dt=0.002,")                 # Time step (2fs).
+            self.addToConfig("  dt=%.3f," % timestep)       # Time step.
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
             self.addToConfig("  ntc=2,")                    # Enable SHAKE.
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
