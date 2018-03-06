@@ -161,24 +161,24 @@ class Namd(process.Process):
         # Open the PSF file for reading.
         with open(self._psf_file) as f:
 
-            # Read the next line.
-            line = f.readline()
+            # Loop over all lines.
+            for line in f:
 
-            # There are improper records.
-            if "!NIMPHI" in line:
-                has_impropers = True
+                # There are improper records.
+                if "!NIMPHI" in line:
+                    has_impropers = True
 
-            # There are donor records.
-            if "!NDON" in line:
-                has_donors = True
+                # There are donor records.
+                if "!NDON" in line:
+                    has_donors = True
 
-            # There are acceptor records.
-            elif "NACC" in line:
-                has_acceptors = True
+                # There are acceptor records.
+                elif "NACC" in line:
+                    has_acceptors = True
 
-            # There are non-bonded exclusion records.
-            elif "NNB" in line:
-                has_non_bonded = True
+                # There are non-bonded exclusion records.
+                elif "NNB" in line:
+                    has_non_bonded = True
 
         # Append empty improper record.
         if not has_impropers:
