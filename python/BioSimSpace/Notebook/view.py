@@ -24,7 +24,7 @@ class View():
     def __init__(self, handle):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            handle -- A handle to a Sire.System or BioSimSpace.Process object.
         """
@@ -185,9 +185,12 @@ class View():
     def savePDB(self, file, index=None):
         """Save a specific view as a PDB file.
 
-           Keyword arguments:
+           Positional arguments:
 
            file  -- The name of the file to write to.
+
+           Keyword arguments:
+
            index -- The view index.
         """
 

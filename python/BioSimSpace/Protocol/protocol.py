@@ -18,9 +18,12 @@ class Protocol():
     def __init__(self, protocol_type, gas_phase=False):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            protocol_type -- The type of protocol.
+
+           Keyword arguments:
+
            gas_phase     -- Whether this is a gas phase simulation.
         """
 

@@ -9,7 +9,6 @@ from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
-from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, environ, getcwd, path, remove
@@ -49,7 +48,7 @@ class Watcher:
     def __init__(self, proc):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            proc -- The Amber Process object.
         """
@@ -81,14 +80,19 @@ class Handler(PatternMatchingEventHandler):
     def __init__(self, proc):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            proc -- The Amber Process object.
         """
         self._process = proc
 
     def on_any_event(self, event):
-        """Update the dictionary when the file is modified."""
+        """Update the dictionary when the file is modified.
+
+           Positional arguments:
+
+           event -- The file system event.
+        """
 
         # N.B.
         #
@@ -118,10 +122,13 @@ class Amber(process.Process):
             work_dir=None, seed=None):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            system   -- The molecular system.
            protocol -- The protocol for the AMBER process.
+
+           Keyword arguments:
+
            exe      -- The full path to the AMBER executable.
            name     -- The name of the process.
            work_dir -- The working directory for the process.
@@ -556,9 +563,12 @@ class Amber(process.Process):
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.
 
+           Positional arguments:
+
+           record      -- The record key.
+
            Keyword arguments:
 
-           record      -- The record keyword.
            time_series -- Whether to return a list of time series records.
         """
         self._update_energy_dict()
@@ -780,7 +790,16 @@ class Amber(process.Process):
         self._watcher._observer.join()
 
     def _get_stdout_record(self, key, time_series=False):
-        """Helper function to get a stdout record from the dictionary."""
+        """Helper function to get a stdout record from the dictionary.
+
+           Positional arguments:
+
+           key        -- The record key.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a time series of records.
+        """
 
         # No data!
         if len(self._stdout_dict) is 0:

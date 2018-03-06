@@ -9,7 +9,6 @@ from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
-from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, getcwd, path, remove
@@ -39,10 +38,13 @@ class Namd(process.Process):
             work_dir=None, charmm_params=True, seed=None):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            system        -- The molecular system.
            protocol      -- The protocol for the NAMD process.
+
+           Keyword arguments:
+
            exe           -- The full path to the NAMD executable.
            name          -- The name of the process.
            work_dir      -- The working directory for the process.
@@ -623,9 +625,12 @@ class Namd(process.Process):
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.
 
+           Positional arguments:
+
+           record      -- The record key.
+
            Keyword arguments:
 
-           record      -- The record keyword.
            time_series -- Whether to return a list of time series records.
         """
         self.stdout(0)
@@ -834,7 +839,16 @@ class Namd(process.Process):
             print(self._stdout[x])
 
     def _get_stdout_record(self, key, time_series=False):
-        """Helper function to get a stdout record from the dictionary."""
+        """Helper function to get a stdout record from the dictionary.
+
+           Positional arguments:
+
+           key        -- The record key.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a time series of records.
+        """
 
         # No data!
         if len(self._stdout_dict) is 0:
