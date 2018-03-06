@@ -560,6 +560,19 @@ class Amber(process.Process):
         # Return the frames.
         return frames
 
+    def nFrames(self):
+        """Return the current number of trajectory frames."""
+
+        # First get the current MDTraj object.
+        traj = self.getTrajectory()
+
+        # There is no trajectory.
+        if traj is None:
+            return 0
+
+        else:
+            return traj.n_frames
+
     def getRecord(self, record, time_series=False):
         """Get a record from the stdout dictionary.
 
