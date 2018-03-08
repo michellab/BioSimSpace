@@ -4,6 +4,7 @@
 @brief   Base class and helper functions for the various sample modules.
 """
 
+from Sire import try_import
 from Sire.ID import CaseInsensitive
 from Sire.Mol import AtomName
 from Sire.Vol import AABox
@@ -20,7 +21,6 @@ from warnings import warn
 import tempfile
 
 try:
-    from Sire import try_import
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
@@ -531,6 +531,10 @@ def _restrain_backbone(system):
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
         self.clearArgs()
+
+    def _get_trajectory_files(self):
+        """Get all files associated with the molecular trajectory."""
+        return None
 
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""

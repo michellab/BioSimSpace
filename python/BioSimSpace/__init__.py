@@ -17,6 +17,7 @@ if _is_notebook():
 
 import BioSimSpace.Process
 import BioSimSpace.Protocol
+import BioSimSpace.Trajectory
 
 import Sire.IO
 import Sire.Base

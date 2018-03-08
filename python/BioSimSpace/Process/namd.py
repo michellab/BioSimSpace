@@ -4,6 +4,7 @@
 @brief   A class for running simulations using NAMD.
 """
 
+from Sire import try_import
 from Sire.Base import findExe, Process
 from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 
@@ -16,7 +17,6 @@ from timeit import default_timer as timer
 from warnings import warn
 
 try:
-    from Sire import try_import
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
@@ -1277,3 +1277,17 @@ class Namd(process.Process):
 
             except KeyError:
                 return None
+
+    def _get_trajectory_files(self):
+        """Get all files associated with the molecular trajectory."""
+
+        # Name of the trajectory file.
+        traj_file = "%s/%s_out.dcd" % (self._work_dir, self._name)
+
+        # Return the trajectory and topology file.
+        if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
+            return (traj_file, self._pdb_file)
+
+        # No trajectory file.
+        else:
+            return None
