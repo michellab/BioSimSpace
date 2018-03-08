@@ -478,8 +478,19 @@ class Namd(process.Process):
         # Change back to the original working directory.
         chdir(dir)
 
-    def getSystem(self):
-        """Get the latest molecular configuration as a Sire system."""
+    def getSystem(self, block='AUTO'):
+        """Get the latest molecular configuration as a Sire system.
+
+           Keyword arguments:
+
+           block -- Whether to block until the process has finished running.
+        """
+
+        # Wait for the process to finish.
+        if block:
+            self.wait()
+        elif block is 'AUTO' and self._is_blocked:
+            self.wait()
 
         # Read the PDB coordinate file and construct a parameterised molecular
         # system using the original PSF and param files.
@@ -524,6 +535,10 @@ class Namd(process.Process):
 
         else:
             return None
+
+    def getCurrentSystem(self):
+        """Get the latest molecular configuration as a Sire system."""
+        return self.getSystem(block=False)
 
     def getTrajectory(self, format='mdtraj'):
         """Get the current trajectory object.
@@ -657,8 +672,30 @@ class Namd(process.Process):
         else:
             return traj.n_frames
 
-    def getRecord(self, record, time_series=False):
+    def getRecord(self, record, time_series=False, block='AUTO'):
         """Get a record from the stdout dictionary.
+
+           Positional arguments:
+
+           record      -- The record key.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+
+        # Wait for the process to finish.
+        if block:
+            self.wait()
+        elif block is 'AUTO' and self._is_blocked:
+            self.wait()
+
+        self.stdout(0)
+        return self._get_stdout_record(record, time_series)
+
+    def getCurrentRecord(self, record, time_series=False):
+        """Get a current record from the stdout dictionary.
 
            Positional arguments:
 
@@ -671,20 +708,40 @@ class Namd(process.Process):
         self.stdout(0)
         return self._get_stdout_record(record, time_series)
 
-    def getRecords(self):
-        """Return the dictionary of stdout time-series records."""
+    def getRecords(self, block='AUTO'):
+        """Return the dictionary of stdout time-series records.
+
+           Keyword arguments:
+
+           block       -- Whether to block until the process has finished running.
+        """
+        # Wait for the process to finish.
+        if block:
+            self.wait()
+        elif block is 'AUTO' and self._is_blocked:
+            self.wait()
+
         return self._stdout_dict
 
-    def getTime(self, time_series=False):
-        """Get the time (in nanoseconds)."""
+    def getCurrentRecords(self):
+        """Return the current dictionary of stdout time-series records."""
+        return getRecords(block=False)
+
+    def getTime(self, time_series=False, block='AUTO'):
+        """Get the time (in nanoseconds).
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
 
         if self._protocol.type == ProtocolType.MINIMISATION:
             return None
 
         else:
             # Get the list of time steps.
-            self.stdout(0)
-            time_steps = self._get_stdout_record('TS', time_series)
+            time_steps = self.getRecord('TS', time_series, block)
 
             # Convert the time step to nanoseconds.
             timestep = self._protocol.timestep * 1e-6
@@ -696,110 +753,413 @@ class Namd(process.Process):
                 else:
                     return timestep * time_steps
 
-    def getStep(self, time_series=False):
-        """Get the number of integration steps."""
-        self.stdout(0)
-        return self._get_stdout_record('TS', time_series)
+    def getCurrentTime(self, time_series=False):
+        """Get the current time (in nanoseconds).
 
-    def getBondEnergy(self, time_series=False):
-        """Get the bond energy."""
-        self.stdout(0)
-        return self._get_stdout_record('BOND', time_series)
+           Keyword arguments:
 
-    def getAngleEnergy(self, time_series=False):
-        """Get the angle energy."""
-        self.stdout(0)
-        return self._get_stdout_record('ANGLE', time_series)
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTime(time_series, block=False)
 
-    def getDihedralEnergy(self, time_series=False):
-        """Get the dihedral energy."""
-        self.stdout(0)
-        return self._get_stdout_record('DIHED', time_series)
+    def getStep(self, time_series=False, block='AUTO'):
+        """Get the number of integration steps.
 
-    def getImproperEnergy(self, time_series=False):
-        """Get the improper energy."""
-        self.stdout(0)
-        return self._get_stdout_record('IMPRP', time_series)
+           Keyword arguments:
 
-    def getElectrostaticEnergy(self, time_series=False):
-        """Get the electrostatic energy."""
-        self.stdout(0)
-        return self._get_stdout_record('ELECT', time_series)
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TS', time_series, block)
 
-    def getVanDerWaalsEnergy(self, time_series=False):
-        """Get the Van der Vaals energy."""
-        self.stdout(0)
-        return self._get_stdout_record('VDW', time_series)
+    def getCurrentStep(self, time_series=False):
+        """Get the current number of integration steps.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getStep(time_series, block=False)
+
+    def getBondEnergy(self, time_series=False, block='AUTO'):
+        """Get the bond energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('BOND', time_series, block)
+
+    def getCurrentBondEnergy(self, time_series=False):
+        """Get the current bond energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getBondEnergy(time_series, block=False)
+
+    def getAngleEnergy(self, time_series=False, block='AUTO'):
+        """Get the angle energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('ANGLE', time_series, block)
+
+    def getCurrentAngleEnergy(self, time_series=False):
+        """Get the current angle energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getAngleEnergy(time_series, block=False)
+
+    def getDihedralEnergy(self, time_series=False, block='AUTO'):
+        """Get the dihedral energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('DIHED', time_series, block)
+
+    def getCurrentDihedralEnergy(self, time_series=False):
+        """Get the current dihedral energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getDihedralEnergy(time_series, block=False)
+
+    def getImproperEnergy(self, time_series=False, block='AUTO'):
+        """Get the improper energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('IMPRP', time_series, block)
+
+    def getCurrentImproperEnergy(self, time_series=False):
+        """Get the current improper energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getImproperEnergy(time_series, block=False)
+
+    def getElectrostaticEnergy(self, time_series=False, block='AUTO'):
+        """Get the electrostatic energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('ELECT', time_series, block)
+
+    def getCurrentElectrostaticEnergy(self, time_series=False):
+        """Get the current electrostatic energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getElectrostaticEnergy(time_series, block=False)
+
+    def getVanDerWaalsEnergy(self, time_series=False, block='AUTO'):
+        """Get the Van der Vaals energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('VDW', time_series)
+
+    def getCurrentVanDerWaalsEnergy(self, time_series=False):
+        """Get the current Van der Waals energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getVanDerWaalsEnergy(time_series, block=False)
 
     def getBoundaryEnergy(self, time_series=False):
-        """Get the boundary energy."""
-        self.stdout(0)
-        return self._get_stdout_record('BOUNDARY', time_series)
+        """Get the boundary energy.
 
-    def getMiscEnergy(self, time_series=False):
-        """Get the external energy."""
-        self.stdout(0)
-        return self._get_stdout_record('MISC', time_series)
+           Keyword arguments:
 
-    def getKineticEnergy(self, time_series=False):
-        """Get the kinetic energy."""
-        self.stdout(0)
-        return self._get_stdout_record('KINETIC', time_series)
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('BOUNDARY', time_series, block)
 
-    def getPotentialEnergy(self, time_series=False):
-        """Get the potential energy."""
-        self.stdout(0)
-        return self._get_stdout_record('POTENTIAL', time_series)
+    def getCurrentBoundaryEnergy(self, time_series=False):
+        """Get the current boundary energy.
 
-    def getTotalEnergy(self, time_series=False):
-        """Get the total energy."""
-        self.stdout(0)
-        return self._get_stdout_record('TOTAL', time_series)
+           Keyword arguments:
 
-    def getTotal2Energy(self, time_series=False):
-        """Get the total energy. (Better KE conservation.)"""
-        self.stdout(0)
-        return self._get_stdout_record('TOTAL2', time_series)
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getBoundaryEnergy(time_series, block=False)
 
-    def getTotal3Energy(self, time_series=False):
-        """Get the total energy. (Smaller short-time fluctuations.)"""
-        self.stdout(0)
-        return self._get_stdout_record('TOTAL3', time_series)
+    def getMiscEnergy(self, time_series=False, block='AUTO'):
+        """Get the external energy.
 
-    def getTemperature(self, time_series=False):
-        """Get the temperature."""
-        self.stdout(0)
-        return self._get_stdout_record('TEMP', time_series)
+           Keyword arguments:
 
-    def getTemperatureAverage(self, time_series=False):
-        """Get the average temperature."""
-        self.stdout(0)
-        return self._get_stdout_record('TEMPAVG', time_series)
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('MISC', time_series, block)
 
-    def getPressure(self, time_series=False):
-        """Get the pressure."""
-        self.stdout(0)
-        return self._get_stdout_record('PRESSURE', time_series)
+    def getCurrentMiscEnergy(self, time_series=False):
+        """Get the current external energy.
 
-    def getPressureAverage(self, time_series=False):
-        """Get the average pressure."""
-        self.stdout(0)
-        return self._get_stdout_record('PRESSAVG', time_series)
+           Keyword arguments:
 
-    def getGPressure(self, time_series=False):
-        """Get the pressure. (Hydrogens incorporated into bonded atoms.)"""
-        self.stdout(0)
-        return self._get_stdout_record('GPRESSURE', time_series)
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getMiscEnergy(time_series, block=False)
 
-    def getGPressureAverage(self, time_series=False):
-        """Get the average pressure. (Hydrogens incorporated into bonded atoms.)"""
-        self.stdout(0)
-        return self._get_stdout_record('GPRESSAVG', time_series)
+    def getKineticEnergy(self, time_series=False, block='AUTO'):
+        """Get the kinetic energy.
 
-    def getVolume(self, time_series=False):
-        """Get the volume."""
-        self.stdout(0)
-        return self._get_stdout_record('VOLUME', time_series)
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('KINETIC', time_series, block)
+
+    def getCurrentKineticEnergy(self, time_series=False):
+        """Get the current kinetic energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getKineticEnergy(time_series, block=False)
+
+    def getPotentialEnergy(self, time_series=False, block='AUTO'):
+        """Get the potential energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('POTENTIAL', time_series, block)
+
+    def getCurrentPotentialEnergy(self, time_series=False):
+        """Get the current potential energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getPotentialEnergy(time_series, block=False)
+
+    def getTotalEnergy(self, time_series=False, block='AUTO'):
+        """Get the total energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TOTAL', time_series, block)
+
+    def getCurrentTotalEnergy(self, time_series=False):
+        """Get the current potential energy.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTotalEnergy(time_series, block=False)
+
+    def getTotal2Energy(self, time_series=False, block='AUTO'):
+        """Get the total energy. (Better KE conservation.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TOTAL2', time_series, block)
+
+    def getCurrentTotal2Energy(self, time_series=False):
+        """Get the current total energy. (Better KE conservation.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTotal2Energy(time_series, block=False)
+
+    def getTotal3Energy(self, time_series=False, block='AUTO'):
+        """Get the total energy. (Smaller short-time fluctuations.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TOTAL3', time_series, block)
+
+    def getCurrentTotal3Energy(self, time_series=False):
+        """Get the total energy. (Smaller short-time fluctuations.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTotal3Energy(time_series, block=False)
+
+    def getTemperature(self, time_series=False, block='AUTO'):
+        """Get the temperature.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TEMP', time_series, block)
+
+    def getCurrentTemperature(self, time_series=False):
+        """Get the temperature.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTemperature(time_series, block=False)
+
+    def getTemperatureAverage(self, time_series=False, block='AUTO'):
+        """Get the average temperature.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('TEMPAVG', time_series, block)
+
+    def getCurrentTemperatureAverage(self, time_series=False):
+        """Get the current average temperature.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getTemperatureAverage(time_series, block=False)
+
+    def getPressure(self, time_series=False, block='AUTO'):
+        """Get the pressure.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('PRESSURE', time_series, block)
+
+    def getCurrentPressure(self, time_series=False):
+        """Get the current pressure.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getPressure(time_series, block=False)
+
+    def getPressureAverage(self, time_series=False, block='AUTO'):
+        """Get the average pressure.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('PRESSAVG', time_series, block)
+
+    def getCurrentPressureAverage(self, time_series=False):
+        """Get the current average pressure.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getPressureAverage(time_series, block=False)
+
+    def getGPressure(self, time_series=False, block='AUTO'):
+        """Get the pressure. (Hydrogens incorporated into bonded atoms.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('GPRESSURE', time_series, block)
+
+    def getCurrentGPressure(self, time_series=False):
+        """Get the current pressure. (Hydrogens incorporated into bonded atoms.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getGPressure(time_series, block=False)
+
+    def getGPressureAverage(self, time_series=False, block='AUTO'):
+        """Get the average pressure. (Hydrogens incorporated into bonded atoms.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('GPRESSAVG', time_series, block)
+
+    def getCurrentGPressureAverage(self, time_series=False):
+        """Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getGPressureAverage(time_series, block=False)
+
+    def getVolume(self, time_series=False, block='AUTO'):
+        """Get the volume.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+           block       -- Whether to block until the process has finished running.
+        """
+        return self.getRecord('VOLUME', time_series, block)
+
+    def getCurrentVolume(self, time_series=False):
+        """Get the current volume.
+
+           Keyword arguments:
+
+           time_series -- Whether to return a list of time series records.
+        """
+        return self.getVolume(time_series, block=False)
 
     def eta(self):
         """Get the estimated time for the process to finish (in minutes)."""

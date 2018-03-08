@@ -32,14 +32,6 @@ print("\nCreated NAMD input files: %s" % filenames)
 print("\nStarting minimisation...")
 process.start()
 
-# Wait for the process to end.
-process.wait()
-
-# Check for errors.
-if process.isError():
-    print("The process failed!")
-    exit()
-
 # Get the minimised molecular structure.
 minimised = process.getSystem()
 
@@ -66,14 +58,6 @@ print("\nCreated NAMD input files: %s" % filenames)
 print("\nStarting equlibration...")
 process.start()
 
-# Wait for the process to end.
-process.wait()
-
-# Check for errors.
-if process.isError():
-    print("The process failed!")
-    exit()
-
 # Get the minimised molecular structure.
 equilibrated = process.getSystem()
 
@@ -99,14 +83,6 @@ print("\nCreated NAMD input files: %s" % filenames)
 # Start the production run.
 print("\nStarting production run...")
 process.start()
-
-# Wait for the process to end.
-process.wait()
-
-# Check for errors.
-if process.isError():
-    print("The process failed!")
-    exit()
 
 # Get the final molecular structure.
 final = process.getSystem()

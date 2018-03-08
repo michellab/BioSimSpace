@@ -8,6 +8,7 @@ from Sire.ID import CaseInsensitive
 from Sire.Mol import AtomName
 from Sire.Vol import AABox
 
+from BioSimSpace import _is_notebook
 from ..Protocol.protocol import Protocol
 
 from collections import OrderedDict
@@ -51,6 +52,10 @@ class Process():
 
         # Set the process to None.
         self._process = None
+
+        # Is the process running interactively? If so, don't block
+        # when a get method is called.
+        self._is_blocked = not _is_notebook()
 
 	# Copy the passed system, protocol, and process name.
         self._system = system
