@@ -513,7 +513,7 @@ class Amber(process.Process):
 
            Keyword arguments:
 
-           indices -- A list of trajectory frame indices.
+           indices -- A list of trajectory frame indices, or time stamps (in ns).
         """
 
         # First get the current MDTraj object.
@@ -523,23 +523,45 @@ class Amber(process.Process):
         if traj is None:
             return None
 
+        # Work out the frame spacing in nanoseconds.
+        time_interval = self._protocol.runtime / self._protocol.frames
+
         # Create the indices array.
 
         # Default to all frames.
         if indices is None:
             indices = [x for x in range(0, traj.n_frames)]
 
-        # Insert the single frame into a list.
+        # A single frame index.
         elif type(indices) is int:
             indices = [indices]
 
-        # Make sure all entries are of type int.
-        elif all(isinstance(item, int) for item in indices):
+        # A list of frame indices.
+        elif all(isinstance(x, int) for x in indices):
             pass
+
+        # A single time stamp.
+        elif type(indices) is float:
+            if indices < 0:
+                raise ValueError("Time stamp cannot be negative.")
+
+            # Round time stamp to nearest frame index.
+            indices = [round(indices / time_interval) - 1]
+
+        # A list of time stamps.
+        elif all(isinstance(x, float) for x in indices):
+            # Make sure no time stamps are negative.
+            for x in indices:
+                if x < 0:
+                    raise ValueError("Time stamp cannot be negative.")
+
+            # Round time stamps to nearest frame indices.
+            indices = [round(x / time_interval) - 1 for x in indices]
 
         # Unsupported argument.
         else:
-            raise ValueError("Unsupported index. Indices must be an 'int', or list of 'int' types.")
+            raise ValueError("Unsupported argument. Indices or time stamps "
+                "must be an 'int' or 'float', or list of 'int' or 'float' types.")
 
         # Intialise the list of frames.
         frames = []
