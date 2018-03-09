@@ -491,7 +491,7 @@ class Namd(process.Process):
         """
 
         # Wait for the process to finish.
-        if block:
+        if block is True:
             self.wait()
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
@@ -548,7 +548,7 @@ class Namd(process.Process):
         """Return a trajectory object."""
 
         # Wait for the process to finish.
-        if block:
+        if block is True:
             self.wait()
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
@@ -569,7 +569,7 @@ class Namd(process.Process):
         """
 
         # Wait for the process to finish.
-        if block:
+        if block is True:
             self.wait()
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
@@ -599,7 +599,7 @@ class Namd(process.Process):
            block       -- Whether to block until the process has finished running.
         """
         # Wait for the process to finish.
-        if block:
+        if block is True:
             self.wait()
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
