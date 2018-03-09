@@ -91,7 +91,7 @@ final = process.getSystem()
 traj = process.getTrajectory()
 
 # Get a selection of trajectory frames as a list of systems.
-frames = process.getFrames([0, 5, 10])
+frames = traj.getFrames([0, 5, 10])
 
 # Write the final structure to file.
 filenames = BSS.saveMolecules("final", final, system.fileFormat())

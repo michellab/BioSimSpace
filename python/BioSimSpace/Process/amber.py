@@ -10,6 +10,7 @@ from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
 from ..Protocol.protocol import Protocol, ProtocolType
+from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, environ, getcwd, path, remove
@@ -136,6 +137,9 @@ class Amber(process.Process):
 
         # Call the base class constructor.
         super().__init__(system, protocol, name, work_dir, seed)
+
+        # This process can generate trajectory data.
+        self._has_trajectory = True
 
         # If the path to the executable wasn't specified, then search
         # for it in $PATH. For now, we'll just search for 'sander', which
@@ -477,151 +481,16 @@ class Amber(process.Process):
         """Get the latest molecular configuration as a Sire system."""
         return self.getSystem(block=False)
 
-    def getTrajectory(self, format='mdtraj'):
-        """Get the current trajectory object.
+    def getTrajectory(self, block='AUTO'):
+        """Return a trajectory object."""
 
-           Keyword arguments:
+        # Wait for the process to finish.
+        if block:
+            self.wait()
+        elif block is 'AUTO' and self._is_blocked:
+            self.wait()
 
-           format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
-        """
-
-        if format.upper() not in ['MDTRAJ', 'MDANALYSIS']:
-            warn("Invalid trajectory format. Using default (mdtraj).")
-            format = mdtraj
-
-        # Check for a trajectory file.
-        has_traj = False
-        if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
-            traj_file = "%s/%s.nc" % (self._work_dir, self._name)
-            has_traj = True
-
-        # We found a trajectory file.
-        if has_traj:
-
-            # Return an MDTraj object.
-            if format is 'mdtraj':
-
-                # MDTraj currently doesn't support the .prm7 extension, so we
-                # need to copy the topology file to a temporary .parm7 file.
-                # I've submitted a pull request to add support for the alternative
-                # .prm7 extension.
-                top_file = "%s/tmp.parm7" % self._work_dir
-                copyfile(self._prm_file, top_file)
-
-                # Create the MDTraj object.
-                traj = mdtraj.load(traj_file, top=top_file)
-
-                # Delete the temporary .parm7 file.
-                remove("%s/tmp.parm7" % self._work_dir)
-
-                return traj
-
-            # Return an MDAnalysis Universe.
-            else:
-                return mdanalysis.Universe(self._prm_file, traj_file, topology_format='PARM7')
-
-        else:
-            return None
-
-    def getFrames(self, indices=None):
-        """Get trajectory frames as a list of Sire systems.
-
-           Keyword arguments:
-
-           indices -- A list of trajectory frame indices, or time stamps (in ns).
-        """
-
-        # First get the current MDTraj object.
-        traj = self.getTrajectory()
-
-        # There is no trajectory.
-        if traj is None:
-            return None
-
-        # Work out the frame spacing in nanoseconds.
-        time_interval = self._protocol.runtime / self._protocol.frames
-
-        # Create the indices array.
-
-        # Default to all frames.
-        if indices is None:
-            indices = [x for x in range(0, traj.n_frames)]
-
-        # A single frame index.
-        elif type(indices) is int:
-            indices = [indices]
-
-        # A list of frame indices.
-        elif all(isinstance(x, int) for x in indices):
-            pass
-
-        # A single time stamp.
-        elif type(indices) is float:
-            if indices < 0:
-                raise ValueError("Time stamp cannot be negative.")
-
-            # Round time stamp to nearest frame index.
-            indices = [round(indices / time_interval) - 1]
-
-        # A list of time stamps.
-        elif all(isinstance(x, float) for x in indices):
-            # Make sure no time stamps are negative.
-            for x in indices:
-                if x < 0:
-                    raise ValueError("Time stamp cannot be negative.")
-
-            # Round time stamps to nearest frame indices.
-            indices = [round(x / time_interval) - 1 for x in indices]
-
-        # Unsupported argument.
-        else:
-            raise ValueError("Unsupported argument. Indices or time stamps "
-                "must be an 'int' or 'float', or list of 'int' or 'float' types.")
-
-        # Intialise the list of frames.
-        frames = []
-
-        # Store the maximum frame number.
-        max_frame = traj.n_frames - 1
-
-        # Loop over all indices.
-        for x in indices:
-
-            # Make sure the frame index is within range.
-            if abs(x) > max_frame:
-                raise ValueError("Frame index (%d) of of range (0-%d)." %s (x, max_frame))
-
-            # The name of the frame coordinate file.
-            frame_file = "%s/frame.nc" % self._work_dir
-
-            # Write the current frame as a NetCDF file.
-            # MDTraj is unable to write a CRD file that is compatible with the original topology!
-            traj[x].save(frame_file)
-
-            # Create a Sire system.
-            system = MoleculeParser.read([self._prm_file, frame_file])
-
-            # Append the system to the list of frames.
-            frames.append(system)
-
-        # Remove the temporary frame coordinate file.
-        remove(frame_file)
-
-        # Return the frames.
-        return frames
-
-    def nFrames(self):
-        """Return the current number of trajectory frames."""
-
-        # First get the current MDTraj object.
-        traj = self.getTrajectory()
-
-        # There is no trajectory.
-        if traj is None:
-            return 0
-
-        else:
-            return traj.n_frames
+        return Trajectory(self)
 
     def getRecord(self, record, time_series=False, block='AUTO'):
         """Get a record from the stdout dictionary.

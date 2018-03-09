@@ -57,6 +57,11 @@ class Process():
         # when a get method is called.
         self._is_blocked = not _is_notebook()
 
+        # Whether this process can generate trajectory data.
+        # Even if a process can generate a trajectory, whether it does
+        # will depend on the chosen protocol.
+        self._has_trajectory = False
+
 	# Copy the passed system, protocol, and process name.
         self._system = system
         self._protocol = protocol
