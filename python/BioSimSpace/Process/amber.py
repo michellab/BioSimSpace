@@ -13,7 +13,7 @@ from ..Protocol.protocol import Protocol, ProtocolType
 from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
-from os import chdir, environ, getcwd, path, remove
+from os import chdir, environ, getcwd, path
 from re import findall
 from shutil import copyfile
 from time import sleep
@@ -178,7 +178,7 @@ class Amber(process.Process):
 
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
-        self._prm_file = "%s/%s.prm7" % (self._work_dir, name)
+        self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # Set the path for the AMBER configuration file.
         # The 'protocol' argument may contain the path to a custom file.
@@ -196,7 +196,7 @@ class Amber(process.Process):
                 raise IOError(('AMBER configuration file doesn\'t exist: "{x}"').format(x=config_file))
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._rst_file, self._prm_file]
+        self._input_files = [self._config_file, self._rst_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -212,7 +212,7 @@ class Amber(process.Process):
 
         # PRM file (topology).
         prm = AmberPrm(self._system)
-        prm.writeToFile(self._prm_file)
+        prm.writeToFile(self._top_file)
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
@@ -472,7 +472,7 @@ class Amber(process.Process):
         # Check that the file exists.
         if path.isfile(restart):
             # Create and return the molecular system.
-            return MoleculeParser.read(restart, self._prm_file)
+            return MoleculeParser.read(restart, self._top_file)
 
         else:
             return None
@@ -490,7 +490,7 @@ class Amber(process.Process):
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
 
-        return Trajectory(self)
+        return Trajectory(process=self)
 
     def getRecord(self, record, time_series=False, block='AUTO'):
         """Get a record from the stdout dictionary.
@@ -1085,7 +1085,7 @@ class Amber(process.Process):
 
         # Return the trajectory and topology file.
         if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
-            return (traj_file, self._prm_file)
+            return (traj_file, self._top_file)
 
         # No trajectory file.
         else:

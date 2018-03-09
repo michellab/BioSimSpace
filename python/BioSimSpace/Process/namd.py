@@ -13,7 +13,7 @@ from ..Protocol.protocol import Protocol, ProtocolType
 from ..Trajectory.trajectory import Trajectory
 
 from math import ceil, floor
-from os import chdir, getcwd, path, remove
+from os import chdir, getcwd, path
 from timeit import default_timer as timer
 from warnings import warn
 
@@ -80,7 +80,7 @@ class Namd(process.Process):
 
         # The names of the input files.
         self._psf_file = "%s/%s.psf" % (self._work_dir, name)
-        self._pdb_file = "%s/%s.pdb" % (self._work_dir, name)
+        self._top_file = "%s/%s.pdb" % (self._work_dir, name)
         self._param_file = "%s/%s.params" % (self._work_dir, name)
         self._velocity_file = None
         self._restraint_file = None
@@ -101,7 +101,7 @@ class Namd(process.Process):
                 raise IOError(('NAMD configuration file doesn\'t exist: "{x}"').format(x=config_file))
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._psf_file, self._pdb_file, self._param_file]
+        self._input_files = [self._config_file, self._psf_file, self._top_file, self._param_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -133,14 +133,14 @@ class Namd(process.Process):
 
         # PDB file.
         pdb = PDB2(self._system)
-        pdb.writeToFile(self._pdb_file)
+        pdb.writeToFile(self._top_file)
 
         # Try to write a PDB "velocity" restart file.
         # The file will only be generated if all atoms in self._system have
         # a "velocity" property.
 
         # First generate a name for the velocity file.
-        velocity_file = path.splitext(self._pdb_file)[0] + ".vel"
+        velocity_file = path.splitext(self._top_file)[0] + ".vel"
 
         # Write the velocity file.
         has_velocities = pdb.writeVelocityFile(velocity_file)
@@ -256,7 +256,7 @@ class Namd(process.Process):
 
         # Topology.
         self.addToConfig("structure             %s" % path.basename(self._psf_file))
-        self.addToConfig("coordinates           %s" % path.basename(self._pdb_file))
+        self.addToConfig("coordinates           %s" % path.basename(self._top_file))
 
         # Velocities.
         if self._velocity_file is not None:
@@ -553,7 +553,7 @@ class Namd(process.Process):
         elif block is 'AUTO' and self._is_blocked:
             self.wait()
 
-        return Trajectory(self)
+        return Trajectory(process=self)
 
     def getRecord(self, record, time_series=False, block='AUTO'):
         """Get a record from the stdout dictionary.
@@ -1169,7 +1169,7 @@ class Namd(process.Process):
 
         # Return the trajectory and topology file.
         if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
-            return (traj_file, self._pdb_file)
+            return (traj_file, self._top_file)
 
         # No trajectory file.
         else:

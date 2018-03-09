@@ -7,8 +7,9 @@
 from ..Process.process import Process
 
 from Sire import try_import
+from Sire.IO import MoleculeParser
 
-from os import path
+from os import path, remove
 from shutil import copyfile
 from warnings import warn
 
@@ -25,46 +26,58 @@ except ImportError:
 class Trajectory():
     """A class for reading a manipulating biomolecular trajectories."""
 
-    def __init__(self, handle):
+    def __init__(self, process=None, trajectory=None, topology=None):
         """Constructor.
-
-           Positional arguments:
-
-           handle -- A handle to a BioSimSpace.Process object or a list of trajectory files.
+           Keyword arguments:
+           process    -- A BioSimSpace process object.
+           trajectory -- A trajectory file.
+           topology   -- A topology file.
         """
 
         # Set default member variables.
         self._process = None
         self._process_name = None
-        self._traj_files = None
+        self._traj_file = None
+        self._top_file = None
+
+        # Nothing to create a trajectory from.
+        if process is None and trajectory is None:
+            raise ValueError("Both 'process' and 'trajectory' keyword arguments are 'None'")
+
+        # Both use cases active. Default to process.
+        if not process is None and not trajectory is None:
+            warn("Both a process and trajectory file are specified! Defaulting to 'process'.")
+            self._traj_file = None
 
         # BioSimSpace process.
-        if handle.__class__.__base__ == Process:
-            self._process = handle
-            self._process_name = handle.__class__.__name__
+        if process is not None:
+            if process.__class__.__base__ == Process:
+                self._process = process
+                self._process_name = process.__class__.__name__
+                self._top_file = self._process._top_file
 
-            # Check that the process can generate a trajectory.
-            if not self._process._has_trajectory:
-                raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % self._process_name)
+                # Check that the process can generate a trajectory.
+                if not self._process._has_trajectory:
+                    raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % self._process_name)
 
-        # List of trajectory files.
-        elif all(isinstance(x, str) for x in handle):
-            self._traj_files = handle
+        # Trajectory and topology files.
+        elif type(trajectory) is str and type(topology) is str:
 
-        # Single trajectory file.
-        elif type(handle) is str:
-            self._traj_files = [handle]
+            # Make sure the trajectory file exists.
+            if not path.isfile(trajectory):
+                raise IOError(('Trajectory file doesn\'t exist: "{x}"').format(x=trajectory))
+
+            # Make sure the topology file exists.
+            if not path.isfile(topology):
+                raise IOError(('Topology file doesn\'t exist: "{x}"').format(x=topology))
+
+            self._traj_file = trajectory
+            self._top_file = topology
 
         # Invalid arguments.
         else:
-            raise ValueError("The handle must be a BioSimSpace.Process object, "
-                "a trajectory file, or a list of trajectory files.")
-
-        # Make sure the trajectory files exist.
-        if self._traj_files is not None:
-            for file in self._traj_files:
-                if not path.isfile(file):
-                    raise IOError(('Trajectory file doesn\'t exist: "{x}"').format(x=file))
+            raise ValueError("BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
+                "or a trajectory and topology file.")
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory()
@@ -95,7 +108,7 @@ class Trajectory():
                 # I've submitted a pull request to add support for the alternative
                 # .prm7 extension.
                 top_file = "%s/tmp.parm7" % self._process._work_dir
-                copyfile(self._process._prm_file, top_file)
+                copyfile(self._top_file, top_file)
 
                 # Set the topology format.
                 top_format = 'PARM7'
@@ -105,7 +118,7 @@ class Trajectory():
 
                 # Path to the trajectory and topology files.
                 traj_file = "%s/%s_out.dcd" % (self._process._work_dir, self._process._name)
-                top_file = "%s/%s.pdb" % (self._process._work_dir, self._process._name)
+                top_file = self._top_file
 
                 # Set the topology format.
                 top_format = 'PDB'
@@ -143,11 +156,20 @@ class Trajectory():
 
                 return universe
 
-
+        # Read trajectory from file.
         # TODO:
-        # Reading trajectory from file isn't current supported.
+        # Make this more robust, i.e. determine topology format from the file
+        # extension and rename files if needed.
         else:
-            return None
+            # Return an MDTraj object.
+            if format is 'mdtraj':
+
+                # Create the MDTraj object.
+                return mdtraj.load(self._traj_file, top=self._top_file)
+
+            # Return an MDAnalysis Universe.
+            else:
+                return mdanalysis.Universe(self._top_file, self._traj_file)
 
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of Sire systems.
@@ -157,21 +179,22 @@ class Trajectory():
            indices -- A list of trajectory frame indices, or time stamps (in ns).
         """
 
-        # First get the current MDTraj object.
+        # The process is running. Grab the latest trajectory.
         if self._process is not None and self._process.isRunning():
             self._trajectory = self.getTrajectory()
 
-        # TODO:
-        # Reading trajectory from file isn't current supported.
-        else:
-            return None
-
-        # There is no trajectory.
-        if traj is None:
-            return None
+            # There is no trajectory.
+            if traj is None:
+                return None
 
         # Work out the frame spacing in nanoseconds.
-        time_interval = self._process._protocol.runtime / self._process._protocol.frames
+        # TODO:
+        # How can we do this in a robust way if the trajectory is loaded from file?
+        # Some formats do not store time information as part of the trajectory.
+        if self._process is not None:
+            time_interval = self._process._protocol.runtime / self._process._protocol.frames
+        else:
+            time_interval = self._trajectory.timestep / 1000
 
         # Create the indices array.
 
@@ -214,7 +237,7 @@ class Trajectory():
         frames = []
 
         # Store the maximum frame number.
-        max_frame = traj.n_frames - 1
+        max_frame = self._trajectory.n_frames - 1
 
         # Loop over all indices.
         for x in indices:
@@ -224,14 +247,13 @@ class Trajectory():
                 raise ValueError("Frame index (%d) of of range (0-%d)." %s (x, max_frame))
 
             # The name of the frame coordinate file.
-            frame_file = "%s/frame.nc" % self._work_dir
+            frame_file = ".frame.nc"
 
             # Write the current frame as a NetCDF file.
-            # MDTraj is unable to write a CRD file that is compatible with the original topology!
-            traj[x].save(frame_file)
+            self._trajectory[x].save(frame_file)
 
             # Create a Sire system.
-            system = MoleculeParser.read([self._prm_file, frame_file])
+            system = MoleculeParser.read([self._top_file, frame_file])
 
             # Append the system to the list of frames.
             frames.append(system)
@@ -249,13 +271,8 @@ class Trajectory():
         if self._process is not None and self._process.isRunning():
             self._trajectory = self.getTrajectory()
 
-        # TODO:
-        # Reading trajectory from file isn't current supported.
-        else:
-            return None
-
         # There is no trajectory.
-        if traj is None:
+        if self._trajectory is None:
             return 0
         else:
-            return traj.n_frames
+            return self._trajectory.n_frames
