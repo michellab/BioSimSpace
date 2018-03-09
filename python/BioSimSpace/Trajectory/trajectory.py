@@ -28,7 +28,9 @@ class Trajectory():
 
     def __init__(self, process=None, trajectory=None, topology=None):
         """Constructor.
+
            Keyword arguments:
+
            process    -- A BioSimSpace process object.
            trajectory -- A trajectory file.
            topology   -- A topology file.
