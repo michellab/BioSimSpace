@@ -37,10 +37,13 @@ class Process():
     def __init__(self, system, protocol, name="process", work_dir=None, seed=None):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            system    -- The molecular system.
            protocol  -- The protocol for the process.
+
+           Keyword arguments:
+
            name      -- The name of the process.
            work_dir  -- The working directory for the process.
            seed      -- A random number seed.
