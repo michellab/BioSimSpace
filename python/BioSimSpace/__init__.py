@@ -15,6 +15,7 @@ def _is_notebook():
 if _is_notebook():
     import BioSimSpace.Notebook
 
+import BioSimSpace.Gateway
 import BioSimSpace.Process
 import BioSimSpace.Protocol
 import BioSimSpace.Trajectory
