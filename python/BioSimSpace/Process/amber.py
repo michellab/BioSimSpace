@@ -32,16 +32,6 @@ try:
 except ImportError:
     raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
 
-try:
-    mdtraj = try_import("mdtraj")
-except ImportError:
-    raise ImportError("MDTraj is not installed. Please install mdtraj in order to use BioSimSpace.")
-
-try:
-    mdanalysis = try_import("MDAnalysis")
-except ImportError:
-    raise ImportError("MDAnalysis is not installed. Please install mdanalysis in order to use BioSimSpace.")
-
 class Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
        is used trigger updates to the energy dictionary each time the file is modified.
