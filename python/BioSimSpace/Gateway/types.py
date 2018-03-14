@@ -38,7 +38,7 @@ class Boolean():
             elif value == 1:
                 self._value = True
             else:
-                ValueError("Integer argument is not 0 or 1.")
+                raise ValueError("Integer argument is not 0 or 1.")
 
         else:
             raise TypeError("Argument is not of type 'bool', or 0 or 1")
