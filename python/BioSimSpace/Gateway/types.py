@@ -42,10 +42,6 @@ class Number():
            value -- The value of the number.
         """
 
-        # Set defaults.
-        self._is_float = False
-        self._is_int_compatible = False
-
         # Set the value.
         self.value = value
 
@@ -61,6 +57,8 @@ class Number():
         # Integer.
         if type(value) is int:
             self._value = value
+            self._is_float = False
+            self._is_whole_number = True
 
         # Float.
         elif type(value) is float:
@@ -70,7 +68,15 @@ class Number():
             # If the remainder is very small, the this can be treated
             # as a whole number.
             if value % 1 < 1e-6:
-                self._is_int_compatible = True
+                self._is_whole_number = True
 
         else:
             raise TypeError("Argument is not of type 'int' or 'float'")
+
+    def isFloat(self):
+        """Whether the number is a float."""
+        return self._is_float
+
+    def isWholeNumber(self):
+        """Whether this is a whole number."""
+        return self._is_whole_number:
