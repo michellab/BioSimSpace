@@ -26,10 +26,22 @@ class Boolean():
     @value.setter
     def value(self, value):
         """Set the boolean value."""
+
+        # Bool.
         if type(value) is bool:
             self._value = value
+
+        # Int.
+        elif type(value) is int:
+            if value == 0:
+                self._value = False
+            elif value == 1:
+                self._value = True
+            else:
+                ValueError("Integer argument is not 0 or 1.")
+
         else:
-            raise TypeError("Argument is not of type 'bool'")
+            raise TypeError("Argument is not of type 'bool', or 0 or 1")
 
 class Number():
     """A number type. Handles integers and floats."""
@@ -79,4 +91,4 @@ class Number():
 
     def isWholeNumber(self):
         """Whether this is a whole number."""
-        return self._is_whole_number:
+        return self._is_whole_number
