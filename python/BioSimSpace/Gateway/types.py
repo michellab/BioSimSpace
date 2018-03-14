@@ -87,6 +87,9 @@ class Boolean():
             else:
                 raise ValueError("String argument is not 'True' or 'False'")
 
+        else:
+            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
+
 class Integer():
     """An integer type."""
 
