@@ -5,17 +5,72 @@
 """
 
 class Boolean():
-    def __init__(self, value):
+    """A boolean type."""
 
-    self.value = value
+    def __init__(self, value):
+        """Constructor.
+
+           Positional arguments:
+
+           value -- The boolean value: True or False.
+        """
+
+        # Set the value.
+        self.value = value
 
     @property
     def value(self):
+        """Get the boolean value."""
         return self._value
 
     @value.setter
     def value(self, value):
+        """Set the boolean value."""
         if type(value) is bool:
             self._value = value
         else:
             raise TypeError("Argument is not of type 'bool'")
+
+class Number():
+    """A number type. Handles integers and floats."""
+
+    def __init__(self, value):
+        """Constructor.
+
+           Positional arguments:
+
+           value -- The value of the number.
+        """
+
+        # Set defaults.
+        self._is_float = False
+        self._is_int_compatible = False
+
+        # Set the value.
+        self.value = value
+
+    @property
+    def value(self):
+        """Get the boolean value."""
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        """Set the value of the number."""
+
+        # Integer.
+        if type(value) is int:
+            self._value = value
+
+        # Float.
+        elif type(value) is float:
+            self._value = value
+            self._is_float = True
+
+            # If the remainder is very small, the this can be treated
+            # as a whole number.
+            if value % 1 < 1e-6:
+                self._is_int_compatible = True
+
+        else:
+            raise TypeError("Argument is not of type 'int' or 'float'")
