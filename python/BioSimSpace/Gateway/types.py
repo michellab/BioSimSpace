@@ -9,7 +9,7 @@ from math import floor
 class Boolean():
     """A boolean type."""
 
-    def __init__(self, value):
+    def __init__(self, *value):
         """Constructor.
 
            Positional arguments:
@@ -18,7 +18,10 @@ class Boolean():
         """
 
         # Set the value.
-        self.value = value
+        if len(value) == 0:
+            self.value = False
+        else:
+            self.value = value[0]
 
     @property
     def value(self):
@@ -84,7 +87,7 @@ class Boolean():
 class Integer():
     """An integer type."""
 
-    def __init__(self, value):
+    def __init__(self, *value):
         """Constructor.
 
            Positional arguments:
@@ -93,7 +96,10 @@ class Integer():
         """
 
         # Set the value.
-        self.value = value
+        if len(value) == 0:
+            self.value = 0
+        else:
+            self.value = value[0]
 
     @property
     def value(self):
@@ -138,7 +144,7 @@ class Integer():
 class Float():
     """An floating point type."""
 
-    def __init__(self, value):
+    def __init__(self, *value):
         """Constructor.
 
            Positional arguments:
@@ -147,7 +153,10 @@ class Float():
         """
 
         # Set the value.
-        self.value = value
+        if len(value) == 0:
+            self.value = 0.0
+        else:
+            self.value = value[0]
 
     @property
     def value(self):
@@ -188,7 +197,7 @@ class Float():
 class String():
     """A string type."""
 
-    def __init__(self, value):
+    def __init__(self, *value):
         """Constructor.
 
            Positional arguments:
@@ -197,7 +206,10 @@ class String():
         """
 
         # Set the value.
-        self.value = value
+        if len(value) == 0:
+            self.value = ''
+        else:
+            self.value = value[0]
 
     @property
     def value(self):
