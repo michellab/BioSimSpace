@@ -9,6 +9,9 @@ from math import floor
 class Boolean():
     """A boolean type."""
 
+    # The type of the value.
+    value_type = bool
+
     def __init__(self, *value):
         """Constructor.
 
@@ -87,6 +90,9 @@ class Boolean():
 class Integer():
     """An integer type."""
 
+    # The type of the value.
+    value_type = int
+
     def __init__(self, *value):
         """Constructor.
 
@@ -144,6 +150,9 @@ class Integer():
 class Float():
     """An floating point type."""
 
+    # The type of the value.
+    value_type = float
+
     def __init__(self, *value):
         """Constructor.
 
@@ -196,6 +205,9 @@ class Float():
 
 class String():
     """A string type."""
+
+    # The type of the value.
+    value_type = str
 
     def __init__(self, *value):
         """Constructor.
