@@ -1,6 +1,6 @@
 """
 @package biosimspace
-@author  Lester Hedges, Antonia Mey
+@author  Lester Hedges
 @brief   A class for interfacing with BioSimSpace nodes.
 """
 
@@ -43,6 +43,10 @@ class Node():
 
         # Add the input requirements.
         if inputs is not None:
+
+            # A single argument dictionary.
+            if type(inputs) is dict:
+                inputs = [inputs]
 
             # Make sure all inputs are dicts.
             if all(isinstance(x, dict) for x in inputs):
