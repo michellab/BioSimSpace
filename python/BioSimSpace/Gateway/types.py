@@ -4,6 +4,8 @@
 @brief   A collection of variable types.
 """
 
+from math import floor
+
 class Boolean():
     """A boolean type."""
 
@@ -12,7 +14,7 @@ class Boolean():
 
            Positional arguments:
 
-           value -- The boolean value: True or False.
+           value -- The boolean value.
         """
 
         # Set the value.
@@ -27,11 +29,15 @@ class Boolean():
     def value(self, value):
         """Set the boolean value."""
 
-        # Bool.
+        # Python bool.
         if type(value) is bool:
             self._value = value
 
-        # Int.
+        # BioSimSpace bool.
+        elif type(value) is Boolean:
+            self._value = value.value
+
+        # Python int.
         elif type(value) is int:
             if value == 0:
                 self._value = False
@@ -40,18 +46,50 @@ class Boolean():
             else:
                 raise ValueError("Integer argument is not 0 or 1.")
 
-        else:
-            raise TypeError("Argument is not of type 'bool', or 0 or 1")
+        # BioSimSpace int.
+        elif type(value) is Integer:
+            if value.value == 0:
+                self._value = False
+            elif value.value == 1:
+                self._value = True
+            else:
+                raise ValueError("Integer argument is not 0 or 1.")
 
-class Number():
-    """A number type. Handles integers and floats."""
+        # Python string.
+        elif type(value) is str:
+
+            # Strip whitespace and convert to upper case.
+            value = value.strip().upper()
+
+            if value == 'TRUE':
+                self._value = True
+            elif value == 'FALSE':
+                self._value = False
+            else:
+                raise ValueError("String argument is not 'True' or 'False'")
+
+        # BioSimSpace string.
+        elif type(value) is String:
+
+            # Strip whitespace and convert to upper case.
+            value = value.value.strip().upper()
+
+            if value == 'TRUE':
+                self._value = True
+            elif value == 'FALSE':
+                self._value = False
+            else:
+                raise ValueError("String argument is not 'True' or 'False'")
+
+class Integer():
+    """An integer type."""
 
     def __init__(self, value):
         """Constructor.
 
            Positional arguments:
 
-           value -- The value of the number.
+           value -- The value of the integer.
         """
 
         # Set the value.
@@ -59,36 +97,119 @@ class Number():
 
     @property
     def value(self):
-        """Get the boolean value."""
+        """Get the integer value."""
         return self._value
 
     @value.setter
     def value(self, value):
-        """Set the value of the number."""
+        """Set the value of the float."""
 
-        # Integer.
+        # Python int.
         if type(value) is int:
             self._value = value
-            self._is_float = False
-            self._is_whole_number = True
 
-        # Float.
+        # Python float.
         elif type(value) is float:
-            self._value = value
-            self._is_float = True
+            self._value = floor(value)
 
-            # If the remainder is very small, the this can be treated
-            # as a whole number.
-            if value % 1 < 1e-6:
-                self._is_whole_number = True
+        # BioSimSpace float.
+        elif type(value) is Float:
+            self._value = floor(value.value)
+
+        # Python string.
+        elif type(value) is str:
+            self._value = floor(float(value))
+
+        # BioSimSpace string.
+        elif type(value) is String:
+            self._value = floor(float(value.value))
+
+        # Python bool.
+        elif type(value) is bool:
+            self._value = int(value)
+
+        # BioSimSpace bool.
+        elif type(value) is Boolean:
+            self._value = int(value.value)
 
         else:
-            raise TypeError("Argument is not of type 'int' or 'float'")
+            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
 
-    def isFloat(self):
-        """Whether the number is a float."""
-        return self._is_float
+class Float():
+    """An floating point type."""
 
-    def isWholeNumber(self):
-        """Whether this is a whole number."""
-        return self._is_whole_number
+    def __init__(self, value):
+        """Constructor.
+
+           Positional arguments:
+
+           value -- The value of the float.
+        """
+
+        # Set the value.
+        self.value = value
+
+    @property
+    def value(self):
+        """Get the float value."""
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        """Set the value of the float."""
+
+        # Python float.
+        if type(value) is float:
+            self._value = value
+
+        # BioSimSpace float.
+        elif type(value) is Float:
+            self._value = value.value
+
+        # Python int.
+        elif type(value) is int:
+            self._value = float(value)
+
+        # BioSimSpace int.
+        elif type(value) is Integer:
+            self._value = float(value.value)
+
+        # Python string.
+        elif type(value) is str:
+            self._value = float(value)
+
+        # BioSimSpace string.
+        elif type(value) is String:
+            self._value = float(value.value)
+
+        else:
+            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
+
+class String():
+    """A string type."""
+
+    def __init__(self, value):
+        """Constructor.
+
+           Positional arguments:
+
+           value -- The string value.
+        """
+
+        # Set the value.
+        self.value = value
+
+    @property
+    def value(self):
+        """Get the string value."""
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        """Set the string value."""
+
+        # BioSimSpace type.
+        if value.__class__.__module__ == 'BioSimSpace.Gateway.types':
+            self._value = str(value.value)
+        else:
+            self._value = str(value)
