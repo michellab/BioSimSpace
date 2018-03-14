@@ -25,6 +25,9 @@ class Node():
         if type(description) is not str:
             raise ValueError("The 'description' keyword must be of type 'str'.")
 
+        # Set the node description string.
+        self._description = description
+
         # Create the parser object.
         if parser is None:
             self._parser = argparse.ArgumentParser(description=description)
