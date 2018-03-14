@@ -32,110 +32,108 @@ class Node():
         elif type(parser) is argparse.ArgumentParser:
             self._parser = parser
 
-    def setRequirements(self, inputs=None, outputs=None):
+    def setRequirements(self, inputs):
         """Set the nodes requirements.
 
-           Keyword arguments:
+           Positional arguments:
 
-           inputs  -- A dictionary of the required inputs.
-           outputs -- A dictionary of the required outputs.
+           inputs -- A dictionary of the required inputs.
         """
 
-        # Add the input requirements.
-        if inputs is not None:
+        # A single argument dictionary.
+        if type(inputs) is dict:
+            inputs = [inputs]
 
-            # A single argument dictionary.
-            if type(inputs) is dict:
-                inputs = [inputs]
+        # Make sure all inputs are dicts.
+        if all(isinstance(x, dict) for x in inputs):
 
-            # Make sure all inputs are dicts.
-            if all(isinstance(x, dict) for x in inputs):
+            # Loop over all of the inputs.
+            for input in inputs:
 
-                # Loop over all of the inputs.
-                for input in inputs:
+                # Extract the keyword values.
 
-                    # Extract the keyword values.
+                # These are required...
 
-                    # These are required...
+                try:
+                    name = input['name']
 
-                    try:
-                        name = input['name']
-
-                        # Append long-form argument name if not present.
-                        if (len(name) > 2):
-                            if name[0:2] != '--':
-                                name = '--' + name
-                        else:
+                    # Append long-form argument name if not present.
+                    if (len(name) > 2):
+                        if name[0:2] != '--':
                             name = '--' + name
-
-                    except KeyError:
-                        raise("Input requirements must have a 'name' keyword!")
-
-                    try:
-                        arg_type = input['type']
-                    except KeyError:
-                        raise("Input requirements must have a 'type' keyword!")
-
-                    try:
-                        doc = input['doc']
-                    except KeyError:
-                        raise("Input requirements must have a 'doc' keyword!")
-
-                    # These are optional...
-
-                    try:
-                        default = input['default']
-                    except:
-                        default = None
-
-                    try:
-                        multi = input['multi']
-                    except:
-                        multi = False
-
-                    try:
-                        required = input['required']
-                    except:
-                        required = True
-
-                    # Argument is never required if a default is set.
-                    if required and default is not None:
-                        required = False
-
-                    # Add the argument to the parser.
-
-                    if required is not False:
-                        if default is not None:
-                            if multi is not False:
-                                self._parser.add_argument(name, type=arg_type, nargs='+',
-                                    help=doc, default=default, required=True)
-                            else:
-                                self._parser.add_argument(name, type=arg_type, help=doc,
-                                    default=default, required=True)
-                        else:
-                            if multi is not False:
-                                self._parser.add_argument(name, type=arg_type, nargs='+',
-                                    help=doc, required=True)
-                            else:
-                                self._parser.add_argument(name, type=arg_type, help=doc,
-                                    required=True)
                     else:
-                        if default is not None:
-                            if multi is not False:
-                                self._parser.add_argument(name, type=arg_type, nargs='+',
-                                    help=doc, default=default)
-                            else:
-                                self._parser.add_argument(name, type=arg_type, help=doc,
-                                    default=default)
-                        else:
-                            if multi is not False:
-                                self._parser.add_argument(name, type=arg_type, nargs='+',
-                                    help=doc)
-                            else:
-                                self._parser.add_argument(name, type=arg_type, help=doc)
+                        name = '--' + name
 
-            # Parse the arguments.
-            self._args = self._parser.parse_args()
+                except KeyError:
+                    raise("Input requirements must have a 'name' keyword!")
+
+                try:
+                    arg_type = input['type']
+                except KeyError:
+                    raise("Input requirements must have a 'type' keyword!")
+
+                try:
+                    doc = input['doc']
+                except KeyError:
+                    raise("Input requirements must have a 'doc' keyword!")
+
+                # These are optional...
+
+                try:
+                    default = input['default']
+                except:
+                    default = None
+
+                try:
+                    multi = input['multi']
+                except:
+                    multi = False
+
+                try:
+                    required = input['required']
+                except:
+                    required = True
+
+                # Argument is never required if a default is set.
+                if required and default is not None:
+                    required = False
+
+                # Add the argument to the parser.
+
+                if required is not False:
+                    if default is not None:
+                        if multi is not False:
+                            self._parser.add_argument(name, type=arg_type, nargs='+',
+                                help=doc, default=default, required=True)
+                        else:
+                            self._parser.add_argument(name, type=arg_type, help=doc,
+                                default=default, required=True)
+                    else:
+                        if multi is not False:
+                            self._parser.add_argument(name, type=arg_type, nargs='+',
+                                help=doc, required=True)
+                        else:
+                            self._parser.add_argument(name, type=arg_type, help=doc,
+                                required=True)
+                else:
+                    if default is not None:
+                        if multi is not False:
+                            self._parser.add_argument(name, type=arg_type, nargs='+',
+                                help=doc, default=default)
+                        else:
+                            self._parser.add_argument(name, type=arg_type, help=doc,
+                                default=default)
+                    else:
+                        if multi is not False:
+                            self._parser.add_argument(name, type=arg_type, nargs='+',
+                                help=doc)
+                        else:
+                            self._parser.add_argument(name, type=arg_type, help=doc)
+        else:
+            raise ValueError("Inputs must be of type 'dict', or a list of 'dict' types!")
+
+        # Parse the arguments.
+        self._args = self._parser.parse_args()
 
     def getInput(self, arg):
         """Get the value of a command-line argument."""
