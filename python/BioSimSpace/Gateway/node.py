@@ -6,7 +6,7 @@
 
 from BioSimSpace import _is_notebook
 
-from .types import *
+from .requirements import *
 
 import argparse
 
