@@ -38,14 +38,6 @@ i.e. for the BioSimSpace.Process module:
 feature-process
 ```
 
-* If you wish to use sub-branches for a feature, they can be identified by
-using a backslash, e.g.:
-
-```bash
-feature-process/namd
-feature-process/amber
-```
-
-When you are happy with your feature, merge sub-branches into the main feature
-branch then create a pull request so that the feature can be merged into devel.
-Once the merge is successful, please delete the redundant feature branch.
+When you are happy with your feature create a pull request so that the feature
+can be merged into devel. Once the merge is successful, please delete the
+redundant feature branch.
