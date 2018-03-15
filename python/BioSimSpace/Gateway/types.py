@@ -4,6 +4,8 @@
 @brief   A collection of requirement classes.
 """
 
+from os import path
+
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
 
@@ -304,3 +306,83 @@ class String(Requirement):
 
         else:
             raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
+
+class File(Requirement):
+    """A file set requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, name=None, help=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           name    -- The name of the requirement.
+           help    -- The help string.
+        """
+
+        # Call the base class constructor.
+        super().__init__(name=name, help=help)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Check the type.
+        if type(value) is str:
+            file = value
+        elif type(value) is String:
+            value = value.value()
+        else:
+            raise ValueError("Cannot convert '%s' to '%s'" % (type(file), type(self)))
+
+        # Make sure the file exists.
+        if not path.isfile(file):
+            raise IOError(('File doesn\'t exist: "{x}"').format(x=file))
+        else:
+            return file
+
+class FileSet(Requirement):
+    """A file requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    # Multiple files can be passed.
+    _is_multi = True
+
+    def __init__(self, name=None, help=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           name    -- The name of the requirement.
+           help    -- The help string.
+        """
+
+        # Call the base class constructor.
+        super().__init__(name=name, help=help)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # We should receive a list of strings.
+        if type(value) is list:
+
+            # Loop over all strings.
+            for file in value:
+
+                # Check the types.
+                if type(file) is str:
+                    file = file
+                elif type(file) is String:
+                    file = file.value()
+                else:
+                    raise ValueError("Cannot convert '%s' to '%s'" % (type(file), type(self)))
+
+            # Make sure the file exists.
+            if not path.isfile(file):
+                raise IOError(('File doesn\'t exist: "{x}"').format(x=file))
+
+        # All is okay. Return the value.
+        return value
