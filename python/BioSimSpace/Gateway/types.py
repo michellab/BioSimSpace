@@ -262,6 +262,14 @@ class Float(Requirement):
         elif type(value) is Float:
             return value.value()
 
+        # Python int.
+        elif type(value) is int:
+            return float(value)
+
+        # BioSimSpace Integer.
+        elif type(value) is int:
+            return float(value.value())
+
         else:
             raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
 
