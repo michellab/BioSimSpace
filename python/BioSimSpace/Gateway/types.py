@@ -1,242 +1,306 @@
 """
 @package biosimspace
 @author  Lester Hedges
-@brief   A collection of variable types.
+@brief   A collection of requirement classes.
 """
 
-from math import floor
+class Requirement():
+    """Base class for BioSimSpace Node requirements."""
 
-class Boolean():
-    """A boolean type."""
+    # Set the argparse argument type.
+    _arg_type = None
 
-    # The type of the value.
-    value_type = bool
+    # Default to single arguments.
+    _is_multi = False
 
-    def __init__(self, *value):
+    def __init__(self, name=None, help=None, default=None,
+            units=None, minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Positional arguments:
+           Keyword arguments:
 
-           value -- The boolean value.
+           name    -- The name of the requirement.
+           help    -- The help string.
+           default -- The default value.
+           units   -- The units.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
         """
 
-        # Set the value.
-        if len(value) == 0:
-            self.value = False
-        else:
-            self.value = value[0]
+	# Don't allow user to create an instance of this base class.
+        if type(self) == Requirement:
+            raise Exception("<Requirement> must be subclassed.")
 
-    @property
+        # Required keyword arguments.
+
+        if name is None:
+            raise ValueError("Missing 'name' keyword argument!")
+        elif type(name) is not str:
+            raise ValueError("'name' keyword argument must be of type 'str'")
+        else:
+            self._name = name
+
+        if help is None:
+            raise ValueError("Missing 'help' keyword argument!")
+        elif type(help) is not str:
+            raise ValueError("'help' keyword argument must be of type 'str'")
+        else:
+            self._help = help
+
+        # Set defaults.
+        self._value = None
+
+        # Set member data.
+        self._default = default
+        self._units = None
+        self._min = minimum
+        self._max = maximum
+        self._allowed = allowed
+
+    def setValue(self, value):
+        """Validate and set the value."""
+
+        # Validate the value.
+        value = self._validate(value)
+
+        # Now check value against any constraints.
+
+        # Minimum.
+        if self._min is not None and value < self._min:
+            raise ValueError("The value (%d) is less than the allowed "
+                "minimum (%d)" % (value, self._min))
+
+        # Maximum.
+        if self._max is not None and value < self._max:
+            raise ValueError("The value (%d) is less than the allowed "
+                "maximum (%d)" % (value, self._max))
+
+        # Allowed values.
+        if self._allowed is not None and value not in self._allowed:
+            raise ValueError("The value (%d) is not in the list of allowed values: "
+                "%s" % (value, str(self._allowed)))
+
+        # All is okay. Set the value.
+        self._value = value
+
     def value(self):
-        """Get the boolean value."""
+        """Return the value."""
         return self._value
 
-    @value.setter
-    def value(self, value):
-        """Set the boolean value."""
+    def name(self):
+        """Return the name of the requirement."""
+        return self._name
+
+    def default(self):
+        """Return the default value."""
+        return self._default
+
+    def units(self):
+        """Return the units."""
+        return self._units
+
+    def helpText(self):
+        """Return the documentation string."""
+        return self._help
+
+    def isMulti(self):
+        """Whether the requirement has multiple values."""
+        return self._is_multi
+
+    def argType(self):
+        """The command-line argument type."""
+        return self._arg_type
+
+    def min(self):
+        """Return the minimum allowed value."""
+        return self._min
+
+    def max(self):
+        """Return the maximum allowed value."""
+        return self._max
+
+    def allowed(self):
+        """Return the allowed values."""
+        return self._allowed
+
+class Boolean(Requirement):
+    """A boolean requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = bool
+
+    def __init__(self, name=None, help=None, default=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           name    -- The name of the requirement.
+           help    -- The help string.
+           default -- The default value.
+        """
+
+        # Call the base class constructor.
+        super().__init__(name=name, help=help, default=default)
+
+    def _validate(self, value):
+        """Validate the value."""
 
         # Python bool.
         if type(value) is bool:
-            self._value = value
+            return value
 
         # BioSimSpace bool.
         elif type(value) is Boolean:
-            self._value = value.value
-
-        # Python int.
-        elif type(value) is int:
-            if value == 0:
-                self._value = False
-            elif value == 1:
-                self._value = True
-            else:
-                raise ValueError("Integer argument is not 0 or 1.")
-
-        # BioSimSpace int.
-        elif type(value) is Integer:
-            if value.value == 0:
-                self._value = False
-            elif value.value == 1:
-                self._value = True
-            else:
-                raise ValueError("Integer argument is not 0 or 1.")
-
-        # Python string.
-        elif type(value) is str:
-
-            # Strip whitespace and convert to upper case.
-            value = value.strip().upper()
-
-            if value == 'TRUE':
-                self._value = True
-            elif value == 'FALSE':
-                self._value = False
-            else:
-                raise ValueError("String argument is not 'True' or 'False'")
-
-        # BioSimSpace string.
-        elif type(value) is String:
-
-            # Strip whitespace and convert to upper case.
-            value = value.value.strip().upper()
-
-            if value == 'TRUE':
-                self._value = True
-            elif value == 'FALSE':
-                self._value = False
-            else:
-                raise ValueError("String argument is not 'True' or 'False'")
+            return value.value()
 
         else:
-            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
+            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
 
-class Integer():
-    """An integer type."""
+class Integer(Requirement):
+    """An integer requirement."""
 
-    # The type of the value.
-    value_type = int
+    # Set the argparse argument type.
+    _arg_type = int
 
-    def __init__(self, *value):
+    def __init__(self, name=None, help=None, default=None,
+            minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Positional arguments:
+           Keyword arguments:
 
-           value -- The value of the integer.
+           name    -- The name of the requirement.
+           help    -- The help string.
+           default -- The default value.
+           min     -- The minimum allowed value.
+           max     -- The maximum allowed value.
+           allowed -- A list of allowed values.
         """
 
-        # Set the value.
-        if len(value) == 0:
-            self.value = 0
-        else:
-            self.value = value[0]
+        # Call the base class constructor.
+        super().__init__(name=name, help=help)
 
-    @property
-    def value(self):
-        """Get the integer value."""
-        return self._value
+        # Set the minimum value.
+        if minimum is not None:
+            self._min = self._validate(minimum)
 
-    @value.setter
-    def value(self, value):
-        """Set the value of the float."""
+        # Set the maximum value.
+        if maximum is not None:
+            self._max = self._validate(maximum)
+
+        # Set the allowed values.
+        if allowed is not None:
+            self._allowed = [self._validate(x) for x in allowed]
+
+        # Set the default value.
+        if default is not None:
+            self._default = self._validate(default)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
 
         # Python int.
         if type(value) is int:
-            self._value = value
+            return value
 
-        # Python float.
-        elif type(value) is float:
-            self._value = floor(value)
-
-        # BioSimSpace float.
-        elif type(value) is Float:
-            self._value = floor(value.value)
-
-        # Python string.
-        elif type(value) is str:
-            self._value = floor(float(value))
-
-        # BioSimSpace string.
-        elif type(value) is String:
-            self._value = floor(float(value.value))
-
-        # Python bool.
-        elif type(value) is bool:
-            self._value = int(value)
-
-        # BioSimSpace bool.
-        elif type(value) is Boolean:
-            self._value = int(value.value)
+        # BioSimSpace Integer.
+        elif type(value) is Integer:
+            return value.value()
 
         else:
-            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
+            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
 
-class Float():
-    """An floating point type."""
+class Float(Requirement):
+    """A floating point requirement."""
 
-    # The type of the value.
-    value_type = float
+    # Set the argparse argument type.
+    _arg_type = float
 
-    def __init__(self, *value):
+    def __init__(self, name=None, help=None, default=None,
+            minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Positional arguments:
+           Keyword arguments:
 
-           value -- The value of the float.
+           name    -- The name of the requirement.
+           help    -- The help string.
+           default -- The default value.
+           min     -- The minimum allowed value.
+           max     -- The maximum allowed value.
+           allowed -- A list of allowed values.
         """
 
-        # Set the value.
-        if len(value) == 0:
-            self.value = 0.0
-        else:
-            self.value = value[0]
+        # Call the base class constructor.
+        super().__init__(name=name, help=help)
 
-    @property
-    def value(self):
-        """Get the float value."""
-        return self._value
+        # Set the minimum value.
+        if minimum is not None:
+            self._min = self._validate(minimum)
 
-    @value.setter
-    def value(self, value):
-        """Set the value of the float."""
+        # Set the maximum value.
+        if maximum is not None:
+            self._max = self._validate(maximum)
+
+        # Set the allowed values.
+        if allowed is not None:
+            self._allowed = [self._validate(x) for x in allowed]
+
+        # Set the default value.
+        if default is not None:
+            self._default = self._validate(default)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
 
         # Python float.
         if type(value) is float:
-            self._value = value
+            return value
 
-        # BioSimSpace float.
+        # BioSimSpace Float.
         elif type(value) is Float:
-            self._value = value.value
-
-        # Python int.
-        elif type(value) is int:
-            self._value = float(value)
-
-        # BioSimSpace int.
-        elif type(value) is Integer:
-            self._value = float(value.value)
-
-        # Python string.
-        elif type(value) is str:
-            self._value = float(value)
-
-        # BioSimSpace string.
-        elif type(value) is String:
-            self._value = float(value.value)
+            return value.value()
 
         else:
-            raise ValueError("Cannot convert %s to %s" % (type(value), type(self)))
+            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
 
-class String():
-    """A string type."""
+class String(Requirement):
+    """A string requirement."""
 
-    # The type of the value.
-    value_type = str
+    # Set the argparse argument type.
+    _arg_type = str
 
-    def __init__(self, *value):
+    def __init__(self, name=None, help=None, default=None, allowed=None):
         """Constructor.
 
-           Positional arguments:
+           Keyword arguments:
 
-           value -- The string value.
+           name    -- The name of the requirement.
+           help    -- The help string.
+           default -- The default value.
+           allowed -- A list of allowed values.
         """
 
-        # Set the value.
-        if len(value) == 0:
-            self.value = ''
+        # Call the base class constructor.
+        super().__init__(name=name, help=help)
+
+        # Set the allowed values.
+        if allowed is not None:
+            self._allowed = [self._validate(x) for x in allowed]
+
+        # Set the default value.
+        if default is not None:
+            self._default = self._validate(default)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Python str.
+        if type(value) is str:
+            return value
+
+        # BioSimSpace String.
+        elif type(value) is String:
+            return value.value()
+
         else:
-            self.value = value[0]
-
-    @property
-    def value(self):
-        """Get the string value."""
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        """Set the string value."""
-
-        # BioSimSpace type.
-        if value.__class__.__module__ == 'BioSimSpace.Gateway.types':
-            self._value = str(value.value)
-        else:
-            self._value = str(value)
+            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))

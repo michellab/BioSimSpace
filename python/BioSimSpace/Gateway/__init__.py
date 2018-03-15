@@ -1,2 +1,2 @@
 from .node import Node
-from .types import *
+from .types import Boolean, Float, Integer, String

@@ -6,6 +6,8 @@
 
 from BioSimSpace import _is_notebook
 
+from .types import *
+
 import argparse
 
 class Node():
@@ -13,13 +15,12 @@ class Node():
 
     _is_notebook = _is_notebook()
 
-    def __init__(self, description=None, parser=None):
+    def __init__(self, description):
         """Constructor.
 
-           Keyword arguments:
+           Positional arguments:
 
            description -- A description of the node.
-	   parser      -- An argparse.ArgumentParser object.
         """
 
         if type(description) is not str:
@@ -28,129 +29,97 @@ class Node():
         # Set the node description string.
         self._description = description
 
-        # Create the parser object.
-        if parser is None:
-            self._parser = argparse.ArgumentParser(description=description)
+        # Initialise a dictionary of requirements.
+        self._requirements = {}
 
-        elif type(parser) is argparse.ArgumentParser:
-            self._parser = parser
+        # Create the parser.
+        self._parser = argparse.ArgumentParser(description=self._description)
 
-    def setRequirements(self, inputs):
+    def setRequirements(self, *args):
         """Set the nodes requirements.
 
            Positional arguments:
 
-           inputs -- A dictionary of the required inputs.
+           args -- The requirements for the node.
         """
 
-        # A single argument dictionary.
-        if type(inputs) is dict:
-            inputs = [inputs]
+        # Loop over all of the inputs.
+        for arg in args:
+            self.addRequirement(arg)
 
-        # Make sure all inputs are dicts.
-        if all(isinstance(x, dict) for x in inputs):
+	# Validate the requirements.
+        self.validateRequirements()
 
-            # Loop over all of the inputs.
-            for input in inputs:
+    def addRequirement(self, requirement):
+        """Add a requirement.
 
-                # Extract the keyword values.
+           Positional arguments:
 
-                # These are required...
+           requirement -- A requirement object.
+        """
 
-                try:
-                    name = input['name']
+        if not isinstance(requirement, Requirement):
+            raise ValueError("The 'requirement' must be of type 'Requirement'.")
 
-                    # Append long-form argument name if not present.
-                    if (len(name) > 2):
-                        if name[0:2] != '--':
-                            name = '--' + name
-                    else:
-                        name = '--' + name
+	# Get the name of the requirement.
+        name = requirement.name()
 
-                except KeyError:
-                    raise("Input requirements must have a 'name' keyword!")
+        # Add the requirement to the dictionary.
+        self._requirements[name] = requirement
 
-                try:
-                    arg_type = input['type']
-                except KeyError:
-                    raise("Input requirements must have a 'type' keyword!")
-
-                try:
-                    doc = input['doc']
-                except KeyError:
-                    raise("Input requirements must have a 'doc' keyword!")
-
-                # These are optional...
-
-                try:
-                    default = input['default']
-                except:
-                    default = None
-
-                try:
-                    multi = input['multi']
-                except:
-                    multi = False
-
-                try:
-                    required = input['required']
-                except:
-                    required = True
-
-                # Argument is never required if a default is set.
-                if required and default is not None:
-                    required = False
-
-                # Add the argument to the parser.
-
-                if required is not False:
-                    if default is not None:
-                        if multi is not False:
-                            self._parser.add_argument(name, type=arg_type, nargs='+',
-                                help=doc, default=default, required=True)
-                        else:
-                            self._parser.add_argument(name, type=arg_type, help=doc,
-                                default=default, required=True)
-                    else:
-                        if multi is not False:
-                            self._parser.add_argument(name, type=arg_type, nargs='+',
-                                help=doc, required=True)
-                        else:
-                            self._parser.add_argument(name, type=arg_type, help=doc,
-                                required=True)
-                else:
-                    if default is not None:
-                        if multi is not False:
-                            self._parser.add_argument(name, type=arg_type, nargs='+',
-                                help=doc, default=default)
-                        else:
-                            self._parser.add_argument(name, type=arg_type, help=doc,
-                                default=default)
-                    else:
-                        if multi is not False:
-                            self._parser.add_argument(name, type=arg_type, nargs='+',
-                                help=doc)
-                        else:
-                            self._parser.add_argument(name, type=arg_type, help=doc)
+	# Append long-form argument name if not present.
+        if (len(name) > 2):
+            if name[0:2] != '--':
+                name = '--' + name
         else:
-            raise ValueError("Inputs must be of type 'dict', or a list of 'dict' types!")
+            name = '--' + name
 
-        # Parse the arguments.
-        self._args = self._parser.parse_args()
+        if requirement.default() is not None:
+            if requirement.isMulti() is not False:
+                self._parser.add_argument(name, type=requirement.argType(), nargs='+',
+                    help=requirement.helpText(), default=requirement.default())
+            else:
+                self._parser.add_argument(name, type=requirement.argType(),
+                    help=requirement.helpText(), default=requirement.default())
+        else:
+            if requirement.isMulti() is not False:
+                self._parser.add_argument(name, type=requirement.argType(), nargs='+',
+                    help=requirement.helpText(), required=True)
+            else:
+                self._parser.add_argument(name, type=requirement.argType(),
+                    help=requirement.helpText(), required=True)
 
-    def getInput(self, arg):
-        """Get the value of a command-line argument."""
+    def validateRequirements(self):
+        """Validate the parsed requirements."""
 
-        if type(arg) is not str:
-            raise ValueError("The arg must be of type 'str'")
+	# Parse the arguments into a dictionary.
+        args = vars(self._parser.parse_args())
 
-        # Convert the arguments to a dictionary.
-        arg_dict = vars(self._args)
+        # Now loop over the arguments and set the requirement values.
+        for key, value in args.items():
+            self._requirements[key].setValue(value)
+
+    def getRequirement(self, name):
+        """Get the value of the named requirement.
+
+           Positional arguments:
+
+           name -- The name of the requirement.
+        """
+
+        if type(name) is not str:
+            raise ValueError("The name must be of type 'str'")
 
         try:
-            value = arg_dict[arg]
+            return self._requirements[name].value()
         except KeyError:
-            print("Input argument '%s' doesn't exist!" % arg)
-            value = None
+            raise
 
-        return value
+    def getRequirements(self):
+        """Get all of the requirements."""
+
+        x = []
+        for key, value in self._requirements.items():
+            x.append(value)
+
+        return x
