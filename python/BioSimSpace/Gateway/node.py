@@ -8,6 +8,8 @@ from BioSimSpace import _is_notebook
 
 from .requirements import *
 
+from collections import OrderedDict
+
 import argparse
 
 class Node():
@@ -29,47 +31,41 @@ class Node():
         # Set the node description string.
         self._description = description
 
-        # Initialise a dictionary of requirements.
-        self._requirements = {}
+        # Initialise dictionaries for the inputs/outputs.
+        self._inputs = OrderedDict()
+        self._outputs = OrderedDict()
+
+        # The input has not yet been validated.
+        self._is_validated = False
 
         # Create the parser.
         self._parser = argparse.ArgumentParser(description=self._description)
 
         # Add an option to allow the user to load a configuration from file.
-        config = File(name="config", help="path to a configuration file (optional)", optional=True)
-        self.addRequirement(config)
+        config = File(help="path to a configuration file (optional)", optional=True)
+        self.addInput("config", config)
 
-    def setRequirements(self, *args):
-        """Set the nodes requirements.
-
-           Positional arguments:
-
-           args -- The requirements for the node.
-        """
-
-        # Loop over all of the inputs.
-        for arg in args:
-            self.addRequirement(arg)
-
-	# Validate the requirements.
-        self.validateRequirements()
-
-    def addRequirement(self, requirement):
-        """Add a requirement.
+    def addInput(self, name, input):
+        """Add an input requirement.
 
            Positional arguments:
 
-           requirement -- A requirement object.
+           name  -- The name of the input.
+           input -- The input requirement object.
         """
 
-        if not isinstance(requirement, Requirement):
-            raise TypeError("The 'requirement' must be of type 'Requirement'.")
+        # Can't add requirements if the input has already been validated.
+        if self._is_validated:
+            return
 
-	# Get the name of the requirement.
-        name = requirement.getName()
+        if type(name) is not str:
+            raise TypeError("'name' must be of type 'str'.")
 
-        # Add the requirement to the dictionary.
-        self._requirements[name] = requirement
+        if not isinstance(input, Requirement):
+            raise TypeError("'input' must be of type 'Requirement'.")
+
+        # Add the input to the dictionary.
+        self._inputs[name] = input
 
 	# Append long-form argument name if not present.
         if (len(name) > 2):
@@ -78,60 +74,100 @@ class Node():
         else:
             name = '--' + name
 
-        if requirement.isOptional():
-            if requirement.getDefault() is not None:
-                if requirement.isMulti() is not False:
-                    self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
-                        help=requirement.getHelp(), default=requirement.getDefault())
+        if input.isOptional():
+            if input.getDefault() is not None:
+                if input.isMulti() is not False:
+                    self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                        help=input.getHelp(), default=input.getDefault())
                 else:
-                    self._parser.add_argument(name, type=requirement.getArgType(),
-                        help=requirement.getHelp(), default=requirement.getDefault())
+                    self._parser.add_argument(name, type=input.getArgType(),
+                        help=input.getHelp(), default=input.getDefault())
             else:
-                if requirement.isMulti() is not False:
-                    self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
-                        help=requirement.getHelp())
+                if input.isMulti() is not False:
+                    self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                        help=input.getHelp())
                 else:
-                    self._parser.add_argument(name, type=requirement.getArgType(),
-                        help=requirement.getHelp())
+                    self._parser.add_argument(name, type=input.getArgType(),
+                        help=input.getHelp())
         else:
-            if requirement.isMulti() is not False:
-                self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
-                    help=requirement.getHelp(), required=True)
+            if input.isMulti() is not False:
+                self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                    help=input.getHelp(), required=True)
             else:
-                self._parser.add_argument(name, type=requirement.getArgType(),
-                    help=requirement.getHelp(), required=True)
+                self._parser.add_argument(name, type=input.getArgType(),
+                    help=input.getHelp(), required=True)
 
-    def validateRequirements(self):
-        """Validate the parsed requirements."""
-
-	# Parse the arguments into a dictionary.
-        args = vars(self._parser.parse_args())
-
-        # Now loop over the arguments and set the requirement values.
-        for key, value in args.items():
-            self._requirements[key].setValue(value)
-
-    def getRequirement(self, name):
-        """Get the value of the named requirement.
+    def addOutput(self, name, input):
+        """Add an output requirement.
 
            Positional arguments:
 
-           name -- The name of the requirement.
+           name   -- The name of the output.
+           output -- The output requirement object.
         """
+
+        # Can't add requirements if the input has already been validated.
+        if self._is_validated:
+            return
+
+        if type(name) is not str:
+            raise TypeError("'name' must be of type 'str'.")
+
+        if not isinstance(output, Requirement):
+            raise TypeError("'output' must be of type 'Requirement'.")
+
+        # Add the output to the dictionary.
+        self._output[name] = input
+
+    def setOutput(self, name, value):
+        """Set the value of an output.
+
+           Positional arguments:
+
+           name  -- The name of the output.
+           value -- The value of the output.
+        """
+
+        try:
+            self._outputs[name].setValue(value)
+        except KeyError:
+            raise
+
+    def getInput(self, name):
+        """Get the value of the named input.
+
+           Positional arguments:
+
+           name -- The name of the input requirement.
+        """
+
+        if not self._is_validated:
+            self._validateInputs()
+            self._is_validated = True
 
         if type(name) is not str:
             raise TypeError("The name must be of type 'str'")
 
         try:
-            return self._requirements[name].getValue()
+            return self._inputs[name].getValue()
         except KeyError:
             raise
 
-    def getRequirements(self):
-        """Get all of the requirements."""
+    def getInputs(self):
+        """Get all of the input requirements."""
 
-        x = []
-        for key, value in self._requirements.items():
-            x.append(value)
+        if not self._is_validated:
+            self._validateInputs()
+            self._is_validated = True
 
-        return x
+        return self._inputs
+
+    def _validateInputs(self):
+        """Validate the parsed inputs."""
+
+	# Parse the arguments into a dictionary.
+        args = vars(self._parser.parse_args())
+
+        # Now loop over the arguments and set the input values.
+        for key, value in args.items():
+            self._inputs[key].setValue(value)

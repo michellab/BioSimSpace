@@ -15,13 +15,12 @@ class Requirement():
     # Default to single arguments.
     _is_multi = False
 
-    def __init__(self, name=None, help=None, default=None,
-            units=None, minimum=None, maximum=None, allowed=None, optional=False):
+    def __init__(self, help=None, default=None, units=None, minimum=None,
+            maximum=None, allowed=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name     -- The name of the requirement.
            help     -- The help string.
            default  -- The default value.
            units    -- The units.
@@ -36,13 +35,6 @@ class Requirement():
             raise Exception("<Requirement> must be subclassed.")
 
         # Required keyword arguments.
-
-        if name is None:
-            raise ValueError("Missing 'name' keyword argument!")
-        elif type(name) is not str:
-            raise TypeError("'name' keyword argument must be of type 'str'")
-        else:
-            self._name = name
 
         if help is None:
             raise ValueError("Missing 'help' keyword argument!")
@@ -97,10 +89,6 @@ class Requirement():
         """Return the value."""
         return self._value
 
-    def getName(self):
-        """Return the name of the requirement."""
-        return self._name
-
     def getDefault(self):
         """Return the default value."""
         return self._default
@@ -143,18 +131,17 @@ class Boolean(Requirement):
     # Set the argparse argument type.
     _arg_type = bool
 
-    def __init__(self, name=None, help=None, default=None):
+    def __init__(self, help=None, default=None):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
            help    -- The help string.
            default -- The default value.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(help=help)
 
         # Set the default value.
         if default is not None:
@@ -175,13 +162,12 @@ class Integer(Requirement):
     # Set the argparse argument type.
     _arg_type = int
 
-    def __init__(self, name=None, help=None, default=None,
+    def __init__(self, help=None, default=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
            help    -- The help string.
            default -- The default value.
            min     -- The minimum allowed value.
@@ -190,7 +176,7 @@ class Integer(Requirement):
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(help=help)
 
         # Set the minimum value.
         if minimum is not None:
@@ -223,13 +209,12 @@ class Float(Requirement):
     # Set the argparse argument type.
     _arg_type = float
 
-    def __init__(self, name=None, help=None, default=None,
+    def __init__(self, help=None, default=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
            help    -- The help string.
            default -- The default value.
            min     -- The minimum allowed value.
@@ -238,7 +223,7 @@ class Float(Requirement):
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(help=help)
 
         # Set the minimum value.
         if minimum is not None:
@@ -273,19 +258,18 @@ class String(Requirement):
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, name=None, help=None, default=None, allowed=None):
+    def __init__(self, help=None, default=None, allowed=None):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
            help    -- The help string.
            default -- The default value.
            allowed -- A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(help=help)
 
         # Set the allowed values.
         if allowed is not None:
@@ -310,18 +294,17 @@ class File(Requirement):
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, name=None, help=None, optional=False):
+    def __init__(self, help=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name     -- The name of the requirement.
            help     -- The help string.
            optional -- Whether the file is optional.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help, optional=optional)
+        super().__init__(help=help, optional=optional)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -351,18 +334,17 @@ class FileSet(Requirement):
     # Multiple files can be passed.
     _is_multi = True
 
-    def __init__(self, name=None, help=None, optional=False):
+    def __init__(self, help=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name     -- The name of the requirement.
            help     -- The help string.
            optional -- Whether the requirement is optional.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help, optional=optional)
+        super().__init__(help=help, optional=optional)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
