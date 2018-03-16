@@ -33,6 +33,9 @@ class Minimisation(Protocol):
     def setSteps(self, steps):
         """Set the maximum number of steps."""
 
+        if type(steps) is not int:
+            raise TypeError("'steps' must be of type 'int'")
+
         if steps <= 0:
             warn("Number of steps must be greater than zero. Using default (10000).")
             self._steps = 10000

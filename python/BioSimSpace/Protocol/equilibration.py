@@ -62,6 +62,12 @@ class Equilibration(Protocol):
     def setTimeStep(self, timestep):
         """Set the time step."""
 
+        if type(timestep) is int:
+            timestep = float(timestep)
+
+        if type(timestep) is not float:
+            raise TypeError("'timestep' must be of type 'float'")
+
         if timestep <= 0:
             warn("The time step must be positive. Using default (2 fs).")
             self._timestep = 2
@@ -76,6 +82,12 @@ class Equilibration(Protocol):
     def setRunTime(self, runtime):
         """Set the running time."""
 
+        if type(runtime) is int:
+            runtime = float(runtime)
+
+        if type(runtime) is not float:
+            raise TypeError("'runtime' must be of type 'float'")
+
         if runtime <= 0:
             warn("The running time must be positive. Using default (0.2 ns).")
             self._runtime = 0.2
@@ -89,6 +101,12 @@ class Equilibration(Protocol):
 
     def setStartTemperature(self, temperature):
         """Set the starting temperature."""
+
+        if type(temperature) is int:
+            temperature = float(temperature)
+
+        if type(temperature) is not float:
+            raise TypeError("'temperature' must be of type 'float'")
 
         if temperature < 0:
             warn("Starting temperature must be positive. Using default (300 K).")
@@ -106,6 +124,12 @@ class Equilibration(Protocol):
 
     def setEndTemperature(self, temperature):
         """Set the final temperature."""
+
+        if type(temperature) is int:
+            temperature = float(temperature)
+
+        if type(temperature) is not float:
+            raise TypeError("'temperature' must be of type 'float'")
 
         if temperature < 0:
             warn("Final temperature must be positive. Using default (300 K).")
