@@ -53,7 +53,7 @@ class Production(Protocol):
         self.setRestart(restart)
 
         # Set the first time step.
-        step = self.setFirstStep(first_step)
+        self.setFirstStep(first_step)
 
     def getTimeStep(self):
         """Return the time step."""
