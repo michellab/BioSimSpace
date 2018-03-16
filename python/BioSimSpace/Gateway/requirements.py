@@ -125,6 +125,21 @@ class Requirement():
         """Return the allowed values."""
         return self._allowed
 
+    def _validate_default(self):
+        """Validate the default value."""
+
+        if self._min is not None and self._default < self._min:
+            raise ValueError("The default '%s' is less than the minimum "
+                "allowed value '%s'" % (self._default, self._min))
+
+        if self._max is not None and self._default > self._max:
+            raise ValueError("The default '%s' is greater than the maximum "
+                "allowed value '%s'" % (self._default, self._max))
+
+        if self._allowed is not None and self._default not in self._allowed:
+            raise ValueError("The default '%s' is not one of the allowed values %s"
+                % (self._default, str(self._allowed)))
+
 class Boolean(Requirement):
     """A boolean requirement."""
 
@@ -145,7 +160,11 @@ class Boolean(Requirement):
 
         # Set the default value.
         if default is not None:
+            # Make sure the default is the right type.
             self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
             self._is_optional = True
 
     def _validate(self, value):
@@ -188,11 +207,17 @@ class Integer(Requirement):
 
         # Set the allowed values.
         if allowed is not None:
+            if type(allowed) is not list:
+                allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
 
         # Set the default value.
         if default is not None:
+            # Make sure the default is the right type.
             self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
             self._is_optional = True
 
     def _validate(self, value):
@@ -235,11 +260,17 @@ class Float(Requirement):
 
         # Set the allowed values.
         if allowed is not None:
+            if type(allowed) is not list:
+                allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
 
         # Set the default value.
         if default is not None:
+            # Make sure the default is the right type.
             self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
             self._is_optional = True
 
     def _validate(self, value):
@@ -273,11 +304,17 @@ class String(Requirement):
 
         # Set the allowed values.
         if allowed is not None:
+            if type(allowed) is not list:
+                allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
 
         # Set the default value.
         if default is not None:
+            # Make sure the default is the right type.
             self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
             self._is_optional = True
 
     def _validate(self, value):
