@@ -66,7 +66,7 @@ class Node():
             raise ValueError("The 'requirement' must be of type 'Requirement'.")
 
 	# Get the name of the requirement.
-        name = requirement.name()
+        name = requirement.getName()
 
         # Add the requirement to the dictionary.
         self._requirements[name] = requirement
@@ -79,27 +79,27 @@ class Node():
             name = '--' + name
 
         if requirement.isOptional():
-            if requirement.default() is not None:
+            if requirement.getDefault() is not None:
                 if requirement.isMulti() is not False:
-                    self._parser.add_argument(name, type=requirement.argType(), nargs='+',
-                        help=requirement.helpText(), default=requirement.default())
+                    self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
+                        help=requirement.getHelp(), default=requirement.getDefault())
                 else:
-                    self._parser.add_argument(name, type=requirement.argType(),
-                        help=requirement.helpText(), default=requirement.default())
+                    self._parser.add_argument(name, type=requirement.getArgType(),
+                        help=requirement.getHelp(), default=requirement.getDefault())
             else:
                 if requirement.isMulti() is not False:
-                    self._parser.add_argument(name, type=requirement.argType(), nargs='+',
-                        help=requirement.helpText())
+                    self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
+                        help=requirement.getHelp())
                 else:
-                    self._parser.add_argument(name, type=requirement.argType(),
-                        help=requirement.helpText())
+                    self._parser.add_argument(name, type=requirement.getArgType(),
+                        help=requirement.getHelp())
         else:
             if requirement.isMulti() is not False:
-                self._parser.add_argument(name, type=requirement.argType(), nargs='+',
-                    help=requirement.helpText(), required=True)
+                self._parser.add_argument(name, type=requirement.getArgType(), nargs='+',
+                    help=requirement.getHelp(), required=True)
             else:
-                self._parser.add_argument(name, type=requirement.argType(),
-                    help=requirement.helpText(), required=True)
+                self._parser.add_argument(name, type=requirement.getArgType(),
+                    help=requirement.getHelp(), required=True)
 
     def validateRequirements(self):
         """Validate the parsed requirements."""
@@ -123,7 +123,7 @@ class Node():
             raise ValueError("The name must be of type 'str'")
 
         try:
-            return self._requirements[name].value()
+            return self._requirements[name].getValue()
         except KeyError:
             raise
 

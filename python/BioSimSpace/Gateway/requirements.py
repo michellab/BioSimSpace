@@ -93,23 +93,23 @@ class Requirement():
         # All is okay. Set the value.
         self._value = value
 
-    def value(self):
+    def getValue(self):
         """Return the value."""
         return self._value
 
-    def name(self):
+    def getName(self):
         """Return the name of the requirement."""
         return self._name
 
-    def default(self):
+    def getDefault(self):
         """Return the default value."""
         return self._default
 
-    def units(self):
+    def getUnits(self):
         """Return the units."""
         return self._units
 
-    def helpText(self):
+    def getHelp(self):
         """Return the documentation string."""
         return self._help
 
@@ -121,19 +121,19 @@ class Requirement():
         """Whether the requirement is optional."""
         return self._is_optional
 
-    def argType(self):
+    def getArgType(self):
         """The command-line argument type."""
         return self._arg_type
 
-    def min(self):
+    def getMin(self):
         """Return the minimum allowed value."""
         return self._min
 
-    def max(self):
+    def getMax(self):
         """Return the maximum allowed value."""
         return self._max
 
-    def allowed(self):
+    def getAllowedValues(self):
         """Return the allowed values."""
         return self._allowed
 
