@@ -40,21 +40,21 @@ class Requirement():
         if name is None:
             raise ValueError("Missing 'name' keyword argument!")
         elif type(name) is not str:
-            raise ValueError("'name' keyword argument must be of type 'str'")
+            raise TypeError("'name' keyword argument must be of type 'str'")
         else:
             self._name = name
 
         if help is None:
             raise ValueError("Missing 'help' keyword argument!")
         elif type(help) is not str:
-            raise ValueError("'help' keyword argument must be of type 'str'")
+            raise TypeError("'help' keyword argument must be of type 'str'")
         else:
             self._help = help
 
         # Optional keywords aguments.
 
         if type(optional) is not bool:
-            raise ValueError("'optional' keyword argument must be of type 'bool'")
+            raise TypeError("'optional' keyword argument must be of type 'bool'")
 
         # Set defaults.
         self._value = None
@@ -167,7 +167,7 @@ class Boolean(Requirement):
         if type(value) is bool:
             return value
         else:
-            raise ValueError("The value should be of type 'bool'.")
+            raise TypeError("The value should be of type 'bool'.")
 
 class Integer(Requirement):
     """An integer requirement."""
@@ -215,7 +215,7 @@ class Integer(Requirement):
         if type(value) is int:
             return value
         else:
-            raise ValueError("The value should be of type 'int'.")
+            raise TypeError("The value should be of type 'int'.")
 
 class Float(Requirement):
     """A floating point requirement."""
@@ -265,7 +265,7 @@ class Float(Requirement):
         elif type(value) is int:
             return float(value)
         else:
-            raise ValueError("The value should be of type 'float' or 'int'.")
+            raise TypeError("The value should be of type 'float' or 'int'.")
 
 class String(Requirement):
     """A string requirement."""
@@ -302,7 +302,7 @@ class String(Requirement):
         if type(value) is str:
             return value
         else:
-            raise ValueError("The value should be of type 'str'")
+            raise TypeError("The value should be of type 'str'")
 
 class File(Requirement):
     """A file set requirement."""
@@ -334,7 +334,7 @@ class File(Requirement):
         if type(value) is str:
             file = value
         else:
-            raise ValueError("The value should be of type 'str'")
+            raise TypeError("The value should be of type 'str'")
 
         # Make sure the file exists.
         if not path.isfile(file):
@@ -381,7 +381,7 @@ class FileSet(Requirement):
                 if type(file) is str:
                     file = file
                 else:
-                    raise ValueError("The value should be of type 'str'")
+                    raise TypeError("The value should be of type 'str'")
 
             # Make sure the file exists.
             if not path.isfile(file):

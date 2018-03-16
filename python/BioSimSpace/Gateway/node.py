@@ -24,7 +24,7 @@ class Node():
         """
 
         if type(description) is not str:
-            raise ValueError("The 'description' keyword must be of type 'str'.")
+            raise TypeError("The 'description' keyword must be of type 'str'.")
 
         # Set the node description string.
         self._description = description
@@ -63,7 +63,7 @@ class Node():
         """
 
         if not isinstance(requirement, Requirement):
-            raise ValueError("The 'requirement' must be of type 'Requirement'.")
+            raise TypeError("The 'requirement' must be of type 'Requirement'.")
 
 	# Get the name of the requirement.
         name = requirement.getName()
@@ -120,7 +120,7 @@ class Node():
         """
 
         if type(name) is not str:
-            raise ValueError("The name must be of type 'str'")
+            raise TypeError("The name must be of type 'str'")
 
         try:
             return self._requirements[name].getValue()
