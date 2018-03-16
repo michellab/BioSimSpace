@@ -73,7 +73,7 @@ class Requirement():
                 "minimum (%d)" % (value, self._min))
 
         # Maximum.
-        if self._max is not None and value < self._max:
+        if self._max is not None and value > self._max:
             raise ValueError("The value (%d) is less than the allowed "
                 "maximum (%d)" % (value, self._max))
 
