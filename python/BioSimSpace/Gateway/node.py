@@ -11,6 +11,7 @@ from .requirements import *
 from collections import OrderedDict
 
 import argparse
+import sys
 
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
@@ -97,7 +98,7 @@ class Node():
                 self._parser.add_argument(name, type=input.getArgType(),
                     help=input.getHelp(), required=True)
 
-    def addOutput(self, name, input):
+    def addOutput(self, name, output):
         """Add an output requirement.
 
            Positional arguments:
@@ -117,7 +118,7 @@ class Node():
             raise TypeError("'output' must be of type 'Requirement'.")
 
         # Add the output to the dictionary.
-        self._output[name] = input
+        self._outputs[name] = output
 
     def setOutput(self, name, value):
         """Set the value of an output.
@@ -161,6 +162,17 @@ class Node():
             self._is_validated = True
 
         return self._inputs
+
+    def validate(self):
+        """Whether the output requirements are satisfied."""
+
+        # Check no outputs are None.
+        for name, output in self._outputs.items():
+            if output.getValue() is None:
+                raise SystemExit("Missing output for requirement '%s'" % name)
+
+        # All ouputs are found.
+        return True
 
     def _validateInputs(self):
         """Validate the parsed inputs."""
