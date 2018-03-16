@@ -30,17 +30,17 @@ class Equilibration(Protocol):
         super().__init__(ProtocolType.EQUILIBRATION, gas_phase)
 
         # Set the time step.
-        self.timestep = timestep
+        self.setTimeStep(timestep)
 
         # Set the running time.
-        self.runtime = runtime
+        self.setRunTime(runtime)
 
         # Set the start temperature.
-        self.temperature_start = temperature_start
+        self.setStartTemperature(temperature_start)
 
         # Set the final temperature.
         if temperature_end is not None:
-            self.temperature_end = temperature_end
+            self.setEndTemperature(temperature_end)
             self._is_const_temp = False
 
             # Start and end temperature is the same.
@@ -53,15 +53,13 @@ class Equilibration(Protocol):
             self._is_const_temp = True
 
         # Set the backbone restraint.
-        self.is_restrained = restrain_backbone
+        self.setRestraint(restrain_backbone)
 
-    @property
-    def timestep(self):
+    def getTimeStep(self):
         """Return the time step."""
         return self._timestep
 
-    @timestep.setter
-    def timestep(self, timestep):
+    def setTimeStep(self, timestep):
         """Set the time step."""
 
         if timestep <= 0:
@@ -71,13 +69,11 @@ class Equilibration(Protocol):
         else:
             self._timestep = timestep
 
-    @property
-    def runtime(self):
+    def getRunTime(self):
         """Return the running time."""
         return self._runtime
 
-    @runtime.setter
-    def runtime(self, runtime):
+    def setRunTime(self, runtime):
         """Set the running time."""
 
         if runtime <= 0:
@@ -87,13 +83,11 @@ class Equilibration(Protocol):
         else:
             self._runtime = runtime
 
-    @property
-    def temperature_start(self):
+    def getStartTemperature(self):
         """Return the starting temperature."""
         return self._temperature_start
 
-    @temperature_start.setter
-    def temperature_start(self, temperature):
+    def setStartTemperature(self, temperature):
         """Set the starting temperature."""
 
         if temperature < 0:
@@ -106,13 +100,11 @@ class Equilibration(Protocol):
         else:
             self._temperature_start = temperature
 
-    @property
-    def temperature_end(self):
+    def getEndTemperature(self):
         """Return the final temperature."""
         return self._temperature_end
 
-    @temperature_end.setter
-    def temperature_end(self, temperature):
+    def setEndTemperature(self, temperature):
         """Set the final temperature."""
 
         if temperature < 0:
@@ -125,13 +117,11 @@ class Equilibration(Protocol):
         else:
             self._temperature_end = temperature
 
-    @property
-    def is_restrained(self):
+    def isRestrained(self):
         """Return whether the backbone is restrained."""
         return self._is_restrained
 
-    @is_restrained.setter
-    def is_restrained(self, restrain_backbone):
+    def setRestraint(self, restrain_backbone):
         """Set the backbone restraint."""
 
         if type(restrain_backbone) is bool:

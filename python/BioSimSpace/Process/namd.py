@@ -62,7 +62,7 @@ class Namd(process.Process):
                 raise IOError(('NAMD executable doesn\'t exist: "{x}"').format(x=exe))
 
         # Set the parameter type.
-        self.is_charmm_params = charmm_params
+        self.setCharmmParams(charmm_params)
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = process.MultiDict()
@@ -96,13 +96,11 @@ class Namd(process.Process):
         # Now set up the working directory for the process.
         self._setup()
 
-    @property
-    def is_charmm_params(self):
+    def isCharmmParams(self):
         """Return whether the parameters are in CHARMM format."""
         return self._is_charmm_params
 
-    @is_charmm_params.setter
-    def is_charmm_params(self, charmm_params):
+    def setCharmmParams(self, charmm_params):
         """Set the parameter type."""
 
         if type(charmm_params) is bool:
@@ -234,7 +232,7 @@ class Namd(process.Process):
             origin = tuple(process._getAABox(self._system).center())
 
         # Work out the box from the atomic coordinates.
-        elif not self._protocol.gas_phase:
+        elif not self._protocol.isGasPhase():
             # Get the axis-aligned bounding box for the molecular system.
             aabox = process._getAABox(self._system)
 
@@ -267,7 +265,7 @@ class Namd(process.Process):
         # Non-bonded potential parameters.
 
         # Gas phase.
-        if self._protocol.gas_phase:
+        if self._protocol.isGasPhase():
             self.addToConfig("cutoff                999.")
             self.addToConfig("zeroMomentum          yes")
             self.addToConfig("switching             off")
@@ -317,25 +315,25 @@ class Namd(process.Process):
         self.addToConfig("outputTiming          1000")
 
         # Add configuration variables for a minimisation simulation.
-        if self._protocol.type() == ProtocolType.MINIMISATION:
+        if self._protocol.getType() == ProtocolType.MINIMISATION:
             self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
             # stepspercycle, which is set the default of 20.
-            steps = 20 * ceil(self._protocol.steps / 20)
+            steps = 20 * ceil(self._protocol.getSteps() / 20)
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        elif self._protocol.type() == ProtocolType.EQUILIBRATION:
+        elif self._protocol.getType() == ProtocolType.EQUILIBRATION:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
-                self.addToConfig("set temperature       %.2f" % self._protocol.temperature_start)
+                self.addToConfig("set temperature       %.2f" % self._protocol.getStartTemperature())
             else:
-                self.addToConfig("set temperature       %.2f" % self._protocol.temperature_end)
+                self.addToConfig("set temperature       %.2f" % self._protocol.getEndTemperature())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %s." % self._protocol.timestep)
+            self.addToConfig("timestep              %s." % self._protocol.getTimeStep())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -358,7 +356,7 @@ class Namd(process.Process):
                 self.addToConfig("useConstantArea       no")
 
             # Restrain the backbone.
-            if self._protocol.is_restrained:
+            if self._protocol.isRestrained():
                 # Create a restrained system.
                 restrained = process._restrain_backbone(self._system)
 
@@ -377,33 +375,33 @@ class Namd(process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = ceil(self._protocol.getRunTime() / 2e-6)
             steps = 20 * ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.temperature_end - self._protocol.temperature_start)
+                denom = abs(self._protocol.getEndTemperature() - self._protocol.getStartTemperature())
                 freq = floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
-                self.addToConfig("reassignTemp          %.2f" % self._protocol.temperature_start)
+                self.addToConfig("reassignTemp          %.2f" % self._protocol.getStartTemperature())
                 self.addToConfig("reassignIncr          1.")
-                self.addToConfig("reassignHold          %.2f" % self._protocol.temperature_end)
+                self.addToConfig("reassignHold          %.2f" % self._protocol.getEndTemperature())
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif self._protocol.type() == ProtocolType.PRODUCTION:
+        elif self._protocol.getType() == ProtocolType.PRODUCTION:
             # Set the Tcl temperature variable.
-            self.addToConfig("set temperature       %.2f" % self._protocol.temperature)
+            self.addToConfig("set temperature       %.2f" % self._protocol.getTemperature())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %s." % self._protocol.timestep)
-            if self._protocol.first_step is not 0:
-                self.addToConfig("firsttimestep         %d" % self._protocol.first_step)
+            self.addToConfig("timestep              %s." % self._protocol.getTimeStep())
+            if self._protocol.getFirstStep() is not 0:
+                self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -415,7 +413,7 @@ class Namd(process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if self._protocol.ensemble is 'NPT':
+            if self._protocol.getEnsemble() is 'NPT':
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  1.01325")
                 self.addToConfig("langevinPistonPeriod  100.")
@@ -427,11 +425,11 @@ class Namd(process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = ceil(self._protocol.runtime / 2e-6)
+            steps = ceil(self._protocol.getRunTime() / 2e-6)
             steps = 20 * ceil(steps / 20)
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.frames))
+            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.getFrames()))
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
@@ -609,7 +607,7 @@ class Namd(process.Process):
            block       -- Whether to block until the process has finished running.
         """
 
-        if self._protocol.type == ProtocolType.MINIMISATION:
+        if self._protocol.getType() == ProtocolType.MINIMISATION:
             return None
 
         else:
@@ -617,7 +615,7 @@ class Namd(process.Process):
             time_steps = self.getRecord('TS', time_series, block)
 
             # Convert the time step to nanoseconds.
-            timestep = self._protocol.timestep * 1e-6
+            timestep = self._protocol.getTimeStep() * 1e-6
 
             # Multiply by the integration time step.
             if time_steps is not None:
