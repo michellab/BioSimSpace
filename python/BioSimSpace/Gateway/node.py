@@ -35,6 +35,10 @@ class Node():
         # Create the parser.
         self._parser = argparse.ArgumentParser(description=self._description)
 
+        # Add an option to allow the user to load a configuration from file.
+        config = File(name="config", help="path to a configuration file (optional)", optional=True)
+        self.addRequirement(config)
+
     def setRequirements(self, *args):
         """Set the nodes requirements.
 
@@ -74,13 +78,21 @@ class Node():
         else:
             name = '--' + name
 
-        if requirement.default() is not None:
-            if requirement.isMulti() is not False:
-                self._parser.add_argument(name, type=requirement.argType(), nargs='+',
-                    help=requirement.helpText(), default=requirement.default())
+        if requirement.isOptional():
+            if requirement.default() is not None:
+                if requirement.isMulti() is not False:
+                    self._parser.add_argument(name, type=requirement.argType(), nargs='+',
+                        help=requirement.helpText(), default=requirement.default())
+                else:
+                    self._parser.add_argument(name, type=requirement.argType(),
+                        help=requirement.helpText(), default=requirement.default())
             else:
-                self._parser.add_argument(name, type=requirement.argType(),
-                    help=requirement.helpText(), default=requirement.default())
+                if requirement.isMulti() is not False:
+                    self._parser.add_argument(name, type=requirement.argType(), nargs='+',
+                        help=requirement.helpText())
+                else:
+                    self._parser.add_argument(name, type=requirement.argType(),
+                        help=requirement.helpText())
         else:
             if requirement.isMulti() is not False:
                 self._parser.add_argument(name, type=requirement.argType(), nargs='+',

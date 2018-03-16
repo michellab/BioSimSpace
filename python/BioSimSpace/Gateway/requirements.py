@@ -16,18 +16,19 @@ class Requirement():
     _is_multi = False
 
     def __init__(self, name=None, help=None, default=None,
-            units=None, minimum=None, maximum=None, allowed=None):
+            units=None, minimum=None, maximum=None, allowed=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
-           help    -- The help string.
-           default -- The default value.
-           units   -- The units.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           name     -- The name of the requirement.
+           help     -- The help string.
+           default  -- The default value.
+           units    -- The units.
+           minimum  -- The minimum allowed value.
+           maximum  -- The maximum allowed value.
+           allowed  -- A list of allowed values.
+           optional -- Whether the requirement is optional.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -50,6 +51,11 @@ class Requirement():
         else:
             self._help = help
 
+        # Optional keywords aguments.
+
+        if type(optional) is not bool:
+            raise ValueError("'optional' keyword argument must be of type 'bool'")
+
         # Set defaults.
         self._value = None
 
@@ -59,6 +65,7 @@ class Requirement():
         self._min = minimum
         self._max = maximum
         self._allowed = allowed
+        self._is_optional = optional
 
     def setValue(self, value):
         """Validate and set the value."""
@@ -110,6 +117,10 @@ class Requirement():
         """Whether the requirement has multiple values."""
         return self._is_multi
 
+    def isOptional(self):
+        """Whether the requirement is optional."""
+        return self._is_optional
+
     def argType(self):
         """The command-line argument type."""
         return self._arg_type
@@ -143,21 +154,20 @@ class Boolean(Requirement):
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help, default=default)
+        super().__init__(name=name, help=help)
+
+        # Set the default value.
+        if default is not None:
+            self._default = self._validate(default)
+            self._is_optional = True
 
     def _validate(self, value):
         """Validate the value."""
 
-        # Python bool.
         if type(value) is bool:
             return value
-
-        # BioSimSpace bool.
-        elif type(value) is Boolean:
-            return value.value()
-
         else:
-            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
+            raise ValueError("The value should be of type 'bool'.")
 
 class Integer(Requirement):
     """An integer requirement."""
@@ -197,20 +207,15 @@ class Integer(Requirement):
         # Set the default value.
         if default is not None:
             self._default = self._validate(default)
+            self._is_optional = True
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Python int.
         if type(value) is int:
             return value
-
-        # BioSimSpace Integer.
-        elif type(value) is Integer:
-            return value.value()
-
         else:
-            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
+            raise ValueError("The value should be of type 'int'.")
 
 class Float(Requirement):
     """A floating point requirement."""
@@ -250,28 +255,17 @@ class Float(Requirement):
         # Set the default value.
         if default is not None:
             self._default = self._validate(default)
+            self._is_optional = True
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Python float.
         if type(value) is float:
             return value
-
-        # BioSimSpace Float.
-        elif type(value) is Float:
-            return value.value()
-
-        # Python int.
         elif type(value) is int:
             return float(value)
-
-        # BioSimSpace Integer.
-        elif type(value) is int:
-            return float(value.value())
-
         else:
-            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
+            raise ValueError("The value should be of type 'float' or 'int'.")
 
 class String(Requirement):
     """A string requirement."""
@@ -300,20 +294,15 @@ class String(Requirement):
         # Set the default value.
         if default is not None:
             self._default = self._validate(default)
+            self._is_optional = True
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Python str.
         if type(value) is str:
             return value
-
-        # BioSimSpace String.
-        elif type(value) is String:
-            return value.value()
-
         else:
-            raise ValueError("Cannot convert '%s' to '%s'" % (type(value), type(self)))
+            raise ValueError("The value should be of type 'str'")
 
 class File(Requirement):
     """A file set requirement."""
@@ -321,28 +310,31 @@ class File(Requirement):
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, name=None, help=None):
+    def __init__(self, name=None, help=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
-           help    -- The help string.
+           name     -- The name of the requirement.
+           help     -- The help string.
+           optional -- Whether the file is optional.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(name=name, help=help, optional=optional)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
+        # Handle optional requirement.
+        if self._is_optional and value is None:
+            return None
+
         # Check the type.
         if type(value) is str:
             file = value
-        elif type(value) is String:
-            value = value.value()
         else:
-            raise ValueError("Cannot convert '%s' to '%s'" % (type(file), type(self)))
+            raise ValueError("The value should be of type 'str'")
 
         # Make sure the file exists.
         if not path.isfile(file):
@@ -359,20 +351,25 @@ class FileSet(Requirement):
     # Multiple files can be passed.
     _is_multi = True
 
-    def __init__(self, name=None, help=None):
+    def __init__(self, name=None, help=None, optional=False):
         """Constructor.
 
            Keyword arguments:
 
-           name    -- The name of the requirement.
-           help    -- The help string.
+           name     -- The name of the requirement.
+           help     -- The help string.
+           optional -- Whether the requirement is optional.
         """
 
         # Call the base class constructor.
-        super().__init__(name=name, help=help)
+        super().__init__(name=name, help=help, optional=optional)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
+
+        # Handle optional requirement.
+        if self._is_optional and value is None:
+            return None
 
         # We should receive a list of strings.
         if type(value) is list:
@@ -383,10 +380,8 @@ class FileSet(Requirement):
                 # Check the types.
                 if type(file) is str:
                     file = file
-                elif type(file) is String:
-                    file = file.value()
                 else:
-                    raise ValueError("Cannot convert '%s' to '%s'" % (type(file), type(self)))
+                    raise ValueError("The value should be of type 'str'")
 
             # Make sure the file exists.
             if not path.isfile(file):
