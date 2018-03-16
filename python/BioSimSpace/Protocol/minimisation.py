@@ -24,15 +24,13 @@ class Minimisation(Protocol):
         super().__init__(ProtocolType.MINIMISATION, gas_phase)
 
         # Set the number of steps.
-        self.steps = steps
+        self.setSteps(steps)
 
-    @property
-    def steps(self):
+    def getSteps(self):
         """Return the maximum number of steps."""
         return self._steps
 
-    @steps.setter
-    def steps(self, steps):
+    def setSteps(self, steps):
         """Set the maximum number of steps."""
 
         if steps <= 0:

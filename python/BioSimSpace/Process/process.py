@@ -73,10 +73,10 @@ class Process():
         # Set the random number seed.
         if seed is None:
             self._is_seeded = False
-            self.seed = 0
+            self._seed = 0
         else:
             self._is_seeded = True
-            self.seed = seed
+            self._seed = self.setSeed(seed)
 
         # Set the timer and running time None.
         self._timer = None
@@ -138,13 +138,11 @@ class Process():
         # Initaliae the command-line argument dictionary.
         self._args = OrderedDict()
 
-    @property
-    def seed(self):
+    def getSeed(self):
         """Return the random number seed."""
         return self._seed
 
-    @seed.setter
-    def seed(self, seed):
+    def setSeed(self, seed):
         """Set the random number seed."""
 
         if type(seed) is not int:

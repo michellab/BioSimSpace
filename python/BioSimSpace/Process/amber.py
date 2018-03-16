@@ -226,7 +226,7 @@ class Amber(process.Process):
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
         if 'space' in self._system.propertyKeys():
-            if self._protocol.gas_phase:
+            if self._protocol.isGasPhase():
                 has_box = False
             else:
                 has_box = True
@@ -234,7 +234,7 @@ class Amber(process.Process):
             has_box = False
 
         # Add configuration variables for a minimisation simulation.
-        if self._protocol.type() == ProtocolType.MINIMISATION:
+        if self._protocol.getType() == ProtocolType.MINIMISATION:
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
             self.addToConfig("  imin=1,")                   # Minisation simulation.
@@ -243,7 +243,7 @@ class Amber(process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  maxcyc=%d,"
-                % self._protocol.steps)                     # Set the number of steps.
+                % self._protocol.getSteps())                # Set the number of steps.
             if not has_box:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
@@ -252,13 +252,13 @@ class Amber(process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
-        elif self._protocol.type() == ProtocolType.EQUILIBRATION:
+        elif self._protocol.getType() == ProtocolType.EQUILIBRATION:
 
             # Convert the timestep to nanoseconds.
-            timestep = self._protocol.timestep * 1e-6
+            timestep = self._protocol.getTimeStep() * 1e-6
 
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.runtime / timestep)
+            steps = ceil(self._protocol.getRunTime() / timestep)
 
             # Set the random number seed.
             if self._is_seeded:
@@ -267,7 +267,7 @@ class Amber(process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.timestep * 1e-3
+            timestep = self._protocol.getTimeStep() * 1e-3
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
@@ -292,34 +292,34 @@ class Amber(process.Process):
             self.addToConfig("  pres0=1.01325,")            # Atompspheric pressure.
 
             # Restrain the backbone.
-            if self._protocol.is_restrained:
+            if self._protocol.isRestrained():
                 self.addToConfig("  ntr=1,")
                 self.addToConfig("  restraint_wt=2,")
                 self.addToConfig("  restraintmask='@CA,C,O,N',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                self.addToConfig("  tempi=%.2f," % self._protocol.temperature_start)
-                self.addToConfig("  temp0=%.2f," % self._protocol.temperature_end)
+                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature())
                 self.addToConfig("  nmropt=1,")
                 self.addToConfig(" /")
                 self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                    % (steps, self._protocol.temperature_start, self._protocol.temperature_end))
+                    % (steps, self._protocol.getStartTemperature(), self._protocol.getEndTemperature()))
                 self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
             else:
-                self.addToConfig("  temp0=%.2f," % self._protocol.temperature_start)
+                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature())
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
-        elif self._protocol.type() == ProtocolType.PRODUCTION:
+        elif self._protocol.getType() == ProtocolType.PRODUCTION:
 
             # Convert the timestep to nanoseconds.
-            timestep = self._protocol.timestep * 1e-6
+            timestep = self._protocol.getTimeStep() * 1e-6
 
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.runtime / timestep)
+            steps = ceil(self._protocol.getRunTime() / timestep)
 
             # Set the random number seed.
             if self._seed is None:
@@ -328,12 +328,12 @@ class Amber(process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.timestep * 1e-3
+            timestep = self._protocol.getTimeStep() * 1e-3
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
             self.addToConfig("  ig=%d," % seed)             # Random number seed.
-            if self._protocol.restart:
+            if self._protocol.isRestart():
                 self.addToConfig("  ntx=5,")                # Read coordinates and velocities.
             else:
                 self.addToConfig("  ntx=1,")                # Only read coordinates.
@@ -341,8 +341,8 @@ class Amber(process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
-                % floor(steps / self._protocol.frames))
-            if self._protocol.restart:
+                % floor(steps / self._protocol.getFrames()))
+            if self._protocol.isRestart():
                 self.addToConfig("  irest=1,")              # Restart using previous velocities.
             else:
                 self.addToConfig("  irest=0,")              # Don't restart.
@@ -357,14 +357,14 @@ class Amber(process.Process):
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
             else:
                 self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
-            if not self._protocol.restart:
+            if not self._protocol.isRestart():
                 self.addToConfig("  tempi=%.2f,"            # Initial temperature.
-                    % self._protocol.temperature)
+                    % self._protocol.getTemperature())
             self.addToConfig("  temp0=%.2f,"                # Target temperature.
-                % self._protocol.temperature)
+                % self._protocol.getTemperature())
 
             # Constant pressure control.
-            if self._protocol.ensemble is 'NPT':
+            if self._protocol.getEnsemble() is 'NPT':
                 self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                 self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
 
@@ -389,12 +389,12 @@ class Amber(process.Process):
         if not self._is_custom:
 
             # Append a reference file if this a constrained equilibration.
-            if self._protocol.type() == ProtocolType.EQUILIBRATION:
-                if self._protocol.is_restrained:
+            if self._protocol.getType() == ProtocolType.EQUILIBRATION:
+                if self._protocol.isRestrained():
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is a production run.
-            elif self._protocol.type() == ProtocolType.PRODUCTION:
+            elif self._protocol.getType() == ProtocolType.PRODUCTION:
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -546,7 +546,7 @@ class Amber(process.Process):
         """
 
         # No time records for minimisation protocols.
-        if self._protocol.type() == ProtocolType.MINIMISATION:
+        if self._protocol.getType() == ProtocolType.MINIMISATION:
             return None
 
         # Get the list of time steps.
@@ -804,7 +804,7 @@ class Amber(process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        if self._protocol.type() == ProtocolType.MINIMISATION:
+        if self._protocol.getType() == ProtocolType.MINIMISATION:
             return self.getRecord('ENERGY', time_series, block)
         else:
             return self.getRecord('ETOT', time_series, block)
@@ -948,7 +948,7 @@ class Amber(process.Process):
                 if len(line) > 0 and line[0] is not '|':
 
                     # The output format is different for minimisation protocols.
-                    if self._protocol.type() == ProtocolType.MINIMISATION:
+                    if self._protocol.getType() == ProtocolType.MINIMISATION:
 
                         # No equals sign in the line.
                         if "=" not in line:

@@ -35,33 +35,31 @@ class Production(Protocol):
         super().__init__(ProtocolType.PRODUCTION, gas_phase)
 
         # Set the time step.
-        self.timestep = timestep
+        self.setTimeStep(timestep)
 
         # Set the runtime.
-        self.runtime = runtime
+        self.setRunTime(runtime)
 
         # Set the system temperature.
-        self.temperature = temperature
+        self.setTemperature(temperature)
 
         # Set the number of trajectory frames.
-        self.frames = frames
+        self.setFrames(frames)
 
         # Set the thermodynamic ensemble.
-        self.ensemble = ensemble
+        self.setEnsemble(ensemble)
 
         # Set the restart flag.
-        self.restart = restart
+        self.setRestart(restart)
 
         # Set the first time step.
-        self.first_step = first_step
+        step = self.setFirstStep(first_step)
 
-    @property
-    def timestep(self):
+    def getTimeStep(self):
         """Return the time step."""
         return self._timestep
 
-    @timestep.setter
-    def timestep(self, timestep):
+    def setTimeStep(self, timestep):
         """Set the time step."""
 
         if timestep <= 0:
@@ -71,13 +69,11 @@ class Production(Protocol):
         else:
             self._timestep = timestep
 
-    @property
-    def runtime(self):
+    def getRunTime(self):
         """Return the running time."""
         return self._runtime
 
-    @runtime.setter
-    def runtime(self, runtime):
+    def setRunTime(self, runtime):
         """Set the running time."""
 
         if runtime <= 0:
@@ -87,13 +83,11 @@ class Production(Protocol):
         else:
             self._runtime = runtime
 
-    @property
-    def temperature(self):
+    def getTemperature(self):
         """Return temperature."""
         return self._temperature
 
-    @temperature.setter
-    def temperature(self, temperature):
+    def setTemperature(self, temperature):
         """Set the temperature."""
 
         if temperature <= 0:
@@ -103,13 +97,11 @@ class Production(Protocol):
         else:
             self._temperature = temperature
 
-    @property
-    def frames(self):
+    def getFrames(self):
         """Return the number of frames."""
         return self._frames
 
-    @frames.setter
-    def frames(self, frames):
+    def setFrames(self, frames):
         """Set the number of frames."""
 
         if frames <= 0:
@@ -119,13 +111,11 @@ class Production(Protocol):
         else:
             self._frames = ceil(frames)
 
-    @property
-    def ensemble(self):
+    def getEnsemble(self):
         """Return the thermodynamic ensemble."""
         return self._ensemble
 
-    @ensemble.setter
-    def ensemble(self, ensemble):
+    def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble."""
 
         if ensemble.strip().upper() not in _ensembles:
@@ -134,13 +124,12 @@ class Production(Protocol):
 
         else:
             self._ensemble = ensemble.strip().upper()
-    @property
-    def first_step(self):
+
+    def getFirstStep(self):
         """Return the first time step."""
         return self._first_step
 
-    @first_step.setter
-    def first_step(self, first_step):
+    def setFirstStep(self, first_step):
         """Set the initial time step."""
 
         if first_step < 0:
@@ -150,13 +139,11 @@ class Production(Protocol):
         else:
             self._first_step = ceil(first_step)
 
-    @property
-    def restart(self):
+    def isRestart(self):
         """Return whether this restart simulation."""
         return self._restart
 
-    @restart.setter
-    def restart(self, restart):
+    def setRestart(self, restart):
         """Set the restart flag."""
 
         if type(restart) is bool:
