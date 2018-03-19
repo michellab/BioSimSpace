@@ -205,6 +205,12 @@ class Integer(Requirement):
         if maximum is not None:
             self._max = self._validate(maximum)
 
+        # Min and max.
+        if minimum is not None and maximum is not None:
+            if maximum < minimum:
+                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
+                    % (maximum, minimum))
+
         # Set the allowed values.
         if allowed is not None:
             if type(allowed) is not list:
@@ -261,6 +267,12 @@ class Float(Requirement):
         # Set the maximum value.
         if maximum is not None:
             self._max = self._validate(maximum)
+
+        # Min and max.
+        if minimum is not None and maximum is not None:
+            if maximum < minimum:
+                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
+                    % (maximum, minimum))
 
         # Set the allowed values.
         if allowed is not None:
