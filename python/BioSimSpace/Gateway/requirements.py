@@ -69,17 +69,17 @@ class Requirement():
 
         # Minimum.
         if self._min is not None and value < self._min:
-            raise ValueError("The value (%d) is less than the allowed "
-                "minimum (%d)" % (value, self._min))
+            raise ValueError("The value (%s) is less than the allowed "
+                "minimum (%s)" % (value, self._min))
 
         # Maximum.
         if self._max is not None and value > self._max:
-            raise ValueError("The value (%d) is less than the allowed "
-                "maximum (%d)" % (value, self._max))
+            raise ValueError("The value (%s) is less than the allowed "
+                "maximum (%s)" % (value, self._max))
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
-            raise ValueError("The value (%d) is not in the list of allowed values: "
+            raise ValueError("The value (%s) is not in the list of allowed values: "
                 "%s" % (value, str(self._allowed)))
 
         # All is okay. Set the value.
