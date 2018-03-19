@@ -458,6 +458,20 @@ class Node():
         # Add the output to the dictionary.
         self._outputs[name] = output
 
+    def setInput(self, name, value):
+        """Directly set an input requirement.
+
+           Positional arguments:
+
+           name  -- The name of the output.
+           value -- The value of the output.
+        """
+
+        try:
+            self._inputs[name].setValue(value)
+        except KeyError:
+            raise
+
     def setOutput(self, name, value):
         """Set the value of an output.
 
