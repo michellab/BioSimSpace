@@ -31,7 +31,7 @@ class Requirement():
         """
 
 	# Don't allow user to create an instance of this base class.
-        if type(self) == Requirement:
+        if type(self) is Requirement:
             raise Exception("<Requirement> must be subclassed.")
 
         # Required keyword arguments.

@@ -28,7 +28,7 @@ class Protocol():
         """
 
 	# Don't allow user to create an instance of this base class.
-        if type(self) == Protocol:
+        if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
 
         # Set the protocol type.

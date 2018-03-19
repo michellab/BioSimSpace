@@ -50,7 +50,7 @@ class Process():
         """
 
 	# Don't allow user to create an instance of this base class.
-        if type(self) == Process:
+        if type(self) is Process:
             raise Exception("<Process> must be subclassed.")
 
         # Set the process to None.
