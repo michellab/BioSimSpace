@@ -9,13 +9,19 @@ from BioSimSpace import _is_notebook
 from .requirements import *
 
 from collections import OrderedDict
+from os.path import basename
 
 import argparse
+import __main__ as main
 import sys
 
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
 
+    # Whether the node is run from Knime.
+    _is_knime = False
+
+    # Whether the node is run from a Jupyter notebook.
     _is_notebook = _is_notebook()
 
     def __init__(self, description):
@@ -29,6 +35,9 @@ class Node():
         if type(description) is not str:
             raise TypeError("The 'description' keyword must be of type 'str'.")
 
+        # Set the node name.
+        self._name = basename(main.__file__)
+
         # Set the node description string.
         self._description = description
 
@@ -36,8 +45,12 @@ class Node():
         self._inputs = OrderedDict()
         self._outputs = OrderedDict()
 
-        # The input has not yet been validated.
-        self._is_validated = False
+        # Whether the input/output have been validated.
+        self._is_input_validated = False
+        self._is_output_validated = False
+
+        # A list of user error messages.
+        self._errors = []
 
         # Create the parser.
         self._parser = argparse.ArgumentParser(description=self._description)
@@ -45,6 +58,13 @@ class Node():
         # Add an option to allow the user to load a configuration from file.
         config = File(help="path to a configuration file (optional)", optional=True)
         self.addInput("config", config)
+
+    def __del__(self):
+        """Destructor."""
+
+        # Validate the node if the user hasn't already done so.
+        if not self._is_output_validated:
+            self.validate()
 
     def addInput(self, name, input):
         """Add an input requirement.
@@ -56,7 +76,7 @@ class Node():
         """
 
         # Can't add requirements if the input has already been validated.
-        if self._is_validated:
+        if self._is_input_validated:
             return
 
         if type(name) is not str:
@@ -108,7 +128,7 @@ class Node():
         """
 
         # Can't add requirements if the input has already been validated.
-        if self._is_validated:
+        if self._is_input_validated:
             return
 
         if type(name) is not str:
@@ -142,9 +162,9 @@ class Node():
            name -- The name of the input requirement.
         """
 
-        if not self._is_validated:
+        if not self._is_input_validated:
             self._validateInputs()
-            self._is_validated = True
+            self._is_input_validated = True
 
         if type(name) is not str:
             raise TypeError("The name must be of type 'str'")
@@ -157,21 +177,39 @@ class Node():
     def getInputs(self):
         """Get all of the input requirements."""
 
-        if not self._is_validated:
+        if not self._is_input_validated:
             self._validateInputs()
-            self._is_validated = True
+            self._is_input_validated = True
 
         return self._inputs
+
+    def addError(self, error):
+        """Add an error message."""
+
+        if type(error) is not str:
+            raise TypeError("The error message must be of type 'str'")
+        else:
+            self._errors.append(error)
 
     def validate(self):
         """Whether the output requirements are satisfied."""
 
+        # Flag that we have validated output.
+        self._is_output_validated = True
+
         # Check no outputs are None.
         for name, output in self._outputs.items():
             if output.getValue() is None:
-                raise SystemExit("Missing output for requirement '%s'" % name)
+                self._errors.append("Missing output for requirement '%s'" % name)
 
-        # All ouputs are found.
+        # Node failed.
+        if len(self._errors) > 0:
+            for error in self._errors:
+                print("%s" % error, file=sys.stderr)
+
+            raise SystemExit("Node '%s' failed!" % self._name)
+
+        # Node completed successfully.
         return True
 
     def _validateInputs(self):
