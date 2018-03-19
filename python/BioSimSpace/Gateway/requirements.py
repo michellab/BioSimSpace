@@ -211,6 +211,10 @@ class Integer(Requirement):
                 allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
 
+            # Conflicting requirements.
+            if self._min is not None or self._max is not None:
+                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
+
         # Set the default value.
         if default is not None:
             # Make sure the default is the right type.
@@ -263,6 +267,10 @@ class Float(Requirement):
             if type(allowed) is not list:
                 allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
+
+            # Conflicting requirements.
+            if self._min is not None or self._max is not None:
+                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
 
         # Set the default value.
         if default is not None:
