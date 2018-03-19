@@ -6,6 +6,15 @@
 
 from BioSimSpace import _is_notebook
 
+from Sire import try_import
+
+# Enable Jupyter widgets.
+if _is_notebook():
+    try:
+        widgets = try_import("ipywidgets")
+    except ImportError:
+        raise ImportError("Ipywidgets is not installed. Please install ipywidgets in order to use BioSimSpace.")
+
 from .requirements import *
 
 from collections import OrderedDict
@@ -36,7 +45,10 @@ class Node():
             raise TypeError("The 'description' keyword must be of type 'str'.")
 
         # Set the node name.
-        self._name = basename(main.__file__)
+        try:
+            self._name = basename(main.__file__)
+        except:
+            self._name = None
 
         # Set the node description string.
         self._description = description
@@ -45,6 +57,9 @@ class Node():
         self._inputs = OrderedDict()
         self._outputs = OrderedDict()
 
+        # A dictionary of Jupyter widgets.
+        self._widgets = OrderedDict()
+
         # Whether the input/output have been validated.
         self._is_input_validated = False
         self._is_output_validated = False
@@ -52,12 +67,17 @@ class Node():
         # A list of user error messages.
         self._errors = []
 
-        # Create the parser.
-        self._parser = argparse.ArgumentParser(description=self._description)
+        # Initialise the parser.
+        self._parser = None
 
-        # Add an option to allow the user to load a configuration from file.
-        config = File(help="path to a configuration file (optional)", optional=True)
-        self.addInput("config", config)
+        # Running from the command-line.
+        if not self._is_knime and not self._is_notebook:
+            # Create the parser.
+            self._parser = argparse.ArgumentParser(description=self._description)
+
+            # Add an option to allow the user to load a configuration from file.
+            config = File(help="path to a configuration file (optional)", optional=True)
+            self.addInput("config", config)
 
     def __del__(self):
         """Destructor."""
@@ -85,10 +105,35 @@ class Node():
         if not isinstance(input, Requirement):
             raise TypeError("'input' must be of type 'Requirement'.")
 
+        # We already have an input with this name.
+        if name in self._inputs:
+            raise ValueError("Duplicate input requirement '%s'"  % name)
+
         # Add the input to the dictionary.
         self._inputs[name] = input
 
-	# Append long-form argument name if not present.
+        # Create a Knime GUI widget.
+        if self._is_knime:
+            self._addInputKnime(name, input)
+
+        # Create a Jupyter GUI widget.
+        elif self._is_notebook:
+            return self._addInputJupyter(name, input)
+
+        # Command-line argparse ArgumentParser.
+        else:
+            self._addInputCommandLine(name, input)
+
+    def _addInputCommandLine(self, name, input):
+        """Add an input requirement for the command-line.
+
+           Positional arguments:
+
+           name  -- The name of the input.
+           input -- The input requirement object.
+        """
+
+        # Append long-form argument name if not present.
         if (len(name) > 2):
             if name[0:2] != '--':
                 name = '--' + name
@@ -118,6 +163,275 @@ class Node():
                 self._parser.add_argument(name, type=input.getArgType(),
                     help=input.getHelp(), required=True)
 
+    def _addInputKnime(self, name, input):
+        """Add an input requirement for Knime.
+
+           Positional arguments:
+
+           name  -- The name of the input.
+           input -- The input requirement object.
+        """
+        return None
+
+    def _addInputJupyter(self, name, input):
+        """Add an input requirement for Jupyter.
+
+           Positional arguments:
+
+           name  -- The name of the input.
+           input -- The input requirement object.
+        """
+
+        # Add a Jupyter widget for each of the supported requirement types.
+
+        # Boolean.
+        if type(input) is Boolean:
+            # Get the default value.
+            default = input.getDefault()
+            if default is None:
+                default = False
+
+            # Create a Jupyter toggle button.
+            widget = widgets.ToggleButton(
+                value=default,
+                description=name,
+                tooltip=input.getHelp(),
+                button_style='',
+                icon='check',
+                disabled=False
+            )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # Integer.
+        elif type(input) is Integer:
+            # Get the list of allowed values.
+            allowed = input.getAllowedValues()
+
+            # Get the default value.
+            default = input.getDefault()
+
+            if allowed is not None:
+                # Set the default.
+                if default is None:
+                    default = allowed[0]
+
+                # Create a dropdown for the list of allowed values.
+                widget = widgets.Dropdown(
+                    options=allowed,
+                    value=default,
+                    description=name,
+                    tooltip=input.getHelp(),
+                    disabled=False
+                )
+
+            else:
+                # Get the range of the input.
+                min_ = input.getMin()
+                max_ = input.getMax()
+
+                # Whether the integer is unbounded.
+                is_unbounded = True
+
+                if min_ is not None:
+                    # Set the default.
+                    if default is None:
+                        default = min_
+
+                    # Bounded integer.
+                    if max_ is not None:
+                        # Create an int slider widget.
+                        widget = widgets.IntSlider(
+                            value=default,
+                            min=min_,
+                            max=max_,
+                            step=1,
+                            description=name,
+                            tooltip=input.getHelp(),
+                            continuous_update=False,
+                            orientation='horizontal',
+                            readout=True,
+                            readout_format='d',
+                            disabled=False
+                        )
+
+                        # Flag that the integer is bounded.
+                        is_unbounded = False
+
+                # Unbounded integer.
+                if is_unbounded:
+                    # Create an integer widget.
+                    widget = widgets.IntText(
+                        value=default,
+                        description=name,
+                        tooltip=input.getHelp(),
+                        disabled=False
+                    )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # Float.
+        elif type(input) is Float:
+            # Get the list of allowed values.
+            allowed = input.getAllowedValues()
+
+            # Get the default value.
+            default = input.getDefault()
+
+            if allowed is not None:
+                # Set the default.
+                if default is None:
+                    default = allowed[0]
+
+                # Create a dropdown for the list of allowed values.
+                widget = widgets.Dropdown(
+                    options=allowed,
+                    value=default,
+                    description=name,
+                    tooltip=input.getHelp(),
+                    disabled=False
+                )
+
+            else:
+                # Get the range of the input.
+                min_ = input.getMin()
+                max_ = input.getMax()
+
+                # Whether the float is unbounded.
+                is_unbounded = True
+
+                if min_ is not None:
+                    # Set the default.
+                    if default is None:
+                        default = min_
+
+                    # Bounded float.
+                    if max_ is not None:
+                        # Create a float slider widget.
+                        widget = widgets.FloatSlider(
+                            value=default,
+                            min=min_,
+                            max=max_,
+                            step=0.1,
+                            description=name,
+                            tooltip=input.getHelp(),
+                            continuous_update=False,
+                            orientation='horizontal',
+                            readout=True,
+                            readout_format='.1f',
+                            disabled=False
+                        )
+
+                        # Flag that the float is bounded.
+                        is_unbounded = False
+
+                # Unbounded float.
+                if is_unbounded:
+                    # Create a float widget.
+                    widget = widgets.IntText(
+                        value=default,
+                        description=name,
+                        tooltip=input.getHelp(),
+                        disabled=False
+                    )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # String.
+        elif type(input) is String:
+            # Get the list of allowed values.
+            allowed = input.getAllowedValues()
+
+            # Get the default value.
+            default = input.getDefault()
+
+            if allowed is not None:
+                # Set the default.
+                if default is None:
+                    default = allowed[0]
+
+                # Create a dropdown for the list of allowed values.
+                widget = widgets.Dropdown(
+                    options=allowed,
+                    value=default,
+                    description=name,
+                    tooltip=input.getHelp(),
+                    disabled=False
+                )
+
+            else:
+                if default is None:
+                    # Create a text widget without a default.
+                    widget = widgets.Text(
+                        placeholder='Type something',
+                        description=name,
+                        tooltip=input.getHelp(),
+                        disabled=False
+                    )
+                else:
+                    # Create a text widget.
+                    widget = widgets.Text(
+                        value=default,
+                        placeholder='Type something',
+                        description=name,
+                        tooltip=input.getHelp(),
+                        disabled=False
+                    )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # File.
+        elif type(input) is File:
+            # Create a float widget.
+            widget = widgets.Text(
+                placeholder='Type a file name',
+                description=name,
+                tooltip=input.getHelp(),
+                disabled=False
+            )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # File set.
+        elif type(input) is FileSet:
+            # Create a float widget.
+            widget = widgets.Text(
+                placeholder='Comma separated list of files',
+                description=name,
+                tooltip=input.getHelp(),
+                disabled=False
+            )
+
+            # Store the widget.
+            self._widgets[name] = widget
+
+            # Return the widget to the notebook.
+            return self._widgets[name]
+
+        # Unsupported input.
+        else:
+            raise ValueError("Unsupported requirement type '%s'" % type(input))
+
     def addOutput(self, name, output):
         """Add an output requirement.
 
@@ -136,6 +450,10 @@ class Node():
 
         if not isinstance(output, Requirement):
             raise TypeError("'output' must be of type 'Requirement'.")
+
+        # We already have an ouput requirement with this name.
+        if name in self._outputs:
+            raise ValueError("Duplicate output requirement '%s'" % name)
 
         # Add the output to the dictionary.
         self._outputs[name] = output
@@ -207,7 +525,10 @@ class Node():
             for error in self._errors:
                 print("%s" % error, file=sys.stderr)
 
-            raise SystemExit("Node '%s' failed!" % self._name)
+            if self._name is not None:
+                raise SystemExit("Node '%s' failed!" % self._name)
+            else:
+                raise SystemExit("Node failed!")
 
         # Node completed successfully.
         return True
@@ -215,9 +536,21 @@ class Node():
     def _validateInputs(self):
         """Validate the parsed inputs."""
 
-	# Parse the arguments into a dictionary.
-        args = vars(self._parser.parse_args())
+        # Knime.
+        if self._is_knime:
+            pass
 
-        # Now loop over the arguments and set the input values.
-        for key, value in args.items():
-            self._inputs[key].setValue(value)
+        # Jupyter.
+        elif self._is_notebook:
+            # Loop over the widgets and set the input values.
+            for key, widget in self._widgets.items():
+                self._inputs[key].setValue(widget.value)
+
+        # Command-line.
+        else:
+            # Parse the arguments into a dictionary.
+            args = vars(self._parser.parse_args())
+
+            # Now loop over the arguments and set the input values.
+            for key, value in args.items():
+                self._inputs[key].setValue(value)
