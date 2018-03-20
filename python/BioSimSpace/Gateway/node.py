@@ -157,8 +157,7 @@ class Node():
                 else:
                     if input.getArgType() is bool:
                         self._parser.add_argument(name, type=_str2bool, nargs='?',
-                            const=True, default=input.getDefault(), help=input.getHelp(),
-                            required=True)
+                            const=True, default=input.getDefault(), help=input.getHelp())
                     else:
                         self._parser.add_argument(name, type=input.getArgType(),
                             help=input.getHelp(), default=input.getDefault())
