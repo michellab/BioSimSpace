@@ -151,21 +151,17 @@ class Boolean(Requirement):
 
            Keyword arguments:
 
-           help    -- The help string.
-           default -- The default value.
+           help -- The help string.
         """
 
         # Call the base class constructor.
         super().__init__(help=help)
 
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Make sure the default satisfies the constraints.
-            self._validate_default()
-            # Flag the the requirement is optional.
-            self._is_optional = True
+        # Boolean requirements default to false.
+        self._default = False
+
+        # Boolean requirements are optional.
+        self._is_optional = True
 
     def _validate(self, value):
         """Validate the value."""

@@ -24,6 +24,15 @@ import argparse
 import __main__ as main
 import sys
 
+def _str2bool(v):
+    """Convert an argument string to a boolean value."""
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
 
@@ -146,8 +155,13 @@ class Node():
                     self._parser.add_argument(name, type=input.getArgType(), nargs='+',
                         help=input.getHelp(), default=input.getDefault())
                 else:
-                    self._parser.add_argument(name, type=input.getArgType(),
-                        help=input.getHelp(), default=input.getDefault())
+                    if input.getArgType() is bool:
+                        self._parser.add_argument(name, type=_str2bool, nargs='?',
+                            const=True, default=input.getDefault(), help=input.getHelp(),
+                            required=True)
+                    else:
+                        self._parser.add_argument(name, type=input.getArgType(),
+                            help=input.getHelp(), default=input.getDefault())
             else:
                 if input.isMulti() is not False:
                     self._parser.add_argument(name, type=input.getArgType(), nargs='+',
@@ -186,14 +200,9 @@ class Node():
 
         # Boolean.
         if type(input) is Boolean:
-            # Get the default value.
-            default = input.getDefault()
-            if default is None:
-                default = False
-
             # Create a Jupyter toggle button.
             widget = widgets.ToggleButton(
-                value=default,
+                value=False,
                 description=name,
                 tooltip=input.getHelp(),
                 button_style='',
