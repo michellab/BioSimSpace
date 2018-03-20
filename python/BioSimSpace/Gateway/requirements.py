@@ -6,6 +6,8 @@
 
 from os import path
 
+import re
+
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
 
@@ -408,6 +410,11 @@ class FileSet(Requirement):
 
         # We should receive a list of strings.
         if type(value) is list:
+
+            # A single file was passed.
+            if len(value) == 1:
+                # Remove whitespace and split on commas.
+                value = re.sub(r"\s+", "", value[0]).split(',')
 
             # Loop over all strings.
             for file in value:
