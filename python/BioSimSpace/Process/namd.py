@@ -333,7 +333,7 @@ class Namd(process.Process):
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %s." % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -399,7 +399,7 @@ class Namd(process.Process):
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %s." % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
             if self._protocol.getFirstStep() is not 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
