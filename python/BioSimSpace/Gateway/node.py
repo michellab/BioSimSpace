@@ -205,6 +205,14 @@ class Node():
                 disabled=False
             )
 
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
+
             # Store the widget.
             self._widgets[name] = widget
 
@@ -272,6 +280,14 @@ class Node():
                         tooltip=input.getHelp(),
                         disabled=False
                     )
+
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
 
             # Store the widget.
             self._widgets[name] = widget
@@ -341,6 +357,14 @@ class Node():
                         disabled=False
                     )
 
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
+
             # Store the widget.
             self._widgets[name] = widget
 
@@ -385,6 +409,14 @@ class Node():
                         disabled=False
                     )
 
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
+
             # Store the widget.
             self._widgets[name] = widget
 
@@ -398,6 +430,14 @@ class Node():
                 disabled=False
             )
 
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
+
             # Store the widget.
             self._widgets[name] = widget
 
@@ -410,6 +450,14 @@ class Node():
                 tooltip=input.getHelp(),
                 disabled=False
             )
+
+            # Add an attribute to flag whether the widget value has
+            # been set by the user.
+            if input.getDefault() is None:
+                widget._is_set = False
+
+            # Bind the callback function.
+            widget.observe(_on_value_change, names="value")
 
             # Store the widget.
             self._widgets[name] = widget
@@ -479,6 +527,9 @@ class Node():
         if type(name) is not str:
             raise TypeError("The name must be of type 'str'")
 
+        # Validate the inputs.
+        self._validateInput()
+
         try:
             return self._inputs[name].getValue()
         except KeyError:
@@ -486,6 +537,9 @@ class Node():
 
     def getInputs(self):
         """Get all of the input requirements."""
+
+        # Validate the inputs.
+        self._validateInput()
 
         return self._inputs
 
@@ -538,7 +592,7 @@ class Node():
 
         return form
 
-    def validateInput(self):
+    def _validateInput(self):
         """Validate the parsed inputs."""
 
         # Knime.
@@ -549,7 +603,15 @@ class Node():
         elif self._is_notebook:
             # Loop over the widgets and set the input values.
             for key, widget in self._widgets.items():
-                self._inputs[key].setValue(widget.value)
+
+                # Use the widget value if it has been set, otherwise, set the value to None.
+                # This ensures that the user actually sets a value.
+                if widget._is_set:
+                    value = widget.value
+                else:
+                    value = None
+
+                self._inputs[key].setValue(value)
 
         # Command-line.
         else:
@@ -560,7 +622,7 @@ class Node():
             for key, value in args.items():
                 self._inputs[key].setValue(value)
 
-    def validateOutput(self):
+    def validate(self):
         """Whether the output requirements are satisfied."""
 
         # Flag that we have validated output.
@@ -591,3 +653,7 @@ class Node():
             value = self._inputs[name].getValue()
             if value is not None:
                 widget.value = value
+
+def _on_value_change(change):
+    """Helper function to flag that a widget value has been set."""
+    change['owner']._is_set = True
