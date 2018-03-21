@@ -60,6 +60,12 @@ class Node():
         # Set the node description string.
         self._description = description
 
+        # Initalise the authors.
+        self._authors = None
+
+        # Initalise the license.
+        self._license = None
+
         # Initialise dictionaries for the inputs/outputs.
         self._inputs = OrderedDict()
         self._outputs = OrderedDict()
@@ -547,6 +553,34 @@ class Node():
             raise TypeError("The error message must be of type 'str'")
         else:
             self._errors.append(error)
+
+    def addAuthor(self, author):
+        """Set the author of the node."""
+
+        if type(author) is not str:
+            raise TypeError("The author must be of type 'str'")
+        else:
+            self._authors.append(error)
+
+    def getAuthors(self):
+        """Return the list of authors."""
+
+        if len(self._authors) == 0:
+            return None
+        else:
+            return self._authors
+
+    def setLicense(self, license):
+        """Set the license for the node."""
+
+        if type(license) is not str:
+            raise TypeError("The license must be of type 'str'")
+        else:
+            self._license = license
+
+    def getLicense(self):
+        """Return the license."""
+        return self._license
 
     def showControls(self):
         """Show the Jupyter widget GUI to allow the user to enter input."""
