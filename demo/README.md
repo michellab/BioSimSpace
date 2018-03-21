@@ -61,6 +61,15 @@ script:
 ./nglview_patch.sh $HOME/sire.app
 ```
 
+In a similar manner we need to install and activate the Jupyter
+[fileupload](https://pypi.python.org/pypi/fileupload) widget.
+
+```bash
+$HOME/sire.app/bin/pip install fileupload
+$HOME/sire.app/bin/jupyter-nbextension install fileupload --py --sys-prefix
+$HOME/sire.app/bin/jupyter-nbextension enable fileupload --py --sys-prefix
+```
+
 Finally, we need to clean any existing Jupyter configuration folders, which
 may be present if you already have Jupyter installed on your machine, i.e.
 installed outside of your `sire.app`. For simplicity we'll delete these files,
