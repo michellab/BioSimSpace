@@ -14,25 +14,22 @@ if _is_notebook():
         widgets = try_import("ipywidgets")
     except ImportError:
         raise ImportError("Ipywidgets is not installed. Please install ipywidgets in order to use BioSimSpace.")
+    try:
+        fileupload = try_import("fileupload")
+    except ImportError:
+        raise ImportError("Fileupload is not installed. Please install fileupload in order to use BioSimSpace.")
 
 from .requirements import *
 
 from collections import OrderedDict
+from os import makedirs
 from os.path import basename
 from warnings import warn
 
 import argparse
+import io
 import __main__ as main
 import sys
-
-def _str2bool(v):
-    """Convert an argument string to a boolean value."""
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
@@ -422,42 +419,42 @@ class Node():
 
         # File.
         elif type(input) is File:
-            # Create a float widget.
-            widget = widgets.Text(
-                placeholder='Type a file name',
-                description=name,
-                tooltip=input.getHelp(),
-                disabled=False
-            )
+            # Create a fileupload widget.
+            widget = fileupload.FileUploadWidget()
 
             # Add an attribute to flag whether the widget value has
             # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
+            widget._is_set = False
+
+            # Flag that this is just a single file upload.
+            widget._is_multi = False
+
+            # Set the value to None.
+            widget.value = None
 
             # Bind the callback function.
-            widget.observe(_on_value_change, names="value")
+            widget.observe(_on_file_upload, names="data")
 
             # Store the widget.
             self._widgets[name] = widget
 
         # File set.
         elif type(input) is FileSet:
-            # Create a float widget.
-            widget = widgets.Text(
-                placeholder='Comma separated list of files',
-                description=name,
-                tooltip=input.getHelp(),
-                disabled=False
-            )
+            # Create a fileupload widget.
+            widget = fileupload.FileUploadWidget()
 
             # Add an attribute to flag whether the widget value has
             # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
+            widget._is_set = False
+
+            # Flag that this is is a set of files.
+            widget._is_multi = True
+
+            # Set the value to None.
+            widget.value = None
 
             # Bind the callback function.
-            widget.observe(_on_value_change, names="value")
+            widget.observe(_on_file_upload, names="data")
 
             # Store the widget.
             self._widgets[name] = widget
@@ -657,3 +654,52 @@ class Node():
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
     change['owner']._is_set = True
+
+def _on_file_upload(change):
+    """Helper function to handle file uploads."""
+
+    # Decode the data stream.
+    decoded = io.StringIO(change['owner'].data.decode('utf-8'))
+
+    # Get the file name.
+    filename = change['owner'].filename
+
+    # Print that the file was uploaded.
+    print('Uploaded `{}` ({:.2f} kB)'.format(
+        filename, len(decoded.read()) / 2 **10))
+
+    # Create the uploads directory if it doesn't already exist.
+    if not path.isdir("uploads"):
+        makedirs("uploads")
+
+    # Update filename.
+    filename = "uploads/%s" % filename
+
+    # Write the file to disk.
+    with open(filename, 'w') as file:
+        file.write(change['owner'].data.decode('utf-8'))
+
+    # Flag that the widget value has been set.
+    change['owner']._is_set = True
+
+    # Now update the widget value.
+
+    # This is a file set widget.
+    if change['owner']._is_multi:
+        # No previous value set.
+        if change['owner'].value is None:
+            change['owner'].value = [filename]
+        else:
+            change['owner'].value.append(filename)
+    # This is a file widget.
+    else:
+        change['owner'].value = filename
+
+def _str2bool(v):
+    """Convert an argument string to a boolean value."""
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
