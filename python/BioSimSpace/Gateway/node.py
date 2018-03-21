@@ -706,11 +706,11 @@ def _on_file_upload(change):
     if not path.isdir("uploads"):
         makedirs("uploads")
 
-    # Update filename.
-    filename = "uploads/%s" % filename
+    # Append the upload directory to the file name.
+    new_filename = "uploads/%s" % filename
 
     # Write the file to disk.
-    with open(filename, 'w') as file:
+    with open(new_filename, 'w') as file:
         file.write(change['owner'].data.decode('utf-8'))
 
     # Flag that the widget value has been set.
@@ -718,16 +718,23 @@ def _on_file_upload(change):
 
     # Now update the widget value.
 
+    # Truncate the filename string if it is more than 15 characters.
+    label = (filename[:15] + '...') if len(filename) > 15 else filename
+
     # This is a file set widget.
     if change['owner']._is_multi:
         # No previous value set.
         if change['owner'].value is None:
-            change['owner'].value = [filename]
+            change['owner'].value = [new_filename]
+            change['owner'].label = "[%s]" % label
         else:
-            change['owner'].value.append(filename)
+            change['owner'].value.append(new_filename)
+            change['owner'].label = \
+                change['owner'].label.replace(']', '') + ", %s]" % label
     # This is a file widget.
     else:
-        change['owner'].value = filename
+        change['owner'].value = new_filename
+        change['owner'].label = label
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""
