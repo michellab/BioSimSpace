@@ -19,6 +19,7 @@ from .requirements import *
 
 from collections import OrderedDict
 from os.path import basename
+from warnings import warn
 
 import argparse
 import __main__ as main
@@ -69,8 +70,7 @@ class Node():
         # A dictionary of Jupyter widgets.
         self._widgets = OrderedDict()
 
-        # Whether the input/output have been validated.
-        self._is_input_validated = False
+        # Whether the output has been validated.
         self._is_output_validated = False
 
         # A list of user error messages.
@@ -104,10 +104,6 @@ class Node():
            input -- The input requirement object.
         """
 
-        # Can't add requirements if the input has already been validated.
-        if self._is_input_validated:
-            return
-
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'.")
 
@@ -116,7 +112,7 @@ class Node():
 
         # We already have an input with this name.
         if name in self._inputs:
-            raise ValueError("Duplicate input requirement '%s'"  % name)
+            warn("Duplicate input requirement '%s'"  % name)
 
         # Add the input to the dictionary.
         self._inputs[name] = input
@@ -212,9 +208,6 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-            # Return the widget to the notebook.
-            return self._widgets[name]
-
         # Integer.
         elif type(input) is Integer:
             # Get the list of allowed values.
@@ -282,9 +275,6 @@ class Node():
 
             # Store the widget.
             self._widgets[name] = widget
-
-            # Return the widget to the notebook.
-            return self._widgets[name]
 
         # Float.
         elif type(input) is Float:
@@ -354,9 +344,6 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-            # Return the widget to the notebook.
-            return self._widgets[name]
-
         # String.
         elif type(input) is String:
             # Get the list of allowed values.
@@ -401,9 +388,6 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-            # Return the widget to the notebook.
-            return self._widgets[name]
-
         # File.
         elif type(input) is File:
             # Create a float widget.
@@ -416,9 +400,6 @@ class Node():
 
             # Store the widget.
             self._widgets[name] = widget
-
-            # Return the widget to the notebook.
-            return self._widgets[name]
 
         # File set.
         elif type(input) is FileSet:
@@ -433,9 +414,6 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-            # Return the widget to the notebook.
-            return self._widgets[name]
-
         # Unsupported input.
         else:
             raise ValueError("Unsupported requirement type '%s'" % type(input))
@@ -449,10 +427,6 @@ class Node():
            output -- The output requirement object.
         """
 
-        # Can't add requirements if the input has already been validated.
-        if self._is_input_validated:
-            return
-
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'.")
 
@@ -461,7 +435,7 @@ class Node():
 
         # We already have an ouput requirement with this name.
         if name in self._outputs:
-            raise ValueError("Duplicate output requirement '%s'" % name)
+            warn("Duplicate input requirement. Overwriting existing value!")
 
         # Add the output to the dictionary.
         self._outputs[name] = output
@@ -502,10 +476,6 @@ class Node():
            name -- The name of the input requirement.
         """
 
-        if not self._is_input_validated:
-            self._validateInputs()
-            self._is_input_validated = True
-
         if type(name) is not str:
             raise TypeError("The name must be of type 'str'")
 
@@ -517,10 +487,6 @@ class Node():
     def getInputs(self):
         """Get all of the input requirements."""
 
-        if not self._is_input_validated:
-            self._validateInputs()
-            self._is_input_validated = True
-
         return self._inputs
 
     def addError(self, error):
@@ -531,7 +497,70 @@ class Node():
         else:
             self._errors.append(error)
 
-    def validate(self):
+    def showControls(self):
+        """Show the Jupyter widget GUI to allow the user to enter input."""
+
+        if not self._is_notebook:
+            return
+
+        # Update the widgets if values have been set.
+        self._update_widgets()
+
+        # Create the layout object.
+        layout = widgets.Layout(
+            display='flex',
+            flex_flow='row',
+            justify_content='space-between'
+        )
+
+        # Initialise the list of form items.
+        form_items = []
+
+        # Loop over all of the widgets.
+        for name, widget in self._widgets.items():
+            # Create the widget label.
+            label = widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
+
+            # Create a box for the widget.
+            box = widgets.Box([label, widget], layout=layout)
+
+            # Add the box to the list of items.
+            form_items.append(box)
+
+        # Create the form.
+        form = widgets.Box(form_items, layout=widgets.Layout(
+            display='flex',
+            flex_flow='column',
+            border='solid 2px',
+            align_items='stretch',
+            width='100%'
+        ))
+
+        return form
+
+    def validateInput(self):
+        """Validate the parsed inputs."""
+
+        # Knime.
+        if self._is_knime:
+            pass
+
+        # Jupyter.
+        elif self._is_notebook:
+            # Loop over the widgets and set the input values.
+            for key, widget in self._widgets.items():
+                self._inputs[key].setValue(widget.value)
+
+        # Command-line.
+        else:
+            # Parse the arguments into a dictionary.
+            args = vars(self._parser.parse_args())
+
+            # Now loop over the arguments and set the input values.
+            for key, value in args.items():
+                self._inputs[key].setValue(value)
+
+    def validateOutput(self):
         """Whether the output requirements are satisfied."""
 
         # Flag that we have validated output.
@@ -555,24 +584,10 @@ class Node():
         # Node completed successfully.
         return True
 
-    def _validateInputs(self):
-        """Validate the parsed inputs."""
+    def _update_widgets(self):
+        """Update widget defaults if values have been set."""
 
-        # Knime.
-        if self._is_knime:
-            pass
-
-        # Jupyter.
-        elif self._is_notebook:
-            # Loop over the widgets and set the input values.
-            for key, widget in self._widgets.items():
-                self._inputs[key].setValue(widget.value)
-
-        # Command-line.
-        else:
-            # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_args())
-
-            # Now loop over the arguments and set the input values.
-            for key, value in args.items():
-                self._inputs[key].setValue(value)
+        for name, widget in self._widgets.items():
+            value = self._inputs[name].getValue()
+            if value is not None:
+                widget.value = value
