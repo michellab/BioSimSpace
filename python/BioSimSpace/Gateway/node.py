@@ -73,6 +73,9 @@ class Node():
         # A dictionary of Jupyter widgets.
         self._widgets = OrderedDict()
 
+        # Whether the input is valid.
+        self._is_valid_input = False
+
         # Whether the output has been validated.
         self._is_output_validated = False
 
@@ -98,8 +101,9 @@ class Node():
         """Destructor."""
 
         # Validate the node if the user hasn't already done so.
-        if not self._is_output_validated:
-            self.validate()
+        if self._is_valid_input:
+            if not self._is_output_validated:
+                self.validate()
 
     def addInput(self, name, input):
         """Add an input requirement.
@@ -565,7 +569,7 @@ class Node():
             raise TypeError("The name must be of type 'str'")
 
         # Validate the inputs.
-        self._validateInput()
+        self._is_valid_input = self._validateInput()
 
         try:
             return self._inputs[name].getValue()
@@ -576,7 +580,7 @@ class Node():
         """Get all of the input requirements."""
 
         # Validate the inputs.
-        self._validateInput()
+        self._is_valid_input = self._validateInput()
 
         return self._inputs
 
