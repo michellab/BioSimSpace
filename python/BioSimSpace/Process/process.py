@@ -9,6 +9,8 @@ from Sire.ID import CaseInsensitive
 from Sire.Mol import AtomName
 from Sire.Vol import AABox
 
+import Sire.System
+
 from BioSimSpace import _is_notebook
 from ..Protocol.protocol import Protocol
 
@@ -52,6 +54,10 @@ class Process():
 	# Don't allow user to create an instance of this base class.
         if type(self) is Process:
             raise Exception("<Process> must be subclassed.")
+
+        # Check that the system is valid.
+        if system.__class__ is not Sire.System.System:
+            raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
         # Set the process to None.
         self._process = None

@@ -32,12 +32,12 @@ class View():
         # Check the handle.
 
         # BioSimSpace process.
-        if handle.__class__.__base__ == Process:
+        if handle.__class__.__base__ is Process:
             self._handle = handle
             self._is_process = True
 
         # Sire system.
-        elif handle.__class__ == Sire.System.System:
+        elif handle.__class__ is Sire.System.System:
             self._handle = handle
             self._is_process = False
 

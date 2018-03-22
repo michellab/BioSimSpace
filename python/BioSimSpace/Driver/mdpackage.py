@@ -16,14 +16,20 @@ _md_packages = { "AMBER"   : { "sander" : False, "pmemd" : False, "pmemd.cuda" :
                  "NAMD"    : { "namd2" : False }
                }
 
-def findMDPackage(supports_gpu=False):
+def findMDPackage(system=None, supports_gpu=False):
     """Find a molecular dynamics package on the system and return
        a handle to it as a MDPackage object.
 
        Keyword arguments:
 
+       system       -- The molecular system.
        supports_gpu -- Whether GPU support is required.
     """
+
+    # Check that the system is valid.
+    if system is not None:
+        if system.__class__ is not Sire.System.System:
+            raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
     if type(supports_gpu) is not bool:
         raise TypeError("'supports_gpu' keyword must be of type 'bool'")
