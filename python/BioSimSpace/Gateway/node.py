@@ -82,6 +82,9 @@ class Node():
         # Initialise the parser.
         self._parser = None
 
+        # Intialise the Jupyter input panel.
+        self._control_panel = None
+
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
             # Create the parser.
@@ -213,6 +216,9 @@ class Node():
             if input.getDefault() is None:
                 widget._is_set = False
 
+            # Store the requirement name.
+            widget._name = name
+
             # Bind the callback function.
             widget.observe(_on_value_change, names="value")
 
@@ -288,6 +294,9 @@ class Node():
             # been set by the user.
             if input.getDefault() is None:
                 widget._is_set = False
+
+            # Store the requirement name.
+            widget._name = name
 
             # Bind the callback function.
             widget.observe(_on_value_change, names="value")
@@ -365,6 +374,9 @@ class Node():
             if input.getDefault() is None:
                 widget._is_set = False
 
+            # Store the requirement name.
+            widget._name = name
+
             # Bind the callback function.
             widget.observe(_on_value_change, names="value")
 
@@ -417,6 +429,9 @@ class Node():
             if input.getDefault() is None:
                 widget._is_set = False
 
+            # Store the requirement name.
+            widget._name = name
+
             # Bind the callback function.
             widget.observe(_on_value_change, names="value")
 
@@ -437,6 +452,9 @@ class Node():
 
             # Set the value to None.
             widget.value = None
+
+            # Store the requirement name.
+            widget._name = name
 
             # Bind the callback function.
             widget.observe(_on_file_upload, names="data")
@@ -459,11 +477,23 @@ class Node():
             # Set the value to None.
             widget.value = None
 
+            # Store a reference to the node.
+            widget._node = self
+
+            # Store the requirement name.
+            widget._name = name
+
+            # Store the requirement.
+            widget._input = input
+
             # Bind the callback function.
             widget.observe(_on_file_upload, names="data")
 
-            # Store the widget.
-            self._widgets[name] = widget
+            # This is a new widget.
+            if not name in self._widgets:
+                self._widgets[name] = [widget]
+            else:
+                self._widgets[name].append(widget)
 
         # Unsupported input.
         else:
@@ -606,8 +636,14 @@ class Node():
             # Create the widget label.
             label = widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
 
+            # This is a FileSet requirement with multiple widgets.
+            if type(widget) is list:
+                items = [label] + widget
+            else:
+                items = [label, widget]
+
             # Create a box for the widget.
-            box = widgets.Box([label, widget], layout=layout)
+            box = widgets.Box(items, layout=layout)
 
             # Add the box to the list of items.
             form_items.append(box)
@@ -620,6 +656,9 @@ class Node():
             align_items='stretch',
             width='100%'
         ))
+
+        # Store the form.
+        self._control_panel = form
 
         return form
 
@@ -637,10 +676,23 @@ class Node():
 
                 # Use the widget value if it has been set, otherwise, set the value to None.
                 # This ensures that the user actually sets a value.
-                if widget._is_set:
-                    value = widget.value
+
+                # This is a FileSet requirement with multiple widgets.
+                if type(widget) is list:
+                    value = []
+                    # Loop over all of the widgets.
+                    for w in widget:
+                        if w._is_set:
+                            value.append(w.value)
+                    # If there are no values, set to None.
+                    if len(value) == 0:
+                        value = None
+                # Single widget.
                 else:
-                    value = None
+                    if widget._is_set:
+                        value = widget.value
+                    else:
+                        value = None
 
                 self._inputs[key].setValue(value)
 
@@ -681,9 +733,17 @@ class Node():
         """Update widget defaults if values have been set."""
 
         for name, widget in self._widgets.items():
-            value = self._inputs[name].getValue()
-            if value is not None:
-                widget.value = value
+            # This is a FileSet requirement with multiple widgets.
+            if type(widget) is list:
+                # Loop over all widgets.
+                for x in range(0, len(widget)):
+                    value = self._inputs[name].getValue()
+                    if value is not None:
+                        widget[x].value = value[x]
+            else:
+                value = self._inputs[name].getValue()
+                if value is not None:
+                    widget.value = value
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
@@ -723,18 +783,47 @@ def _on_file_upload(change):
 
     # This is a file set widget.
     if change['owner']._is_multi:
-        # No previous value set.
+        # This is the first time the value has been set.
         if change['owner'].value is None:
-            change['owner'].value = [new_filename]
-            change['owner'].label = "[%s]" % label
-        else:
-            change['owner'].value.append(new_filename)
-            change['owner'].label = \
-                change['owner'].label.replace(']', '') + ", %s]" % label
-    # This is a file widget.
-    else:
-        change['owner'].value = new_filename
-        change['owner'].label = label
+            # Whether a match has been found.
+            is_found = False
+
+            # The widget index.
+            index = 0
+
+            # Store the name of the input requirement.
+            name = change['owner']._name
+
+            # Loop over the widgets in the control panel and find the one
+            # that with the matching name.
+            for child in change['owner']._node._control_panel.children:
+                # The widget name matches.
+                if child.children[1]._name == name:
+                    is_match = True
+                    break
+
+                # Increment the index.
+                index += 1
+
+            # No match!
+            if not is_match:
+                raise RunTimeError("Missing widget for requirement name: '%s'" % name)
+
+            # Create a new widget.
+            change['owner']._node._addInputJupyter(name, change['owner']._input)
+
+            # Convert the children of the control panel to a list.
+            boxes = list(change['owner']._node._control_panel.children[index].children)
+
+            # Append the new widget to the list.
+            boxes.append(change['owner']._node._widgets[name][-1])
+
+            # Add the updated box back into the list of boxes.
+            change['owner']._node._control_panel.children[index].children = tuple(boxes)
+
+    # Update the widget value and label.
+    change['owner'].value = new_filename
+    change['owner'].label = label
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""
