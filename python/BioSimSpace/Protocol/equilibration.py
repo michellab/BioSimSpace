@@ -50,6 +50,7 @@ class Equilibration(Protocol):
 
         # Constant temperature simulation.
         else:
+            self._temperature_end = None
             self._is_const_temp = True
 
         # Set the backbone restraint.
