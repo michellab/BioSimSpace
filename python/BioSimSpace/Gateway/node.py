@@ -760,6 +760,13 @@ def _on_value_change(change):
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
 
+    # Store the number of bytes.
+    num_bytes = len(change['owner'].data)
+
+    # Return if there is no data.
+    if num_bytes == 0:
+        return
+
     # Get the file name.
     filename = change['owner'].filename
 
@@ -774,8 +781,12 @@ def _on_file_upload(change):
     with open(new_filename, 'wb') as file:
         file.write(change['owner'].data)
 
-    # Print that the file was uploaded.
-    print("Uploaded: %s" % filename)
+    # Report that the file was uploaded.
+    print('Uploaded `{}` ({:.2f} kB)'.format(
+        filename, num_bytes / 2 **10))
+
+    # Clear the redundant data from the widget.
+    change['owner'].data = b''
 
     # Flag that the widget value has been set.
     change['owner']._is_set = True
