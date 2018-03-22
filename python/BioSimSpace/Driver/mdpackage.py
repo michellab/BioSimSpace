@@ -9,6 +9,13 @@ from Sire.Base import findExe
 import BioSimSpace.Process as Process
 import BioSimSpace.Protocol as Protocol
 
+# A dictionary mapping MD packages to their executable names and GPU support.
+#                PACKAGE        EXE       GPU
+_md_packages = { "AMBER"   : { "sander" : False, "pmemd" : False, "pmemd.cuda" : True },
+                 "GROMACS" : { "gmx" : True },
+                 "NAMD"    : { "namd2" : False }
+               }
+
 def findMDPackage(supports_gpu=False):
     """Find a molecular dynamics package on the system and return
        a handle to it as a MDPackage object.
