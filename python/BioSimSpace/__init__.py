@@ -15,7 +15,8 @@ def _is_notebook():
 if _is_notebook():
     import BioSimSpace.Notebook
 
-import BioSimSpace.Driver
+from BioSimSpace.Driver import findMDPackage
+
 import BioSimSpace.Gateway
 import BioSimSpace.Process
 import BioSimSpace.Protocol
