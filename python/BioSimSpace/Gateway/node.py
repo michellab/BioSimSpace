@@ -211,10 +211,14 @@ class Node():
                 disabled=False
             )
 
-            # Add an attribute to flag whether the widget value has
-            # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
+            # By default, boolean widgets are set to false.
+            widget._is_set = True
+
+            # Get the default value.
+            default = input.getDefault()
+
+            if default is not None:
+                widget.value = default
 
             # Store the requirement name.
             widget._name = name
@@ -739,7 +743,7 @@ class Node():
                 for x in range(0, len(widget)):
                     value = self._inputs[name].getValue()
                     if value is not None:
-                        widget[x].value = value[x]
+                        widget[x].value = value
             else:
                 value = self._inputs[name].getValue()
                 if value is not None:
