@@ -64,7 +64,7 @@ class Requirement():
     def setValue(self, value):
         """Validate and set the value."""
 
-        if value is None:
+        if value is None and not self._is_optional:
             raise ValueError("Value is unset!")
 
         # Validate the value.
