@@ -756,15 +756,8 @@ def _on_value_change(change):
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
 
-    # Decode the data stream.
-    decoded = io.StringIO(change['owner'].data.decode('utf-8'))
-
     # Get the file name.
     filename = change['owner'].filename
-
-    # Print that the file was uploaded.
-    print('Uploaded `{}` ({:.2f} kB)'.format(
-        filename, len(decoded.read()) / 2 **10))
 
     # Create the uploads directory if it doesn't already exist.
     if not path.isdir("uploads"):
@@ -774,8 +767,11 @@ def _on_file_upload(change):
     new_filename = "uploads/%s" % filename
 
     # Write the file to disk.
-    with open(new_filename, 'w') as file:
-        file.write(change['owner'].data.decode('utf-8'))
+    with open(new_filename, 'wb') as file:
+        file.write(change['owner'].data)
+
+    # Print that the file was uploaded.
+    print("Uploaded: %s" % filename)
 
     # Flag that the widget value has been set.
     change['owner']._is_set = True
