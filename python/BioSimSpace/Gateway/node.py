@@ -121,8 +121,10 @@ class Node():
             raise TypeError("'input' must be of type 'Requirement'.")
 
         # We already have an input with this name.
+        reset = False
         if name in self._inputs:
             warn("Duplicate input requirement '%s'"  % name)
+            reset = True
 
         # Add the input to the dictionary.
         self._inputs[name] = input
@@ -133,7 +135,7 @@ class Node():
 
         # Create a Jupyter GUI widget.
         elif self._is_notebook:
-            return self._addInputJupyter(name, input)
+            return self._addInputJupyter(name, input, reset)
 
         # Command-line argparse ArgumentParser.
         else:
@@ -192,13 +194,14 @@ class Node():
         """
         return None
 
-    def _addInputJupyter(self, name, input):
+    def _addInputJupyter(self, name, input, reset=False):
         """Add an input requirement for Jupyter.
 
            Positional arguments:
 
            name  -- The name of the input.
            input -- The input requirement object.
+           reset -- Whether to reset the widget data.
         """
 
         # Add a Jupyter widget for each of the supported requirement types.
@@ -498,7 +501,7 @@ class Node():
             widget.observe(_on_file_upload, names="data")
 
             # This is a new widget.
-            if not name in self._widgets:
+            if not name in self._widgets or reset:
                 self._widgets[name] = [widget]
             else:
                 self._widgets[name].append(widget)
