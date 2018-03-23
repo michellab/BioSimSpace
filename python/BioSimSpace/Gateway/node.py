@@ -811,7 +811,7 @@ def _on_file_upload(change):
         file.write(change['owner'].data)
 
     # Report that the file was uploaded.
-    print('Uploaded `{}` ({:.2f} kB)'.format(
+    print("Uploaded '{}' ({:.2f} kB)".format(
         filename, num_bytes / 2 **10))
 
     # Clear the redundant data from the widget.
