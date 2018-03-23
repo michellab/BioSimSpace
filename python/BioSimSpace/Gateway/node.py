@@ -204,6 +204,16 @@ class Node():
            reset -- Whether to reset the widget data.
         """
 
+        # Create a widget button to indicate whether the requirement value
+        # has been set.
+        button = widgets.Button(
+            tooltip='The input requirement is unset.',
+            button_style='warning',
+            icon='fa-question',
+            layout=widgets.Layout(flex='1 1 auto', width='auto'),
+            disabled=False,
+        )
+
         # Add a Jupyter widget for each of the supported requirement types.
 
         # Boolean.
@@ -218,8 +228,11 @@ class Node():
                 disabled=False
             )
 
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
+
             # By default, boolean widgets are set to false.
-            widget._is_set = True
+            widget._is_set = False
 
             # Get the default value.
             default = input.getDefault()
@@ -301,10 +314,16 @@ class Node():
                         disabled=False
                     )
 
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
             if input.getDefault() is None:
                 widget._is_set = False
+                widget._button.tooltip = 'The input requirement is set.',
+                widget._button.button_style = 'success'
+                widget._button.icon = 'fa-check'
 
             # Store the requirement name.
             widget._name = name
@@ -380,10 +399,16 @@ class Node():
                         disabled=False
                     )
 
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
             if input.getDefault() is None:
                 widget._is_set = False
+                widget._button.tooltip = 'The input requirement is set.'
+                widget._button.button_style = 'success'
+                widget._button.icon = 'fa-check'
 
             # Store the requirement name.
             widget._name = name
@@ -435,10 +460,16 @@ class Node():
                         disabled=False
                     )
 
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
             if input.getDefault() is None:
                 widget._is_set = False
+                widget._button.tooltip = 'The input requirement is set.'
+                widget._button.button_style = 'success'
+                widget._button.icon = 'fa-check'
 
             # Store the requirement name.
             widget._name = name
@@ -453,6 +484,9 @@ class Node():
         elif type(input) is File:
             # Create a fileupload widget.
             widget = fileupload.FileUploadWidget()
+
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
 
             # Add an attribute to flag whether the widget value has
             # been set by the user.
@@ -477,6 +511,9 @@ class Node():
         elif type(input) is FileSet:
             # Create a fileupload widget.
             widget = fileupload.FileUploadWidget()
+
+            # Add the 'set' indicator button to the widget.
+            widget._button = button
 
             # Add an attribute to flag whether the widget value has
             # been set by the user.
@@ -531,20 +568,6 @@ class Node():
 
         # Add the output to the dictionary.
         self._outputs[name] = output
-
-    def setInput(self, name, value):
-        """Directly set an input requirement.
-
-           Positional arguments:
-
-           name  -- The name of the output.
-           value -- The value of the output.
-        """
-
-        try:
-            self._inputs[name].setValue(value)
-        except KeyError:
-            raise
 
     def setOutput(self, name, value):
         """Set the value of an output.
@@ -629,9 +652,6 @@ class Node():
         if not self._is_notebook:
             return
 
-        # Update the widgets if values have been set.
-        self._update_widgets()
-
         # Create the layout object.
         layout = widgets.Layout(
             display='flex',
@@ -640,7 +660,10 @@ class Node():
         )
 
         # Initialise the list of form items.
-        form_items = []
+        requirements = []
+
+        # Initialise the list of input requirement 'set' indicators.
+        indicators = []
 
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
@@ -650,23 +673,39 @@ class Node():
             # This is a FileSet requirement with multiple widgets.
             if type(widget) is list:
                 items = [label] + widget
+                indicator = widget[0]._button
             else:
                 items = [label, widget]
+                indicator = widget._button
 
             # Create a box for the widget.
             box = widgets.Box(items, layout=layout)
 
-            # Add the box to the list of items.
-            form_items.append(box)
+            # Add the widget box to the list.
+            requirements.append(box)
 
-        # Create the form.
-        form = widgets.Box(form_items, layout=widgets.Layout(
+            # Add the indicator to the list.
+            indicators.append(indicator)
+
+        # Create the widget form.
+        form1 = widgets.Box(requirements, layout=widgets.Layout(
             display='flex',
             flex_flow='column',
             border='solid 2px',
             align_items='stretch',
             width='100%'
         ))
+
+        # Create the indicator form.
+        form2 = widgets.VBox(indicators, layout=widgets.Layout(
+            display='flex',
+            flex_flow='column',
+            align_items='stretch',
+            width='5%'
+        ))
+
+        # Combine the two forms.
+        form = widgets.Box([form1, form2], layout=layout)
 
         # Store the form.
         self._control_panel = form
@@ -740,25 +779,12 @@ class Node():
         # Node completed successfully.
         return True
 
-    def _update_widgets(self):
-        """Update widget defaults if values have been set."""
-
-        for name, widget in self._widgets.items():
-            # This is a FileSet requirement with multiple widgets.
-            if type(widget) is list:
-                # Loop over all widgets.
-                for x in range(0, len(widget)):
-                    value = self._inputs[name].getValue()
-                    if value is not None:
-                        widget[x].value = value
-            else:
-                value = self._inputs[name].getValue()
-                if value is not None:
-                    widget.value = value
-
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
     change['owner']._is_set = True
+    change['owner']._button.tooltip = 'The input requirement is set.'
+    change['owner']._button.button_style = 'success'
+    change['owner']._button.icon = 'fa-check'
 
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
@@ -793,6 +819,9 @@ def _on_file_upload(change):
 
     # Flag that the widget value has been set.
     change['owner']._is_set = True
+    change['owner']._button.tooltip = 'The input requirement is set.'
+    change['owner']._button.button_style = 'success'
+    change['owner']._button.icon = 'fa-check'
 
     # Now update the widget value.
 
@@ -806,15 +835,12 @@ def _on_file_upload(change):
             # Whether a match has been found.
             is_found = False
 
-            # The widget index.
-            index = 0
-
             # Store the name of the input requirement.
             name = change['owner']._name
 
             # Loop over the widgets in the control panel and find the one
             # that with the matching name.
-            for child in change['owner']._node._control_panel.children:
+            for index, child in enumerate(change['owner']._node._control_panel.children[0].children):
                 # The widget name matches.
                 if child.children[1]._name == name:
                     is_match = True
@@ -831,13 +857,13 @@ def _on_file_upload(change):
             change['owner']._node._addInputJupyter(name, change['owner']._input)
 
             # Convert the children of the control panel to a list.
-            boxes = list(change['owner']._node._control_panel.children[index].children)
+            boxes = list(change['owner']._node._control_panel.children[0].children[index].children)
 
             # Append the new widget to the list.
             boxes.append(change['owner']._node._widgets[name][-1])
 
             # Add the updated box back into the list of boxes.
-            change['owner']._node._control_panel.children[index].children = tuple(boxes)
+            change['owner']._node._control_panel.children[0].children[index].children = tuple(boxes)
 
     # Update the widget value and label.
     change['owner'].value = new_filename
