@@ -209,7 +209,7 @@ class Node():
         button = widgets.Button(
             tooltip='The input requirement is unset.',
             button_style='warning',
-            icon='fa-question',
+            icon='fa-exclamation-triangle',
             layout=widgets.Layout(flex='1 1 auto', width='auto'),
             disabled=False,
         )
