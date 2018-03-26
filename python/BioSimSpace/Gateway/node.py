@@ -19,6 +19,9 @@ if _is_notebook():
     except ImportError:
         raise ImportError("Fileupload is not installed. Please install fileupload in order to use BioSimSpace.")
 
+    from IPython.display import FileLink
+    import tarfile
+
 from .requirements import *
 
 from collections import OrderedDict
@@ -40,22 +43,27 @@ class Node():
     # Whether the node is run from a Jupyter notebook.
     _is_notebook = _is_notebook()
 
-    def __init__(self, description):
+    def __init__(self, description, name=None):
         """Constructor.
 
            Positional arguments:
 
            description -- A description of the node.
+
+           Keyword arguments:
+
+           name        -- The name of the node.
         """
 
         if type(description) is not str:
             raise TypeError("The 'description' keyword must be of type 'str'.")
 
         # Set the node name.
-        try:
-            self._name = basename(main.__file__)
-        except:
-            self._name = None
+        if name is None:
+            try:
+                self._name = basename(main.__file__)
+            except:
+                self._name = None
 
         # Set the node description string.
         self._description = description
@@ -761,10 +769,16 @@ class Node():
         # Flag that we have validated output.
         self._is_output_validated = True
 
+        # A list of File and FileSet outputs.
+        file_outputs = []
+
         # Check no outputs are None.
         for name, output in self._outputs.items():
             if output.getValue() is None:
                 self._errors.append("Missing output for requirement '%s'" % name)
+            else:
+                if type(output) is File or type(output) is FileSet:
+                    file_outputs.append(output)
 
         # Node failed.
         if len(self._errors) > 0:
@@ -776,8 +790,33 @@ class Node():
             else:
                 raise SystemExit("Node failed!")
 
-        # Node completed successfully.
-        return True
+        # Create a compressed archive containing all file output for the node.
+        if self._is_notebook:
+            # There are files.
+            if len(file_outputs) > 0:
+                # Create the archive name.
+                if self._name is None:
+                    arcname = "output/"
+                    tarname = "output.tar.gz"
+                else:
+                    arcname = "%s/" % self._name
+                    tarname = "%s.tar.gz" % self._name
+
+                # Append the files to the archive.
+                with tarfile.open(tarname, "w:gz") as tar:
+                    # Loop over all of the file outputs.
+                    for output in file_outputs:
+                        if type(output) is File:
+                            file = output.getValue()
+                            tar.add(file, arcname=arcname + basename(file))
+                        else:
+                            for file in output.getValue():
+                                tar.add(file, arcname=arcname + basename(file))
+
+                # Return a link to the archive.
+                return FileLink(tarname)
+        else:
+            return True
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
