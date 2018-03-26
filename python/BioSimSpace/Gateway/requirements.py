@@ -413,6 +413,10 @@ class FileSet(Requirement):
         if self._is_optional and value is None:
             return None
 
+        # Handle single strings.
+        if type(value) is str:
+            value = [value]
+
         # We should receive a list of strings.
         if type(value) is list:
 
