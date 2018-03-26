@@ -11,7 +11,7 @@ from Sire.Vol import AABox
 
 import Sire.System
 
-from BioSimSpace import _is_notebook
+from BioSimSpace import _is_interactive, _is_notebook
 from ..Protocol.protocol import Protocol
 
 from collections import OrderedDict
@@ -64,7 +64,7 @@ class Process():
 
         # Is the process running interactively? If so, don't block
         # when a get method is called.
-        self._is_blocked = not _is_notebook()
+        self._is_blocked = not _is_interactive()
 
         # Whether this process can generate trajectory data.
         # Even if a process can generate a trajectory, whether it does

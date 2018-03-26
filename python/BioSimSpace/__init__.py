@@ -11,6 +11,19 @@ def _is_notebook():
     except NameError:
         return False      # Probably standard Python interpreter
 
+# Determine whether we're being run interactively.
+def _is_interactive():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return True   # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
+
 # Interactive tools.
 if _is_notebook():
     import BioSimSpace.Notebook
