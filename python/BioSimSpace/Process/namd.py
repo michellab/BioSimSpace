@@ -9,8 +9,8 @@ from Sire.Base import findExe, Process
 from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 
 from . import process
-from ..Protocol.protocol import Protocol, ProtocolType
-from ..Trajectory.trajectory import Trajectory
+from ..Protocol import *
+from ..Trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, getcwd, path
@@ -76,19 +76,7 @@ class Namd(process.Process):
         self._restraint_file = None
 
         # Set the path for the NAMD configuration file.
-        # The 'protocol' argument may contain the path to a custom file.
-
-        # Set the config file name.
-        if not self._is_custom:
-            self._config_file = "%s/%s.namd" % (self._work_dir, name)
-
-        # The user has supplied a custom config file.
-        else:
-            # Make sure the file exists.
-            if path.isfile(protocol):
-                self._config_file = protocol
-            else:
-                raise IOError(('NAMD configuration file doesn\'t exist: "{x}"').format(x=config_file))
+        self._config_file = "%s/%s.namd" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._psf_file, self._top_file, self._param_file]
@@ -199,10 +187,11 @@ class Namd(process.Process):
             f.close()
 
         # Generate the NAMD configuration file.
-        # Skip if the user has passed a custom config.
-        if not self._is_custom:
+        if type(self._protocol) is Custom:
+            self.setConfig(self._protocol.getConfig())
+        else:
             self._generate_config()
-            self.writeConfig(self._config_file)
+        self.writeConfig(self._config_file)
 
         # Return the list of input files.
         return self._input_files
@@ -302,7 +291,7 @@ class Namd(process.Process):
         self.addToConfig("outputTiming          1000")
 
         # Add configuration variables for a minimisation simulation.
-        if self._protocol.getType() == ProtocolType.MINIMISATION:
+        if type(self._protocol) is Minimisation:
             self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
@@ -311,7 +300,7 @@ class Namd(process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        elif self._protocol.getType() == ProtocolType.EQUILIBRATION:
+        if type(self._protocol) is Equilibration:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f" % self._protocol.getStartTemperature())
@@ -380,7 +369,7 @@ class Namd(process.Process):
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif self._protocol.getType() == ProtocolType.PRODUCTION:
+        elif type(self._protocol) is Production:
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f" % self._protocol.getTemperature())
             self.addToConfig("temperature           $temperature")
@@ -594,7 +583,7 @@ class Namd(process.Process):
            block       -- Whether to block until the process has finished running.
         """
 
-        if self._protocol.getType() == ProtocolType.MINIMISATION:
+        if type(self._protocol) is Minimisation:
             return None
 
         else:

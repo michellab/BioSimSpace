@@ -9,8 +9,8 @@ from Sire.Base import findExe, Process
 from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
 from . import process
-from ..Protocol.protocol import Protocol, ProtocolType
-from ..Trajectory.trajectory import Trajectory
+from ..Protocol import *
+from ..Trajectory import Trajectory
 
 from math import ceil, floor
 from os import chdir, environ, getcwd, path
@@ -171,19 +171,7 @@ class Amber(process.Process):
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # Set the path for the AMBER configuration file.
-        # The 'protocol' argument may contain the path to a custom file.
-
-        # Set the config file name.
-        if not self._is_custom:
-            self._config_file = "%s/%s.amber" % (self._work_dir, name)
-
-        # The user has supplied a custom config file.
-        else:
-            # Make sure the file exists.
-            if path.isfile(protocol):
-                self._config_file = protocol
-            else:
-                raise IOError(('AMBER configuration file doesn\'t exist: "{x}"').format(x=config_file))
+        self._config_file = "%s/%s.amber" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
@@ -206,9 +194,11 @@ class Amber(process.Process):
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
-        if not self._is_custom:
+        if type(self._protocol) is Custom:
+            self.setConfig(self._protocol.getConfig())
+        else:
             self._generate_config()
-            self.writeConfig(self._config_file)
+        self.writeConfig(self._config_file)
 
         # Generate the dictionary of command-line arguments.
         self._generate_args()
@@ -232,7 +222,7 @@ class Amber(process.Process):
             has_box = False
 
         # Add configuration variables for a minimisation simulation.
-        if self._protocol.getType() == ProtocolType.MINIMISATION:
+        if type(self._protocol) is Minimisation:
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
             self.addToConfig("  imin=1,")                   # Minisation simulation.
@@ -250,7 +240,7 @@ class Amber(process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
-        elif self._protocol.getType() == ProtocolType.EQUILIBRATION:
+        elif type(self._protocol) is Equilibration:
 
             # Convert the timestep to nanoseconds.
             timestep = self._protocol.getTimeStep() * 1e-6
@@ -311,7 +301,7 @@ class Amber(process.Process):
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
-        elif self._protocol.getType() == ProtocolType.PRODUCTION:
+        elif type(self._protocol) is Production:
 
             # Convert the timestep to nanoseconds.
             timestep = self._protocol.getTimeStep() * 1e-6
@@ -383,16 +373,16 @@ class Amber(process.Process):
         self.setArg("-r", "%s.crd" % self._name)            # Restart file.
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
-        # Skip if the user has passed a custom config.
-        if not self._is_custom:
+        # Skip if the user has passed a custom protocol.
+        if type(self._protocol) is not Custom:
 
             # Append a reference file if this a constrained equilibration.
-            if self._protocol.getType() == ProtocolType.EQUILIBRATION:
+            if type(self._protocol) is Equilibration:
                 if self._protocol.isRestrained():
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is a production run.
-            elif self._protocol.getType() == ProtocolType.PRODUCTION:
+            elif type(self._protocol) is Production:
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -544,7 +534,7 @@ class Amber(process.Process):
         """
 
         # No time records for minimisation protocols.
-        if self._protocol.getType() == ProtocolType.MINIMISATION:
+        if type(self._protocol) is Minimisation:
             return None
 
         # Get the list of time steps.
@@ -802,7 +792,7 @@ class Amber(process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        if self._protocol.getType() == ProtocolType.MINIMISATION:
+        if type(self._protocol) is Minimisation:
             return self.getRecord('ENERGY', time_series, block)
         else:
             return self.getRecord('ETOT', time_series, block)
@@ -946,7 +936,7 @@ class Amber(process.Process):
                 if len(line) > 0 and line[0] is not '|':
 
                     # The output format is different for minimisation protocols.
-                    if self._protocol.getType() == ProtocolType.MINIMISATION:
+                    if type(self._protocol) is Minimisation:
 
                         # No equals sign in the line.
                         if "=" not in line:

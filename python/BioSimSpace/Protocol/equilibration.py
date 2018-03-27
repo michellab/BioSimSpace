@@ -4,7 +4,7 @@
 @brief   A class for storing equilibration protocols.
 """
 
-from .protocol import Protocol, ProtocolType
+from .protocol import Protocol
 
 from pytest import approx
 from warnings import warn
@@ -24,9 +24,6 @@ class Equilibration(Protocol):
            temperature_end   -- The final temperature (in Kelvin).
            restrain_backbone -- Whether the atoms in the backbone are fixed.
         """
-
-        # Call the base class constructor.
-        super().__init__(ProtocolType.EQUILIBRATION)
 
         # Set the time step.
         self.setTimeStep(timestep)

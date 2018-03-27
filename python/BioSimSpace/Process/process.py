@@ -59,6 +59,10 @@ class Process():
         if system.__class__ is not Sire.System.System:
             raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
+        # Check that the protocol is valid.
+        if not isinstance(protocol, Protocol):
+            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
+
         # Set the process to None.
         self._process = None
 
@@ -93,13 +97,6 @@ class Process():
 
         # Set the list of input files to None.
         self._input_files = None
-
-        # Check whether this is a Protocol object.
-        # If not, we assume that the user has passed a custom configuration file.
-        if isinstance(protocol, Protocol):
-            self._is_custom = False
-        else:
-            self._is_custom = True
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:

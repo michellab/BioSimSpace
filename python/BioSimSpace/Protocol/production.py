@@ -4,7 +4,7 @@
 @brief   A class for storing production protocols.
 """
 
-from .protocol import Protocol, ProtocolType
+from .protocol import Protocol
 
 from math import ceil
 
@@ -29,9 +29,6 @@ class Production(Protocol):
            first_step  -- The initial time step (for restart simulations).
            restart     -- Whether this is a continuation of a previous simulation.
         """
-
-        # Call the base class constructor.
-        super().__init__(ProtocolType.PRODUCTION)
 
         # Set the time step.
         self.setTimeStep(timestep)

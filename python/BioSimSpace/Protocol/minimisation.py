@@ -4,7 +4,7 @@
 @brief   A class for storing minimisation protocols.
 """
 
-from .protocol import Protocol, ProtocolType
+from .protocol import Protocol
 
 from warnings import warn
 
@@ -16,11 +16,8 @@ class Minimisation(Protocol):
 
            Keyword arguments:
 
-           steps     -- The maximum number of steps to perform.
+           steps -- The maximum number of steps to perform.
         """
-
-        # Call the base class constructor.
-        super().__init__(ProtocolType.MINIMISATION)
 
         # Set the number of steps.
         self.setSteps(steps)
