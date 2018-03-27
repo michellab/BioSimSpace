@@ -105,7 +105,6 @@ class Namd(process.Process):
 
         if type(charmm_params) is bool:
             self._is_charmm_params = charmm_params
-
         else:
             warn("Non-boolean CHARMM parameter flag. Defaulting to True!")
             self._is_charmm_params = True
@@ -231,14 +230,9 @@ class Namd(process.Process):
             # output files.
             origin = tuple(process._getAABox(self._system).center())
 
-        # Work out the box from the atomic coordinates.
-        elif not self._protocol.isGasPhase():
-            # Get the axis-aligned bounding box for the molecular system.
-            aabox = process._getAABox(self._system)
-
-            # Work out the box size and origin.
-            box_size = 2 * aabox.halfExtents()
-            origin = tuple(aabox.center())
+        # No box information. Assume this is a gas phase simulation.
+        else:
+            has_box = False
 
         # Append generic configuration variables.
 
@@ -265,7 +259,7 @@ class Namd(process.Process):
         # Non-bonded potential parameters.
 
         # Gas phase.
-        if self._protocol.isGasPhase():
+        if not has_box:
             self.addToConfig("cutoff                999.")
             self.addToConfig("zeroMomentum          yes")
             self.addToConfig("switching             off")
@@ -280,19 +274,11 @@ class Namd(process.Process):
                 self.addToConfig("switchdist            10.")
 
             # Load the XSC file.
-            if has_box:
-                self.addToConfig("extendedSystem        %s.xsc" % self._name)
-                # We force the cell origin to be located at the system's centre
-                # of geometry. This ensures a consistent periodic wrapping for
-                # all NAMD output.
-                self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
-
-            # Set the cell using the axis-aligned bounding box.
-            else:
-                self.addToConfig("cellBasisVector1     %.1f   0.    0." % box_size[0])
-                self.addToConfig("cellBasisVector2      0.   %.1f   0." % box_size[1])
-                self.addToConfig("cellBasisVector3      0.    0.   %.1f" % box_size[2])
-                self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
+            self.addToConfig("extendedSystem        %s.xsc" % self._name)
+            # We force the cell origin to be located at the system's centre
+            # of geometry. This ensures a consistent periodic wrapping for
+            # all NAMD output.
+            self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
 
             # Wrap all molecular coordinates to the periodic box.
             self.addToConfig("wrapAll               on")

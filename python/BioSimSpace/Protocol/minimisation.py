@@ -11,17 +11,16 @@ from warnings import warn
 class Minimisation(Protocol):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, steps=10000, gas_phase=False):
+    def __init__(self, steps=10000):
         """Constructor.
 
            Keyword arguments:
 
            steps     -- The maximum number of steps to perform.
-           gas_phase -- Whether this a gas phase simulation.
         """
 
         # Call the base class constructor.
-        super().__init__(ProtocolType.MINIMISATION, gas_phase)
+        super().__init__(ProtocolType.MINIMISATION)
 
         # Set the number of steps.
         self.setSteps(steps)

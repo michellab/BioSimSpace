@@ -16,7 +16,7 @@ class Production(Protocol):
     """A class for storing production protocols."""
 
     def __init__(self, timestep=2, runtime=1, temperature=300, frames=20,
-            ensemble="NPT", first_step=0, restart=False, gas_phase=False):
+            ensemble="NPT", first_step=0, restart=False):
         """Constructor.
 
            Keyword arguments:
@@ -28,11 +28,10 @@ class Production(Protocol):
            ensemble    -- The thermodynamic ensemble.
            first_step  -- The initial time step (for restart simulations).
            restart     -- Whether this is a continuation of a previous simulation.
-           gas_phase   -- Whether this a gas phase simulation.
         """
 
         # Call the base class constructor.
-        super().__init__(ProtocolType.PRODUCTION, gas_phase)
+        super().__init__(ProtocolType.PRODUCTION)
 
         # Set the time step.
         self.setTimeStep(timestep)
