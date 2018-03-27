@@ -68,7 +68,7 @@ class View():
                 return
 
         else:
-            system = handle
+            system = self._handle
 
         # Create and return the view.
         return self._create_view(system, gui=gui)
@@ -95,7 +95,7 @@ class View():
                 return
 
         else:
-            system = handle
+            system = self._handle
 
         # Extract the molecule numbers.
         molnums = system.molNums()
@@ -136,7 +136,7 @@ class View():
                 return
 
         else:
-            system = handle
+            system = self._handle
 
         # Extract the molecule numbers.
         molnums = system.molNums()
