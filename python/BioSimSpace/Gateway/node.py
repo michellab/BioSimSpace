@@ -632,15 +632,14 @@ class Node():
         if type(author) is not str:
             raise TypeError("The author must be of type 'str'")
         else:
-            self._authors.append(error)
+            if self._authors is None:
+                self._authors = [author]
+            else:
+                self._authors.append(author)
 
     def getAuthors(self):
         """Return the list of authors."""
-
-        if len(self._authors) == 0:
-            return None
-        else:
-            return self._authors
+        return self._authors
 
     def setLicense(self, license):
         """Set the license for the node."""
