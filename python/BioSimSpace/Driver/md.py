@@ -116,8 +116,6 @@ class MD():
         # Find a molecular dynamics package and executable.
         package, exe = _find_md_package(system, protocol)
 
-        print(package, exe)
-
         # Create the process object.
 
         # AMBER.
