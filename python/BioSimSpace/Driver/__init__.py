@@ -1,1 +1,1 @@
-from .mdpackage import findMDPackage
+from .md import MD

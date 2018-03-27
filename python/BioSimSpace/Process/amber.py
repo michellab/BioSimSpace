@@ -385,8 +385,14 @@ class Amber(process.Process):
             elif type(self._protocol) is Production:
                 self.setArg("-x", "%s.nc" % self._name)
 
-    def start(self):
-        """Start the AMBER simulation. """
+    def start(self, is_indirect=False):
+        """Start the AMBER simulation.
+
+           Keyword arguments:
+
+           is_indirect -- Whether the process is being started indirectly, e.g.
+                          by the BioSimSpace.MD interface.
+        """
 
         # Process is already running.
         if self._process is not None:
@@ -429,6 +435,11 @@ class Amber(process.Process):
 	# Watch the energy info file for changes.
         self._watcher = Watcher(self)
         self._watcher.start()
+
+        # Return the process object if it has been started indirectly.
+        # This ensures that the user retains access to the running process.
+        if is_indirect:
+            return self
 
     def getSystem(self, block='AUTO'):
         """Get the latest molecular configuration as a Sire system.

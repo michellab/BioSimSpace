@@ -410,8 +410,14 @@ class Namd(process.Process):
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
-    def start(self):
-        """Start the NAMD simulation."""
+    def start(self, is_indirect=False):
+        """Start the NAMD simulation.
+
+           Keyword arguments:
+
+           is_indirect -- Whether the process is being started indirectly, e.g.
+                          by the BioSimSpace.MD interface.
+        """
 
         # Process is already running.
         if self._process is not None:
@@ -445,6 +451,11 @@ class Namd(process.Process):
 
         # Change back to the original working directory.
         chdir(dir)
+
+        # Return the process object if it has been started indirectly.
+        # This ensures that the user retains access to the running process.
+        if is_indirect:
+            return self
 
     def getSystem(self, block='AUTO'):
         """Get the latest molecular configuration as a Sire system.

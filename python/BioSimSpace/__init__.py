@@ -28,7 +28,7 @@ def _is_interactive():
 if _is_notebook():
     import BioSimSpace.Notebook
 
-from BioSimSpace.Driver import findMDPackage
+from BioSimSpace.Driver import MD
 
 import BioSimSpace.Gateway
 import BioSimSpace.Process
