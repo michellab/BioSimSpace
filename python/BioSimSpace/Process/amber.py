@@ -228,6 +228,7 @@ class Amber(process.Process):
         if 'space' in self._system.propertyKeys():
             has_box = True
         else:
+            warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
         # Add configuration variables for a minimisation simulation.

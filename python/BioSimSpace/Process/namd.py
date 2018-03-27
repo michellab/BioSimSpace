@@ -232,6 +232,7 @@ class Namd(process.Process):
 
         # No box information. Assume this is a gas phase simulation.
         else:
+            warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
         # Append generic configuration variables.
