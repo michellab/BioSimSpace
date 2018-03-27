@@ -1,7 +1,7 @@
 """
 @package biosimspace
 @author  Lester Hedges
-@brief   Base class and helper functions for the various sample modules.
+@brief   Base class and helper functions for the various process objects.
 """
 
 from Sire import try_import
@@ -143,6 +143,36 @@ class Process():
 
         # Initaliae the command-line argument dictionary.
         self._args = OrderedDict()
+
+    def run(self, system=None, protocol=None, autostart=True):
+        """Create and run a new process."""
+
+        # Use the existing system.
+        if system is None:
+            system = self._system
+
+        # Check that the new system is valid.
+        else:
+            if system.__class__ is not Sire.System.System:
+                raise TypeError("'system' must be of type 'Sire.System._System.System'")
+
+        # Use the existing protocol.
+        if protocol is None:
+            protocol = self._protocol
+
+        # Check that the new protocol is valid.
+        else:
+            if isinstance(protocol, Protocol):
+                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
+
+        # Create the new process.
+        process = type(self)(system, protocol)
+
+        # Return the new process object.
+        if autostart:
+            return process.start()
+        else:
+            return process
 
     def getSeed(self):
         """Return the random number seed."""
