@@ -239,7 +239,7 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
-            # By default, boolean widgets are set to false.
+            # Flag that the widget is unset.
             widget._is_set = False
 
             # Get the default value.
@@ -247,6 +247,10 @@ class Node():
 
             if default is not None:
                 widget.value = default
+                widget._is_set = True
+                widget._button.tooltip = 'The input requirement is set.'
+                widget._button.button_style = 'success'
+                widget._button.icon = 'fa-check'
 
             # Store the requirement name.
             widget._name = name
@@ -325,11 +329,14 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
+            # Flag that the widget is unset.
+            widget._is_set = False
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
-                widget._button.tooltip = 'The input requirement is set.',
+            if input.getDefault() is not None:
+                widget._is_set = True
+                widget._button.tooltip = 'The input requirement is set.'
                 widget._button.button_style = 'success'
                 widget._button.icon = 'fa-check'
 
@@ -410,10 +417,13 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
+            # Flag that the widget is unset.
+            widget._is_set = False
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
+            if input.getDefault() is not None:
+                widget._is_set = True
                 widget._button.tooltip = 'The input requirement is set.'
                 widget._button.button_style = 'success'
                 widget._button.icon = 'fa-check'
@@ -471,10 +481,13 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
+            # Flag that the widget is unset.
+            widget._is_set = False
+
             # Add an attribute to flag whether the widget value has
             # been set by the user.
-            if input.getDefault() is None:
-                widget._is_set = False
+            if input.getDefault() is not None:
+                widget._is_set = True
                 widget._button.tooltip = 'The input requirement is set.'
                 widget._button.button_style = 'success'
                 widget._button.icon = 'fa-check'
@@ -496,8 +509,7 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
-            # Add an attribute to flag whether the widget value has
-            # been set by the user.
+            # Flag that the widget is unset.
             widget._is_set = False
 
             # Flag that this is just a single file upload.
@@ -523,8 +535,7 @@ class Node():
             # Add the 'set' indicator button to the widget.
             widget._button = button
 
-            # Add an attribute to flag whether the widget value has
-            # been set by the user.
+            # Flag that the widget is unset.
             widget._is_set = False
 
             # Flag that this is is a set of files.
