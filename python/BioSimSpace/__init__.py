@@ -43,6 +43,8 @@ import Sire.Mol
 
 from Sire.Mol import AtomMCSMatcher as MCSMatcher
 
+from warnings import warn
+
 def readMolecules( files ):
     return Sire.IO.MoleculeParser.read( files )
 
@@ -81,3 +83,30 @@ Sire.System.System.take = _system_take
 class MolWithResName(Sire.Mol.MolWithResID):
     def __init__(self, resname):
         super().__init__( Sire.Mol.ResName(resname) )
+
+def viewMolecules( files, idxs=None ):
+    """View the molecules contained in the passed file(s). Optionally supply
+       a list of indices of molecules you want to view. This views the molecules
+       and also returns a view object that will allow you to change the view,
+       e.g. choosing different molecules to view etc.
+    """
+
+    if not _is_notebook():
+        warn("You can only view molecules form within a Jupyter notebook.")
+        return None
+
+    if isinstance(files, str):
+        files = [files]
+
+    print("Reading molecules from '%s'" % files)
+    s = readMolecules(files)
+
+    print("Rendering the molecules...")
+    v = BioSimSpace.Notebook.View(s)
+
+    if idxs:
+        v.molecules(idxs)
+    else:
+        v.molecules()
+
+    return v
