@@ -63,6 +63,9 @@ class Process():
         if not isinstance(protocol, Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
+        # Set the process name.
+        self._name = None
+
         # Set the process to None.
         self._process = None
 
@@ -277,6 +280,10 @@ class Process():
         # Print the lines.
         for x in range(start, num_lines):
             print(self._stderr[x])
+
+    def name(self):
+        """Return the process name."""
+        return self._name
 
     def exe(self):
         """Return the executable."""

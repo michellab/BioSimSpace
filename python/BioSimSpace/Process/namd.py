@@ -44,6 +44,9 @@ class Namd(process.Process):
         # Call the base class constructor.
         super().__init__(system, protocol, name, work_dir, seed)
 
+        # Set the process name.
+        self._name = "NAMD"
+
         # This process can generate trajectory data.
         self._has_trajectory = True
 
