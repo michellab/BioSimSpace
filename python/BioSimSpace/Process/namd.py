@@ -25,8 +25,7 @@ except ImportError:
 class Namd(process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd",
-            work_dir=None, charmm_params=True, seed=None):
+    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, seed=None):
         """Constructor.
 
            Positional arguments:
@@ -39,7 +38,6 @@ class Namd(process.Process):
            exe           -- The full path to the NAMD executable.
            name          -- The name of the process.
            work_dir      -- The working directory for the process.
-           charmm_params -- Whether the parameter file is in CHARMM format.
            seed          -- A random number seed.
         """
 
@@ -61,9 +59,6 @@ class Namd(process.Process):
             else:
                 raise IOError(('NAMD executable doesn\'t exist: "{x}"').format(x=exe))
 
-        # Set the parameter type.
-        self.setCharmmParams(charmm_params)
-
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = process.MultiDict()
         self._stdout_title = None
@@ -83,19 +78,6 @@ class Namd(process.Process):
 
         # Now set up the working directory for the process.
         self._setup()
-
-    def isCharmmParams(self):
-        """Return whether the parameters are in CHARMM format."""
-        return self._is_charmm_params
-
-    def setCharmmParams(self, charmm_params):
-        """Set the parameter type."""
-
-        if type(charmm_params) is bool:
-            self._is_charmm_params = charmm_params
-        else:
-            warn("Non-boolean CHARMM parameter flag. Defaulting to True!")
-            self._is_charmm_params = True
 
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
@@ -224,6 +206,19 @@ class Namd(process.Process):
             warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # Check whether the system contains parameter format information.
+        if 'param-format' in self._system.propertyKeys():
+            # Get the parameter format.
+            if self._system.property('param-format').toString() == "CHARMM":
+                is_charmm = True
+            else:
+                is_charmm = False
+
+        # No parameter format information. Assume these are CHARMM parameters.
+        else:
+            warn("No parameter format information found. Assuming CHARMM parameters.")
+            is_charmm = True
+
         # Append generic configuration variables.
 
         # Topology.
@@ -235,7 +230,7 @@ class Namd(process.Process):
             self.addToConfig("velocities            %s" % path.basename(self._velocity_file))
 
         # Parameters.
-        if self._is_charmm_params:
+        if is_charmm:
             self.addToConfig("paraTypeCharmm        on")
         self.addToConfig("parameters            %s" % path.basename(self._param_file))
 
