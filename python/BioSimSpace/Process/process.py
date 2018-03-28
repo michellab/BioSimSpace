@@ -36,7 +36,7 @@ class MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name="process", work_dir=None, seed=None):
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None):
         """Constructor.
 
            Positional arguments:
@@ -63,9 +63,6 @@ class Process():
         if not isinstance(protocol, Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
-        # Set the process name.
-        self._name = None
-
         # Set the process to None.
         self._process = None
 
@@ -81,7 +78,12 @@ class Process():
 	# Copy the passed system, protocol, and process name.
         self._system = system
         self._protocol = protocol
-        self._name = name
+
+        # Set the name
+        if name is None:
+            self._name = None
+        else:
+            self.setName(name)
 
         # Set the random number seed.
         if seed is None:
@@ -89,7 +91,7 @@ class Process():
             self._seed = 0
         else:
             self._is_seeded = True
-            self._seed = self.setSeed(seed)
+            self.setSeed(seed)
 
         # Set the timer and running time None.
         self._timer = None
@@ -174,6 +176,22 @@ class Process():
         else:
             return process
 
+    def getPackageName(self):
+        """Return the package name."""
+        return self._package_name
+
+    def getName(self):
+        """Return the process name."""
+        return self._name
+
+    def setName(self, name):
+        """Set the process name."""
+
+        if type(name) is not str:
+            raise TypeError("'name' must be of type 'str'")
+        else:
+            self._name = name
+
     def getSeed(self):
         """Return the random number seed."""
         return self._seed
@@ -221,7 +239,8 @@ class Process():
 
     def kill(self):
         """Kill the running process."""
-        self._process.kill()
+        if not self._process is None and self._process.isRunning():
+            self._process.kill()
 
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
@@ -280,10 +299,6 @@ class Process():
         # Print the lines.
         for x in range(start, num_lines):
             print(self._stderr[x])
-
-    def name(self):
-        """Return the process name."""
-        return self._name
 
     def exe(self):
         """Return the executable."""

@@ -128,8 +128,8 @@ class Amber(process.Process):
         # Call the base class constructor.
         super().__init__(system, protocol, name, work_dir, seed)
 
-        # Set the process name.
-        self._name = "AMBER"
+        # Set the package name.
+        self._package_name = "AMBER"
 
         # This process can generate trajectory data.
         self._has_trajectory = True
@@ -388,14 +388,8 @@ class Amber(process.Process):
             elif type(self._protocol) is Production:
                 self.setArg("-x", "%s.nc" % self._name)
 
-    def start(self, is_indirect=False):
-        """Start the AMBER simulation.
-
-           Keyword arguments:
-
-           is_indirect -- Whether the process is being started indirectly, e.g.
-                          by the BioSimSpace.MD interface.
-        """
+    def start(self):
+        """Start the AMBER process."""
 
         # Process is already running.
         if self._process is not None:
@@ -439,10 +433,7 @@ class Amber(process.Process):
         self._watcher = Watcher(self)
         self._watcher.start()
 
-        # Return the process object if it has been started indirectly.
-        # This ensures that the user retains access to the running process.
-        if is_indirect:
-            return self
+        return self
 
     def getSystem(self, block='AUTO'):
         """Get the latest molecular configuration as a Sire system.
@@ -1011,7 +1002,8 @@ class Amber(process.Process):
             self._watcher._observer.join()
 
         # Kill the process.
-        self._process.kill()
+        if not self._process is None and self._process.isRunning():
+            self._process.kill()
 
     def wait(self):
         """Wait for the process to finish."""

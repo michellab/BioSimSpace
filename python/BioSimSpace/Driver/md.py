@@ -132,6 +132,6 @@ class MD():
 
         # Start the process.
         if autostart:
-            return process.start(is_indirect=True)
+            return process.start()
         else:
             return process
