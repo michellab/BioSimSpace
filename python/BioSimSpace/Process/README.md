@@ -168,11 +168,12 @@ Once you are happy with the way a process is configured it can be started using:
 process.start()
 ```
 
-If you are using BioSimSpace from a regular python script then you will need to
-wait for the process to finish before the interpreter exits.
+If you are using BioSimSpace from a regular python script then the process will
+block the main thread if you try to get any data from it while it is running, e.g.:
 
 ```python
-process.wait()
+# This will wait for the process to finish running before returning the final system.
+system = process.getSystem()
 ```
 
 If you are using BioSimSpace interactively, e.g. using a [Jupyter](http://jupyter.org)
