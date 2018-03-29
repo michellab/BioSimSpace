@@ -32,7 +32,7 @@ the following command:
 $HOME/sire.app/bin/pip install matplotlib
 ```
 
-Molecular visualisation requires [NGLview](https://github.com/arose/nglview),
+Molecular visualisation requires [NGLView](https://github.com/arose/nglview),
 which is a bit of a pain to configure. It is not possible to use the regular
 `try_import` function from `Sire`, since `conda` will install the incorrect
 version. At present, manual installation via `pip` is required.
@@ -42,7 +42,7 @@ First install Jupyter:
 $HOME/sire.app/bin/pip install jupyter
 ```
 
-Now install NGLview, overwriting any dependencies that were already installed above:
+Now install NGLView, overwriting any dependencies that were already installed above:
 ```bash
 $HOME/sire.app/bin/pip install --no-cache-dir --ignore-installed nglview
 ```
@@ -52,13 +52,18 @@ We now need to enable the notebook extension:
 $HOME/sire.app/bin/jupyter-nbextension enable nglview --py --sys-prefix
 ```
 
-Unfortunately, the version of NGLview provided by `pip` (version 1.0, at this
-time) contains a bug that causes intermittent issues when reading molecular
-structures from file. This can be fixed by running the provided helper
-script:
+Versions of NGLView earlier than 1.1.2 have an issues that causes intermittent
+problems when reading molecular structures from file. This can be fixed by
+running the provided helper script:
 
 ```bash
 ./nglview_patch.sh $HOME/sire.app
+```
+
+To find out what version of NGLView you have installed, run:
+
+```bash
+$HOME/sire.app/bin/pip show nglview
 ```
 
 In a similar manner we need to install and activate the Jupyter
