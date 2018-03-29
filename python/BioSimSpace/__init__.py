@@ -24,13 +24,10 @@ def _is_interactive():
     except NameError:
         return False      # Probably standard Python interpreter
 
-# Interactive tools.
-if _is_notebook():
-    import BioSimSpace.Notebook
-
 from BioSimSpace.Driver import MD
 
 import BioSimSpace.Gateway
+import BioSimSpace.Notebook
 import BioSimSpace.Process
 import BioSimSpace.Protocol
 import BioSimSpace.Trajectory
@@ -92,7 +89,7 @@ def viewMolecules( files, idxs=None ):
     """
 
     if not _is_notebook():
-        warn("You can only view molecules form within a Jupyter notebook.")
+        warn("You can only view molecules from within a Jupyter notebook.")
         return None
 
     if isinstance(files, str):

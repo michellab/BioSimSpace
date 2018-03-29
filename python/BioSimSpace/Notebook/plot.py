@@ -1,4 +1,8 @@
+from BioSimSpace import _is_interactive
+
 from Sire import try_import
+
+from warnings import warn
 
 try:
     matplotlib = try_import("matplotlib")
@@ -22,6 +26,11 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Plot(x=None, y=None, xlabel=None, ylabel=None):
     """A simple function to create x/y plots with matplotlib."""
+
+    # Make sure were running interactively.
+    if not _is_interactive():
+        warn("You can only use BioSimSpace.Notebook.Plot when running interactively.")
+        return None
 
     if x is None or y is None:
         raise ValueError("Both x and y must be defined.")

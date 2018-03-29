@@ -4,19 +4,27 @@
 @brief   A class for handling interactive molecular visualisations.
 """
 
+from BioSimSpace import _is_notebook
+
+from Sire import try_import
+from Sire.IO import PDB2
+
 import Sire.Mol
 import Sire.System
-
-from Sire.IO import PDB2
 
 from ..Process.process import Process
 
 from glob import glob
 from os import remove
 from shutil import copyfile
+from warnings import warn
 
-import nglview
 import tempfile
+
+try:
+    nglview = try_import("nglview")
+except ImportError:
+    raise ImportError("NGLView is not installed. Please install nglview in order to use BioSimSpace.")
 
 class View():
     """A class for handling interactive molecular visualisations."""
@@ -28,6 +36,11 @@ class View():
 
            handle -- A handle to a Sire.System or BioSimSpace.Process object.
         """
+
+        # Make sure were running from within a Jupyter notebook.
+        if not _is_notebook():
+            warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
+            return None
 
         # Check the handle.
 
