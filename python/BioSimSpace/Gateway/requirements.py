@@ -381,7 +381,7 @@ class File(Requirement):
 
         # Make sure the file exists.
         if not path.isfile(file):
-            raise IOError(('File doesn\'t exist: "{x}"').format(x=file))
+            raise IOError("File doesn't exist: '%s'" % file)
         else:
             return file
 
@@ -436,7 +436,7 @@ class FileSet(Requirement):
 
             # Make sure the file exists.
             if not path.isfile(file):
-                raise IOError(('File doesn\'t exist: "{x}"').format(x=file))
+                raise IOError("File doesn't exist: '%s'" % file)
 
         # All is okay. Return the value.
         return value

@@ -122,8 +122,8 @@ class Process():
 
         # Create the files. This makes sure that the 'stdout' and 'stderr'
         # methods can be called when the files are empty.
-        open(self._stdout_file, 'a').close()
-        open(self._stderr_file, 'a').close()
+        open(self._stdout_file, "a").close()
+        open(self._stderr_file, "a").close()
 
         # Initialise lists to store the contents of stdout and stderr.
         self._stdout = []
@@ -202,7 +202,6 @@ class Process():
         if type(seed) is not int:
             warn("The seed must be an integer. Disabling seeding.")
             self._seed = None
-
         else:
             self._seed = seed
 
@@ -401,7 +400,7 @@ class Process():
 
     def getArgString(self):
         """Get the command-line arguments string."""
-        return ' '.join(self.getArgStringList())
+        return " ".join(self.getArgStringList())
 
     def getArgStringList(self):
         """Convert the argument dictionary into a list of strings."""
@@ -549,9 +548,9 @@ def _restrain_backbone(system):
     # Since we only want to restrain atoms in protein backbones, we compare
     # molecule residue names against this list in order to determine whether
     # the molecule is a protein.
-    amino_acids = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
-        'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'SEC',
-        'VAL', 'TRP', 'TYR']
+    amino_acids = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE",
+        "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "SEC",
+        "VAL", "TRP", "TYR"]
 
     # Loop over all molecules by number.
     for n in s.molNums():

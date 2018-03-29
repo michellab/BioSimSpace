@@ -10,7 +10,7 @@ from math import ceil
 
 # A list of allowed thermodynamic ensembles.
 # Update as support is added.
-_ensembles = ['NVT', 'NPT']
+_ensembles = ["NVT", "NPT"]
 
 class Production(Protocol):
     """A class for storing production protocols."""
@@ -137,7 +137,7 @@ class Production(Protocol):
 
         if ensemble.strip().upper() not in _ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
-            self._ensemble = 'NPT'
+            self._ensemble = "NPT"
 
         else:
             self._ensemble = ensemble.strip().upper()

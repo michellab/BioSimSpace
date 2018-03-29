@@ -67,11 +67,11 @@ class Trajectory():
 
             # Make sure the trajectory file exists.
             if not path.isfile(trajectory):
-                raise IOError(('Trajectory file doesn\'t exist: "{x}"').format(x=trajectory))
+                raise IOError("Trajectory file doesn't exist: '%s'" % trajectory)
 
             # Make sure the topology file exists.
             if not path.isfile(topology):
-                raise IOError(('Topology file doesn\'t exist: "{x}"').format(x=topology))
+                raise IOError("Topology file doesn't exist: '%s'" % topology)
 
             self._traj_file = trajectory
             self._top_file = topology
@@ -92,7 +92,7 @@ class Trajectory():
            format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
         """
 
-        if format.upper() not in ['MDTRAJ', 'MDANALYSIS']:
+        if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
             warn("Invalid trajectory format. Using default (mdtraj).")
             format = mdtraj
 
@@ -100,7 +100,7 @@ class Trajectory():
         if self._process is not None:
 
             # AMBER.
-            if self._process_name.upper() == 'AMBER':
+            if self._process_name.upper() == "AMBER":
 
                 # Path to the trajectory file.
                 traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
@@ -116,14 +116,14 @@ class Trajectory():
                 top_format = 'PARM7'
 
             # NAMD.
-            elif self._process_name.upper() == 'NAMD':
+            elif self._process_name.upper() == "NAMD":
 
                 # Path to the trajectory and topology files.
                 traj_file = "%s/%s_out.dcd" % (self._process._work_dir, self._process._name)
                 top_file = self._top_file
 
                 # Set the topology format.
-                top_format = 'PDB'
+                top_format = "PDB"
 
             # Unsupported process.
             else:
@@ -131,10 +131,10 @@ class Trajectory():
 
             # Check that the trajectory and topology files exist.
             if not path.isfile(traj_file):
-                raise IOError(('Trajectory file doesn\'t exist: "{x}"').format(x=traj_file))
+                raise IOError("Trajectory file doesn't exist: '%s'" % traj_file)
 
             if not path.isfile(top_file):
-                raise IOError(('Topology file doesn\'t exist: "{x}"').format(x=top_file))
+                raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
             # Return an MDTraj object.
             if format is 'mdtraj':
@@ -143,7 +143,7 @@ class Trajectory():
                 traj = mdtraj.load(traj_file, top=top_file)
 
                 # Delete the temporary .parm7 file.
-                if self._process_name.upper() is 'AMBER':
+                if self._process_name.upper() is "AMBER":
                     remove(top_file)
 
                 return traj
@@ -153,7 +153,7 @@ class Trajectory():
                 universe = mdanalysis.Universe(top_file, traj_file, topology_format=top_format)
 
                 # Delete the temporary .parm7 file.
-                if self._process_name.upper() is 'AMBER':
+                if self._process_name.upper() is "AMBER":
                     remove(top_file)
 
                 return universe
@@ -164,7 +164,7 @@ class Trajectory():
         # extension and rename files if needed.
         else:
             # Return an MDTraj object.
-            if format is 'mdtraj':
+            if format is "mdtraj":
 
                 # Create the MDTraj object.
                 return mdtraj.load(self._traj_file, top=self._top_file)
