@@ -33,4 +33,4 @@ frames = trajectory.getFrames([0, 1 ,2])
 
 # Get every other frame.
 frames = trajectory.getFrames([x for x in range(0, trajectory.nFrames(), 2)])
-``
+```
