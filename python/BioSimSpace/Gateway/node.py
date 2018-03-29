@@ -637,15 +637,33 @@ class Node():
         else:
             self._errors.append(error)
 
-    def addAuthor(self, author):
-        """Set the author of the node."""
+    def addAuthor(self, name=None, email=None, affiliation=None):
+        """Add an author for the node.
 
-        if type(author) is not str:
-            raise TypeError("The author must be of type 'str'")
+           Keyword arguments:
+
+           name        -- The author's name.
+           email       -- The author's email address.
+           affiliation -- The author's affilation.
+        """
+
+        if name is None:
+            raise ValueError("Missing required 'name' keyword argument.")
+
+        if type(name) is not str:
+            raise TypeError("'name' must be of type 'str'")
+
+        if type(email) is not str:
+            raise TypeError("'email' must be of type 'str'")
+
+        if type(affiliation) is not str:
+            raise TypeError("'affiliation' must be of type 'str'")
+
+        if self._authors is None:
+            self._authors = [{"name" : name, "email" : email, "affiliation" : affiliation}]
         else:
-            if self._authors is None:
-                self._authors = [author]
-            else:
+            author = {"name" : name, "email" : email, "affiliation" : affiliation}
+            if not author in self._authors:
                 self._authors.append(author)
 
     def getAuthors(self):
