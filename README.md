@@ -5,6 +5,7 @@ Code and resources for the EPSRC [BioSimSpace](https://biosimspace.org) project.
 To install into a [Sire](https://github.com/michellab/Sire) package, use:
 
 ```bash
+cd python
 python setup.py install
 ```
 
@@ -16,6 +17,17 @@ $HOME/sire.app/bin/python setup.py install
 ```
 At present you will need to use the `devel` branch of [Sire](https://github.com/michellab/Sire)
 to make sure that you have access to the latest features and bug-fixes.
+
+## Documentation
+
+Each sub-package has its own README page:
+
+- [BioSimspace.Driver](python/BioSimSpace/Driver)
+- [BioSimspace.Gateway](python/BioSimSpace/Gateway)
+- [BioSimspace.Notebook](python/BioSimSpace/Notebook)
+- [BioSimspace.Process](python/BioSimSpace/Process)
+- [BioSimspace.Protocol](python/BioSimSpace/Protocol)
+- [BioSimspace.Trajectory](python/BioSimSpace/Trajectory)
 
 ## Dependencies
 
