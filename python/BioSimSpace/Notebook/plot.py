@@ -7,8 +7,9 @@ from warnings import warn
 try:
     matplotlib = try_import("matplotlib")
     import matplotlib.pyplot as plt
+    _has_matplotlib = True
 except ImportError:
-    raise ImportError("Matplotlib is not installed. Please install matplotlib in order to use BioSimSpace.")
+    _has_matplotlib = False
 
 # Define font sizes.
 SMALL_SIZE = 14
@@ -30,6 +31,12 @@ def Plot(x=None, y=None, xlabel=None, ylabel=None):
     # Make sure were running interactively.
     if not _is_interactive():
         warn("You can only use BioSimSpace.Notebook.Plot when running interactively.")
+        return None
+
+    # Matplotlib failed to import.
+    if not _has_matplotlib:
+        warn("BioSimSpace.Notebook.Plot is disabled as matplotlib failed "
+            "to load. Please check your matplotlib installation.")
         return None
 
     if x is None or y is None:
