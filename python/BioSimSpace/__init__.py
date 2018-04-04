@@ -25,12 +25,12 @@ def _is_interactive():
         return False      # Probably standard Python interpreter
 
 from BioSimSpace.Driver import MD
+from BioSimSpace.Trajectory import Trajectory
 
 import BioSimSpace.Gateway
 import BioSimSpace.Notebook
 import BioSimSpace.Process
 import BioSimSpace.Protocol
-import BioSimSpace.Trajectory
 
 import Sire.IO
 import Sire.Base
