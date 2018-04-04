@@ -196,7 +196,7 @@ class Trajectory():
         if self._process is not None:
             time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
         else:
-            time_interval = self._trajectory.getTimeStep() / 1000
+            time_interval = self._trajectory.timestep / 1000
 
         # Create the indices array.
 
