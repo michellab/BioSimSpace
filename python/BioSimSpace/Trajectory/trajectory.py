@@ -8,6 +8,7 @@ from ..Process.process import Process
 
 from Sire import try_import
 from Sire.IO import MoleculeParser
+from Sire.Mol import AtomNum, Molecule, MolIdx
 
 from os import path, remove
 from shutil import copyfile
@@ -278,3 +279,72 @@ class Trajectory():
             return 0
         else:
             return self._trajectory.n_frames
+
+    def RMSD(self, frame=None, atoms=None, molecule=None):
+        """Compute the root mean squared displacement.
+
+           Keyword arguments:
+
+           frame    -- The index of the reference frame.
+           atoms    -- A list of reference atom indices.
+           molecule -- The index of the reference molecule.
+        """
+
+        # Default to the first frame.
+        if frame is None:
+            frame = 0
+        else:
+            if type(frame) is not int:
+                raise TypeError("'frame' must be of type 'int'")
+            else:
+                # Store the maximum frame number.
+                max_frame = self._trajectory.n_frames - 1
+                if abs(frame) > max_frame:
+                    raise ValueError("Frame index (%d) of of range (0-%d)." %s (frame, max_frame))
+
+        if molecule is not None and atoms is not None:
+            warn("Cannot have a reference molecule and list of atoms. Defaulting to atoms.")
+            molecule = None
+
+        # Extract the molecule from the reference trajectory frame and generate a
+        # list of atom indices.
+        if molecule is not None:
+            # Integer molecule index.
+            if type(molecule) is int:
+                try:
+                    molecule = self.getFrames(frame)[0][MolIdx(molecule)]
+                except:
+                    raise ValueError("Missing 'MolIdx(%d)' in Sire.System" % molecule)
+            # Sire.Mol.MolIdx index.
+            elif type(molecule) is MolIdx:
+                try:
+                    molecule = self.getFrames(frame)[0][molecule]
+                except:
+                    raise ValueError("Missing '%s' in Sire.System" % molecule.toString())
+            # A Sire.Mol.Molecule object.
+            elif type(molecule) is Molecule:
+                pass
+            else:
+                raise TypeError("'molecule' must be of type 'int', 'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
+
+            # Initialise the list of atom indices.
+            atoms = []
+
+            # Loop over all of the atoms and add them to the list.
+            # Atoms are numbered from one in Sire, so subtract one to get the python index.
+            for atom in molecule.atoms():
+                atoms.append(atom.number().value() - 1)
+
+        if atoms is not None:
+            # Check that all of the atom indices are integers.
+            if not all(isinstance(x, int) for x in atoms):
+                raise TypeError("'atom' indices must be of type 'int'")
+
+        # Use MDTraj to compute the RMSD.
+        try:
+            rmsd = mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
+        except:
+            raise ValueError("Atom indices not found in the system.")
+
+        # Convert to a list and return.
+        return list(rmsd)
