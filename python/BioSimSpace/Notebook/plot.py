@@ -40,8 +40,17 @@ def Plot(x=None, y=None, xlabel=None, ylabel=None):
             "to load. Please check your matplotlib installation.")
         return None
 
-    if x is None or y is None:
-        raise ValueError("Both x and y must be defined.")
+    if x is None:
+        if y is None:
+            raise ValueError("'y' data must be defined!")
+        else:
+            if type(y) is not list:
+                raise TypeError("'y' must be of type 'list'")
+            # No x data, use array index as value.
+            x = [x for x in range(0, len(y))]
+
+    if type(x) is not list:
+        raise TypeError("'x' must be of type 'list'")
 
     if len(x) != len(y):
         raise ValueError("Mismatch in list sizes: len(x) = %d, len(y) = %d"
@@ -70,4 +79,4 @@ def Plot(x=None, y=None, xlabel=None, ylabel=None):
     # Turn on grid.
     plt.grid()
 
-    return plt
+    return plt.show()
