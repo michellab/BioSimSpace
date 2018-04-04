@@ -12,9 +12,7 @@ from ..Process import *
 from ..Protocol import *
 from ..Protocol.protocol import Protocol
 
-from os import environ
-
-import path
+from os import environ, path
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE           GPU
