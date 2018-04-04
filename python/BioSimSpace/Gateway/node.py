@@ -20,7 +20,7 @@ if _is_notebook():
         raise ImportError("Fileupload is not installed. Please install fileupload in order to use BioSimSpace.")
 
     from IPython.display import FileLink
-    import tarfile
+    import zipfile
 
 from .requirements import *
 
@@ -825,24 +825,24 @@ class Node():
                 # Create the archive name.
                 if self._name is None:
                     arcname = "output/"
-                    tarname = "output.tar.gz"
+                    zipname = "output.zip"
                 else:
                     arcname = "%s/" % self._name
-                    tarname = "%s.tar.gz" % self._name
+                    zipname = "%s.zip" % self._name
 
                 # Append the files to the archive.
-                with tarfile.open(tarname, "w:gz") as tar:
+                with zipfile.ZipFile(zipname, "w") as zip:
                     # Loop over all of the file outputs.
                     for output in file_outputs:
                         if type(output) is File:
                             file = output.getValue()
-                            tar.add(file, arcname=arcname + basename(file))
+                            zip.write(file, arcname=arcname + basename(file))
                         else:
                             for file in output.getValue():
-                                tar.add(file, arcname=arcname + basename(file))
+                                zip.write(file, arcname=arcname + basename(file))
 
                 # Return a link to the archive.
-                return FileLink(tarname)
+                return FileLink(zipname)
         else:
             return True
 
