@@ -26,8 +26,18 @@ if _has_matplotlib:
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-def Plot(x=None, y=None, xlabel=None, ylabel=None):
-    """A simple function to create x/y plots with matplotlib."""
+def Plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
+    """A simple function to create x/y plots with matplotlib.
+
+       Keyword arguments:
+
+       x      -- A list of x data values.
+       y      -- A list of y data values.
+       xlabel -- The x axis label string.
+       ylabel -- The y axis label string.
+       logx   -- Whether the x axis is logarithmic.
+       logy   -- Whether the y axis is logarithmic.
+    """
 
     # Make sure were running interactively.
     if not _is_interactive():
@@ -68,13 +78,19 @@ def Plot(x=None, y=None, xlabel=None, ylabel=None):
     plt.figure(figsize=(8, 6))
 
     # Create the plot.
-    plt.plot(x, y, '-bo')
+    plt.plot(x, y, "-bo")
 
     # Add axis labels.
     if xlabel is not None:
         plt.xlabel(xlabel)
     if ylabel is not None:
         plt.ylabel(ylabel)
+
+    # Scale the axes.
+    if logx:
+        plt.xscale("log")
+    if logy:
+        plt.yscale("log")
 
     # Turn on grid.
     plt.grid()
