@@ -25,8 +25,7 @@ if _is_notebook():
 from .requirements import *
 
 from collections import OrderedDict
-from os import makedirs
-from os.path import basename
+from os import makedirs, path
 from warnings import warn
 
 import argparse
@@ -61,7 +60,7 @@ class Node():
         # Set the node name.
         if name is None:
             try:
-                self._name = basename(main.__file__)
+                self._name = path.basename(main.__file__)
             except:
                 self._name = None
 
@@ -836,10 +835,10 @@ class Node():
                     for output in file_outputs:
                         if type(output) is File:
                             file = output.getValue()
-                            zip.write(file, arcname=arcname + basename(file))
+                            zip.write(file, arcname=arcname + path.basename(file))
                         else:
                             for file in output.getValue():
-                                zip.write(file, arcname=arcname + basename(file))
+                                zip.write(file, arcname=arcname + path.basename(file))
 
                 # Return a link to the archive.
                 return FileLink(zipname)

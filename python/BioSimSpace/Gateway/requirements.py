@@ -4,9 +4,14 @@
 @brief   A collection of requirement classes.
 """
 
-from os import path
-
+import bz2
+import gzip
+import os
 import re
+import shutil
+import sys
+import tarfile
+import zipfile
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
@@ -375,12 +380,14 @@ class File(Requirement):
 
         # Check the type.
         if type(value) is str:
-            file = value
+            file = _unarchive(value)
+            if file is None:
+                file = value
         else:
             raise TypeError("The value should be of type 'str'")
 
         # Make sure the file exists.
-        if not path.isfile(file):
+        if not os.path.isfile(file):
             raise IOError("File doesn't exist: '%s'" % file)
         else:
             return file
@@ -417,6 +424,10 @@ class FileSet(Requirement):
         if type(value) is str:
             value = [value]
 
+        # The user can pass a list of compressed files so we need to keep
+        # track of the names of the uncompressed files.
+        uncompressed_files = []
+
         # We should receive a list of strings.
         if type(value) is list:
 
@@ -429,14 +440,105 @@ class FileSet(Requirement):
             for file in value:
 
                 # Check the types.
-                if type(file) is str:
-                    file = file
-                else:
+                if type(file) is not str:
                     raise TypeError("The value should be of type 'str'")
 
-            # Make sure the file exists.
-            if not path.isfile(file):
-                raise IOError("File doesn't exist: '%s'" % file)
+                # Check whether this is an archive.
+                files = _unarchive(file)
 
-        # All is okay. Return the value.
-        return value
+                if files is not None:
+                    if type(files) is list:
+                        uncompressed_files += files
+                    else:
+                        uncompressed_files.append(files)
+                else:
+                    # Make sure the file exists.
+                    if not os.path.isfile(file):
+                        raise IOError("File doesn't exist: '%s'" % file)
+
+        if len(uncompressed_files) > 0:
+            return uncompressed_files
+        else:
+            return value
+
+def _unarchive(name):
+    """Decompress an archive and return a list of files."""
+
+    # Get the directory name.
+    dir = os.path.dirname(name)
+
+    # If the file compressed file has been passed on the command-line, then
+    # we'll extract it to a directory to avoid littering the current workspace.
+    if dir == "uploads":
+        dir += "/"
+    else:
+        dir = "uncompressed/"
+
+    # List of supported tar file formats.
+    tarfiles = ["tar.gz", "tar.bz2", "tar"]
+
+    # Check whether this is a tar compressed file.
+    for tar_name in tarfiles:
+
+        # Found a match.
+        if tar_name in name.lower():
+
+            # The list of decompressed files.
+            files = []
+
+            # Decompress the archive.
+            with tarfile.open(name) as tar:
+                # We need to call tar.list(), otherwise the tar object will not know
+                # about nested directories, i.e. it will appear as if ther is a single
+                # member.
+                print("Decompressing...")
+                tar.list(verbose=False)
+
+                # Loop over all of the members and get the file names.
+                # If the name has no extension, then we assume that it's a directory.
+                for file in tar.members:
+                    if os.path.splitext(file.name)[1] is not "":
+                        files.append(dir + file.name)
+
+                # Now extract all of the files.
+                tar.extractall(dir)
+
+            return files
+
+    # Get the file name and extension.
+    file, ext = os.path.splitext(name)
+
+    # This is a zip file.
+    if ext.lower() == ".zip":
+        # The list of decompressed files.
+        files = None
+
+        with zipfile.ZipFile(name) as zip:
+            files = zip.namelist()
+            print("Decompressing...")
+            for file in files:
+                print(file)
+            zip.extractall(dir)
+
+        return files
+
+    # This is a gzip file.
+    if ext.lower() == ".gz" or ext == ".gzip":
+        with gzip.open(name, "rb") as f_in:
+            with open(file, "wb") as f_out:
+                print("Decompressing...\n%s" % name)
+                shutil.copyfileobj(f_in, f_out)
+
+        return file
+
+    # This is a bzip2 file.
+    if ext.lower() == ".bz2" or ext == ".bzip2":
+        with bz2.open(name, "rb") as f_in:
+            with open(file, "wb") as f_out:
+                print("Decompressing...\n%s" % name)
+                shutil.copyfileobj(f_in, f_out)
+
+        return file
+
+    # If we get this far, then this is not a supported archive.
+    return None
