@@ -6,6 +6,7 @@
 
 from .protocol import Protocol
 
+from math import ceil
 from pytest import approx
 from warnings import warn
 
@@ -13,7 +14,7 @@ class Equilibration(Protocol):
     """A class for storing equilibration protocols."""
 
     def __init__(self, timestep=2, runtime=0.2, temperature_start=300,
-            temperature_end=None, restrain_backbone=False):
+            temperature_end=None, frames=20, restrain_backbone=False):
         """Constructor.
 
            Keyword arguments:
@@ -22,6 +23,7 @@ class Equilibration(Protocol):
            runtime           -- The running time (in nanoseconds).
            temperature_start -- The starting temperature (in Kelvin).
            temperature_end   -- The final temperature (in Kelvin).
+           frames            -- The number of trajectory frames to record.
            restrain_backbone -- Whether the atoms in the backbone are fixed.
         """
 
@@ -48,6 +50,9 @@ class Equilibration(Protocol):
         else:
             self._temperature_end = None
             self._is_const_temp = True
+
+        # Set the number of trajectory frames.
+        self.setFrames(frames)
 
         # Set the backbone restraint.
         self.setRestraint(restrain_backbone)
@@ -137,6 +142,23 @@ class Equilibration(Protocol):
 
         else:
             self._temperature_end = temperature
+
+    def getFrames(self):
+        """Return the number of frames."""
+        return self._frames
+
+    def setFrames(self, frames):
+        """Set the number of frames."""
+
+        if type(frames) is not int:
+            raise TypeError("'frames' must be of type 'int'")
+
+        if frames <= 0:
+            warn("The number of frames must be positive. Using default (20).")
+            self._frames = 20
+
+        else:
+            self._frames = ceil(frames)
 
     def isRestrained(self):
         """Return whether the backbone is restrained."""

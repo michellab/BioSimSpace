@@ -363,6 +363,9 @@ class Namd(process.Process):
                 self.addToConfig("reassignIncr          1.")
                 self.addToConfig("reassignHold          %.2f" % self._protocol.getEndTemperature())
 
+            # Trajectory output frequency.
+            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.getFrames()))
+
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 

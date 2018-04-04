@@ -267,6 +267,8 @@ class Amber(process.Process):
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
+            self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
+                % floor(steps / self._protocol.getFrames()))
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  dt=%.3f," % timestep)       # Time step.
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
@@ -384,8 +386,8 @@ class Amber(process.Process):
                 if self._protocol.isRestrained():
                     self.setArg("-ref", "%s.rst7" % self._name)
 
-            # Append a trajectory file if this is a production run.
-            elif type(self._protocol) is Production:
+            # Append a trajectory file if this is an equilibration or production run.
+            if type(self._protocol) is Equilibration or type(self._protocol) is Production:
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
