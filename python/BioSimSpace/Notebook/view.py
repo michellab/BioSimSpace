@@ -37,7 +37,7 @@ class View():
            handle -- A handle to a Sire.System or BioSimSpace.Process object.
         """
 
-        # Make sure were running from within a Jupyter notebook.
+        # Make sure we're running inside a Jupyter notebook.
         if not _is_notebook():
             warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
@@ -72,6 +72,10 @@ class View():
            gui -- Whether to display the gui.
         """
 
+        # Make sure we're running inside a Jupyter notebook.
+        if not _is_notebook():
+            return None
+
         # Get the latest system from the process.
         if self._is_process:
             system = self._handle.getSystem()
@@ -94,6 +98,10 @@ class View():
            indices -- A list of molecule indices.
            gui     -- Whether to display the gui.
         """
+
+        # Make sure we're running inside a Jupyter notebook.
+        if not _is_notebook():
+            return None
 
         # Return a view of the entire system.
         if indices is None:
@@ -140,6 +148,10 @@ class View():
            gui   -- Whether to display the gui.
         """
 
+        # Make sure we're running inside a Jupyter notebook.
+        if not _is_notebook():
+            return None
+
         # Get the latest system from the process.
         if self._is_process:
             system = self._handle.getSystem()
@@ -176,6 +188,10 @@ class View():
            gui   -- Whether to display the gui.
         """
 
+        # Make sure we're running inside a Jupyter notebook.
+        if not _is_notebook():
+            return None
+
         # Return if there are no views.
         if self._num_views == 0:
             return
@@ -206,6 +222,10 @@ class View():
 
            index -- The view index.
         """
+
+        # Make sure we're running inside a Jupyter notebook.
+        if not _is_notebook():
+            return None
 
         # Default to the most recent view.
         if index is None:
