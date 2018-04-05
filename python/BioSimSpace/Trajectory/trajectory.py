@@ -187,7 +187,7 @@ class Trajectory():
             self._trajectory = self.getTrajectory()
 
             # There is no trajectory.
-            if traj is None:
+            if self._trajectory is None:
                 return None
 
         # Work out the frame spacing in nanoseconds.
@@ -203,7 +203,7 @@ class Trajectory():
 
         # Default to all frames.
         if indices is None:
-            indices = [x for x in range(0, traj.n_frames)]
+            indices = [x for x in range(0, self._trajectory.n_frames)]
 
         # A single frame index.
         elif type(indices) is int:
