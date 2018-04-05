@@ -102,9 +102,9 @@ class Node():
             self._parser = argparse.ArgumentParser(description=self._description,
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-            # Add an option to allow the user to load a configuration from file.
-            config = File(help="path to a configuration file (unsupported)", optional=True)
-            self.addInput("config", config)
+            # TODO: Add an option to allow the user to load a configuration from file.
+            # config = File(help="path to a configuration file", optional=True)
+            # self.addInput("config", config)
 
     def __del__(self):
         """Destructor."""
