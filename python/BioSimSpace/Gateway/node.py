@@ -91,6 +91,7 @@ class Node():
 
         # Initialise the parser.
         self._parser = None
+        self._required_args = None
 
         # Intialise the Jupyter input panel.
         self._control_panel = None
@@ -98,10 +99,11 @@ class Node():
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
             # Create the parser.
-            self._parser = argparse.ArgumentParser(description=self._description)
+            self._parser = argparse.ArgumentParser(description=self._description,
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
             # Add an option to allow the user to load a configuration from file.
-            config = File(help="path to a configuration file (optional)", optional=True)
+            config = File(help="path to a configuration file (unsupported)", optional=True)
             self.addInput("config", config)
 
     def __del__(self):
@@ -130,8 +132,11 @@ class Node():
         # We already have an input with this name.
         reset = False
         if name in self._inputs:
-            warn("Duplicate input requirement '%s'"  % name)
-            reset = True
+            if self._is_notebook:
+                warn("Duplicate input requirement '%s'"  % name)
+                reset = True
+            else:
+                raise ValueError("Duplicate input requirement '%s'"  % name)
 
         # Add the input to the dictionary.
         self._inputs[name] = input
@@ -174,8 +179,12 @@ class Node():
                         self._parser.add_argument(name, type=_str2bool, nargs='?',
                             const=True, default=input.getDefault(), help=input.getHelp())
                     else:
-                        self._parser.add_argument(name, type=input.getArgType(),
-                            help=input.getHelp(), default=input.getDefault())
+                        if input.getAllowedValues() is not None:
+                            self._parser.add_argument(name, type=input.getArgType(), help=input.getHelp(),
+                                default=input.getDefault(), choices=input.getAllowedValues())
+                        else:
+                            self._parser.add_argument(name, type=input.getArgType(),
+                                help=input.getHelp(), default=input.getDefault())
             else:
                 if input.isMulti() is not False:
                     self._parser.add_argument(name, type=input.getArgType(), nargs='+',
@@ -184,12 +193,24 @@ class Node():
                     self._parser.add_argument(name, type=input.getArgType(),
                         help=input.getHelp())
         else:
+            # Create the required arguments group.
+            if self._required_args is None:
+                self._required_args = self._parser.add_argument_group("required arguments")
+
             if input.isMulti() is not False:
-                self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                self._required_args.add_argument(name, type=input.getArgType(), nargs='+',
                     help=input.getHelp(), required=True)
             else:
-                self._parser.add_argument(name, type=input.getArgType(),
-                    help=input.getHelp(), required=True)
+                if input.getAllowedValues() is not None:
+                    self._required_args.add_argument(name, type=input.getArgType(),
+                        help=input.getHelp(), required=True, choices=input.getAllowedValues())
+                else:
+                    if input.getArgType() is bool:
+                        self._required_args.add_argument(name, type=_str2bool, nargs='?',
+                            const=True, help=input.getHelp())
+                    else:
+                        self._required_args.add_argument(name, type=input.getArgType(),
+                            help=input.getHelp(), required=True)
 
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
