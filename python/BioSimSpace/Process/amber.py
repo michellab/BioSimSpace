@@ -475,7 +475,11 @@ class Amber(process.Process):
         elif block is "AUTO" and self._is_blocked:
             self.wait()
 
-        return Trajectory(process=self)
+        try:
+            traj = Trajectory(process=self)
+            return traj
+        except:
+            return None
 
     def getRecord(self, record, time_series=False, block="AUTO"):
         """Get a record from the stdout dictionary.
