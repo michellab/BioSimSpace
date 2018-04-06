@@ -141,7 +141,11 @@ class Trajectory():
             if format is 'mdtraj':
 
                 # Create the MDTraj object.
-                traj = mdtraj.load(traj_file, top=top_file)
+                try:
+                    traj = mdtraj.load(traj_file, top=top_file)
+                except:
+                    warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    traj = None
 
                 # Delete the temporary .parm7 file.
                 if self._process_name.upper() is "AMBER":
@@ -151,7 +155,11 @@ class Trajectory():
 
             # Return an MDAnalysis Universe.
             else:
-                universe = mdanalysis.Universe(top_file, traj_file, topology_format=top_format)
+                try:
+                    universe = mdanalysis.Universe(top_file, traj_file, topology_format=top_format)
+                except:
+                    warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    universe = None
 
                 # Delete the temporary .parm7 file.
                 if self._process_name.upper() is "AMBER":
@@ -167,12 +175,23 @@ class Trajectory():
             # Return an MDTraj object.
             if format is "mdtraj":
 
-                # Create the MDTraj object.
-                return mdtraj.load(self._traj_file, top=self._top_file)
+                try:
+                    traj = mdtraj.load(self._traj_file, top=self._top_file)
+                except:
+                    warn("MDTraj failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
+                    traj = None
+
+                return traj
 
             # Return an MDAnalysis Universe.
             else:
-                return mdanalysis.Universe(self._top_file, self._traj_file)
+                try:
+                    universe = mdanalysis.Universe(self._top_file, self._traj_file, topology_format=top_format)
+                except:
+                    warn("MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
+                    universe = None
+
+                return universe
 
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of Sire systems.
