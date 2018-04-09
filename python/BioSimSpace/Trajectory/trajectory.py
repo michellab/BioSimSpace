@@ -258,15 +258,17 @@ class Trajectory():
         # Intialise the list of frames.
         frames = []
 
-        # Store the maximum frame number.
-        max_frame = self._trajectory.n_frames - 1
+        # Store the number of frames.
+        n_frames = self._trajectory.n_frames
 
         # Loop over all indices.
         for x in indices:
 
             # Make sure the frame index is within range.
-            if abs(x) > max_frame:
-                raise ValueError("Frame index (%d) of of range (0-%d)." %s (x, max_frame))
+            if x > 0 and x >= n_frames:
+                raise ValueError("Frame index (%d) of of range (0 to %d)." %s (x, n_frames - 1))
+            elif x < -n_frames:
+                raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (x, n_frames))
 
             # The name of the frame coordinate file.
             frame_file = ".frame.nc"
@@ -316,10 +318,14 @@ class Trajectory():
             if type(frame) is not int:
                 raise TypeError("'frame' must be of type 'int'")
             else:
-                # Store the maximum frame number.
-                max_frame = self._trajectory.n_frames - 1
-                if abs(frame) > max_frame:
-                    raise ValueError("Frame index (%d) of of range (0-%d)." %s (frame, max_frame))
+                # Store the number of frames.
+                n_frames = self._trajectory.n_frames
+
+                # Make sure the frame index is within range.
+                if frame > 0 and frame >= n_frames:
+                    raise ValueError("Frame index (%d) of of range (0 to %d)." %s (frame, n_frames - 1))
+                elif frame < -n_frames:
+                    raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (frame, n_frames))
 
         if molecule is not None and atoms is not None:
             warn("Cannot have a reference molecule and list of atoms. Defaulting to atoms.")
