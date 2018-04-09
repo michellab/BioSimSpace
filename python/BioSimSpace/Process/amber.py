@@ -525,7 +525,7 @@ class Amber(process.Process):
         elif block is "AUTO" and self._is_blocked:
             self.wait()
 
-        return self._stdout_dict
+        return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
         """Return the current dictionary of stdout time-series records."""

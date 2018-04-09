@@ -413,6 +413,10 @@ class FileSet(Requirement):
         # Call the base class constructor.
         super().__init__(help=help, optional=optional)
 
+    def getValue(self):
+        """Return the value."""
+        return self._value.copy()
+
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 

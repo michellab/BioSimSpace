@@ -637,7 +637,11 @@ class Node():
         self._is_valid_input = self._validateInput()
 
         try:
-            return self._inputs[name].getValue()
+            value = self._inputs[name].getValue()
+            if type(value) is list:
+                return value.copy()
+            else:
+                return value
         except KeyError:
             raise
 
@@ -647,7 +651,7 @@ class Node():
         # Validate the inputs.
         self._is_valid_input = self._validateInput()
 
-        return self._inputs
+        return self._inputs.copy()
 
     def addError(self, error):
         """Add an error message."""
@@ -673,10 +677,10 @@ class Node():
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'")
 
-        if type(email) is not str:
+        if email is not None and type(email) is not str:
             raise TypeError("'email' must be of type 'str'")
 
-        if type(affiliation) is not str:
+        if affiliation is not None and type(affiliation) is not str:
             raise TypeError("'affiliation' must be of type 'str'")
 
         if self._authors is None:
@@ -688,7 +692,7 @@ class Node():
 
     def getAuthors(self):
         """Return the list of authors."""
-        return self._authors
+        return self._authors.copy()
 
     def setLicense(self, license):
         """Set the license for the node."""

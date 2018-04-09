@@ -24,7 +24,7 @@ class Custom(Protocol):
 
     def getConfig(self):
         """Return the custom configuration."""
-        return self._config
+        return self._config.copy()
 
     def setConfig(self, config):
         """Set the custom configuration."""

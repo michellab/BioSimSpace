@@ -305,7 +305,7 @@ class Process():
 
     def inputFiles(self):
         """Return the list of input files."""
-        return self._input_files
+        return self._input_files.copy()
 
     def workDir(self):
         """Return the working directory."""
@@ -318,7 +318,7 @@ class Process():
         for line in pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
 
-        return self._stdout
+        return self._stdout.copy()
 
     def getError(self):
         """Return the entire stderr for the process as a list of strings."""
@@ -327,7 +327,7 @@ class Process():
         for line in pygtail.Pygtail(self._stderr_file):
             self._stderr.append(line.rstrip())
 
-        return self._stderr
+        return self._stderr.copy()
 
     def command(self):
         """Return the command-line string used to run the process."""
@@ -335,7 +335,7 @@ class Process():
 
     def getConfig(self):
         """Get the list of configuration file strings."""
-        return self._config
+        return self._config.copy()
 
     def setConfig(self, config):
         """Set the list of configuration file strings."""
@@ -396,7 +396,7 @@ class Process():
 
     def getArgs(self):
         """Get the dictionary of command-line arguments."""
-        return self._args
+        return self._args.copy()
 
     def getArgString(self):
         """Get the command-line arguments string."""
