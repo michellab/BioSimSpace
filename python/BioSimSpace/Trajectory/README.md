@@ -7,7 +7,21 @@ file. Internally, the `Trajectory` class makes use of [MDTraj](http://mdtraj.org
 and [MDAnalysis](https://www.mdanalysis.org) and can return trajectory
 objects in either of these formats.
 
-Some examples:
+For particular trajectory formats, MDTraj trajectory relies on the
+[NetCDF](https://en.wikipedia.org/wiki/NetCDF) format and the reader/writer
+that comes as part of the [SciPy](https://www.scipy.org) package. Following
+the update to NetCDF-5, the SciPy writer no longer conforms to the padding
+requirements of the NetCDF standard. (See [here](https://github.com/Unidata/netcdf-c/issues/657)
+for details.) This has been fixed in the development version of SciPy and
+will be part of the next release. In the mean time, it is possible to patch
+the installed version of SciPy using the following command:
+
+```bash
+curl https://raw.githubusercontent.com/scipy/scipy/master/scipy/io/netcdf.py \
+    > $HOME/sire.app/lib/python3.5/site-packages/scipy/io/
+```
+
+Some examples of how to use the Trajectory sub-package:
 
 ```python
 import BioSimSpace as BSS
