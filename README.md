@@ -15,8 +15,8 @@ has been added to your path. Alternatively, run:
 ```bash
 $HOME/sire.app/bin/python setup.py install
 ```
-At present you will need to use the `devel` branch of [Sire](https://github.com/michellab/Sire)
-to make sure that you have access to the latest features and bug-fixes.
+At present we recommend using the `devel` branch of [Sire](https://github.com/michellab/Sire)
+to ensure that you have access to the latest features and bug-fixes.
 
 ## Documentation
 
@@ -29,6 +29,8 @@ Each sub-package has its own README page:
 - [BioSimspace.Protocol](python/BioSimSpace/Protocol)
 - [BioSimspace.Trajectory](python/BioSimSpace/Trajectory)
 
+Full API documentation and examples can be found at [biosimspace.org](https://biosimspace.org).
+
 ## Dependencies
 
 BioSimSpace makes use of several external python packages. When using BioSimSpace
@@ -40,16 +42,18 @@ error.)
 
 ## Developing
 
-Please create a feature branch for development work. We use the following
-formatting conventions:
-
-* Branches related to a particular feature should be prefixed with `feature`,
-i.e. for the BioSimSpace.Process module:
+Please create a feature branch for development work. Branches related to a
+particular feature should be prefixed with `feature`, i.e. for the
+BioSimSpace.Process module:
 
 ```bash
 feature-process
 ```
 
-When you are happy with your feature create a pull request so that the feature
+When you are happy with your feature, create a pull request so that the feature
 can be merged into devel. Once the merge is successful, please delete the
 redundant feature branch.
+
+## Tests
+
+A test suite can be found [here](https://github.com/michellab/BioSimSpaceUnitTests).
