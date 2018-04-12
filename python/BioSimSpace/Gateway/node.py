@@ -427,7 +427,7 @@ class Node():
                 # Unbounded float.
                 if is_unbounded:
                     # Create a float widget.
-                    widget = widgets.IntText(
+                    widget = widgets.FloatSlider(
                         value=default,
                         description=name,
                         tooltip=input.getHelp(),
