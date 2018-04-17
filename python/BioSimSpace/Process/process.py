@@ -146,8 +146,22 @@ class Process():
         # Initaliae the command-line argument dictionary.
         self._args = OrderedDict()
 
-    def run(self, system=None, protocol=None, autostart=True):
-        """Create and run a new process."""
+    def run(self, system=None, protocol=None, autostart=True, restart=False):
+        """Create and run a new process.
+
+           Keyword arguments:
+
+           system    -- The molecular system.
+           protocol  -- The simulation protocol.
+           autostart -- Whether to start the process automatically.
+           restart   -- Whether to restart the simulation, i.e. use the original system.
+
+           return    -- The new process object.
+        """
+
+        # Try to get the current system.
+        if not restart:
+            system = self.getSystem()
 
         # Use the existing system.
         if system is None:
@@ -164,7 +178,7 @@ class Process():
 
         # Check that the new protocol is valid.
         else:
-            if isinstance(protocol, Protocol):
+            if not isinstance(protocol, Protocol):
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Create the new process.
