@@ -86,7 +86,7 @@ class MD():
     """A simple class for driving molecular dynamics simulations."""
 
     @staticmethod
-    def run(system, protocol, autostart=True):
+    def run(system, protocol, autostart=True, name=None, work_dir=None, seed=None):
         """Constructor.
 
            Positional arguments:
@@ -97,6 +97,9 @@ class MD():
            Keyword arguments:
 
            autostart -- Whether to start the process automatically.
+           name      -- The name of the process.
+           work_dir  -- The working directory for the process.
+           seed      -- A random number seed.
         """
 
         # Check that the system is valid.
@@ -118,15 +121,15 @@ class MD():
 
         # AMBER.
         if package == "AMBER":
-            process = Amber(system, protocol)
+            process = Amber(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # GROMACS.
         elif package == "GROMACS":
-            process = Gromacs(system, protocol)
+            process = Gromacs(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # NAMD.
         elif package == "NAMD":
-            process = Namd(system, protocol)
+            process = Namd(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # Start the process.
         if autostart:
