@@ -24,7 +24,7 @@ protocol = BSS.Protocol.Minimisation()
 
 # Automatically find an appropriate molecular dynamics package on the
 # host environment, set up the simulation and return a running process.
-# Since the system was generate with a CRD and TOP file, BSS.MD will
+# Since the system was generated from a CRD and TOP file, BSS.MD will
 # try to find an AMBER package.
 process = BSS.MD.run(system, protocol)
 ```
