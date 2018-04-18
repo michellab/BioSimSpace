@@ -194,8 +194,8 @@ process.stdout()
 process.stderr(20)
 
 # Get the whole of stdout and stderr a list of strings.
-stdout = process.getOutput()
-stderr = process.getError()
+stdout = process.getStdout()
+stderr = process.getStderr()
 
 # Get the current number of steps, the run time (in nanoseconds) and energy (in kcal/mol).
 # Many other record types are supported. The options available depend on the nature of the
