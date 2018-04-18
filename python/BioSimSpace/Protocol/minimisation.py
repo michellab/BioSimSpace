@@ -22,6 +22,14 @@ class Minimisation(Protocol):
         # Set the number of steps.
         self.setSteps(steps)
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
+
     def getSteps(self):
         """Return the maximum number of steps."""
         return self._steps

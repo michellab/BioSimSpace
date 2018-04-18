@@ -48,7 +48,7 @@ class Equilibration(Protocol):
 
         # Constant temperature simulation.
         else:
-            self._temperature_end = None
+            self._temperature_end = self._temperature_start
             self._is_const_temp = True
 
         # Set the number of trajectory frames.
@@ -56,6 +56,20 @@ class Equilibration(Protocol):
 
         # Set the backbone restraint.
         self.setRestraint(restrain_backbone)
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return ("<BioSimSpace.Protocol.Equilibration: timestep=%.2f, runtime=%.2f, "
+                "temperature_start=%.2f, temperature_end=%.2f, frames=%d, restrain_backbone=%r>"
+               ) % (self._timestep, self._runtime, self._temperature_start,
+                       self._temperature_end, self._frames, self._is_restrained)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return ("BioSimSpace.Protocol.Equilibration(timestep=%.2f, runtime=%.2f, "
+                "temperature_start=%.2f, temperature_end=%.2f, frames=%d, restrain_backbone=%r)"
+               ) % (self._timestep, self._runtime, self._temperature_start,
+                       self._temperature_end, self._frames, self._is_restrained)
 
     def getTimeStep(self):
         """Return the time step."""
