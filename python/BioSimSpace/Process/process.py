@@ -402,6 +402,13 @@ class Process():
         else:
             raise ValueError("'config' must be a string, list of strings, or a file path.")
 
+    def resetConfig(self):
+        """Reset the configuration parameters."""
+        self._generate_config()
+
+        # Write the new configuration file.
+        self.writeConfig(self._config_file)
+
     def writeConfig(self, file):
         """Write the configuration to file."""
         with open(file, "w") as f:
