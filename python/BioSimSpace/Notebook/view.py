@@ -107,6 +107,14 @@ class View():
         if indices is None:
             return self.system(gui=gui)
 
+        # Convert single indices to a list.
+        if type(indices) is not list:
+            indices = [indices]
+
+        # Check that the indices is a list of integers.
+        if not all(isinstance(x, int) for x in indices):
+            raise TypeError("'indices' must be a 'list' of type 'int'")
+
         # Get the latest system from the process.
         if self._is_process:
             system = self._handle.getSystem()
@@ -151,6 +159,10 @@ class View():
         # Make sure we're running inside a Jupyter notebook.
         if not _is_notebook():
             return None
+
+        # Check that the index is an integer.
+        if type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
 
         # Get the latest system from the process.
         if self._is_process:
@@ -200,6 +212,10 @@ class View():
         if index is None:
             index = self._num_views - 1
 
+        # Check that the index is an integer.
+        elif type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
+
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
             raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
@@ -230,6 +246,10 @@ class View():
         # Default to the most recent view.
         if index is None:
             index = self._num_views - 1
+
+        # Check that the index is an integer.
+        elif type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
 
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
