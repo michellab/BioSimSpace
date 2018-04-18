@@ -15,12 +15,14 @@ from BioSimSpace import _is_interactive, _is_notebook
 from ..Protocol.protocol import Protocol
 
 from collections import OrderedDict
+from glob import glob
 from operator import add, sub
 from os import makedirs, path, remove
 from timeit import default_timer as timer
 from warnings import warn
 
 import tempfile
+import zipfile
 
 try:
     pygtail = try_import("pygtail")
@@ -325,8 +327,19 @@ class Process():
         """Return the working directory."""
         return self._work_dir
 
-    def getOutput(self):
-        """Return the entire stdout for the process as a list of strings."""
+    def getStdout(self, block="AUTO"):
+        """Return the entire stdout for the process as a list of strings.
+
+           Keyword arguments:
+
+           block -- Whether to block until the process has finished running.
+        """
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block is "AUTO" and self._is_blocked:
+            self.wait()
 
         # Append any new lines to the stdout list.
         for line in pygtail.Pygtail(self._stdout_file):
@@ -334,14 +347,59 @@ class Process():
 
         return self._stdout.copy()
 
-    def getError(self):
-        """Return the entire stderr for the process as a list of strings."""
+    def getStderr(self, block="AUTO"):
+        """Return the entire stderr for the process as a list of strings.
+
+           Keyword arguments:
+
+           block -- Whether to block until the process has finished running.
+        """
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block is "AUTO" and self._is_blocked:
+            self.wait()
 
         # Append any new lines to the stdout list.
         for line in pygtail.Pygtail(self._stderr_file):
             self._stderr.append(line.rstrip())
 
         return self._stderr.copy()
+
+    def getOutput(self, name=None, block="AUTO"):
+        """Return a link to a zip file of the working directory.
+
+           Keyword arguments:
+
+           name  -- The name of the zip file.
+           block -- Whether to block until the process has finished running.
+        """
+
+        if name is None:
+            name = self._name
+        else:
+            if type(name) is not str:
+                raise TypeError("'name' must be of type 'str'")
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block is "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Generate the zip file name.
+        zipname = "%s.zip" % name
+
+        # Glob all of the output files.
+        output = glob("%s/*" % self._work_dir)
+
+        with zipfile.ZipFile(zipname, "w") as zip:
+            # Loop over all of the file outputs.
+            for file in output:
+                zip.write(file, arcname=path.basename(file))
+
+        return zipname
 
     def command(self):
         """Return the command-line string used to run the process."""
