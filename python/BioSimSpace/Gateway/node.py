@@ -848,10 +848,8 @@ class Node():
             if len(file_outputs) > 0:
                 # Create the archive name.
                 if self._name is None:
-                    arcname = "output/"
                     zipname = "output.zip"
                 else:
-                    arcname = "%s/" % self._name
                     zipname = "%s.zip" % self._name
 
                 # Append the files to the archive.
@@ -860,10 +858,10 @@ class Node():
                     for output in file_outputs:
                         if type(output) is File:
                             file = output.getValue()
-                            zip.write(file, arcname=arcname + path.basename(file))
+                            zip.write(file, arcname=path.basename(file))
                         else:
                             for file in output.getValue():
-                                zip.write(file, arcname=arcname + path.basename(file))
+                                zip.write(file, arcname=path.basename(file))
 
                 # Return a link to the archive.
                 return FileLink(zipname)
