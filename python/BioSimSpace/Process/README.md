@@ -37,13 +37,6 @@ protocol = BSS.Protocol.Minimisation()
 process = BSS.Process.Amber(system, protocol)
 ```
 
-To use a custom protocol, the constructor could be called as follows:
-
-```python
-# Initialise the AMBER process using a custom protocol.
-process = BSS.Process.Amber(system, protocol="config.amber")
-```
-
 ### _Working directory_
 
 By default, each process is run in a temporary workspace. To specify
