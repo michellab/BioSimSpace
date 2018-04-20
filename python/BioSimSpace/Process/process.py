@@ -24,6 +24,9 @@ from warnings import warn
 import tempfile
 import zipfile
 
+if _is_notebook():
+    from IPython.display import FileLink
+
 try:
     pygtail = try_import("pygtail")
 except ImportError:
@@ -399,7 +402,13 @@ class Process():
             for file in output:
                 zip.write(file, arcname=path.basename(file))
 
-        return zipname
+
+        # Return a link to the archive.
+        if _is_notebook():
+            return FileLink(zipname)
+        # Return the path to the archive.
+        else:
+            return zipname
 
     def command(self):
         """Return the command-line string used to run the process."""
