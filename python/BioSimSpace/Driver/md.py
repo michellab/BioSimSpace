@@ -86,7 +86,7 @@ class MD():
     """A simple class for driving molecular dynamics simulations."""
 
     @staticmethod
-    def run(system, protocol, autostart=True, name=None, work_dir=None, seed=None):
+    def run(system, protocol, autostart=True, name="md", work_dir=None, seed=None):
         """Constructor.
 
            Positional arguments:
