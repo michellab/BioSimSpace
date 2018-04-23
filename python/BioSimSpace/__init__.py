@@ -30,6 +30,7 @@ from BioSimSpace.Driver import MD
 from BioSimSpace.Trajectory import Trajectory
 
 import BioSimSpace.Gateway
+import BioSimSpace.IO
 import BioSimSpace.Notebook
 import BioSimSpace.Process
 import BioSimSpace.Protocol
