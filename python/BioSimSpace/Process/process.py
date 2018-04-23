@@ -151,6 +151,16 @@ class Process():
         # Initaliae the command-line argument dictionary.
         self._args = OrderedDict()
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s'>" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(), self._exe, self._name, self._work_dir)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s')" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(), self._exe, self._name, self._work_dir)
+
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
