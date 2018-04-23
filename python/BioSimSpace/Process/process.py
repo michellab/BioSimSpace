@@ -244,6 +244,10 @@ class Process():
            max_time -- The maximimum time to wait (in minutes).
         """
 
+        # The process isn't running.
+        if not self.isRunning():
+            return
+
         if not max_time is None:
             if max_time <= 0:
                 warn("Maximum running time must be greater than zero. Using default (60 mins).")
@@ -261,11 +265,18 @@ class Process():
 
     def isRunning(self):
         """Return whether the process is running"""
-        return self._process.isRunning()
+        try:
+            return self._process.isRunning()
+        except AttributeError:
+            return False
 
     def isError(self):
         """Return whether the process errored."""
-        return self._process.isError()
+        try:
+            return self._process.isError()
+        except AttributeError:
+            print("The process hasn't been started!")
+            return None
 
     def kill(self):
         """Kill the running process."""

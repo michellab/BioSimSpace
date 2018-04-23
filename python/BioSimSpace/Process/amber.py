@@ -1010,6 +1010,10 @@ class Amber(process.Process):
     def wait(self):
         """Wait for the process to finish."""
 
+        # The process isn't running.
+        if not self.isRunning():
+            return
+
         # Loop until the process is finished.
         # For some reason we can't use Sire.Base.Process.wait() since it
         # doesn't work properly with the background threads used for the
