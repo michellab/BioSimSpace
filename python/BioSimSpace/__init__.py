@@ -35,34 +35,12 @@ import BioSimSpace.Notebook
 import BioSimSpace.Process
 import BioSimSpace.Protocol
 
-import Sire.IO
-import Sire.Base
-import Sire.System
-
 import Sire.Mol
+import Sire.System
 
 from Sire.Mol import AtomMCSMatcher as MCSMatcher
 
 from warnings import warn
-
-def readMolecules( files ):
-    return Sire.IO.MoleculeParser.read( files )
-
-def readMolecule( files ):
-    return Sire.IO.MoleculeParser.read( files )[Sire.Mol.MolIdx(0)].molecule()
-
-def saveMolecules(filebase, system, fileformat):
-    return Sire.IO.MoleculeParser.save(system, filebase, \
-                      {"fileformat":Sire.Base.wrap(fileformat)})
-
-def saveMolecule(filebase, molecule):
-    s = Sire.System.System("BioSimSpace molecule")
-    m = Sire.Mol.MoleculeGroup("all")
-    m.add(molecule)
-    s._old_add(m)
-    f1 = saveMolecules(filebase, s, "PRM7")
-    f2 = saveMolecules(filebase, s, "RST7")
-    return f1+f2
 
 def _system_add(system, molecule):
     system._old_add(molecule, Sire.Mol.MGIdx(0))

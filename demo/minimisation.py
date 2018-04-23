@@ -75,7 +75,7 @@ node.showControls()
 # In[ ]:
 
 
-system = BSS.readMolecules(node.getInput("files"))
+system = BSS.IO.readMolecules(node.getInput("files"))
 
 
 # In order to run a minimisation we need to define a protocol. This can be done using the `BioSimSpace.Protocol` module. Here we will create a "best practice" minimisation protocol, overriding the number of steps with the input from the user.
@@ -101,7 +101,7 @@ process = BSS.MD.run(system, protocol)
 # In[ ]:
 
 
-node.setOutput("minimised", BSS.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
+node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
 
 
 # Finally, we validate that the node completed succesfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.

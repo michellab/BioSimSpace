@@ -15,7 +15,7 @@ files = glob("amber/ala/*")
 
 # Load the molecular system.
 print("\nLoading molecules...")
-system = BSS.readMolecules(files)
+system = BSS.IO.readMolecules(files)
 
 # Create a minimisation protocol.
 protocol = BSS.Protocol.Minimisation(steps=1000)
@@ -36,7 +36,7 @@ process.start()
 minimised = process.getSystem()
 
 # Write the minimised structure to file.
-filenames = BSS.saveMolecules("minimised", minimised, system.fileFormat())
+filenames = BSS.IO.saveMolecules("minimised", minimised, system.fileFormat())
 print("\nWritten minimised molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
@@ -62,7 +62,7 @@ process.start()
 equilibrated = process.getSystem()
 
 # Write the equilibrated structure to file.
-filenames = BSS.saveMolecules("equilibrated", equilibrated, system.fileFormat())
+filenames = BSS.IO.saveMolecules("equilibrated", equilibrated, system.fileFormat())
 print("\nWritten equilibrated molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
@@ -94,7 +94,7 @@ traj = process.getTrajectory()
 frames = traj.getFrames([0, 5, 10])
 
 # Write the final structure to file.
-filenames = BSS.saveMolecules("final", final, system.fileFormat())
+filenames = BSS.IO.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
