@@ -17,9 +17,7 @@ All process classes must take at least two arguments to their constructor:
 * `system`: A Sire molecular system.
 
 * `protocol`: A [`BioSimSpace.Protocol`](../Protocol) object defining the
-protocol for the simulation process, e.g. an equilibration protocol. A
-user who wishes to run a custom process can simply replace the protocol
-argument with the path to an appropriate configuration file.
+protocol for the simulation process, e.g. an equilibration protocol.
 
 For example, to initialise an object to run a default minimistion protocol
 using AMBER:
