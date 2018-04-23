@@ -90,7 +90,7 @@ param = "some-parameter = some-value"
 process.addToConfig(param)
 
 # Add a list of additional configuration parameters.
-params = ["some-parameter = some-value", "some-other-parameter = "some-other-value"]
+params = ["some-parameter = some-value", "some-other-parameter = some-other-value"]
 process.addToConfig(params)
 
 # Add some additional parameters from a file.
