@@ -93,7 +93,7 @@ class Process():
         # Set the random number seed.
         if seed is None:
             self._is_seeded = False
-            self._seed = 0
+            self._seed = None
         else:
             self._is_seeded = True
             self.setSeed(seed)
@@ -153,13 +153,15 @@ class Process():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s'>" \
-            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(), self._exe, self._name, self._work_dir)
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s')" \
-            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(), self._exe, self._name, self._work_dir)
+        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
