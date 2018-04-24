@@ -24,5 +24,5 @@ Functionality for running and controlling simulation processes.
 Author: Lester Hedges
 """
 
-from ._amber import Amber
-from ._namd import Namd
+from ._amber import *
+from ._namd import *

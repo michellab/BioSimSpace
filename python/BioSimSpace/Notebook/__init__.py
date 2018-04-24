@@ -24,5 +24,5 @@ Tools for interactive use of BioSimSpace.
 Author: Lester Hedges
 """
 
-from ._plot import plot
-from ._view import View
+from ._plot import *
+from ._view import *

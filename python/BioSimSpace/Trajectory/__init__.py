@@ -24,4 +24,4 @@ Functionality for reading and analysing molecular trajectories.
 Author: Lester Hedges
 """
 
-from ._trajectory import Trajectory
+from ._trajectory import *

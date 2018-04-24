@@ -24,5 +24,5 @@ Functionality for interfacing BioSimSpace with the outside world.
 Author: Lester Hedges
 """
 
-from ._node import Node
-from ._requirements import Boolean, File, FileSet, Float, Integer, String
+from ._node import *
+from ._requirements import *

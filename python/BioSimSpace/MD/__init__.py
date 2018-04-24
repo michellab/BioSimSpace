@@ -24,4 +24,4 @@ Functionality for configuring and running molecular dynamics simulation processe
 Author: Lester Hedges
 """
 
-from ._md import MD
+from ._md import *
