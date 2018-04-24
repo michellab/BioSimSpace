@@ -43,6 +43,9 @@ error.)
 
 ## Developing
 
+BioSimSpace is written in Python but uses an object-oriented style with C++
+naming conventions. More details can be found [here](python).
+
 Please create a feature branch for development work. Branches related to a
 particular feature should be prefixed with `feature`, i.e. for the
 BioSimSpace.Process module:
