@@ -28,6 +28,7 @@ from Sire.Base import wrap as _wrap
 from Sire.IO import MoleculeParser as _MoleculeParser
 
 from collections import OrderedDict as _OrderedDict
+from glob import glob
 from io import StringIO as _StringIO
 import sys as _sys
 
