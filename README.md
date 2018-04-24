@@ -22,8 +22,9 @@ to ensure that you have access to the latest features and bug-fixes.
 
 Each sub-package has its own README page:
 
-- [BioSimspace.Driver](python/BioSimSpace/Driver)
 - [BioSimspace.Gateway](python/BioSimSpace/Gateway)
+- [BioSimspace.IO](python/BioSimSpace/IO)
+- [BioSimspace.MD](python/BioSimSpace/MD)
 - [BioSimspace.Notebook](python/BioSimSpace/Notebook)
 - [BioSimspace.Process](python/BioSimSpace/Process)
 - [BioSimspace.Protocol](python/BioSimSpace/Protocol)
