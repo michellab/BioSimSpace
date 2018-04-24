@@ -3,7 +3,7 @@
 This sub-package provides functionality for running different molecular
 simulation processes.
 
-The `process.py` module defines a set of common helper functions and a
+The `_process.py` module defines a set of common helper functions and a
 base class, `Process`, that defines common properties and methods for
 all processes. Individual modules, such as `namd.py`, defined functionality
 for running process with a particular software package. At present we
