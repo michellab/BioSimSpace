@@ -20,8 +20,18 @@
 #####################################################################
 
 """
-Functionality for reading and analysing molecular trajectories.
+Functionality for handling simulation protocols.
 Author: Lester Hedges
 """
 
-from ._trajectory import Trajectory
+__all__ = ["Protocol"]
+
+class Protocol():
+    """A base class for holding simulation protocols."""
+
+    def __init__(self):
+        """Constructor."""
+
+	# Don't allow user to create an instance of this base class.
+        if type(self) is Protocol:
+            raise Exception("<Protocol> must be subclassed.")

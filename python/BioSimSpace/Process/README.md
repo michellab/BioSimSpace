@@ -26,7 +26,7 @@ using AMBER:
 import BioSimSpace as BSS
 
 # Create a molecular system.
-system = BSS.readMolecules(["ala.crd", "ala.top"])
+system = BSS.IO.readMolecules(["ala.crd", "ala.top"])
 
 # Create a default minimisation protocol.
 protocol = BSS.Protocol.Minimisation()
@@ -218,7 +218,7 @@ system = process.getSystem()
 This could then be saved to file:
 
 ```python
-BSS.saveMolecules("configuration", system, system.fileFormat())
+BSS.IO.saveMolecules("configuration", system, system.fileFormat())
 ```
 
 To safely kill a running process:

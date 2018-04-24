@@ -61,7 +61,7 @@ node.addOutput("minimised", BSS.Gateway.FileSet(help="the minimised molecular sy
 node.showControls()
 
 # Create the molecular system and minimisation protocol from the user input.
-system = BSS.readMolecules(node.getInput("files"))
+system = BSS.IO.readMolecules(node.getInput("files"))
 protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
 
 # Find a molecular dynamics package and run the protocol.
@@ -69,7 +69,7 @@ process = BSS.MD.run(system, protocol)
 
 # Wait for the process to finish and write the final molecular configuration to file,
 # binding the file names to the output requirement of the node.
-node.setOutput("minimised", BSS.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
+node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
 
 # Finally, validate that the node completed successfully.
 node.validate()

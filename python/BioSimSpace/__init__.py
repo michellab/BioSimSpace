@@ -1,4 +1,32 @@
-"""Making biomolecular simulation a breeze!"""
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
+"""
+Making biomolecular simulation a breeze!
+
+A collection of tools that makes it easy to write robust and interoperable
+molecular workflow components.
+
+www.biosimspace.org
+"""
 
 # Determine whether we're being imported from a Jupyter notebook.
 def _is_notebook():
@@ -26,41 +54,45 @@ def _is_interactive():
     except NameError:
         return False      # Probably standard Python interpreter
 
-from BioSimSpace.Driver import MD
+from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
 
-import BioSimSpace.Gateway
-import BioSimSpace.IO
-import BioSimSpace.Notebook
-import BioSimSpace.Process
-import BioSimSpace.Protocol
+import BioSimSpace.Gateway as Gateway
+import BioSimSpace.IO as IO
+import BioSimSpace.Notebook as Notebook
+import BioSimSpace.Process as Process
+import BioSimSpace.Protocol as Protocol
 
-import Sire.Mol
-import Sire.System
+import Sire as _Sire
 
-from Sire.Mol import AtomMCSMatcher as MCSMatcher
+from warnings import warn as _warn
 
-from warnings import warn
+# Monkey patches.
 
-def _system_add(system, molecule):
-    system._old_add(molecule, Sire.Mol.MGIdx(0))
-
-def _system_fileformat(system):
+def _getFileFormat(system):
+    """Return the file formats associated with the system."""
     return system.property("fileformat").value()
 
-def _system_take(system, molid):
-    molecule = system[ molid ]
-    system.remove(molecule.number())
-    return molecule
+def _getMolWithResName(system, resname):
+    """Return the molecule containing the given residue.
 
-Sire.System.System._old_add = Sire.System.System.add
-Sire.System.System.add = _system_add
-Sire.System.System.fileFormat = _system_fileformat
-Sire.System.System.take = _system_take
+       Positional arguments:
 
-class MolWithResName(Sire.Mol.MolWithResID):
+       resname -- The name of a residue unique to the molecule.
+    """
+    try:
+        return system[_MolWithResName(resname)]
+    except:
+        raise KeyError("System does not contain residue '%s'" % resname)
+
+class _MolWithResName(_Sire.Mol.MolWithResID):
     def __init__(self, resname):
-        super().__init__( Sire.Mol.ResName(resname) )
+        super().__init__( _Sire.Mol.ResName(resname) )
+
+_Sire.System.System.fileFormat = _getFileFormat
+_Sire.System.System.getMolWithResName = _getMolWithResName
+
+# Top-level functions.
 
 def viewMolecules( files, idxs=None ):
     """View the molecules contained in the passed file(s). Optionally supply
@@ -70,7 +102,7 @@ def viewMolecules( files, idxs=None ):
     """
 
     if not _is_notebook():
-        warn("You can only view molecules from within a Jupyter notebook.")
+        _warn("You can only view molecules from within a Jupyter notebook.")
         return None
 
     if isinstance(files, str):

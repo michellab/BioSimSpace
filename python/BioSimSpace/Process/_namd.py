@@ -1,14 +1,34 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
 """
-@package biosimspace
-@author  Lester Hedges
-@brief   A class for running simulations using NAMD.
+Functionality for running simulations using NAMD.
+Author: Lester Hedges
 """
 
 from Sire import try_import
 from Sire.Base import findExe, Process
 from Sire.IO import CharmmPSF, MoleculeParser, PDB2
 
-from . import process
+from . import _process
 from ..Protocol import *
 from ..Trajectory import Trajectory
 
@@ -22,7 +42,9 @@ try:
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
-class Namd(process.Process):
+__all__ = ["Namd"]
+
+class Namd(_process.Process):
     """A class for running simulations using NAMD."""
 
     def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, seed=None):
@@ -63,7 +85,7 @@ class Namd(process.Process):
                 raise IOError("NAMD executable doesn't exist: '%s'" % exe)
 
         # Initialise the stdout dictionary and title header.
-        self._stdout_dict = process.MultiDict()
+        self._stdout_dict = _process.MultiDict()
         self._stdout_title = None
 
         # The names of the input files.
@@ -202,7 +224,7 @@ class Namd(process.Process):
             # origin to be the average of the atomic coordinates. This
             # ensures a consistent wrapping for coordinates in the  NAMD
             # output files.
-            origin = tuple(process._getAABox(self._system).center())
+            origin = tuple(_process._getAABox(self._system).center())
 
         # No box information. Assume this is a gas phase simulation.
         else:
@@ -332,7 +354,7 @@ class Namd(process.Process):
             # Restrain the backbone.
             if self._protocol.isRestrained():
                 # Create a restrained system.
-                restrained = process._restrain_backbone(self._system)
+                restrained = _process._restrain_backbone(self._system)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
                 p = PDB2(restrained, {"occupancy" : "restrained"})

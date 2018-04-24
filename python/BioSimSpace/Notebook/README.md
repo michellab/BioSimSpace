@@ -15,7 +15,7 @@ of molecular configurations while a process is running.
 import BioSimSpace as BSS
 
 # Create a molecular system.
-system = BSS.readMolecules(["ala.crd", "ala.top"])
+system = BSS.IO.readMolecules(["ala.crd", "ala.top"])
 
 # Create a view object for the system.
 view = BSS.NoteBook.View(system)
@@ -42,7 +42,7 @@ view = BSS.Notebook.View(process)
 view.molecules()
 ```
 
-## BioSimSpace.Notebook.Plot
+## BioSimSpace.Notebook.plot
 
 This is a simple wrapper around [Matplotlib](https://matplotlib.org) for
 plotting time-series data.
@@ -51,6 +51,6 @@ For example:
 
 ```python
 # Generate a plot of time vs total energy.
-BSS.Notebook.Plot(process.getTime(time_series=True), process.getTotalEnergy(time_series=True),
+BSS.Notebook.plot(process.getTime(time_series=True), process.getTotalEnergy(time_series=True),
     xlabel="Time (ns)", ylabel="Energy (kcal/mol)")
 ```

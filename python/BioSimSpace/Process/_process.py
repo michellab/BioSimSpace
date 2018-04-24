@@ -1,7 +1,27 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
 """
-@package biosimspace
-@author  Lester Hedges
-@brief   Base class and helper functions for the various process objects.
+Functionality for running simulation processes.
+Author: Lester Hedges
 """
 
 from Sire import try_import
@@ -12,7 +32,7 @@ from Sire.Vol import AABox
 import Sire.System
 
 from BioSimSpace import _is_interactive, _is_notebook
-from ..Protocol.protocol import Protocol
+from ..Protocol._protocol import Protocol
 
 from collections import OrderedDict
 from glob import glob
@@ -31,6 +51,8 @@ try:
     pygtail = try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
+
+__all__ = ["Process"]
 
 class MultiDict(dict):
     """A multi-valued dictionary."""

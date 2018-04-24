@@ -1,12 +1,34 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
 """
-@package biosimspace
-@author  Lester Hedges
-@brief   A class for storing production protocols.
+Functionality for production protocols.
+Author: Lester Hedges
 """
 
-from .protocol import Protocol
+from ._protocol import Protocol
 
 from math import ceil
+
+__all__ = ["Production"]
 
 # A list of allowed thermodynamic ensembles.
 # Update as support is added.

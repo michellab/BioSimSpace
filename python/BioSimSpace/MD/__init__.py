@@ -20,8 +20,8 @@
 #####################################################################
 
 """
-Functionality for reading and analysing molecular trajectories.
+Functionality for configuring and running molecular dynamics simulation processes.
 Author: Lester Hedges
 """
 
-from ._trajectory import Trajectory
+from ._md import MD

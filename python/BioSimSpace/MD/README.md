@@ -1,7 +1,7 @@
-# BioSimSpace.Driver
+# BioSimSpace.MD
 
-This sub-package provides functionality for driving various types of simulation
-and analysis processes.
+This sub-package provides functionality for configuring and running various
+types of molecular dynamics simulation processes.
 
 At present, we provide support for finding molecular dynamics packages and
 automatically configuring and starting processes for the user.
@@ -17,7 +17,7 @@ As an example:
 import BioSimSpace as BSS
 
 # Create a molecular system.
-system = BSS.readMolecules(["ala.crd", "ala.top"])
+system = BSS.IO.readMolecules(["ala.crd", "ala.top"])
 
 # Create a default minimisation protocol.
 protocol = BSS.Protocol.Minimisation()

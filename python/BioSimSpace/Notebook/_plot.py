@@ -1,3 +1,29 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
+"""
+Tools for plotting data.
+Author: Lester Hedges
+"""
+
 from BioSimSpace import _is_interactive
 
 from Sire import try_import
@@ -10,6 +36,8 @@ try:
     _has_matplotlib = True
 except ImportError:
     _has_matplotlib = False
+
+__all__ = ["plot"]
 
 if _has_matplotlib:
     # Define font sizes.
@@ -26,7 +54,7 @@ if _has_matplotlib:
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-def Plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
+def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
     """A simple function to create x/y plots with matplotlib.
 
        Keyword arguments:
@@ -41,12 +69,12 @@ def Plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
 
     # Make sure were running interactively.
     if not _is_interactive():
-        warn("You can only use BioSimSpace.Notebook.Plot when running interactively.")
+        warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
     # Matplotlib failed to import.
     if not _has_matplotlib:
-        warn("BioSimSpace.Notebook.Plot is disabled as matplotlib failed "
+        warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
             "to load. Please check your matplotlib installation.")
         return None
 

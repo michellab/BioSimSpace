@@ -1,14 +1,34 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
 """
-@package biosimspace
-@author  Lester Hedges
-@brief   A class for running simulations using AMBER.
+Functionality for running simulations using AMBER.
+Author: Lester Hedges
 """
 
 from Sire import try_import
 from Sire.Base import findExe, Process
 from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
 
-from . import process
+from . import _process
 from ..Protocol import *
 from ..Trajectory import Trajectory
 
@@ -31,6 +51,8 @@ try:
     from watchdog.observers import Observer
 except ImportError:
     raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
+
+__all__ = ["Amber"]
 
 class Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -99,13 +121,13 @@ class Handler(PatternMatchingEventHandler):
             # process started, then wipe the dictionary and flag that the file
             # is now being watched.
             if not self._process._is_watching:
-                self._process._stdout_dict = process.MultiDict()
+                self._process._stdout_dict = _process.MultiDict()
                 self._process._is_watching = True
 
             # Now update the dictionary with any new records.
             self._process._update_energy_dict()
 
-class Amber(process.Process):
+class Amber(_process.Process):
     """A class for running simulations using AMBER."""
 
     def __init__(self, system, protocol, exe=None, name="amber",
@@ -158,7 +180,7 @@ class Amber(process.Process):
                 raise IOError("AMBER executable doesn't exist: '%s'" % exe)
 
         # Initialise the energy dictionary and header.
-        self._stdout_dict = process.MultiDict()
+        self._stdout_dict = _process.MultiDict()
 
         # Create the name of the energy output file and wipe the
         # contents of any existing file.

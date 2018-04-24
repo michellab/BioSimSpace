@@ -1,7 +1,27 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright 2017-2018
+#
+# Authors: Lester Hedges
+
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
 """
-@package biosimspace
-@author  Lester Hedges
-@brief   A class for interfacing with BioSimSpace nodes.
+Functionality for creating BioSimSpace workflow components (nodes).
+Author: Lester Hedges
 """
 
 from BioSimSpace import _is_notebook
@@ -22,7 +42,7 @@ if _is_notebook():
     from IPython.display import FileLink
     import zipfile
 
-from .requirements import *
+from ._requirements import *
 
 from collections import OrderedDict
 from os import makedirs, path
@@ -32,6 +52,8 @@ import argparse
 import io
 import __main__ as main
 import sys
+
+__all__ = ["Node"]
 
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
