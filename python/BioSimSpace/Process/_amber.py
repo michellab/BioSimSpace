@@ -930,7 +930,7 @@ class Amber(_process.Process):
         """
         return self.getVolume(time_series, block=False)
 
-    def getDensity(self, time_series=False):
+    def getDensity(self, time_series=False, block="AUTO"):
         """Get the density.
 
            Keyword arguments:
