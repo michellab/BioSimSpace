@@ -33,7 +33,7 @@ import sys
 import tarfile
 import zipfile
 
-__all__ = ["Requirement", "Boolean", "Integer", "Float", "String", "File", "FileSet"]
+__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet"]
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
