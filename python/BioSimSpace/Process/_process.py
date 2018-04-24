@@ -386,7 +386,7 @@ class Process():
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         # Append any new lines to the stdout list.
@@ -406,7 +406,7 @@ class Process():
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         # Append any new lines to the stdout list.
@@ -433,7 +433,7 @@ class Process():
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         # Generate the zip file name.

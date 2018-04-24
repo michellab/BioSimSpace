@@ -160,7 +160,7 @@ class Trajectory():
                 raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
             # Return an MDTraj object.
-            if format is 'mdtraj':
+            if format == 'mdtraj':
 
                 # Create the MDTraj object.
                 try:
@@ -195,7 +195,7 @@ class Trajectory():
         # extension and rename files if needed.
         else:
             # Return an MDTraj object.
-            if format is "mdtraj":
+            if format == "mdtraj":
 
                 try:
                     traj = mdtraj.load(self._traj_file, top=self._top_file)

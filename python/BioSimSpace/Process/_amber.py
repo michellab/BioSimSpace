@@ -379,7 +379,7 @@ class Amber(_process.Process):
                 % self._protocol.getTemperature())
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() is "NPT":
+            if self._protocol.getEnsemble() == "NPT":
                 self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                 self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
 
@@ -470,7 +470,7 @@ class Amber(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         # Create the name of the restart CRD file.
@@ -494,7 +494,7 @@ class Amber(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         return Trajectory(process=self)
@@ -515,7 +515,7 @@ class Amber(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         return self._get_stdout_record(record.strip().upper(), time_series)
@@ -544,7 +544,7 @@ class Amber(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         return self._stdout_dict.copy()

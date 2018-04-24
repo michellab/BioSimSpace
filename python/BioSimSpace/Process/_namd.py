@@ -399,7 +399,7 @@ class Namd(_process.Process):
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
-            if self._protocol.getFirstStep() is not 0:
+            if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
@@ -412,7 +412,7 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() is "NPT":
+            if self._protocol.getEnsemble() == "NPT":
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  1.01325")
                 self.addToConfig("langevinPistonPeriod  100.")
@@ -482,7 +482,7 @@ class Namd(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         # Read the PDB coordinate file and construct a parameterised molecular
@@ -539,7 +539,7 @@ class Namd(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         return Trajectory(process=self)
@@ -560,7 +560,7 @@ class Namd(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         self.stdout(0)
@@ -590,7 +590,7 @@ class Namd(_process.Process):
         # Wait for the process to finish.
         if block is True:
             self.wait()
-        elif block is "AUTO" and self._is_blocked:
+        elif block == "AUTO" and self._is_blocked:
             self.wait()
 
         return self._stdout_dict.copy()
