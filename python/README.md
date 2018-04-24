@@ -41,13 +41,17 @@ we use the sub-package `__init__.py` to selectively import the required
 classes and functions.
 
 * Module files containing implementation details are prefixed with an underscore,
-i.e. `_process.py`.
+i.e. `_process.py`
 
 * Each module file contains an `__all__` variable that lists the specific items
 that should be imported.
 
 * The sub-package `__init__.py` can be used to safely expose the required
-functionality to the user with `from module import *`.
+functionality to the user with:
+
+```python
+from module import *
+```
 
 This results in a clean API and documentation, with all extraneous information,
 e.g. external modules, hidden from the user. This is important when working
@@ -77,7 +81,7 @@ should be used to explicitly modify member data.
 
 For example:
 
-```
+```python
 # A class that holds a list of numbers.
 
 class MyClass():
@@ -85,7 +89,7 @@ class MyClass():
     _list = [1, 2, 3, 4, 5]
 
     def getList(self):
-        return self._numbers
+        return self._list
 
 # Create an instance of the class.
 c = MyClass()
@@ -103,13 +107,13 @@ print(c.getList()
 
 Instead use:
 
-```
+```python
 class MyClass():
     # A private class member variable containing a list of numbers.
     _list = [1, 2, 3, 4, 5]
 
     def getList(self):
-        return self._numbers.copy()
+        return self._list.copy()
 
 # Create an instance of the class.
 c = MyClass()
