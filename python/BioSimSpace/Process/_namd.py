@@ -767,7 +767,7 @@ class Namd(_process.Process):
         """
         return self.getVanDerWaalsEnergy(time_series, block=False)
 
-    def getBoundaryEnergy(self, time_series=False):
+    def getBoundaryEnergy(self, time_series=False, block="AUTO"):
         """Get the boundary energy.
 
            Keyword arguments:
