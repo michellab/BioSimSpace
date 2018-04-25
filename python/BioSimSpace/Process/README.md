@@ -3,12 +3,11 @@
 This sub-package provides functionality for running different molecular
 simulation processes.
 
-The `_process.py` module defines a set of common helper functions and a
-base class, `Process`, that defines common properties and methods for
-all processes. Other modules, such as `_namd.py`, define functionality
-for running process with a particular software package. At present we
-provide support for [NAMD](http://www.ks.uiuc.edu/Research/namd) and
-[AMBER](http://ambermd.org).
+The package provides a base class, `Process`, that defines common properties
+and methods for all processes. Derived classes, such as `Namd`, define
+functionality for running process with a particular software package. At
+present we provide support for [NAMD](http://www.ks.uiuc.edu/Research/namd)
+and [AMBER](http://ambermd.org).
 
 ## Object instantiation
 
