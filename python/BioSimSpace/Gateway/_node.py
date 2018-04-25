@@ -690,7 +690,7 @@ class Node():
 
            name        -- The author's name.
            email       -- The author's email address.
-           affiliation -- The author's affilation.
+           affiliation -- The author's affiliation.
         """
 
         if name is None:
