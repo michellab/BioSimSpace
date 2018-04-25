@@ -64,7 +64,7 @@ for index, line in enumerate(format_info):
 
         if format != "SUPPLEMENTARY":
             _formats.append(format)
-            _formats_dict[format.upper()] = (extensions, description)
+            _formats_dict[format.replace(" ", "").upper()] = (format, description)
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
@@ -82,7 +82,7 @@ def formatInfo(format):
     """
 
     try:
-        return _formats_dict[format.upper()][1]
+        return _formats_dict[format.replace(" ", "").upper()][1]
     except KeyError:
         print("Unsupported format: '%s'" % format)
         return None
@@ -104,8 +104,46 @@ def saveMolecules(filebase, system, fileformat):
 
        filebase   -- The base name of the output file.
        system     -- The molecular system.
-       fileformat -- The file format to save as.
+       fileformat -- The file format (or formats) to save to.
     """
 
-    return _MoleculeParser.save(system, filebase, \
-                      {"fileformat":_wrap(fileformat)})
+    # Check that fileformat argument is of the correct type.
+
+    # Convert to a list if a single string is passed.
+    if type(fileformat) is str:
+        fileformat = [fileformat]
+    # Lists and tuples are okay!
+    elif type(fileformat) is list:
+        pass
+    elif type(fileformat) is tuple:
+        pass
+    # Invalid.
+    else:
+        raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
+
+    # Make sure all items in list or tuple are strings.
+    if not all(isinstance(x, str) for x in fileformat):
+        raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
+
+    # Make a list of the matched file formats.
+    formats = []
+
+    # Make sure that all of the formats are valid.
+    for format in fileformat:
+        try:
+            f = _formats_dict[format.replace(" ", "").upper()][0]
+            formats.append(f)
+        except KeyError:
+            raise ValueError("Unsupported file format '%s'. Supported formats "
+                "are: %s." % (format, str(_formats)))
+
+    # A list of the files that have been written.
+    files = []
+
+    # Save the system using each file format.
+    for format in formats:
+        file = _MoleculeParser.save(system, filebase, \
+                {"fileformat":_wrap(format)})
+        files += file
+
+    return files
