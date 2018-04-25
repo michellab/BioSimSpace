@@ -5,10 +5,12 @@ and the outside world. It allows the user to define robust and portable workflow
 components (nodes) that can be run from a variety of environments, e.g. within
 [Jupyter](http://jupyter.org), or from the command-line.
 
-## BioSimSpace.Gateway.requirements
+## Requirements
 
-This module provides a set of classes that are used to define the input and
-output requirements of a node. These are:
+Workflow components require input from the user and generate output.
+`BioSimSpace.Gateway` provides a collection of `Requirement` types that allow
+the user to document the required inputs and outputs, and to specify default
+values and constraints. These are:
 
 - `BioSimSpace.Gateway.Boolean`
 - `BioSimSpace.Gateway.Integer`
@@ -16,8 +18,7 @@ output requirements of a node. These are:
 - `BioSimSpace.Gateway.File`
 - `BioSimSpace.Gateway.FileSet`
 
-The requirements allow the user to document the inputs and outputs, and to
-specify default values and constraints. For example:
+As an example:
 
 ```python
 import BioSimSpace as BSS
