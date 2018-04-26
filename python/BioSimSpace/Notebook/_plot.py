@@ -26,13 +26,13 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _is_interactive
 
-from Sire import try_import
+from Sire import try_import as _try_import
 
-from warnings import warn
+from warnings import warn as _warn
 
 try:
-    matplotlib = try_import("matplotlib")
-    import matplotlib.pyplot as plt
+    _matplotlib = _try_import("matplotlib")
+    import matplotlib.pyplot as _plt
     _has_matplotlib = True
 except ImportError:
     _has_matplotlib = False
@@ -41,18 +41,18 @@ __all__ = ["plot"]
 
 if _has_matplotlib:
     # Define font sizes.
-    SMALL_SIZE = 14
-    MEDIUM_SIZE = 16
-    BIGGER_SIZE = 18
+    _SMALL_SIZE = 14
+    _MEDIUM_SIZE = 16
+    _BIGGER_SIZE = 18
 
     # Set font sizes.
-    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    _plt.rc('font', size=_SMALL_SIZE)          # controls default text sizes
+    _plt.rc('axes', titlesize=_SMALL_SIZE)     # fontsize of the axes title
+    _plt.rc('axes', labelsize=_MEDIUM_SIZE)    # fontsize of the x and y labels
+    _plt.rc('xtick', labelsize=_SMALL_SIZE)    # fontsize of the tick labels
+    _plt.rc('ytick', labelsize=_SMALL_SIZE)    # fontsize of the tick labels
+    _plt.rc('legend', fontsize=_SMALL_SIZE)    # legend fontsize
+    _plt.rc('figure', titlesize=_BIGGER_SIZE)  # fontsize of the figure title
 
 def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
     """A simple function to create x/y plots with matplotlib.
@@ -69,12 +69,12 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
 
     # Make sure were running interactively.
     if not _is_interactive():
-        warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
+        _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
     # Matplotlib failed to import.
     if not _has_matplotlib:
-        warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
             "to load. Please check your matplotlib installation.")
         return None
 
@@ -103,24 +103,24 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
             raise TypeError("'ylabel' must be of type 'str'")
 
     # Set the figure size.
-    plt.figure(figsize=(8, 6))
+    _plt.figure(figsize=(8, 6))
 
     # Create the plot.
-    plt.plot(x, y, "-bo")
+    _plt.plot(x, y, "-bo")
 
     # Add axis labels.
     if xlabel is not None:
-        plt.xlabel(xlabel)
+        _plt.xlabel(xlabel)
     if ylabel is not None:
-        plt.ylabel(ylabel)
+        _plt.ylabel(ylabel)
 
     # Scale the axes.
     if logx:
-        plt.xscale("log")
+        _plt.xscale("log")
     if logy:
-        plt.yscale("log")
+        _plt.yscale("log")
 
     # Turn on grid.
-    plt.grid()
+    _plt.grid()
 
-    return plt.show()
+    return _plt.show()

@@ -24,25 +24,20 @@ Tools for visualising molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire as _Sire
+
 from BioSimSpace import _is_notebook
 
-from Sire import try_import
-from Sire.IO import PDB2
+from ..Process._process import Process as _Process
+from .._System import System as _System
 
-import Sire.Mol
-import Sire.System
-
-from ..Process._process import Process
-
-from glob import glob
-from os import remove
-from shutil import copyfile
-from warnings import warn
-
-import tempfile
+import os as _os
+import shutil as _shutil
+import tempfile as _tempfile
+import warnings as _warnings
 
 try:
-    nglview = try_import("nglview")
+    _nglview = _Sire.try_import("nglview")
 except ImportError:
     raise ImportError("NGLView is not installed. Please install nglview in order to use BioSimSpace.")
 
@@ -61,26 +56,26 @@ class View():
 
         # Make sure we're running inside a Jupyter notebook.
         if not _is_notebook():
-            warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
+            _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
 
         # Check the handle.
 
         # BioSimSpace process.
-        if handle.__class__.__base__ is Process:
+        if isinstance(handle, _Process):
             self._handle = handle
             self._is_process = True
 
-        # Sire system.
-        elif handle.__class__ is Sire.System.System:
-            self._handle = handle
+        # BioSimSpace system.
+        elif type(handle) is System:
+            self._handle = handle._getSireSystem()
             self._is_process = False
 
         else:
-            raise ValueError("The handle must be a Sire.System or BioSimSpace.Process object.")
+            raise ValueError("The handle must be a BioSimSpace.System or BioSimSpace.Process object.")
 
         # Create a temporary workspace for the view object.
-        self._tmp_dir = tempfile.TemporaryDirectory()
+        self._tmp_dir = _tempfile.TemporaryDirectory()
         self._work_dir = self._tmp_dir.name
 
         # Zero the number of views.
@@ -100,7 +95,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()
+            system = self._handle.getSystem()._getSireSystem()
 
             # No system.
             if system is None:
@@ -139,7 +134,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()
+            system = self._handle.getSystem()._getSireSystem()
 
             # No system.
             if system is None:
@@ -152,8 +147,8 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = Sire.System.System("BioSimSpace molecule")
-        m = Sire.Mol.MoleculeGroup("all")
+        s = _Sire.System.System("BioSimSpace molecule")
+        m = _Sire.Mol.MoleculeGroup("all")
 
         # Loop over all of the indices.
         for index in indices:
@@ -164,7 +159,7 @@ class View():
             m.add(system[molnums[index]])
 
         # Add all of the molecules to the system.
-        s._old_add(m)
+        s.add(m)
 
         # Create and return the view.
         return self._create_view(s, gui=gui)
@@ -188,7 +183,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()
+            system = self._handle.getSystem()._getSireSystem()
 
             # No system.
             if system is None:
@@ -205,10 +200,10 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = Sire.System.System("BioSimSpace molecule")
-        m = Sire.Mol.MoleculeGroup("all")
+        s = _Sire.System.System("BioSimSpace molecule")
+        m = _Sire.Mol.MoleculeGroup("all")
         m.add(system[molnums[index]])
-        s._old_add(m)
+        s.add(m)
 
         # Create and return the view.
         return self._create_view(s, gui=gui)
@@ -278,17 +273,17 @@ class View():
             raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
 
         # Copy the file to the chosen location.
-        copyfile("%s/view_%04d.pdb" % (self._work_dir, index), file)
+        _shutil.copyfile("%s/view_%04d.pdb" % (self._work_dir, index), file)
 
     def reset(self):
         """Reset the object, clearing all view files."""
 
         # Glob all of the view PDB structure files.
-        files = glob("%s/*.pdb" % self._work_dir)
+        files = _glob.glob("%s/*.pdb" % self._work_dir)
 
         # Remove all of the files.
         for file in files:
-            remove(file)
+            _os.remove(file)
 
         # Reset the number of views.
         self._num_views = 0
@@ -328,11 +323,11 @@ class View():
 
         # Create a PDB object and write to file.
         if system is not None:
-            pdb = PDB2(system)
+            pdb = _Sire.IO.PDB2(system)
             pdb.writeToFile(filename)
 
         # Create the NGLview object.
-        view = nglview.show_file(filename)
+        view = _nglview.show_file(filename)
 
         # Return the view and display it.
         return view.display(gui=gui)

@@ -24,13 +24,13 @@ Functionality for storing custom simulation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._protocol import Protocol
+from ._protocol import Protocol as _Protocol
 
-from os import path
+import os as _os
 
 __all__ = ["Custom"]
 
-class Custom(Protocol):
+class Custom(_Protocol):
     """A class for storing custom protocols."""
 
     def __init__(self, config):
@@ -56,7 +56,7 @@ class Custom(Protocol):
             self._config = config
 
         # The user has passed a path to a file.
-        elif path.isfile(config):
+        elif _os.path.isfile(config):
 
             # Clear the existing config.
             self._config = []

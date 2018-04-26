@@ -24,14 +24,14 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import bz2
-import gzip
-import os
-import re
-import shutil
-import sys
-import tarfile
-import zipfile
+import bz2 as _bz2
+import gzip as _gzip
+import os as _os
+import re as _re
+import shutil as _shutil
+import sys as _sys
+import tarfile as _tarfile
+import zipfile as _zipfile
 
 __all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet"]
 
@@ -409,7 +409,7 @@ class File(Requirement):
             raise TypeError("The value should be of type 'str'")
 
         # Make sure the file exists.
-        if not os.path.isfile(file):
+        if not _os.path.isfile(file):
             raise IOError("File doesn't exist: '%s'" % file)
         else:
             return file
@@ -460,7 +460,7 @@ class FileSet(Requirement):
             # A single file was passed.
             if len(value) == 1:
                 # Remove whitespace and split on commas.
-                value = re.sub(r"\s+", "", value[0]).split(',')
+                value = _re.sub(r"\s+", "", value[0]).split(',')
 
             # Loop over all strings.
             for file in value:
@@ -479,7 +479,7 @@ class FileSet(Requirement):
                         uncompressed_files.append(files)
                 else:
                     # Make sure the file exists.
-                    if not os.path.isfile(file):
+                    if not _os.path.isfile(file):
                         raise IOError("File doesn't exist: '%s'" % file)
 
         if len(uncompressed_files) > 0:
@@ -491,7 +491,7 @@ def _unarchive(name):
     """Decompress an archive and return a list of files."""
 
     # Get the directory name.
-    dir = os.path.dirname(name)
+    dir = _os.path.dirname(name)
 
     # If the file compressed file has been passed on the command-line, then
     # we'll extract it to a directory to avoid littering the current workspace.
@@ -513,7 +513,7 @@ def _unarchive(name):
             files = []
 
             # Decompress the archive.
-            with tarfile.open(name) as tar:
+            with _tarfile.open(name) as tar:
                 # We need to call tar.list(), otherwise the tar object will not know
                 # about nested directories, i.e. it will appear as if ther is a single
                 # member.
@@ -523,7 +523,7 @@ def _unarchive(name):
                 # Loop over all of the members and get the file names.
                 # If the name has no extension, then we assume that it's a directory.
                 for file in tar.members:
-                    if os.path.splitext(file.name)[1] is not "":
+                    if _os.path.splitext(file.name)[1] is not "":
                         files.append(dir + file.name)
 
                 # Now extract all of the files.
@@ -532,14 +532,14 @@ def _unarchive(name):
             return files
 
     # Get the file name and extension.
-    file, ext = os.path.splitext(name)
+    file, ext = _os.path.splitext(name)
 
     # This is a zip file.
     if ext.lower() == ".zip":
         # The list of decompressed files.
         files = None
 
-        with zipfile.ZipFile(name) as zip:
+        with _zipfile.ZipFile(name) as zip:
             files = zip.namelist()
             print("Decompressing...")
             for file in files:
@@ -550,7 +550,7 @@ def _unarchive(name):
 
     # This is a gzip file.
     if ext.lower() == ".gz" or ext == ".gzip":
-        with gzip.open(name, "rb") as f_in:
+        with _gzip.open(name, "rb") as f_in:
             with open(file, "wb") as f_out:
                 print("Decompressing...\n%s" % name)
                 shutil.copyfileobj(f_in, f_out)
@@ -559,10 +559,10 @@ def _unarchive(name):
 
     # This is a bzip2 file.
     if ext.lower() == ".bz2" or ext == ".bzip2":
-        with bz2.open(name, "rb") as f_in:
+        with _bz2.open(name, "rb") as f_in:
             with open(file, "wb") as f_out:
                 print("Decompressing...\n%s" % name)
-                shutil.copyfileobj(f_in, f_out)
+                _shutil.copyfileobj(f_in, f_out)
 
         return file
 

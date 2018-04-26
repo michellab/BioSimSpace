@@ -24,37 +24,32 @@ Functionality for running simulation processes.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire import try_import
-from Sire.ID import CaseInsensitive
-from Sire.Mol import AtomName
-from Sire.Vol import AABox
-
-import Sire.System
+import Sire as _Sire
 
 from BioSimSpace import _is_interactive, _is_notebook
-from ..Protocol._protocol import Protocol
 
-from collections import OrderedDict
-from glob import glob
-from operator import add, sub
-from os import makedirs, path, remove
-from timeit import default_timer as timer
-from warnings import warn
+from ..Protocol._protocol import Protocol as _Protocol
+from .._System import System as _System
 
-import tempfile
-import zipfile
+import collections as _collections
+import operator as _operator
+import os as _os
+import timeit as _timeit
+import warnings as _warnings
+import tempfile as _tempfile
+import zipfile as _zipfile
 
 if _is_notebook():
-    from IPython.display import FileLink
+    from IPython.display import FileLink as _FileLink
 
 try:
-    pygtail = try_import("pygtail")
+    _pygtail = _Sire.try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
 __all__ = ["Process"]
 
-class MultiDict(dict):
+class _MultiDict(dict):
     """A multi-valued dictionary."""
     def __setitem__(self, key, value):
         """Add the given value to the list of values for this key."""
@@ -83,11 +78,11 @@ class Process():
             raise Exception("<Process> must be subclassed.")
 
         # Check that the system is valid.
-        if system.__class__ is not Sire.System.System:
-            raise TypeError("'system' must be of type 'Sire.System._System.System'")
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace.System'")
 
         # Check that the protocol is valid.
-        if not isinstance(protocol, Protocol):
+        if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Set the process to None.
@@ -103,7 +98,7 @@ class Process():
         self._has_trajectory = False
 
 	# Copy the passed system, protocol, and process name.
-        self._system = system
+        self._system = system._getSireSystem()
         self._protocol = protocol
 
         # Set the name
@@ -132,7 +127,7 @@ class Process():
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
-            self._tmp_dir = tempfile.TemporaryDirectory()
+            self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
         # User specified working directory.
@@ -140,8 +135,8 @@ class Process():
             self._work_dir = work_dir
 
             # Create the directory if it doesn't already exist.
-            if not path.isdir(work_dir):
-                makedirs(work_dir)
+            if not _os.path.isdir(work_dir):
+                _os.makedirs(work_dir)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
@@ -161,28 +156,28 @@ class Process():
         stdout_offset = "%s.offset" % self._stdout_file
         stderr_offset = "%s.offset" % self._stderr_file
 
-        if path.isfile(stdout_offset):
-            remove(stdout_offset)
+        if _os.path.isfile(stdout_offset):
+            _os.remove(stdout_offset)
 
-        if path.isfile(stderr_offset):
-            remove(stderr_offset)
+        if _os.path.isfile(stderr_offset):
+            _os.remove(stderr_offset)
 
         # Initialise the configuration file string list.
         self._config = []
 
         # Initaliae the command-line argument dictionary.
-        self._args = OrderedDict()
+        self._args = _collections.OrderedDict()
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
-            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
@@ -208,8 +203,8 @@ class Process():
 
         # Check that the new system is valid.
         else:
-            if system.__class__ is not Sire.System.System:
-                raise TypeError("'system' must be of type 'Sire.System._System.System'")
+            if type(system) is not _System:
+                raise TypeError("'system' must be of type 'BioSimSpace.System'")
 
         # Use the existing protocol.
         if protocol is None:
@@ -217,7 +212,7 @@ class Process():
 
         # Check that the new protocol is valid.
         else:
-            if not isinstance(protocol, Protocol):
+            if not isinstance(protocol, _Protocol):
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Create the new process.
@@ -253,7 +248,7 @@ class Process():
         """Set the random number seed."""
 
         if type(seed) is not int:
-            warn("The seed must be an integer. Disabling seeding.")
+            _warnings.warn("The seed must be an integer. Disabling seeding.")
             self._seed = None
         else:
             self._seed = seed
@@ -272,7 +267,7 @@ class Process():
 
         if not max_time is None:
             if max_time <= 0:
-                warn("Maximum running time must be greater than zero. Using default (60 mins).")
+                _warnings.warn("Maximum running time must be greater than zero. Using default (60 mins).")
                 max_time = 60
 
             # Convert the time to milliseconds.
@@ -318,7 +313,7 @@ class Process():
             raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
-        for line in pygtail.Pygtail(self._stdout_file):
+        for line in _pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
 
         # Get the current number of lines.
@@ -347,7 +342,7 @@ class Process():
             raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
-        for line in pygtail.Pygtail(self._stderr_file):
+        for line in _pygtail.Pygtail(self._stderr_file):
             self._stderr.append(line.rstrip())
 
         # Get the current number of lines.
@@ -390,7 +385,7 @@ class Process():
             self.wait()
 
         # Append any new lines to the stdout list.
-        for line in pygtail.Pygtail(self._stdout_file):
+        for line in _pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
 
         return self._stdout.copy()
@@ -410,7 +405,7 @@ class Process():
             self.wait()
 
         # Append any new lines to the stdout list.
-        for line in pygtail.Pygtail(self._stderr_file):
+        for line in _pygtail.Pygtail(self._stderr_file):
             self._stderr.append(line.rstrip())
 
         return self._stderr.copy()
@@ -440,17 +435,17 @@ class Process():
         zipname = "%s.zip" % name
 
         # Glob all of the output files.
-        output = glob("%s/*" % self._work_dir)
+        output = _glob.glob("%s/*" % self._work_dir)
 
-        with zipfile.ZipFile(zipname, "w") as zip:
+        with _zipfile.ZipFile(zipname, "w") as zip:
             # Loop over all of the file outputs.
             for file in output:
-                zip.write(file, arcname=path.basename(file))
+                zip.write(file, arcname=_os.path.basename(file))
 
 
         # Return a link to the archive.
         if _is_notebook():
-            return FileLink(zipname)
+            return _FileLink(zipname)
         # Return the path to the archive.
         else:
             return zipname
@@ -472,7 +467,7 @@ class Process():
             self.writeConfig(self._config_file)
 
         # The user has passed a path to a file.
-        elif path.isfile(config):
+        elif _os.path.isfile(config):
 
             # Clear the existing config.
             self._config = []
@@ -501,7 +496,7 @@ class Process():
             self.writeConfig(self._config_file)
 
         # A path to a file.
-        elif path.isfile(config):
+        elif _os.path.isfile(config):
 
             # Read the contents of the file.
             with open(file, "r") as f:
@@ -555,11 +550,11 @@ class Process():
 
     def setArgs(self, args):
         """Set the dictionary of command-line arguments."""
-        if isinstance(args, OrderedDict):
+        if isinstance(args, _collections.OrderedDict):
             self._args = args
 
         elif isinstance(args, dict):
-            self._args = OrderedDict(args)
+            self._args = _collections.OrderedDict(args)
 
     def setArg(self, arg, value):
         """Set a specific command-line argument.
@@ -592,7 +587,7 @@ class Process():
 
            args -- A dictionary of arguments.
         """
-        if isinstance(args, dict) or isinstance(args, OrderedDict):
+        if isinstance(args, dict) or isinstance(args, _collections.OrderedDict):
             for arg, value in args.items():
                 self._args[arg] = value
 
@@ -617,14 +612,14 @@ class Process():
 
         # The process is still running.
         if self._process.isRunning():
-            self._runtime = (timer() - self._timer) / 60
+            self._runtime = (_timeit.default_timer() - self._timer) / 60
             return self._runtime
 
         # The process has finished.
         else:
             # Return the runtime and reset the timer.
             if self._timer is not None:
-                self._runtime = (timer() - self._timer) / 60
+                self._runtime = (_timeit.default_timer() - self._timer) / 60
                 self._timer = None
                 return self._runtime
 
@@ -654,7 +649,7 @@ def _getAABox(system):
             raise
 
     # Return the AABox for the coordinates.
-    return AABox(coord)
+    return _Sire.Vol.AABox(coord)
 
 def _get_box_size(system):
     """Get the size of the periodic box."""
@@ -706,10 +701,10 @@ def _restrain_backbone(system):
         if is_protein:
 
             # Select the backbone.
-            backbone = m.atoms(AtomName("CA", CaseInsensitive) *
-                               AtomName("N",  CaseInsensitive) *
-                               AtomName("C",  CaseInsensitive) *
-                               AtomName("O",  CaseInsensitive))
+            backbone = m.atoms(_Sire.Mol.AtomName("CA", _Sire.ID.CaseInsensitive) *
+                               _Sire.Mol.AtomName("N",  _Sire.ID.CaseInsensitive) *
+                               _Sire.Mol.AtomName("C",  _Sire.ID.CaseInsensitive) *
+                               _Sire.Mol.AtomName("O",  _Sire.ID.CaseInsensitive))
 
             # Set the restrained property for each atom in the backbone.
             for atom in backbone:

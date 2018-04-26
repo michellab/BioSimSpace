@@ -27,6 +27,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from Sire.Base import wrap as _wrap
 from Sire.IO import MoleculeParser as _MoleculeParser
 
+from .._System import System as _System
+
 from collections import OrderedDict as _OrderedDict
 from glob import glob
 from io import StringIO as _StringIO
@@ -95,7 +97,9 @@ def readMolecules(files):
        files -- A file name, or a list of file names.
     """
 
-    return _MoleculeParser.read(files)
+    system = _MoleculeParser.read(files)
+
+    return _System(system)
 
 def saveMolecules(filebase, system, fileformat):
     """Save a molecular system to file.
@@ -107,11 +111,20 @@ def saveMolecules(filebase, system, fileformat):
        fileformat -- The file format (or formats) to save to.
     """
 
+    # Check that the filebase is a string.
+    if type(filebase) is not str:
+        raise TypeError("'filebase' must be of type 'str'")
+
+    # Check that that the system is of the correct type.
+    if type(system) is not _System:
+        raise TypeError("'system' must be of type 'BioSimSpace.System'")
+
     # Check that fileformat argument is of the correct type.
 
     # Convert to a list if a single string is passed.
+    # We split on ',' since the user might pass system.fileFormat() as the argument.
     if type(fileformat) is str:
-        fileformat = [fileformat]
+        fileformat = fileformat.split(",")
     # Lists and tuples are okay!
     elif type(fileformat) is list:
         pass
@@ -142,7 +155,7 @@ def saveMolecules(filebase, system, fileformat):
 
     # Save the system using each file format.
     for format in formats:
-        file = _MoleculeParser.save(system, filebase, \
+        file = _MoleculeParser.save(system._getSireSystem(), filebase, \
                 {"fileformat":_wrap(format)})
         files += file
 

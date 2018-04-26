@@ -24,13 +24,13 @@ Functionality for minimisation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._protocol import Protocol
+from ._protocol import Protocol as _Protocol
 
-from warnings import warn
+import warnings as _warnings
 
 __all__ = ["Minimisation"]
 
-class Minimisation(Protocol):
+class Minimisation(_Protocol):
     """A class for storing minimisation protocols."""
 
     def __init__(self, steps=10000):
@@ -63,7 +63,7 @@ class Minimisation(Protocol):
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:
-            warn("Number of steps must be greater than zero. Using default (10000).")
+            _warnings.warn("Number of steps must be greater than zero. Using default (10000).")
             self._steps = 10000
 
         else:

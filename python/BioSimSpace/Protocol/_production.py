@@ -24,9 +24,9 @@ Functionality for production protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._protocol import Protocol
+from ._protocol import Protocol as _Protocol
 
-from math import ceil
+import math as _math
 
 __all__ = ["Production"]
 
@@ -34,7 +34,7 @@ __all__ = ["Production"]
 # Update as support is added.
 _ensembles = ["NVT", "NPT"]
 
-class Production(Protocol):
+class Production(_Protocol):
     """A class for storing production protocols."""
 
     def __init__(self, timestep=2, runtime=1, temperature=300, frames=20,
@@ -162,7 +162,7 @@ class Production(Protocol):
             self._frames = 20
 
         else:
-            self._frames = ceil(frames)
+            self._frames = _math.ceil(frames)
 
     def getEnsemble(self):
         """Return the thermodynamic ensemble."""
@@ -193,7 +193,7 @@ class Production(Protocol):
             self._first_step = 0
 
         else:
-            self._first_step = ceil(first_step)
+            self._first_step = _math.ceil(first_step)
 
     def isRestart(self):
         """Return whether this restart simulation."""

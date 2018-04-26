@@ -24,34 +24,39 @@ Functionality for creating BioSimSpace workflow components (nodes).
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from Sire import try_import as _try_import
+
 from BioSimSpace import _is_notebook
 
-from Sire import try_import
+from ._requirements import Boolean as _Boolean
+from ._requirements import File as _File
+from ._requirements import FileSet as _FileSet
+from ._requirements import Float as _Float
+from ._requirements import Integer as _Integer
+from ._requirements import Requirement as _Requirement
+from ._requirements import String as _String
+
+import argparse as _argparse
+import collections as _collections
+import io as _io
+import __main__
+import os as _os
+import sys as _sys
+import warnings as _warnings
 
 # Enable Jupyter widgets.
 if _is_notebook():
     try:
-        widgets = try_import("ipywidgets")
+        _widgets = _try_import("ipywidgets")
     except ImportError:
         raise ImportError("Ipywidgets is not installed. Please install ipywidgets in order to use BioSimSpace.")
     try:
-        fileupload = try_import("fileupload")
+        _fileupload = _try_import("fileupload")
     except ImportError:
         raise ImportError("Fileupload is not installed. Please install fileupload in order to use BioSimSpace.")
 
-    from IPython.display import FileLink
-    import zipfile
-
-from ._requirements import *
-
-from collections import OrderedDict
-from os import makedirs, path
-from warnings import warn
-
-import argparse
-import io
-import __main__ as main
-import sys
+    from IPython.display import FileLink as _FileLink
+    import zipfile as _zipfile
 
 __all__ = ["Node"]
 
@@ -82,7 +87,7 @@ class Node():
         # Set the node name.
         if name is None:
             try:
-                self._name = path.basename(main.__file__)
+                self._name = _os.path.basename(__main__.__file__)
             except:
                 self._name = None
 
@@ -96,11 +101,11 @@ class Node():
         self._license = None
 
         # Initialise dictionaries for the inputs/outputs.
-        self._inputs = OrderedDict()
-        self._outputs = OrderedDict()
+        self._inputs = _collections.OrderedDict()
+        self._outputs = _collections.OrderedDict()
 
         # A dictionary of Jupyter widgets.
-        self._widgets = OrderedDict()
+        self._widgets = _collections.OrderedDict()
 
         # Whether the input is valid.
         self._is_valid_input = False
@@ -121,8 +126,8 @@ class Node():
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
             # Create the parser.
-            self._parser = argparse.ArgumentParser(description=self._description,
-                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            self._parser = _argparse.ArgumentParser(description=self._description,
+                formatter_class=_argparse.ArgumentDefaultsHelpFormatter)
 
             # TODO: Add an option to allow the user to load a configuration from file.
             # config = File(help="path to a configuration file", optional=True)
@@ -148,14 +153,14 @@ class Node():
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'.")
 
-        if not isinstance(input, Requirement):
+        if not isinstance(input, _Requirement):
             raise TypeError("'input' must be of type 'Requirement'.")
 
         # We already have an input with this name.
         reset = False
         if name in self._inputs:
             if self._is_notebook:
-                warn("Duplicate input requirement '%s'"  % name)
+                _warnings.warn("Duplicate input requirement '%s'"  % name)
                 reset = True
             else:
                 raise ValueError("Duplicate input requirement '%s'"  % name)
@@ -256,20 +261,20 @@ class Node():
 
         # Create a widget button to indicate whether the requirement value
         # has been set.
-        button = widgets.Button(
+        button = _widgets.Button(
             tooltip="The input requirement is unset.",
             button_style="warning",
             icon="fa-exclamation-triangle",
-            layout=widgets.Layout(flex="1 1 auto", width="auto"),
+            layout=_widgets.Layout(flex="1 1 auto", width="auto"),
             disabled=False,
         )
 
         # Add a Jupyter widget for each of the supported requirement types.
 
         # Boolean.
-        if type(input) is Boolean:
+        if type(input) is _Boolean:
             # Create a Jupyter toggle button.
-            widget = widgets.ToggleButton(
+            widget = _widgets.ToggleButton(
                 value=False,
                 description=name,
                 tooltip=input.getHelp(),
@@ -304,7 +309,7 @@ class Node():
             self._widgets[name] = widget
 
         # Integer.
-        elif type(input) is Integer:
+        elif type(input) is _Integer:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -317,7 +322,7 @@ class Node():
                     default = allowed[0]
 
                 # Create a dropdown for the list of allowed values.
-                widget = widgets.Dropdown(
+                widget = _widgets.Dropdown(
                     options=allowed,
                     value=default,
                     description=name,
@@ -341,7 +346,7 @@ class Node():
                     # Bounded integer.
                     if max_ is not None:
                         # Create an int slider widget.
-                        widget = widgets.IntSlider(
+                        widget = _widgets.IntSlider(
                             value=default,
                             min=min_,
                             max=max_,
@@ -361,7 +366,7 @@ class Node():
                 # Unbounded integer.
                 if is_unbounded:
                     # Create an integer widget.
-                    widget = widgets.IntText(
+                    widget = _widgets.IntText(
                         value=default,
                         description=name,
                         tooltip=input.getHelp(),
@@ -392,7 +397,7 @@ class Node():
             self._widgets[name] = widget
 
         # Float.
-        elif type(input) is Float:
+        elif type(input) is _Float:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -405,7 +410,7 @@ class Node():
                     default = allowed[0]
 
                 # Create a dropdown for the list of allowed values.
-                widget = widgets.Dropdown(
+                widget = _widgets.Dropdown(
                     options=allowed,
                     value=default,
                     description=name,
@@ -429,7 +434,7 @@ class Node():
                     # Bounded float.
                     if max_ is not None:
                         # Create a float slider widget.
-                        widget = widgets.FloatSlider(
+                        widget = _widgets.FloatSlider(
                             value=default,
                             min=min_,
                             max=max_,
@@ -449,7 +454,7 @@ class Node():
                 # Unbounded float.
                 if is_unbounded:
                     # Create a float widget.
-                    widget = widgets.FloatText(
+                    widget = _widgets.FloatText(
                         value=default,
                         description=name,
                         tooltip=input.getHelp(),
@@ -480,7 +485,7 @@ class Node():
             self._widgets[name] = widget
 
         # String.
-        elif type(input) is String:
+        elif type(input) is _String:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -493,7 +498,7 @@ class Node():
                     default = allowed[0]
 
                 # Create a dropdown for the list of allowed values.
-                widget = widgets.Dropdown(
+                widget = _widgets.Dropdown(
                     options=allowed,
                     value=default,
                     description=name,
@@ -504,7 +509,7 @@ class Node():
             else:
                 if default is None:
                     # Create a text widget without a default.
-                    widget = widgets.Text(
+                    widget = _widgets.Text(
                         placeholder="Type something",
                         description=name,
                         tooltip=input.getHelp(),
@@ -512,7 +517,7 @@ class Node():
                     )
                 else:
                     # Create a text widget.
-                    widget = widgets.Text(
+                    widget = _widgets.Text(
                         value=default,
                         placeholder="Type something",
                         description=name,
@@ -544,9 +549,9 @@ class Node():
             self._widgets[name] = widget
 
         # File.
-        elif type(input) is File:
+        elif type(input) is _File:
             # Create a fileupload widget.
-            widget = fileupload.FileUploadWidget()
+            widget = _fileupload.FileUploadWidget()
 
             # Add the 'set' indicator button to the widget.
             widget._button = button
@@ -570,9 +575,9 @@ class Node():
             self._widgets[name] = widget
 
         # File set.
-        elif type(input) is FileSet:
+        elif type(input) is _FileSet:
             # Create a fileupload widget.
-            widget = fileupload.FileUploadWidget()
+            widget = _fileupload.FileUploadWidget()
 
             # Add the 'set' indicator button to the widget.
             widget._button = button
@@ -620,12 +625,12 @@ class Node():
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'.")
 
-        if not isinstance(output, Requirement):
+        if not isinstance(output, _Requirement):
             raise TypeError("'output' must be of type 'Requirement'.")
 
         # We already have an ouput requirement with this name.
         if name in self._outputs:
-            warn("Duplicate input requirement. Overwriting existing value!")
+            _warnings.warn("Duplicate input requirement. Overwriting existing value!")
 
         # Add the output to the dictionary.
         self._outputs[name] = output
@@ -735,7 +740,7 @@ class Node():
             return
 
         # Create the layout object.
-        layout = widgets.Layout(
+        layout = _widgets.Layout(
             display="flex",
             flex_flow="row",
             justify_content="space-between"
@@ -750,7 +755,7 @@ class Node():
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
             # Create the widget label.
-            label = widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
+            label = _widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
 
             # This is a FileSet requirement with multiple widgets.
             if type(widget) is list:
@@ -761,7 +766,7 @@ class Node():
                 indicator = widget._button
 
             # Create a box for the widget.
-            box = widgets.Box(items, layout=layout)
+            box = _widgets.Box(items, layout=layout)
 
             # Add the widget box to the list.
             requirements.append(box)
@@ -770,7 +775,7 @@ class Node():
             indicators.append(indicator)
 
         # Create the widget form.
-        form1 = widgets.Box(requirements, layout=widgets.Layout(
+        form1 = _widgets.Box(requirements, layout=_widgets.Layout(
             display="flex",
             flex_flow="column",
             border="solid 2px",
@@ -779,7 +784,7 @@ class Node():
         ))
 
         # Create the indicator form.
-        form2 = widgets.VBox(indicators, layout=widgets.Layout(
+        form2 = _widgets.VBox(indicators, layout=_widgets.Layout(
             display="flex",
             flex_flow="column",
             align_items="stretch",
@@ -787,7 +792,7 @@ class Node():
         ))
 
         # Combine the two forms.
-        form = widgets.Box([form1, form2], layout=layout)
+        form = _widgets.Box([form1, form2], layout=layout)
 
         # Store the form.
         self._control_panel = form
@@ -851,13 +856,13 @@ class Node():
             if output.getValue() is None:
                 self._errors.append("Missing output for requirement '%s'" % name)
             else:
-                if type(output) is File or type(output) is FileSet:
+                if type(output) is _File or type(output) is _FileSet:
                     file_outputs.append(output)
 
         # Node failed.
         if len(self._errors) > 0:
             for error in self._errors:
-                print("%s" % error, file=sys.stderr)
+                print("%s" % error, file=_sys.stderr)
 
             if self._name is not None:
                 raise SystemExit("Node '%s' failed!" % self._name)
@@ -875,18 +880,18 @@ class Node():
                     zipname = "%s.zip" % self._name
 
                 # Append the files to the archive.
-                with zipfile.ZipFile(zipname, "w") as zip:
+                with _zipfile.ZipFile(zipname, "w") as zip:
                     # Loop over all of the file outputs.
                     for output in file_outputs:
-                        if type(output) is File:
+                        if type(output) is _File:
                             file = output.getValue()
-                            zip.write(file, arcname=path.basename(file))
+                            zip.write(file, arcname=_os.path.basename(file))
                         else:
                             for file in output.getValue():
-                                zip.write(file, arcname=path.basename(file))
+                                zip.write(file, arcname=_os.path.basename(file))
 
                 # Return a link to the archive.
-                return FileLink(zipname)
+                return _FileLink(zipname)
         else:
             return True
 
@@ -911,8 +916,8 @@ def _on_file_upload(change):
     filename = change["owner"].filename
 
     # Create the uploads directory if it doesn't already exist.
-    if not path.isdir("uploads"):
-        makedirs("uploads")
+    if not _os.path.isdir("uploads"):
+        _os.makedirs("uploads")
 
     # Append the upload directory to the file name.
     new_filename = "uploads/%s" % filename
@@ -987,4 +992,4 @@ def _str2bool(v):
     elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
+        raise _argparse.ArgumentTypeError("Boolean value expected.")

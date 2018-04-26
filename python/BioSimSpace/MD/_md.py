@@ -24,15 +24,15 @@ Functionality for configuring and driving molecular dynamics simulations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire.Base import findExe
+import Sire as _Sire
 
-import Sire.System
+from ..Protocol import Custom as _Custom
+from ..Protocol._protocol import Protocol as _Protocol
+from .._System import System as _System
 
-from ..Process import *
-from ..Protocol import *
-from ..Protocol._protocol import Protocol
+import BioSimSpace.Process as _Process
 
-from os import environ, path
+import os as _os
 
 __all__ = ["MD"]
 
@@ -64,12 +64,16 @@ def _find_md_package(system, protocol, use_gpu=True):
        use_gpu  -- Whether to use GPU support.
     """
 
+    # Check that the system is valid.
+    if type(system) is not _System:
+        raise TypeError("'system' must be of type 'BioSimSpace.System'")
+
     # Check that the use_gpu flag is valid.
     if type(use_gpu) is not bool:
         raise TypeError("'use_gpu' keyword must be of type 'bool'")
 
     # Get the file format of the molecular system.
-    fileformat = system.property("fileformat").toString()
+    fileformat = system.fileFormat()
 
     # Make sure that this format is supported.
     if not fileformat in _file_extensions:
@@ -81,22 +85,22 @@ def _find_md_package(system, protocol, use_gpu=True):
     for exe, gpu in _md_packages[package].items():
         if package == "AMBER":
             # Search AMBERHOME, if set.
-            if "AMBERHOME" in environ:
-                amber_home = environ.get("AMBERHOME")
+            if "AMBERHOME" in _os.environ:
+                amber_home = _os.environ.get("AMBERHOME")
                 exe = "%s/bin/%s" % (amber_home, exe)
-                if path.isfile(exe):
+                if _os.path.isfile(exe):
                     return (package, exe)
 
             # Search PATH.
             else:
                 try:
-                    exe = findExe(exe).absoluteFilePath()
+                    exe = _Sire.Base.findExe(exe).absoluteFilePath()
                     return (package, exe)
                 except:
                     pass
         else:
             try:
-                exe = findExe(exe).absoluteFilePath()
+                exe = _Sire.Base.findExe(exe).absoluteFilePath()
                 return (package, exe)
             except:
                 pass
@@ -125,13 +129,13 @@ class MD():
         """
 
         # Check that the system is valid.
-        if system.__class__ is not Sire.System.System:
-            raise TypeError("'system' must be of type 'Sire.System._System.System'")
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace.System'")
 
         # Check that the protocol is valid.
-        if not isinstance(protocol, Protocol):
+        if not isinstance(protocol, _Protocol):
             if type(protocol) is str:
-                protocol = Custom(protocol)
+                protocol = _Custom(protocol)
             else:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
                     "or the path to a custom configuration file.")
@@ -143,15 +147,15 @@ class MD():
 
         # AMBER.
         if package == "AMBER":
-            process = Amber(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Amber(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # GROMACS.
         elif package == "GROMACS":
-            process = Gromacs(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Gromacs(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # NAMD.
         elif package == "NAMD":
-            process = Namd(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Namd(system, protocol, name=name, work_dir=work_dir, seed=seed)
 
         # Start the process.
         if autostart:

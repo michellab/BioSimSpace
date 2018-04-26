@@ -24,15 +24,15 @@ Functionality for equilibration protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._protocol import Protocol
+from ._protocol import Protocol as _Protocol
 
-from math import ceil
-from pytest import approx
-from warnings import warn
+import math as _math
+import pytest as _pytest
+import warnings as _warnings
 
 __all__ = ["Equilibration"]
 
-class Equilibration(Protocol):
+class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
     def __init__(self, timestep=2, runtime=0.2, temperature_start=300,
@@ -65,7 +65,7 @@ class Equilibration(Protocol):
 
             # Start and end temperature is the same.
             if (self._temperature_start == self._temperature_end):
-                warn("Start and end temperatures are the same!")
+                _warnings.warn("Start and end temperatures are the same!")
                 self._is_const_temp = True
 
         # Constant temperature simulation.
@@ -107,7 +107,7 @@ class Equilibration(Protocol):
             raise TypeError("'timestep' must be of type 'float'")
 
         if timestep <= 0:
-            warn("The time step must be positive. Using default (2 fs).")
+            _warnings.warn("The time step must be positive. Using default (2 fs).")
             self._timestep = 2
 
         else:
@@ -127,7 +127,7 @@ class Equilibration(Protocol):
             raise TypeError("'runtime' must be of type 'float'")
 
         if runtime <= 0:
-            warn("The running time must be positive. Using default (0.2 ns).")
+            _warnings.warn("The running time must be positive. Using default (0.2 ns).")
             self._runtime = 0.2
 
         else:
@@ -147,10 +147,10 @@ class Equilibration(Protocol):
             raise TypeError("'temperature' must be of type 'float'")
 
         if temperature < 0:
-            warn("Starting temperature must be positive. Using default (300 K).")
+            _warnings.warn("Starting temperature must be positive. Using default (300 K).")
             self._temperature_start = 300
 
-        elif temperature == approx(0):
+        elif temperature == _pytest.approx(0):
             self._temperature_start = 0.01
 
         else:
@@ -170,10 +170,10 @@ class Equilibration(Protocol):
             raise TypeError("'temperature' must be of type 'float'")
 
         if temperature < 0:
-            warn("Final temperature must be positive. Using default (300 K).")
+            _warnings.warn("Final temperature must be positive. Using default (300 K).")
             self._temperature_end = 300
 
-        elif temperature == approx(0):
+        elif temperature == _pytest.approx(0):
             self._temperature_end = 0.01
 
         else:
@@ -190,11 +190,11 @@ class Equilibration(Protocol):
             raise TypeError("'frames' must be of type 'int'")
 
         if frames <= 0:
-            warn("The number of frames must be positive. Using default (20).")
+            _warnings.warn("The number of frames must be positive. Using default (20).")
             self._frames = 20
 
         else:
-            self._frames = ceil(frames)
+            self._frames = _math.ceil(frames)
 
     def isRestrained(self):
         """Return whether the backbone is restrained."""
@@ -207,7 +207,7 @@ class Equilibration(Protocol):
             self._is_restrained = restrain_backbone
 
         else:
-            warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
+            _warnings.warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
             self._is_restrained = False
 
     def isConstantTemp(self):

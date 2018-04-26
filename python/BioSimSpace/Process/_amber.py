@@ -24,37 +24,32 @@ Functionality for running simulations using AMBER.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire import try_import
-from Sire.Base import findExe, Process
-from Sire.IO import AmberPrm, AmberRst7, MoleculeParser
+import Sire as _Sire
 
 from . import _process
-from ..Protocol import *
-from ..Trajectory import Trajectory
+from .._System import System as _System
+from ..Trajectory import Trajectory as _Trajectory
 
-from math import ceil, floor
-from os import chdir, environ, getcwd, path
-from re import findall
-from shutil import copyfile
-from time import sleep
-from timeit import default_timer as timer
-from warnings import warn
+import BioSimSpace.Protocol as _Protocol
 
-try:
-    pygtail = try_import("pygtail")
-except ImportError:
-    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
+import math as _math
+import os as _os
+import re as _re
+import shutil as _shutil
+import time as _time
+import timeit as _timeit
+import warnings as _warnings
 
 try:
-    watchdog = try_import("watchdog")
-    from watchdog.events import PatternMatchingEventHandler
-    from watchdog.observers import Observer
+    _watchdog = _Sire.try_import("watchdog")
+    from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
+    from watchdog.observers import Observer as _Observer
 except ImportError:
     raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
 
 __all__ = ["Amber"]
 
-class Watcher:
+class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
        is used trigger updates to the energy dictionary each time the file is modified.
     """
@@ -67,18 +62,18 @@ class Watcher:
         """
 
         self._process = proc
-        self._observer = Observer()
+        self._observer = _Observer()
 
     def start(self):
         """Start the file watcher."""
 
         # Setup the event handler and observer.
-        event_handler = Handler(self._process)
+        event_handler = _Handler(self._process)
         self._observer.schedule(event_handler, self._process._work_dir)
         self._observer.daemon = True
         self._observer.start()
 
-class Handler(PatternMatchingEventHandler):
+class _Handler(_PatternMatchingEventHandler):
     """An event handler to trigger updates to the energy dictionary each time
        the log file is changed.
     """
@@ -121,7 +116,7 @@ class Handler(PatternMatchingEventHandler):
             # process started, then wipe the dictionary and flag that the file
             # is now being watched.
             if not self._process._is_watching:
-                self._process._stdout_dict = _process.MultiDict()
+                self._process._stdout_dict = _process._MultiDict()
                 self._process._is_watching = True
 
             # Now update the dictionary with any new records.
@@ -163,24 +158,24 @@ class Amber(_process.Process):
         # pmemd, sander, etc., as well as their variants, e.g. pmemd.MPI.
         if exe is None:
             # Search AMBERHOME, if set.
-            if "AMBERHOME" in environ:
-                amber_home = environ.get("AMBERHOME")
-                if path.isfile("%s/bin/sander" % amber_home):
+            if "AMBERHOME" in _os.environ:
+                amber_home = _os.environ.get("AMBERHOME")
+                if _os.path.isfile("%s/bin/sander" % amber_home):
                     self._exe = "%s/bin/sander" % amber_home
 
             # Search PATH.
             else:
-                self._exe = findExe("sander").absoluteFilePath()
+                self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
 
         else:
             # Make sure executable exists.
-            if path.isfile(exe):
+            if _os.path.isfile(exe):
                 self._exe = protocol
             else:
                 raise IOError("AMBER executable doesn't exist: '%s'" % exe)
 
         # Initialise the energy dictionary and header.
-        self._stdout_dict = _process.MultiDict()
+        self._stdout_dict = _process._MultiDict()
 
         # Create the name of the energy output file and wipe the
         # contents of any existing file.
@@ -210,16 +205,16 @@ class Amber(_process.Process):
         # Create the input files...
 
         # RST file (coordinates).
-        rst = AmberRst7(self._system)
+        rst = _Sire.IO.AmberRst7(self._system)
         rst.writeToFile(self._rst_file)
 
         # PRM file (topology).
-        prm = AmberPrm(self._system)
+        prm = _Sire.IO.AmberPrm(self._system)
         prm.writeToFile(self._top_file)
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is Custom:
+        if type(self._protocol) is _Protocol.Custom:
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -243,11 +238,11 @@ class Amber(_process.Process):
         if "space" in self._system.propertyKeys():
             has_box = True
         else:
-            warn("No simulation box found. Assuming gas phase simulation.")
+            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation:
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
             self.addToConfig("  imin=1,")                   # Minisation simulation.
@@ -265,13 +260,13 @@ class Amber(_process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is Equilibration:
+        elif type(self._protocol) is _Protocol.Equilibration:
 
             # Convert the timestep to nanoseconds.
             timestep = self._protocol.getTimeStep() * 1e-6
 
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.getRunTime() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime() / timestep)
 
             # Set the random number seed.
             if self._is_seeded:
@@ -290,7 +285,7 @@ class Amber(_process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
-                % floor(steps / self._protocol.getFrames()))
+                % _math.floor(steps / self._protocol.getFrames()))
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  dt=%.3f," % timestep)       # Time step.
             self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
@@ -328,13 +323,13 @@ class Amber(_process.Process):
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is Production:
+        elif type(self._protocol) is _Protocol.Production:
 
             # Convert the timestep to nanoseconds.
             timestep = self._protocol.getTimeStep() * 1e-6
 
             # Work out the number of integration steps.
-            steps = ceil(self._protocol.getRunTime() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime() / timestep)
 
             # Set the random number seed.
             if self._seed is None:
@@ -356,7 +351,7 @@ class Amber(_process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
             self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
-                % floor(steps / self._protocol.getFrames()))
+                % _math.floor(steps / self._protocol.getFrames()))
             if self._protocol.isRestart():
                 self.addToConfig("  irest=1,")              # Restart using previous velocities.
             else:
@@ -401,15 +396,15 @@ class Amber(_process.Process):
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
         # Skip if the user has passed a custom protocol.
-        if type(self._protocol) is not Custom:
+        if type(self._protocol) is not _Protocol.Custom:
 
             # Append a reference file if this a constrained equilibration.
-            if type(self._protocol) is Equilibration:
+            if type(self._protocol) is _Protocol.Equilibration:
                 if self._protocol.isRestrained():
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is an equilibration or production run.
-            if type(self._protocol) is Equilibration or type(self._protocol) is Production:
+            if type(self._protocol) is _Protocol.Equilibration or type(self._protocol) is _Protocol.Production:
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -424,11 +419,11 @@ class Amber(_process.Process):
         self._is_watching = False
 
         # Store the current working directory.
-        dir = getcwd()
+        dir = _os.getcwd()
 
         # Change to the working directory for the process.
         # This avoid problems with relative paths.
-        chdir(self._work_dir)
+        _os.chdir(self._work_dir)
 
         # Create the arguments string list.
         args = self.getArgStringList()
@@ -444,17 +439,17 @@ class Amber(_process.Process):
             f.write("%s\n" % self._command)
 
         # Start the timer.
-        self._timer = timer()
+        self._timer = _timeit.default_timer()
 
         # Start the simulation.
-        self._process = Process.run(self._exe, args,
+        self._process = _Sire.Base.Process.run(self._exe, args,
             "%s.out"  % self._name, "%s.err"  % self._name)
 
         # Change back to the original working directory.
-        chdir(dir)
+        _os.chdir(dir)
 
 	# Watch the energy info file for changes.
-        self._watcher = Watcher(self)
+        self._watcher = _Watcher(self)
         self._watcher.start()
 
         return self
@@ -477,9 +472,9 @@ class Amber(_process.Process):
         restart = "%s/%s.crd" % (self._work_dir, self._name)
 
         # Check that the file exists.
-        if path.isfile(restart):
+        if _os.path.isfile(restart):
             # Create and return the molecular system.
-            return MoleculeParser.read(restart, self._top_file)
+            return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
 
         else:
             return None
@@ -497,7 +492,7 @@ class Amber(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        return Trajectory(process=self)
+        return _Trajectory(process=self)
 
     def getRecord(self, record, time_series=False, block="AUTO"):
         """Get a record from the stdout dictionary.
@@ -563,7 +558,7 @@ class Amber(_process.Process):
         """
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation:
             return None
 
         # Get the list of time steps.
@@ -821,7 +816,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        if type(self._protocol) is Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation:
             return self.getRecord("ENERGY", time_series, block)
         else:
             return self.getRecord("ETOT", time_series, block)
@@ -965,7 +960,7 @@ class Amber(_process.Process):
                 if len(line) > 0 and line[0] is not "|":
 
                     # The output format is different for minimisation protocols.
-                    if type(self._protocol) is Minimisation:
+                    if type(self._protocol) is _Protocol.Minimisation:
 
                         # No equals sign in the line.
                         if "=" not in line:
@@ -1000,7 +995,7 @@ class Amber(_process.Process):
                     # All other protocols have output that is formatted as RECORD = VALUE.
 
                     # Use a regex search to split the line into record names and values.
-                    records = findall("(\d*\-*\d*\s*[A-Z]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)", line.upper())
+                    records = _re.findall("(\d*\-*\d*\s*[A-Z]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)", line.upper())
 
                     # Append each record to the dictionary.
                     for key, value in records:
@@ -1041,7 +1036,7 @@ class Amber(_process.Process):
         # doesn't work properly with the background threads used for the
         # watchdog observer.
         while self._process.isRunning():
-            sleep(1)
+            _time.sleep(1)
 
         # Stop and join the watchdog observer.
         self._watcher._observer.stop()
@@ -1064,7 +1059,7 @@ class Amber(_process.Process):
             return None
 
         if type(time_series) is not bool:
-            warn("Non-boolean time-series flag. Defaulting to False!")
+            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
         # Return the list of dictionary values.
@@ -1096,7 +1091,7 @@ class Amber(_process.Process):
         traj_file = "%s/%s.nc" % (self._work_dir, self._name)
 
         # Return the trajectory and topology file.
-        if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
+        if _os.path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
             return (traj_file, self._top_file)
 
         # No trajectory file.

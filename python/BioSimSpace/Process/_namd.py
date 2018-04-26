@@ -24,21 +24,21 @@ Functionality for running simulations using NAMD.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire import try_import
-from Sire.Base import findExe, Process
-from Sire.IO import CharmmPSF, MoleculeParser, PDB2
+import Sire as _Sire
 
 from . import _process
-from ..Protocol import *
-from ..Trajectory import Trajectory
+from .._System import System as _System
+from ..Trajectory import Trajectory as _Trajectory
 
-from math import ceil, floor
-from os import chdir, getcwd, path
-from timeit import default_timer as timer
-from warnings import warn
+import BioSimSpace.Protocol as _Protocol
+
+import math as _math
+import os as _os
+import timeit as _timeit
+import warnings as _warnings
 
 try:
-    pygtail = try_import("pygtail")
+    _pygtail = _Sire.try_import("pygtail")
 except ImportError:
     raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
@@ -75,17 +75,17 @@ class Namd(_process.Process):
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
         if exe is None:
-            self._exe = findExe("namd2").absoluteFilePath()
+            self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
 
         else:
             # Make sure executable exists.
-            if path.isfile(exe):
+            if _os.path.isfile(exe):
                 self._exe = protocol
             else:
                 raise IOError("NAMD executable doesn't exist: '%s'" % exe)
 
         # Initialise the stdout dictionary and title header.
-        self._stdout_dict = _process.MultiDict()
+        self._stdout_dict = _process._MultiDict()
         self._stdout_title = None
 
         # The names of the input files.
@@ -110,11 +110,11 @@ class Namd(_process.Process):
         # Create the input files...
 
         # PSF and parameter files.
-        psf = CharmmPSF(self._system)
+        psf = _Sire.IO.CharmmPSF(self._system)
         psf.writeToFile(self._psf_file)
 
         # PDB file.
-        pdb = PDB2(self._system)
+        pdb = _Sire.IO.PDB2(self._system)
         pdb.writeToFile(self._top_file)
 
         # Try to write a PDB "velocity" restart file.
@@ -122,7 +122,7 @@ class Namd(_process.Process):
         # a "velocity" property.
 
         # First generate a name for the velocity file.
-        velocity_file = path.splitext(self._top_file)[0] + ".vel"
+        velocity_file = _os.path.splitext(self._top_file)[0] + ".vel"
 
         # Write the velocity file.
         has_velocities = pdb.writeVelocityFile(velocity_file)
@@ -194,7 +194,7 @@ class Namd(_process.Process):
             f.close()
 
         # Generate the NAMD configuration file.
-        if type(self._protocol) is Custom:
+        if type(self._protocol) is _Protocol.Custom:
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -228,7 +228,7 @@ class Namd(_process.Process):
 
         # No box information. Assume this is a gas phase simulation.
         else:
-            warn("No simulation box found. Assuming gas phase simulation.")
+            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
         # Check whether the system contains parameter format information.
@@ -241,23 +241,23 @@ class Namd(_process.Process):
 
         # No parameter format information. Assume these are CHARMM parameters.
         else:
-            warn("No parameter format information found. Assuming CHARMM parameters.")
+            _warnings.warn("No parameter format information found. Assuming CHARMM parameters.")
             is_charmm = True
 
         # Append generic configuration variables.
 
         # Topology.
-        self.addToConfig("structure             %s" % path.basename(self._psf_file))
-        self.addToConfig("coordinates           %s" % path.basename(self._top_file))
+        self.addToConfig("structure             %s" % _os.path.basename(self._psf_file))
+        self.addToConfig("coordinates           %s" % _os.path.basename(self._top_file))
 
         # Velocities.
         if self._velocity_file is not None:
-            self.addToConfig("velocities            %s" % path.basename(self._velocity_file))
+            self.addToConfig("velocities            %s" % _os.path.basename(self._velocity_file))
 
         # Parameters.
         if is_charmm:
             self.addToConfig("paraTypeCharmm        on")
-        self.addToConfig("parameters            %s" % path.basename(self._param_file))
+        self.addToConfig("parameters            %s" % _os.path.basename(self._param_file))
 
         # Random number seed.
         if self._is_seeded:
@@ -311,16 +311,16 @@ class Namd(_process.Process):
         self.addToConfig("outputTiming          1000")
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation:
             self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
             # stepspercycle, which is set the default of 20.
-            steps = 20 * ceil(self._protocol.getSteps() / 20)
+            steps = 20 * _math.ceil(self._protocol.getSteps() / 20)
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        if type(self._protocol) is Equilibration:
+        if type(self._protocol) is _Protocol.Equilibration:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f" % self._protocol.getStartTemperature())
@@ -371,14 +371,14 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = ceil(self._protocol.getRunTime() / 2e-6)
-            steps = 20 * ceil(steps / 20)
+            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = 20 * _math.ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
                 denom = abs(self._protocol.getEndTemperature() - self._protocol.getStartTemperature())
-                freq = floor(steps / denom)
+                freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
                 self.addToConfig("reassignTemp          %.2f" % self._protocol.getStartTemperature())
@@ -386,13 +386,13 @@ class Namd(_process.Process):
                 self.addToConfig("reassignHold          %.2f" % self._protocol.getEndTemperature())
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is Production:
+        elif type(self._protocol) is _Protocol.Production:
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f" % self._protocol.getTemperature())
             self.addToConfig("temperature           $temperature")
@@ -424,11 +424,11 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = ceil(self._protocol.getRunTime() / 2e-6)
-            steps = 20 * ceil(steps / 20)
+            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
@@ -442,11 +442,11 @@ class Namd(_process.Process):
                 return
 
         # Store the current working directory.
-        dir = getcwd()
+        dir = _os.getcwd()
 
         # Change to the working directory for the process.
         # This avoid problems with relative paths.
-        chdir(self._work_dir)
+        _os.chdir(self._work_dir)
 
         # Write the command-line process to a README.txt file.
         with open("README.txt", "w") as f:
@@ -459,15 +459,15 @@ class Namd(_process.Process):
             f.write("%s\n" % self._command)
 
         # Start the timer.
-        self._timer = timer()
+        self._timer = _timeit.default_timer()
 
         # Start the simulation.
-        self._process = Process.run(self._exe, "%s.namd" % self._name,
-                                               "%s.out"  % self._name,
-                                               "%s.err"  % self._name)
+        self._process = _Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
+                                                          "%s.out"  % self._name,
+                                                          "%s.err"  % self._name)
 
         # Change back to the original working directory.
-        chdir(dir)
+        _os.chdir(dir)
 
         return self
 
@@ -491,12 +491,12 @@ class Namd(_process.Process):
         has_coor = False
 
         # First check for final configuration.
-        if path.isfile("%s/%s_out.coor" % (self._work_dir, self._name)):
+        if _os.path.isfile("%s/%s_out.coor" % (self._work_dir, self._name)):
             coor_file = "%s/%s_out.coor" % (self._work_dir, self._name)
             has_coor = True
 
         # Otherwise check for a restart file.
-        elif path.isfile("%s/%s_out.restart.coor" % (self._work_dir, self._name)):
+        elif _os.path.isfile("%s/%s_out.restart.coor" % (self._work_dir, self._name)):
             coor_file = "%s/%s_out.restart.coor" % (self._work_dir, self._name)
             has_coor = True
 
@@ -505,12 +505,12 @@ class Namd(_process.Process):
         has_xsc = False
 
         # First check for final XSC file.
-        if path.isfile("%s/%s_out.xsc" % (self._work_dir, self._name)):
+        if _os.path.isfile("%s/%s_out.xsc" % (self._work_dir, self._name)):
             xsc_file = "%s/%s_out.xsc" % (self._work_dir, self._name)
             has_xsc = True
 
         # Otherwise check for a restart XSC file.
-        elif path.isfile("%s/%s_out.restart.xsc" % (self._work_dir, self._name)):
+        elif _os.path.isfile("%s/%s_out.restart.xsc" % (self._work_dir, self._name)):
             xsc_file = "%s/%s_out.restart.xsc" % (self._work_dir, self._name)
             has_xsc = True
 
@@ -524,7 +524,7 @@ class Namd(_process.Process):
                 files.append(xsc_file)
 
             # Create and return the molecular system.
-            return MoleculeParser.read(files)
+            return _System(_Sire.IO.MoleculeParser.read(files))
 
         else:
             return None
@@ -542,7 +542,7 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        return Trajectory(process=self)
+        return _Trajectory(process=self)
 
     def getRecord(self, record, time_series=False, block="AUTO"):
         """Get a record from the stdout dictionary.
@@ -608,7 +608,7 @@ class Namd(_process.Process):
            block       -- Whether to block until the process has finished running.
         """
 
-        if type(self._protocol) is Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation:
             return None
 
         else:
@@ -1072,7 +1072,7 @@ class Namd(_process.Process):
             raise ValueError("The number of lines must be positive!")
 
         # Append any new lines to the stdout list.
-        for line in pygtail.Pygtail(self._stdout_file):
+        for line in _pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
 
             # Split the record using whitespace.
@@ -1125,7 +1125,7 @@ class Namd(_process.Process):
             return None
 
         if type(time_series) is not bool:
-            warn("Non-boolean time-series flag. Defaulting to False!")
+            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
         # Return the list of dictionary values.
@@ -1157,7 +1157,7 @@ class Namd(_process.Process):
         traj_file = "%s/%s_out.dcd" % (self._work_dir, self._name)
 
         # Return the trajectory and topology file.
-        if path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
+        if _os.path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
             return (traj_file, self._top_file)
 
         # No trajectory file.

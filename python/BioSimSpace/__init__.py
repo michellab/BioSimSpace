@@ -63,34 +63,7 @@ import BioSimSpace.Notebook as Notebook
 import BioSimSpace.Process as Process
 import BioSimSpace.Protocol as Protocol
 
-import Sire as _Sire
-
 from warnings import warn as _warn
-
-# Monkey patches.
-
-def _getFileFormat(system):
-    """Return the file formats associated with the system."""
-    return system.property("fileformat").value()
-
-def _getMolWithResName(system, resname):
-    """Return the molecule containing the given residue.
-
-       Positional arguments:
-
-       resname -- The name of a residue unique to the molecule.
-    """
-    try:
-        return system[_MolWithResName(resname)]
-    except:
-        raise KeyError("System does not contain residue '%s'" % resname)
-
-class _MolWithResName(_Sire.Mol.MolWithResID):
-    def __init__(self, resname):
-        super().__init__( _Sire.Mol.ResName(resname) )
-
-_Sire.System.System.fileFormat = _getFileFormat
-_Sire.System.System.getMolWithResName = _getMolWithResName
 
 # Top-level functions.
 
