@@ -20,7 +20,7 @@ to ensure that you have access to the latest features and bug-fixes.
 
 ## Documentation
 
-Each sub-package has its own README page:
+Each package has its own README page:
 
 - [BioSimspace.Gateway](python/BioSimSpace/Gateway)
 - [BioSimspace.IO](python/BioSimSpace/IO)

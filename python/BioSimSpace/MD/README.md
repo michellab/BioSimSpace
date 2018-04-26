@@ -1,6 +1,6 @@
 # BioSimSpace.MD
 
-This sub-package provides functionality for configuring and running various
+This package provides functionality for configuring and running various
 types of molecular dynamics simulation processes.
 
 At present, we provide support for finding molecular dynamics packages and

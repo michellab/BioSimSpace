@@ -1,7 +1,7 @@
 # BioSimSpace.Notebook
 
-This sub-packages provides functionality for viewing molecules and creating
-graphs when using BioSimSpace interactively within a [Jupyter](http://jupyter.org)
+This package provides functionality for viewing molecules and creating graphs
+when using BioSimSpace interactively within a [Jupyter](http://jupyter.org)
 notebook.
 
 ## BioSimSpace.Notebook.View

@@ -24,7 +24,7 @@ We follow a C++ style naming convention.
 * Functions: camelCase
 * Variables: snake_case
 
-For example, to instantiate a minimisation protocol from the `Protocol` sub-package:
+For example, to instantiate a minimisation protocol from the `Protocol` package:
 
 ```python
 import BioSimSpace as BSS
@@ -33,11 +33,11 @@ protocol = BSS.Protocol.Minimisation()
 
 ## Modules
 
-BioSimSpace is a collection of sub-packages, e.g. `BioSimSpace.Gateway` and
-`BioSimSpace.Protocol`. Within each sub-package is a set of modules that
+BioSimSpace is a collection of packages, e.g. `BioSimSpace.Gateway` and
+`BioSimSpace.Protocol`. Within each package is a set of modules that
 implement the required functionality. Rather than directly exposing all of
 the modules we choose to hide implementation details from the user. Instead
-we use the sub-package `__init__.py` to selectively import the required
+we use the package `__init__.py` to selectively import the required
 classes and functions.
 
 * Module files containing implementation details are prefixed with an underscore,
@@ -46,7 +46,7 @@ i.e. `_process.py`
 * Each module file contains an `__all__` variable that lists the specific items
 that should be imported.
 
-* The sub-package `__init__.py` can be used to safely expose the required
+* The package `__init__.py` can be used to safely expose the required
 functionality to the user with:
 
 ```python

@@ -1,6 +1,6 @@
 # BioSimSpace.Process
 
-This sub-package provides functionality for running different molecular
+This package provides functionality for running different molecular
 simulation processes.
 
 The package provides a base class, `Process`, that defines common properties

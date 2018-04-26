@@ -1,6 +1,6 @@
 # BioSimSpace.IO
 
-This sub-package contains functionality for reading and writing a large number of
+This package contains functionality for reading and writing a large number of
 common molecular file formats. Unlike many other molecular parsers, BioSimSpace
 does not attempt to infer the format from the file extension. Instead, it reads
 the files in parallel using its blazing fast suite of parsers in order to

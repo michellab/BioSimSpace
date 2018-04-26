@@ -1,6 +1,6 @@
 # BioSimSpace.Trajectory
 
-This sub-package provides functionality for reading and manipulating molecular
+This package provides functionality for reading and manipulating molecular
 trajectories. A trajectory can be created by attaching to a running
 [Process](../Process), or by passing an appropriate trajectory and topology
 file. Internally, the `Trajectory` class makes use of [MDTraj](http://mdtraj.org/1.9.0)
@@ -21,7 +21,7 @@ curl https://raw.githubusercontent.com/scipy/scipy/master/scipy/io/netcdf.py \
     > $HOME/sire.app/lib/python3.5/site-packages/scipy/io/
 ```
 
-Some examples of how to use the Trajectory sub-package:
+Some examples of how to use the Trajectory package:
 
 ```python
 import BioSimSpace as BSS

@@ -1,6 +1,6 @@
 # BioSimSpace.Gateway
 
-This sub-package provides functionality to act as a bridge between BioSimSpace
+This package provides functionality to act as a bridge between BioSimSpace
 and the outside world. It allows the user to define robust and portable workflow
 components (nodes) that can be run from a variety of environments, e.g. within
 [Jupyter](http://jupyter.org), or from the command-line.
