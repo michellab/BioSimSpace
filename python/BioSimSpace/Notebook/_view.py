@@ -3,8 +3,8 @@
 #
 # Copyright: 2017-2018
 #
-# Authors: Lester Hedges
-
+# Authors: Lester Hedges <lester.hedges@gmail.com>
+#
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
@@ -21,7 +21,7 @@
 
 """
 Tools for visualising molecular systems.
-Author: Lester Hedges
+Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from BioSimSpace import _is_notebook
