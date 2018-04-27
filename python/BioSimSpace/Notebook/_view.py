@@ -51,7 +51,7 @@ class View():
 
            Positional arguments:
 
-           handle -- A handle to a Sire.System or BioSimSpace.Process object.
+           handle -- A handle to a BioSimSpace.System or BioSimSpace.Process object.
         """
 
         # Make sure we're running inside a Jupyter notebook.
