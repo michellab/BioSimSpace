@@ -26,14 +26,14 @@ not be directly exposed to the user.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire.Mol as _Mol
-import Sire.System as _System
+import Sire.Mol as _SireMol
+import Sire.System as _SireSystem
 
 __all__ = ["System"]
 
-class _MolWithResName(_Mol.MolWithResID):
+class _MolWithResName(_SireMol.MolWithResID):
     def __init__(self, resname):
-        super().__init__(_Mol.ResName(resname))
+        super().__init__(_SireMol.ResName(resname))
 
 class System():
     """A container class for storing molecular systems."""
@@ -47,7 +47,7 @@ class System():
         """
 
         # Check that the system is valid.
-        if not isinstance(system, _System.System):
+        if not isinstance(system, _SireSystem.System):
             raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
         # Set the system.
