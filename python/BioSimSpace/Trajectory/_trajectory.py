@@ -29,19 +29,11 @@ import Sire as _Sire
 from ..Process._process import Process as _Process
 from .._System import System as _System
 
+import MDAnalysis as _mdanalysis
+import mdtraj as _mdtraj
 import os as _os
 import shutil as _shutil
 import warnings as _warnings
-
-try:
-    _mdtraj = _Sire.try_import("mdtraj")
-except ImportError:
-    raise ImportError("MDTraj is not installed. Please install mdtraj in order to use BioSimSpace.")
-
-try:
-    _mdanalysis = _Sire.try_import("MDAnalysis")
-except ImportError:
-    raise ImportError("MDAnalysis is not installed. Please install mdanalysis in order to use BioSimSpace.")
 
 __all__ = ["Trajectory"]
 

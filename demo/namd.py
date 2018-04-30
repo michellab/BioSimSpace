@@ -1,17 +1,9 @@
 import BioSimSpace as BSS
 
-from glob import glob
-from sys import exit
-
-try:
-    from Sire import try_import
-    matplotlib = try_import("matplotlib")
-    import matplotlib.pyplot as plt
-except ImportError:
-    raise ImportError("Matplotlib is not installed. Please install matplotlib in order to use BioSimSpace.")
+import matplotlib.pyplot as plt
 
 # Glob the input files.
-files = glob("namd/ubiquitin/*")
+files = BSS.IO.glob("namd/ubiquitin/*")
 
 # Load the molecular system.
 print("\nLoading molecules...")

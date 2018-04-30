@@ -28,6 +28,13 @@ molecular workflow components.
 www.biosimspace.org
 """
 
+# Make sure we're using the Sire python interpreter.
+try:
+    import Sire
+    del(Sire)
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
+
 # Determine whether we're being imported from a Jupyter notebook.
 def _is_notebook():
     try:

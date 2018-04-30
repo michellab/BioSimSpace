@@ -31,15 +31,11 @@ from BioSimSpace import _is_notebook
 from ..Process._process import Process as _Process
 from .._System import System as _System
 
+import nglview as _nglview
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
 import warnings as _warnings
-
-try:
-    _nglview = _Sire.try_import("nglview")
-except ImportError:
-    raise ImportError("NGLView is not installed. Please install nglview in order to use BioSimSpace.")
 
 __all__ = ["View"]
 

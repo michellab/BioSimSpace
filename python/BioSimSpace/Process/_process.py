@@ -34,6 +34,7 @@ from .._System import System as _System
 import collections as _collections
 import operator as _operator
 import os as _os
+import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
 import tempfile as _tempfile
@@ -41,11 +42,6 @@ import zipfile as _zipfile
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
-
-try:
-    _pygtail = _Sire.try_import("pygtail")
-except ImportError:
-    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
 __all__ = ["Process"]
 

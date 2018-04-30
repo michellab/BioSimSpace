@@ -32,6 +32,9 @@ from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
 
+from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
+from watchdog.observers import Observer as _Observer
+
 import math as _math
 import os as _os
 import re as _re
@@ -39,13 +42,6 @@ import shutil as _shutil
 import time as _time
 import timeit as _timeit
 import warnings as _warnings
-
-try:
-    _watchdog = _Sire.try_import("watchdog")
-    from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
-    from watchdog.observers import Observer as _Observer
-except ImportError:
-    raise ImportError("Watchdog is not installed. Please install watchdog in order to use BioSimSpace.")
 
 __all__ = ["Amber"]
 

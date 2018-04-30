@@ -26,12 +26,9 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _is_interactive
 
-from Sire import try_import as _try_import
-
 from warnings import warn as _warn
 
 try:
-    _matplotlib = _try_import("matplotlib")
     import matplotlib.pyplot as _plt
     _has_matplotlib = True
 except ImportError:

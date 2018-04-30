@@ -34,13 +34,9 @@ import BioSimSpace.Protocol as _Protocol
 
 import math as _math
 import os as _os
+import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
-
-try:
-    _pygtail = _Sire.try_import("pygtail")
-except ImportError:
-    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
 
 __all__ = ["Namd"]
 

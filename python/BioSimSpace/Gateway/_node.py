@@ -24,8 +24,6 @@ Functionality for creating BioSimSpace workflow components (nodes).
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire import try_import as _try_import
-
 from BioSimSpace import _is_notebook
 
 from ._requirements import Boolean as _Boolean
@@ -46,16 +44,10 @@ import warnings as _warnings
 
 # Enable Jupyter widgets.
 if _is_notebook():
-    try:
-        _widgets = _try_import("ipywidgets")
-    except ImportError:
-        raise ImportError("Ipywidgets is not installed. Please install ipywidgets in order to use BioSimSpace.")
-    try:
-        _fileupload = _try_import("fileupload")
-    except ImportError:
-        raise ImportError("Fileupload is not installed. Please install fileupload in order to use BioSimSpace.")
-
     from IPython.display import FileLink as _FileLink
+
+    import fileupload as _fileupload
+    import ipywidgets as _widgets
     import zipfile as _zipfile
 
 __all__ = ["Node"]
