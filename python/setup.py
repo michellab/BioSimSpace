@@ -47,24 +47,20 @@ finally:
     command = "%s/conda config --system --set auto_update_conda false" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'mock'")
-    command = "%s/conda install -y -q mock" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Installing package: 'watchdog'")
-    command = "%s/conda install -y -q watchdog" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     print("Installing package: 'mdtraj'")
     command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'mdanalysis'")
-    command = "%s/conda install -y -q mdanalysis" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     print("Upgrading pip")
     command = "%s/pip install --upgrade pip" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    print("Installing package: 'watchdog'")
+    command = "%s/pip install watchdog" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    print("Installing package: 'mdanalysis'")
+    command = "%s/pip install mdanalysis" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("Installing package: 'jupyter'")
@@ -83,17 +79,6 @@ finally:
     command = "%s/pip install matplotlib" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'nglview'")
-    command = "%s/pip --no-cache-dir install nglview" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Activating notebook extension: 'nglview'")
-    command = "%s/jupyter-nbextension install nglview --py --sys-prefix" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     print("Installing package: 'fileupload'")
     command = "%s/pip install fileupload" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
@@ -103,6 +88,17 @@ finally:
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    print("Installing package: 'nglview'")
+    command = "%s/pip --no-cache-dir install nglview" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    print("Activating notebook extension: 'nglview'")
+    command = "%s/jupyter-nbextension install nglview --py --sys-prefix" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("Patching 'mdtraj' NetCDF writer")
