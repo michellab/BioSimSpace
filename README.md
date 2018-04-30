@@ -38,6 +38,11 @@ BioSimSpace makes use of several external python packages. These should be
 automatically installed into your Sire app by the [setup.py](python/setup.py)
 script.
 
+## Demos
+
+A collection of example scripts and notebooks are included in the [demo](demo)
+directory.
+
 ## Developing
 
 BioSimSpace is written in Python but uses an object-oriented style with C++
