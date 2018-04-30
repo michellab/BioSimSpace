@@ -18,7 +18,7 @@ the installed version of SciPy using the following command:
 
 ```bash
 curl https://raw.githubusercontent.com/scipy/scipy/master/scipy/io/netcdf.py \
-    > $HOME/sire.app/lib/python3.5/site-packages/scipy/io/
+    > $HOME/sire.app/lib/python3.5/site-packages/scipy/io/netcdf.py
 ```
 
 Some examples of how to use the Trajectory package:
