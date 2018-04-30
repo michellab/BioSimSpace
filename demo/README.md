@@ -21,21 +21,20 @@ PYTHONPATH=../python $HOME/sire.app/bin/python amber.py
 ## Notebooks
 
 We also provide several [Jupyter](http://jupyter.org) notebooks that show how
-to work with BioSimSpace in an interactive environment.
+to work with BioSimSpace in an interactive environment. If you used the
+regular [setup.py](../python/setup.py) installation, then you should be good
+to go. If not, the following describes installation instructions for the
+required dependencies.
 
 To enable plotting functionality in the example notebooks you will also need
-to install [Matplotlib](https://matplotlib.org). This will already have been
-installed if you have run any of the BioSimSpace demo scripts. If not, run
-the following command:
+to install [Matplotlib](https://matplotlib.org):
 
 ```bash
 $HOME/sire.app/bin/pip install matplotlib
 ```
 
 Molecular visualisation requires [NGLView](https://github.com/arose/nglview),
-which is a bit of a pain to configure. It is not possible to use the regular
-`try_import` function from `Sire`, since `conda` will install the incorrect
-version. At present, manual installation via `pip` is required.
+which can be a bit of a pain to configure correctly.
 
 First install Jupyter:
 ```bash
@@ -75,8 +74,8 @@ $HOME/sire.app/bin/jupyter-nbextension install fileupload --py --sys-prefix
 $HOME/sire.app/bin/jupyter-nbextension enable fileupload --py --sys-prefix
 ```
 
-Finally, we need to clean any existing Jupyter configuration folders, which
-may be present if you already have Jupyter installed on your machine, i.e.
+Finally, you may need to clean any existing Jupyter configuration folders, which
+will likely be present if you already have Jupyter installed on your machine, i.e.
 installed outside of your `sire.app`. For simplicity we'll delete these files,
 although you may want to back them up:
 
