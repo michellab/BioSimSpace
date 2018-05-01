@@ -53,6 +53,25 @@ if _is_notebook():
 
 __all__ = ["Node"]
 
+class _OutputAction(_argparse.Action):
+    """Helper class for printing node output requirements."""
+
+    def __init__(self,
+		 option_strings,
+		 dest=_argparse.SUPPRESS,
+		 default=_argparse.SUPPRESS,
+		 help=None):
+        super(_OutputAction, self).__init__(
+	      option_strings=option_strings,
+              dest=dest,
+              default=default,
+              nargs=0,
+              help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser._print_output()
+        parser.exit()
+
 class Node():
     """A class for interfacing with BioSimSpace nodes."""
 
@@ -123,10 +142,14 @@ class Node():
             self._parser = _argparse.ArgumentParser(description=description,
                 formatter_class=_argparse.RawTextHelpFormatter, add_help=False)
 
+            # Bind _print_output method to parser.
+            self._parser._print_output = self._print_output
+
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
+            self._optional.add_argument("-o", "--output", action=_OutputAction, help="Show the output of this node.")
 
             # TODO: Add an option to allow the user to load a configuration from file.
             # config = File(help="path to a configuration file", optional=True)
@@ -925,6 +948,19 @@ class Node():
                 help += "\n  max=%s" % maxmimum
 
         return help
+
+    def _print_output(self):
+        """Print the output requirements of the node."""
+
+        # Initialise the output string.
+        string = "This node outputs the following...\n"
+
+        # Add documentation for each output.
+        for name, output in self._outputs.items():
+            s = "  %s: %s, '%s'" % (name, output.__class__.__name__, output.getHelp())
+            string += "\n".join(_textwrap.wrap(s, 80)) + "\n"
+
+        print(string, end="")
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
