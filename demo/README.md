@@ -10,6 +10,12 @@ $HOME/sire.app/bin/python amber.py
 
 # Run an example NAMD workflow.
 $HOME/sire.app/bin/python namd.py
+
+# Run a generic minimisation node using AMBER input files.
+$HOME/sire.app/bin/python minimisation.py --steps=1000 --files amber/ala/*
+
+# Run a generic minimisation node using NAMD input files.
+$HOME/sire.app/bin/python minimisation.py --steps=1000 --files namd/ala*/*
 ```
 
 Alternatively, set the `PYTHONPATH` environment so that the python interpreter
