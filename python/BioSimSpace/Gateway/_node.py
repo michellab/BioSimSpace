@@ -40,6 +40,7 @@ import io as _io
 import __main__
 import os as _os
 import sys as _sys
+import textwrap as _textwrap
 import warnings as _warnings
 
 # Enable Jupyter widgets.
@@ -118,13 +119,14 @@ class Node():
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
             # Create the parser.
-            self._parser = _argparse.ArgumentParser(description=self._description,
-                formatter_class=_argparse.ArgumentDefaultsHelpFormatter, add_help=False)
+            description = "\n".join(_textwrap.wrap(self._description, 80))
+            self._parser = _argparse.ArgumentParser(description=description,
+                formatter_class=_argparse.RawTextHelpFormatter, add_help=False)
 
             # Add argument groups.
-            self._required = self._parser.add_argument_group("required arguments")
-            self._optional = self._parser.add_argument_group("optional arguments")
-            self._optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
+            self._required = self._parser.add_argument_group("Required arguments")
+            self._optional = self._parser.add_argument_group("Optional arguments")
+            self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
 
             # TODO: Add an option to allow the user to load a configuration from file.
             # config = File(help="path to a configuration file", optional=True)
@@ -197,40 +199,42 @@ class Node():
             if input.getDefault() is not None:
                 if input.isMulti() is not False:
                     self._optional.add_argument(name, type=input.getArgType(), nargs='+',
-                        help=input.getHelp(), default=input.getDefault())
+                        help=self._create_help_string(input), default=input.getDefault())
                 else:
                     if input.getArgType() is bool:
                         self._optional.add_argument(name, type=_str2bool, nargs='?',
-                            const=True, default=input.getDefault(), help=input.getHelp())
+                            const=True, default=input.getDefault(), help=self._create_help_string(input))
                     else:
                         if input.getAllowedValues() is not None:
-                            self._optional.add_argument(name, type=input.getArgType(), help=input.getHelp(),
-                                default=input.getDefault(), choices=input.getAllowedValues())
+                            self._optional.add_argument(name, type=input.getArgType(),
+                                help=self._create_help_string(input), default=input.getDefault(),
+                                choices=input.getAllowedValues())
                         else:
                             self._optional.add_argument(name, type=input.getArgType(),
-                                help=input.getHelp(), default=input.getDefault())
+                                help=self._create_help_string(input), default=input.getDefault())
             else:
                 if input.isMulti() is not False:
                     self._optional.add_argument(name, type=input.getArgType(), nargs='+',
-                        help=input.getHelp())
+                        help=self._create_help_string(input))
                 else:
                     self._optional.add_argument(name, type=input.getArgType(),
-                        help=input.getHelp())
+                        help=self._create_help_string(input))
         else:
             if input.isMulti() is not False:
                 self._required.add_argument(name, type=input.getArgType(), nargs='+',
-                    help=input.getHelp(), required=True)
+                    help=self._create_help_string(input), required=True)
             else:
                 if input.getAllowedValues() is not None:
                     self._required.add_argument(name, type=input.getArgType(),
-                        help=input.getHelp(), required=True, choices=input.getAllowedValues())
+                        help=self._create_help_string(input), required=True,
+                        choices=input.getAllowedValues())
                 else:
                     if input.getArgType() is bool:
                         self._required.add_argument(name, type=_str2bool, nargs='?',
-                            const=True, help=input.getHelp())
+                            const=True, help=self._create_help_string(input))
                     else:
                         self._required.add_argument(name, type=input.getArgType(),
-                            help=input.getHelp(), required=True)
+                            help=self._create_help_string(input), required=True)
 
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
@@ -887,6 +891,40 @@ class Node():
                 return _FileLink(zipname)
         else:
             return True
+
+    def _create_help_string(self, input):
+        """Create a nicely formatted argparse help string.
+
+           Positional arguments:
+
+           input -- The input requirement.
+        """
+
+        # Initialise the help string.
+        help = "\n".join(_textwrap.wrap(input.getHelp(), 80))
+
+        # Get the default value.
+        default = input.getDefault()
+
+        # Add default value to help string.
+        if default is not None:
+            help += "\n  default=%s" % default
+
+        # Get the min/max allowed values.
+        minimum = input.getMin()
+        maximum = input.getMax()
+
+        # Add min/max values to help string.
+        if minimum is not None:
+            if maximum is not None:
+                help += "\n  min=%s, max=%s" % (minimum, maximum)
+            else:
+                help += "\n  min=%s" % minimum
+        else:
+            if maximum is not None:
+                help += "\n  max=%s" % maxmimum
+
+        return help
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
