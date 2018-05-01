@@ -110,7 +110,7 @@ class Node():
 
         # Initialise the parser.
         self._parser = None
-        self._required_args = None
+        self._required = None
 
         # Intialise the Jupyter input panel.
         self._control_panel = None
@@ -119,7 +119,12 @@ class Node():
         if not self._is_knime and not self._is_notebook:
             # Create the parser.
             self._parser = _argparse.ArgumentParser(description=self._description,
-                formatter_class=_argparse.ArgumentDefaultsHelpFormatter)
+                formatter_class=_argparse.ArgumentDefaultsHelpFormatter, add_help=False)
+
+            # Add argument groups.
+            self._required = self._parser.add_argument_group("required arguments")
+            self._optional = self._parser.add_argument_group("optional arguments")
+            self._optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
 
             # TODO: Add an option to allow the user to load a configuration from file.
             # config = File(help="path to a configuration file", optional=True)
@@ -191,44 +196,40 @@ class Node():
         if input.isOptional():
             if input.getDefault() is not None:
                 if input.isMulti() is not False:
-                    self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                    self._optional.add_argument(name, type=input.getArgType(), nargs='+',
                         help=input.getHelp(), default=input.getDefault())
                 else:
                     if input.getArgType() is bool:
-                        self._parser.add_argument(name, type=_str2bool, nargs='?',
+                        self._optional.add_argument(name, type=_str2bool, nargs='?',
                             const=True, default=input.getDefault(), help=input.getHelp())
                     else:
                         if input.getAllowedValues() is not None:
-                            self._parser.add_argument(name, type=input.getArgType(), help=input.getHelp(),
+                            self._optional.add_argument(name, type=input.getArgType(), help=input.getHelp(),
                                 default=input.getDefault(), choices=input.getAllowedValues())
                         else:
-                            self._parser.add_argument(name, type=input.getArgType(),
+                            self._optional.add_argument(name, type=input.getArgType(),
                                 help=input.getHelp(), default=input.getDefault())
             else:
                 if input.isMulti() is not False:
-                    self._parser.add_argument(name, type=input.getArgType(), nargs='+',
+                    self._optional.add_argument(name, type=input.getArgType(), nargs='+',
                         help=input.getHelp())
                 else:
-                    self._parser.add_argument(name, type=input.getArgType(),
+                    self._optional.add_argument(name, type=input.getArgType(),
                         help=input.getHelp())
         else:
-            # Create the required arguments group.
-            if self._required_args is None:
-                self._required_args = self._parser.add_argument_group("required arguments")
-
             if input.isMulti() is not False:
-                self._required_args.add_argument(name, type=input.getArgType(), nargs='+',
+                self._required.add_argument(name, type=input.getArgType(), nargs='+',
                     help=input.getHelp(), required=True)
             else:
                 if input.getAllowedValues() is not None:
-                    self._required_args.add_argument(name, type=input.getArgType(),
+                    self._required.add_argument(name, type=input.getArgType(),
                         help=input.getHelp(), required=True, choices=input.getAllowedValues())
                 else:
                     if input.getArgType() is bool:
-                        self._required_args.add_argument(name, type=_str2bool, nargs='?',
+                        self._required.add_argument(name, type=_str2bool, nargs='?',
                             const=True, help=input.getHelp())
                     else:
-                        self._required_args.add_argument(name, type=input.getArgType(),
+                        self._required.add_argument(name, type=input.getArgType(),
                             help=input.getHelp(), required=True)
 
     def _addInputKnime(self, name, input):
