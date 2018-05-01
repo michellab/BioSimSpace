@@ -2,14 +2,27 @@
 
 Code and resources for the EPSRC [BioSimSpace](https://biosimspace.org) project.
 
-To install into a [Sire](https://github.com/michellab/Sire) package, use:
+BioSimSpace is an interoperable framework for biomolecular simulation. With it you
+can:
+
+- Write robust and portable biomolecular workflow components that work on
+different hardware, with different software packages, and that can be run
+in different ways, e.g. command-line, [Jupyter](http://jupyter.org).
+- Interact with running molecular simulation processes in real-time within
+a Jupyter notebook.
+
+## Installation.
+
+BioSimSpace is built on top of the [Sire](https://siremol.org) molecular
+simulations framework. At present you will need to need to install BioSimSpace
+into an existing [Sire](https://github.com/michellab/Sire) application:
 
 ```bash
 cd python
 python setup.py install
 ```
 
-Note that this assumes that Sire's `bin` directory, `$HOME/sire.app/bin`,
+Note that this assumes that Sire's `bin` directory, typically `$HOME/sire.app/bin`,
 has been added to your path. Alternatively, run:
 
 ```bash
