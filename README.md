@@ -1,6 +1,7 @@
 # BioSimSpace
 
-Code and resources for the EPSRC [BioSimSpace](https://biosimspace.org) project.
+Code and resources for the [EPSRC](https://epsrc.ukri.org)
+[BioSimSpace](https://biosimspace.org) project.
 
 BioSimSpace is an interoperable framework for biomolecular simulation. With it you
 can:
