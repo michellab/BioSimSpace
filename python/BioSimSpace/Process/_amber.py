@@ -159,14 +159,22 @@ class Amber(_process.Process):
                 if _os.path.isfile("%s/bin/sander" % amber_home):
                     self._exe = "%s/bin/sander" % amber_home
 
-            # Search PATH.
             else:
-                self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
+                bin_dir = _Sire.Base.getBinDir()
+                exe = "%s/sander" % bin_dir
+
+                # Search Sire bin directory.
+                if _os.path.isfile(exe):
+                    self._exe = exe
+
+                # Search system PATH.
+                else:
+                    self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
 
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
-                self._exe = protocol
+                self._exe = exe
             else:
                 raise IOError("AMBER executable doesn't exist: '%s'" % exe)
 

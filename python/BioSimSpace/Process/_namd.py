@@ -76,7 +76,7 @@ class Namd(_process.Process):
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
-                self._exe = protocol
+                self._exe = exe
             else:
                 raise IOError("NAMD executable doesn't exist: '%s'" % exe)
 

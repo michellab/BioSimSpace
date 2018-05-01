@@ -87,17 +87,24 @@ def _find_md_package(system, protocol, use_gpu=True):
             # Search AMBERHOME, if set.
             if "AMBERHOME" in _os.environ:
                 amber_home = _os.environ.get("AMBERHOME")
-                exe = "%s/bin/%s" % (amber_home, exe)
-                if _os.path.isfile(exe):
-                    return (package, exe)
+                _exe = "%s/bin/%s" % (amber_home, exe)
+                if _os.path.isfile(_exe):
+                    return (package, _exe)
 
             # Search PATH.
             else:
-                try:
-                    exe = _Sire.Base.findExe(exe).absoluteFilePath()
-                    return (package, exe)
-                except:
-                    pass
+                # Search within the Sire bin directory.
+                bin_dir = _Sire.Base.getBinDir()
+                _exe = "%s/%s" % (bin_dir, exe)
+
+                if _os.path.isfile(_exe):
+                    return (package, _exe)
+                else:
+                    try:
+                        exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                        return (package, exe)
+                    except:
+                        pass
         else:
             try:
                 exe = _Sire.Base.findExe(exe).absoluteFilePath()
@@ -147,15 +154,15 @@ class MD():
 
         # AMBER.
         if package == "AMBER":
-            process = _Process.Amber(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Amber(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
 
         # GROMACS.
         elif package == "GROMACS":
-            process = _Process.Gromacs(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Gromacs(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
 
         # NAMD.
         elif package == "NAMD":
-            process = _Process.Namd(system, protocol, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Namd(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
 
         # Start the process.
         if autostart:
