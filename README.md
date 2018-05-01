@@ -12,7 +12,7 @@ in different ways, e.g. command-line, [Jupyter](http://jupyter.org).
 - Interact with running molecular simulation processes in real-time within
 a Jupyter notebook.
 
-## Installation.
+## Installation
 
 BioSimSpace is built on top of the [Sire](https://siremol.org) molecular
 simulations framework. At present you will need to need to install BioSimSpace
