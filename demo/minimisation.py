@@ -38,8 +38,8 @@ node.setLicense("GPLv3")
 # In[ ]:
 
 
-node.addInput("files", BSS.Gateway.FileSet(help="a set of molecular input files"))
-node.addInput("steps", BSS.Gateway.Integer(help="the number of minimisation steps", minimum=0, maximum=1000000, default=10000))
+node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
+node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=1000000, default=10000))
 
 
 # Note that the input requirement `steps` has a default value, so it is optional.
@@ -49,7 +49,7 @@ node.addInput("steps", BSS.Gateway.Integer(help="the number of minimisation step
 # In[ ]:
 
 
-node.addOutput("minimised", BSS.Gateway.FileSet(help="the minimised molecular system"))
+node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
 
 
 # When working interactively within a Jupyter notebook we need a way to allow users to set the input requirements. The `node.showControls` method will display a graphical user interface (GUI), from which inputs can be set.
