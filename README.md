@@ -63,3 +63,8 @@ redundant feature branch.
 ## Tests
 
 A test suite can be found [here](https://github.com/michellab/BioSimSpaceUnitTests).
+
+## Versioning
+
+BioSimSpace uses the following versioning convention for releases, `YYYY.MAJOR.MINOR`,
+e.g. `2018.1.0`.
