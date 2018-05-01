@@ -67,4 +67,4 @@ A test suite can be found [here](https://github.com/michellab/BioSimSpaceUnitTes
 ## Versioning
 
 BioSimSpace uses the following versioning convention for releases, `YYYY.MAJOR.MINOR`,
-e.g. `2018.1.0`.
+e.g. `2018.1.0`. For a summary of the version history, please refer to the [CHANGELOG](CHANGELOG.md).
