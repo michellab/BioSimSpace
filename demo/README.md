@@ -2,24 +2,26 @@
 
 This directory contains example scripts that illustrate various ways of using
 BioSimSpace. If you have already installed BioSimSpace into a Sire package then
-you can run any of the scripts directly, i.e.
+you can run any of the scripts directly, e.g.:
 
 ```bash
 # Run an example AMBER workflow.
 $HOME/sire.app/bin/python amber.py
 
 # Run an example NAMD workflow.
+# You'll need to have installed NAMD on your computer.
 $HOME/sire.app/bin/python namd.py
 
 # Run a generic minimisation node using AMBER input files.
 $HOME/sire.app/bin/python minimisation.py --steps=1000 --files amber/ala/*
 
 # Run a generic minimisation node using NAMD input files.
+# You'll need to have installed NAMD on your computer.
 $HOME/sire.app/bin/python minimisation.py --steps=1000 --files namd/ala*/*
 ```
 
-Alternatively, set the `PYTHONPATH` environment so that the python interpreter
-can locate BioSimSpace:
+Alternatively, e.g. when developing, set the `PYTHONPATH` environment so that
+the python interpreter can locate BioSimSpace:
 
 ```bash
 PYTHONPATH=../python $HOME/sire.app/bin/python amber.py
@@ -27,10 +29,34 @@ PYTHONPATH=../python $HOME/sire.app/bin/python amber.py
 ## Notebooks
 
 We also provide several [Jupyter](http://jupyter.org) notebooks that show how
-to work with BioSimSpace in an interactive environment. If you used the
-regular [setup.py](../python/setup.py) installation, then you should be good
-to go. If not, the following describes installation instructions for the
-required dependencies.
+to work with BioSimSpace in an interactive environment. Current notebooks are:
+
+* [interactive_md.ipynb](interactive_md.ipynb) - A short notebook showing how
+to interact with a running molecular simulation process in real-time.
+* [minimisation.ipynb](minimisation.ipynb) - An example BioSimSpace node
+showing how to write a fully documented, validated, and portable workflow
+component.
+* [amber.ipynb](amber.ipynb) - A detailed notebook showing how to use the
+low-level functionality of BioSimSpace to set up and configure
+[AMBER](http://ambermd.org) simulations.
+
+To run a notebook, simply launch the Jupyter notebook app:
+
+```bash
+$HOME/sire.app/bin/jupyter notebook
+```
+
+This will open a notebook dashboard in your browser, where you can click on
+the notebook of your choice. You can also launch a specific notebook directly,
+e.g.:
+
+```bash
+$HOME/sire.app/bin/jupyter notebook interactive_md.ipynb
+```
+
+If you used the regular [setup.py](../python/setup.py) installation, then you
+should be good to go. If not, the following describes full installation
+instructions for the required dependencies.
 
 To enable plotting functionality in the example notebooks you will also need
 to install [Matplotlib](https://matplotlib.org):
