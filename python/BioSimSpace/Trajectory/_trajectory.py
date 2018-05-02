@@ -98,7 +98,7 @@ class Trajectory():
         # Get the current trajectory.
         self._trajectory = self.getTrajectory()
 
-    def getTrajectory(self, format='mdtraj'):
+    def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
 
            Keyword arguments:
@@ -108,7 +108,7 @@ class Trajectory():
 
         if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
             _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
-            format = mdtraj
+            format = "mdtraj"
 
         # Get the trajectory from the process.
         if self._process is not None:
@@ -127,7 +127,7 @@ class Trajectory():
                 _shutil.copyfile(self._top_file, top_file)
 
                 # Set the topology format.
-                top_format = 'PARM7'
+                top_format = "PARM7"
 
             # NAMD.
             elif self._process_name.upper() == "NAMD":
@@ -151,7 +151,7 @@ class Trajectory():
                 raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
             # Return an MDTraj object.
-            if format == 'mdtraj':
+            if format == "mdtraj":
 
                 # Create the MDTraj object.
                 try:
