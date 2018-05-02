@@ -159,11 +159,11 @@ class Amber(_process.Process):
                 if _os.path.isfile("%s/bin/sander" % amber_home):
                     self._exe = "%s/bin/sander" % amber_home
 
+            # Search Sire bin directory.
             else:
                 bin_dir = _Sire.Base.getBinDir()
                 exe = "%s/sander" % bin_dir
 
-                # Search Sire bin directory.
                 if _os.path.isfile(exe):
                     self._exe = exe
 

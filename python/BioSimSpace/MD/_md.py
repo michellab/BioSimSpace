@@ -91,20 +91,23 @@ def _find_md_package(system, protocol, use_gpu=True):
                 if _os.path.isfile(_exe):
                     return (package, _exe)
 
-            # Search PATH.
+            # Search within the Sire bin directory.
             else:
-                # Search within the Sire bin directory.
                 bin_dir = _Sire.Base.getBinDir()
                 _exe = "%s/%s" % (bin_dir, exe)
 
                 if _os.path.isfile(_exe):
                     return (package, _exe)
+
+                # Search system PATH.
                 else:
                     try:
                         exe = _Sire.Base.findExe(exe).absoluteFilePath()
                         return (package, exe)
                     except:
                         pass
+
+        # Search system PATH.
         else:
             try:
                 exe = _Sire.Base.findExe(exe).absoluteFilePath()
