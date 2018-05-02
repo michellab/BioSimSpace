@@ -380,7 +380,7 @@ class Trajectory():
 
         # Use MDTraj to compute the RMSD.
         try:
-            rmsd = mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
+            rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
         except:
             raise ValueError("Atom indices not found in the system.")
 
