@@ -47,11 +47,11 @@ finally:
     command = "%s/conda config --system --set auto_update_conda false" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'mdtraj'")
+    print("Installing package: mdtraj")
     command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'ambertools'")
+    print("Installing package: ambertools")
     command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
@@ -59,53 +59,51 @@ finally:
     command = "%s/pip install --upgrade pip" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'watchdog'")
+    print("Installing package: watchdog")
     command = "%s/pip install watchdog" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'mdanalysis'")
+    print("Installing package: mdanalysis")
     command = "%s/pip install mdanalysis" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'jupyter'")
+    print("Installing package: jupyter")
     command = "%s/pip install jupyter" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'duecredit'")
+    print("Installing package: duecredit")
     command = "%s/pip install duecredit" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'pygtail'")
+    print("Installing package: pygtail")
     command = "%s/pip install pygtail" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'matplotlib'")
+    print("Installing package: matplotlib")
     command = "%s/pip install matplotlib" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'fileupload'")
+    print("Installing package: fileupload")
     command = "%s/pip install fileupload" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Activating notebook extension: 'fileupload'")
-    command = "%s/jupyter-nbextension install fileupload --py --sys-prefix" % bin_dir
+    print("Activating notebook extension: fileupload")
+    command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: 'nglview'")
+    print("Installing package: nglview")
     command = "%s/pip --no-cache-dir install nglview" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Activating notebook extension: 'nglview'")
-    command = "%s/jupyter-nbextension install nglview --py --sys-prefix" % bin_dir
+    print("Activating notebook extension: nglview")
+    command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Patching 'mdtraj' NetCDF writer")
+    print("Patching mdtraj NetCDF writer")
     command = ("%s/curl -k -s https://raw.githubusercontent.com/scipy/scipy/master/scipy/io/netcdf.py"
                "> %s/python3.5/site-packages/scipy/io/netcdf.py"
               ) % (bin_dir, lib_dir)
@@ -114,7 +112,6 @@ finally:
     print("Fixing conda NetCDF install")
     command = "%s/conda clean -all -y -q" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     command = "%s/conda update -y -q netcdf4" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
