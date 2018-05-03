@@ -16,7 +16,7 @@ a Jupyter notebook.
 
 BioSimSpace is built on top of the [Sire](https://siremol.org) molecular
 simulations framework. At present you will need to need to install BioSimSpace
-into an existing [Sire](https://github.com/michellab/Sire) application:
+into an existing [Sire](https://siremol.org/pages/download.html) application:
 
 ```bash
 cd python
@@ -70,13 +70,27 @@ BioSimSpace.Process module:
 feature-process
 ```
 
-When you are happy with your feature, create a pull request so that the feature
-can be merged into devel. Once the merge is successful, please delete the
-redundant feature branch.
+When you are happy with your feature, merge into the
+['testing`](https://github.com/michellab/BioSimSpace/tree/testing) branch to
+check that the continuous integration tests pass. When ready, create a pull
+request so that the feature can be merged into devel. Once the merge is
+successful, please delete the redundant feature branch.
 
 ## Tests
 
-A test suite can be found [here](https://github.com/michellab/BioSimSpaceUnitTests).
+We currently don't run continuous integration (CI) against all BioSimSpace branches.
+This is because BioSimSpace is built on top of [Sire](https://siremol.org) meaning
+that a binary version of Sire must be downloaded and unpacked on the CI server, into
+which BioSimSpace is installed.
+
+Since the Sire binary is large, executing a fresh download for every commit is
+currently prohibitively expensive. Instead, we use a
+[`testing`](https://github.com/michellab/BioSimSpace/tree/testing) branch for CI.
+Feature branches are periodically merged into `testing` to validate the build
+process and check that all unit tests pass.
+
+For those who wish to run things locally, a test suite can be found
+[here](https://github.com/michellab/BioSimSpaceUnitTests).
 
 ## Versioning
 
