@@ -1,0 +1,46 @@
+# BioSimSpace Travis CI configuration.
+
+# Note that a 'language' variable isn't necessary since we run tests using
+# a prebuilt Sire binary installation that comes with all necessary Python
+# base packages. Travis will default to a Ruby VM, which comes with all
+# required command-line utilities.
+
+# Only run CI against the testing branch.
+branches:
+  only:
+    - testing
+
+os:
+  - linux
+
+notifications:
+  email: false
+
+# Disable Sire usage analytics and set paths for the Sire app and tests.
+env:
+  global:
+    - SIRE_DONT_PHONEHOME=1
+    - SIRE_SILENT_PHONEHOME=1
+    - SIRE_DIR=$HOME/sire.app
+    - TEST_DIR=$HOME/test
+
+# Download and unpack binary Sire application and clone BioSimSpace tests.
+before_install:
+  - wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -O sire.run
+  - chmod a+x sire.run
+  - echo "$SIRE_DIR" | ./sire.run
+  - rm sire.run
+  - git clone https://github.com/michellab/BioSimSpaceUnitTests $TEST_DIR
+
+# Install BioSimSpace into Sire application.
+install:
+  - cd python
+  - $SIRE_DIR/bin/python setup.py install
+
+# Run BioSimSpace test suite.
+script:
+  - cd $TEST_DIR
+  - $SIRE_DIR/bin/pytest tests -v
+
+after_success:
+  - echo "Congratulations - everything worked :-)
