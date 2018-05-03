@@ -24,20 +24,28 @@ env:
     - SIRE_SILENT_PHONEHOME=1
     - SIRE_DIR=$HOME/sire.app
     - TEST_DIR=$HOME/test
+    - CACHE_DIR=$HOME/cache
+
+# Cache the precompiled Sire binary file.
+cache:
+  directories:
+    - $HOME/cache
+  timeout: 1000
 
 # Download and unpack binary Sire application and clone BioSimSpace tests.
 before_install:
   - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -O sire.run
-    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -O sire.run
-      mkdir -p $HOME/.matplotlib
-      echo "backend: TkAgg" > $HOME/.matplotlib/matplotlibrc
+    if [ ! -f $CACHE_DIR/sire.run ]; then
+      if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -O $CACHE_DIR/sire.run
+      elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -O $CACHE_DIR/sire.run
+        mkdir -p $HOME/.matplotlib
+        echo "backend: TkAgg" > $HOME/.matplotlib/matplotlibrc
+      fi
     fi
-  - chmod a+x sire.run
-  - unset DISPLAY && echo "$SIRE_DIR" | ./sire.run
-  - rm sire.run
+  - chmod a+x $CACHE_DIR/sire.run
+  - unset DISPLAY && echo "$SIRE_DIR" | $CACHE_DIR/sire.run
   - git clone https://github.com/michellab/BioSimSpaceUnitTests $TEST_DIR
 
 # Install BioSimSpace into Sire application.
