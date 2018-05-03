@@ -34,6 +34,19 @@ $HOME/sire.app/bin/python setup.py install
 At present we recommend using the `devel` branch of [Sire](https://github.com/michellab/Sire)
 to ensure that you have access to the latest features and bug-fixes.
 
+If you experience problems with [`matplotlib`](https://matplotlib.org) when
+importing BioSimSpace on macOS, e.g.
+
+```python
+RuntimeError**: Python is not installed as a framework.
+```
+
+simply add the following to `~/.matplotlib/matplotlibrc`
+
+```bash
+backend: TkAgg
+```
+
 ## Documentation
 
 Each package has its own README page:
