@@ -1,3 +1,7 @@
+# Set the minimum allowed Sire version.
+min_ver = "2018.1.0"
+min_ver_int = int(min_ver.replace(".", ""))
+
 # Make sure we're using the Sire python interpreter.
 try:
     import Sire.Base
@@ -5,6 +9,10 @@ try:
     lib_dir = Sire.Base.getLibDir()
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
+
+# Check the Sire version.
+if int(Sire.__version__.replace(".", "")) < min_ver_int:
+    raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
 
 from setuptools import setup, find_packages
 
