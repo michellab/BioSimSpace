@@ -12,6 +12,7 @@ branches:
 
 os:
   - linux
+  - osx
 
 notifications:
   email: false
@@ -26,9 +27,16 @@ env:
 
 # Download and unpack binary Sire application and clone BioSimSpace tests.
 before_install:
-  - wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -O sire.run
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -O sire.run
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      wget http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -O sire.run
+      mkdir -p $HOME/.matplotlib
+      echo "backend: TkAgg" > $HOME/.matplotlib/matplotlibrc
+    fi
   - chmod a+x sire.run
-  - echo "$SIRE_DIR" | ./sire.run
+  - unset DISPLAY && echo "$SIRE_DIR" | ./sire.run
   - rm sire.run
   - git clone https://github.com/michellab/BioSimSpaceUnitTests $TEST_DIR
 
