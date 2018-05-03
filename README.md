@@ -73,7 +73,7 @@ feature-process
 ```
 
 When you are happy with your feature, merge into the
-['testing`](https://github.com/michellab/BioSimSpace/tree/testing) branch to
+[`testing`](https://github.com/michellab/BioSimSpace/tree/testing) branch to
 check that the continuous integration tests pass. When ready, create a pull
 request so that the feature can be merged into devel. Once the merge is
 successful, please delete the redundant feature branch.
