@@ -2,6 +2,9 @@
 
 # Installer script for BioSimSpace.
 
+# Current Sire version.
+SIRE_VER=201811
+
 # Store the current directory.
 CURR_DIR=$(pwd)
 
@@ -17,14 +20,26 @@ if [[ ! ($OS == "Linux" || $OS == "Darwin") ]]; then
     exit 1
 fi
 
-if [ $# -gt 0 ]; then
-    if [[ "$1" == "master" ]]; then
-        BRANCH=master
-    elif [[ "$1" == "devel" ]]; then
-        BRANCH=devel
-    else
-        echo "Unsupported branch! Defaulting to 'master'"
-    fi
+# Simple parser for command-line options.
+for i in "$@"; do
+    case "$1" in
+    -b=*|--branch=*)
+        BRANCH="${i#*=}";;
+    -c|--clean)
+        CLEAN_BUILD=true;;
+    -*)
+        echo " Unrecognized option \"$1\"";
+        echo " Available options are: 'branch' and 'clean'"
+        exit 1;;
+    esac
+    shift
+done
+
+# Check branch is valid.
+if [[ ! ($BRANCH == master || $BRANCH == devel) ]]; then
+	echo " Unsupported branch: $BRANCH"
+	echo " Available options are: 'master' or 'devel'"
+	exit 1
 fi
 
 if [ -z "$INSTALL_DIR" ]; then
@@ -43,42 +58,72 @@ fi
 
 echo "Installing into directory: ${INSTALL_DIR}"
 
+# Store the location of the Sire version file.
+SIRE_VER_FILE=${INSTALL_DIR}/SIRE_VER.txt
+
+# Set the Sire application directory.
+SIRE_DIR=${INSTALL_DIR}/sire.app
+
 # Create the installation directory.
 mkdir -p ${INSTALL_DIR}
 
-echo "  --> Downloading Sire binary"
+# Check for existing Sire installation.
+if [ -z "$CLEAN_BUILD" ]; then
+    if [ -f $SIRE_VER_FILE ]; then
+        # Get the current version.
+        CURR_VER=$(cat $SIRE_VER_FILE)
 
-# Download latest self-extracting Sire binary.
-if [[ $OS == "Linux" ]]; then
-    curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -o ${INSTALL_DIR}/sire.run
-else
-    curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -o ${INSTALL_DIR}/sire.run
-    mkdir -p $HOME/.matplotlib
-    touch $HOME/.matplotlib/matplotlibrc
-    if ! grep -q "backend" $HOME/.matplotlib/matplotlibrc; then
-        echo "backend: TkAgg" >> $HOME/.matplotlib/matplotlibrc
+        # Is the version up to date?
+        if [ "$SIRE_VER" -gt "$CURR_VER" ]; then
+            CLEAN_BUILD=true
+        fi
     else
-        sed -i '' 's/.*backend.*/backend: TkAgg/' $HOME/.matplotlib/matplotlibrc
+        CLEAN_BUILD=true
     fi
 fi
 
-# Make the binary executable.
-chmod a+x ${INSTALL_DIR}/sire.run
+# Download and install Sire.
+if ! [ -z "$CLEAN_BUILD" ]; then
 
-# Store the current DISPLAY variable. This allows us to unset DISPLAY to ensure
-# that Sire binary unpacking runs in the current shell.
-CURR_DISPLAY=$DISPLAY
+    echo "  --> Downloading Sire binary"
 
-echo "  --> Installing Sire application"
+    # Clean any existing Sire installation.
+    if [ -d $SIRE_DIR ]; then
+        rm -r $SIRE_DIR
+    fi
 
-# Unpack the binary.
-unset DISPLAY && echo "${INSTALL_DIR}/sire.app" | ${INSTALL_DIR}/sire.run > /dev/null 2>&1
+    # Download latest self-extracting Sire binary.
+    if [[ $OS == "Linux" ]]; then
+        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -o ${INSTALL_DIR}/sire.run
+    else
+        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -o ${INSTALL_DIR}/sire.run
+        mkdir -p $HOME/.matplotlib
+        touch $HOME/.matplotlib/matplotlibrc
+        if ! grep -q "backend" $HOME/.matplotlib/matplotlibrc; then
+            echo "backend: TkAgg" >> $HOME/.matplotlib/matplotlibrc
+        else
+            sed -i '' 's/.*backend.*/backend: TkAgg/' $HOME/.matplotlib/matplotlibrc
+        fi
+    fi
 
-# Reset the DISPLAY.
-export DISPLAY=$CURR_DISPLAY
+    # Make the binary executable.
+    chmod a+x ${INSTALL_DIR}/sire.run
 
-# Remove the binary file.
-rm ${INSTALL_DIR}/sire.run
+    # Store the current DISPLAY variable. This allows us to unset DISPLAY to ensure
+    # that Sire binary unpacking runs in the current shell.
+    CURR_DISPLAY=$DISPLAY
+
+    echo "  --> Installing Sire application"
+
+    # Unpack the binary.
+    unset DISPLAY && echo "$SIRE_DIR" | ${INSTALL_DIR}/sire.run > /dev/null 2>&1 && echo $SIRE_VER > $SIRE_VER_FILE
+
+    # Reset the DISPLAY.
+    export DISPLAY=$CURR_DISPLAY
+
+    # Remove the binary file.
+    rm ${INSTALL_DIR}/sire.run
+fi
 
 echo "  --> Downloading BioSimSpace"
 
@@ -109,7 +154,7 @@ rm tests.zip
 cd BioSimSpace-$BRANCH/python
 
 echo "  --> Installing BioSimSpace"
-${INSTALL_DIR}/sire.app/bin/python setup.py install > /dev/null 2>&1
+$SIRE_DIR/bin/python setup.py install > /dev/null 2>&1
 
 # Clean up.
 cd ${INSTALL_DIR}
@@ -123,10 +168,10 @@ cd $CURR_DIR
 
 # Add aliases to ~/.biosimspacerc
 echo "# BioSimSpace aliases." > $HOME/.biosimspacerc
-echo "alias bss_python=${INSTALL_DIR}/sire.app/bin/python" >> $HOME/.biosimspacerc
-echo "alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython" >> $HOME/.biosimspacerc
-echo "alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter" >> $HOME/.biosimspacerc
-echo "alias bss_test='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
+echo "alias bss_python=$SIRE_DIR/bin/python" >> $HOME/.biosimspacerc
+echo "alias bss_ipython=$SIRE_DIR/bin/ipython" >> $HOME/.biosimspacerc
+echo "alias bss_jupyter=$SIRE_DIR/bin/jupyter" >> $HOME/.biosimspacerc
+echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
 
 # Store the name of the shell rc file.
 SHELL_RC=$HOME/.$(basename "$SHELL")rc

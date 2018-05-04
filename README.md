@@ -33,7 +33,15 @@ from [`master`](https://github.com/michellab/BioSimSpace/tree/master) branch.
 To install the development version, run:
 
 ```bash
-./install.sh devel
+./install.sh --branch=devel
+```
+
+Since the Sire binary is quite large (~700 MB), it is only re-downloaded
+whenever a new version is released. To force a clean install with a fresh
+download, run:
+
+```bash
+./install.sh --clean
 ```
 
 Full installation details are given below for those who wish to install
