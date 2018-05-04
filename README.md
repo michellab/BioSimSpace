@@ -18,13 +18,15 @@ a Jupyter notebook.
 
 The [`install.sh`](install.sh) script will automatically install and configure
 a clean BioSimSpace application on Linux or macOS. Following a successful
-installation, the following aliases will be set (this assumes that you are
-using a Bash shell):
+installation, the following aliases will be set:
 
 * `bss_python` - The BioSimSpace python interpreter.
 * `bss_ipython` - The BioSimSpace interactive python shell.
 * `bss_jupyter` - The BioSimSpace Jupyter executable.
 * `bss_test` - Run the BioSimSpace unit tests.
+
+(You'll need to run `source ~/.biosimspacerc` or restart your shell for these
+to take effect.)
 
 Note that this defaults to installing the latest stable version of BioSimSpace
 from [`master`](https://github.com/michellab/BioSimSpace/tree/master) branch.

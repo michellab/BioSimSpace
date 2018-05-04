@@ -121,13 +121,6 @@ rm -r BioSimSpaceUnitTests-master
 # Switch back to original workspace.
 cd $CURR_DIR
 
-# Set shell aliases.
-echo "  --> Setting BioSimSpace shell aliases"
-alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython
-alias bss_python=${INSTALL_DIR}/sire.app/bin/python
-alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter
-alias bss_tests='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'
-
 # Add aliases to ~/.biosimspacerc
 echo "# BioSimSpace aliases." > $HOME/.biosimspacerc
 echo "alias bss_python=${INSTALL_DIR}/sire.app/bin/python" >> $HOME/.biosimspacerc
@@ -135,10 +128,14 @@ echo "alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython" >> $HOME/.biosimspa
 echo "alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter" >> $HOME/.biosimspacerc
 echo "alias bss_tests='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
 
-# Source aliases in ~/.bashrc
-if ! grep -q "BioSimSpace" $HOME/.bashrc; then
-    echo -e "\n# Source BioSimSpace aliases." >> $HOME/.bashrc
-    echo "source $HOME/.biosimspacerc" >> $HOME/.bashrc
+# Store the name of the shell rc file.
+SHELL_RC=$HOME/.$(basename "$SHELL")rc
+
+# Source aliases in the SHELL_RC file
+if ! grep -q "BioSimSpace" $SHELL_RC; then
+    echo -e "\n# Source BioSimSpace aliases." >> $SHELL_RC
+    echo "source $HOME/.biosimspacerc" >> $SHELL_RC
 fi
 
 echo "Installation complete!"
+echo "You'll need to run 'source ~/.biosimspacerc' or restart your shell for aliases to take effect."
