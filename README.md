@@ -25,6 +25,14 @@ using a Bash shell):
 * `bss_ipython` - The BioSimSpace interactive python shell.
 * `bss_jupyter` - The BioSimSpace Jupyter executable.
 
+Note that this defaults to installing the latest stable version of BioSimSpace
+from [`master`](https://github.com/michellab/BioSimSpace/tree/master) branch.
+To install the development version, run:
+
+```bash
+./install.sh devel
+```
+
 Full installation details are given below for those who wish to install
 BioSimSpace manually, or already have built their own Sire application.
 

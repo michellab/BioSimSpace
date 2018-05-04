@@ -5,6 +5,9 @@
 # Store the current directory.
 CURR_DIR=$(pwd)
 
+# Set the default branch.
+BRANCH=master
+
 # Store the OS name.
 OS="$(uname)"
 
@@ -12,6 +15,16 @@ OS="$(uname)"
 if [[ ! ($OS == "Linux" || $OS == "Darwin") ]]; then
     echo "Installer only works on Linux and macOS!"
     exit 1
+fi
+
+if [ $# -gt 0 ]; then
+    if [[ "$1" == "master" ]]; then
+        BRANCH=master
+    elif [[ "$1" == "devel" ]]; then
+        BRANCH=devel
+    else
+        echo "Unsupported branch! Defaulting to 'master'"
+    fi
 fi
 
 if [ -z "$INSTALL_DIR" ]; then
@@ -70,7 +83,7 @@ rm ${INSTALL_DIR}/sire.run
 echo "  --> Downloading BioSimSpace"
 
 # Download the latest zip archive from the BioSimSpace master branch.
-curl -sL https://github.com/michellab/BioSimSpace/archive/master.zip -o ${INSTALL_DIR}/master.zip
+curl -sL https://github.com/michellab/BioSimSpace/archive/$BRANCH.zip -o ${INSTALL_DIR}/$BRANCH.zip
 
 # Change to the installation directory.
 cd ${INSTALL_DIR}
@@ -81,19 +94,19 @@ if [ -d demo ]; then
 fi
 
 # Unzip the BioSimSpace archive.
-unzip -q master.zip
-rm master.zip
+unzip -q $BRANCH.zip
+rm $BRANCH.zip
 
 # Change to the python directory.
-cd BioSimSpace-master/python
+cd BioSimSpace-$BRANCH/python
 
 echo "  --> Installing BioSimSpace"
 ${INSTALL_DIR}/sire.app/bin/python setup.py install > /dev/null 2>&1
 
 # Clean up.
 cd ${INSTALL_DIR}
-mv BioSimSpace-master/demo .
-rm -r BioSimSpace-master
+mv BioSimSpace-$BRANCH/demo .
+rm -r BioSimSpace-$BRANCH
 
 # Switch back to original workspace.
 cd $CURR_DIR
