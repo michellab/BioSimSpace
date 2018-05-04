@@ -126,7 +126,7 @@ echo "# BioSimSpace aliases." > $HOME/.biosimspacerc
 echo "alias bss_python=${INSTALL_DIR}/sire.app/bin/python" >> $HOME/.biosimspacerc
 echo "alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython" >> $HOME/.biosimspacerc
 echo "alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter" >> $HOME/.biosimspacerc
-echo "alias bss_tests='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
+echo "alias bss_test='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
 
 # Store the name of the shell rc file.
 SHELL_RC=$HOME/.$(basename "$SHELL")rc
