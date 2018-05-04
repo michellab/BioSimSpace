@@ -56,7 +56,7 @@ if [ -z "$INSTALL_DIR" ]; then
     fi
 fi
 
-echo "Installing into directory: ${INSTALL_DIR}"
+echo "Installing into directory: $INSTALL_DIR"
 
 # Store the location of the Sire version file.
 SIRE_VER_FILE="$INSTALL_DIR/SIRE_VER.txt"
