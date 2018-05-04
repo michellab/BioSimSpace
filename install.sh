@@ -46,32 +46,32 @@ if [ -z "$INSTALL_DIR" ]; then
     # Ask the user where they would like to install BioSimSpace. By default
     # we will aim for $HOME/BioSimSpace.app
     echo -n "Where would you like to install BioSimSpace? [$HOME/BioSimSpace.app]: "
-    read INSTALL_DIR
+    read -r INSTALL_DIR
 
-    if [ ! ${INSTALL_DIR} ]; then
-        INSTALL_DIR=$HOME/BioSimSpace.app
+    if [ ! "$INSTALL_DIR" ]; then
+        INSTALL_DIR="$HOME/BioSimSpace.app"
     else
         # Use eval so that we can expand variables such as $HOME
-        INSTALL_DIR=`eval echo ${INSTALL_DIR}`
+        INSTALL_DIR=$(eval echo "$INSTALL_DIR")
     fi
 fi
 
 echo "Installing into directory: ${INSTALL_DIR}"
 
 # Store the location of the Sire version file.
-SIRE_VER_FILE=${INSTALL_DIR}/SIRE_VER.txt
+SIRE_VER_FILE="$INSTALL_DIR/SIRE_VER.txt"
 
 # Set the Sire application directory.
-SIRE_DIR=${INSTALL_DIR}/sire.app
+SIRE_DIR="$INSTALL_DIR/sire.app"
 
 # Create the installation directory.
-mkdir -p ${INSTALL_DIR}
+mkdir -p "$INSTALL_DIR"
 
 # Check for existing Sire installation.
 if [ -z "$CLEAN_BUILD" ]; then
-    if [ -f $SIRE_VER_FILE ]; then
+    if [ -f "$SIRE_VER_FILE" ]; then
         # Get the current version.
-        CURR_VER=$(cat $SIRE_VER_FILE)
+        CURR_VER=$(cat "$SIRE_VER_FILE")
 
         # Is the version up to date?
         if [ "$SIRE_VER" -gt "$CURR_VER" ]; then
@@ -88,26 +88,26 @@ if ! [ -z "$CLEAN_BUILD" ]; then
     echo "  --> Downloading Sire binary"
 
     # Clean any existing Sire installation.
-    if [ -d $SIRE_DIR ]; then
-        rm -r $SIRE_DIR
+    if [ -d "$SIRE_DIR" ]; then
+        rm -r "$SIRE_DIR"
     fi
 
     # Download latest self-extracting Sire binary.
     if [[ $OS == "Linux" ]]; then
-        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -o ${INSTALL_DIR}/sire.run
+        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -o "$INSTALL_DIR/sire.run"
     else
-        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -o ${INSTALL_DIR}/sire.run
-        mkdir -p $HOME/.matplotlib
-        touch $HOME/.matplotlib/matplotlibrc
-        if ! grep -q "backend" $HOME/.matplotlib/matplotlibrc; then
-            echo "backend: TkAgg" >> $HOME/.matplotlib/matplotlibrc
+        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -o "$INSTALL_DIR/sire.run"
+        mkdir -p "$HOME/.matplotlib"
+        touch "$HOME/.matplotlib/matplotlibrc"
+        if ! grep -q "backend" "$HOME/.matplotlib/matplotlibrc"; then
+            echo "backend: TkAgg" >> "$HOME/.matplotlib/matplotlibrc"
         else
-            sed -i '' 's/.*backend.*/backend: TkAgg/' $HOME/.matplotlib/matplotlibrc
+            sed -i '' 's/.*backend.*/backend: TkAgg/' "$HOME/.matplotlib/matplotlibrc"
         fi
     fi
 
     # Make the binary executable.
-    chmod a+x ${INSTALL_DIR}/sire.run
+    chmod a+x "$INSTALL_DIR/sire.run"
 
     # Store the current DISPLAY variable. This allows us to unset DISPLAY to ensure
     # that Sire binary unpacking runs in the current shell.
@@ -116,23 +116,23 @@ if ! [ -z "$CLEAN_BUILD" ]; then
     echo "  --> Installing Sire application"
 
     # Unpack the binary.
-    unset DISPLAY && echo "$SIRE_DIR" | ${INSTALL_DIR}/sire.run > /dev/null 2>&1 && echo $SIRE_VER > $SIRE_VER_FILE
+    unset DISPLAY && echo "$SIRE_DIR" | "$INSTALL_DIR/sire.run" > /dev/null 2>&1 && echo $SIRE_VER > "$SIRE_VER_FILE"
 
     # Reset the DISPLAY.
     export DISPLAY=$CURR_DISPLAY
 
     # Remove the binary file.
-    rm ${INSTALL_DIR}/sire.run
+    rm "$INSTALL_DIR"/sire.run
 fi
 
 echo "  --> Downloading BioSimSpace"
 
 # Download the latest zip archives from the BioSimSpace master branches (source and tests).
-curl -sL https://github.com/michellab/BioSimSpace/archive/$BRANCH.zip -o ${INSTALL_DIR}/$BRANCH.zip
-curl -sL https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip -o ${INSTALL_DIR}/tests.zip
+curl -sL https://github.com/michellab/BioSimSpace/archive/"$BRANCH.zip" -o "$INSTALL_DIR/$BRANCH.zip"
+curl -sL https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip -o "$INSTALL_DIR/tests.zip"
 
 # Change to the installation directory.
-cd ${INSTALL_DIR}
+cd "$INSTALL_DIR" || exit 1
 
 # Remove old demo directory.
 if [ -d demo ]; then
@@ -145,41 +145,41 @@ if [ -d tests ]; then
 fi
 
 # Unzip the BioSimSpace archives.
-unzip -q $BRANCH.zip
+unzip -q "$BRANCH.zip"
 unzip -q tests.zip
-rm $BRANCH.zip
+rm "$BRANCH.zip"
 rm tests.zip
 
 # Change to the python directory.
-cd BioSimSpace-$BRANCH/python
+cd "BioSimSpace-$BRANCH/python" || exit 1
 
 echo "  --> Installing BioSimSpace"
-$SIRE_DIR/bin/python setup.py install > /dev/null 2>&1
+"$SIRE_DIR/bin/python" setup.py install > /dev/null 2>&1
 
 # Clean up.
-cd ${INSTALL_DIR}
-mv BioSimSpace-$BRANCH/demo .
-rm -r BioSimSpace-$BRANCH
+cd "$INSTALL_DIR" || exit 1
+mv "BioSimSpace-$BRANCH/demo" .
+rm -r "BioSimSpace-$BRANCH"
 mv BioSimSpaceUnitTests-master/tests .
 rm -r BioSimSpaceUnitTests-master
 
 # Switch back to original workspace.
-cd $CURR_DIR
+cd "$CURR_DIR" || exit 1
 
 # Add aliases to ~/.biosimspacerc
-echo "# BioSimSpace aliases." > $HOME/.biosimspacerc
-echo "alias bss_python=$SIRE_DIR/bin/python" >> $HOME/.biosimspacerc
-echo "alias bss_ipython=$SIRE_DIR/bin/ipython" >> $HOME/.biosimspacerc
-echo "alias bss_jupyter=$SIRE_DIR/bin/jupyter" >> $HOME/.biosimspacerc
-echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
+echo "# BioSimSpace aliases." > "$HOME/.biosimspacerc"
+echo "alias bss_python='$SIRE_DIR/bin/python'" >> "$HOME/.biosimspacerc"
+echo "alias bss_ipython='$SIRE_DIR/bin/ipython'" >> "$HOME/.biosimspacerc"
+echo "alias bss_jupyter='$SIRE_DIR/bin/jupyter'" >> "$HOME/.biosimspacerc"
+echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'" >> "$HOME/.biosimspacerc"
 
 # Store the name of the shell rc file.
-SHELL_RC=$HOME/.$(basename "$SHELL")rc
+SHELL_RC="$HOME/.$(basename "$SHELL")rc"
 
 # Source aliases in the SHELL_RC file
-if ! grep -q "BioSimSpace" $SHELL_RC; then
-    echo -e "\n# Source BioSimSpace aliases." >> $SHELL_RC
-    echo "source $HOME/.biosimspacerc" >> $SHELL_RC
+if ! grep -q "BioSimSpace" "$SHELL_RC"; then
+    printf "\n# Source BioSimSpace aliases.\n" >> "$SHELL_RC"
+    echo "source $HOME/.biosimspacerc" >> "$SHELL_RC"
 fi
 
 echo "Installation complete!"
