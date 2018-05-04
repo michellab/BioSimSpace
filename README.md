@@ -16,6 +16,20 @@ a Jupyter notebook.
 
 ## Installation
 
+The [`install.sh`](install.sh) script will automatically install and configure
+a clean BioSimSpace application on Linux or macOS. Following a successful
+installation, the following aliases will be set (this assumes that you are
+using a Bash shell):
+
+* `bss_python` - The BioSimSpace python interpreter.
+* `bss_ipython` - The BioSimSpace interactive python shell.
+* `bss_jupyter` - The BioSimSpace Jupyter executable.
+
+Full installation details are given below for those who wish to install
+BioSimSpace manually, or already have built their own Sire application.
+
+---
+
 BioSimSpace is built on top of the [Sire](https://siremol.org) molecular
 simulations framework. At present you will need to need to install BioSimSpace
 into an existing [Sire](https://siremol.org/pages/download.html) application:
