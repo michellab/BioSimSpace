@@ -24,6 +24,7 @@ using a Bash shell):
 * `bss_python` - The BioSimSpace python interpreter.
 * `bss_ipython` - The BioSimSpace interactive python shell.
 * `bss_jupyter` - The BioSimSpace Jupyter executable.
+* `bss_test` - Run the BioSimSpace unit tests.
 
 Note that this defaults to installing the latest stable version of BioSimSpace
 from [`master`](https://github.com/michellab/BioSimSpace/tree/master) branch.

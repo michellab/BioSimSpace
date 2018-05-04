@@ -82,8 +82,9 @@ rm ${INSTALL_DIR}/sire.run
 
 echo "  --> Downloading BioSimSpace"
 
-# Download the latest zip archive from the BioSimSpace master branch.
+# Download the latest zip archives from the BioSimSpace master branches (source and tests).
 curl -sL https://github.com/michellab/BioSimSpace/archive/$BRANCH.zip -o ${INSTALL_DIR}/$BRANCH.zip
+curl -sL https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip -o ${INSTALL_DIR}/tests.zip
 
 # Change to the installation directory.
 cd ${INSTALL_DIR}
@@ -93,9 +94,16 @@ if [ -d demo ]; then
     rm -r demo
 fi
 
-# Unzip the BioSimSpace archive.
+# Remove old tests directory.
+if [ -d tests ]; then
+    rm -r tests
+fi
+
+# Unzip the BioSimSpace archives.
 unzip -q $BRANCH.zip
+unzip -q tests.zip
 rm $BRANCH.zip
+rm tests.zip
 
 # Change to the python directory.
 cd BioSimSpace-$BRANCH/python
@@ -107,22 +115,30 @@ ${INSTALL_DIR}/sire.app/bin/python setup.py install > /dev/null 2>&1
 cd ${INSTALL_DIR}
 mv BioSimSpace-$BRANCH/demo .
 rm -r BioSimSpace-$BRANCH
+mv BioSimSpaceUnitTests-master/tests .
+rm -r BioSimSpaceUnitTests-master
 
 # Switch back to original workspace.
 cd $CURR_DIR
 
-# Set environment variables.
-echo "  --> Setting environment variables"
+# Set shell aliases.
+echo "  --> Setting BioSimSpace shell aliases"
 alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython
 alias bss_python=${INSTALL_DIR}/sire.app/bin/python
 alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter
+alias bss_tests='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'
 
-# Update bashrc.
+# Add aliases to ~/.biosimspacerc
+echo "# BioSimSpace aliases." > $HOME/.biosimspacerc
+echo "alias bss_python=${INSTALL_DIR}/sire.app/bin/python" >> $HOME/.biosimspacerc
+echo "alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython" >> $HOME/.biosimspacerc
+echo "alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter" >> $HOME/.biosimspacerc
+echo "alias bss_tests='cd ${INSTALL_DIR}; sire.app/bin/pytest -v tests; cd -'" >> $HOME/.biosimspacerc
+
+# Source aliases in ~/.bashrc
 if ! grep -q "BioSimSpace" $HOME/.bashrc; then
-    echo -e "\n# BioSimSpace environment variables." >> $HOME/.bashrc
-    echo "alias bss_python=${INSTALL_DIR}/sire.app/bin/python" >> $HOME/.bashrc
-    echo "alias bss_ipython=${INSTALL_DIR}/sire.app/bin/ipython" >> $HOME/.bashrc
-    echo "alias bss_jupyter=${INSTALL_DIR}/sire.app/bin/jupyter" >> $HOME/.bashrc
+    echo -e "\n# Source BioSimSpace aliases." >> $HOME/.bashrc
+    echo "source $HOME/.biosimspacerc" >> $HOME/.bashrc
 fi
 
 echo "Installation complete!"
