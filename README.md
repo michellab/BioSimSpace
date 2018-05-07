@@ -29,8 +29,8 @@ installation, the following aliases will be set:
 to take effect.)
 
 Note that this defaults to installing the latest stable version of BioSimSpace
-from [`master`](https://github.com/michellab/BioSimSpace/tree/master) branch.
-To install the development version, run:
+from the [`master`](https://github.com/michellab/BioSimSpace/tree/master)
+branch. To install the development version, run:
 
 ```bash
 ./install.sh --branch=devel
