@@ -115,6 +115,10 @@ finally:
     command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
+    print("Cleaning conda environment")
+    command = "%s/conda clean -all -y -q" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
     print("\nDone!")
 
     print("\nIf you have problems with Jupyter permissions, try removing '$HOME/.jupyter' or '$HOME/.local/share/jupyter'")
