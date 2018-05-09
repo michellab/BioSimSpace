@@ -105,7 +105,6 @@ class Gromacs(_process.Process):
         # Get the data prefix.
         if proc.returncode != 0:
             raise RuntimeError("Unable to determine GROMACS data prefix!")
-
         else:
             self._data_prefix = proc.stdout.decode("ascii").strip()
 
@@ -118,7 +117,7 @@ class Gromacs(_process.Process):
         self._top_file = "%s/%s.top" % (self._work_dir, name)
 
         # Set the path for the GROMACS configuration file.
-        self._config_file = "%s/%s.gromacs" % (self._work_dir, name)
+        self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._gro_file, self._top_file]
@@ -130,9 +129,6 @@ class Gromacs(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
-
-        # To read a full GROMACS system using Sire...
-        # s = _Sire.IO.MoleculeParser.read(files, {"GROMACS_PATH":gromacs_path})
 
         # GRO87 file.
         gro = _Sire.IO.Gro87(self._system)
@@ -150,6 +146,26 @@ class Gromacs(_process.Process):
             self._generate_config()
         self.writeConfig(self._config_file)
 
+        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
+
+        # Use grompp to generate the portable binary run input file.
+        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
+            % (self._exe, self._config_file, self._config_file.split(".")[0],
+                    self._gro_file, self._top_file, self._tpr_file)
+
+        # Run the command.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Get the data prefix.
+        if proc.returncode != 0:
+            raise RuntimeError("Unable to generate GROMACS binary run input file")
+        else:
+            self._input_files.append(self._tpr_file)
+
+        # Generate the dictionary of command-line arguments.
+        self._generate_args()
+
         # Return the list of input files.
         return self._input_files
 
@@ -158,3 +174,87 @@ class Gromacs(_process.Process):
 
         # Clear the existing configuration list.
         self._config = []
+
+        # Check whether the system contains periodic box information.
+        # For now, well not attempt to generate a box if the system property
+        # is missing. If no box is present, we'll assume a non-periodic simulation.
+        if "space" in self._system.propertyKeys():
+            has_box = True
+        else:
+            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
+            has_box = False
+
+        # Add configuration variables for a minimisation simulation.
+        if type(self._protocol) is _Protocol.Minimisation:
+            self.addToConfig("integrator = cg")             # Use conjugate gradient.
+            self.addToConfig("nsteps = %d"
+                % self._protocol.getSteps())                # Set the number of steps.
+            self.addToConfig("nstxout = 10")                # Write coordinates every 10 steps.
+            self.addToConfig("nstlog = 10")                 # Write energies every 10 steps.
+            self.addToConfig("cutoff-scheme = Verlet")      # Use Verlet pair lists.
+            self.addToConfig("ns-type = grid")              # Use a grid to search for neighbours.
+            if has_box:
+                self.addToConfig("pbc = xyz")               # Simulate a fully periodic box.
+            self.addToConfig("coulombtype = PME")           # Fast smooth Particle-Mesh Ewald.
+            self.addToConfig("DispCorr = EnerPres")         # Dispersion corrections for energy and pressure.
+
+    def start(self):
+        """Start the GROMACS process."""
+
+        # Process is already running.
+        if self._process is not None:
+            if self._process.isRunning():
+                return
+
+        # Reset the watcher.
+        self._is_watching = False
+
+        # Store the current working directory.
+        dir = _os.getcwd()
+
+        # Change to the working directory for the process.
+        # This avoids problems with relative paths.
+        _os.chdir(self._work_dir)
+
+        # Create the arguments string list.
+        args = self.getArgStringList()
+
+        # Write the command-line process to a README.txt file.
+        with open("README.txt", "w") as f:
+
+            # Set the command-line string.
+            self._command = "%s " % self._exe + self.getArgString()
+
+            # Write the command to file.
+            f.write("# GROMACS was run with the following command:\n")
+            f.write("%s\n" % self._command)
+
+        # Start the timer.
+        self._timer = _timeit.default_timer()
+
+        # Start the simulation.
+        self._process = _Sire.Base.Process.run(self._exe, args,
+            "%s.out" % self._name, "%s.out" % self._name)
+
+        # For historical reasons (console message aggregation with MPI), Gromacs
+        # writes the majority of its output to stderr. For user convenience, we
+        # redirect all output to stdout, and place a message in the stderr file
+        # to highlight this.
+        with open(self._stderr_file, "w") as f:
+            f.write("All output has been redirected to the stdout stream!")
+
+        # Change back to the original working directory.
+        _os.chdir(dir)
+
+        return self
+
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
+
+        # Clear the existing arguments.
+        self.clearArgs()
+
+        # Add the default arguments.
+        self.setArg("mdrun", True)          # Use mdrun.
+        self.setArg("-v", True)             # Verbose output.
+        self.setArg("-deffnm", self._name)  # Output file prefix.
