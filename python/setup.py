@@ -63,6 +63,10 @@ finally:
     command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
+    print("Upgrading package: scipy")
+    command = "%s/conda upgrade -y -q scipy" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
     print("Upgrading pip")
     command = "%s/pip install --upgrade pip" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
@@ -109,18 +113,6 @@ finally:
     command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
     command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Patching mdtraj NetCDF writer")
-    command = ("%s/curl -k -s https://raw.githubusercontent.com/scipy/scipy/master/scipy/io/netcdf.py"
-               "> %s/python3.5/site-packages/scipy/io/netcdf.py"
-              ) % (bin_dir, lib_dir)
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Fixing conda NetCDF install")
-    command = "%s/conda clean -all -y -q" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-    command = "%s/conda update -y -q netcdf4" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("\nDone!")
