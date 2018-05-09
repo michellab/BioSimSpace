@@ -441,7 +441,7 @@ class Namd(_process.Process):
         dir = _os.getcwd()
 
         # Change to the working directory for the process.
-        # This avoid problems with relative paths.
+        # This avoids problems with relative paths.
         _os.chdir(self._work_dir)
 
         # Write the command-line process to a README.txt file.
@@ -458,9 +458,8 @@ class Namd(_process.Process):
         self._timer = _timeit.default_timer()
 
         # Start the simulation.
-        self._process = _Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
-                                                          "%s.out"  % self._name,
-                                                          "%s.err"  % self._name)
+        self._process = _Sire.Base.Process.run(self._exe,
+            "%s.namd" % self._name, "%s.out" % self._name, "%s.err" % self._name)
 
         # Change back to the original working directory.
         _os.chdir(dir)

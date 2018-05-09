@@ -426,7 +426,7 @@ class Amber(_process.Process):
         dir = _os.getcwd()
 
         # Change to the working directory for the process.
-        # This avoid problems with relative paths.
+        # This avoids problems with relative paths.
         _os.chdir(self._work_dir)
 
         # Create the arguments string list.
@@ -447,7 +447,7 @@ class Amber(_process.Process):
 
         # Start the simulation.
         self._process = _Sire.Base.Process.run(self._exe, args,
-            "%s.out"  % self._name, "%s.err"  % self._name)
+            "%s.out" % self._name, "%s.err" % self._name)
 
         # Change back to the original working directory.
         _os.chdir(dir)
