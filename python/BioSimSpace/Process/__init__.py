@@ -25,4 +25,5 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ._amber import *
+from ._gromacs import *
 from ._namd import *
