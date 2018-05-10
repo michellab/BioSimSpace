@@ -33,11 +33,26 @@ from .._System import System as _System
 from collections import OrderedDict as _OrderedDict
 from glob import glob
 from io import StringIO as _StringIO
-from os.path import dirname as _dirname
+
+import os.path as _path
+import subprocess as _subprocess
 import sys as _sys
 
 # Set the bundled GROMACS topology file directory.
-_gromacs_path = _dirname(_getBinDir()) + "/share/gromacs/top"
+_gromacs_path = _path.dirname(_getBinDir()) + "/share/gromacs/top"
+
+# The directory is missing. GROMACS must not be installed.
+if not _path.isdir(_gromacs_path):
+    print("Missing GROMACS topology file path: '%s'" % _gromacs_path)
+
+    # Attempt to install GROMACS.
+    print("Trying to install GROMACS.")
+    command = "%s/conda install -y -q -c bioconda gromacs" % _getBinDir()
+    proc = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    # The installation failed.
+    if proc.returncode != 0:
+        raise RuntimeError("GROMACS installation failed: '%s'" % command)
 
 # Context manager for capturing stdout.
 # Taken from:
