@@ -43,7 +43,7 @@ _gromacs_path = _path.dirname(_getBinDir()) + "/share/gromacs/top"
 
 # The directory is missing. GROMACS must not be installed.
 if not _path.isdir(_gromacs_path):
-    print("Missing GROMACS topology file path: '%s'" % _gromacs_path)
+    print("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
 
     # Attempt to install GROMACS.
     print("Trying to install GROMACS.")
