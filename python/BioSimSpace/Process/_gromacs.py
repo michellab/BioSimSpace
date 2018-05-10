@@ -39,11 +39,6 @@ import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
-try:
-    _pygtail = _Sire.try_import("pygtail")
-except ImportError:
-    raise ImportError("Pygtail is not installed. Please install pygtail in order to use BioSimSpace.")
-
 __all__ = ["Gromacs"]
 
 class Gromacs(_process.Process):
