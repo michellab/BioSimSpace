@@ -132,7 +132,7 @@ class Gromacs(_process.Process):
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._gro_file, self._top_file]
+        self._run_files = [self._config_file, self._gro_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -150,6 +150,10 @@ class Gromacs(_process.Process):
         top = _Sire.IO.GroTop(self._system)
         top.writeToFile(self._top_file)
 
+        # Create the binary input file name.
+        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
+        self._run_files.append(self._tpr_file)
+
         # Generate the GROMACS configuration file.
         # Skip if the user has passed a custom config.
         if type(self._protocol) is _Protocol.Custom:
@@ -158,28 +162,11 @@ class Gromacs(_process.Process):
             self._generate_config()
         self.writeConfig(self._config_file)
 
-        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
-
-        # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
-            % (self._exe, self._config_file, self._config_file.split(".")[0],
-                    self._gro_file, self._top_file, self._tpr_file)
-
-        # Run the command.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-
-        # Get the data prefix.
-        if proc.returncode != 0:
-            raise RuntimeError("Unable to generate GROMACS binary run input file")
-        else:
-            self._input_files.append(self._tpr_file)
-
         # Generate the dictionary of command-line arguments.
         self._generate_args()
 
         # Return the list of input files.
-        return self._input_files
+        return self._run_files
 
     def _generate_config(self):
         """Generate GROMACS configuration file strings."""
@@ -270,3 +257,44 @@ class Gromacs(_process.Process):
         self.setArg("mdrun", True)          # Use mdrun.
         self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
+
+    def _generate_binary_run_file(self):
+        """Use grommp to generate the binary run input file."""
+
+        # Use grompp to generate the portable binary run input file.
+        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
+            % (self._exe, self._config_file, self._config_file.split(".")[0],
+                self._gro_file, self._top_file, self._tpr_file)
+
+        # Run the command.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Get the data prefix.
+        if proc.returncode != 0:
+            raise RuntimeError("Unable to generate GROMACS binary run input file")
+
+    def setConfig(self, config):
+        """Set the list of configuration file strings."""
+
+        # Call the base class method.
+        super().setConfig(config)
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
+
+    def addToConfig(self, config):
+        """Add a string to the configuration list."""
+
+        # Call the base class method.
+        super().addToConfig(config)
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
+
+    def resetConfig(self):
+        """Reset the configuration parameters."""
+        self._generate_config()
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
