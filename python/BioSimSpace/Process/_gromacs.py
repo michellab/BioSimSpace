@@ -178,19 +178,79 @@ class Gromacs(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # The list of configuration strings.
+        # We don't repeatedly call addToConfig since this will run grommp
+        # to re-compile the binary run input file each time.
+        config = []
+
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
-            self.addToConfig("integrator = cg")             # Use conjugate gradient.
-            self.addToConfig("nsteps = %d"
-                % self._protocol.getSteps())                # Set the number of steps.
-            self.addToConfig("nstxout = 10")                # Write coordinates every 10 steps.
-            self.addToConfig("nstlog = 10")                 # Write energies every 10 steps.
-            self.addToConfig("cutoff-scheme = Verlet")      # Use Verlet pair lists.
-            self.addToConfig("ns-type = grid")              # Use a grid to search for neighbours.
+            config.append("integrator = cg")            # Use conjugate gradient.
+            config.append("nsteps = %d"
+                % self._protocol.getSteps())            # Set the number of steps.
+            config.append("nstxout = 10")               # Write coordinates every 10 steps.
+            config.append("nstlog = 10")                # Write energies every 10 steps.
+            config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+            config.append("ns-type = grid")             # Use a grid to search for neighbours.
             if has_box:
-                self.addToConfig("pbc = xyz")               # Simulate a fully periodic box.
-            self.addToConfig("coulombtype = PME")           # Fast smooth Particle-Mesh Ewald.
-            self.addToConfig("DispCorr = EnerPres")         # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")              # Simulate a fully periodic box.
+            config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+            config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+
+        # Set the configuration.
+        self.setConfig(config)
+
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
+
+        # Clear the existing arguments.
+        self.clearArgs()
+
+        # Add the default arguments.
+        self.setArg("mdrun", True)          # Use mdrun.
+        self.setArg("-v", True)             # Verbose output.
+        self.setArg("-deffnm", self._name)  # Output file prefix.
+
+    def _generate_binary_run_file(self):
+        """Use grommp to generate the binary run input file."""
+
+        # Use grompp to generate the portable binary run input file.
+        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
+            % (self._exe, self._config_file, self._config_file.split(".")[0],
+                self._gro_file, self._top_file, self._tpr_file)
+
+        # Run the command.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Get the data prefix.
+        if proc.returncode != 0:
+            raise RuntimeError("Unable to generate GROMACS binary run input file")
+
+    def addToConfig(self, config):
+        """Add a string to the configuration list."""
+
+        # Call the base class method.
+        super().addToConfig(config)
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
+
+    def resetConfig(self):
+        """Reset the configuration parameters."""
+        self._generate_config()
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
+
+    def setConfig(self, config):
+        """Set the list of configuration file strings."""
+
+        # Call the base class method.
+        super().setConfig(config)
+
+        # Use grompp to generate the portable binary run input file.
+        self._generate_binary_run_file()
 
     def start(self):
         """Start the GROMACS process."""
@@ -242,54 +302,27 @@ class Gromacs(_process.Process):
 
         return self
 
-    def _generate_args(self):
-        """Generate the dictionary of command-line arguments."""
+    def getSystem(self, block="AUTO"):
+        """Get the latest molecular configuration as a Sire system.
 
-        # Clear the existing arguments.
-        self.clearArgs()
+           Keyword arguments:
 
-        # Add the default arguments.
-        self.setArg("mdrun", True)          # Use mdrun.
-        self.setArg("-v", True)             # Verbose output.
-        self.setArg("-deffnm", self._name)  # Output file prefix.
+           block -- Whether to block until the process has finished running.
+        """
 
-    def _generate_binary_run_file(self):
-        """Use grommp to generate the binary run input file."""
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
 
-        # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
-            % (self._exe, self._config_file, self._config_file.split(".")[0],
-                self._gro_file, self._top_file, self._tpr_file)
+        # Create the name of the restart GRO file.
+        restart = "%s/%s.gro" % (self._work_dir, self._name)
 
-        # Run the command.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        # Check that the file exists.
+        if _os.path.isfile(restart):
+            # Create and return the molecular system.
+            return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
 
-        # Get the data prefix.
-        if proc.returncode != 0:
-            raise RuntimeError("Unable to generate GROMACS binary run input file")
-
-    def setConfig(self, config):
-        """Set the list of configuration file strings."""
-
-        # Call the base class method.
-        super().setConfig(config)
-
-        # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
-
-    def addToConfig(self, config):
-        """Add a string to the configuration list."""
-
-        # Call the base class method.
-        super().addToConfig(config)
-
-        # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
-
-    def resetConfig(self):
-        """Reset the configuration parameters."""
-        self._generate_config()
-
-        # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
+        else:
+            return None
