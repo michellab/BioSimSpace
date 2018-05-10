@@ -39,6 +39,7 @@ import math as _math
 import os as _os
 import re as _re
 import shutil as _shutil
+import subprocess as _subprocess
 import time as _time
 import timeit as _timeit
 import warnings as _warnings
@@ -165,9 +166,21 @@ class Amber(_process.Process):
                 exe = "%s/sander" % bin_dir
 
                 if _os.path.isfile(exe):
-                    self._exe = exe
+                    # Although the executable exists, it may not work because it was
+                    # precompiled on a system with different hardware instructions.
+                    # We test this by running the executable and checking the error
+                    # code.
+                    command = "%s 2>&1 | grep 'Error opening unit'" % exe
+                    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
 
-                # Search system PATH.
+                    # The executable runs.
+                    if proc.returncode == 0:
+                        self._exe = exe
+                    # Search the system PATH.
+                    else:
+                        self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
+
+                # Search the system PATH.
                 else:
                     self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
 

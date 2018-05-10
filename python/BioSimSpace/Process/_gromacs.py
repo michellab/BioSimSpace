@@ -81,9 +81,21 @@ class Gromacs(_process.Process):
             exe = "%s/gmx" % bin_dir
 
             if _os.path.isfile(exe):
-                self._exe = exe
+                # Although the executable exists, it may not work because it was
+                # precompiled on a system with different hardware instructions.
+                # We test this by running the executable and checking the error
+                # code.
+                proc = _subprocess.run(exe, shell=True,
+                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
-            # Search system PATH.
+                # The executable runs.
+                if proc.returncode == 0:
+                    self._exe = exe
+                # Search the system PATH.
+                else:
+                    self._exe = _Sire.Base.findExe("gmx").absoluteFilePath()
+
+            # Search the system PATH.
             else:
                 self._exe = _Sire.Base.findExe("gmx").absoluteFilePath()
 
@@ -97,7 +109,7 @@ class Gromacs(_process.Process):
         # Now use the GROMACS exe to get the location of the data directory.
 
         # Generate the shell command.
-        command = "%s -h -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % self._exe
+        command = "%s -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % self._exe
 
         # Run the command.
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)

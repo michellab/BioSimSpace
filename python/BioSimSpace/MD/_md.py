@@ -33,6 +33,7 @@ from .._System import System as _System
 import BioSimSpace.Process as _Process
 
 import os as _os
+import subprocess as _subprocess
 
 __all__ = ["MD"]
 
@@ -83,6 +84,8 @@ def _find_md_package(system, protocol, use_gpu=True):
 
     # Loop over each executable in turn and see whether it exists on the system.
     for exe, gpu in _md_packages[package].items():
+
+        # AMBER.
         if package == "AMBER":
             # Search AMBERHOME, if set.
             if "AMBERHOME" in _os.environ:
@@ -97,7 +100,23 @@ def _find_md_package(system, protocol, use_gpu=True):
                 _exe = "%s/%s" % (bin_dir, exe)
 
                 if _os.path.isfile(_exe):
-                    return (package, _exe)
+                    # Although the executable exists, it may not work because it was
+                    # precompiled on a system with different hardware instructions.
+                    # We test this by running the executable and checking the error
+                    # code.
+                    command = "%s 2>&1 | grep 'Error opening unit'" % _exe
+                    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
+
+                    # The executable runs.
+                    if proc.returncode == 0:
+                        return (package, _exe)
+                    else:
+                        # Search the system PATH.
+                        try:
+                            exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                            return (package, exe)
+                        except:
+                            pass
 
                 # Search system PATH.
                 else:
@@ -107,7 +126,39 @@ def _find_md_package(system, protocol, use_gpu=True):
                     except:
                         pass
 
-        # Search system PATH.
+        # GROMACS.
+        elif package == "GROMACS":
+            bin_dir = _Sire.Base.getBinDir()
+            _exe = "%s/%s" % (bin_dir, exe)
+
+            if _os.path.isfile(_exe):
+                # Although the executable exists, it may not work because it was
+                # precompiled on a system with different hardware instructions.
+                # We test this by running the executable and checking the error
+                # code.
+                proc = _subprocess.run(exe, shell=True,
+                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+                # The executable runs.
+                if proc.returncode == 0:
+                    return (package, _exe)
+                else:
+                    # Search the system PATH.
+                    try:
+                        exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                        return (package, exe)
+                    except:
+                        pass
+
+            # Search system PATH.
+            else:
+                try:
+                    exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                    return (package, exe)
+                except:
+                    pass
+
+        # NAMD.
         else:
             try:
                 exe = _Sire.Base.findExe(exe).absoluteFilePath()
