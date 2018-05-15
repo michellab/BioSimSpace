@@ -2,6 +2,38 @@
 
 # Installer script for BioSimSpace.
 
+# Check required command-line utilities are installed.
+
+# Unzip is needed for uncompressing archive files from GitHub.
+if ! [ -x "$(command -v unzip)" ]; then
+    echo "Error: 'unzip' is not installed." >&2
+    exit 1
+fi
+
+# Curl or wget are needed to download Sire and BioSimSpace.
+if [ -x "$(command -v curl)" ]; then
+    HAS_CURL=true
+elif [ -x "$(command -v wget)" ]; then
+    HAS_CURL=false
+else
+    echo "Error: 'curl' or 'wget' must be installed." >&2
+    exit 1
+fi
+
+# Download function definition.
+download() {
+    if [[ "$HAS_CURL" == "true" ]]; then
+        curl --silent --insecure --location $1 --output $2
+    else
+        wget --quiet --no-check-certificate $1 --output-document $2
+    fi
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to download: $1" >&2
+        exit 1
+    fi
+}
+
 # Current Sire version.
 SIRE_VER=201811
 
@@ -16,7 +48,7 @@ OS="$(uname)"
 
 # Only Linux and macOS are supported.
 if [[ ! ($OS == "Linux" || $OS == "Darwin") ]]; then
-    echo "Installer only works on Linux and macOS!"
+    echo "Installer only works on Linux and macOS!" >&2
     exit 1
 fi
 
@@ -28,8 +60,8 @@ for i in "$@"; do
     -c|--clean)
         CLEAN_BUILD=true;;
     -*)
-        echo " Unrecognized option \"$1\"";
-        echo " Available options are: 'branch' and 'clean'"
+        echo " Unrecognized option \"$1\"" >&2;
+        echo " Available options are: 'branch' and 'clean'" >&2
         exit 1;;
     esac
     shift
@@ -37,8 +69,8 @@ done
 
 # Check branch is valid.
 if [[ ! ($BRANCH == master || $BRANCH == devel) ]]; then
-	echo " Unsupported branch: $BRANCH"
-	echo " Available options are: 'master' or 'devel'"
+	echo " Unsupported branch: $BRANCH" >&2
+	echo " Available options are: 'master' or 'devel'" >&2
 	exit 1
 fi
 
@@ -94,9 +126,9 @@ if ! [ -z "$CLEAN_BUILD" ]; then
 
     # Download latest self-extracting Sire binary.
     if [[ $OS == "Linux" ]]; then
-        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run -o "$INSTALL_DIR/sire.run"
+    download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run "$INSTALL_DIR/sire.run"
     else
-        curl -sL http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run -o "$INSTALL_DIR/sire.run"
+        download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run "$INSTALL_DIR/sire.run"
         mkdir -p "$HOME/.matplotlib"
         touch "$HOME/.matplotlib/matplotlibrc"
         if ! grep -q "backend" "$HOME/.matplotlib/matplotlibrc"; then
@@ -128,8 +160,8 @@ fi
 echo "  --> Downloading BioSimSpace"
 
 # Download the latest zip archives from the BioSimSpace master branches (source and tests).
-curl -sL https://github.com/michellab/BioSimSpace/archive/"$BRANCH.zip" -o "$INSTALL_DIR/$BRANCH.zip"
-curl -sL https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip -o "$INSTALL_DIR/tests.zip"
+download "https://github.com/michellab/BioSimSpace/archive/$BRANCH.zip" "$INSTALL_DIR/$BRANCH.zip"
+download https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip "$INSTALL_DIR/tests.zip"
 
 # Change to the installation directory.
 cd "$INSTALL_DIR" || exit 1
