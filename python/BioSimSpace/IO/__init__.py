@@ -48,7 +48,7 @@ if not _path.isdir(_gromacs_path):
     # Attempt to install GROMACS.
     print("Trying to install GROMACS.")
     command = "%s/conda install -y -q -c bioconda gromacs" % _getBinDir()
-    proc = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
 
     # The installation failed.
     if proc.returncode != 0:
