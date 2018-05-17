@@ -23,14 +23,15 @@ fi
 # Download function definition.
 download() {
     if [[ "$HAS_CURL" == "true" ]]; then
-        curl --silent --insecure --location $1 --output $2
+        if ! curl --silent --insecure --location "$1" --output "$2"; then
+            echo "Failed to download: $1" >&2
+            exit 1
+        fi
     else
-        wget --quiet --no-check-certificate $1 --output-document $2
-    fi
-
-    if [ $? -ne 0 ]; then
-        echo "Failed to download: $1" >&2
-        exit 1
+        if ! wget --quiet --no-check-certificate "$1" --output-document "$2"; then
+            echo "Failed to download: $1" >&2
+            exit 1
+        fi
     fi
 }
 
@@ -200,10 +201,12 @@ cd "$CURR_DIR" || exit 1
 
 # Add aliases to ~/.biosimspacerc
 echo "# BioSimSpace aliases." > "$HOME/.biosimspacerc"
-echo "alias bss_python='$SIRE_DIR/bin/python'" >> "$HOME/.biosimspacerc"
-echo "alias bss_ipython='$SIRE_DIR/bin/ipython'" >> "$HOME/.biosimspacerc"
-echo "alias bss_jupyter='$SIRE_DIR/bin/jupyter'" >> "$HOME/.biosimspacerc"
-echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'" >> "$HOME/.biosimspacerc"
+{
+    echo "alias bss_python='$SIRE_DIR/bin/python'"
+    echo "alias bss_ipython='$SIRE_DIR/bin/ipython'"
+    echo "alias bss_jupyter='$SIRE_DIR/bin/jupyter'"
+    echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'"
+} >> "$HOME/.biosimspacerc"
 
 # Store the name of the shell rc file.
 SHELL_RC="$HOME/.$(basename "$SHELL")rc"
