@@ -138,6 +138,27 @@ class Process():
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
         self._stderr_file = "%s/%s.err" % (self._work_dir, name)
 
+        # Initialise the configuration file string list.
+        self._config = []
+
+        # Initaliae the command-line argument dictionary.
+        self._args = _collections.OrderedDict()
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
+
+    def _clear_output(self):
+        """Reset stdout and stderr."""
+
         # Create the files. This makes sure that the 'stdout' and 'stderr'
         # methods can be called when the files are empty.
         open(self._stdout_file, "a").close()
@@ -157,24 +178,6 @@ class Process():
 
         if _os.path.isfile(stderr_offset):
             _os.remove(stderr_offset)
-
-        # Initialise the configuration file string list.
-        self._config = []
-
-        # Initaliae the command-line argument dictionary.
-        self._args = _collections.OrderedDict()
-
-    def __str__(self):
-        """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._work_dir, self._seed)
-
-    def __repr__(self):
-        """Return a string showing how to instantiate the object."""
-        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._work_dir, self._seed)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.

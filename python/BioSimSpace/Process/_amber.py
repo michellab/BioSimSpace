@@ -432,6 +432,9 @@ class Amber(_process.Process):
             if self._process.isRunning():
                 return
 
+        # Clear any existing output.
+        self._clear_output()
+
         # Reset the watcher.
         self._is_watching = False
 

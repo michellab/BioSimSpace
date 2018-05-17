@@ -260,8 +260,8 @@ class Gromacs(_process.Process):
             if self._process.isRunning():
                 return
 
-        # Reset the watcher.
-        self._is_watching = False
+        # Clear any existing output.
+        self._clear_output()
 
         # Store the current working directory.
         dir = _os.getcwd()

@@ -437,6 +437,9 @@ class Namd(_process.Process):
             if self._process.isRunning():
                 return
 
+        # Clear any existing output.
+        self._clear_output()
+
         # Store the current working directory.
         dir = _os.getcwd()
 
