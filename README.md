@@ -58,7 +58,7 @@ cd python
 python setup.py install
 ```
 
-(You can safely ignore warnings regarding `mkl-random` and `mkl-fft`.)
+(You can safely ignore warnings regarding `mmtf-python`, `mkl-random`, and `mkl-fft`.)
 
 Note that this assumes that Sire's `bin` directory, typically `$HOME/sire.app/bin`,
 has been added to your path. Alternatively, run:

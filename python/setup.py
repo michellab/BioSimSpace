@@ -59,12 +59,12 @@ finally:
     command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: ambertools")
-    command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
+    print("Installing package: mdanalysis")
+    command = "%s/conda install -y -q mdanalysis" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Upgrading package: scipy")
-    command = "%s/conda upgrade -y -q scipy" % bin_dir
+    print("Installing package: ambertools")
+    command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("Upgrading pip")
@@ -75,10 +75,6 @@ finally:
     command = "%s/pip install watchdog" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: mdanalysis")
-    command = "%s/pip install mdanalysis" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     print("Installing package: jupyter")
     command = "%s/pip install jupyter" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
@@ -87,12 +83,12 @@ finally:
     command = "%s/pip install duecredit" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: pygtail")
-    command = "%s/pip install pygtail" % bin_dir
+    print("Installing package: mock")
+    command = "%s/pip install mock" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: matplotlib")
-    command = "%s/pip install matplotlib" % bin_dir
+    print("Installing package: pygtail")
+    command = "%s/pip install pygtail" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("Installing package: fileupload")
