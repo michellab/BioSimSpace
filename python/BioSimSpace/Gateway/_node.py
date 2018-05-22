@@ -926,6 +926,13 @@ class Node():
         # Initialise the help string.
         help = "\n".join(_textwrap.wrap(input.getHelp(), 80))
 
+        # Get the units.
+        units = input.getUnits()
+
+        # Add the units to the help string.
+        if units is not None:
+            help += "\n  units=%s" % (units[0] + units[1:].lower())
+
         # Get the default value.
         default = input.getDefault()
 

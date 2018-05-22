@@ -24,6 +24,8 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Units as _Units
+
 import bz2 as _bz2
 import gzip as _gzip
 import os as _os
@@ -33,7 +35,7 @@ import sys as _sys
 import tarfile as _tarfile
 import zipfile as _zipfile
 
-__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet"]
+__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet", "Temperature"]
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
@@ -486,6 +488,154 @@ class FileSet(Requirement):
             return uncompressed_files
         else:
             return value
+
+class Temperature(Requirement):
+    """A temperature requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    # A list of allowed units.
+    _supported_units = { "KELVIN"     : _Units.kelvin,
+                         "CELSIUS"    : _Units.celsius,
+                         "FAHRENHEIT" : _Units.fahrenheit }
+
+    def __init__(self, help=None, default=None, units=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           units   -- The units.
+           min     -- The minimum allowed value.
+           max     -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help)
+
+        # Validate the units.
+        if units is not None:
+            self._units = self._validate_units(units)
+        else:
+            raise ValueError("No units have been specified!")
+
+        # Set the minimum value.
+        if minimum is not None:
+            self._min = self._validate(minimum)
+
+        # Set the maximum value.
+        if maximum is not None:
+            self._max = self._validate(maximum)
+
+        # Min and max.
+        if minimum is not None and maximum is not None:
+            if maximum < minimum:
+                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
+                    % (maximum, minimum))
+
+        # Set the allowed values.
+        if allowed is not None:
+            if type(allowed) is not list:
+                allowed = [allowed]
+            self._allowed = [self._validate(x) for x in allowed]
+
+            # Conflicting requirements.
+            if self._min is not None or self._max is not None:
+                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
+
+        # Set the default value.
+        if default is not None:
+            # Make sure the default is the right type.
+            self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
+            self._is_optional = True
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        if self._value is not None:
+            return "%.2f %s" % (self._value, self._units[0].upper())
+        else:
+            return ""
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Float.
+        if type(value) is float:
+            pass
+
+        # Integer.
+        elif type(value) is int:
+            value = float(value)
+
+        # String.
+        elif type(value) is str:
+            # First try to directly convert to a float.
+            try:
+                value = float(value)
+
+            # Use a regular expression to extract the value and unit.
+            except ValueError:
+                match = _re.search("^\s*(\d+\.?\d*)\s*([A-Za-z]+)\s*$", value, _re.IGNORECASE)
+
+                if match is None:
+                    raise ValueError("Could not interpret temperature: '%s'" % value)
+                else:
+                    # Extract the value and units.
+                    value, units = match.groups()
+
+                    # Convert the value to a float.
+                    value = float(value)
+
+                    # Validate the units.
+                    units = self._validate_units(units)
+
+                    if self._units == "KELVIN":
+                        value = (value * self._supported_units[units]).value()
+                    else:
+                        # Convert the value to the right units.
+                        value = (value * self._supported_units[units]).to(self._supported_units[self._units])
+
+        # Unsupported.
+        else:
+            raise TypeError("The value should be of type 'float', 'int', or 'str'")
+
+        if value < 0:
+            raise ValueError("The temperature cannot be negative!")
+
+        return value
+
+    def _validate_units(self, units):
+        """Validate that the units are supported."""
+
+        # Strip whitespace and convert to upper case.
+        units = units.replace(" ", "").upper()
+
+        # Check that unit is supported.
+        if not units in self._supported_units:
+            found = False
+
+            # Match first letter.
+            for unit in self._supported_units:
+                if unit[0] == units[0]:
+                    found = True
+                    units = unit
+                    break
+
+            if not found:
+                raise ValueError("Supported units are %s" % self._supported_units)
+
+        return units
+
+    def supportedUnits(self):
+        """Print a list of supported units."""
+        print(self._supported_units)
 
 def _unarchive(name):
     """Decompress an archive and return a list of files."""
