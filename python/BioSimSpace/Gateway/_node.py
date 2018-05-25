@@ -926,8 +926,8 @@ class Node():
         # Initialise the help string.
         help = "\n".join(_textwrap.wrap(input.getHelp(), 80))
 
-        # Get the units.
-        units = input.getUnits()
+        # Get the unit.
+        units = input.getUnit()
 
         # Add the units to the help string.
         if units is not None:
