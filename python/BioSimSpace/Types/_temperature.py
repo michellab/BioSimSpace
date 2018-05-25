@@ -32,9 +32,9 @@ class Temperature:
                          "FAHRENHEIT" : _Units.fahrenheit }
 
     # Map unit abbreviations to the full name.
-    _abbreviations  = { "K" : "KELVIN",
-                        "C" : "CELSIUS",
-                        "F" : "FAHRENHEIT" }
+    _abbreviations = { "K" : "KELVIN",
+                       "C" : "CELSIUS",
+                       "F" : "FAHRENHEIT" }
 
     def __init__(self, magnitude, unit):
         """Constructor.

@@ -37,13 +37,13 @@ class Time:
                          "FEMTOSECOND" : _Units.femtosecond }
 
     # Map unit abbreviations to the full name.
-    _abbreviations  = { "HR"  : "HOUR",
-                        "MIN" : "MINUTE",
-                        "SEC" : "SECOND",
-                        "MS"  : "MILLISECOND",
-                        "NS"  : "NANOSECOND",
-                        "PS"  : "PICOSECOND",
-                        "FS"  : "FEMTOSECOND" }
+    _abbreviations = { "HR"  : "HOUR",
+                       "MIN" : "MINUTE",
+                       "SEC" : "SECOND",
+                       "MS"  : "MILLISECOND",
+                       "NS"  : "NANOSECOND",
+                       "PS"  : "PICOSECOND",
+                       "FS"  : "FEMTOSECOND" }
 
     def __init__(self, magnitude, unit):
         """Constructor.
