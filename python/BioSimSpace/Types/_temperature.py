@@ -170,6 +170,6 @@ class Temperature:
                     break
 
             if not found:
-                raise ValueError("Supported units are %s" % self._supported_units)
+                raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
         return unit
