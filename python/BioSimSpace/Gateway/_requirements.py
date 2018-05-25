@@ -24,7 +24,7 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire.Units as _Units
+import BioSimSpace.Types as _Types
 
 import bz2 as _bz2
 import gzip as _gzip
@@ -46,7 +46,7 @@ class Requirement():
     # Default to single arguments.
     _is_multi = False
 
-    def __init__(self, help=None, default=None, units=None, minimum=None,
+    def __init__(self, help=None, default=None, unit=None, minimum=None,
             maximum=None, allowed=None, optional=False):
         """Constructor.
 
@@ -54,7 +54,7 @@ class Requirement():
 
            help     -- The help string.
            default  -- The default value.
-           units    -- The units.
+           unit     -- The unit.
            minimum  -- The minimum allowed value.
            maximum  -- The maximum allowed value.
            allowed  -- A list of allowed values.
@@ -84,7 +84,7 @@ class Requirement():
 
         # Set member data.
         self._default = default
-        self._units = None
+        self._unit = None
         self._min = minimum
         self._max = maximum
         self._allowed = allowed
@@ -127,9 +127,9 @@ class Requirement():
         """Return the default value."""
         return self._default
 
-    def getUnits(self):
-        """Return the units."""
-        return self._units
+    def getUnit(self):
+        """Return the unit."""
+        return self._unit
 
     def getHelp(self):
         """Return the documentation string."""
@@ -495,12 +495,7 @@ class Temperature(Requirement):
     # Set the argparse argument type.
     _arg_type = str
 
-    # A list of allowed units.
-    _supported_units = { "KELVIN"     : _Units.kelvin,
-                         "CELSIUS"    : _Units.celsius,
-                         "FAHRENHEIT" : _Units.fahrenheit }
-
-    def __init__(self, help=None, default=None, units=None,
+    def __init__(self, help=None, default=None, unit=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
@@ -508,7 +503,7 @@ class Temperature(Requirement):
 
            help    -- The help string.
            default -- The default value.
-           units   -- The units.
+           unit    -- The unit.
            min     -- The minimum allowed value.
            max     -- The maximum allowed value.
            allowed -- A list of allowed values.
@@ -517,11 +512,15 @@ class Temperature(Requirement):
         # Call the base class constructor.
         super().__init__(help=help)
 
-        # Validate the units.
-        if units is not None:
-            self._units = self._validate_units(units)
+        # Validate the unit.
+        if unit is not None:
+            try:
+                temp = _Types.Temperature(1, unit)
+                self._unit = unit
+            except:
+                raise ValueError("Supported units are: '%s'" % temp.supportedUnits())
         else:
-            raise ValueError("No units have been specified!")
+            raise ValueError("No unit has been specified!")
 
         # Set the minimum value.
         if minimum is not None:
@@ -556,13 +555,6 @@ class Temperature(Requirement):
             # Flag the the requirement is optional.
             self._is_optional = True
 
-    def __str__(self):
-        """Return a human readable string representation of the object."""
-        if self._value is not None:
-            return "%.2f %s" % (self._value, self._units[0].upper())
-        else:
-            return ""
-
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
@@ -587,55 +579,18 @@ class Temperature(Requirement):
                 if match is None:
                     raise ValueError("Could not interpret temperature: '%s'" % value)
                 else:
-                    # Extract the value and units.
-                    value, units = match.groups()
+                    # Extract the value and unit.
+                    value, unit = match.groups()
 
                     # Convert the value to a float.
                     value = float(value)
 
-                    # Validate the units.
-                    units = self._validate_units(units)
-
-                    if self._units == "KELVIN":
-                        value = (value * self._supported_units[units]).value()
-                    else:
-                        # Convert the value to the right units.
-                        value = (value * self._supported_units[units]).to(self._supported_units[self._units])
 
         # Unsupported.
         else:
             raise TypeError("The value should be of type 'float', 'int', or 'str'")
 
-        if value < 0:
-            raise ValueError("The temperature cannot be negative!")
-
-        return value
-
-    def _validate_units(self, units):
-        """Validate that the units are supported."""
-
-        # Strip whitespace and convert to upper case.
-        units = units.replace(" ", "").upper()
-
-        # Check that unit is supported.
-        if not units in self._supported_units:
-            found = False
-
-            # Match first letter.
-            for unit in self._supported_units:
-                if unit[0] == units[0]:
-                    found = True
-                    units = unit
-                    break
-
-            if not found:
-                raise ValueError("Supported units are %s" % self._supported_units)
-
-        return units
-
-    def supportedUnits(self):
-        """Print a list of supported units."""
-        print(self._supported_units)
+        return _Types.Temperature(value, unit)
 
 def _unarchive(name):
     """Decompress an archive and return a list of files."""
