@@ -25,3 +25,4 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ._temperature import *
+from ._time import *
