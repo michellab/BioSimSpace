@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import BioSimSpace.Types as _Types
 
 import bz2 as _bz2
+import copy as _copy
 import gzip as _gzip
 import os as _os
 import re as _re
@@ -35,7 +36,8 @@ import sys as _sys
 import tarfile as _tarfile
 import zipfile as _zipfile
 
-__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet", "Temperature"]
+__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet",
+    "Temperature", "Time"]
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
@@ -79,16 +81,47 @@ class Requirement():
         if type(optional) is not bool:
             raise TypeError("'optional' keyword argument must be of type 'bool'")
 
-        # Set defaults.
+        # Set defaults
         self._value = None
-
-        # Set member data.
-        self._default = default
+        self._default = None
         self._unit = None
-        self._min = minimum
-        self._max = maximum
-        self._allowed = allowed
+        self._min = None
+        self._max = None
+        self._allowed = None
         self._is_optional = optional
+
+        # Set the minimum value.
+        if minimum is not None:
+            self._min = self._validate(minimum)
+
+        # Set the maximum value.
+        if maximum is not None:
+            self._max = self._validate(maximum)
+
+        # Min and max.
+        if minimum is not None and maximum is not None:
+            if maximum < minimum:
+                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
+                    % (maximum, minimum))
+
+        # Set the allowed values.
+        if allowed is not None:
+            if type(allowed) is not list:
+                allowed = [allowed]
+            self._allowed = [self._validate(x) for x in allowed]
+
+            # Conflicting requirements.
+            if self._min is not None or self._max is not None:
+                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
+
+        # Set the default value.
+        if default is not None:
+            # Make sure the default is the right type.
+            self._default = self._validate(default)
+            # Make sure the default satisfies the constraints.
+            self._validate_default()
+            # Flag the the requirement is optional.
+            self._is_optional = True
 
     def setValue(self, value):
         """Validate and set the value."""
@@ -190,14 +223,7 @@ class Boolean(Requirement):
         """
 
         # Call the base class constructor.
-        super().__init__(help=help)
-
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Flag the the requirement is optional.
-            self._is_optional = True
+        super().__init__(help=help, default=default)
 
     def _validate(self, value):
         """Validate the value."""
@@ -221,46 +247,14 @@ class Integer(Requirement):
 
            help    -- The help string.
            default -- The default value.
-           min     -- The minimum allowed value.
-           max     -- The maximum allowed value.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
            allowed -- A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(help=help)
-
-        # Set the minimum value.
-        if minimum is not None:
-            self._min = self._validate(minimum)
-
-        # Set the maximum value.
-        if maximum is not None:
-            self._max = self._validate(maximum)
-
-        # Min and max.
-        if minimum is not None and maximum is not None:
-            if maximum < minimum:
-                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
-                    % (maximum, minimum))
-
-        # Set the allowed values.
-        if allowed is not None:
-            if type(allowed) is not list:
-                allowed = [allowed]
-            self._allowed = [self._validate(x) for x in allowed]
-
-            # Conflicting requirements.
-            if self._min is not None or self._max is not None:
-                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
-
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Make sure the default satisfies the constraints.
-            self._validate_default()
-            # Flag the the requirement is optional.
-            self._is_optional = True
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -284,46 +278,14 @@ class Float(Requirement):
 
            help    -- The help string.
            default -- The default value.
-           min     -- The minimum allowed value.
-           max     -- The maximum allowed value.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
            allowed -- A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(help=help)
-
-        # Set the minimum value.
-        if minimum is not None:
-            self._min = self._validate(minimum)
-
-        # Set the maximum value.
-        if maximum is not None:
-            self._max = self._validate(maximum)
-
-        # Min and max.
-        if minimum is not None and maximum is not None:
-            if maximum < minimum:
-                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
-                    % (maximum, minimum))
-
-        # Set the allowed values.
-        if allowed is not None:
-            if type(allowed) is not list:
-                allowed = [allowed]
-            self._allowed = [self._validate(x) for x in allowed]
-
-            # Conflicting requirements.
-            if self._min is not None or self._max is not None:
-                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
-
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Make sure the default satisfies the constraints.
-            self._validate_default()
-            # Flag the the requirement is optional.
-            self._is_optional = True
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -352,22 +314,7 @@ class String(Requirement):
         """
 
         # Call the base class constructor.
-        super().__init__(help=help)
-
-        # Set the allowed values.
-        if allowed is not None:
-            if type(allowed) is not list:
-                allowed = [allowed]
-            self._allowed = [self._validate(x) for x in allowed]
-
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Make sure the default satisfies the constraints.
-            self._validate_default()
-            # Flag the the requirement is optional.
-            self._is_optional = True
+        super().__init__(help=help, default=default, allowed=allowed)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -439,7 +386,10 @@ class FileSet(Requirement):
 
     def getValue(self):
         """Return the value."""
-        return self._value.copy()
+        if self._value is None:
+            return None
+        else:
+            return self._value.copy()
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -504,13 +454,14 @@ class Temperature(Requirement):
            help    -- The help string.
            default -- The default value.
            unit    -- The unit.
-           min     -- The minimum allowed value.
-           max     -- The maximum allowed value.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
            allowed -- A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(help=help)
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
 
         # Validate the unit.
         if unit is not None:
@@ -519,75 +470,114 @@ class Temperature(Requirement):
         else:
             raise ValueError("No unit has been specified!")
 
-        # Set the minimum value.
-        if minimum is not None:
-            self._min = self._validate(minimum)
-
-        # Set the maximum value.
-        if maximum is not None:
-            self._max = self._validate(maximum)
-
-        # Min and max.
-        if minimum is not None and maximum is not None:
-            if maximum < minimum:
-                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
-                    % (maximum, minimum))
-
-        # Set the allowed values.
-        if allowed is not None:
-            if type(allowed) is not list:
-                allowed = [allowed]
-            self._allowed = [self._validate(x) for x in allowed]
-
-            # Conflicting requirements.
-            if self._min is not None or self._max is not None:
-                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
-
-        # Set the default value.
-        if default is not None:
-            # Make sure the default is the right type.
-            self._default = self._validate(default)
-            # Make sure the default satisfies the constraints.
-            self._validate_default()
-            # Flag the the requirement is optional.
-            self._is_optional = True
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Float.
-        if type(value) is float:
-            pass
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "temperature")
 
-        # Integer.
-        elif type(value) is int:
+        if unit is None:
+            return _Types.Temperature(value, self._unit)
+        else:
+            return _Types.Temperature(value, unit)._convert_to(self._unit)
+
+class Time(Requirement):
+    """A time requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           unit    -- The unit.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
+
+        # Validate the unit.
+        if unit is not None:
+            temp = _Types.Time(1, unit)
+            self._unit = temp.unit()
+        else:
+            raise ValueError("No unit has been specified!")
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "time")
+
+        if unit is None:
+            return _Types.Time(value, self._unit)
+        else:
+            return _Types.Time(value, unit)._convert_to(self._unit)
+
+def _validate_unit_requirement(value, unit_type):
+    """Helper function to validate input requirements with units.
+
+       Positional arguments:
+
+       value     -- The value of the input requirement.
+       unit_type -- The unit type.
+    """
+
+    # Float.
+    if type(value) is float:
+        pass
+
+    # Integer.
+    elif type(value) is int:
+        value = float(value)
+
+    # String.
+    elif type(value) is str:
+        # First try to directly convert to a float.
+        try:
             value = float(value)
 
-        # String.
-        elif type(value) is str:
-            # First try to directly convert to a float.
-            try:
+        # Use a regular expression to extract the value and unit.
+        except ValueError:
+            match = _re.search("^\s*(\-?\d+\.?\d*)\s*([A-Za-z]+)\s*$", value, _re.IGNORECASE)
+
+            if match is None:
+                raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+            else:
+                # Extract the value and unit.
+                value, unit = match.groups()
+
+                # Convert the value to a float.
                 value = float(value)
 
-            # Use a regular expression to extract the value and unit.
-            except ValueError:
-                match = _re.search("^\s*(\d+\.?\d*)\s*([A-Za-z]+)\s*$", value, _re.IGNORECASE)
+    # Unsupported.
+    else:
+        raise TypeError("The value should be of type 'float', 'int', or 'str'")
 
-                if match is None:
-                    raise ValueError("Could not interpret temperature: '%s'" % value)
-                else:
-                    # Extract the value and unit.
-                    value, unit = match.groups()
-
-                    # Convert the value to a float.
-                    value = float(value)
-
-
-        # Unsupported.
-        else:
-            raise TypeError("The value should be of type 'float', 'int', or 'str'")
-
-        return _Types.Temperature(value, unit)
+    return (value, unit)
 
 def _unarchive(name):
     """Decompress an archive and return a list of files."""
