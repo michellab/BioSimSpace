@@ -53,12 +53,12 @@ class Temperature:
         else:
             raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-        # Don't support negative temperatures.
-        if magnitude < 0:
-            raise ValueError("The temperature cannot be negative!")
-
         # Check that the unit is supported.
         self._unit = self._validate_unit(unit)
+
+        # Check that the temperature is above absolute zero.
+        if self._kelvin() < 0:
+            raise ValueError("The temperature cannot be less than absolute zero (0 Kelvin).")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -72,32 +72,48 @@ class Temperature:
         """Addition operator."""
 
         # Add the magnitudes in a common unit.
-        mag = self.kelvin() + other.kelvin()
+        mag = self.kelvin().magnitude() + other.kelvin().magnitude()
+
+        # Get new magnitude in the original unit.
+        # Left-hand operand takes precedence.
+        mag = Temperature(mag, "KELVIN")._convert_to(self._unit).magnitude()
 
         # Return a new temperature object.
-        return Temperature(mag, "KELVIN")
+        return Temperature(mag, self._unit)
 
     def __sub__(self, other):
         """Subtraction operator."""
 
         # Subtract the magnitudes in a common unit.
-        mag = self.kelvin() - other.kelvin()
+        mag = self.kelvin().magnitude() - other.kelvin().magnitude()
+
+        # Get new magnitude in the original unit.
+        # Left-hand operand takes precedence.
+        mag = Temperature(mag, "KELVIN")._convert_to(self._unit).magnitude()
 
         # Return a new temperature object.
-        return Temperature(mag, "KELVIN")
+        return Temperature(mag, self._unit)
 
     def __mul__(self, other):
         """Multiplication operator."""
 
-        if type(other) is Temperature:
-            # Multiply the magnitudes in a common unit.
-            mag = self.kelvin() * other.kelvin()
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
 
-            # Return a new temperature object.
-            return Temperature(mag, "KELVIN")
+        # Only support multiplication by float.
+        if type(other) is float:
+            # Convert to Kelvin and multiply.
+            mag = self.kelvin().magnitude() * other
+
+            # Get new magnitude in the original unit.
+            mag = Temperature(mag, "KELVIN")._convert_to(self._unit).magnitude()
+
+            # Return the new temperature.
+            return Temperature(mag, self._unit)
 
         else:
-            return self.__rmul__(other)
+            raise NotImplementedError
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -108,8 +124,14 @@ class Temperature:
 
         # Only support multiplication by float.
         if type(other) is float:
-            mag = self._magnitude * other
-            return Temperature(mag, "KELVIN")
+            # Convert to Kelvin and multiply.
+            mag = self.kelvin().magnitude() * other
+
+            # Get new magnitude in the original unit.
+            mag = Temperature(mag, "KELVIN")._convert_to(self._unit).magnitude()
+
+            # Return the new temperature.
+            return Temperature(mag, self._unit)
 
         else:
             raise NotImplementedError
@@ -117,25 +139,23 @@ class Temperature:
     def __truediv__(self, other):
         """Division operator."""
 
-        if type(other) is Temperature:
-            # Divide the magnitudes in a common unit.
-            mag = self.kelvin() / other.kelvin()
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
 
-            # Return a new temperature object.
-            return Temperature(mag, "KELVIN")
+        # Only support division by float.
+        if type(other) is float:
+            # Convert to Kelvin and divide.
+            mag = self.kelvin().magnitude() / other
+
+            # Get new magnitude in the original unit.
+            mag = Temperature(mag, "KELVIN")._convert_to(self._unit).magnitude()
+
+            # Return the new temperature.
+            return Temperature(mag, self._unit)
 
         else:
-            # Convert int to float.
-            if type(other) is int:
-                other = float(other)
-
-            # Only support division by float.
-            if type(other) is float:
-                mag = self._magnitude / other
-                return Temperature(mag, "KELVIN")
-
-            else:
-                raise NotImplementedError
+            raise NotImplementedError
 
     def magnitude(self):
         """Return the magnitude."""
@@ -145,17 +165,37 @@ class Temperature:
         """Return the unit."""
         return self._unit
 
+    def _kelvin(self):
+        """Return the magnitude of the temperature in Kelvin."""
+        return (self._magnitude * self._supported_units[self._unit]).value()
+
     def kelvin(self):
         """Return the temperature in Kelvin."""
-        return (self._magnitude * self._supported_units[self._unit]).value()
+        return Temperature((self._magnitude * self._supported_units[self._unit]).value(), "KELVIN")
 
     def celsius(self):
         """Return the temperature in Celsius."""
-        return (self._magnitude * self._supported_units[self._unit]).to(_Units.celsius)
+        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.celsius), "CELSIUS")
 
     def fahrenheit(self):
         """Return the temperature in Fahrenheit."""
-        return (self._magnitude * self._supported_units[self._unit]).to(_Units.fahrenheit)
+        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.fahrenheit), "FAHRENHEIT")
+
+    def _convert_to(self, unit):
+        """Return the temperature in a different unit.
+
+           Positional arguments:
+
+           unit -- The unit to convert to.
+        """
+        if unit == "KELVIN":
+            return self.kelvin()
+        elif unit == "CELSIUS":
+            return self.celsius()
+        elif unit == "FAHRENHEIT":
+            return self.fahrenheit()
+        else:
+            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -163,11 +203,10 @@ class Temperature:
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
-        # Check that unit is supported.
-        if not unit in self._supported_units:
-            if not unit in self._abbreviations:
-                raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
-            else:
-                unit = self._abbreviations[unit]
-
-        return unit
+        # Check that the unit is supported.
+        if unit in self._supported_units:
+            return unit
+        elif unit in self._abbreviations:
+            return self._abbreviations[unit]
+        else:
+            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
