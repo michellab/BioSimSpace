@@ -515,7 +515,7 @@ class Temperature(Requirement):
         # Validate the unit.
         if unit is not None:
             temp = _Types.Temperature(1, unit)
-            self._unit = unit
+            self._unit = temp.unit()
         else:
             raise ValueError("No unit has been specified!")
 

@@ -31,6 +31,11 @@ class Temperature:
                          "CELSIUS"    : _Units.celsius,
                          "FAHRENHEIT" : _Units.fahrenheit }
 
+    # Map unit abbreviations to the full name.
+    _abbreviations  = { "K" : "KELVIN",
+                        "C" : "CELSIUS",
+                        "F" : "FAHRENHEIT" }
+
     def __init__(self, magnitude, unit):
         """Constructor.
 
@@ -160,16 +165,9 @@ class Temperature:
 
         # Check that unit is supported.
         if not unit in self._supported_units:
-            found = False
-
-            # Match first letter.
-            for u in self._supported_units:
-                if unit[0] == u[0]:
-                    found = True
-                    unit = u
-                    break
-
-            if not found:
+            if not unit in self._abbreviations:
                 raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            else:
+                unit = self._abbreviations[unit]
 
         return unit
