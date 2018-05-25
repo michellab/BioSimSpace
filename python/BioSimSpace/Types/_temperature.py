@@ -62,14 +62,14 @@ class Temperature:
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if self._magnitude > 1e6:
+        if self._magnitude > 1e6 or abs(self._magnitude) < 1e-6:
             return "%.4e %s" % (self._magnitude, self._unit[0].upper())
         else:
             return "%.2f %s" % (self._magnitude, self._unit[0].upper())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e6:
+        if self._magnitude > 1e6 or abs(self._magnitude) < 1e-6:
             return "BioSimSpace.Types.Temperature(%.4e, '%s')" % (self._magnitude, self._unit)
         else:
             return "BioSimSpace.Types.Temperature(%f, '%s')" % (self._magnitude, self._unit)
