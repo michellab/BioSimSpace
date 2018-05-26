@@ -546,6 +546,9 @@ def _validate_unit_requirement(value, unit_type):
        unit_type -- The unit type.
     """
 
+    # No unit by default.
+    unit = None
+
     # Float.
     if type(value) is float:
         pass

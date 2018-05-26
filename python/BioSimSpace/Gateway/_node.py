@@ -31,6 +31,8 @@ from ._requirements import File as _File
 from ._requirements import FileSet as _FileSet
 from ._requirements import Float as _Float
 from ._requirements import Integer as _Integer
+from ._requirements import Temperature as _Temperature
+from ._requirements import Time as _Time
 from ._requirements import Requirement as _Requirement
 from ._requirements import String as _String
 
@@ -279,6 +281,9 @@ class Node():
            reset -- Whether to reset the widget data.
         """
 
+        # Float types (including those with units).
+        float_types = [_Float, _Temperature, _Time]
+
         # Create a widget button to indicate whether the requirement value
         # has been set.
         button = _widgets.Button(
@@ -416,8 +421,8 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-        # Float.
-        elif type(input) is _Float:
+        # Float types (including those with units).
+        elif type(input) in float_types:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -774,8 +779,17 @@ class Node():
 
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
+
+            # Credate the label string.
+            string = "%s: %s" % (name, self._inputs[name].getHelp())
+
+            # Add the unit information.
+            unit = self._inputs[name].getUnit()
+            if unit is not None:
+                string += " (%s)" % unit
+
             # Create the widget label.
-            label = _widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
+            label = _widgets.Label(value=string)
 
             # This is a FileSet requirement with multiple widgets.
             if type(widget) is list:
