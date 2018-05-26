@@ -93,6 +93,7 @@ Each package has its own README page:
 - [BioSimspace.Process](python/BioSimSpace/Process)
 - [BioSimspace.Protocol](python/BioSimSpace/Protocol)
 - [BioSimspace.Trajectory](python/BioSimSpace/Trajectory)
+- [BioSimspace.Types](python/BioSimSpace/Types)
 
 Full API documentation and examples can be found at [biosimspace.org](https://biosimspace.org).
 
