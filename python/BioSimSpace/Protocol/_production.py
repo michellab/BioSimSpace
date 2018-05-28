@@ -26,6 +26,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from ._protocol import Protocol as _Protocol
 
+import BioSimSpace.Types as _Types
+
 import math as _math
 
 __all__ = ["Production"]
@@ -37,15 +39,22 @@ _ensembles = ["NVT", "NPT"]
 class Production(_Protocol):
     """A class for storing production protocols."""
 
-    def __init__(self, timestep=2, runtime=1, temperature=300, frames=20,
-            ensemble="NPT", first_step=0, restart=False):
+    def __init__(self,
+                 timestep=_Types.Time(2, "femtosecond"),
+                 runtime=_Types.Time(1, "nanosecond"),
+                 temperature=_Types.Temperature(300, "kelvin"),
+                 frames=20,
+                 ensemble="NPT",
+                 first_step=0,
+                 restart=False
+                ):
         """Constructor.
 
            Keyword arguments:
 
-           timestep    -- The integration timestep (in femtoseconds).
-           runtime     -- The running time (in nanoseconds).
-           temperature -- The temperature (in Kelvin).
+           timestep    -- The integration timestep.
+           runtime     -- The running time.
+           temperature -- The temperature.
            frames      -- The number of trajectory frames to record.
            ensemble    -- The thermodynamic ensemble.
            first_step  -- The initial time step (for restart simulations).
@@ -94,18 +103,10 @@ class Production(_Protocol):
     def setTimeStep(self, timestep):
         """Set the time step."""
 
-        if type(timestep) is int:
-            timestep = float(timestep)
-
-        if type(timestep) is not float:
-            raise TypeError("'timestep' must be of type 'float'")
-
-        if timestep <= 0:
-            warn("The time step must be positive. Using default (2 fs).")
-            self._timestep = 2
-
-        else:
+        if type(timestep) is _Types.Time:
             self._timestep = timestep
+        else:
+            raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
         """Return the running time."""
@@ -114,18 +115,10 @@ class Production(_Protocol):
     def setRunTime(self, runtime):
         """Set the running time."""
 
-        if type(runtime) is int:
-            runtime = float(runtime)
-
-        if type(runtime) is not float:
-            raise TypeError("'runtime' must be of type 'float'")
-
-        if runtime <= 0:
-            warn("The running time must be positive. Using default (1 ns).")
-            self._runtime = 1
-
-        else:
+        if type(runtime) is _Types.Time:
             self._runtime = runtime
+        else:
+            raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
         """Return temperature."""
@@ -134,18 +127,10 @@ class Production(_Protocol):
     def setTemperature(self, temperature):
         """Set the temperature."""
 
-        if type(temperature) is int:
-            temperature = float(temperature)
-
-        if type(temperature) is not float:
-            raise TypeError("'temperature' must be of type 'float'")
-
-        if temperature <= 0:
-            warn("Temperature must be positive. Using default (300 K).")
-            self._temperature = 300
-
-        else:
+        if type(temperature) is _Types.Temperature:
             self._temperature = temperature
+        else:
+            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getFrames(self):
         """Return the number of frames."""
@@ -160,7 +145,6 @@ class Production(_Protocol):
         if frames <= 0:
             warn("The number of frames must be positive. Using default (20).")
             self._frames = 20
-
         else:
             self._frames = _math.ceil(frames)
 
@@ -174,7 +158,6 @@ class Production(_Protocol):
         if ensemble.strip().upper() not in _ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
             self._ensemble = "NPT"
-
         else:
             self._ensemble = ensemble.strip().upper()
 
@@ -191,7 +174,6 @@ class Production(_Protocol):
         if first_step < 0:
             warn("The initial time step must be positive. Using default (0).")
             self._first_step = 0
-
         else:
             self._first_step = _math.ceil(first_step)
 
@@ -204,7 +186,6 @@ class Production(_Protocol):
 
         if type(restart) is bool:
             self._restart = restart
-
         else:
             warn("Non-boolean restart flag. Defaulting to False!")
             self._restart = False
