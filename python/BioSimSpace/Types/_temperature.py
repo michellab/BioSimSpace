@@ -163,6 +163,30 @@ class Temperature:
         else:
             raise NotImplementedError
 
+    def __lt__(self, other):
+        """Less than operator."""
+        return self.kelvin().magnitude() < other.kelvin().magnitude()
+
+    def __le__(self, other):
+        """Less than or equal to operator."""
+        return self.kelvin().magnitude() <= other.kelvin().magnitude()
+
+    def __eq__(self, other):
+        """Equals to operator."""
+        return self.kelvin().magnitude() == other.kelvin().magnitude()
+
+    def __ne__(self, other):
+        """Not equals to operator."""
+        return self.kelvin().magnitude() != other.kelvin().magnitude()
+
+    def __ge__(self, other):
+        """Greater than or equal to operator."""
+        return self.kelvin().magnitude() >= other.kelvin().magnitude()
+
+    def __gt__(self, other):
+        """Gretear than operator."""
+        return self.kelvin().magnitude() > other.kelvin().magnitude()
+
     def magnitude(self):
         """Return the magnitude."""
         return self._magnitude
