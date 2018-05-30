@@ -27,7 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from Sire.Base import wrap as _wrap
 from Sire.IO import MoleculeParser as _MoleculeParser
 
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob

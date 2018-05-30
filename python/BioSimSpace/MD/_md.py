@@ -28,7 +28,7 @@ import Sire as _Sire
 
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import BioSimSpace.Process as _Process
 

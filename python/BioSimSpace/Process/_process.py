@@ -29,7 +29,7 @@ import Sire as _Sire
 from BioSimSpace import _is_interactive, _is_notebook
 
 from ..Protocol._protocol import Protocol as _Protocol
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import collections as _collections
 import operator as _operator

@@ -20,10 +20,11 @@
 #####################################################################
 
 """
-A thin wrapper around Sire.System. This is an internal package and should
-not be directly exposed to the user.
+A set of thin wrappers around various Sire objects. This is an internal package
+and should not be directly exposed to the user.
 
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._molecule import *
 from ._system import *

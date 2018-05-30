@@ -29,6 +29,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire.Mol as _SireMol
 import Sire.System as _SireSystem
 
+from ._molecule import Molecule as _Molecule
+
 __all__ = ["System"]
 
 class _MolWithResName(_SireMol.MolWithResID):
@@ -77,7 +79,7 @@ class System():
            resname -- The name of a residue unique to the molecule.
         """
         try:
-            return self._system[_MolWithResName(resname)]
+            return _Molecule(self._system[_MolWithResName(resname)])
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 

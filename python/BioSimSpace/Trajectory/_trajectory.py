@@ -27,7 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from ..Process._process import Process as _Process
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj

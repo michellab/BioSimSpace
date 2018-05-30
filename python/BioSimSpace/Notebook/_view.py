@@ -29,7 +29,7 @@ import Sire as _Sire
 from BioSimSpace import _is_notebook
 
 from ..Process._process import Process as _Process
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import nglview as _nglview
 import os as _os

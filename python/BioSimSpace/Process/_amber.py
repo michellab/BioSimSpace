@@ -27,7 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from . import _process
-from .._System import System as _System
+from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
