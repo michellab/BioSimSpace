@@ -61,6 +61,14 @@ def _is_interactive():
     except NameError:
         return False      # Probably standard Python interpreter
 
+# Check to see if AMBERHOME is set.
+from os import environ as _environ
+if "AMBERHOME" in _environ:
+    _amber_home = _environ.get("AMBERHOME")
+else:
+    _amber_home = None
+del(_environ)
+
 from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
 
@@ -68,6 +76,7 @@ import BioSimSpace.Gateway as Gateway
 import BioSimSpace.IO as IO
 import BioSimSpace.Notebook as Notebook
 import BioSimSpace.Process as Process
+import BioSimSpace.Parameters as Parameters
 import BioSimSpace.Protocol as Protocol
 import BioSimSpace.Types as Types
 

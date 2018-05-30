@@ -26,6 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
+from BioSimSpace import _amber_home
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
@@ -85,9 +86,8 @@ def _find_md_package(system, protocol, use_gpu=True):
     for exe, gpu in _md_packages[package].items():
         if package == "AMBER":
             # Search AMBERHOME, if set.
-            if "AMBERHOME" in _os.environ:
-                amber_home = _os.environ.get("AMBERHOME")
-                _exe = "%s/bin/%s" % (amber_home, exe)
+            if _amber_home is not None:
+                _exe = "%s/bin/%s" % (_amber_home, exe)
                 if _os.path.isfile(_exe):
                     return (package, _exe)
 

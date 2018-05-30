@@ -26,6 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
+from BioSimSpace import _amber_home
 from . import _process
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -154,10 +155,9 @@ class Amber(_process.Process):
         # pmemd, sander, etc., as well as their variants, e.g. pmemd.MPI.
         if exe is None:
             # Search AMBERHOME, if set.
-            if "AMBERHOME" in _os.environ:
-                amber_home = _os.environ.get("AMBERHOME")
-                if _os.path.isfile("%s/bin/sander" % amber_home):
-                    self._exe = "%s/bin/sander" % amber_home
+            if _amber_home is not None:
+                if _os.path.isfile("%s/bin/sander" % _amber_home):
+                    self._exe = "%s/bin/sander" % _amber_home
 
             # Search Sire bin directory.
             else:
