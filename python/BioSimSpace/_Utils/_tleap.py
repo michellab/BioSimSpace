@@ -20,7 +20,7 @@
 #####################################################################
 
 """
-Functionality for parameterising molecules using LEaP.
+Functionality for using the tLEaP package from AmberTools.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
@@ -50,17 +50,14 @@ if _amber_home is not None:
 if _exe is None:
     # Search Sire bin directory.
     bin_dir = _Sire.Base.getBinDir()
-    exe = "%s/tleap" % bin_dir
-
-    if _os.path.isfile(exe):
-        _exe = exe
+    _exe = "%s/tleap" % bin_dir
 
     # Search system PATH.
-    else:
+    if not _os.path.isfile(_exe):
         _exe = _Sire.Base.findExe("tleap").absoluteFilePath()
 
 class Tleap():
-    """A simple class for parameterising molecules using LEaP."""
+    """A simple wrapper around the tLeaP package from AmberTools."""
 
     @staticmethod
     def parameterise(molecule, forcefield):
@@ -149,7 +146,7 @@ class Tleap():
             f.write("quit")
 
         # Generate the tLEaP command.
-        command = "%s -f tmp.txt" % exe
+        command = "%s -f tmp.txt" % _exe
 
         # Run tLEaP as a subprocess.
         proc = _subprocess.run(command, shell=True,
