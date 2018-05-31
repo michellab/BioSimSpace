@@ -168,7 +168,7 @@ class Tleap():
             # TODO: Things to check:
             #    1) Number of atoms is consistent.
             #    2) Leap log file does not specify addition or removal of atoms.
-            #    3) Funky work necessary for HIS, HIE, HID, HIP (histidene).
+            #    3) Funky work necessary for HIS, HIE, HID, HIP (histidine).
             #    4) More funky logic for CYS/CYX, including having to add addBond lines.
 
         else:
