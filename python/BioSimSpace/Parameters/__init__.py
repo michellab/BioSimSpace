@@ -86,4 +86,4 @@ def _parameterise(molecules, forcefield):
     """
 
     if type(molecules) is _Molecule:
-        return _Molecule(_Tleap.run(molecules._getSireMolecule(), forcefield))
+        return _Molecule(_Tleap.parameterise(molecules._getSireMolecule(), forcefield))

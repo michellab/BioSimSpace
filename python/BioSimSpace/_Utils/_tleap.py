@@ -62,8 +62,11 @@ if _exe is None:
 class Tleap():
     """A simple class for parameterising molecules using LEaP."""
 
-    def run(molecule, forcefield):
-        """Positional arguments:
+    @staticmethod
+    def parameterise(molecule, forcefield):
+        """Parameterise a molecule with a given force field.
+
+           Positional arguments:
 
            molecule   -- The molecule to parameterise.
            forcefield -- The forcefield to use.
