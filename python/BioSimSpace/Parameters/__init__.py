@@ -27,63 +27,133 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 
+from .._Utils import Antechamber as _Antechamber
 from .._Utils import Tleap as _Tleap
 
 import multiprocessing as _multiprocessing
 
-def ff99(molecules):
+def ff99(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff99 force field.
 
        Positional arguments:
 
        molecules -- The molecules to parameterise.
-    """
-    return _parameterise(molecules, "ff99")
 
-def ff99SB(molecules):
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "ff99", work_dir, verbose)
+
+def ff99SB(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff99SB force field.
 
        Positional arguments:
 
        molecules -- The molecules to parameterise.
-    """
-    return _parameterise(molecules, "ff99SB")
 
-def ff03(molecules):
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "ff99SB", work_dir, verbose)
+
+def ff03(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff03 force field.
 
        Positional arguments:
 
        molecules -- The molecules to parameterise.
-    """
-    return _parameterise(molecules, "ff03")
 
-def ff14(molecules):
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "ff03", work_dir, verbose)
+
+def ff14(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff14 force field.
 
        Positional arguments:
 
        molecules -- The molecules to parameterise.
-    """
-    return _parameterise(molecules, "ff14")
 
-def ff14SB(molecules):
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "ff14", work_dir, verbose)
+
+def ff14SB(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff14SB force field.
 
        Positional arguments:
 
        molecules -- The molecules to parameterise.
-    """
-    return _parameterise(molecules, "ff14SB")
+       work_dir  -- The working directory for external processes.
 
-def _parameterise(molecules, forcefield):
+       Keyword arguments:
+
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "ff14SB", work_dir, verbose)
+
+def gaff(molecules, work_dir=None, verbose=False):
+    """Parameterise using the gaff force field.
+
+       Positional arguments:
+
+       molecules -- The molecules to parameterise.
+
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "gaff", work_dir, verbose)
+
+def gaff2(molecules, work_dir=None, verbose=False):
+    """Parameterise using the gaff force field.
+
+       Positional arguments:
+
+       molecules -- The molecules to parameterise.
+
+       Keyword arguments:
+
+       work_dir  -- The working directory for external processes.
+       verbose   -- Whether to report stdout/stderr of external processes.
+    """
+    return _parameterise(molecules, "gaff2", work_dir, verbose)
+
+def _parameterise(molecules, forcefield, work_dir=None, verbose=False):
     """Internal function to parameterise a set of molecules using a given force field.
 
        Positional arguments:
 
        molecules  -- The molecules to parameterise.
        forcefield -- The force field to use.
+
+       Keyword arguments:
+
+       work_dir   -- The working directory for external processes.
+       verbose    -- Whether to report stdout/stderr of external processes.
     """
 
+    if work_dir is not None and type(work_dir) is not str:
+        raise TypeError("'work_dir' must be of type 'str'")
+
+    if type(verbose) is not bool:
+        raise TypeError("'verbose' must be of type 'bool'")
+
     if type(molecules) is _Molecule:
-        return _Molecule(_Tleap.parameterise(molecules._getSireMolecule(), forcefield))
+        if forcefield == "gaff" or forcefield == "gaff2":
+            return _Molecule(_Antechamber.parameterise(molecules._getSireMolecule(),
+                forcefield, work_dir=work_dir, verbose=verbose))
+        else:
+            return _Molecule(_Tleap.parameterise(molecules._getSireMolecule(),
+                forcefield, work_dir=work_dir, verbose=verbose))

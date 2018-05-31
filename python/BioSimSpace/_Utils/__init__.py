@@ -24,4 +24,5 @@ Internal BioSimSpace utilities.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._antechamber import *
 from ._tleap import *
