@@ -162,7 +162,7 @@ class Tleap():
             # Return the parameterised molecule.
             return _Sire.IO.MoleculeParser.read(output)[_Sire.Mol.MolIdx(0)]
 
-            # Things to check:
+            # TODO: Things to check:
             #    1) Number of atoms is consistent.
             #    2) Leap log file does not specify addition or removal of atoms.
             #    3) Funky work necessary for HIS, HIE, HID, HIP (histidene).
