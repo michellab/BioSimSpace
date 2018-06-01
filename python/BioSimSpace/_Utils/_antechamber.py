@@ -133,7 +133,9 @@ class Antechamber():
         pdb.writeToFile("antechamber.pdb")
 
         # Generate the Antechamber command.
-        command = "%s -i antechamber.pdb -fi pdb -o antechamber.mol2 -fo mol2 -c bcc -s 2" % _antechamber_exe
+        command = ("%s -at %s -i antechamber.pdb -fi pdb " +
+                   "-o antechamber.mol2 -fo mol2 -c bcc -s 2"
+                  ) % (_antechamber_exe, forcefield)
 
         # Run Antechamber as a subprocess.
         if verbose:
@@ -147,7 +149,9 @@ class Antechamber():
         if _os.path.isfile("antechamber.mol2"):
 
             # Run parmchk to check for missing parameters.
-            command = "%s -i antechamber.mol2 -f mol2 -o antechamber.frcmod" % _parmchk_exe
+            command = ("%s -s %d -i antechamber.mol2 -f mol2 " +
+                       "-o antechamber.frcmod"
+                      ) % (_parmchk_exe, 1 if forcefield == "gaff" else 2)
 
             # Run parmchk as a subprocess.
             if verbose:
