@@ -80,14 +80,14 @@ class Tleap():
            is_ante    -- Whether tLEaP has been called after Antechamber.
         """
 
-        if type(molecule) is not _Sire.Mol._Mol.Molecule:
+        if type(is_ante) is not bool:
+            raise TypeError("'is_ante' must be of type 'bool'")
+
+        if not is_ante and type(molecule) is not _Sire.Mol._Mol.Molecule:
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule'")
 
         if type(forcefield) is not str:
             raise TypeError("'forcefield' must be of type 'str'")
-
-        if type(is_ante) is not bool:
-            raise TypeError("'is_ante' must be of type 'bool'")
 
         # Whether the force field was found.
         is_found = False
@@ -127,14 +127,6 @@ class Tleap():
         if is_old:
             ff = "oldff/" + ff
 
-        # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace molecule")
-        m = _Sire.Mol.MoleculeGroup("all")
-
-        # Add the molecule.
-        m.add(molecule)
-        s.add(m)
-
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
             tmp_dir = _tempfile.TemporaryDirectory()
@@ -163,6 +155,14 @@ class Tleap():
                 f.write("leap = loadmol2 antechamber.mol2\n")
                 f.write("loadamberparams antechamber.frcmod\n")
             else:
+                # Create a new system and molecule group.
+                s = _Sire.System.System("BioSimSpace molecule")
+                m = _Sire.Mol.MoleculeGroup("all")
+
+                # Add the molecule.
+                m.add(molecule)
+                s.add(m)
+
                 # Write the system to a PDB file.
                 pdb = _Sire.IO.PDB2(s)
                 pdb.writeToFile("leap.pdb")
