@@ -69,6 +69,7 @@ import BioSimSpace.IO as IO
 import BioSimSpace.Notebook as Notebook
 import BioSimSpace.Process as Process
 import BioSimSpace.Protocol as Protocol
+import BioSimSpace.Types as Types
 
 from warnings import warn as _warn
 

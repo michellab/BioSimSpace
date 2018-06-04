@@ -319,13 +319,16 @@ class Namd(_process.Process):
         if type(self._protocol) is _Protocol.Equilibration:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
-                self.addToConfig("set temperature       %.2f" % self._protocol.getStartTemperature())
+                self.addToConfig("set temperature       %.2f"
+                    % self._protocol.getStartTemperature().kelvin().magnitude())
             else:
-                self.addToConfig("set temperature       %.2f" % self._protocol.getEndTemperature())
+                self.addToConfig("set temperature       %.2f"
+                    % self._protocol.getEndTemperature().kelvin().magnitude())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f"
+                % self._protocol.getTimeStep().femtoseconds().magnitude())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -367,19 +370,23 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() /
+                               self._protocol.getTimeStep().nanoseconds().magnitude())
             steps = 20 * _math.ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature() - self._protocol.getStartTemperature())
+                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
+                            self._protocol.getStartTemperature().kelvin().magnitude())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
-                self.addToConfig("reassignTemp          %.2f" % self._protocol.getStartTemperature())
+                self.addToConfig("reassignTemp          %.2f"
+                    % self._protocol.getStartTemperature().kelvin().magnitude())
                 self.addToConfig("reassignIncr          1.")
-                self.addToConfig("reassignHold          %.2f" % self._protocol.getEndTemperature())
+                self.addToConfig("reassignHold          %.2f"
+                    % self._protocol.getEndTemperature().kelvin().magnitude())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
@@ -390,11 +397,13 @@ class Namd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
             # Set the Tcl temperature variable.
-            self.addToConfig("set temperature       %.2f" % self._protocol.getTemperature())
+            self.addToConfig("set temperature       %.2f"
+                % self._protocol.getTemperature().kelvin().magnitude())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f"
+                % self._protocol.getTimeStep().femtoseconds().magnitude())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -420,7 +429,8 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() /
+                               self._protocol.getTimeStep().nanoseconds().magnitude())
             steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.
@@ -614,7 +624,7 @@ class Namd(_process.Process):
             time_steps = self.getRecord("TS", time_series, block)
 
             # Convert the time step to nanoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-6
+            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
 
             # Multiply by the integration time step.
             if time_steps is not None:

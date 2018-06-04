@@ -3,14 +3,14 @@ import BioSimSpace as BSS
 import matplotlib.pyplot as plt
 
 # Glob the input files.
-files = BSS.IO.glob("namd/ubiquitin/*")
+files = BSS.IO.glob("namd/alanin/*")
 
 # Load the molecular system.
 print("\nLoading molecules...")
 system = BSS.IO.readMolecules(files)
 
 # Create a minimisation protocol.
-protocol = BSS.Protocol.Minimisation(steps=1000)
+protocol = BSS.Protocol.Minimisation(steps=10000)
 
 # Initialise the NAMD process.
 print("\nInitialising minimisation process...")
@@ -36,7 +36,7 @@ print("\nMinimised energy is %.2f kcal/mol." % process.getTotalEnergy())
 print("Minimisation took %.2f minutes." % process.runTime())
 
 # Create a short equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.01)
+protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.1, "nanosecond"))
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
@@ -47,7 +47,7 @@ filenames = process.inputFiles()
 print("\nCreated NAMD input files: %s" % filenames)
 
 # Start the equlibration.
-print("\nStarting equlibration...")
+print("\nStarting equilibration...")
 process.start()
 
 # Get the minimised molecular structure.
@@ -62,7 +62,7 @@ print("\nEquilibrated energy is %.2f kcal/mol." % process.getTotalEnergy())
 print("Equilibration took %.2f minutes." % process.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.01)
+protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.1, "nanosecond"))
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")

@@ -36,7 +36,9 @@ print("\nMinimised energy is %.2f kcal/mol." % process.getTotalEnergy())
 print("Minimisation took %.2f minutes." % process.runTime())
 
 # Create a short heating equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.01, temperature_start=0, temperature_end=300)
+protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.01, "nanosecond"),
+                                      temperature_start=BSS.Types.Temperature(0, "kelvin"),
+                                      temperature_end=BSS.Types.Temperature(300, "kelvin"))
 
 # Initialise the AMBER process.
 print("\nInitialising equilibration process...")
@@ -47,7 +49,7 @@ filenames = process.inputFiles()
 print("\nCreated AMBER input files: %s" % filenames)
 
 # Start the equlibration.
-print("\nStarting equlibration...")
+print("\nStarting equilibration...")
 process.start()
 
 # Get the minimised molecular structure.
@@ -62,7 +64,7 @@ print("\nEquilibrated energy is %.2f kcal/mol." % process.getTotalEnergy())
 print("Equilibration took %.2f minutes." % process.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.01, restart=True)
+protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.01, "nanosecond"), restart=True)
 
 # Initialise the AMBER process.
 print("\nInitialising production process...")

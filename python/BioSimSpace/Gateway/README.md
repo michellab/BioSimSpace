@@ -17,6 +17,8 @@ values and constraints. These are:
 - `BioSimSpace.Gateway.Float`
 - `BioSimSpace.Gateway.File`
 - `BioSimSpace.Gateway.FileSet`
+- `BioSimSpace.Gateway.Temperature`
+- `BioSimSpace.Gateway.Time`
 
 As an example:
 

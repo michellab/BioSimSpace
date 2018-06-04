@@ -26,6 +26,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from ._protocol import Protocol as _Protocol
 
+import BioSimSpace.Types as _Types
+
 import math as _math
 import pytest as _pytest
 import warnings as _warnings
@@ -35,8 +37,14 @@ __all__ = ["Equilibration"]
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
-    def __init__(self, timestep=2, runtime=0.2, temperature_start=300,
-            temperature_end=None, frames=20, restrain_backbone=False):
+    def __init__(self,
+                 timestep=_Types.Time(2, "femtosecond"),
+                 runtime=_Types.Time(0.2, "nanoseconds"),
+                 temperature_start=_Types.Temperature(300, "kelvin"),
+                 temperature_end=None,
+                 frames=20,
+                 restrain_backbone=False
+                ):
         """Constructor.
 
            Keyword arguments:
@@ -100,18 +108,10 @@ class Equilibration(_Protocol):
     def setTimeStep(self, timestep):
         """Set the time step."""
 
-        if type(timestep) is int:
-            timestep = float(timestep)
-
-        if type(timestep) is not float:
-            raise TypeError("'timestep' must be of type 'float'")
-
-        if timestep <= 0:
-            _warnings.warn("The time step must be positive. Using default (2 fs).")
-            self._timestep = 2
-
-        else:
+        if type(timestep) is _Types.Time:
             self._timestep = timestep
+        else:
+            raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
         """Return the running time."""
@@ -120,18 +120,10 @@ class Equilibration(_Protocol):
     def setRunTime(self, runtime):
         """Set the running time."""
 
-        if type(runtime) is int:
-            runtime = float(runtime)
-
-        if type(runtime) is not float:
-            raise TypeError("'runtime' must be of type 'float'")
-
-        if runtime <= 0:
-            _warnings.warn("The running time must be positive. Using default (0.2 ns).")
-            self._runtime = 0.2
-
-        else:
+        if type(runtime) is _Types.Time:
             self._runtime = runtime
+        else:
+            raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getStartTemperature(self):
         """Return the starting temperature."""
@@ -140,21 +132,12 @@ class Equilibration(_Protocol):
     def setStartTemperature(self, temperature):
         """Set the starting temperature."""
 
-        if type(temperature) is int:
-            temperature = float(temperature)
-
-        if type(temperature) is not float:
-            raise TypeError("'temperature' must be of type 'float'")
-
-        if temperature < 0:
-            _warnings.warn("Starting temperature must be positive. Using default (300 K).")
-            self._temperature_start = 300
-
-        elif temperature == _pytest.approx(0):
-            self._temperature_start = 0.01
-
-        else:
+        if type(temperature) is _Types.Temperature:
+            if temperature.kelvin().magnitude() == _pytest.approx(0):
+                temperature._magnitude = 0.01
             self._temperature_start = temperature
+        else:
+            raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getEndTemperature(self):
         """Return the final temperature."""
@@ -163,21 +146,12 @@ class Equilibration(_Protocol):
     def setEndTemperature(self, temperature):
         """Set the final temperature."""
 
-        if type(temperature) is int:
-            temperature = float(temperature)
-
-        if type(temperature) is not float:
-            raise TypeError("'temperature' must be of type 'float'")
-
-        if temperature < 0:
-            _warnings.warn("Final temperature must be positive. Using default (300 K).")
-            self._temperature_end = 300
-
-        elif temperature == _pytest.approx(0):
-            self._temperature_end = 0.01
-
-        else:
+        if type(temperature) is _Types.Temperature:
+            if temperature.kelvin().magnitude() == _pytest.approx(0):
+                temperature._magnitude = 0.01
             self._temperature_end = temperature
+        else:
+            raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getFrames(self):
         """Return the number of frames."""
@@ -192,7 +166,6 @@ class Equilibration(_Protocol):
         if frames <= 0:
             _warnings.warn("The number of frames must be positive. Using default (20).")
             self._frames = 20
-
         else:
             self._frames = _math.ceil(frames)
 
@@ -205,11 +178,10 @@ class Equilibration(_Protocol):
 
         if type(restrain_backbone) is bool:
             self._is_restrained = restrain_backbone
-
         else:
             _warnings.warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
             self._is_restrained = False
 
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature."""
-        return self._is_const_temp
+        return self._temperature_start == self._temperature_end

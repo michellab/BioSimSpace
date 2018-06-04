@@ -86,13 +86,14 @@ backend: TkAgg
 
 Each package has its own README page:
 
-- [BioSimspace.Gateway](python/BioSimSpace/Gateway)
-- [BioSimspace.IO](python/BioSimSpace/IO)
-- [BioSimspace.MD](python/BioSimSpace/MD)
-- [BioSimspace.Notebook](python/BioSimSpace/Notebook)
-- [BioSimspace.Process](python/BioSimSpace/Process)
-- [BioSimspace.Protocol](python/BioSimSpace/Protocol)
-- [BioSimspace.Trajectory](python/BioSimSpace/Trajectory)
+- [BioSimSpace.Gateway](python/BioSimSpace/Gateway)
+- [BioSimSpace.IO](python/BioSimSpace/IO)
+- [BioSimSpace.MD](python/BioSimSpace/MD)
+- [BioSimSpace.Notebook](python/BioSimSpace/Notebook)
+- [BioSimSpace.Process](python/BioSimSpace/Process)
+- [BioSimSpace.Protocol](python/BioSimSpace/Protocol)
+- [BioSimSpace.Trajectory](python/BioSimSpace/Trajectory)
+- [BioSimSpace.Types](python/BioSimSpace/Types)
 
 Full API documentation and examples can be found at [biosimspace.org](https://biosimspace.org).
 

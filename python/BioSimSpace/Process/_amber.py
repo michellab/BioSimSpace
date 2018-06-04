@@ -280,10 +280,10 @@ class Amber(_process.Process):
         elif type(self._protocol) is _Protocol.Equilibration:
 
             # Convert the timestep to nanoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-6
+            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() / timestep)
 
             # Set the random number seed.
             if self._is_seeded:
@@ -292,7 +292,7 @@ class Amber(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-3
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
@@ -326,27 +326,28 @@ class Amber(_process.Process):
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature())
-                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature())
+                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature().kelvin().magnitude())
                 self.addToConfig("  nmropt=1,")
                 self.addToConfig(" /")
                 self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                    % (steps, self._protocol.getStartTemperature(), self._protocol.getEndTemperature()))
+                    % (steps, self._protocol.getStartTemperature().kelvin().magnitude(),
+                       self._protocol.getEndTemperature().kelvin().magnitude()))
                 self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
             else:
-                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
             # Convert the timestep to nanoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-6
+            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() / timestep)
 
             # Set the random number seed.
             if self._seed is None:
@@ -355,7 +356,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-3
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -386,9 +387,9 @@ class Amber(_process.Process):
                 self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
             if not self._protocol.isRestart():
                 self.addToConfig("  tempi=%.2f,"            # Initial temperature.
-                    % self._protocol.getTemperature())
+                    % self._protocol.getTemperature().kelvin().magnitude())
             self.addToConfig("  temp0=%.2f,"                # Target temperature.
-                % self._protocol.getTemperature())
+                % self._protocol.getTemperature().kelvin().magnitude())
 
             # Constant pressure control.
             if self._protocol.getEnsemble() == "NPT":
