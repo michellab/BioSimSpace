@@ -147,6 +147,8 @@ class Equilibration(_Protocol):
         """Set the final temperature."""
 
         if type(temperature) is _Types.Temperature:
+            if temperature.kelvin().magnitude() == _pytest.approx(0):
+                temperature._magnitude = 0.01
             self._temperature_end = temperature
         else:
             raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
