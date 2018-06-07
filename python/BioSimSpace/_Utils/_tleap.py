@@ -130,7 +130,7 @@ class Tleap():
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
             tmp_dir = _tempfile.TemporaryDirectory()
-            work_dir = self._tmp_dir.name
+            work_dir = tmp_dir.name
 
         # User specified working directory.
         else:
