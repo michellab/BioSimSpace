@@ -28,6 +28,7 @@ import Sire as _Sire
 
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
+from .._SireWrappers import Molecule as _Molecule
 
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj
@@ -359,11 +360,15 @@ class Trajectory():
                     molecule = self.getFrames(frame)[0]._getSireSystem()[molecule]
                 except:
                     raise ValueError("Missing '%s' in System" % molecule.toString())
+
+            # A BioSimSpace Molecule object.
+            elif type(molecule) is _Molecule:
+                molecule = molecule._getSireMolecule()
             # A Sire.Mol.Molecule object.
             elif type(molecule) is _Sire.Mol.Molecule:
                 pass
             else:
-                raise TypeError("'molecule' must be of type 'int', 'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
+                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', 'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
 
             # Initialise the list of atom indices.
             atoms = []
