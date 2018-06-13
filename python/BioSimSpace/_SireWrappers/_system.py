@@ -71,6 +71,32 @@ class System():
         """Return the file formats associated with the system."""
         return self._system.property("fileformat").value()
 
+    def getMolecules(self, group="all"):
+        """Return a list containing all of the molecules in the specified group.
+        
+           Keyword arguments:
+
+           group -- The name of the molecule group.
+        """
+
+        if type(group) is not str:
+            raise TypeError("'group' must be of type 'str'")
+
+        # Try to extract the molecule group.
+        try:
+            molgrp = self._system.group(_SireMol.MGName(group)).molecules()
+        except:
+            raise ValueError("No molecules in group '%s'" % group)
+
+        # Create a list to store the molecules.
+        mols = []
+
+        # Loop over all of the molecules in the Sire system and append to the list.
+        for num in molgrp.molNums():
+            mols.append(_Molecule(molgrp[num]))
+
+        return mols
+
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
 
