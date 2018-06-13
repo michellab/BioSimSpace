@@ -104,6 +104,9 @@ class Molecule():
         if mol1.nAtoms() < num_atoms:
             raise IncompatibleError("The passed molecule does not contain enough atoms!")
 
+        # Whether we need to rename the atoms.
+        is_rename = False
+
         # Match the atoms based on residue index and atom name.
         matches = _SireMol.ResIdxAtomNameMatcher().match(mol0, mol1)
 
@@ -112,6 +115,9 @@ class Molecule():
             # Atom names might have changed. Try to match using residue index
             # and maximum common substructure (matching light atoms too).
             matches = _SireMol.ResIdxAtomMCSMatcher(True, False).match(mol0, mol1)
+
+            # We need to rename the atoms.
+            is_rename = True
 
             # Have we matched all of the atoms?
             if len(matches) < num_atoms:
@@ -186,6 +192,26 @@ class Molecule():
                                 edit_mol.setProperty(prop, mol1.property(prop))
                             except:
                                 raise IncompatibleError("Failed to set property '%s'" % prop)
+
+        # Finally, rename the atoms.
+
+        if is_rename:
+            if verbose:
+                print("\nRenaming atoms...")
+
+            for idx0, idx1 in matches.items():
+                # Get the name of the atom in each molecule.
+                name0 = mol0.atom(idx0).name()
+                name1 = mol1.atom(idx1).name()
+
+                if verbose:
+                    print("  %s --> %s" % (name0, name1))
+
+                # Try to rename the atom.
+                try:
+                    edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                except:
+                    raise IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1))
 
         # Commit the changes.
         self._molecule = edit_mol.commit()
