@@ -143,7 +143,7 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Loop over all of the indices.
