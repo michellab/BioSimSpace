@@ -150,23 +150,69 @@ def _parameterise(molecules, forcefield, work_dir=None, verbose=False):
     if type(verbose) is not bool:
         raise TypeError("'verbose' must be of type 'bool'")
 
-    if type(molecules) is _Molecule:
+    # A list of Molecule objects.
+    if type(molecules) is list:
+        if all(isinstance(x, _Molecule) for x in molecules):
+            is_list = True
+            is_system = False
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        mol = _Molecule(molecules._molecule.__deepcopy__())
+    # A single Molecule object.
+    elif type(molecules) is _Molecule:
+        molecules = [molecules]
+        is_list = False
+        is_system = False
 
-        # Parameterise the molecule.
-        if forcefield == "gaff" or forcefield == "gaff2":
-            par_mol = _Molecule(_Antechamber.parameterise(molecules._getSireMolecule(),
-                forcefield, work_dir=work_dir, verbose=verbose))
-        else:
-            par_mol = _Molecule(_Tleap.parameterise(molecules._getSireMolecule(),
-                forcefield, work_dir=work_dir, verbose=verbose))
+    # Unsupported.
+    else:
+        raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule', "
+            + "or a list of objects of this type.")
 
-        # Make the molecule 'mol' compatible with 'par_mol'. This will create
-        # a mapping between atom indices in the two molecules and add all of
-        # the new properties from 'par_mol' to 'mol'.
-        mol._makeCompatibleWith(par_mol)
+    # Create a list of new molecules.
+    new_mols = []
 
-        # Return the updated molecule.
-        return mol
+    # Loop over all of the molecules.
+    for mol in molecules:
+        new_mols.append(_parameterise_molecule(mol, forcefield,
+            work_dir=work_dir, verbose=verbose))
+
+    if is_list:
+        return new_mols
+    else:
+        return new_mols[0]
+
+def _parameterise_molecule(molecule, forcefield, work_dir=None, verbose=False):
+    """Internal function to parameterise a single molecule using a given force field.
+
+       Positional arguments:
+
+       molecule   -- The molecules to parameterise.
+       forcefield -- The force field to use.
+
+       Keyword arguments:
+
+       work_dir   -- The working directory for external processes.
+       verbose    -- Whether to report stdout/stderr of external processes.
+    """
+
+    # A single Molecule object.
+    if type(molecule) is not _Molecule:
+        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+
+    # Create a new molecule using a deep copy of the internal Sire Molecule.
+    new_mol = _Molecule(molecule._molecule.__deepcopy__())
+
+    # Parameterise the molecule.
+    if forcefield == "gaff" or forcefield == "gaff2":
+        par_mol = _Molecule(_Antechamber.parameterise(molecule._getSireMolecule(),
+            forcefield, work_dir=work_dir, verbose=verbose))
+    else:
+        par_mol = _Molecule(_Tleap.parameterise(molecule._getSireMolecule(),
+            forcefield, work_dir=work_dir, verbose=verbose))
+
+    # Make the molecule 'mol' compatible with 'par_mol'. This will create
+    # a mapping between atom indices in the two molecules and add all of
+    # the new properties from 'par_mol' to 'mol'.
+    new_mol._makeCompatibleWith(par_mol)
+
+    # Return the updated molecule.
+    return new_mol
