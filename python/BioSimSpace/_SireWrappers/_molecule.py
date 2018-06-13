@@ -131,7 +131,7 @@ class Molecule():
             is_reordered = _SireMol.ResIdxAtomNameMatcher().changesOrder(mol0, mol1)
 
         if verbose:
-            print("Atom matching successful. Atom indices %s reordered." % ("" if is_reordered else "not"))
+            print("Atom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
 
         # Get a list of the property keys for each molecule.
         props0 = mol0.propertyKeys()
@@ -160,7 +160,7 @@ class Molecule():
                     # If so, add it to the matching atom in this molecule.
                     if mol1.atom(idx1).hasProperty(prop):
                         if verbose:
-                            print("  %s: %s --> %s" % (prop, idx1, idx0))
+                            print("  %-20s %s --> %s" % (prop, idx1, idx0))
                         try:
                             edit_mol = edit_mol.atom(idx0).setProperty(prop, mol1.atom(idx1).property(prop)).molecule()
                             seen_prop[prop] = True
