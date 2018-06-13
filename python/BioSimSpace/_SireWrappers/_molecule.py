@@ -145,7 +145,7 @@ class Molecule():
         for prop in props1:
             seen_prop[prop] = False
 
-        # First set atom based properties.
+        # First, set atom based properties.
 
         if verbose:
             print("\nSetting atom based properties...")
