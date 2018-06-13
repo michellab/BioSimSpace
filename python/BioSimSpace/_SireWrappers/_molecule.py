@@ -111,7 +111,7 @@ class Molecule():
         if len(matches) < num_atoms:
             # Atom names might have changed. Try to match using residue index
             # and maximum common substructure (matching light atoms too).
-            matches = _SireMol.ResIdxAtomMCS(True, False).match(mol0, mol1)
+            matches = _SireMol.ResIdxAtomMCSMatcher(True, False).match(mol0, mol1)
 
             # Have we matched all of the atoms?
             if len(matches) < num_atoms:
