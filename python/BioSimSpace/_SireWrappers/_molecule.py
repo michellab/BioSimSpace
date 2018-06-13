@@ -72,7 +72,7 @@ class Molecule():
         """Return the full Sire Molecule object."""
         return self._molecule
 
-    def _makeCompatibleWith(self, molecule, overwrite=False):
+    def _makeCompatibleWith(self, molecule, overwrite=False, verbose=False):
         """Make this molecule compatible with this one, i.e. match atoms and
            add all additional properties.
 
@@ -83,12 +83,13 @@ class Molecule():
            Keyword arguments:
 
            overwrite -- Whether to overwrite any duplicate properties.
+           verbose   -- Whether to report status updates to stdout.
         """
 
         # Check that the molecule is valid.
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
-        if type(molecule) is Molecule:
+        elif type(molecule) is Molecule:
             mol1 = molecule._molecule
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule', or 'Sire.Mol._Mol.Molecule'")
@@ -116,19 +117,32 @@ class Molecule():
             if len(matches) < num_atoms:
                 raise IncompatibleError("Failed to match all atoms!")
 
+            # Are the atoms in the same order?
+            is_reordered = _SireMol.ResIdxAtomMCSMatcher(True, False).changesOrder(mol0, mol1)
+
+        else:
+            # Are the atoms in the same order?
+            is_reordered = _SireMol.ResIdxAtomNameMatcher().changesOrder(mol0, mol1)
+
+        if verbose:
+            print("Atom matching successful. Atom indices %s reordered." % ("" if is_reordered else "not"))
+
         # Get a list of the property keys for each molecule.
         props0 = mol0.propertyKeys()
         props1 = mol1.propertyKeys()
+
+        # Make the molecule editable.
+        edit_mol = mol0.edit()
 
         # Create a dictionary to flag whether a property has been seen.
         seen_prop = {}
         for prop in props1:
             seen_prop[prop] = False
 
-        # Make the molecule editable.
-        edit_mol = mol0.edit()
-
         # First set atom based properties.
+
+        if verbose:
+            print("\nSetting atom based properties...")
 
         # Loop over all of the keys in the new molecule.
         for prop in props1:
@@ -139,31 +153,39 @@ class Molecule():
                     # Does the atom have this property?
                     # If so, add it to the matching atom in this molecule.
                     if mol1.atom(idx1).hasProperty(prop):
+                        if verbose:
+                            print("  %s: %s --> %s" % (prop, idx1, idx0))
                         try:
                             edit_mol = edit_mol.atom(idx0).setProperty(prop, mol1.atom(idx1).property(prop)).molecule()
                             seen_prop[prop] = True
                         except:
-                            raise IncompatibleError("Failed to map property '%s' from AtomIdx(%d) to AtomIdx(%d)."
+                            raise IncompatibleError("Failed to map property '%s' from %s to %s."
                                 % (prop, idx1, idx0))
 
         # Now deal with all unseen properties. These will be non atom-based
         # properties, such as TwoAtomFunctions, StringProperty, etc.
-        for prop in seen_prop:
-            # Skip parameters and intrascale, since these contain an implicit
-            # reference to a molinfo object.
-            if not seen_prop[prop] and prop != "parameters":
-                # This is a new property, or we are allowed to overwrite.
-                if (not mol0.hasProperty(prop)) or overwrite:
-                    # Try to match with atoms in the original molecule.
-                    try:
-                        edit_mol.setProperty(prop, mol1.property(prop).makeCompatibleWith(mol0, matches))
 
-                    # This is probably just a molecule property, such as a forcefield definition.
-                    except AttributeError:
+        if verbose:
+            print("\nSetting molecule based properties...")
+
+        # Loop over all of the unseen properties.
+        for prop in seen_prop:
+            if not seen_prop[prop]:
+                # Skip 'parameters' property, since it contains references to other parameters.
+                if prop != "parameters":
+                    # This is a new property, or we are allowed to overwrite.
+                    if (not mol0.hasProperty(prop)) or overwrite:
+                        if verbose:
+                            print("  %s" % prop)
+                        # Try to match with atoms in the original molecule.
                         try:
-                            edit_mol.setProperty(prop, mol1.property(prop))
-                        except:
-                            raise IncompatibleError("Failed to set property '%s'" % prop)
+                            edit_mol.setProperty(prop, mol1.property(prop).makeCompatibleWith(mol0, matches))
+                        # This is probably just a molecule property, such as a forcefield definition.
+                        except AttributeError:
+                            try:
+                                edit_mol.setProperty(prop, mol1.property(prop))
+                            except:
+                                raise IncompatibleError("Failed to set property '%s'" % prop)
 
         # Commit the changes.
         self._molecule = edit_mol.commit()
