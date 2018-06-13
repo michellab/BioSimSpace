@@ -212,7 +212,7 @@ def _parameterise_molecule(molecule, forcefield, work_dir=None, verbose=False):
     # Make the molecule 'mol' compatible with 'par_mol'. This will create
     # a mapping between atom indices in the two molecules and add all of
     # the new properties from 'par_mol' to 'mol'.
-    new_mol._makeCompatibleWith(par_mol)
+    new_mol._makeCompatibleWith(par_mol, verbose=verbose)
 
     # Return the updated molecule.
     return new_mol

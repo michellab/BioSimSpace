@@ -131,7 +131,7 @@ class Molecule():
             is_reordered = _SireMol.ResIdxAtomNameMatcher().changesOrder(mol0, mol1)
 
         if verbose:
-            print("Atom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
+            print("\nAtom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
 
         # Get a list of the property keys for each molecule.
         props0 = mol0.propertyKeys()
