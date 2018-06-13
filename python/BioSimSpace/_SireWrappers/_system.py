@@ -73,7 +73,7 @@ class System():
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
-        
+
            Keyword arguments:
 
            group -- The name of the molecule group.
@@ -91,7 +91,7 @@ class System():
         # Create a list to store the molecules.
         mols = []
 
-        # Loop over all of the molecules in the Sire system and append to the list.
+        # Loop over all of the molecules in the group and append to the list.
         for num in molgrp.molNums():
             mols.append(_Molecule(molgrp[num]))
 
