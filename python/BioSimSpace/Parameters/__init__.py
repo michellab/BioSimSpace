@@ -180,6 +180,17 @@ def _parameterise(molecules, forcefield, work_dir=None, verbose=False):
     else:
         return new_mols[0]
 
+# Create a list of the force field names.
+# This needs to come after all of the force field functions.
+_forcefields = []
+for _var in dir():
+    if _var[0] != "_":
+        _forcefields.append(_var)
+
+def forceFields():
+    "Print a list of the supported force fields"
+    print(", ".join(_forcefields))
+
 def _parameterise_molecule(molecule, forcefield, work_dir=None, verbose=False):
     """Internal function to parameterise a single molecule using a given force field.
 
