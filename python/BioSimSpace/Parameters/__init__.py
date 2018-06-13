@@ -151,9 +151,22 @@ def _parameterise(molecules, forcefield, work_dir=None, verbose=False):
         raise TypeError("'verbose' must be of type 'bool'")
 
     if type(molecules) is _Molecule:
+
+        # Create a new molecule using a deep copy of the internal Sire Molecule.
+        mol = _Molecule(molecules._molecule.__deepcopy__())
+
+        # Parameterise the molecule.
         if forcefield == "gaff" or forcefield == "gaff2":
-            return _Molecule(_Antechamber.parameterise(molecules._getSireMolecule(),
+            par_mol = _Molecule(_Antechamber.parameterise(molecules._getSireMolecule(),
                 forcefield, work_dir=work_dir, verbose=verbose))
         else:
-            return _Molecule(_Tleap.parameterise(molecules._getSireMolecule(),
+            par_mol = _Molecule(_Tleap.parameterise(molecules._getSireMolecule(),
                 forcefield, work_dir=work_dir, verbose=verbose))
+
+        # Make the molecule 'mol' compatible with 'par_mol'. This will create
+        # a mapping between atom indices in the two molecules and add all of
+        # the new properties from 'par_mol' to 'mol'.
+        mol._makeCompatibleWith(par_mol)
+
+        # Return the updated molecule.
+        return mol
