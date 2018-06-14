@@ -110,13 +110,16 @@ class Tleap():
         if not is_found:
             ff = _IO.glob("%s/*.%s" % (_cmd_dir, forcefield))
 
-            # Search the old force fields
+            # Search the old force fields. First try a specific match.
             if len(ff) == 0:
-                ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
+                ff = _IO.glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
 
-                # No force field found!
+                # No matches, try globbing all files with matching extension.
                 if len(ff) == 0:
-                    raise ValueError("No force field file found for '%s'" % forcefield)
+                    ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
+                    # No force field found!
+                    if len(ff) == 0:
+                        raise ValueError("No force field file found for '%s'" % forcefield)
 
         # Multiple force fields found.
         if len(ff) > 1:
