@@ -72,7 +72,7 @@ class Molecule():
         """Return the full Sire Molecule object."""
         return self._molecule
 
-    def _makeCompatibleWith(self, molecule, map={"coordinates" : "cheese"}, overwrite=True,
+    def _makeCompatibleWith(self, molecule, map={}, overwrite=True,
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
