@@ -19,11 +19,6 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-# TODO:
-# This should ultimately be a BioSimSpace.Process object since we need state
-# that persists beyond the lifetime of a function call. This allows the user
-# to query stdout/stderr when things go wrong, and examine intermediate files.
-
 """
 Functionality for parameterising molecules using the Antechamber package.
 Author: Lester Hedges <lester.hedges@gmail.com>

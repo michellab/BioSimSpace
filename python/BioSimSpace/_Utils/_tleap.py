@@ -19,11 +19,6 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-# TODO:
-# This should ultimately be a BioSimSpace.Process object since we need state
-# that persists beyond the lifetime of a function call. This allows the user
-# to query stdout/stderr when things go wrong, and examine intermediate files.
-
 """
 Functionality for using the tLEaP package from AmberTools.
 Author: Lester Hedges <lester.hedges@gmail.com>
@@ -99,9 +94,13 @@ class Tleap():
         if _amber_home is not None:
             ff = _IO.glob("%s/dat/leap/cmd/*.%s" % (_amber_home, forcefield))
 
-            # Search the old force fields
+            # Search the old force fields. First try a specific match.
             if len(ff) == 0:
-                ff = _IO.glob("%s/dat/leap/cmd/oldff/*.%s" % (_amber_home, forcefield))
+                ff = _IO.glob("%s/dat/leap/cmd/oldff/leaprc.s" % (_amber_home, forcefield))
+
+                # No matches, try globbing all files with matching extension.
+                if len(ff) == 0:
+                    ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
 
                 if len(ff) > 0:
                     is_found = True
@@ -113,6 +112,7 @@ class Tleap():
             # Search the old force fields. First try a specific match.
             if len(ff) == 0:
                 ff = _IO.glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
+                is_old = True
 
                 # No matches, try globbing all files with matching extension.
                 if len(ff) == 0:
