@@ -196,7 +196,7 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)

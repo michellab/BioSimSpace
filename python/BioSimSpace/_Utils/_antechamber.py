@@ -104,7 +104,7 @@ class Antechamber():
                 raise ValueError("Supported force fields are 'gaff' and 'gaff2'")
 
         # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.

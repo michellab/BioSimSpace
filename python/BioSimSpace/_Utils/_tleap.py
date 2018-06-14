@@ -156,7 +156,7 @@ class Tleap():
                 f.write("loadAmberParams antechamber.frcmod\n")
             else:
                 # Create a new system and molecule group.
-                s = _Sire.System.System("BioSimSpace molecule")
+                s = _Sire.System.System("BioSimSpace System")
                 m = _Sire.Mol.MoleculeGroup("all")
 
                 # Add the molecule.
