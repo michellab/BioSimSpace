@@ -20,7 +20,7 @@
 #####################################################################
 
 """
-Functionality for parameterising molecular systems.
+Functionality for parameterising molecules.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
