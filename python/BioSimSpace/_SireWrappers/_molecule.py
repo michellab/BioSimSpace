@@ -148,7 +148,7 @@ class Molecule():
         # First, set atom based properties.
 
         if verbose:
-            print("\nSetting atom based properties...")
+            print("\nSetting atom properties...")
 
         # Loop over all of the keys in the new molecule.
         for prop in props1:
@@ -172,7 +172,7 @@ class Molecule():
         # properties, such as TwoAtomFunctions, StringProperty, etc.
 
         if verbose:
-            print("\nSetting molecule based properties...")
+            print("\nSetting molecule properties...")
 
         # Loop over all of the unseen properties.
         for prop in seen_prop:
