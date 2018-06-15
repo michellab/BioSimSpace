@@ -26,7 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
-from BioSimSpace import _amber_home
+from BioSimSpace import _amber_home, _bin_dir
 from . import _process
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -161,8 +161,7 @@ class Amber(_process.Process):
 
             # Search Sire bin directory.
             else:
-                bin_dir = _Sire.Base.getBinDir()
-                exe = "%s/sander" % bin_dir
+                exe = "%s/sander" % _bin_dir
 
                 if _os.path.isfile(exe):
                     self._exe = exe

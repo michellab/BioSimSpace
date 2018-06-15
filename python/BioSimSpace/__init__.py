@@ -28,9 +28,11 @@ molecular workflow components.
 www.biosimspace.org
 """
 
-# Make sure we're using the Sire python interpreter.
+# Make sure we're using the Sire python interpreter and store the
+# locate of the Sire binary directory.
 try:
     import Sire
+    _bin_dir = Sire.Base.getBinDir()
     del(Sire)
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")

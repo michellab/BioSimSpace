@@ -24,9 +24,9 @@ Functionality for configuring and driving molecular dynamics simulations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+from Sire.Base import findExe as _findExe
 
-from BioSimSpace import _amber_home
+from BioSimSpace import _amber_home, _bin_dir
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
@@ -93,8 +93,7 @@ def _find_md_package(system, protocol, use_gpu=True):
 
             # Search within the Sire bin directory.
             else:
-                bin_dir = _Sire.Base.getBinDir()
-                _exe = "%s/%s" % (bin_dir, exe)
+                _exe = "%s/%s" % (_bin_dir, exe)
 
                 if _os.path.isfile(_exe):
                     return (package, _exe)
@@ -102,7 +101,7 @@ def _find_md_package(system, protocol, use_gpu=True):
                 # Search system PATH.
                 else:
                     try:
-                        exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                        exe = _findExe(exe).absoluteFilePath()
                         return (package, exe)
                     except:
                         pass
@@ -110,7 +109,7 @@ def _find_md_package(system, protocol, use_gpu=True):
         # Search system PATH.
         else:
             try:
-                exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                exe = _findExe(exe).absoluteFilePath()
                 return (package, exe)
             except:
                 pass

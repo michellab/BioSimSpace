@@ -30,7 +30,7 @@ from .._SireWrappers import Molecule as _Molecule
 from .._Utils import Antechamber as _Antechamber
 from .._Utils import Tleap as _Tleap
 
-import multiprocessing as _multiprocessing
+from . import Protocol as _Protocol
 
 def ff99(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff99 force field.
