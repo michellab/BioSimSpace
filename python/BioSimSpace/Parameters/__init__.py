@@ -74,20 +74,6 @@ def ff03(molecules, work_dir=None, verbose=False):
     """
     return _parameterise(molecules, "ff03", work_dir, verbose)
 
-def ff14(molecules, work_dir=None, verbose=False):
-    """Parameterise using the ff14 force field.
-
-       Positional arguments:
-
-       molecules -- The molecules to parameterise.
-
-       Keyword arguments:
-
-       work_dir  -- The working directory for external processes.
-       verbose   -- Whether to report stdout/stderr of external processes.
-    """
-    return _parameterise(molecules, "ff14", work_dir, verbose)
-
 def ff14SB(molecules, work_dir=None, verbose=False):
     """Parameterise using the ff14SB force field.
 
