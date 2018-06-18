@@ -94,8 +94,9 @@ class Process():
             if not _os.path.isdir(work_dir):
                 _os.makedirs(work_dir)
 
-        # Flag that the process hasn't been started.
+        # Flag that the process hasn't started/finished.
         self._is_started = False
+        self._is_finished = False
 
         # Initialise the queue and thread.
         self._queue = None
@@ -117,9 +118,11 @@ class Process():
         # Create the queue.
         self._queue = _queue.Queue()
 
-        # Run the protocol as a background thread.
+        # Create the thread.
         self._thread = _threading.Thread(target=self._protocol.run,
                                          args=[self._molecule, self._work_dir, self._queue])
+
+        # Start the thread.
         self._thread.start()
 
     def getMolecule(self):
@@ -132,11 +135,14 @@ class Process():
             self._start()
 
         # Block the thread until it finishes.
-        if self._thread.is_alive():
+        if not self._is_finished:
             self._thread.join()
 
             # Get the parameterise molecule from the thread function.
             self._new_molecule = self._queue.get()
+
+            # Flag that the thread has finished.
+            self._is_finished = True
 
         # No molecule was return, parameterisation failed.
         if self._new_molecule is None:

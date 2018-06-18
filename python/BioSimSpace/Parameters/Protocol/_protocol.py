@@ -130,12 +130,19 @@ class Protocol():
         if type(queue) is not None and type(queue) is not _queue.Queue:
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
+
         # Store the current working directory.
         dir = _os.getcwd()
 
-        # Change to the working directory for the process.
-        # This avoid problems with relative paths.
-        _os.chdir(work_dir)
+        # Set up the working directory.
+        if work_dir is not None:
+            # Create the working directory, if it doesn't already exist.
+            if not _os.path.isdir(work_dir):
+                _os.makedirs(work_dir)
+
+            # Change to the working directory for the process.
+            # This avoid problems with relative paths.
+            _os.chdir(work_dir)
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
         new_mol = _Molecule(molecule._molecule.__deepcopy__())
@@ -157,10 +164,8 @@ class Protocol():
             output = self._run_pdb2gmx(molecule)
 
         # Change back to the original directory.
-        _os.chdir(dir)
-
-        queue.put(None)
-        return None
+        if work_dir is not None:
+            _os.chdir(dir)
 
         # No output, parameterisation failed.
         if output is None:
