@@ -97,7 +97,24 @@ def readMolecules(files):
        files -- A file name, or a list of file names.
     """
 
-    system = _MoleculeParser.read(files)
+    # Convert to a list.
+    if type(files) is str:
+        files = [files]
+
+    # Check that all arguments are of type 'str'.
+    if type(files) is list:
+        if not all(isinstance(x, str) for x in files):
+            raise TypeError("'files' must be a list of 'str' types.")
+        if len(files) == 0:
+            raise ValueError("The list of input files is empty!")
+    else:
+        raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+
+    # Try to read the files and return a molecular system.
+    try:
+        system = _MoleculeParser.read(files)
+    except:
+        raise IOError("Failed to read molecules from: %s" % files)
 
     return _System(system)
 
