@@ -81,6 +81,14 @@ class Process():
         if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
+        # Check that the working directory is valid.
+        if work_dir is not None and type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+
+        # Check that the seed is valid.
+        if seed is not None and type(seed) is not int:
+            raise TypeError("'seed' must be of type 'int'")
+
         # Set the process to None.
         self._process = None
 
