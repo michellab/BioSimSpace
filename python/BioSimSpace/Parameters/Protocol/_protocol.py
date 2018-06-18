@@ -199,52 +199,6 @@ class Protocol():
            molecule -- The molecule to apply the parameterisation protocol to.
         """
 
-        # Whether the force field is found.
-        is_found = False
-
-        # Whether the force field is old.
-        is_old = False
-
-        # Search for a compatible force field file.
-        if _amber_home is not None:
-            ff = _IO.glob("%s/dat/leap/cmd/*.%s" % (_amber_home, self._forcefield))
-
-            # Search the old force fields. First try a specific match.
-            if len(ff) == 0:
-                ff = _IO.glob("%s/dat/leap/cmd/oldff/leaprc.s" % (_amber_home, self._forcefield))
-
-                # No matches, try globbing all files with matching extension.
-                if len(ff) == 0:
-                    ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, self._forcefield))
-
-                if len(ff) > 0:
-                    is_found = True
-                    is_old = True
-
-        if not is_found:
-            ff = _IO.glob("%s/*.%s" % (_cmd_dir, self._forcefield))
-
-            # Search the old force fields. First try a specific match.
-            if len(ff) == 0:
-                ff = _IO.glob("%s/oldff/leaprc.%s" % (_cmd_dir, self._forcefield))
-                is_old = True
-
-                # No matches, try globbing all files with matching extension.
-                if len(ff) == 0:
-                    ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, self._forcefield))
-                    # No force field found!
-                    if len(ff) == 0:
-                        raise ValueError("No force field file found for '%s'" % self._forcefield)
-
-        # Multiple force fields found.
-        if len(ff) > 1:
-            raise ValueError("Multiple force fields found for '%s': %s" % (self._forcefield, ff))
-
-        # Create the force field name.
-        ff = _os.path.basename(ff[0])
-        if is_old:
-            ff = "oldff/" + ff
-
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
@@ -255,13 +209,16 @@ class Protocol():
 
         # Write the system to a PDB file.
         pdb = _Sire.IO.PDB2(s)
-        pdb.writeToFile("input.pdb")
+        pdb.writeToFile("leap.pdb")
+
+        # Try to find a force field file.
+        ff = _find_force_field(self._forcefield)
 
         # Write the LEaP input file.
         with open("leap.txt", "w") as f:
             f.write("source %s\n" % ff)
-            f.write("mol = loadPdb input.pdb\n")
-            f.write("saveAmberParm mol output.top output.crd\n")
+            f.write("mol = loadPdb leap.pdb\n")
+            f.write("saveAmberParm mol leap.top leap.crd\n")
             f.write("quit")
 
         # Generate the tLEaP command.
@@ -273,8 +230,8 @@ class Protocol():
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
-        if _os.path.isfile("output.top") and _os.path.isfile("output.crd"):
-            return ["output.top", "output.crd"]
+        if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
+            return ["leap.top", "leap.crd"]
         else:
             return None
 
@@ -286,3 +243,55 @@ class Protocol():
            molecule -- The molecule to apply the parameterisation protocol to.
         """
         raise NotImplementedError("Parameterisation using pdb2gmx is not yet supported.")
+
+def _find_force_field(forcefield):
+    """Internal function to search LEaP compatible force field files."""
+
+    # Whether the force field is found.
+    is_found = False
+
+    # Whether the force field is old.
+    is_old = False
+
+    # Search for a compatible force field file.
+    if _amber_home is not None:
+        ff = _IO.glob("%s/dat/leap/cmd/*.%s" % (_amber_home, forcefield))
+
+        # Search the old force fields. First try a specific match.
+        if len(ff) == 0:
+            ff = _IO.glob("%s/dat/leap/cmd/oldff/leaprc.s" % (_amber_home, forcefield))
+
+            # No matches, try globbing all files with matching extension.
+            if len(ff) == 0:
+                ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
+
+            if len(ff) > 0:
+                is_found = True
+                is_old = True
+
+    if not is_found:
+        ff = _IO.glob("%s/*.%s" % (_cmd_dir, forcefield))
+
+        # Search the old force fields. First try a specific match.
+        if len(ff) == 0:
+            ff = _IO.glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
+            is_old = True
+
+            # No matches, try globbing all files with matching extension.
+            if len(ff) == 0:
+                ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, self._forcefield))
+                # No force field found!
+                if len(ff) == 0:
+                    raise ValueError("No force field file found for '%s'" % self._forcefield)
+
+    # Multiple force fields found.
+    if len(ff) > 1:
+        raise ValueError("Multiple force fields found for '%s': %s" % (self._forcefield, ff))
+
+    # Create the force field name.
+    ff = _os.path.basename(ff[0])
+    if is_old:
+        ff = "oldff/" + ff
+
+    # Return the force field.
+    return ff
