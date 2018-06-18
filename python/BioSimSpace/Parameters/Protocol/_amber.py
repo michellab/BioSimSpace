@@ -134,14 +134,14 @@ class GAFF(_protocol.Protocol):
             _os.chdir(work_dir)
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._molecule.__deepcopy__())
+        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._molecule)
+        m.add(molecule._getSireMolecule())
         s.add(m)
 
         # Write the system to a PDB file.

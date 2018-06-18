@@ -145,7 +145,7 @@ class Protocol():
             _os.chdir(work_dir)
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._molecule.__deepcopy__())
+        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
         # Choose the program to run with depending on the force field compatibility.
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
@@ -204,7 +204,7 @@ class Protocol():
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._molecule)
+        m.add(molecule._getSireMolecule())
         s.add(m)
 
         # Write the system to a PDB file.

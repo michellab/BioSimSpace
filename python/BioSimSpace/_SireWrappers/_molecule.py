@@ -50,7 +50,7 @@ class Molecule():
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule'")
 
         # Set the molecule.
-        self._molecule = molecule
+        self._sire_molecule = molecule
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -62,15 +62,15 @@ class Molecule():
 
     def nAtoms(self):
         """Return the number of atoms in the molecule."""
-        return self._molecule.nAtoms()
+        return self._sire_molecule.nAtoms()
 
     def nResidues(self):
         """Return the number of residues in the molecule."""
-        return self._molecule.nResidues()
+        return self._sire_molecule.nResidues()
 
     def _getSireMolecule(self):
         """Return the full Sire Molecule object."""
-        return self._molecule
+        return self._sire_molecule
 
     def _makeCompatibleWith(self, molecule, map={}, overwrite=True,
             rename_atoms=False, verbose=False):
@@ -94,7 +94,7 @@ class Molecule():
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
         elif type(molecule) is Molecule:
-            mol1 = molecule._molecule
+            mol1 = molecule._sire_molecule
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule', or 'Sire.Mol._Mol.Molecule'")
 
@@ -111,7 +111,7 @@ class Molecule():
             raise TypeError("'verbose' must be of type 'bool'")
 
         # Get the two Sire molecules.
-        mol0 = self._molecule
+        mol0 = self._sire_molecule
 
         # Store the number of atoms to match.
         num_atoms = mol0.nAtoms()
@@ -258,4 +258,4 @@ class Molecule():
                     raise IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1))
 
         # Commit the changes.
-        self._molecule = edit_mol.commit()
+        self._sire_molecule = edit_mol.commit()

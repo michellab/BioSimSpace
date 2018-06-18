@@ -53,7 +53,7 @@ class System():
             raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
         # Set the system.
-        self._system = system
+        self._sire_system = system
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -84,7 +84,7 @@ class System():
 
         # Try to extract the molecule group.
         try:
-            molgrp = self._system.group(_SireMol.MGName(group)).molecules()
+            molgrp = self._sire_system.group(_SireMol.MGName(group)).molecules()
         except:
             raise ValueError("No molecules in group '%s'" % group)
 
@@ -105,10 +105,10 @@ class System():
            resname -- The name of a residue unique to the molecule.
         """
         try:
-            return _Molecule(self._system[_MolWithResName(resname)])
+            return _Molecule(self._sire_system[_MolWithResName(resname)])
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 
     def _getSireSystem(self):
         """Return the full Sire System object."""
-        return self._system
+        return self._sire_system
