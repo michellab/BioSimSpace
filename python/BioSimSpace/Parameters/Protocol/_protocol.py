@@ -249,4 +249,4 @@ class Protocol():
 
            molecule -- The molecule to apply the parameterisation protocol to.
         """
-        pass
+        raise NotImplementedError("Parameterisation using pdb2gmx is not yet supported.")
