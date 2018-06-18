@@ -32,6 +32,7 @@ from ..._SireWrappers import Molecule as _Molecule
 import BioSimSpace.IO as _IO
 
 import os as _os
+import queue as _queue
 import subprocess as _subprocess
 
 __all__ = ["Protocol"]
@@ -110,16 +111,31 @@ class Protocol():
         self._tleap = False
         self._pdb2gmx = False
 
-    def run(self, molecule):
+    def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
            Positional arguments:
 
            molecule -- The molecule to apply the parameterisation protocol to.
+           work_dir -- The working directory.
+           queue    -- The thread queue is which this method has been run.
         """
 
         if type(molecule) is not _Molecule:
             raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+
+        if type(work_dir) is not None and type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+
+        if type(queue) is not None and type(queue) is not _queue.Queue:
+            raise TypeError("'queue' must be of type 'queue.Queue'")
+
+        # Store the current working directory.
+        dir = _os.getcwd()
+
+        # Change to the working directory for the process.
+        # This avoid problems with relative paths.
+        _os.chdir(work_dir)
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
         new_mol = _Molecule(molecule._molecule.__deepcopy__())
@@ -140,11 +156,24 @@ class Protocol():
         else:
             output = self._run_pdb2gmx(molecule)
 
+        # Change back to the original directory.
+        _os.chdir(dir)
+
+        queue.put(None)
+        return None
+
         # No output, parameterisation failed.
         if output is None:
+            if queue is not None:
+                queue.put(None)
             return None
 
         else:
+            # Prepend the working directory to the output file names.
+            if work_dir is not None:
+                output = ["%s/%s" % (work_dir, output[0]),
+                          "%s/%s" % (work_dir, output[1])]
+
             # Load the parameterised molecule.
             par_mol = _Molecule(_Sire.IO.MoleculeParser.read(output)[_Sire.Mol.MolIdx(0)])
 
@@ -153,6 +182,8 @@ class Protocol():
             # the new properties from 'par_mol' to 'mol'.
             new_mol._makeCompatibleWith(par_mol, overwrite=True, verbose=False)
 
+            if queue is not None:
+                queue.put(new_mol)
             return new_mol
 
     def _run_tleap(self, molecule):

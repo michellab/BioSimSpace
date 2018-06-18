@@ -33,6 +33,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from . import _protocol
 from ..._SireWrappers import Molecule as _Molecule
 
+import os as _os
+
 __all__ = ["FF03", "FF99", "FF99SB", "FF14SB", "GAFF", "GAFF2"]
 
 class FF03(_protocol.Protocol):
@@ -97,16 +99,24 @@ class GAFF(_protocol.Protocol):
 
         self._version = 1
 
-    def run(self):
-        """Run the protocotol.
+    def run(self, molecule, work_dir=None, queue=None):
+        """Run the parameterisation protocol.
 
            Positional arguments:
 
            molecule -- The molecule to apply the parameterisation protocol to.
+           work_dir -- The working directory.
+           queue    -- The thread queue is which this method has been run.
         """
 
         if type(molecule) is not _Molecule:
             raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+
+        if type(work_dir) is not None and type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+
+        if type(queue) is not None and type(queue) is not _queue.Queue:
+            raise TypeError("'queue' must be of type 'queue.Queue'")
 
 class GAFF2(_protocol.Protocol):
     """A class for handling protocols for the GAFF2 force field model."""

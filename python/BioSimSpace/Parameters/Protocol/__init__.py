@@ -24,4 +24,5 @@ Protocol for parameterising molecules.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._protocol import Protocol as _Protocol
 from ._amber import *
