@@ -24,6 +24,7 @@ Functionality for reading/writing molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import wrap as _wrap
 from Sire.IO import MoleculeParser as _MoleculeParser
 
@@ -32,7 +33,26 @@ from .._SireWrappers import System as _System
 from collections import OrderedDict as _OrderedDict
 from glob import glob
 from io import StringIO as _StringIO
+
+import os.path as _path
+import subprocess as _subprocess
 import sys as _sys
+
+# Set the bundled GROMACS topology file directory.
+_gromacs_path = _path.dirname(_getBinDir()) + "/share/gromacs/top"
+
+# The directory is missing. GROMACS must not be installed.
+if not _path.isdir(_gromacs_path):
+    print("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
+
+    # Attempt to install GROMACS.
+    print("Trying to install GROMACS.")
+    command = "%s/conda install -y -q -c bioconda gromacs" % _getBinDir()
+    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
+
+    # The installation failed.
+    if proc.returncode != 0:
+        raise RuntimeError("GROMACS installation failed: '%s'" % command)
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -89,13 +109,23 @@ def formatInfo(format):
         print("Unsupported format: '%s'" % format)
         return None
 
-def readMolecules(files):
+def readMolecules(files, map={}):
     """Read a molecular system from file.
 
        Positional arguments:
 
        files -- A file name, or a list of file names.
+
+       Keyword arguments:
+
+       map   -- A dictionary that maps system "properties" to their user defined
+                values. This allows the user to refer to properties with their
+                own naming scheme, e.g. { "charge" : "my-charge" }
     """
+
+    # Add the GROMACS topology file path.
+    if "GROMACS_PATH" not in map:
+        map["GROMACS_PATH"] = _gromacs_path
 
     # Convert to a list.
     if type(files) is str:
@@ -112,13 +142,13 @@ def readMolecules(files):
 
     # Try to read the files and return a molecular system.
     try:
-        system = _MoleculeParser.read(files)
+        system = _MoleculeParser.read(files, map)
     except:
         raise IOError("Failed to read molecules from: %s" % files)
 
     return _System(system)
 
-def saveMolecules(filebase, system, fileformat):
+def saveMolecules(filebase, system, fileformat, map={}):
     """Save a molecular system to file.
 
        Positional arguments:
@@ -126,7 +156,17 @@ def saveMolecules(filebase, system, fileformat):
        filebase   -- The base name of the output file.
        system     -- The molecular system.
        fileformat -- The file format (or formats) to save to.
+
+       Keyword arguments:
+
+       map   -- A dictionary that maps system "properties" to their user defined
+                values. This allows the user to refer to properties with their
+                own naming scheme, e.g. { "charge" : "my-charge" }
     """
+
+    # Add the GROMACS topology file path.
+    if "GROMACS_PATH" not in map:
+        map["GROMACS_PATH"] = _gromacs_path
 
     # Check that the filebase is a string.
     if type(filebase) is not str:
@@ -172,8 +212,12 @@ def saveMolecules(filebase, system, fileformat):
 
     # Save the system using each file format.
     for format in formats:
-        file = _MoleculeParser.save(system._getSireSystem(), filebase, \
-                {"fileformat":_wrap(format)})
+        # Add the file format to the property map.
+        _map = map
+        map["fileformat"] = _wrap(format)
+
+        # Write the file.
+        file = _MoleculeParser.save(system._getSireSystem(), filebase, map)
         files += file
 
     return files
