@@ -24,10 +24,12 @@ Functionality for reading/writing molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import wrap as _wrap
-from Sire.IO import MoleculeParser as _MoleculeParser
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
+import Sire.System as _SireSystem
 
+from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 
 from collections import OrderedDict as _OrderedDict
@@ -39,7 +41,7 @@ import subprocess as _subprocess
 import sys as _sys
 
 # Set the bundled GROMACS topology file directory.
-_gromacs_path = _path.dirname(_getBinDir()) + "/share/gromacs/top"
+_gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
 
 # The directory is missing. GROMACS must not be installed.
 if not _path.isdir(_gromacs_path):
@@ -47,7 +49,7 @@ if not _path.isdir(_gromacs_path):
 
     # Attempt to install GROMACS.
     print("Trying to install GROMACS.")
-    command = "%s/conda install -y -q -c bioconda gromacs" % _getBinDir()
+    command = "%s/conda install -y -q -c bioconda gromacs" % _SireBase.getBinDir()
     proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
 
     # The installation failed.
@@ -69,7 +71,7 @@ class _Capturing(list):
 
 # Capture the supported format information
 with _Capturing() as format_info:
-    print(r"%s" % _MoleculeParser.supportedFormats())
+    print(r"%s" % _SireIO.MoleculeParser.supportedFormats())
 
 # Create a list of the supported formats.
 _formats = []
@@ -142,7 +144,7 @@ def readMolecules(files, map={}):
 
     # Try to read the files and return a molecular system.
     try:
-        system = _MoleculeParser.read(files, map)
+        system = _SireIO.MoleculeParser.read(files, map)
     except:
         raise IOError("Failed to read molecules from: %s" % files)
 
@@ -173,8 +175,20 @@ def saveMolecules(filebase, system, fileformat, map={}):
         raise TypeError("'filebase' must be of type 'str'")
 
     # Check that that the system is of the correct type.
-    if type(system) is not _System:
-        raise TypeError("'system' must be of type 'BioSimSpace.System'")
+
+    # A Mystem object.
+    if type(system) is _System:
+        pass
+    # A Molecule object.
+    elif type(system) is _Molecule:
+        system = [system]
+    # A list of Molecule objects.
+    elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
+        pass
+    # Invalid type.
+    else:
+        raise TypeError("'system' must be of type 'BioSimSpace.System', "
+            + "'BioSimSpace.Molecule, or a list of 'BiSimSpace.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 
@@ -207,6 +221,23 @@ def saveMolecules(filebase, system, fileformat, map={}):
             raise ValueError("Unsupported file format '%s'. Supported formats "
                 "are: %s." % (format, str(_formats)))
 
+    # We have a list of molecules. Create a new system and add each molecule.
+    if type(system) is list:
+
+        # Create a Sire system and molecule group.
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
+
+        # Add all of the molecules to the group.
+        for molecule in system:
+            m.add(molecule._getSireMolecule())
+
+        # Add the molecule group to the system.
+        s.add(m)
+
+        # Wrap the system.
+        system = _System(s)
+
     # A list of the files that have been written.
     files = []
 
@@ -214,10 +245,10 @@ def saveMolecules(filebase, system, fileformat, map={}):
     for format in formats:
         # Add the file format to the property map.
         _map = map
-        map["fileformat"] = _wrap(format)
+        map["fileformat"] = _SireBase.wrap(format)
 
         # Write the file.
-        file = _MoleculeParser.save(system._getSireSystem(), filebase, map)
+        file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, map)
         files += file
 
     return files
