@@ -97,6 +97,29 @@ class System():
         for mol in molecules:
             self._sire_system.add(mol._getSireMolecule(), _SireMol.MGName("all"))
 
+    def removeMolecules(self, molecules):
+        """Remove a molecule, or list of molecules from the system.
+
+           Positional arguments:
+
+           molecules -- A Molecule, or list of Molecule objects.
+        """
+
+        # A Molecule object.
+        if type(molecules) is _Molecule:
+            molecules = [molecules]
+        # A list of Molecule objects.
+        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+            pass
+        # Invalid argument.
+        else:
+            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
+                + "or a list of 'BioSimSpace.Molecule' types.")
+
+        # Remove the molecules to the system.
+        for mol in molecules:
+            self._sire_system.remove(mol._getSireMolecule().number())
+
     def udpateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
 
