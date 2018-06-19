@@ -65,11 +65,60 @@ class System():
 
     def nMolecules(self):
         """Return the number of molecules in the system."""
-        return self._system.nMolecules()
+        return self._sire_system.nMolecules()
 
     def fileFormat(self):
         """Return the file formats associated with the system."""
-        return self._system.property("fileformat").value()
+        return self._sire_system.property("fileformat").value()
+
+    def addMolecules(self, molecules):
+        """Add a molecule, or list of molecules to the system.
+
+           Positional arguments:
+
+           molecules -- A Molecule, or list of Molecule objects.
+        """
+
+        # A Molecule object.
+        if type(molecules) is _Molecule:
+            molecules = [molecules]
+        # A list of Molecule objects.
+        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+            pass
+        # Invalid argument.
+        else:
+            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
+                + "or a list of 'BioSimSpace.Molecule' types.")
+
+        # Get the "all" molecule group.
+        molgrp = self._sire_system.group(_SireMol.MGName("all"))
+
+        # Add the molecules to the system.
+        for mol in molecules:
+            self._sire_system.add(mol._getSireMolecule(), _SireMol.MGName("all"))
+
+    def udpateMolecules(self, molecules):
+        """Update a molecule, or list of molecules in the system.
+
+           Positional arguments:
+
+           molecules -- A Molecule, or list of Molecule objects.
+        """
+
+        # A Molecule object.
+        if type(molecules) is _Molecule:
+            molecules = [molecules]
+        # A list of Molecule objects.
+        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+            pass
+        # Invalid argument.
+        else:
+            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
+                + "or a list of 'BioSimSpace.Molecule' types.")
+
+        # Update each of the molecules.
+        for mol in molecule:
+            self._sire_system.update(mol._getSireMolecule())
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
