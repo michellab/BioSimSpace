@@ -63,6 +63,36 @@ class System():
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.System: nMolecules=%d>" % self.nMolecules()
 
+    def __add__(self, other):
+        """Addition operator."""
+
+        # Create a copy of the current system.
+        system = System(self._sire_system.__deepcopy__())
+
+        # Add the new molecules.
+        if type(other) is System:
+            system.addMolecules(other.getMolecules())
+        else:
+            system.addMolecules(other)
+
+        # Return the combined system.
+        return system
+
+    def __sub__(self, other):
+        """Subtraction operator."""
+
+        # Create a copy of the current system.
+        system = System(self._sire_system.__deepcopy__())
+
+        # Remove the molecules from the other system.
+        if type(other) is System:
+            system.removeMolecules(other.getMolecules())
+        else:
+            system.removeMolecules(other)
+
+        # Return the new system.
+        return system
+
     def nMolecules(self):
         """Return the number of molecules in the system."""
         return self._sire_system.nMolecules()
