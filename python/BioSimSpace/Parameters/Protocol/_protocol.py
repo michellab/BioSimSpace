@@ -179,7 +179,7 @@ class Protocol():
                           "%s/%s" % (work_dir, output[1])]
 
             # Load the parameterised molecule.
-            par_mol = _Molecule(_Sire.IO.MoleculeParser.read(output)[_Sire.Mol.MolIdx(0)])
+            par_mol = _Molecule(_IO.readMolecules(output)._getSireSystem()[_Sire.Mol.MolIdx(0)])
 
             # Make the molecule 'mol' compatible with 'par_mol'. This will create
             # a mapping between atom indices in the two molecules and add all of
@@ -223,6 +223,11 @@ class Protocol():
         # Generate the tLEaP command.
         command = "%s -f leap.txt" % _tleap_exe
 
+        with open("README.txt", "w") as f:
+            # Write the command to file.
+            f.write("# tLEaP was run with the following command:\n")
+            f.write("%s\n" % command)
+
         # Run tLEaP as a subprocess.
         proc = _subprocess.run(command, shell=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
@@ -241,7 +246,47 @@ class Protocol():
 
            molecule -- The molecule to apply the parameterisation protocol to.
         """
-        raise NotImplementedError("Parameterisation using pdb2gmx is not yet supported.")
+
+        # A list of supported force fields, mapping to their GROMACS ID string.
+        # GROMACS supports a sub-set of the AMBER force fields.
+        supported_ff = { "ff99"   : "amber99",
+                         "ff99SB" : "amber99sb",
+                         "ff03"   : "amber03"
+                       }
+
+        if self._forcefield not in supported_ff:
+            raise ValueError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
+
+        # Create a new system and molecule group.
+        s = _Sire.System.System("BioSimSpace System")
+        m = _Sire.Mol.MoleculeGroup("all")
+
+        # Add the molecule.
+        m.add(molecule._getSireMolecule())
+        s.add(m)
+
+        # Write the system to a PDB file.
+        pdb = _Sire.IO.PDB2(s)
+        pdb.writeToFile("input.pdb")
+
+        # Generate the pdb2gmx command.
+        command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
+            % (_gmx_exe, supported_ff[self._forcefield])
+
+        with open("README.txt", "w") as f:
+            # Write the command to file.
+            f.write("# pdb2gmx was run with the following command:\n")
+            f.write("%s\n" % command)
+
+        # Run pdb2gmx as a subprocess.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Check for the expected output.
+        if _os.path.isfile("output.gro") and _os.path.isfile("output.top"):
+            return ["output.gro", "output.top"]
+        else:
+            return None
 
 def _find_force_field(forcefield):
     """Internal function to search LEaP compatible force field files."""

@@ -33,6 +33,8 @@ import Sire as _Sire
 from . import _protocol
 from ..._SireWrappers import Molecule as _Molecule
 
+import BioSimSpace.IO as _IO
+
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
@@ -153,6 +155,11 @@ class GAFF(_protocol.Protocol):
                    "-o antechamber.mol2 -fo mol2 -c bcc -s 2"
                   ) % (_protocol._antechamber_exe, self._version)
 
+        with open("README.txt", "w") as f:
+            # Write the command to file.
+            f.write("# Antechamber was run with the following command:\n")
+            f.write("%s\n" % command)
+
         # Run Antechamber as a subprocess.
         proc = _subprocess.run(command, shell=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
@@ -165,6 +172,11 @@ class GAFF(_protocol.Protocol):
             command = ("%s -s %d -i antechamber.mol2 -f mol2 " +
                        "-o antechamber.frcmod"
                       ) % (_protocol._parmchk_exe, self._version)
+
+            with open("README.txt", "a") as f:
+                # Write the command to file.
+                f.write("\n# ParmChk was run with the following command:\n")
+                f.write("%s\n" % command)
 
             # Run parmchk as a subprocess.
             proc = _subprocess.run(command, shell=True,
@@ -191,6 +203,11 @@ class GAFF(_protocol.Protocol):
                 # Generate the tLEaP command.
                 command = "%s -f leap.txt" % _protocol._tleap_exe
 
+                with open("README.txt", "a") as f:
+                    # Write the command to file.
+                    f.write("\n# tLEaP was run with the following command:\n")
+                    f.write("%s\n" % command)
+
                 # Run tLEaP as a subprocess.
                 proc = _subprocess.run(command, shell=True,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
@@ -199,7 +216,8 @@ class GAFF(_protocol.Protocol):
                 # the expected output was generated.
                 if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
                     # Load the parameterised molecule.
-                    par_mol = _Molecule(_Sire.IO.MoleculeParser.read(["leap.top", "leap.crd"])[_Sire.Mol.MolIdx(0)])
+                    par_mol = _Molecule(_IO.readMolecules(["leap.top", "leap.crd"])
+                              ._getSireSystem()[_Sire.Mol.MolIdx(0)])
 
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of
