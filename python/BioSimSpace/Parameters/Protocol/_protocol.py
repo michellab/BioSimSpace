@@ -130,7 +130,6 @@ class Protocol():
         if type(queue) is not None and type(queue) is not _queue.Queue:
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
-
         # Store the current working directory.
         dir = _os.getcwd()
 
