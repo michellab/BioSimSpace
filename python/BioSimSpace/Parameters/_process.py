@@ -24,6 +24,20 @@ Functionality running parameterisation protocols as a background process.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+# TODO:
+# Work out a way to safely kill running processes.
+#
+# This is hard because the process launches a thread which itself calls a
+# Protocol.run method, in which multiple subprocesses can be launched. The
+# thread would need access to the PID of the subprocess in order to kill them,
+# and this would affect the logic of the run method (once a subprocess has been
+# killed the method should exit).
+
+# Alternatively, one could use a multiprocessing.Process instead of a thread,
+# which has a terminate method. However, communication between the Process and
+# the run method requires the return type of the method to be  picklable, which
+# isn't the case for our Molecule object.
+
 from BioSimSpace import _is_notebook
 
 from . import Protocol as _Protocol
