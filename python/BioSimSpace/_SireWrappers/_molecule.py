@@ -28,6 +28,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire.Mol as _SireMol
 import Sire.MM as _SireMM
+import Sire.System as _SireSystem
 
 __all__ = ["Molecule"]
 
@@ -59,6 +60,22 @@ class Molecule():
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
+
+    def __add__(self, other):
+        """Addition operator."""
+
+        # Validate the input.
+        if type(other) is not Molecule:
+            raise TypeError("'other' must be of type 'BioSimSpace.Molecule'")
+
+        # Create a new system.
+        system = _System(_SireSystem.System("BioSimSpace System"))
+
+        # Add the two molecules to the system.
+        system.addMolecules([self, other])
+
+        # Return the system.
+        return system
 
     def nAtoms(self):
         """Return the number of atoms in the molecule."""
@@ -259,3 +276,6 @@ class Molecule():
 
         # Commit the changes.
         self._sire_molecule = edit_mol.commit()
+
+# Import at bottom of module to avoid circular dependency.
+from ._system import System as _System

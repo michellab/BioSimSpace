@@ -29,7 +29,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire.Mol as _SireMol
 import Sire.System as _SireSystem
 
-from ._molecule import Molecule as _Molecule
 
 __all__ = ["System"]
 
@@ -120,12 +119,22 @@ class System():
             raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
                 + "or a list of 'BioSimSpace.Molecule' types.")
 
-        # Get the "all" molecule group.
-        molgrp = self._sire_system.group(_SireMol.MGName("all"))
+        # The system is empty.
+        if self._sire_system.nMolecules() == 0:
+            # Create a new "all" molecule group.
+            molgrp = _SireMol.MoleculeGroup("all")
 
-        # Add the molecules to the system.
-        for mol in molecules:
-            self._sire_system.add(mol._getSireMolecule(), _SireMol.MGName("all"))
+            # Add the molecules to the group.
+            for mol in molecules:
+                molgrp.add(mol._getSireMolecule())
+
+            # Add the molecule group to the system.
+            self._sire_system.add(molgrp)
+
+        # Otherwise, add the molecules to the existing "all" group.
+        else:
+            for mol in molecules:
+                self._sire_system.add(mol._getSireMolecule(), _SireMol.MGName("all"))
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -214,3 +223,6 @@ class System():
     def _getSireSystem(self):
         """Return the full Sire System object."""
         return self._sire_system
+
+# Import at bottom of module to avoid circular dependency.
+from ._molecule import Molecule as _Molecule
