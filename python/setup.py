@@ -75,6 +75,10 @@ finally:
     command = "%s/conda install -y -q icu" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
+    print("Installing package: openbabel")
+    command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
     print("Upgrading pip")
     command = "%s/pip install --upgrade pip" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
