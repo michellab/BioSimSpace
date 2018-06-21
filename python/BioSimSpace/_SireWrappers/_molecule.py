@@ -131,9 +131,9 @@ class Molecule():
 
         # Have we matched all of the atoms?
         if len(matches) < num_atoms:
-            # Atom names might have changed. Try to match using residue index
-            # and maximum common substructure (matching light atoms too).
-            matcher = _SireMol.ResIdxAtomMCSMatcher(True, False)
+            # Atom names might have changed. Try to match by residue index
+            # and coordinates.
+            matcher = _SireMol.ResIdxAtomCoordMatcher()
             matches = matcher.match(mol0, mol1)
 
             # We need to rename the atoms.
