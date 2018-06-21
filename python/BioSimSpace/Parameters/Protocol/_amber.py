@@ -95,13 +95,49 @@ class FF14SB(_protocol.Protocol):
 class GAFF(_protocol.Protocol):
     """A class for handling protocols for the GAFF force field model."""
 
-    def __init__(self):
-        """Constructor."""
+    # A list of supported charge methods.
+    _charge_methods = [ "RESP",
+                        "CM2",
+                        "MUL",
+                        "BCC",
+                        "ESP",
+                        "GAS" ]
+
+    def __init__(self, charge_method="BCC"):
+        """Constructor.
+
+           Keyword arguments:
+
+           charge_method -- The method to use when calculating atomic charges.
+        """
+
+        if type(charge_method) is not str:
+            raise TypeError("'charge_method' must be of type 'str'")
+
+        # Strip whitespace and convert to upper case.
+        charge_method = charge_method.replace(" ", "").upper()
+
+        # Check that the charge method is valid.
+        if not charge_method in self._charge_methods:
+            raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
+                % (charge_method, self.charge_methods))
+
+        # Set the charge method.
+        self._charge_method = charge_method
 
         # Call the base class constructor.
         super().__init__(forcefield="gaff")
 
         self._version = 1
+
+    @classmethod
+    def chargeMethods(cls):
+        """Return a list of the supported charge methods."""
+        return cls._charge_methods
+
+    def chargeMethod(self):
+        """Return the chosen charge method."""
+        return self._charge_method
 
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
@@ -152,8 +188,9 @@ class GAFF(_protocol.Protocol):
 
         # Generate the Antechamber command.
         command = ("%s -at %d -i antechamber.pdb -fi pdb " +
-                   "-o antechamber.mol2 -fo mol2 -c bcc -s 2"
-                  ) % (_protocol._antechamber_exe, self._version)
+                   "-o antechamber.mol2 -fo mol2 -c %s -s 2"
+                  ) % (_protocol._antechamber_exe,
+                        self._version, self._charge_method.lower())
 
         with open("README.txt", "w") as f:
             # Write the command to file.
@@ -244,8 +281,29 @@ class GAFF2(_protocol.Protocol):
     # Copy the GAFF run method.
     run = GAFF.run
 
-    def __init__(self):
-        """Constructor."""
+    # Copy the supported charge methods.
+    _charge_methods = GAFF._charge_methods
+    chargeMethods = GAFF.chargeMethods
+    chargeMethod = GAFF.chargeMethod
+
+    def __init__(self, charge_method="BCC"):
+        """Constructor.
+
+           Keyword arguments:
+
+           charge_method -- The method to use when calculating atomic charges.
+        """
+
+        # Strip whitespace and convert to upper case.
+        charge_method = charge_method.replace(" ", "").upper()
+
+        # Check that the charge method is valid.
+        if not charge_method in self._charge_methods:
+            raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
+                % (charge_method, self._charge_methods))
+
+        # Set the charge method.
+        self._charge_method = charge_method
 
         # Call the base class constructor.
         super().__init__(forcefield="gaff2")

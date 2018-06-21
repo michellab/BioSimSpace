@@ -200,5 +200,5 @@ for _var in dir():
         _forcefields.append(_var)
 
 def forceFields():
-    "Print a list of the supported force fields"
-    print(", ".join(_forcefields))
+    "Return a list of the supported force fields"
+    return _forcefields
