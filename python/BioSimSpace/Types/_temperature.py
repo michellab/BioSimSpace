@@ -21,8 +21,6 @@
 
 import Sire.Units as _Units
 
-import re as _re
-
 __all__ = ["Temperature"]
 
 class Temperature:
