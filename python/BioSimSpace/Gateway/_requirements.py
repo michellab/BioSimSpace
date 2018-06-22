@@ -648,7 +648,7 @@ def _unarchive(name):
         with _gzip.open(name, "rb") as f_in:
             with open(file, "wb") as f_out:
                 print("Decompressing...\n%s" % name)
-                shutil.copyfileobj(f_in, f_out)
+                _shutil.copyfileobj(f_in, f_out)
 
         return file
 
