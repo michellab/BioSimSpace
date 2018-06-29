@@ -125,8 +125,15 @@ class System():
             molgrp = _SireMol.MoleculeGroup("all")
 
             # Add the molecules to the group.
-            for mol in molecules:
-                molgrp.add(mol._getSireMolecule())
+            for num_mols, mol in enumerate(molecules):
+                # Get the existing molecule.
+                m = mol._getSireMolecule()
+
+                # Renumber the molecule, starting from 1.
+                m = m.edit().renumber(_SireMol.MolNum(num_mols+1)).molecule().commit()
+
+                # Add the molecule.
+                molgrp.add(m)
 
             # Add the molecule group to the system.
             self._sire_system.add(molgrp)
