@@ -80,6 +80,7 @@ import BioSimSpace.Notebook as Notebook
 import BioSimSpace.Process as Process
 import BioSimSpace.Parameters as Parameters
 import BioSimSpace.Protocol as Protocol
+import BioSimSpace.Solvent as Solvent
 import BioSimSpace.Types as Types
 
 from warnings import warn as _warn
