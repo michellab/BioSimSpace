@@ -147,7 +147,7 @@ class Temperature:
         if type(other) is int:
             other = float(other)
 
-        # Only support division by float.
+        # Float division.
         if type(other) is float:
             # Convert to Kelvin and divide.
             mag = self.kelvin().magnitude() / other
@@ -157,6 +157,10 @@ class Temperature:
 
             # Return the new temperature.
             return Temperature(mag, self._unit)
+
+        # Division by another temperature.
+        elif type(other) is Temperature:
+            return self.kelvin().magnitude() / other.kelvin().magnitude()
 
         else:
             raise NotImplementedError

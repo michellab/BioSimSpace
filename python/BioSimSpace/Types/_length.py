@@ -151,10 +151,14 @@ class Length:
         if type(other) is int:
             other = float(other)
 
-        # Only support division by float.
+        # Float division.
         if type(other) is float:
             mag = self._magnitude / other
             return Length(mag, self._unit)
+
+        # Division by another length.
+        elif type(other) is Length:
+            return self.angstroms().magnitude() / other.angstroms().magnitude()
 
         else:
             raise NotImplementedError

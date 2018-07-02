@@ -153,10 +153,14 @@ class Time:
         if type(other) is int:
             other = float(other)
 
-        # Only support division by float.
+        # Float division.
         if type(other) is float:
             mag = self._magnitude / other
             return Time(mag, self._unit)
+
+        # Divide by time.
+        elif type(other) is Time:
+            return self.picoseconds().magnitude() / other.picoseconds().magnitude()
 
         else:
             raise NotImplementedError
