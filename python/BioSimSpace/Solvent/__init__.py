@@ -34,6 +34,7 @@ from .._SireWrappers import Molecule as _Molecule
 import BioSimSpace.IO as _IO
 
 import os as _os
+import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
@@ -46,7 +47,7 @@ if not _os.path.isfile(_gmx_exe):
     _gmx_exe = _Sire.Base.findExe("gmx").absoluteFilePath()
 
 def spc(molecule=None, box=None):
-    """Add solvent compatible with all three-point water models.
+    """Add SPC solvent.
 
        Keyword arguments:
 
@@ -58,10 +59,25 @@ def spc(molecule=None, box=None):
     molecule, box = _validate_input(molecule, box)
 
     # Create the solvated system.
-    return _solvate(molecule, box, "spc216")
+    return _solvate(molecule, box, "spc", 3)
+
+def spce(molecule=None, box=None):
+    """Add SPC/E solvent.
+
+       Keyword arguments:
+
+       molecule -- A molecule, or system of molecules.
+       box      -- A list containing the box size in each dimension (in nm).
+    """
+
+    # Validate arguments.
+    molecule, box = _validate_input(molecule, box)
+
+    # Create the solvated system.
+    return _solvate(molecule, box, "spce", 3)
 
 def tip3p(molecule=None, box=None):
-    """Add solvent compatible with all three-point water models.
+    """Add TIP3P solvent.
 
        Keyword arguments:
 
@@ -73,7 +89,7 @@ def tip3p(molecule=None, box=None):
     molecule, box = _validate_input(molecule, box)
 
     # Create the solvated system.
-    return _solvate(molecule, box, "spc216")
+    return _solvate(molecule, box, "tip3p", 3)
 
 def tip4p(molecule=None, box=None):
     """Add TIP4P solvent.
@@ -88,7 +104,22 @@ def tip4p(molecule=None, box=None):
     molecule, box = _validate_input(molecule, box)
 
     # Return the solvated system.
-    return _solvate(molecule, box, "tip4p")
+    return _solvate(molecule, box, "tip4p", 4)
+
+def tip5p(molecule=None, box=None):
+    """Add TIP5P solvent.
+
+       Keyword arguments:
+
+       molecule -- A molecule, or system of molecules.
+       box      -- A list containing the box size in each dimenion (in nm).
+    """
+
+    # Validate arguments.
+    molecule, box = _validate_input(molecule, box)
+
+    # Return the solvated system.
+    return _solvate(molecule, box, "tip5p", 5)
 
 def _validate_input(molecule, box):
     """Internal function to validate function arguments.
@@ -134,14 +165,15 @@ def _validate_input(molecule, box):
 
     return (molecule, box)
 
-def _solvate(molecule, box, model, work_dir=None):
+def _solvate(molecule, box, model, num_point, work_dir=None):
     """Internal function to add solvent using 'gmx solvate'.
 
        Positional arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
-       model    -- The water model.
+       molecule  -- A molecule, or system of molecules.
+       box       -- A list containing the box size in each dimension (in nm).
+       model     -- The name of the water model.
+       num_point -- The number of points in the model.
 
        Keyword arguments:
 
@@ -171,10 +203,14 @@ def _solvate(molecule, box, model, work_dir=None):
         _os.chdir(work_dir)
 
     # Create the gmx command.
-    command = "%s solvate -cs %s" % (_gmx_exe, model)
+    if num_point == 3:
+        mod = "spc216"
+    else:
+        mod = model
+    command = "%s solvate -cs %s" % (_gmx_exe, mod)
 
     if molecule is not None:
-        # Write the molecule/system to a GRO and TOP files.
+        # Write the molecule/system to a GRO files.
         _IO.saveMolecules("input", molecule, "gro87")
         _shutil.copyfile("input.gro87", "input.gro")
 
@@ -199,7 +235,47 @@ def _solvate(molecule, box, model, work_dir=None):
     # gmx doesn't return sensible error codes, so we need to check that
     # the expected output was generated.
     if _os.path.isfile("output.gro"):
-        system = _IO.readMolecules("output.gro")
+
+        # Extract the water lines from the GRO file.
+        water_lines = []
+        with open("output.gro", "r") as file:
+            for line in file:
+                if _re.search("SOL", line):
+                    water_lines.append(line)
+
+            # Add any box information. This is the last line in the GRO file.
+            water_lines.append(line)
+
+        # Write a GRO file that contains only the water atoms.
+        if len(water_lines) - 1 > 0:
+            with open("water.gro", "w") as file:
+                file.write("BioSimSpace %s water box\n" % model.upper())
+                file.write("%d\n" % (len(water_lines)-1))
+
+                for line in water_lines:
+                    file.write("%s" % line)
+
+        # Create a TOP file for the water model. By default we use the Amber03
+        # force field to generate a dummy topology for the water model.
+        with open("water.top", "w") as file:
+            file.write("; Include AmberO3 force field\n")
+            file.write('#include "amber03.ff/forcefield.itp"\n\n')
+            file.write("; Include %s water topology\n" % model.upper())
+            file.write('#include "amber03.ff/%s.itp"\n\n' % model)
+            file.write("[ system ] \n")
+            file.write("BioSimSpace %s water box\n\n" % model.upper())
+            file.write("[ molecules ] \n")
+            file.write(";molecule name    nr.\n")
+            file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
+
+        # Load the water box.
+        water = _IO.readMolecules(["water.gro", "water.top"])
+
+        # Create a new system by adding the water to the original molecule.
+        if type(molecule) is _System:
+            system = molecule.addMolecules(water.getMolecules())
+        else:
+            system = molecule + water.getMolecules()
 
         # Change back to the original directory.
         if work_dir is not None:
