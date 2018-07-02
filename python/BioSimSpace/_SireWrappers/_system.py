@@ -119,7 +119,6 @@ class System():
             raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
                 + "or a list of 'BioSimSpace.Molecule' types.")
 
-        # The system is empty.
         if self._sire_system.nMolecules() == 0:
             # Create a new "all" molecule group.
             molgrp = _SireMol.MoleculeGroup("all")
@@ -209,8 +208,12 @@ class System():
         # Create a list to store the molecules.
         mols = []
 
+        # Get a list of the MolNums in the group and sort them.
+        nums = molgrp.molNums()
+        nums.sort()
+
         # Loop over all of the molecules in the group and append to the list.
-        for num in molgrp.molNums():
+        for num in nums:
             mols.append(_Molecule(molgrp[num]))
 
         return mols
