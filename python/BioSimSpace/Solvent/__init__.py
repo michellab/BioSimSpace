@@ -30,6 +30,7 @@ from BioSimSpace import _bin_dir
 
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
+from ..Types import Length as _Length
 
 import BioSimSpace.IO as _IO
 
@@ -153,15 +154,8 @@ def _validate_input(molecule, box):
         if len(box) != 3:
             raise ValueError("The 'box' must have x, y, and z size information.")
         else:
-            try:
-                box = [float(x) for x in box]
-            except:
-                pass
-            if not all(isinstance(x, float) for x in box):
-                raise ValueError("The box dimensions must be of type 'float'")
-            for size in box:
-                if size < 0:
-                    raise ValueError("The box size cannot be negative!.")
+            if not all(isinstance(x, _Length) for x in box):
+                raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
     return (molecule, box)
 
@@ -219,11 +213,15 @@ def _solvate(molecule, box, model, num_point, work_dir=None):
 
         # Add the box information.
         if box is not None:
-            command += " -box %f %f %f" % (box[0], box[1], box[2])
+            command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
+                                           box[1].nanometers().magnitude(),
+                                           box[2].nanometers().magnitude())
 
     # Just add box information.
     else:
-        command += " -box %f %f %f" % (box[0], box[1], box[2])
+        command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
+                                       box[1].nanometers().magnitude(),
+                                       box[2].nanometers().magnitude())
 
     # Add the output file.
     command += " -o output.gro"
