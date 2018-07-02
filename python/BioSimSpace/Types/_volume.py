@@ -21,24 +21,20 @@
 
 import Sire.Units as _Units
 
-__all__ = ["Length"]
+__all__ = ["Volume"]
 
-class Length:
+class Volume:
     # Dictionary of allowed units.
-    _supported_units = { "METER"      : _Units.meter,
-                         "CENTIMETER" : _Units.centimeter,
-                         "MILLIMETER" : _Units.millimeter,
-                         "NANOMETER"  : _Units.nanometer,
-                         "ANGSTROM"   : _Units.angstrom,
-                         "PICOMETER"  : _Units.picometer }
+    _supported_units = { "METER3"      : _Units.meter2,
+                         "NANOMETER3"  : _Units.nanometer2,
+                         "ANGSTROM3"   : _Units.angstrom2,
+                         "PICOMETER3"  : _Units.picometer2 }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M"  : "METER",
-                       "CM" : "CENTIMETER",
-                       "MM" : "MILLIMETER",
-                       "NM" : "NANOMETER",
-                       "A"  : "ANGSTROM",
-                       "PM" : "PICOMETER" }
+    _abbreviations = { "M3"  : "METER3",
+                       "NM3" : "NANOMETER3",
+                       "A3"  : "ANGSTROM3",
+                       "PM3" : "PICOMETER3" }
 
     def __init__(self, magnitude, unit):
         """Constructor.
@@ -57,9 +53,9 @@ class Length:
         else:
             raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-        # Don't support negative lengths.
+        # Don't support negative volumes.
         if magnitude < 0:
-            raise ValueError("The length cannot be negative!")
+            raise ValueError("The volume cannot be negative!")
 
         # Check that the unit is supported.
         self._unit = self._validate_unit(unit)
@@ -71,8 +67,8 @@ class Length:
             self._abbrev = self._unit.lower()
 
         # Handle Angstrom separately.
-        if self._abbrev == "a":
-            self._abbrev = "A"
+        if self._abbrev == "a3":
+            self._abbrev = "A3"
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -84,35 +80,35 @@ class Length:
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._magnitude > 1e6 or self._magnitude < 1e-6:
-            return "BioSimSpace.Types.Length(%.4e, '%s')" % (self._magnitude, self._abbrev)
+            return "BioSimSpace.Types.Volume(%.4e, '%s')" % (self._magnitude, self._abbrev)
         else:
-            return "BioSimSpace.Types.Length(%f, '%s')" % (self._magnitude, self._abbrev)
+            return "BioSimSpace.Types.Volume(%f, '%s')" % (self._magnitude, self._abbrev)
 
     def __add__(self, other):
         """Addition operator."""
 
         # Add the magnitudes in a common unit.
-        mag = self.angstroms().magnitude() + other.angstroms().magnitude()
+        mag = self.angstroms3().magnitude() + other.angstroms3().magnitude()
 
         # Get new magnitude in the original unit.
         # Left-hand operand takes precedence.
-        mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
+        mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
 
         # Return a new length object.
-        return Length(mag, self._unit)
+        return Volume(mag, self._unit)
 
     def __sub__(self, other):
         """Subtraction operator."""
 
         # Subtract the magnitudes in a common unit.
-        mag = self.angstroms().magnitude() - other.angstroms().magnitude()
+        mag = self.angstroms3().magnitude() - other.angstroms3().magnitude()
 
         # Get new magnitude in the original unit.
         # Left-hand operand takes precedence.
-        mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
+        mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
 
-        # Return a new length object.
-        return Length(mag, self._unit)
+        # Return a new Volume object.
+        return Volume(mag, self._unit)
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -124,17 +120,7 @@ class Length:
         # Multiplication by float.
         if type(other) is float:
             mag = self._magnitude * other
-            return Length(mag, self._unit)
-
-        # Multiplication by another Length.
-        elif type(other) is Length:
-            mag = self.angstroms().magnitude() * other.angstroms().magnitude()
-            return _Area(mag, "A2")
-
-        # Multiplication by an Area.
-        elif type(other) is _Area:
-            mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
-            return _Volume(mag, "A3")
+            return Volume(mag, self._unit)
 
         else:
             raise NotImplementedError
@@ -149,17 +135,7 @@ class Length:
         # Multiplication by float.
         if type(other) is float:
             mag = self._magnitude * other
-            return Length(mag, self._unit)
-
-        # Multiplication by another Length.
-        elif type(other) is Length:
-            mag = self.angstroms().magnitude() * other.angstroms().magnitude()
-            return _Area(mag, "A2")
-
-        # Multiplication by an Area.
-        elif type(other) is _Area:
-            mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
-            return _Volume(mag, "A3")
+            return Volume(mag, self._unit)
 
         else:
             raise NotImplementedError
@@ -174,38 +150,48 @@ class Length:
         # Float division.
         if type(other) is float:
             mag = self._magnitude / other
-            return Length(mag, self._unit)
+            return Volume(mag, self._unit)
 
-        # Division by another Length.
-        elif type(other) is Length:
-            return self.angstroms().magnitude() / other.angstroms().magnitude()
+        # Division by another Volume.
+        elif type(other) is Volume:
+            return self.angstroms3().magnitude() / other.angstroms3().magnitude()
+
+        # Division by an Area.
+        elif type(other) is _Area:
+            mag = self.angstroms3().magnitude() / other.angstroms2().magnitude()
+            return _Length(mag, "A")
+
+        # Division by a Length.
+        elif type(other) is _Length:
+            mag = self.angstroms3().magnitude() / other.angstroms().magnitude()
+            return _Area(mag, "A2")
 
         else:
             raise NotImplementedError
 
     def __lt__(self, other):
         """Less than operator."""
-        return self.angstroms().magnitude() < other.angstroms().magnitude()
+        return self.angstroms3().magnitude() < other.angstroms3().magnitude()
 
     def __le__(self, other):
         """Less than or equal to operator."""
-        return self.angstroms().magnitude() <= other.angstroms().magnitude()
+        return self.angstroms3().magnitude() <= other.angstroms3().magnitude()
 
     def __eq__(self, other):
         """Equals to operator."""
-        return self.angstroms().magnitude() == other.angstroms().magnitude()
+        return self.angstroms3().magnitude() == other.angstroms3().magnitude()
 
     def __ne__(self, other):
         """Not equals to operator."""
-        return self.angstroms().magnitude() != other.angstroms().magnitude()
+        return self.angstroms3().magnitude() != other.angstroms3().magnitude()
 
     def __ge__(self, other):
         """Greater than or equal to operator."""
-        return self.angstroms().magnitude() >= other.angstroms().magnitude()
+        return self.angstroms3().magnitude() >= other.angstroms3().magnitude()
 
     def __gt__(self, other):
         """Gretear than operator."""
-        return self.angstroms().magnitude() > other.angstroms().magnitude()
+        return self.angstroms3().magnitude() > other.angstroms3().magnitude()
 
     def magnitude(self):
         """Return the magnitude."""
@@ -215,49 +201,37 @@ class Length:
         """Return the unit."""
         return self._unit
 
-    def meters(self):
-        """Return the length in meters."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.meter), "METER")
+    def meters3(self):
+        """Return the volume in cubic meters."""
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.meter2), "METER3")
 
-    def centimeters(self):
-        """Return the length in centimeters."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.centimeter), "CENTIMETER")
+    def nanometers3(self):
+        """Return the volume in cubic nanometers."""
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer2), "NANOMETER3")
 
-    def millimeters(self):
-        """Return the length in millimeters."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.millimeter), "MILLIMETER")
+    def angstroms3(self):
+        """Return the volume in cubic angstroms."""
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom2), "ANGSTROM3")
 
-    def nanometers(self):
-        """Return the length in nanometers."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer), "NANOMETER")
-
-    def angstroms(self):
-        """Return the length in angstroms."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom), "ANGSTROM")
-
-    def picometers(self):
-        """Return the length in picometers."""
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer), "PICOMETER")
+    def picometers3(self):
+        """Return the volume in cubic picometers."""
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER3")
 
     def _convert_to(self, unit):
-        """Return the length in a different unit.
+        """Return the volume in a different unit.
 
            Positional arguments:
 
            unit -- The unit to convert to.
         """
-        if unit == "METER":
-            return self.meters()
-        elif unit == "CENTIMETER":
-            return self.centimeters()
-        elif unit == "MILLIMETER":
-            return self.millimeters()
-        elif unit == "NANOMETER":
-            return self.nanometers()
-        elif unit == "ANGSTROM":
-            return self.angstroms()
-        elif unit == "PICOMETER":
-            return self.picometers()
+        if unit == "METER3":
+            return self.meters3()
+        elif unit == "NANOMETER3":
+            return self.nanometers3()
+        elif unit == "ANGSTROM3":
+            return self.angstroms3()
+        elif unit == "PICOMETER3":
+            return self.picometers3()
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
@@ -281,4 +255,4 @@ class Length:
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area
-from ._volume import Volume as _Volume
+from ._length import Length as _Length
