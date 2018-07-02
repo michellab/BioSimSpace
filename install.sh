@@ -219,3 +219,9 @@ fi
 
 echo "Installation complete!"
 echo "You'll need to run 'source ~/.biosimspacerc' or restart your shell for aliases to take effect."
+
+echo
+echo "For additional support, please install the following packages..."
+echo "AMBER:   http://ambermd.org"
+echo "GROMACS: http://www.gromacs.org"
+echo "NAMD:    http://www.ks.uiuc.edu/Research/namd"
