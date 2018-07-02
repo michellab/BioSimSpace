@@ -40,6 +40,7 @@ import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
+import warnings as _warnings
 
 # Search for the gmx exe.
 
@@ -47,88 +48,94 @@ _gmx_exe = "%s/gmx" % _bin_dir
 if not _os.path.isfile(_gmx_exe):
     _gmx_exe = _Sire.Base.findExe("gmx").absoluteFilePath()
 
-def spc(molecule=None, box=None):
+def spc(molecule=None, box=None, shell=None):
     """Add SPC solvent.
 
        Keyword arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     # Validate arguments.
-    molecule, box = _validate_input(molecule, box)
+    molecule, box, shell = _validate_input(molecule, box, shell)
 
     # Create the solvated system.
     return _solvate(molecule, box, "spc", 3)
 
-def spce(molecule=None, box=None):
+def spce(molecule=None, box=None, shell=None):
     """Add SPC/E solvent.
 
        Keyword arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     # Validate arguments.
-    molecule, box = _validate_input(molecule, box)
+    molecule, box, shell = _validate_input(molecule, box, shell)
 
     # Create the solvated system.
-    return _solvate(molecule, box, "spce", 3)
+    return _solvate(molecule, box, shell, "spce", 3)
 
-def tip3p(molecule=None, box=None):
+def tip3p(molecule=None, box=None, shell=None):
     """Add TIP3P solvent.
 
        Keyword arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     # Validate arguments.
-    molecule, box = _validate_input(molecule, box)
+    molecule, box, shell = _validate_input(molecule, box, shell)
 
     # Create the solvated system.
-    return _solvate(molecule, box, "tip3p", 3)
+    return _solvate(molecule, box, shell, "tip3p", 3)
 
-def tip4p(molecule=None, box=None):
+def tip4p(molecule=None, box=None, shell=None):
     """Add TIP4P solvent.
 
        Keyword arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimenion (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     # Validate arguments.
-    molecule, box = _validate_input(molecule, box)
+    molecule, box, shell = _validate_input(molecule, box, shell)
 
     # Return the solvated system.
-    return _solvate(molecule, box, "tip4p", 4)
+    return _solvate(molecule, box, shell, "tip4p", 4)
 
-def tip5p(molecule=None, box=None):
+def tip5p(molecule=None, box=None, shell=None):
     """Add TIP5P solvent.
 
        Keyword arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimenion (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     # Validate arguments.
-    molecule, box = _validate_input(molecule, box)
+    molecule, box, shell = _validate_input(molecule, box, shell)
 
     # Return the solvated system.
-    return _solvate(molecule, box, "tip5p", 5)
+    return _solvate(molecule, box, shell, "tip5p", 5)
 
-def _validate_input(molecule, box):
+def _validate_input(molecule, box, shell):
     """Internal function to validate function arguments.
 
        Positional arguments:
 
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
+       shell    -- Thickness of the water shell around the solute.
     """
 
     if molecule is not None:
@@ -152,6 +159,10 @@ def _validate_input(molecule, box):
         if box is None:
             raise ValueError("Missing 'box' keyword argument!")
 
+        if shell is not None:
+            _warnings.warn("Ignoring 'shell' keyword argument as solute is missing.")
+            shell = None
+
     if box is not None:
         if len(box) != 3:
             raise ValueError("The 'box' must have x, y, and z size information.")
@@ -159,15 +170,20 @@ def _validate_input(molecule, box):
             if not all(isinstance(x, _Length) for x in box):
                 raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
-    return (molecule, box)
+    if shell is not None:
+        if type(shell) is not _Length:
+            raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
-def _solvate(molecule, box, model, num_point, work_dir=None):
+    return (molecule, box, shell)
+
+def _solvate(molecule, box, shell, model, num_point, work_dir=None):
     """Internal function to add solvent using 'gmx solvate'.
 
        Positional arguments:
 
        molecule  -- A molecule, or system of molecules.
        box       -- A list containing the box size in each dimension (in nm).
+       shell     -- Thickness of the water shell around the solute.
        model     -- The name of the water model.
        num_point -- The number of points in the model.
 
@@ -218,6 +234,10 @@ def _solvate(molecule, box, model, num_point, work_dir=None):
             command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
                                            box[1].nanometers().magnitude(),
                                            box[2].nanometers().magnitude())
+
+        # Add the shell information.
+        if shell is not None:
+            command += " -shell %f" % shell.nanometers().magnitude()
 
     # Just add box information.
     else:
