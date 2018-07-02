@@ -230,7 +230,7 @@ class Time:
         return Time((self._magnitude * self._supported_units[self._unit]).to(_Units.femtosecond), "FEMTOSECOND")
 
     def _convert_to(self, unit):
-        """Return the temperature in a different unit.
+        """Return the time in a different unit.
 
            Positional arguments:
 
