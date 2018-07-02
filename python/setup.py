@@ -63,18 +63,6 @@ finally:
     command = "%s/conda install -y -q mdanalysis" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: ambertools")
-    command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Installing package: gromacs")
-    command = "%s/conda install -y -q -c bioconda gromacs" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Installing package: icu")
-    command = "%s/conda install -y -q icu" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
     print("Installing package: openbabel")
     command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
