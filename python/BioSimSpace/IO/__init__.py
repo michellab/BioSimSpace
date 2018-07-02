@@ -161,9 +161,9 @@ def saveMolecules(filebase, system, fileformat, map={}):
 
        Keyword arguments:
 
-       map   -- A dictionary that maps system "properties" to their user defined
-                values. This allows the user to refer to properties with their
-                own naming scheme, e.g. { "charge" : "my-charge" }
+       map        -- A dictionary that maps system "properties" to their user
+                     defined values. This allows the user to refer to properties
+                     with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Add the GROMACS topology file path.
