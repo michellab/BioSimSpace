@@ -140,6 +140,8 @@ def _validate_input(molecule, box):
         if type(molecule) is _System and box is None:
             try:
                 box = system.property("space").dimensions()
+                # Convert to a list of Length objects.
+                box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
                 raise ValueError("The system has no box information. Please use "
                     + "the 'box' keyword argument.")
@@ -275,6 +277,9 @@ def _solvate(molecule, box, model, num_point, work_dir=None):
                 system = molecule.addMolecules(water.getMolecules())
             else:
                 system = molecule + water.getMolecules()
+
+                # Add the space property from the water system.
+                system._sire_system.setProperty("space", water._sire_system.property("space"))
         else:
             system = water
 
