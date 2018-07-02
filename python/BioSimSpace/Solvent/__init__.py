@@ -272,10 +272,13 @@ def _solvate(molecule, box, model, num_point, work_dir=None):
         water = _IO.readMolecules(["water.gro", "water.top"])
 
         # Create a new system by adding the water to the original molecule.
-        if type(molecule) is _System:
-            system = molecule.addMolecules(water.getMolecules())
+        if molecule is not None:
+            if type(molecule) is _System:
+                system = molecule.addMolecules(water.getMolecules())
+            else:
+                system = molecule + water.getMolecules()
         else:
-            system = molecule + water.getMolecules()
+            system = water
 
         # Change back to the original directory.
         if work_dir is not None:
