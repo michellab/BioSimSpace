@@ -64,15 +64,23 @@ class Molecule():
     def __add__(self, other):
         """Addition operator."""
 
+        # Create a list of molecules.
+        molecules = [self]
+
         # Validate the input.
-        if type(other) is not Molecule:
-            raise TypeError("'other' must be of type 'BioSimSpace.Molecule'")
+        if type(other) is Molecule:
+            molecules.append(other)
+        elif type(other) is list and all(isinstance(x, Molecule) for x in other):
+            molecules.extend(other)
+        else:
+            raise TypeError("'other' must be of type 'BioSimSpace.Molecule', or a list "
+                + "of 'BioSimSpace.Molecule' types")
 
         # Create a new system.
         system = _System(_SireSystem.System("BioSimSpace System"))
 
-        # Add the two molecules to the system.
-        system.addMolecules([self, other])
+        # Add the molecules to the system.
+        system.addMolecules(molecules)
 
         # Return the system.
         return system
