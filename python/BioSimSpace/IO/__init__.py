@@ -125,10 +125,6 @@ def readMolecules(files, map={}):
                 own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
-    # Add the GROMACS topology file path.
-    if "GROMACS_PATH" not in map:
-        map["GROMACS_PATH"] = _gromacs_path
-
     # Convert to a list.
     if type(files) is str:
         files = [files]
@@ -141,6 +137,14 @@ def readMolecules(files, map={}):
             raise ValueError("The list of input files is empty!")
     else:
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+
+    # Validate the map.
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
+    # Add the GROMACS topology file path.
+    if "GROMACS_PATH" not in map:
+        map["GROMACS_PATH"] = _gromacs_path
 
     # Try to read the files and return a molecular system.
     try:
@@ -166,17 +170,13 @@ def saveMolecules(filebase, system, fileformat, map={}):
                      with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
-    # Add the GROMACS topology file path.
-    if "GROMACS_PATH" not in map:
-        map["GROMACS_PATH"] = _gromacs_path
-
     # Check that the filebase is a string.
     if type(filebase) is not str:
         raise TypeError("'filebase' must be of type 'str'")
 
     # Check that that the system is of the correct type.
 
-    # A Mystem object.
+    # A System object.
     if type(system) is _System:
         pass
     # A Molecule object.
@@ -221,6 +221,17 @@ def saveMolecules(filebase, system, fileformat, map={}):
             raise ValueError("Unsupported file format '%s'. Supported formats "
                 "are: %s." % (format, str(_formats)))
 
+    # Validate the map.
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
+    # Copy the map.
+    _map = map.copy()
+
+    # Add the GROMACS topology file path.
+    if "GROMACS_PATH" not in _map:
+        _map["GROMACS_PATH"] = _gromacs_path
+
     # We have a list of molecules. Create a new system and add each molecule.
     if type(system) is list:
 
@@ -244,11 +255,10 @@ def saveMolecules(filebase, system, fileformat, map={}):
     # Save the system using each file format.
     for format in formats:
         # Add the file format to the property map.
-        _map = map
-        map["fileformat"] = _SireBase.wrap(format)
+        _map["fileformat"] = _SireBase.wrap(format)
 
         # Write the file.
-        file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, map)
+        file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
         files += file
 
     return files

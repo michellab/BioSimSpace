@@ -96,9 +96,23 @@ class System():
         """Return the number of molecules in the system."""
         return self._sire_system.nMolecules()
 
-    def fileFormat(self):
-        """Return the file formats associated with the system."""
-        return self._sire_system.property("fileformat").value()
+    def fileFormat(self, map={}):
+        """Return the file formats associated with the system.
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        if type(map) is not dict:
+            raise TypeError("'map' must be of type 'dict'")
+
+        if "fileformat" in map:
+            prop = map["fileformat"]
+        else:
+            prop = "fileformat"
+
+        return self._sire_system.property(prop).value()
 
     def addMolecules(self, molecules):
         """Add a molecule, or list of molecules to the system.

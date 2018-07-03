@@ -93,8 +93,19 @@ if not _os.path.isfile(_gmx_exe):
 class Protocol():
     """A base class for parameterisation protocols."""
 
-    def __init__(self, forcefield):
-        """Constructor."""
+    def __init__(self, forcefield, map={}):
+        """Constructor.
+
+           Positional arguments:
+
+           forcefield -- The name of the force field.
+
+           Keyword arguments:
+
+           map        -- A dictionary that maps system "properties" to their user defined
+                         values. This allows the user to refer to properties with their
+                         own naming scheme, e.g. { "charge" : "my-charge" }
+        """
 
 	# Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
@@ -105,6 +116,12 @@ class Protocol():
             raise TypeError("'forcefield' must be of type 'str'")
         else:
             self._forcefield = forcefield
+
+        # Validate and set the property map.
+        if type(map) is not dict:
+            raise TypeError("'map' must be of type 'dict'")
+        else:
+            self._map = map.copy()
 
         # Set default compatability flags for the utility programs.
         # These must be overridden in the constructor of any derived classes.
@@ -184,7 +201,7 @@ class Protocol():
             # Make the molecule 'mol' compatible with 'par_mol'. This will create
             # a mapping between atom indices in the two molecules and add all of
             # the new properties from 'par_mol' to 'mol'.
-            new_mol._makeCompatibleWith(par_mol, overwrite=True, verbose=False)
+            new_mol._makeCompatibleWith(par_mol, map=self._map, overwrite=True, verbose=False)
 
             if queue is not None:
                 queue.put(new_mol)

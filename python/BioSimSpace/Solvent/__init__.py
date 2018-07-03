@@ -48,7 +48,7 @@ _gmx_exe = "%s/gmx" % _bin_dir
 if not _os.path.isfile(_gmx_exe):
     _gmx_exe = _Sire.Base.findExe("gmx").absoluteFilePath()
 
-def spc(molecule=None, box=None, shell=None):
+def spc(molecule=None, box=None, shell=None, map={}):
     """Add SPC solvent.
 
        Keyword arguments:
@@ -56,10 +56,13 @@ def spc(molecule=None, box=None, shell=None):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell)
+    molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, "spc", 3)
@@ -72,10 +75,13 @@ def spce(molecule=None, box=None, shell=None):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell)
+    molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "spce", 3)
@@ -88,10 +94,13 @@ def tip3p(molecule=None, box=None, shell=None):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell)
+    molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "tip3p", 3)
@@ -104,10 +113,13 @@ def tip4p(molecule=None, box=None, shell=None):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimenion (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell)
+    molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Return the solvated system.
     return _solvate(molecule, box, shell, "tip4p", 4)
@@ -120,15 +132,18 @@ def tip5p(molecule=None, box=None, shell=None):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimenion (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell)
+    molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Return the solvated system.
     return _solvate(molecule, box, shell, "tip5p", 5)
 
-def _validate_input(molecule, box, shell):
+def _validate_input(molecule, box, shell, map):
     """Internal function to validate function arguments.
 
        Positional arguments:
@@ -136,6 +151,9 @@ def _validate_input(molecule, box, shell):
        molecule -- A molecule, or system of molecules.
        box      -- A list containing the box size in each dimension (in nm).
        shell    -- Thickness of the water shell around the solute.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if molecule is not None:
@@ -146,7 +164,11 @@ def _validate_input(molecule, box, shell):
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None:
             try:
-                box = system.property("space").dimensions()
+                if "space" in map:
+                    prop = map["space"]
+                else:
+                    prop = "space"
+                box = system.property(prop).dimensions()
                 # Convert to a list of Length objects.
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
@@ -174,9 +196,12 @@ def _validate_input(molecule, box, shell):
         if type(shell) is not _Length:
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     return (molecule, box, shell)
 
-def _solvate(molecule, box, shell, model, num_point, work_dir=None):
+def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
     """Internal function to add solvent using 'gmx solvate'.
 
        Positional arguments:
@@ -190,6 +215,9 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None):
        Keyword arguments:
 
        work_dir -- The working directory for the process.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Create a hash for the solvation run.
@@ -298,8 +326,13 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None):
             else:
                 system = molecule + water.getMolecules()
 
+                if "space" in map:
+                    prop = map["space"]
+                else:
+                    prop = "space"
+
                 # Add the space property from the water system.
-                system._sire_system.setProperty("space", water._sire_system.property("space"))
+                system._sire_system.setProperty(prop, water._sire_system.property(prop))
         else:
             system = water
 

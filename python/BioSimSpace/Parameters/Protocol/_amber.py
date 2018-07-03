@@ -44,11 +44,18 @@ __all__ = ["FF03", "FF99", "FF99SB", "FF14SB", "GAFF", "GAFF2"]
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self):
-        """Constructor."""
+    def __init__(self, map={}):
+        """Constructor.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
 
         # Call the base class constructor.
-        super().__init__(forcefield="ff03")
+        super().__init__(forcefield="ff03", map=map)
 
         # Set the compatibility flags.
         self._tleap = True
@@ -57,11 +64,18 @@ class FF03(_protocol.Protocol):
 class FF99(_protocol.Protocol):
     """A class for handling protocols for the FF99 force field model."""
 
-    def __init__(self):
-        """Constructor."""
+    def __init__(self, map={}):
+        """Constructor.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
 
         # Call the base class constructor.
-        super().__init__(forcefield="ff99")
+        super().__init__(forcefield="ff99", map=map)
 
         # Set the compatibility flags.
         self._tleap = True
@@ -70,11 +84,18 @@ class FF99(_protocol.Protocol):
 class FF99SB(_protocol.Protocol):
     """A class for handling protocols for the FF99SB force field model."""
 
-    def __init__(self):
-        """Constructor."""
+    def __init__(self, map={}):
+        """Constructor.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
 
         # Call the base class constructor.
-        super().__init__(forcefield="ff99SB")
+        super().__init__(forcefield="ff99SB", map=map)
 
         # Set the compatibility flags.
         self._tleap = True
@@ -84,10 +105,17 @@ class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
     def __init__(self):
-        """Constructor."""
+        """Constructor.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
 
         # Call the base class constructor.
-        super().__init__(forcefield="ff14SB")
+        super().__init__(forcefield="ff14SB", map=map)
 
         # Set the compatibility flags.
         self._tleap = True
@@ -103,12 +131,15 @@ class GAFF(_protocol.Protocol):
                         "ESP",
                         "GAS" ]
 
-    def __init__(self, charge_method="BCC"):
+    def __init__(self, charge_method="BCC", map={}):
         """Constructor.
 
            Keyword arguments:
 
            charge_method -- The method to use when calculating atomic charges.
+           map           -- A dictionary that maps system "properties" to their user defined
+                            values. This allows the user to refer to properties with their
+                            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         if type(charge_method) is not str:
@@ -126,7 +157,7 @@ class GAFF(_protocol.Protocol):
         self._charge_method = charge_method
 
         # Call the base class constructor.
-        super().__init__(forcefield="gaff")
+        super().__init__(forcefield="gaff", map=map)
 
         self._version = 1
 
@@ -259,7 +290,7 @@ class GAFF(_protocol.Protocol):
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of
                     # the new properties from 'par_mol' to 'mol'.
-                    new_mol._makeCompatibleWith(par_mol, overwrite=True, verbose=False)
+                    new_mol._makeCompatibleWith(par_mol, map=self._map, overwrite=True, verbose=False)
 
                 else:
                     new_mol = None
@@ -286,12 +317,15 @@ class GAFF2(_protocol.Protocol):
     chargeMethods = GAFF.chargeMethods
     chargeMethod = GAFF.chargeMethod
 
-    def __init__(self, charge_method="BCC"):
+    def __init__(self, charge_method="BCC", map={}):
         """Constructor.
 
            Keyword arguments:
 
            charge_method -- The method to use when calculating atomic charges.
+           map           -- A dictionary that maps system "properties" to their user defined
+                            values. This allows the user to refer to properties with their
+                            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Strip whitespace and convert to upper case.

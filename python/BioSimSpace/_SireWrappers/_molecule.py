@@ -182,13 +182,21 @@ class Molecule():
         props0 = mol0.propertyKeys()
         props1 = mol1.propertyKeys()
 
+        # Copy the property map.
+        _map = map.copy()
+
         # See if any of the new properties are in the map, add them if not.
         for prop in props1:
-            if not prop in map:
-                map[prop] = prop
+            if not prop in _map:
+                _map[prop] = prop
 
         # Make the molecule editable.
         edit_mol = mol0.edit()
+
+        if "parameters" in _map:
+            param = _map["parameters"]
+        else:
+            param = "parameters"
 
         # The atom order is the same, simply copy across properties as is.
         if not is_reordered:
@@ -197,15 +205,15 @@ class Molecule():
             # Loop over all of the keys in the new molecule.
             for prop in props1:
                 # Skip 'parameters' property, since it contains references to other parameters.
-                if prop != "parameters":
+                if prop != param:
                     # This is a new property, or we are allowed to overwrite.
-                    if (not mol0.hasProperty(map[prop])) or overwrite:
+                    if (not mol0.hasProperty(_map[prop])) or overwrite:
                         if verbose:
-                            print("  %s" % map[prop])
+                            print("  %s" % _map[prop])
                         try:
-                            edit_mol = edit_mol.setProperty(map[prop], mol1.property(prop))
+                            edit_mol = edit_mol.setProperty(_map[prop], mol1.property(prop))
                         except:
-                            raise IncompatibleError("Failed to set property '%s'" % map[prop])
+                            raise IncompatibleError("Failed to set property '%s'" % _map[prop])
 
         # The atom order is different, we need to map the atoms when setting properties.
         else:
@@ -222,20 +230,20 @@ class Molecule():
             # Loop over all of the keys in the new molecule.
             for prop in props1:
                 # This is a new property, or we are allowed to overwrite.
-                if (not mol0.hasProperty(map[prop])) or overwrite:
+                if (not mol0.hasProperty(_map[prop])) or overwrite:
                     # Loop over all of the atom mapping pairs and set the property.
                     for idx0, idx1 in matches.items():
                         # Does the atom have this property?
                         # If so, add it to the matching atom in this molecule.
                         if mol1.atom(idx1).hasProperty(prop):
                             if verbose:
-                                print("  %-20s %s --> %s" % (map[prop], idx1, idx0))
+                                print("  %-20s %s --> %s" % (_map[prop], idx1, idx0))
                             try:
-                                edit_mol = edit_mol.atom(idx0).setProperty(map[prop], mol1.atom(idx1).property(prop)).molecule()
+                                edit_mol = edit_mol.atom(idx0).setProperty(_map[prop], mol1.atom(idx1).property(prop)).molecule()
                                 seen_prop[prop] = True
                             except:
                                 raise IncompatibleError("Failed to copy property '%s' from %s to %s."
-                                    % (map[prop], idx1, idx0))
+                                    % (_map[prop], idx1, idx0))
 
             # Now deal with all unseen properties. These will be non atom-based
             # properties, such as TwoAtomFunctions, StringProperty, etc.
@@ -249,18 +257,18 @@ class Molecule():
                     # Skip 'parameters' property, since it contains references to other parameters.
                     if prop != "parameters":
                         # This is a new property, or we are allowed to overwrite.
-                        if (not mol0.hasProperty(map[prop])) or overwrite:
+                        if (not mol0.hasProperty(_map[prop])) or overwrite:
                             if verbose:
-                                print("  %s" % map[prop])
+                                print("  %s" % _map[prop])
                             # Try to match with atoms in the original molecule.
                             try:
-                                edit_mol.setProperty(map[prop], mol1.property(prop).makeCompatibleWith(mol0, matches))
+                                edit_mol.setProperty(_map[prop], mol1.property(prop).makeCompatibleWith(mol0, matches))
                             # This is probably just a molecule property, such as a forcefield definition.
                             except AttributeError:
                                 try:
-                                    edit_mol.setProperty(map[prop], mol1.property(prop))
+                                    edit_mol.setProperty(_map[prop], mol1.property(prop))
                                 except:
-                                    raise IncompatibleError("Failed to set property '%s'" % map[prop])
+                                    raise IncompatibleError("Failed to set property '%s'" % _map[prop])
 
         # Finally, rename the atoms.
 

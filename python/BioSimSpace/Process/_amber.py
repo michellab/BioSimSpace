@@ -123,7 +123,7 @@ class Amber(_process.Process):
     """A class for running simulations using AMBER."""
 
     def __init__(self, system, protocol, exe=None, name="amber",
-            work_dir=None, seed=None):
+            work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
@@ -137,10 +137,13 @@ class Amber(_process.Process):
            name     -- The name of the process.
            work_dir -- The working directory for the process.
            seed     -- A random number seed.
+           map      -- A dictionary that maps system "properties" to their user defined
+                       values. This allows the user to refer to properties with their
+                       own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed)
+        super().__init__(system, protocol, name, work_dir, seed, map)
 
         # Set the package name.
         self._package_name = "AMBER"
@@ -235,10 +238,15 @@ class Amber(_process.Process):
         # Clear the existing configuration list.
         self._config = []
 
+        if "space" in self._map:
+            prop = self._map["space"]
+        else:
+            prop = "space"
+
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system.propertyKeys():
+        if prop in self._system.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")

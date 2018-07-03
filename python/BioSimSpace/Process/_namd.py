@@ -43,7 +43,8 @@ __all__ = ["Namd"]
 class Namd(_process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, seed=None):
+    def __init__(self, system, protocol, exe=None,
+            name="namd", work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
@@ -57,10 +58,13 @@ class Namd(_process.Process):
            name          -- The name of the process.
            work_dir      -- The working directory for the process.
            seed          -- A random number seed.
+           map           -- A dictionary that maps system "properties" to their user defined
+                            values. This allows the user to refer to properties with their
+                            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed)
+        super().__init__(system, protocol, name, work_dir, seed, map)
 
         # Set the package name.
         self._package_name = "NAMD"
@@ -208,13 +212,18 @@ class Namd(_process.Process):
         # Flag that the system doesn't contain a box.
         has_box = False
 
+        if "space" in self._map:
+            prop = self._map["space"]
+        else:
+            prop = "space"
+
         # Check whether the system contains periodic box information.
-        if "space" in self._system.propertyKeys():
+        if prop in self._system.propertyKeys():
             # Flag that we have found a box.
             has_box = True
 
             # Get the box size.
-            box_size = self._system.property("space").dimensions()
+            box_size = self._system.property(prop).dimensions()
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
@@ -227,10 +236,15 @@ class Namd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        if "param_format" in self._map:
+            prop = self._map["param_format"]
+        else:
+            prop = "param_format"
+
         # Check whether the system contains parameter format information.
-        if "param-format" in self._system.propertyKeys():
+        if prop in self._system.propertyKeys():
             # Get the parameter format.
-            if self._system.property("param-format").toString() == "CHARMM":
+            if self._system.property(prop).toString() == "CHARMM":
                 is_charmm = True
             else:
                 is_charmm = False
@@ -356,7 +370,11 @@ class Namd(_process.Process):
                 restrained = _process._restrain_backbone(self._system)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
-                p = PDB2(restrained, {"occupancy" : "restrained"})
+                if "occupancy" in self._map:
+                    prop = self._map["occupancy"]
+                else:
+                    prop = "occupancy"
+                p = PDB2(restrained, {prop : "restrained"})
 
                 # File name for the restraint file.
                 self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)

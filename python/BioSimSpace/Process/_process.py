@@ -54,7 +54,7 @@ class _MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name=None, work_dir=None, seed=None):
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
@@ -67,6 +67,9 @@ class Process():
            name      -- The name of the process.
            work_dir  -- The working directory for the process.
            seed      -- A random number seed.
+           map       -- A dictionary that maps system "properties" to their user defined
+                        values. This allows the user to refer to properties with their
+                        own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -88,6 +91,10 @@ class Process():
         # Check that the seed is valid.
         if seed is not None and type(seed) is not int:
             raise TypeError("'seed' must be of type 'int'")
+
+        # Check that the map is valid.
+        if type(map) is not dict:
+            raise TypeError("'map' must be of type 'dict'")
 
         # Set the process to None.
         self._process = None
@@ -118,6 +125,9 @@ class Process():
         else:
             self._is_seeded = True
             self.setSeed(seed)
+
+        # Set the map.
+        self._map = map.copy()
 
         # Set the timer and running time None.
         self._timer = None
@@ -631,12 +641,15 @@ class Process():
             else:
                 return self._runtime
 
-def _getAABox(system):
+def _getAABox(system, map={}):
     """Get the axis-aligned bounding box for the molecular system.
 
        Keyword arguments:
 
        system -- A Sire molecular system.
+       map    -- A dictionary that maps system "properties" to their user defined
+                 values. This allows the user to refer to properties with their
+                 own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Initialise the coordinates vector.
@@ -647,7 +660,11 @@ def _getAABox(system):
 
         # Extract the atomic coordinates and append them to the vector.
         try:
-            coord.extend(system[n].property("coordinates").toVector())
+            if "coordinates" in map:
+                prop = map["coordinates"]
+            else:
+                prop = "coordinates"
+            coord.extend(system[n].property(prop).toVector())
 
         except UserWarning:
             raise
@@ -655,11 +672,23 @@ def _getAABox(system):
     # Return the AABox for the coordinates.
     return _Sire.Vol.AABox(coord)
 
-def _get_box_size(system):
-    """Get the size of the periodic box."""
+def _get_box_size(system, map={}):
+    """Get the size of the periodic box.
+
+       Keyword arguments:
+
+       system -- A Sire molecular system.
+       map    -- A dictionary that maps system "properties" to their user defined
+                 values. This allows the user to refer to properties with their
+                 own naming scheme, e.g. { "charge" : "my-charge" }
+    """
 
     try:
-        box = system.property("space")
+        if "space" in map:
+            prop = map["space"]
+        else:
+            prop = "space"
+        box = system.property(prop)
         return box.dimensions()
 
     except UserWarning:
