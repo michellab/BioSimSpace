@@ -36,7 +36,7 @@ download() {
 }
 
 # Current Sire version.
-SIRE_VER=201811
+SIRE_VER=201820
 
 # Store the current directory.
 CURR_DIR=$(pwd)
