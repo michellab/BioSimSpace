@@ -26,7 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
-from BioSimSpace import _amber_home, _bin_dir
+from BioSimSpace import _amber_home
 from . import _process
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -159,20 +159,11 @@ class Amber(_process.Process):
         if exe is None:
             # Search AMBERHOME, if set.
             if _amber_home is not None:
-                if _os.path.isfile("%s/bin/sander" % _amber_home):
-                    self._exe = "%s/bin/sander" % _amber_home
-
-            # Search Sire bin directory.
-            else:
-                exe = "%s/sander" % _bin_dir
-
+                exe = "%s/bin/sander" % _amber_home
                 if _os.path.isfile(exe):
                     self._exe = exe
-
-                # Search system PATH.
                 else:
-                    self._exe = _Sire.Base.findExe("sander").absoluteFilePath()
-
+                    raise IOError("AMBER executable doesn't exist: '%s'" % exe)
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):

@@ -29,24 +29,21 @@ import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
 import Sire.System as _SireSystem
 
+from BioSimSpace import _gromacs_path
+
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob
 from io import StringIO as _StringIO
+from warnings import warn as _warn
 
 import os.path as _path
-import subprocess as _subprocess
 import sys as _sys
-import warnings as _warnings
 
-# Set the bundled GROMACS topology file directory.
-_gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
-
-# Warn if the bundled topology directory is missing.
-if not _path.isdir(_gromacs_path):
-    _warnings.warn("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
+if _gromacs_path is None:
+    _warn("BioSimSpace.IO doesn't have support for GROMACS topology files.")
 
 # Context manager for capturing stdout.
 # Taken from:

@@ -24,11 +24,15 @@ Functionality for parameterising molecules.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from BioSimSpace import _amber_home, _gmx_exe
+
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
+
+from warnings import warn as _warn
 
 def ff99(molecule, options={}, background=True):
     """Parameterise using the ff99 force field.
@@ -41,6 +45,10 @@ def ff99(molecule, options={}, background=True):
 
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
+
+    if _amber_home is None and _gmx_exe is None:
+        _warn("'BioSimSpace.Parameters.ff99' is not supported!")
+        return None
 
     # Validate arguments.
 
@@ -69,6 +77,10 @@ def ff99SB(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
+    if _amber_home is None and _gmx_exe is None:
+        _warn("'BioSimSpace.Parameters.ff99SB' is not supported!")
+        return None
+
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
@@ -95,6 +107,10 @@ def ff03(molecule, options={}, background=True):
 
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
+
+    if _amber_home is None and _gmx_exe is None:
+        _warn("'BioSimSpace.Parameters.ff03' is not supported!")
+        return None
 
     # Validate arguments.
 
@@ -123,6 +139,10 @@ def ff14SB(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
+    if _amber_home is None:
+        _warn("'BioSimSpace.Parameters.ff14SB' is not supported!")
+        return None
+
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
@@ -150,6 +170,10 @@ def gaff(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
+    if _amber_home is None:
+        _warn("'BioSimSpace.Parameters.gaff' is not supported!")
+        return None
+
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
@@ -176,6 +200,10 @@ def gaff2(molecule, options={}, background=True):
 
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
+
+    if _amber_home is None:
+        _warn("'BioSimSpace.Parameters.gaff2' is not supported!")
+        return None
 
     # Validate arguments.
 

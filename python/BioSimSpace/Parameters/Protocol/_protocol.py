@@ -26,7 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
-from BioSimSpace import _amber_home, _bin_dir
+from BioSimSpace import _amber_home, _gmx_exe
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
@@ -37,8 +37,8 @@ import subprocess as _subprocess
 
 __all__ = ["Protocol"]
 
-# Set the bundled tLEaP cmd directory.
-_cmd_dir = _os.path.dirname(_bin_dir) + "/dat/leap/cmd"
+# Set the tLEaP cmd directory.
+_cmd_dir = _os.path.dirname(_amber_home) + "/dat/leap/cmd"
 
 # Search for all of the required executables.
 
@@ -47,48 +47,33 @@ _cmd_dir = _os.path.dirname(_bin_dir) + "/dat/leap/cmd"
 _tleap_exe = None
 
 if _amber_home is not None:
-    if _os.path.isfile("%s/bin/tleap" % _amber_home):
-        _tleap_exe = "%s/bin/tleap" % _amber_home
-
-if _tleap_exe is None:
-    _tleap_exe = "%s/tleap" % _bin_dir
-
-    if not _os.path.isfile(_tleap_exe):
-        _tleap_exe = _Sire.Base.findExe("tleap").absoluteFilePath()
+    _exe = "%s/bin/tleap" % _amber_home
+    if _os.path.isfile(_exe):
+        _tleap_exe = _exe
+    else:
+        raise IOError("Missing tLEaP executable: '%s'" % _exe)
 
 # Search for the Antechamber exe.
 
 _antechamber_exe = None
 
 if _amber_home is not None:
-    if _os.path.isfile("%s/bin/antechamber" % _amber_home):
-        _antechamber_exe = "%s/bin/antechamber" % _amber_home
-
-if _antechamber_exe is None:
-    _antechamber_exe = "%s/antechamber" % _bin_dir
-
-    if not _os.path.isfile(_antechamber_exe):
-        _antechamber_exe = _Sire.Base.findExe("antechamber").absoluteFilePath()
+    _exe = "%s/bin/antechamber" % _amber_home
+    if _os.path.isfile(_exe):
+        _antechamber_exe = _exe
+    else:
+        raise IOError("Missing Antechamber executable: '%s'" % _exe)
 
 # Search for the parmchk exe.
 
 _parmchk_exe = None
 
 if _amber_home is not None:
-    if _os.path.isfile("%s/bin/parmchk2" % _amber_home):
-        _parmchk_exe = "%s/bin/parmchk2" % _amber_home
-
-if _parmchk_exe is None:
-    _parmchk_exe = "%s/parmchk2" % _bin_dir
-
-    if not _os.path.isfile(_parmchk_exe):
-        _parmchk_exe = _Sire.Base.findExe("parmchk2").absoluteFilePath()
-
-# Search for the gmx exe.
-
-_gmx_exe = "%s/gmx" % _bin_dir
-if not _os.path.isfile(_gmx_exe):
-    _gmx_exe = _Sire.Base.findExe("gmx").absoluteFilePath()
+    _exe = "%s/bin/parmchk2" % _amber_home
+    if _os.path.isfile(_exe):
+        _parmchk_exe = _exe
+    else:
+        raise IOError("Missing parmchk executable: '%s'" % _exe)
 
 class Protocol():
     """A base class for parameterisation protocols."""
@@ -169,15 +154,24 @@ class Protocol():
 
         # Parameterise using tLEaP.
         if self._tleap:
-            output = self._run_tleap(molecule)
+            if _tleap_exe is not None:
+                output = self._run_tleap(molecule)
+            else:
+                output = None
 
             # If there was no output, try using pdbgmx
             if output is None:
-                output = self._run_pdb2gmx(molecule)
+                if _gmx_exe:
+                    output = self._run_pdb2gmx(molecule)
+                else:
+                    output = None
 
         # Parameterise using pdb2gmx.
         else:
-            output = self._run_pdb2gmx(molecule)
+            if _gmx_exe:
+                output = self._run_pdb2gmx(molecule)
+            else:
+                return None
 
         # Change back to the original directory.
         if work_dir is not None:

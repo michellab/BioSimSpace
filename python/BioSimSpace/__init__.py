@@ -32,7 +32,6 @@ www.biosimspace.org
 # locate of the Sire binary directory.
 try:
     import Sire
-    _bin_dir = Sire.Base.getBinDir()
     del(Sire)
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
@@ -63,13 +62,58 @@ def _is_interactive():
     except NameError:
         return False      # Probably standard Python interpreter
 
-# Check to see if AMBERHOME is set.
 from os import environ as _environ
+from warnings import warn as _warn
+
+# Check to see if AMBERHOME is set.
 if "AMBERHOME" in _environ:
     _amber_home = _environ.get("AMBERHOME")
 else:
     _amber_home = None
+    _warn("Missing 'AMBERHOME' environment variable.\n "
+        + "Please download and install AMBER from: http://ambermd.org")
 del(_environ)
+
+# Check to see if GROMACS is installed.
+import Sire.Base as _SireBase
+from os import path as _path
+try:
+    _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
+except:
+    _gmx_exe = None
+    _warn("Cannot find 'gmx' executable.\n "
+        + "Please download and install GROMACS from: http://gromacs.org")
+
+# Set the bundled GROMACS topology file directory.
+_gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
+del(_SireBase)
+
+if not _path.isdir(_gromacs_path):
+    # Try using the GROMACS exe to get the location of the data directory.
+    if _gmx_exe is not None:
+
+        import subprocess as _subprocess
+
+        # Generate the shell command.
+        _command = "%s -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % self._exe
+
+        # Run the command.
+        _proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
+
+        # Get the data prefix.
+        if _proc.returncode == 0:
+            _gromacs_path = _proc.stdout.decode("ascii").strip()
+            _not_found = False
+        else:
+            _not_found = True
+
+    if _not_found:
+        _warnings.warn("Could not locate GROMACS topology file directory!")
+
+    del(_command)
+    del(_not_found)
+    del(_proc)
+    del(_subprocess)
 
 from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
@@ -82,8 +126,6 @@ import BioSimSpace.Parameters as Parameters
 import BioSimSpace.Protocol as Protocol
 import BioSimSpace.Solvent as Solvent
 import BioSimSpace.Types as Types
-
-from warnings import warn as _warn
 
 # Top-level functions.
 
@@ -117,3 +159,4 @@ def viewMolecules( files, idxs=None ):
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
+del _warn

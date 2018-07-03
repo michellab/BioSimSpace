@@ -24,9 +24,7 @@ Functionality for solvating molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
-
-from BioSimSpace import _bin_dir
+from BioSimSpace import _gmx_exe
 
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
@@ -42,12 +40,6 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-# Search for the gmx exe.
-
-_gmx_exe = "%s/gmx" % _bin_dir
-if not _os.path.isfile(_gmx_exe):
-    _gmx_exe = _Sire.Base.findExe("gmx").absoluteFilePath()
-
 def spc(molecule=None, box=None, shell=None, map={}):
     """Add SPC solvent.
 
@@ -61,13 +53,17 @@ def spc(molecule=None, box=None, shell=None, map={}):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    if _gmx_exe is None:
+        _warnings.warn("'BioSimSpace.Solvent.spc' is not supported!")
+        return None
+
     # Validate arguments.
     molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, "spc", 3)
 
-def spce(molecule=None, box=None, shell=None):
+def spce(molecule=None, box=None, shell=None, map={}):
     """Add SPC/E solvent.
 
        Keyword arguments:
@@ -80,13 +76,17 @@ def spce(molecule=None, box=None, shell=None):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    if _gmx_exe is None:
+        _warnings.warn("'BioSimSpace.Solvent.spce' is not supported!")
+        return None
+
     # Validate arguments.
     molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "spce", 3)
 
-def tip3p(molecule=None, box=None, shell=None):
+def tip3p(molecule=None, box=None, shell=None, map={}):
     """Add TIP3P solvent.
 
        Keyword arguments:
@@ -99,13 +99,17 @@ def tip3p(molecule=None, box=None, shell=None):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    if _gmx_exe is None:
+        _warnings.warn("'BioSimSpace.Solvent.tip3p' is not supported!")
+        return None
+
     # Validate arguments.
     molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "tip3p", 3)
 
-def tip4p(molecule=None, box=None, shell=None):
+def tip4p(molecule=None, box=None, shell=None, map={}):
     """Add TIP4P solvent.
 
        Keyword arguments:
@@ -118,13 +122,17 @@ def tip4p(molecule=None, box=None, shell=None):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    if _gmx_exe is None:
+        _warnings.warn("'BioSimSpace.Solvent.tip4p' is not supported!")
+        return None
+
     # Validate arguments.
     molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Return the solvated system.
     return _solvate(molecule, box, shell, "tip4p", 4)
 
-def tip5p(molecule=None, box=None, shell=None):
+def tip5p(molecule=None, box=None, shell=None, map={}):
     """Add TIP5P solvent.
 
        Keyword arguments:
@@ -136,6 +144,10 @@ def tip5p(molecule=None, box=None, shell=None):
                    values. This allows the user to refer to properties with their
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
+
+    if _gmx_exe is None:
+        _warnings.warn("'BioSimSpace.Solvent.tip5p' is not supported!")
+        return None
 
     # Validate arguments.
     molecule, box, shell = _validate_input(molecule, box, shell, map)
@@ -260,8 +272,8 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
         # Add the box information.
         if box is not None:
             command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                           box[1].nanometers().magnitude(),
-                                           box[2].nanometers().magnitude())
+                                        box[1].nanometers().magnitude(),
+                                        box[2].nanometers().magnitude())
 
         # Add the shell information.
         if shell is not None:
@@ -270,8 +282,8 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
     # Just add box information.
     else:
         command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                       box[1].nanometers().magnitude(),
-                                       box[2].nanometers().magnitude())
+                                    box[1].nanometers().magnitude(),
+                                    box[2].nanometers().magnitude())
 
     # Add the output file.
     command += " -o output.gro"

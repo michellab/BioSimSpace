@@ -26,7 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from Sire.Base import findExe as _findExe
 
-from BioSimSpace import _amber_home, _bin_dir
+from BioSimSpace import _amber_home
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
@@ -90,21 +90,6 @@ def _find_md_package(system, protocol, use_gpu=True):
                 _exe = "%s/bin/%s" % (_amber_home, exe)
                 if _os.path.isfile(_exe):
                     return (package, _exe)
-
-            # Search within the Sire bin directory.
-            else:
-                _exe = "%s/%s" % (_bin_dir, exe)
-
-                if _os.path.isfile(_exe):
-                    return (package, _exe)
-
-                # Search system PATH.
-                else:
-                    try:
-                        exe = _findExe(exe).absoluteFilePath()
-                        return (package, exe)
-                    except:
-                        pass
 
         # Search system PATH.
         else:
