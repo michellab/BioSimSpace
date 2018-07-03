@@ -39,22 +39,14 @@ from io import StringIO as _StringIO
 import os.path as _path
 import subprocess as _subprocess
 import sys as _sys
+import warnings as _warnings
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
 
-# The directory is missing. GROMACS must not be installed.
+# Warn if the bundled topology directory is missing.
 if not _path.isdir(_gromacs_path):
-    print("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
-
-    # Attempt to install GROMACS.
-    print("Trying to install GROMACS.")
-    command = "%s/conda install -y -q -c bioconda gromacs" % _SireBase.getBinDir()
-    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
-
-    # The installation failed.
-    if proc.returncode != 0:
-        raise RuntimeError("GROMACS installation failed: '%s'" % command)
+    _warnings.warn("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
 
 # Context manager for capturing stdout.
 # Taken from:
