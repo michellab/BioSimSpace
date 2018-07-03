@@ -120,6 +120,6 @@ finally:
     print("\nIf you have problems with Jupyter permissions, try removing '$HOME/.jupyter' or '$HOME/.local/share/jupyter'")
 
     print("\nFor optional package support...")
-    print("\nAMBER:   http://ambermd.org")
-    print("\nGROMACS: http://www.gromacs.org")
-    print("\nNAMD:    http://www.ks.uiuc.edu/Research/namd")
+    print("AMBER:   http://ambermd.org")
+    print("GROMACS: http://www.gromacs.org")
+    print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
