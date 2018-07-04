@@ -26,9 +26,11 @@ not be directly exposed to the user.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
+import Sire.Move as _SireMove
 import Sire.System as _SireSystem
-
+import Sire.Vol as _SireVol
 
 __all__ = ["System"]
 
@@ -244,9 +246,87 @@ class System():
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 
+    def translate(self, vector):
+        """Translate the system.
+
+           Positional arguments:
+
+           vector -- The translation vector.
+        """
+
+        # Validate input.
+        if type(vector) is list:
+            vec = []
+            for x in vector:
+                if type(x) is int:
+                    vec.append(float(x))
+                elif type(x) is float:
+                    vec.append(x)
+                else:
+                    raise TypeError("'vector' must contain 'int' or 'float' types only!")
+        else:
+            raise TypeError("'vector' must be of type 'list'")
+
+        # Translate each of the molecules in the system.
+        for n in self._sire_system.molNums():
+            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec)).commit()
+            self._sire_system.update(mol)
+
     def _getSireSystem(self):
         """Return the full Sire System object."""
         return self._sire_system
+
+    def _getBoxSize(self, map={}):
+        """Get the size of the periodic box.
+
+           Keyword arguments:
+
+           system -- A Sire molecular system.
+           map    -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        try:
+            if "space" in map:
+                prop = map["space"]
+            else:
+                prop = "space"
+            box = self._sire_system.property(prop)
+            return box.dimensions()
+
+        except UserWarning:
+            return None
+
+    def _getAABox(self, map={}):
+        """Get the axis-aligned bounding box for the molecular system.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Initialise the coordinates vector.
+        coord = []
+
+        # Loop over all of the molecules.
+        for n in self._sire_system.molNums():
+
+            # Extract the atomic coordinates and append them to the vector.
+            try:
+                if "coordinates" in map:
+                    prop = map["coordinates"]
+                else:
+                    prop = "coordinates"
+                coord.extend(self._sire_system[n].property(prop).toVector())
+
+            except UserWarning:
+                raise
+
+        # Return the AABox for the coordinates.
+        return _SireVol.AABox(coord)
 
 # Import at bottom of module to avoid circular dependency.
 from ._molecule import Molecule as _Molecule

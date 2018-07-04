@@ -26,9 +26,12 @@ not be directly exposed to the user.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
+import Sire.Move as _SireMove
 import Sire.MM as _SireMM
 import Sire.System as _SireSystem
+import Sire.Vol as _SireVol
 
 __all__ = ["Molecule"]
 
@@ -92,6 +95,30 @@ class Molecule():
     def nResidues(self):
         """Return the number of residues in the molecule."""
         return self._sire_molecule.nResidues()
+
+    def translate(self, vector):
+        """Translate the molecule.
+
+           Positional arguments:
+
+           vector -- The translation vector.
+        """
+
+        # Validate input.
+        if type(vector) is list:
+            vec = []
+            for x in vector:
+                if type(x) is int:
+                    vec.append(float(x))
+                elif type(x) is float:
+                    vec.append(x)
+                else:
+                    raise TypeError("'vector' must contain 'int' or 'float' types only!")
+        else:
+            raise TypeError("'vector' must be of type 'list'")
+
+        # Perform the translation.
+        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
 
     def _getSireMolecule(self):
         """Return the full Sire Molecule object."""
@@ -292,6 +319,33 @@ class Molecule():
 
         # Commit the changes.
         self._sire_molecule = edit_mol.commit()
+
+    def _getAABox(self, map={}):
+        """Get the axis-aligned bounding box for the molecule.
+
+           Keyword arguments:
+
+           map -- A dictionary that maps system "properties" to their user defined
+                  values. This allows the user to refer to properties with their
+                  own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Initialise the coordinates vector.
+        coord = []
+
+        # Extract the atomic coordinates and append them to the vector.
+        try:
+            if "coordinates" in map:
+                prop = map["coordinates"]
+            else:
+                prop = "coordinates"
+            coord.extend(self._sire_molecule.property(prop).toVector())
+
+        except UserWarning:
+            raise
+
+        # Return the AABox for the coordinates.
+        return _SireVol.AABox(coord)
 
 # Import at bottom of module to avoid circular dependency.
 from ._system import System as _System
