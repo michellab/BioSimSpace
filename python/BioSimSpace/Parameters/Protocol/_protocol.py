@@ -38,7 +38,10 @@ import subprocess as _subprocess
 __all__ = ["Protocol"]
 
 # Set the tLEaP cmd directory.
-_cmd_dir = _os.path.dirname(_amber_home) + "/dat/leap/cmd"
+if _amber_home is not None:
+    _cmd_dir = _os.path.dirname(_amber_home) + "/dat/leap/cmd"
+else:
+    _cmd_dir = None
 
 # Search for all of the required executables.
 
