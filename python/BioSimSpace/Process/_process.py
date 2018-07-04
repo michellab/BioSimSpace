@@ -641,59 +641,6 @@ class Process():
             else:
                 return self._runtime
 
-def _getAABox(system, map={}):
-    """Get the axis-aligned bounding box for the molecular system.
-
-       Keyword arguments:
-
-       system -- A Sire molecular system.
-       map    -- A dictionary that maps system "properties" to their user defined
-                 values. This allows the user to refer to properties with their
-                 own naming scheme, e.g. { "charge" : "my-charge" }
-    """
-
-    # Initialise the coordinates vector.
-    coord = []
-
-    # Loop over all of the molecules.
-    for n in system.molNums():
-
-        # Extract the atomic coordinates and append them to the vector.
-        try:
-            if "coordinates" in map:
-                prop = map["coordinates"]
-            else:
-                prop = "coordinates"
-            coord.extend(system[n].property(prop).toVector())
-
-        except UserWarning:
-            raise
-
-    # Return the AABox for the coordinates.
-    return _Sire.Vol.AABox(coord)
-
-def _get_box_size(system, map={}):
-    """Get the size of the periodic box.
-
-       Keyword arguments:
-
-       system -- A Sire molecular system.
-       map    -- A dictionary that maps system "properties" to their user defined
-                 values. This allows the user to refer to properties with their
-                 own naming scheme, e.g. { "charge" : "my-charge" }
-    """
-
-    try:
-        if "space" in map:
-            prop = map["space"]
-        else:
-            prop = "space"
-        box = system.property(prop)
-        return box.dimensions()
-
-    except UserWarning:
-        return None
-
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
