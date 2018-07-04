@@ -88,6 +88,7 @@ del(_SireBase)
 
 if not _path.isdir(_gromacs_path):
     _gromacs_path = None
+    _not_found = None
 
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
@@ -99,6 +100,8 @@ if not _path.isdir(_gromacs_path):
 
         # Run the command.
         _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
+
+        del(_command)
 
         # Get the data prefix.
         if _proc.returncode == 0:
@@ -112,13 +115,14 @@ if not _path.isdir(_gromacs_path):
         else:
             _not_found = True
 
+        del(_path)
+        del(_proc)
+        del(_subprocess)
+
     if _not_found:
         _warn("Could not locate GROMACS topology file directory!")
 
-    del(_command)
     del(_not_found)
-    del(_proc)
-    del(_subprocess)
 
 from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
@@ -164,5 +168,4 @@ def viewMolecules( files, idxs=None ):
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
-del _path
 del _warn
