@@ -211,6 +211,10 @@ def _validate_input(molecule, box, shell, map):
     if type(map) is not dict:
         raise TypeError("'map' must be of type 'dict'")
 
+    # Check that the box is large enough to hold the molecule.
+    if molecule is not None and not _check_box_size(molecule, box):
+        raise ValueError("The 'box' is not large enough to hold the 'molecule'")
+
     return (molecule, box, shell)
 
 def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
@@ -269,8 +273,8 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
         # Add the box information.
         if box is not None:
             command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                        box[1].nanometers().magnitude(),
-                                        box[2].nanometers().magnitude())
+                                           box[1].nanometers().magnitude(),
+                                           box[2].nanometers().magnitude())
 
         # Add the shell information.
         if shell is not None:
@@ -279,8 +283,8 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
     # Just add box information.
     else:
         command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                    box[1].nanometers().magnitude(),
-                                    box[2].nanometers().magnitude())
+                                       box[1].nanometers().magnitude(),
+                                       box[2].nanometers().magnitude())
 
     # Add the output file.
     command += " -o output.gro"
@@ -350,3 +354,27 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
             _os.chdir(dir)
 
         return system
+
+def _check_box_size(molecule, box):
+    """Internal function to check that box is big enough for the molecule.
+
+       Positional arguments:
+
+       molecule -- A molecule, or system of molecules.
+       box      -- A list containing the box size in each dimension (in nm).
+    """
+
+    # Get the axis-aligned bounding box of the molecule/system.
+    aabox = molecule._getAABox()
+
+    # Calculate the box size in each dimension, storing each component as a
+    # length in Angstroms.
+    mol_box = [_Length(2*x," A") for x in aabox.halfExtents()]
+
+    # Make sure the box is big enough in each dimension.
+    for len1, len2 in zip(box, mol_box):
+        if len1 < len2:
+            return False
+
+    # We made it this far, all dimensions are large enough.
+    return True
