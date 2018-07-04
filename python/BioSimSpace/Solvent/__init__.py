@@ -236,6 +236,19 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    # Store the centre of the molecule.
+    center = molecule._getAABox().center()
+
+    # Work out the vector from the centre of the molecule to the centre of the
+    # water box, converting the distance in each direction to Angstroms.
+    vec = []
+    for x, y in zip(box, center):
+        vec.append(0.5*x.angstroms().magnitude() - y)
+
+    # Translate the molecule. This allows us to create a water box
+    # around the molecule.
+    molecule.translate(vec)
+
     # Store the current working directory.
     dir = _os.getcwd()
 
@@ -331,6 +344,11 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
 
         # Load the water box.
         water = _IO.readMolecules(["water.gro", "water.top"])
+
+        # Translate the molecule and water back to the original position.
+        vec = [-x for x in vec]
+        molecule.translate(vec)
+        water.translate(vec)
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
