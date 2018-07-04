@@ -61,7 +61,7 @@ def spc(molecule=None, box=None, shell=None, map={}):
     molecule, box, shell = _validate_input(molecule, box, shell, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, "spc", 3)
+    return _solvate(molecule, box, shell, "spc", 3)
 
 def spce(molecule=None, box=None, shell=None, map={}):
     """Add SPC/E solvent.
@@ -231,9 +231,6 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
                    values. This allows the user to refer to properties with their
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
-
-    # Create a hash for the solvation run.
-    #hash = hash((molecule, box)) % ((_sys.maxsize + 1) * 2)
 
     # Store the current working directory.
     dir = _os.getcwd()
