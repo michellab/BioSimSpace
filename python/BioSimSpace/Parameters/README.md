@@ -1,3 +1,3 @@
 # BioSimSpace.Parameters
 
-This sub-package provides functionality for parameterising molecules.
+This package provides functionality for parameterising molecular systems.
