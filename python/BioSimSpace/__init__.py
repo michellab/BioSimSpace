@@ -87,6 +87,8 @@ _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
 del(_SireBase)
 
 if not _path.isdir(_gromacs_path):
+    _gromacs_path = None
+
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
 
@@ -100,13 +102,18 @@ if not _path.isdir(_gromacs_path):
 
         # Get the data prefix.
         if _proc.returncode == 0:
-            _gromacs_path = _proc.stdout.decode("ascii").strip()
-            _not_found = False
+            _gromacs_path = _proc.stdout.decode("ascii").strip() + "/share/gromacs/top"
+            # Check for the topology file directory.
+            if not _path.isdir(_gromacs_path):
+                _gromacs_path = None
+                _not_found = True
+            else:
+                _not_found = False
         else:
             _not_found = True
 
     if _not_found:
-        _warnings.warn("Could not locate GROMACS topology file directory!")
+        _warn("Could not locate GROMACS topology file directory!")
 
     del(_command)
     del(_not_found)
