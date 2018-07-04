@@ -157,4 +157,5 @@ def viewMolecules( files, idxs=None ):
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
+del _path
 del _warn
