@@ -153,10 +153,10 @@ def viewMolecules( files, idxs=None ):
         files = [files]
 
     print("Reading molecules from '%s'" % files)
-    s = readMolecules(files)
+    s = IO.readMolecules(files)
 
     print("Rendering the molecules...")
-    v = BioSimSpace.Notebook.View(s)
+    v = Notebook.View(s)
 
     if idxs:
         v.molecules(idxs)
@@ -168,4 +168,3 @@ def viewMolecules( files, idxs=None ):
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
-del _warn
