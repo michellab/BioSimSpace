@@ -125,6 +125,36 @@ class System():
         """Return the number of molecules in the system."""
         return self._sire_system.nMolecules()
 
+    def nResidues(self):
+        """Return the number of residues in the system."""
+
+        tally = 0
+
+        for n in self._sire_system.molNums():
+            tally += self._sire_system[n].nResidues()
+
+        return tally
+
+    def nChains(self):
+        """Return the number of chains in the system."""
+
+        tally = 0
+
+        for n in self._sire_system.molNums():
+            tally += self._sire_system[n].nChains()
+
+        return tally
+
+    def nAtoms(self):
+        """Return the number of atoms in the system."""
+
+        tally = 0
+
+        for n in self._sire_system.molNums():
+            tally += self._sire_system[n].nAtoms()
+
+        return tally
+
     def fileFormat(self, map={}):
         """Return the file formats associated with the system.
 
@@ -166,28 +196,18 @@ class System():
             raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
                 + "or a list of 'BioSimSpace.Molecule' types.")
 
+        # Renumber the atoms and residues in the molecules so that they are
+        # consistent with the existing system.
+        molecules = self._renumberMolecules(molecules)
+
+        # The system is empty: create a new Sire system from the molecules.
         if self._sire_system.nMolecules() == 0:
-            # Create a new "all" molecule group.
-            molgrp = _SireMol.MoleculeGroup("all")
-
-            # Add the molecules to the group.
-            for num_mols, mol in enumerate(molecules):
-                # Get the existing molecule.
-                m = mol._getSireMolecule()
-
-                # Renumber the molecule, starting from 1.
-                m = m.edit().renumber(_SireMol.MolNum(num_mols+1)).molecule().commit()
-
-                # Add the molecule.
-                molgrp.add(m)
-
-            # Add the molecule group to the system.
-            self._sire_system.add(molgrp)
+            self._sire_system = self._createSireSystem(molecules)
 
         # Otherwise, add the molecules to the existing "all" group.
         else:
             for mol in molecules:
-                self._sire_system.add(mol._getSireMolecule(), _SireMol.MGName("all"))
+                self._sire_system.add(mol._sire_molecule, _SireMol.MGName("all"))
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -212,9 +232,15 @@ class System():
             raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
                 + "or a list of 'BioSimSpace.Molecule' types.")
 
-        # Remove the molecules to the system.
+        # Remove the molecules in the system.
         for mol in molecules:
-            self._sire_system.remove(mol._getSireMolecule().number())
+            self._sire_system.remove(mol._sire_molecule.number())
+
+        # Renumber all of the molecules and create a new system.
+        molecules = self._renumberMolecules(self.getMolecules(), is_rebuild=True)
+
+        # Create a new Sire system from the molecules.
+        self._sire_system = self._createSireSystem(molecules)
 
     def udpateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -241,7 +267,13 @@ class System():
 
         # Update each of the molecules.
         for mol in molecule:
-            self._sire_system.update(mol._getSireMolecule())
+            self._sire_system.update(mol._sire_molecule)
+
+        # Renumber all of the molecules and create a new system.
+        molecules = self._renumberMolecules(self.getMolecules(), is_rebuild=True)
+
+        # Create a new Sire system from the molecules.
+        self._sire_system = self._createSireSystem(molecules)
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
@@ -373,6 +405,98 @@ class System():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
+
+    def _renumberMolecules(self, molecules, is_rebuild=False):
+        """Helper function to renumber the molecules to be consistent with the
+           system.
+
+           Positional arguments:
+
+           molecules -- A list of Molecule objects.
+        """
+
+        # Renumber everything.
+        if is_rebuild:
+            num_molecules = 0
+            num_residues = 0
+            num_atoms = 0
+
+        # Get the current number of molecules, residues, and atoms.
+        else:
+            num_molecules = self.nMolecules()
+            num_residues = self.nResidues()
+            num_atoms = self.nAtoms()
+
+        # Create a list to hold the modified molecules.
+        new_molecules = []
+
+        # Loop over all of the molecules.
+        for mol in molecules:
+
+            # Create a copy of the molecule.
+            new_mol = _Molecule(mol)
+
+            # Get the Sire molecule and make it editable.
+            edit_mol = new_mol._sire_molecule.edit()
+
+            # Renumber the molecule.
+            edit_mol = edit_mol.renumber(_SireMol.MolNum(num_molecules+1)).molecule()
+            num_molecules += 1
+
+            # A hash mapping between old and new numbers.
+            num_hash = {}
+
+            # Loop over all residues and add them to the hash.
+            for res in edit_mol.residues():
+                num_hash[res.number()] = _SireMol.ResNum(num_residues+1)
+                num_residues += 1
+
+            # Renumber the residues.
+            edit_mol = edit_mol.renumber(num_hash).molecule()
+
+            # Clear the hash.
+            num_hash = {}
+
+            # Loop over all of the atoms and add them to the hash.
+            for atom in edit_mol.atoms():
+                num_hash[atom.number()] = _SireMol.AtomNum(num_atoms+1)
+                num_atoms += 1
+
+            # Renumber the atoms.
+            edit_mol = edit_mol.renumber(num_hash).molecule()
+
+            # Commit the changes and replace the molecule.
+            new_mol._sire_molecule = edit_mol.commit()
+
+            # Append to the list of molecules.
+            new_molecules.append(new_mol)
+
+        # Return the renumbered molecules.
+        return new_molecules
+
+    @staticmethod
+    def _createSireSystem(molecules):
+        """Create a Sire system from a list of molecules.
+
+           Positional arguments:
+
+           molecules -- A list of Molecule objects.
+        """
+
+        # Create an empty Sire System.
+        system = _SireSystem.System("BioSimSpace System")
+
+        # Create a new "all" molecule group.
+        molgrp = _SireMol.MoleculeGroup("all")
+
+        # Add the molecules to the group.
+        for mol in molecules:
+            molgrp.add(mol._sire_molecule)
+
+        # Add the molecule group to the system.
+        system.add(molgrp)
+
+        return system
 
 # Import at bottom of module to avoid circular dependency.
 from ._molecule import Molecule as _Molecule
