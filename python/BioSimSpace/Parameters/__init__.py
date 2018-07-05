@@ -298,6 +298,7 @@ for _var in dir():
         _forcefield_dict[_var] = getattr(_namespace, _var)
 del(_namespace)
 del(_sys)
+del(_var)
 
 def forceFields():
     "Return a list of the supported force fields"
