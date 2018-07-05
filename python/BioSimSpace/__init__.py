@@ -33,7 +33,8 @@ try:
     import Sire
     del(Sire)
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
+    raise ModuleNotFoundError("BioSimSpace currently requires the Sire "
+        + "Python interpreter: www.siremol.org")
 
 # Determine whether we're being imported from a Jupyter notebook.
 def _is_notebook():
@@ -69,7 +70,8 @@ if "AMBERHOME" in _environ:
     _amber_home = _environ.get("AMBERHOME")
 else:
     _amber_home = None
-    _warn("Missing 'AMBERHOME' environment variable. Please download and install AMBER from: http://ambermd.org")
+    _warn("Missing 'AMBERHOME' environment variable. Please download and "
+        + "install AMBER from: http://ambermd.org")
 del(_environ)
 
 # Check to see if GROMACS is installed.
@@ -79,7 +81,8 @@ try:
     _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
 except:
     _gmx_exe = None
-    _warn("Cannot find 'gmx' executable. Please download and install GROMACS from: http://gromacs.org")
+    _warn("Cannot find 'gmx' executable. Please download and install "
+        + "GROMACS from: http://gromacs.org")
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"

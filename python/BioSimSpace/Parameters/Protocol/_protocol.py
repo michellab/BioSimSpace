@@ -50,10 +50,8 @@ if _amber_home is not None:
 _tleap_exe = None
 
 if _amber_home is not None:
-    _exe = "%s/bin/tleap" % _amber_home
-    if _os.path.isfile(_exe):
-        _tleap_exe = _exe
-    else:
+    _tleap_exe = "%s/bin/tleap" % _amber_home
+    if not _os.path.isfile(_tleap_exe):
         raise IOError("Missing tLEaP executable: '%s'" % _exe)
 
 # Search for the Antechamber exe.
@@ -61,10 +59,8 @@ if _amber_home is not None:
 _antechamber_exe = None
 
 if _amber_home is not None:
-    _exe = "%s/bin/antechamber" % _amber_home
-    if _os.path.isfile(_exe):
-        _antechamber_exe = _exe
-    else:
+    _antechamber_exe = "%s/bin/antechamber" % _amber_home
+    if not _os.path.isfile(_antechamber_exe):
         raise IOError("Missing Antechamber executable: '%s'" % _exe)
 
 # Search for the parmchk exe.
@@ -72,10 +68,8 @@ if _amber_home is not None:
 _parmchk_exe = None
 
 if _amber_home is not None:
-    _exe = "%s/bin/parmchk2" % _amber_home
-    if _os.path.isfile(_exe):
-        _parmchk_exe = _exe
-    else:
+    _parmchk_exe = "%s/bin/parmchk2" % _amber_home
+    if not _os.path.isfile(_parmchk_exe):
         raise IOError("Missing parmchk executable: '%s'" % _exe)
 
 class Protocol():

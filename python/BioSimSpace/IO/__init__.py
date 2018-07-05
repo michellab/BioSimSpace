@@ -43,7 +43,8 @@ import os.path as _path
 import sys as _sys
 
 if _gromacs_path is None:
-    _warn("BioSimSpace.IO doesn't have support for GROMACS topology files.")
+    _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+           + "for GROMACS topology file support.")
 
 # Context manager for capturing stdout.
 # Taken from:

@@ -33,6 +33,8 @@ import Sire.MM as _SireMM
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
+from ..Types import Length as _Length
+
 __all__ = ["Molecule"]
 
 class IncompatibleError(Exception):
@@ -101,8 +103,12 @@ class Molecule():
 
            Positional arguments:
 
-           vector -- The translation vector.
+           vector -- The translation vector (in Angstroms).
         """
+
+        # Convert tuple to a list.
+        if type(vector) is tuple:
+            vector = list(vector)
 
         # Validate input.
         if type(vector) is list:
@@ -112,10 +118,13 @@ class Molecule():
                     vec.append(float(x))
                 elif type(x) is float:
                     vec.append(x)
+                elif type(x) is _Length:
+                    vec.append(x.angstroms().magnitude())
                 else:
-                    raise TypeError("'vector' must contain 'int' or 'float' types only!")
+                    raise TypeError("'vector' must contain 'int', 'float', or "
+                        + "'BioSimSpace.Types.Length' types only!")
         else:
-            raise TypeError("'vector' must be of type 'list'")
+            raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
         # Perform the translation.
         self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()

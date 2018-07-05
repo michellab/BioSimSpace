@@ -24,7 +24,7 @@ Functionality for solvating molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from BioSimSpace import _gmx_exe
+from BioSimSpace import _gmx_exe, _gromacs_path
 
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
@@ -40,6 +40,10 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
+if _gmx_exe is None or _gromacs_path is None:
+    _warnings.warn("'BioSimSpace.Solvent' is not supported. Please "
+        + "install GROMACS: http://www.gromacs.org")
+
 def spc(molecule=None, box=None, shell=None, map={}):
     """Add SPC solvent.
 
@@ -53,7 +57,7 @@ def spc(molecule=None, box=None, shell=None, map={}):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
-    if _gmx_exe is None:
+    if _gmx_exe is None or _gromacs_path is None:
         _warnings.warn("'BioSimSpace.Solvent.spc' is not supported!")
         return None
 

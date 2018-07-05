@@ -24,7 +24,7 @@ Functionality for parameterising molecules.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
@@ -46,8 +46,9 @@ def ff99(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
-    if _amber_home is None and _gmx_exe is None:
-        _warn("'BioSimSpace.Parameters.ff99' is not supported!")
+    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
+            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
         return None
 
     # Validate arguments.
@@ -77,8 +78,9 @@ def ff99SB(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
-    if _amber_home is None and _gmx_exe is None:
-        _warn("'BioSimSpace.Parameters.ff99SB' is not supported!")
+    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
+            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
         return None
 
     # Validate arguments.
@@ -108,8 +110,9 @@ def ff03(molecule, options={}, background=True):
        options  -- A dictionary of keyword options to override the protocol defaults.
     """
 
-    if _amber_home is None and _gmx_exe is None:
-        _warn("'BioSimSpace.Parameters.ff03' is not supported!")
+    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
+            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
         return None
 
     # Validate arguments.
@@ -140,7 +143,8 @@ def ff14SB(molecule, options={}, background=True):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.ff14SB' is not supported!")
+        _warn("'BioSimSpace.Parameters.ff14SB' is not supported. Please install "
+            + "AMBER (http://ambermd.org).")
         return None
 
     # Validate arguments.
@@ -171,7 +175,8 @@ def gaff(molecule, options={}, background=True):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.gaff' is not supported!")
+        _warn("'BioSimSpace.Parameters.gaff' is not supported. Please install "
+            + "AMBER (http://ambermd.org).")
         return None
 
     # Validate arguments.
@@ -202,7 +207,8 @@ def gaff2(molecule, options={}, background=True):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.gaff2' is not supported!")
+        _warn("'BioSimSpace.Parameters.gaff2' is not supported. Please install "
+            + "AMBER (http://ambermd.org).")
         return None
 
     # Validate arguments.
