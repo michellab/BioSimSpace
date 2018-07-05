@@ -28,8 +28,7 @@ molecular workflow components.
 www.biosimspace.org
 """
 
-# Make sure we're using the Sire python interpreter and store the
-# locate of the Sire binary directory.
+# Make sure we're using the Sire python interpreter.
 try:
     import Sire
     del(Sire)
