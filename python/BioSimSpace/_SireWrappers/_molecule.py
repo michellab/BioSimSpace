@@ -58,8 +58,8 @@ class Molecule():
             self._sire_molecule = molecule.__deepcopy__()
 
         # Another BioSimSpace Molecule object.
-        elif type(molecule) is _Molecule:
-            self._sire_molecule = molecule.sire_molecule.__deepcopy__()
+        elif type(molecule) is Molecule:
+            self._sire_molecule = molecule._sire_molecule.__deepcopy__()
 
         # Invalid type.
         else:
@@ -103,6 +103,10 @@ class Molecule():
     def nResidues(self):
         """Return the number of residues in the molecule."""
         return self._sire_molecule.nResidues()
+
+    def nChains(self):
+        """Return the number of chains in the molecule."""
+        return self._sire_molecule.nChains()
 
     def translate(self, vector):
         """Translate the molecule.
