@@ -357,17 +357,18 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
             if type(molecule) is _System:
-                system = molecule.addMolecules(water.getMolecules())
+                system = _System(molecule._sire_system.__deepcopy__())
+                system.addMolecules(water.getMolecules())
             else:
                 system = molecule + water.getMolecules()
 
-                if "space" in map:
-                    prop = map["space"]
-                else:
-                    prop = "space"
+            if "space" in map:
+                prop = map["space"]
+            else:
+                prop = "space"
 
-                # Add the space property from the water system.
-                system._sire_system.setProperty(prop, water._sire_system.property(prop))
+            # Add the space property from the water system.
+            system._sire_system.setProperty(prop, water._sire_system.property(prop))
         else:
             system = water
 
