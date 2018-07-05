@@ -34,7 +34,7 @@ from . import Protocol as _Protocol
 
 from warnings import warn as _warn
 
-def ff99(molecule, options={}, background=True):
+def ff99(molecule, options={}, map={}):
     """Parameterise using the ff99 force field.
 
        Positional arguments:
@@ -44,6 +44,9 @@ def ff99(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -59,14 +62,17 @@ def ff99(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.FF99()
+    protocol = _Protocol.FF99(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, autostart=True)
 
-def ff99SB(molecule, options={}, background=True):
+def ff99SB(molecule, options={}, map={}):
     """Parameterise using the ff99SB force field.
 
        Positional arguments:
@@ -76,6 +82,9 @@ def ff99SB(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -91,14 +100,17 @@ def ff99SB(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.FF99SB()
+    protocol = _Protocol.FF99SB(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, autostart=True)
 
-def ff03(molecule, options={}, background=True):
+def ff03(molecule, options={}, map={}):
     """Parameterise using the ff03 force field.
 
        Positional arguments:
@@ -108,6 +120,9 @@ def ff03(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -123,14 +138,17 @@ def ff03(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.FF03()
+    protocol = _Protocol.FF03(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, autostart=True)
 
-def ff14SB(molecule, options={}, background=True):
+def ff14SB(molecule, options={}, map={}):
     """Parameterise using the ff14SB force field.
 
        Positional arguments:
@@ -140,6 +158,9 @@ def ff14SB(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None:
@@ -155,14 +176,17 @@ def ff14SB(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.FF14SB()
+    protocol = _Protocol.FF14SB(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, autostart=True)
 
-def gaff(molecule, options={}, background=True):
+def gaff(molecule, options={}, map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments:
@@ -172,6 +196,9 @@ def gaff(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None:
@@ -187,14 +214,17 @@ def gaff(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.GAFF()
+    protocol = _Protocol.GAFF(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, autostart=True)
 
-def gaff2(molecule, options={}, background=True):
+def gaff2(molecule, options={}, map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments:
@@ -204,6 +234,9 @@ def gaff2(molecule, options={}, background=True):
        Keyword arguments:
 
        options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _amber_home is None:
@@ -219,8 +252,11 @@ def gaff2(molecule, options={}, background=True):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Create a default protocol.
-    protocol = _Protocol.GAFF2()
+    protocol = _Protocol.GAFF2(map=map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
