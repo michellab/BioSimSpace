@@ -39,9 +39,9 @@ __all__ = ["Protocol"]
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:
-    _cmd_dir = _os.path.dirname(_amber_home) + "/dat/leap/cmd"
-else:
-    _cmd_dir = None
+    _cmd_dir = _amber_home + "/dat/leap/cmd"
+    if not _os.path.isdir(_cmd_dir):
+        raise IOError("Missing tLEaP dat directory: '%s'" % _cmd_dir)
 
 # Search for all of the required executables.
 
@@ -337,14 +337,14 @@ def _find_force_field(forcefield):
 
             # No matches, try globbing all files with matching extension.
             if len(ff) == 0:
-                ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, self._forcefield))
+                ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
                 # No force field found!
                 if len(ff) == 0:
-                    raise ValueError("No force field file found for '%s'" % self._forcefield)
+                    raise ValueError("No force field file found for '%s'" % forcefield)
 
     # Multiple force fields found.
     if len(ff) > 1:
-        raise ValueError("Multiple force fields found for '%s': %s" % (self._forcefield, ff))
+        raise ValueError("Multiple force fields found for '%s': %s" % (forcefield, ff))
 
     # Create the force field name.
     ff = _os.path.basename(ff[0])

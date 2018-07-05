@@ -258,7 +258,10 @@ class GAFF(_protocol.Protocol):
                 # Antechamber.
 
                 # Try to find a force field file.
-                ff = _protocol._find_force_field(self._forcefield)
+                if self._version == 1:
+                    ff = _protocol._find_force_field("gaff")
+                else:
+                    ff = _protocol._find_force_field("gaff2")
 
                 # Write the LEaP input file.
                 with open("leap.txt", "w") as f:
