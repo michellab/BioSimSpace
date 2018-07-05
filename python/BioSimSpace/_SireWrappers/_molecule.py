@@ -52,11 +52,19 @@ class Molecule():
         """
 
         # Check that the molecule is valid.
-        if not isinstance(molecule, _SireMol.Molecule):
-            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule'")
 
-        # Set the molecule.
-        self._sire_molecule = molecule
+        # A Sire Molecule object.
+        if type(molecule) is _SireMol.Molecule:
+            self._sire_molecule = molecule.__deepcopy__()
+
+        # Another BioSimSpace Molecule object.
+        elif type(molecule) is _Molecule:
+            self._sire_molecule = molecule.sire_molecule.__deepcopy__()
+
+        # Invalid type.
+        else:
+            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
+                + "or 'BioSimSpace.Molecule'.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -68,6 +76,10 @@ class Molecule():
 
     def __add__(self, other):
         """Addition operator."""
+
+        # Convert tuple to a list.
+        if type(other) is tuple:
+            other = list(other)
 
         # Create a list of molecules.
         molecules = [self]
@@ -81,14 +93,8 @@ class Molecule():
             raise TypeError("'other' must be of type 'BioSimSpace.Molecule', or a list "
                 + "of 'BioSimSpace.Molecule' types")
 
-        # Create a new system.
-        system = _System(_SireSystem.System("BioSimSpace System"))
-
-        # Add the molecules to the system.
-        system.addMolecules(molecules)
-
-        # Return the system.
-        return system
+        # Create and return a new system.
+        return _System(molecules)
 
     def nAtoms(self):
         """Return the number of atoms in the molecule."""

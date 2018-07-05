@@ -52,11 +52,36 @@ class System():
         """
 
         # Check that the system is valid.
-        if not isinstance(system, _SireSystem.System):
-            raise TypeError("'system' must be of type 'Sire.System._System.System'")
 
-        # Set the system.
-        self._sire_system = system
+        # Convert tuple to a list.
+        if type(system) is tuple:
+            system = list(system)
+
+        # A Sire System object.
+        if type(system) is _SireSystem.System:
+            self._sire_system = system.__deepcopy__()
+
+        # Another BioSimSpace System object.
+        elif type(system) is System:
+            self._sire_system = system._sire_system.__deepcopy__()
+
+        # A BioSimSpace Molecule object.
+        elif type(system) is _Molecule:
+            self._sire_system = _SireSystem.System("BioSimSpace System.")
+            self.addMolecules(system)
+
+        # A list of BioSimSpace Molecule objects.
+        elif type(system) is list:
+            if not all(isinstance(x, _Molecule) for x in system):
+                raise TypeError("'system' must contain a of 'BioSimSpace.Molecule' types.")
+            else:
+                self._sire_system = _SireSystem.System("BioSimSpace System.")
+                self.addMolecules(system)
+
+        # Invalid type.
+        else:
+            raise TypeError("'system' must be of type 'Sire.System._System.System' "
+                + "or a list of 'BioSimSpace.Molecule' types.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -126,6 +151,10 @@ class System():
            molecules -- A Molecule, or list of Molecule objects.
         """
 
+        # Convert tuple to a list.
+        if type(molecules) is tuple:
+            system = list(molecules)
+
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
@@ -168,6 +197,10 @@ class System():
            molecules -- A Molecule, or list of Molecule objects.
         """
 
+        # Convert tuple to a list.
+        if type(molecules) is tuple:
+            system = list(molecules)
+
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
@@ -190,6 +223,10 @@ class System():
 
            molecules -- A Molecule, or list of Molecule objects.
         """
+
+        # Convert tuple to a list.
+        if type(molecules) is tuple:
+            system = list(molecules)
 
         # A Molecule object.
         if type(molecules) is _Molecule:
@@ -255,7 +292,6 @@ class System():
 
            vector -- The translation vector (in Angstroms).
         """
-
 
         # Convert tuple to a list.
         if type(vector) is tuple:

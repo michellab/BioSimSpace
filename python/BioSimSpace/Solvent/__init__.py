@@ -357,8 +357,7 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
             if type(molecule) is _System:
-                system = _System(molecule._sire_system.__deepcopy__())
-                system.addMolecules(water.getMolecules())
+                system = _System(molecule + water.getMolecules())
             else:
                 system = molecule + water.getMolecules()
 

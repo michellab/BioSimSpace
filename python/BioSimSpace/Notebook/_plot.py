@@ -75,6 +75,12 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
             "to load. Please check your matplotlib installation.")
         return None
 
+    # Convert tuple to a list.
+    if type(x) is tuple:
+        x = list(x)
+    if type(y) is tuple:
+        y = list(y)
+
     if x is None:
         if y is None:
             raise ValueError("'y' data must be defined!")
