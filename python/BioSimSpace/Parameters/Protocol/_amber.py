@@ -104,7 +104,7 @@ class FF99SB(_protocol.Protocol):
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self):
+    def __init__(self, map={}):
         """Constructor.
 
            Keyword arguments:
