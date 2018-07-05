@@ -34,6 +34,30 @@ from . import Protocol as _Protocol
 
 from warnings import warn as _warn
 
+def parameterise(molecule, forcefield, options={}, map={}):
+    """Parameterise using the a specified force field.
+
+       Positional arguments:
+
+       molecule   -- The molecule to parameterise.
+       forcefield -- The force field to parameterise with.
+
+       Keyword arguments:
+
+       options  -- A dictionary of keyword options to override the protocol defaults.
+       map      -- A dictionary that maps system "properties" to their user defined
+                   values. This allows the user to refer to properties with their
+                   own naming scheme, e.g. { "charge" : "my-charge" }
+    """
+
+    if type(forcefield) is not str:
+        raise TypeError("'forcefield' must be of type 'str'")
+    else:
+        if forcefield not in forceFields():
+            raise ValueError("Supported force fields are: %s" % forceFields())
+
+    return _forcefield_dict[forcefield](molecule, options=options, map=map)
+
 def ff99(molecule, options={}, map={}):
     """Parameterise using the ff99 force field.
 
@@ -265,9 +289,15 @@ def gaff2(molecule, options={}, map={}):
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
 _forcefields = []
+_forcefield_dict = {}
+import sys as _sys
+_namespace = _sys.modules[__name__]
 for _var in dir():
-    if _var[0] != "_":
+    if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
+        _forcefield_dict[_var] = getattr(_namespace, _var)
+del(_namespace)
+del(_sys)
 
 def forceFields():
     "Return a list of the supported force fields"
