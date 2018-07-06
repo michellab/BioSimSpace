@@ -214,8 +214,11 @@ class GAFF(_protocol.Protocol):
         s.add(m)
 
         # Write the system to a PDB file.
-        pdb = _Sire.IO.PDB2(s)
-        pdb.writeToFile("antechamber.pdb")
+        try:
+            pdb = _Sire.IO.PDB2(s)
+            pdb.writeToFile("antechamber.pdb")
+        except:
+            raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Generate the Antechamber command.
         command = ("%s -at %d -i antechamber.pdb -fi pdb " +
@@ -287,13 +290,19 @@ class GAFF(_protocol.Protocol):
                 # the expected output was generated.
                 if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
                     # Load the parameterised molecule.
-                    par_mol = _Molecule(_IO.readMolecules(["leap.top", "leap.crd"])
-                              ._getSireSystem()[_Sire.Mol.MolIdx(0)])
+                    try:
+                        par_mol = _Molecule(_IO.readMolecules(["leap.top", "leap.crd"])
+                                  ._getSireSystem()[_Sire.Mol.MolIdx(0)])
+                    except:
+                        raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
 
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of
                     # the new properties from 'par_mol' to 'mol'.
                     new_mol._makeCompatibleWith(par_mol, map=self._map, overwrite=True, verbose=False)
+
+                    # Record the forcefield used to parameterise the molecule.
+                    new_mol._forcefield = ff
 
                 else:
                     new_mol = None

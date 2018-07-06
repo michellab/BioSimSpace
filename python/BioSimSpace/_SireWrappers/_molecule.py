@@ -66,6 +66,10 @@ class Molecule():
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
                 + "or 'BioSimSpace.Molecule'.")
 
+        # Set the force field variable. This records the force field with which
+        # the molecule has been parameterised, i.e. by BSS.Parameters.
+        self._forcefield = None
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())

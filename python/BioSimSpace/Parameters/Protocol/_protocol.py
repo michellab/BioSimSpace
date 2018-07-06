@@ -186,13 +186,19 @@ class Protocol():
                 output = ["%s/%s" % (work_dir, output[0]),
                           "%s/%s" % (work_dir, output[1])]
 
-            # Load the parameterised molecule.
-            par_mol = _Molecule(_IO.readMolecules(output)._getSireSystem()[_Sire.Mol.MolIdx(0)])
+            try:
+                # Load the parameterised molecule.
+                par_mol = _Molecule(_IO.readMolecules(output)._getSireSystem()[_Sire.Mol.MolIdx(0)])
+            except:
+                raise IOError("Failed to read molecule from: '%s', '%s'" % (output[0], output[1])) from None
 
             # Make the molecule 'mol' compatible with 'par_mol'. This will create
             # a mapping between atom indices in the two molecules and add all of
             # the new properties from 'par_mol' to 'mol'.
             new_mol._makeCompatibleWith(par_mol, map=self._map, overwrite=True, verbose=False)
+
+            # Record the forcefield used to parameterise the molecule.
+            new_mol._forcefield = self._forcefield
 
             if queue is not None:
                 queue.put(new_mol)
@@ -215,8 +221,11 @@ class Protocol():
         s.add(m)
 
         # Write the system to a PDB file.
-        pdb = _Sire.IO.PDB2(s)
-        pdb.writeToFile("leap.pdb")
+        try:
+            pdb = _Sire.IO.PDB2(s)
+            pdb.writeToFile("leap.pdb")
+        except:
+            raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
@@ -274,8 +283,11 @@ class Protocol():
         s.add(m)
 
         # Write the system to a PDB file.
-        pdb = _Sire.IO.PDB2(s)
-        pdb.writeToFile("input.pdb")
+        try:
+            pdb = _Sire.IO.PDB2(s)
+            pdb.writeToFile("input.pdb")
+        except:
+            raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Generate the pdb2gmx command.
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
