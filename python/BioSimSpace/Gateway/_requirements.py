@@ -715,16 +715,26 @@ def _validate_unit_requirement(value, unit_type):
 
         # Use a regular expression to extract the value and unit.
         except ValueError:
-            match = _re.search("^\s*(\-?\d+\.?\d*)\s*(.*)", value, _re.IGNORECASE)
 
+            # Strip white space from the string.
+            value = value.replace(" ", "")
+
+            # Try to match scientific format.
+            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", value, _re.IGNORECASE)
+
+            # Try to match decimal format.
             if match is None:
-                raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
-            else:
-                # Extract the value and unit.
-                value, unit = match.groups()
+                match = _re.search("(\-?\d+\.?\d*)(.*)", value, _re.IGNORECASE)
 
-                # Convert the value to a float.
-                value = float(value)
+                # No matches, raise an error.
+                if match is None:
+                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+
+            # Extract the value and unit.
+            value, unit = match.groups()
+
+            # Convert the value to a float.
+            value = float(value)
 
     # Unsupported.
     else:
