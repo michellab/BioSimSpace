@@ -401,7 +401,7 @@ class System():
                 coord.extend(self._sire_system[n].property(prop).toVector())
 
             except UserWarning:
-                raise
+                raise("Molecule %s has no coordinate property.") from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)

@@ -259,7 +259,7 @@ class Molecule():
                         try:
                             edit_mol = edit_mol.setProperty(_map[prop], mol1.property(prop))
                         except:
-                            raise IncompatibleError("Failed to set property '%s'" % _map[prop])
+                            raise IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
 
         # The atom order is different, we need to map the atoms when setting properties.
         else:
@@ -289,7 +289,7 @@ class Molecule():
                                 seen_prop[prop] = True
                             except:
                                 raise IncompatibleError("Failed to copy property '%s' from %s to %s."
-                                    % (_map[prop], idx1, idx0))
+                                    % (_map[prop], idx1, idx0)) from None
 
             # Now deal with all unseen properties. These will be non atom-based
             # properties, such as TwoAtomFunctions, StringProperty, etc.
@@ -314,7 +314,7 @@ class Molecule():
                                 try:
                                     edit_mol.setProperty(_map[prop], mol1.property(prop))
                                 except:
-                                    raise IncompatibleError("Failed to set property '%s'" % _map[prop])
+                                    raise IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
 
         # Finally, rename the atoms.
 
@@ -334,7 +334,7 @@ class Molecule():
                 try:
                     edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
                 except:
-                    raise IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1))
+                    raise IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
 
         # Commit the changes.
         self._sire_molecule = edit_mol.commit()
@@ -361,7 +361,7 @@ class Molecule():
             coord.extend(self._sire_molecule.property(prop).toVector())
 
         except UserWarning:
-            raise
+            raise("Molecule has no coordinate property.") from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)

@@ -319,8 +319,11 @@ class View():
 
         # Create a PDB object and write to file.
         if system is not None:
-            pdb = _Sire.IO.PDB2(system)
-            pdb.writeToFile(filename)
+            try:
+                pdb = _Sire.IO.PDB2(system)
+                pdb.writeToFile(filename)
+            except:
+                raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)

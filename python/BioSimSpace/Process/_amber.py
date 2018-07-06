@@ -202,12 +202,18 @@ class Amber(_process.Process):
         # Create the input files...
 
         # RST file (coordinates).
-        rst = _Sire.IO.AmberRst7(self._system)
-        rst.writeToFile(self._rst_file)
+        try:
+            rst = _Sire.IO.AmberRst7(self._system)
+            rst.writeToFile(self._rst_file)
+        except:
+            raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
-        prm = _Sire.IO.AmberPrm(self._system)
-        prm.writeToFile(self._top_file)
+        try:
+            prm = _Sire.IO.AmberPrm(self._system)
+            prm.writeToFile(self._top_file)
+        except:
+            raise IOError("Failed to write system to 'PRM7' format.") from None
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
@@ -477,8 +483,11 @@ class Amber(_process.Process):
         # Check that the file exists.
         if _os.path.isfile(restart):
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
-
+            try:
+                return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
+            except:
+                print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
+                return None
         else:
             return None
 

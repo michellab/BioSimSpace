@@ -75,7 +75,10 @@ class Namd(_process.Process):
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
         if exe is None:
-            self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
+            try:
+                self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
+            except:
+                raise IOError("Failed to find 'namd2' executable in system path!.") from None
 
         else:
             # Make sure executable exists.
@@ -110,12 +113,18 @@ class Namd(_process.Process):
         # Create the input files...
 
         # PSF and parameter files.
-        psf = _Sire.IO.CharmmPSF(self._system)
-        psf.writeToFile(self._psf_file)
+        try:
+            psf = _Sire.IO.CharmmPSF(self._system)
+            psf.writeToFile(self._psf_file)
+        except:
+            raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
-        pdb = _Sire.IO.PDB2(self._system)
-        pdb.writeToFile(self._top_file)
+        try:
+            pdb = _Sire.IO.PDB2(self._system)
+            pdb.writeToFile(self._top_file)
+        except:
+            raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Try to write a PDB "velocity" restart file.
         # The file will only be generated if all atoms in self._system have
@@ -374,13 +383,17 @@ class Namd(_process.Process):
                     prop = self._map["occupancy"]
                 else:
                     prop = "occupancy"
-                p = PDB2(restrained, {prop : "restrained"})
 
-                # File name for the restraint file.
-                self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
+                try:
+                    p = PDB2(restrained, {prop : "restrained"})
 
-                # Write the PDB file.
-                p.writeToFile(self._restraint_file)
+                    # File name for the restraint file.
+                    self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
+
+                    # Write the PDB file.
+                    p.writeToFile(self._restraint_file)
+                except:
+                    raise IOError("Failed to add restraints to 'PDB' file.") from None
 
                 # Update the configuration file.
                 self.addToConfig("fixedAtoms            yes")
@@ -548,7 +561,10 @@ class Namd(_process.Process):
                 files.append(xsc_file)
 
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read(files))
+            try:
+                return _System(_Sire.IO.MoleculeParser.read(files))
+            except:
+                return None
 
         else:
             return None

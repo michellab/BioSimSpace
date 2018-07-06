@@ -100,7 +100,7 @@ def _find_md_package(system, protocol, use_gpu=True):
                 pass
 
     # If we get this far, then no executable was found.
-    raise ValueError("No executable found for package: '%s'" % package)
+    raise ValueError("No executable found for package: '%s'" % package) from None
 
 class MD():
     """A simple class for driving molecular dynamics simulations."""

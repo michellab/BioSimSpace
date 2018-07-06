@@ -291,7 +291,10 @@ class Trajectory():
             self._trajectory[x].save(frame_file)
 
             # Create a Sire system.
-            system = _System(_Sire.IO.MoleculeParser.read([self._top_file, frame_file]))
+            try:
+                system = _System(_Sire.IO.MoleculeParser.read([self._top_file, frame_file]))
+            except:
+                raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
 
             # Append the system to the list of frames.
             frames.append(system)
