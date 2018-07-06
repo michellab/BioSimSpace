@@ -139,8 +139,14 @@ def readMolecules(files, map={}):
     # Try to read the files and return a molecular system.
     try:
         system = _SireIO.MoleculeParser.read(files, map)
-    except:
-        raise IOError("Failed to read molecules from: %s" % files)
+    except Exception as e:
+        if "There are no lead parsers!" in str(e):
+            msg = ("Failed to read molecules from %s. "
+                   "It looks like you failed to include a topology file."
+                  ) % files
+            raise IOError(msg) from None
+        else:
+            raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
 
@@ -248,7 +254,10 @@ def saveMolecules(filebase, system, fileformat, map={}):
         _map["fileformat"] = _SireBase.wrap(format)
 
         # Write the file.
-        file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
-        files += file
+        try:
+            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
+            files += file
+        except:
+            raise IOError("Failed to save system to format: '%s'" % format) from None
 
     return files
