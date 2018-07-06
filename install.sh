@@ -127,9 +127,9 @@ if ! [ -z "$CLEAN_BUILD" ]; then
 
     # Download latest self-extracting Sire binary.
     if [[ $OS == "Linux" ]]; then
-    download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_linux.run "$INSTALL_DIR/sire.run"
+    download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_linux.run "$INSTALL_DIR/sire.run"
     else
-        download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_1_1_osx.run "$INSTALL_DIR/sire.run"
+        download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_osx.run "$INSTALL_DIR/sire.run"
         mkdir -p "$HOME/.matplotlib"
         touch "$HOME/.matplotlib/matplotlibrc"
         if ! grep -q "backend" "$HOME/.matplotlib/matplotlibrc"; then
