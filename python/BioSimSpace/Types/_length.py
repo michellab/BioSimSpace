@@ -21,6 +21,8 @@
 
 import Sire.Units as _Units
 
+import re as _re
+
 __all__ = ["Length"]
 
 class Length:
@@ -40,29 +42,50 @@ class Length:
                        "A"  : "ANGSTROM",
                        "PM" : "PICOMETER" }
 
-    def __init__(self, magnitude, unit):
+    def __init__(self, *args):
         """Constructor.
 
            Positional arguments:
 
            magnitude -- The magnitude.
            unit      -- The unit.
+
+           or
+
+           string    -- A string representation of the time.
         """
 
-        # Check that the magnitude is valid.
-        if type(magnitude) is int:
-            self._magnitude = float(magnitude)
-        elif type(magnitude) is float:
-            self._magnitude = magnitude
-        else:
-            raise TypeError("'magnitude' must be of type 'int' or 'float'")
+        # The user has passed a magnitude and a unit.
+        if len(args) > 1:
+            magnitude = args[0]
+            unit = args[1]
 
-        # Don't support negative lengths.
-        if magnitude < 0:
-            raise ValueError("The length cannot be negative!")
+            # Check that the magnitude is valid.
+            if type(magnitude) is int:
+                self._magnitude = float(magnitude)
+            elif type(magnitude) is float:
+                self._magnitude = magnitude
+            else:
+                raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-        # Check that the unit is supported.
-        self._unit = self._validate_unit(unit)
+            # Don't support negative times.
+            if magnitude < 0:
+                raise ValueError("The length cannot be negative!")
+
+            # Check that the unit is supported.
+            self._unit = self._validate_unit(unit)
+
+        # The user has passed a string representation of the length.
+        elif len(args) == 1:
+            if type(args[0]) != str:
+                raise TypeError("'string' must be of type 'str'")
+
+            # Convert the string to a Length object.
+            length = self._from_string(args[0])
+
+            # Store the magnitude and unit.
+            self._magnitude = length._magnitude
+            self._unit = length._unit
 
         # Store the abbreviated unit.
         try:
@@ -91,28 +114,48 @@ class Length:
     def __add__(self, other):
         """Addition operator."""
 
-        # Add the magnitudes in a common unit.
-        mag = self.angstroms().magnitude() + other.angstroms().magnitude()
+        # Addition of another Length object.
+        if type(other) is Length:
+            # Add the magnitudes in a common unit.
+            mag = self.angstroms().magnitude() + other.angstroms().magnitude()
 
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
+            # Get new magnitude in the original unit.
+            # Left-hand operand takes precedence.
+            mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
 
-        # Return a new length object.
-        return Length(mag, self._unit)
+            # Return a new length object.
+            return Length(mag, self._unit)
+
+        # Addition of a string.
+        elif type(other) is str:
+            length = self._from_string(other)
+            return self + length
+
+        else:
+            raise NotImplementedError
 
     def __sub__(self, other):
         """Subtraction operator."""
 
-        # Subtract the magnitudes in a common unit.
-        mag = self.angstroms().magnitude() - other.angstroms().magnitude()
+        # Subtraction of another Length object.
+        if type(other) is Length:
+            # Subtract the magnitudes in a common unit.
+            mag = self.angstroms().magnitude() - other.angstroms().magnitude()
 
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
+            # Get new magnitude in the original unit.
+            # Left-hand operand takes precedence.
+            mag = Length(mag, "ANGSTROM")._convert_to(self._unit).magnitude()
 
-        # Return a new length object.
-        return Length(mag, self._unit)
+            # Return a new length object.
+            return Length(mag, self._unit)
+
+        # Addition of a string.
+        elif type(other) is str:
+            length = self._from_string(other)
+            return self - length
+
+        else:
+            raise NotImplementedError
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -136,6 +179,18 @@ class Length:
             mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
             return _Volume(mag, "A3")
 
+        # Multiplication by a string.
+        elif type(other) is str:
+            try:
+                length = Length(other)
+                return self * length
+            except:
+                try:
+                    area = _Area(other)
+                    return self * area
+                except:
+                    raise ValueError("Could not convert the string to a 'BioSimSpace.Length' "
+                        + "or 'BioSimSpace.Area' type.")
         else:
             raise NotImplementedError
 
@@ -161,6 +216,18 @@ class Length:
             mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
             return _Volume(mag, "A3")
 
+        # Multiplication by a string.
+        elif type(other) is str:
+            try:
+                length = Length(other)
+                return self * length
+            except:
+                try:
+                    area = _Area(other)
+                    return self * area
+                except:
+                    raise ValueError("Could not convert the string to a "
+                        + "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
         else:
             raise NotImplementedError
 
@@ -180,32 +247,99 @@ class Length:
         elif type(other) is Length:
             return self.angstroms().magnitude() / other.angstroms().magnitude()
 
+        # Division by a string.
+        elif type(other) is str:
+            try:
+                length = self._from_string(other)
+                return self / length
+            except:
+                raise ValueError("Could not convert the string to a 'BioSimSpace.Types.Length'.")
         else:
             raise NotImplementedError
 
     def __lt__(self, other):
         """Less than operator."""
-        return self.angstroms().magnitude() < other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() < other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() < self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __le__(self, other):
         """Less than or equal to operator."""
-        return self.angstroms().magnitude() <= other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() <= other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() <= self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __eq__(self, other):
         """Equals to operator."""
-        return self.angstroms().magnitude() == other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() == other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() == self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __ne__(self, other):
         """Not equals to operator."""
-        return self.angstroms().magnitude() != other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() != other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() != self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __ge__(self, other):
         """Greater than or equal to operator."""
-        return self.angstroms().magnitude() >= other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() >= other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() >= self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __gt__(self, other):
         """Gretear than operator."""
-        return self.angstroms().magnitude() > other.angstroms().magnitude()
+
+        # Compare with another Length object.
+        if type(other) is Length:
+            return self.angstroms().magnitude() > other.angstroms().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms().magnitude() > self._from_string(other).angstroms().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def magnitude(self):
         """Return the magnitude."""
@@ -238,6 +372,41 @@ class Length:
     def picometers(self):
         """Return the length in picometers."""
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer), "PICOMETER")
+
+    def _from_string(self, string):
+        """Convert a string to a Length object.
+
+           Positional arguments:
+
+           string -- The string to interpret.
+        """
+
+        if type(string) is str:
+            # Strip white space from the string.
+            string = string.replace(" ", "")
+
+            # Try to match scientific format.
+            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
+
+            # Try to match decimal format.
+            if match is None:
+                match = _re.search("(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
+
+                # No matches, raise an error.
+                if match is None:
+                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+
+            # Extract the value and unit.
+            value, unit = match.groups()
+
+            # Convert the value to a float.
+            value = float(value)
+
+            # Create and return a new Length object.
+            return Length(value, unit)
+
+        else:
+            raise TypeError("'string' must be of type 'str'")
 
     def _convert_to(self, unit):
         """Return the length in a different unit.

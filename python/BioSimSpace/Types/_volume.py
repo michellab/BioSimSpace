@@ -21,6 +21,8 @@
 
 import Sire.Units as _Units
 
+import re as _re
+
 __all__ = ["Volume"]
 
 class Volume:
@@ -31,38 +33,60 @@ class Volume:
                          "PICOMETER3"  : _Units.picometer2 }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M^3"  : "METER3",
-                       "NM^3" : "NANOMETER3",
-                       "A^3"  : "ANGSTROM3",
-                       "PM^3" : "PICOMETER3" }
+    _abbreviations = { "M3"  : "METER3",
+                       "NM3" : "NANOMETER3",
+                       "A3"  : "ANGSTROM3",
+                       "PM3" : "PICOMETER3" }
 
-    def __init__(self, magnitude, unit):
+    def __init__(self, *args):
         """Constructor.
 
            Positional arguments:
 
            magnitude -- The magnitude.
            unit      -- The unit.
+
+           or
+
+           string    -- A string representation of the time.
         """
 
-        # Check that the magnitude is valid.
-        if type(magnitude) is int:
-            self._magnitude = float(magnitude)
-        elif type(magnitude) is float:
-            self._magnitude = magnitude
-        else:
-            raise TypeError("'magnitude' must be of type 'int' or 'float'")
+        # The user has passed a magnitude and a unit.
+        if len(args) > 1:
+            magnitude = args[0]
+            unit = args[1]
 
-        # Don't support negative volumes.
-        if magnitude < 0:
-            raise ValueError("The volume cannot be negative!")
+            # Check that the magnitude is valid.
+            if type(magnitude) is int:
+                self._magnitude = float(magnitude)
+            elif type(magnitude) is float:
+                self._magnitude = magnitude
+            else:
+                raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-        # Check that the unit is supported.
-        self._unit = self._validate_unit(unit)
+            # Don't support negative times.
+            if magnitude < 0:
+                raise ValueError("The area cannot be negative!")
+
+            # Check that the unit is supported.
+            self._unit = self._validate_unit(unit)
+
+        # The user has passed a string representation of the area.
+        elif len(args) == 1:
+            if type(args[0]) != str:
+                raise TypeError("'string' must be of type 'str'")
+
+            # Convert the string to a Volume object.
+            volume = self._from_string(args[0])
+
+            # Store the magnitude and unit.
+            self._magnitude = volume._magnitude
+            self._unit = volume._unit
 
         # Store the abbreviated unit.
         try:
             self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()
+            self._abbrev = self._abbrev[0:-1] + "^" + self._abbrev[-1]
         except:
             self._abbrev = self._unit.lower()
 
@@ -87,28 +111,48 @@ class Volume:
     def __add__(self, other):
         """Addition operator."""
 
-        # Add the magnitudes in a common unit.
-        mag = self.angstroms3().magnitude() + other.angstroms3().magnitude()
+        # Addition of another Volume object.
+        if type(other) is Volume:
+            # Add the magnitudes in a common unit.
+            mag = self.angstroms3().magnitude() + other.angstroms3().magnitude()
 
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
+            # Get new magnitude in the original unit.
+            # Left-hand operand takes precedence.
+            mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
 
-        # Return a new length object.
-        return Volume(mag, self._unit)
+            # Return a new length object.
+            return Volume(mag, self._unit)
+
+        # Addition of a string.
+        elif type(other) is str:
+            volume = self._from_string(other)
+            return self + volume
+
+        else:
+            raise NotImplementedError
 
     def __sub__(self, other):
         """Subtraction operator."""
 
-        # Subtract the magnitudes in a common unit.
-        mag = self.angstroms3().magnitude() - other.angstroms3().magnitude()
+        # Addition of another Volume object.
+        if type(other) is Volume:
+            # Subtract the magnitudes in a common unit.
+            mag = self.angstroms3().magnitude() - other.angstroms3().magnitude()
 
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
+            # Get new magnitude in the original unit.
+            # Left-hand operand takes precedence.
+            mag = Volume(mag, "ANGSTROM3")._convert_to(self._unit).magnitude()
 
-        # Return a new Volume object.
-        return Volume(mag, self._unit)
+            # Return a new Volume object.
+            return Volume(mag, self._unit)
+
+        # Subtraction of a string.
+        elif type(other) is str:
+            volume = self._from_string(other)
+            return self - volume
+
+        else:
+            raise NotImplementedError
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -166,32 +210,109 @@ class Volume:
             mag = self.angstroms3().magnitude() / other.angstroms().magnitude()
             return _Area(mag, "A2")
 
+        # Division by a string.
+        elif type(other) is str:
+            try:
+                length = _Length(other)
+                return self / length
+            except:
+                try:
+                    area = _Area(other)
+                    return self / area
+                except:
+                    try:
+                        volume = Volume(other)
+                        return self / volume
+                    except:
+                        raise ValueError("Could not convert the string to a "
+                            + "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
+                            + "or 'BioSimSpace.Types.Volume'")
         else:
             raise NotImplementedError
 
     def __lt__(self, other):
         """Less than operator."""
-        return self.angstroms3().magnitude() < other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() < other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() < self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __le__(self, other):
         """Less than or equal to operator."""
-        return self.angstroms3().magnitude() <= other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() <= other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() <= self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __eq__(self, other):
         """Equals to operator."""
-        return self.angstroms3().magnitude() == other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() == other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() == self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __ne__(self, other):
         """Not equals to operator."""
-        return self.angstroms3().magnitude() != other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() != other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() != self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __ge__(self, other):
         """Greater than or equal to operator."""
-        return self.angstroms3().magnitude() >= other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() >= other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() >= self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def __gt__(self, other):
         """Gretear than operator."""
-        return self.angstroms3().magnitude() > other.angstroms3().magnitude()
+
+        # Compare with another Volume object.
+        if type(other) is Volume:
+            return self.angstroms3().magnitude() > other.angstroms3().magnitude()
+
+        # Compare with a string.
+        elif type(other) is str:
+            return self.angstroms3().magnitude() > self._from_string(other).angstroms3().magnitude()
+
+        else:
+            raise NotImplementedError
 
     def magnitude(self):
         """Return the magnitude."""
@@ -216,6 +337,41 @@ class Volume:
     def picometers3(self):
         """Return the volume in cubic picometers."""
         return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER3")
+
+    def _from_string(self, string):
+        """Convert a string to a Volume object.
+
+           Positional arguments:
+
+           string -- The string to interpret.
+        """
+
+        if type(string) is str:
+            # Strip white space from the string.
+            string = string.replace(" ", "")
+
+            # Try to match scientific format.
+            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
+
+            # Try to match decimal format.
+            if match is None:
+                match = _re.search("(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
+
+                # No matches, raise an error.
+                if match is None:
+                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+
+            # Extract the value and unit.
+            value, unit = match.groups()
+
+            # Convert the value to a float.
+            value = float(value)
+
+            # Create and return a new Volume object.
+            return Volume(value, unit)
+
+        else:
+            raise TypeError("'string' must be of type 'str'")
 
     def _convert_to(self, unit):
         """Return the volume in a different unit.
