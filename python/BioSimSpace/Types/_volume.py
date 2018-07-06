@@ -31,10 +31,10 @@ class Volume:
                          "PICOMETER3"  : _Units.picometer2 }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M3"  : "METER3",
-                       "NM3" : "NANOMETER3",
-                       "A3"  : "ANGSTROM3",
-                       "PM3" : "PICOMETER3" }
+    _abbreviations = { "M^3"  : "METER3",
+                       "NM^3" : "NANOMETER3",
+                       "A^3"  : "ANGSTROM3",
+                       "PM^3" : "PICOMETER3" }
 
     def __init__(self, magnitude, unit):
         """Constructor.
@@ -67,8 +67,8 @@ class Volume:
             self._abbrev = self._unit.lower()
 
         # Handle Angstrom separately.
-        if self._abbrev == "a3":
-            self._abbrev = "A3"
+        if self._abbrev == "a^3":
+            self._abbrev = "A^3"
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -241,15 +241,25 @@ class Volume:
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
+        # Replace any occurence of cubed with 3.
+        unit = unit.replace("CUBED", "3").upper()
+        unit = unit.replace("CUBE", "3").upper()
+
+        # Strip "^" character.
+        unit = unit.replace("^", "").upper()
+
+        # Strip any "S" characters.
+        unit = unit.replace("S", "").upper()
+
+        # Fix for ANGSTROM (since it contains an "S").
+        if unit[0:3] == "ANG":
+            unit = "ANGS" + unit[3:]
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
-        elif unit[:-1] in self._supported_units:
-            return unit[:-1]
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
-        elif unit[:-1] in self._abbreviations:
-            return self._abbreviations[unit[:-1]]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 

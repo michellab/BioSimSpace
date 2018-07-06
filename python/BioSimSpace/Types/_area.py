@@ -31,10 +31,10 @@ class Area:
                          "PICOMETER2"  : _Units.picometer2 }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M2"  : "METER2",
-                       "NM2" : "NANOMETER2",
-                       "A2"  : "ANGSTROM2",
-                       "PM2" : "PICOMETER2" }
+    _abbreviations = { "M^2"  : "METER2",
+                       "NM^2" : "NANOMETER2",
+                       "A^2"  : "ANGSTROM2",
+                       "PM^2" : "PICOMETER2" }
 
     def __init__(self, magnitude, unit):
         """Constructor.
@@ -67,8 +67,8 @@ class Area:
             self._abbrev = self._unit.lower()
 
         # Handle Angstrom separately.
-        if self._abbrev == "a2":
-            self._abbrev = "A2"
+        if self._abbrev == "a^2":
+            self._abbrev = "A^2"
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -246,15 +246,25 @@ class Area:
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
+        # Replace any occurence of squared with 2.
+        unit = unit.replace("SQUARED", "2").upper()
+        unit = unit.replace("SQUARE", "2").upper()
+
+        # Strip "^" character.
+        unit = unit.replace("^", "").upper()
+
+        # Strip any "S" characters.
+        unit = unit.replace("S", "").upper()
+
+        # Fix for ANGSTROM (since it contains an "S").
+        if unit[0:3] == "ANG":
+            unit = "ANGS" + unit[3:]
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
-        elif unit[:-1] in self._supported_units:
-            return unit[:-1]
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
-        elif unit[:-1] in self._abbreviations:
-            return self._abbreviations[unit[:-1]]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 

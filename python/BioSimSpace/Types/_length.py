@@ -267,15 +267,18 @@ class Length:
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
+        # Strip any "S" characters.
+        unit = unit.replace("S", "").upper()
+
+        # Fix for ANGSTROM (since it contains an "S").
+        if unit[0:3] == "ANG":
+            unit = "ANGS" + unit[3:]
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
-        elif unit[:-1] in self._supported_units:
-            return unit[:-1]
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
-        elif unit[:-1] in self._abbreviations:
-            return self._abbreviations[unit[:-1]]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
