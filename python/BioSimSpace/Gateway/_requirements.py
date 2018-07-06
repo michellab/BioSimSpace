@@ -36,8 +36,11 @@ import sys as _sys
 import tarfile as _tarfile
 import zipfile as _zipfile
 
-__all__ = ["Boolean", "Integer", "Float", "String", "File", "FileSet",
-    "Temperature", "Time"]
+__all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
+           "File", "FileSet",                           # File types.
+           "Length", "Area", "Volume",                  # Length types.
+           "Temperature",
+           "Time"]
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
@@ -439,6 +442,153 @@ class FileSet(Requirement):
         else:
             return value
 
+class Length(Requirement):
+    """A length requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           unit    -- The unit.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
+
+        # Validate the unit.
+        if unit is not None:
+            temp = _Types.Length(1, unit)
+            self._unit = temp.unit()
+        else:
+            raise ValueError("No unit has been specified!")
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "length")
+
+        if unit is None:
+            return _Types.Length(value, self._unit)
+        else:
+            return _Types.Length(value, unit)._convert_to(self._unit)
+
+class Area(Requirement):
+    """An area requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           unit    -- The unit.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
+
+        # Validate the unit.
+        if unit is not None:
+            temp = _Types.Area(1, unit)
+            self._unit = temp.unit()
+        else:
+            raise ValueError("No unit has been specified!")
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "length")
+
+        if unit is None:
+            return _Types.Area(value, self._unit)
+        else:
+            return _Types.Area(value, unit)._convert_to(self._unit)
+
+class Volume(Requirement):
+    """A volume requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           unit    -- The unit.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
+
+        # Validate the unit.
+        if unit is not None:
+            temp = _Types.Volume(1, unit)
+            self._unit = temp.unit()
+        else:
+            raise ValueError("No unit has been specified!")
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "length")
+
+        if unit is None:
+            return _Types.Volume(value, self._unit)
+        else:
+            return _Types.Volume(value, unit)._convert_to(self._unit)
+
 class Temperature(Requirement):
     """A temperature requirement."""
 
@@ -565,7 +715,7 @@ def _validate_unit_requirement(value, unit_type):
 
         # Use a regular expression to extract the value and unit.
         except ValueError:
-            match = _re.search("^\s*(\-?\d+\.?\d*)\s*([A-Za-z]+)\s*$", value, _re.IGNORECASE)
+            match = _re.search("^\s*(\-?\d+\.?\d*)\s*(.*)", value, _re.IGNORECASE)
 
             if match is None:
                 raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
