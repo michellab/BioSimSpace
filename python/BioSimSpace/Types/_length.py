@@ -103,17 +103,17 @@ class Length:
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
+        if self._magnitude > 1e4 or self._magnitude < 1e-4:
             return "%.4e %s" % (self._magnitude, self._abbrev)
         else:
-            return "%.2f %s" % (self._magnitude, self._abbrev)
+            return "%5.4f %s" % (self._magnitude, self._abbrev)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
+        if self._magnitude > 1e4 or self._magnitude < 1e-4:
             return "BioSimSpace.Types.Length(%.4e, '%s')" % (self._magnitude, self._abbrev)
         else:
-            return "BioSimSpace.Types.Length(%f, '%s')" % (self._magnitude, self._abbrev)
+            return "BioSimSpace.Types.Length(%5.4f, '%s')" % (self._magnitude, self._abbrev)
 
     def __add__(self, other):
         """Addition operator."""

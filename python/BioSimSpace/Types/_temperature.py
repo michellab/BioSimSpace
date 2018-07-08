@@ -85,19 +85,22 @@ class Temperature:
         else:
             raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
 
+        # Store the abbreviated unit.
+        self._abbrev = self._unit[0].upper()
+
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if self._magnitude > 1e6 or abs(self._magnitude) < 1e-6:
-            return "%.4e %s" % (self._magnitude, self._unit[0].upper())
+        if self._magnitude > 1e4 or self._magnitude < 1e-4:
+            return "%.4e %s" % (self._magnitude, self.unit)
         else:
-            return "%.2f %s" % (self._magnitude, self._unit[0].upper())
+            return "%5.4f %s" % (self._magnitude, self._abbrev)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e6 or abs(self._magnitude) < 1e-6:
+        if self._magnitude > 1e4 or abs(self._magnitude) < 1e-4:
             return "BioSimSpace.Types.Temperature(%.4e, '%s')" % (self._magnitude, self._unit)
         else:
-            return "BioSimSpace.Types.Temperature(%f, '%s')" % (self._magnitude, self._unit)
+            return "BioSimSpace.Types.Temperature(%5.4f, '%s')" % (self._magnitude, self._unit)
 
     def __add__(self, other):
         """Addition operator."""
