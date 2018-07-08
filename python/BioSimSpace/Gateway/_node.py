@@ -34,6 +34,7 @@ from ._requirements import Float as _Float
 from ._requirements import Energy as _Energy
 from ._requirements import Integer as _Integer
 from ._requirements import Length as _Length
+from ._requirements import Pressure as _Pressure
 from ._requirements import Requirement as _Requirement
 from ._requirements import String as _String
 from ._requirements import Temperature as _Temperature
@@ -60,7 +61,8 @@ if _is_notebook():
 __all__ = ["Node"]
 
 # Float types (including those with units).
-_float_types = [_Float, _Energy, _Length, _Area, _Volume, _Temperature, _Time]
+_float_types = [_Float, _Energy, _Pressure, _Length, _Area, _Volume,
+    _Temperature, _Time]
 
 class _OutputAction(_argparse.Action):
     """Helper class for printing node output requirements."""

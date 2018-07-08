@@ -20,14 +20,13 @@
 #####################################################################
 
 """
-A set of common physical units.
+Pressure units.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from . import Area
-from . import Energy
-from . import Length
-from . import Pressure
-from . import Temperature
-from . import Time
-from . import Volume
+from ...Types import Pressure as _Pressure
+
+__all__ = ["atm", "bar"]
+
+atm = _Pressure(1, "ATMOSPHERE")
+bar = _Pressure(1, "BAR")

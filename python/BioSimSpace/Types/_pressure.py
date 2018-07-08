@@ -23,23 +23,16 @@ import Sire.Units as _Units
 
 import re as _re
 
-__all__ = ["Energy"]
+__all__ = ["Pressure"]
 
-class Energy:
+class Pressure:
     # Dictionary of allowed units.
-    _supported_units = { "KILO CALORIES PER MOL" : _Units.kcal_per_mol,
-                         "KILO JOULES PER MOL"   : _Units.kJ_per_mol,
-                         "KT"                    : 2.479 * _Units.kJ_per_mol }
+    _supported_units = { "ATMOSPHERE" : _Units.atm,
+                         "BAR"        : _Units.bar }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "KCAL/MOL" : "KILO CALORIES PER MOL",
-                       "KJ/MOL"   : "KILO JOULES PER MOL",
-                       "KT"       : "KT" }
-
-    # Print formatting.
-    _print_format = { "KILO CALORIES PER MOL" : "kcal/mol",
-                      "KILO JOULES PER MOL"   : "kJ/mol",
-                      "KT"                    : "KT" }
+    _abbreviations = { "ATM" : "ATMOSPHERE",
+                       "BAR" : "BAR" }
 
     def __init__(self, *args):
         """Constructor.
@@ -51,7 +44,7 @@ class Energy:
 
            or
 
-           string    -- A string representation of the energy.
+           string    -- A string representation of the pressure.
         """
 
         # The user has passed a magnitude and a unit.
@@ -75,45 +68,48 @@ class Energy:
             if type(args[0]) != str:
                 raise TypeError("'string' must be of type 'str'")
 
-            # Convert the string to a Energy object.
-            nrg = self._from_string(args[0])
+            # Convert the string to a Pressure object.
+            press = self._from_string(args[0])
 
             # Store the magnitude and unit.
-            self._magnitude = nrg._magnitude
-            self._unit = nrg._unit
+            self._magnitude = press._magnitude
+            self._unit = press._unit
 
         # No arguments.
         else:
             raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
 
+        # Store the abbreviated unit.
+        self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._magnitude > 1e4 or self._magnitude < 1e-4:
-            return "%.4e %s" % (self._magnitude, self._print_format[self.unit])
+            return "%.4e %s" % (self._magnitude, self._abbrev)
         else:
-            return "%5.4f %s" % (self._magnitude, self._print_format[self._unit])
+            return "%5.4f %s" % (self._magnitude, self._abbrev)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._magnitude > 1e4 or abs(self._magnitude) < 1e-4:
-            return "BioSimSpace.Types.Energy(%.4e, '%s')" % (self._magnitude, self._unit)
+            return "BioSimSpace.Types.Pressure(%.4e, '%s')" % (self._magnitude, self._unit)
         else:
-            return "BioSimSpace.Types.Energy(%5.4f, '%s')" % (self._magnitude, self._unit)
+            return "BioSimSpace.Types.Pressure(%5.4f, '%s')" % (self._magnitude, self._unit)
 
     def __add__(self, other):
         """Addition operator."""
 
-        # Addition of another Energy object.
-        if type(other) is Energy:
+        # Addition of another Pressure object.
+        if type(other) is Pressure:
             # Add the magnitudes in a common unit.
-            mag = self.kcal_per_mol().magnitude() + other.kcal_per_mol().magnitude()
+            mag = self.atm().magnitude() + other.atm().magnitude()
 
             # Get new magnitude in the original unit.
             # Left-hand operand takes precedence.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
+            mag = Pressure(mag, "atm")._convert_to(self._unit).magnitude()
 
             # Return a new temperature object.
-            return Energy(mag, self._unit)
+            return Pressure(mag, self._unit)
 
         # Addition of a string.
         elif type(other) is str:
@@ -126,17 +122,17 @@ class Energy:
     def __sub__(self, other):
         """Subtraction operator."""
 
-        # Subtraction of another Energy object.
-        if type(other) is Energy:
+        # Subtraction of another Pressure object.
+        if type(other) is Pressure:
             # Subtract the magnitudes in a common unit.
-            mag = self.kcal_per_mol().magnitude() - other.kcal_per_mol().magnitude()
+            mag = self.atm().magnitude() - other.atm().magnitude()
 
             # Get new magnitude in the original unit.
             # Left-hand operand takes precedence.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
+            mag = Pressure(mag, "atm")._convert_to(self._unit).magnitude()
 
             # Return a new temperature object.
-            return Energy(mag, self._unit)
+            return Pressure(mag, self._unit)
 
         # Addition of a string.
         elif type(other) is str:
@@ -155,14 +151,14 @@ class Energy:
 
         # Only support multiplication by float.
         if type(other) is float:
-            # Convert to kcal_per_mol and multiply.
-            mag = self.kcal_per_mol().magnitude() * other
+            # Convert to atm and multiply.
+            mag = self.atm().magnitude() * other
 
             # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
+            mag = Pressure(mag, "atm")._convert_to(self._unit).magnitude()
 
             # Return the new temperature.
-            return Energy(mag, self._unit)
+            return Pressure(mag, self._unit)
 
         else:
             raise NotImplementedError
@@ -176,14 +172,14 @@ class Energy:
 
         # Only support multiplication by float.
         if type(other) is float:
-            # Convert to kcal_per_mol and multiply.
-            mag = self.kcal_per_mol().magnitude() * other
+            # Convert to atm and multiply.
+            mag = self.atm().magnitude() * other
 
             # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
+            mag = Pressure(mag, "atm")._convert_to(self._unit).magnitude()
 
             # Return the new temperature.
-            return Energy(mag, self._unit)
+            return Pressure(mag, self._unit)
 
         else:
             raise NotImplementedError
@@ -197,23 +193,23 @@ class Energy:
 
         # Float division.
         if type(other) is float:
-            # Convert to kcal_per_mol and divide.
-            mag = self.kcal_per_mol().magnitude() / other
+            # Convert to atm and divide.
+            mag = self.atm().magnitude() / other
 
             # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
+            mag = Pressure(mag, "atm")._convert_to(self._unit).magnitude()
 
             # Return the new temperature.
-            return Energy(mag, self._unit)
+            return Pressure(mag, self._unit)
 
         # Division by another temperature.
-        elif type(other) is Energy:
-            return self.kcal_per_mol().magnitude() / other.kcal_per_mol().magnitude()
+        elif type(other) is Pressure:
+            return self.atm().magnitude() / other.atm().magnitude()
 
         # Division by a string.
         elif type(other) is str:
-            nrg = self._from_string(other)
-            return self / nrg
+            press = self._from_string(other)
+            return self / press
 
         else:
             raise NotImplementedError
@@ -221,13 +217,13 @@ class Energy:
     def __lt__(self, other):
         """Less than operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() < other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() < other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() < self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() < self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -235,13 +231,13 @@ class Energy:
     def __le__(self, other):
         """Less than or equal to operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() <= other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() <= other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() <= self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() <= self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -249,13 +245,13 @@ class Energy:
     def __eq__(self, other):
         """Equals to operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() == other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() == other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() == self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() == self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -263,13 +259,13 @@ class Energy:
     def __ne__(self, other):
         """Not equals to operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() != other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() != other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() != self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() != self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -277,13 +273,13 @@ class Energy:
     def __ge__(self, other):
         """Greater than or equal to operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() >= other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() >= other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() >= self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() >= self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -291,13 +287,13 @@ class Energy:
     def __gt__(self, other):
         """Gretear than operator."""
 
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() > other.kcal_per_mol().magnitude()
+        # Compare to another Pressure object.
+        if type(other) is Pressure:
+            return self.atm().magnitude() > other.atm().magnitude()
 
         # Compare with a string.
         elif type(other) is str:
-            return self.kcal_per_mol().magnitude() > self._from_string(other).kcal_per_mol().magnitude()
+            return self.atm().magnitude() > self._from_string(other).atm().magnitude()
 
         else:
             raise NotImplementedError
@@ -310,20 +306,16 @@ class Energy:
         """Return the unit."""
         return self._unit
 
-    def kcal_per_mol(self):
-        """Return the energy in kcal per mol."""
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kcal_per_mol), "KILO CALORIES PER MOL")
+    def atm(self):
+        """Return the atmospheric pressure."""
+        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.atm), "ATMOSPHERE")
 
-    def kj_per_mol(self):
-        """Return the energy in kJ per mol."""
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kJ_per_mol), "KILO JOULES PER MOL")
-
-    def kt(self):
-        """Return the energy in KT."""
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _Units.kJ_per_mol), "KT")
+    def bar(self):
+        """Return the pressure in bar."""
+        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.bar), "BAR")
 
     def _from_string(self, string):
-        """Convert a string to a Energy object.
+        """Convert a string to a Pressure object.
 
            Positional arguments:
 
@@ -351,8 +343,8 @@ class Energy:
             # Convert the value to a float.
             value = float(value)
 
-            # Create and return a new Energy object.
-            return Energy(value, unit)
+            # Create and return a new Pressure object.
+            return Pressure(value, unit)
 
         else:
             raise TypeError("'string' must be of type 'str'")
@@ -364,12 +356,10 @@ class Energy:
 
            unit -- The unit to convert to.
         """
-        if unit == "KILO CALORIES PER MOL":
-            return self.kcal_per_mol()
-        elif unit == "KILO JOULES PER MOL":
-            return self.kj_per_mol()
-        elif unit == "KT":
-            return self.kt()
+        if unit == "ATMOSPHERE":
+            return self.atm()
+        elif unit == "BAR":
+            return self.bar()
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
@@ -379,20 +369,17 @@ class Energy:
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
-        # Replace all instances of KILO with K.
-        unit = unit.replace("KILO", "K")
+        # Strip all instances of PRESSURE.
+        unit = unit.replace("PRESSURE", "")
+        unit = unit.replace("PRESS", "")
+        unit = unit.replace("PRES", "")
 
-        # Replace all instances of PER with the / character.
-        unit = unit.replace("PER", "/")
+        # Replace all instance of ATMOSPHERIC/ATMOSPHERE with ATM.
+        unit = unit.replace("ATMOSPHERIC", "ATM")
+        unit = unit.replace("ATMOSPHERE", "ATM")
 
-        # Replace all instance of MOLE with MOL.
-        unit = unit.replace("MOLE", "MOL")
-
-        # Replace all instances of CALORIES with CAL.
-        unit = unit.replace("CALORIES", "CAL")
-
-        # Replace all instances of JOULES with J.
-        unit = unit.replace("JOULES", "J")
+        # Strip all "S" characters.
+        unit = unit.replace("S", "")
 
         # Check that the unit is supported.
         if unit in self._abbreviations:
