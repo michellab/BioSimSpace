@@ -48,7 +48,7 @@ class Area:
 
            or
 
-           string    -- A string representation of the time.
+           string    -- A string representation of the area.
         """
 
         # The user has passed a magnitude and a unit.
@@ -64,7 +64,7 @@ class Area:
             else:
                 raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-            # Don't support negative times.
+            # Don't support negative areas.
             if magnitude < 0:
                 raise ValueError("The area cannot be negative!")
 

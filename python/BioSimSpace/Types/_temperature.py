@@ -46,7 +46,7 @@ class Temperature:
 
            or
 
-           string    -- A string representation of the time.
+           string    -- A string representation of the temperature.
         """
 
         # The user has passed a magnitude and a unit.

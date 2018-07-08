@@ -52,7 +52,7 @@ class Length:
 
            or
 
-           string    -- A string representation of the time.
+           string    -- A string representation of the length.
         """
 
         # The user has passed a magnitude and a unit.
@@ -68,7 +68,7 @@ class Length:
             else:
                 raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-            # Don't support negative times.
+            # Don't support negative lengths.
             if magnitude < 0:
                 raise ValueError("The length cannot be negative!")
 

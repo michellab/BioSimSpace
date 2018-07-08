@@ -48,7 +48,7 @@ class Volume:
 
            or
 
-           string    -- A string representation of the time.
+           string    -- A string representation of the volume.
         """
 
         # The user has passed a magnitude and a unit.
@@ -64,14 +64,14 @@ class Volume:
             else:
                 raise TypeError("'magnitude' must be of type 'int' or 'float'")
 
-            # Don't support negative times.
+            # Don't support negative volumes.
             if magnitude < 0:
-                raise ValueError("The area cannot be negative!")
+                raise ValueError("The volume cannot be negative!")
 
             # Check that the unit is supported.
             self._unit = self._validate_unit(unit)
 
-        # The user has passed a string representation of the area.
+        # The user has passed a string representation of the volume.
         elif len(args) == 1:
             if type(args[0]) != str:
                 raise TypeError("'string' must be of type 'str'")
