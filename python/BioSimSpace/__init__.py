@@ -137,6 +137,7 @@ import BioSimSpace.Parameters as Parameters
 import BioSimSpace.Protocol as Protocol
 import BioSimSpace.Solvent as Solvent
 import BioSimSpace.Types as Types
+import BioSimSpace.Units as Units
 
 # Top-level functions.
 
