@@ -87,6 +87,10 @@ class Length:
             self._magnitude = length._magnitude
             self._unit = length._unit
 
+        # No arguments.
+        else:
+            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
+
         # Store the abbreviated unit.
         try:
             self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()

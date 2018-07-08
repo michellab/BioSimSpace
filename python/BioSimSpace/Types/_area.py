@@ -83,6 +83,10 @@ class Area:
             self._magnitude = area._magnitude
             self._unit = area._unit
 
+        # No arguments.
+        else:
+            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
+
         # Store the abbreviated unit.
         try:
             self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()

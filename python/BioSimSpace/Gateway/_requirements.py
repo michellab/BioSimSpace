@@ -468,8 +468,8 @@ class Length(Requirement):
 
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Length(1, unit)
-            self._unit = temp.unit()
+            length = _Types.Length(1, unit)
+            self._unit = length.unit()
         else:
             raise ValueError("No unit has been specified!")
 
@@ -517,8 +517,8 @@ class Area(Requirement):
 
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Area(1, unit)
-            self._unit = temp.unit()
+            area = _Types.Area(1, unit)
+            self._unit = area.unit()
         else:
             raise ValueError("No unit has been specified!")
 
@@ -566,8 +566,8 @@ class Volume(Requirement):
 
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Volume(1, unit)
-            self._unit = temp.unit()
+            volume = _Types.Volume(1, unit)
+            self._unit = volume.unit()
         else:
             raise ValueError("No unit has been specified!")
 
@@ -664,8 +664,8 @@ class Time(Requirement):
 
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Time(1, unit)
-            self._unit = temp.unit()
+            time = _Types.Time(1, unit)
+            self._unit = time.unit()
         else:
             raise ValueError("No unit has been specified!")
 

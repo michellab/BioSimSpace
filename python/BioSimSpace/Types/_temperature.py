@@ -81,6 +81,10 @@ class Temperature:
             self._magnitude = temp._magnitude
             self._unit = temp._unit
 
+        # No arguments.
+        else:
+            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._magnitude > 1e6 or abs(self._magnitude) < 1e-6:
