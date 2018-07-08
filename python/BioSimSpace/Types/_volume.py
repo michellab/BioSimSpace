@@ -27,10 +27,10 @@ __all__ = ["Volume"]
 
 class Volume:
     # Dictionary of allowed units.
-    _supported_units = { "METER3"      : _Units.meter2,
-                         "NANOMETER3"  : _Units.nanometer2,
-                         "ANGSTROM3"   : _Units.angstrom2,
-                         "PICOMETER3"  : _Units.picometer2 }
+    _supported_units = { "METER3"      : _Units.meter3,
+                         "NANOMETER3"  : _Units.nanometer3,
+                         "ANGSTROM3"   : _Units.angstrom3,
+                         "PICOMETER3"  : _Units.picometer3 }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "M3"  : "METER3",
