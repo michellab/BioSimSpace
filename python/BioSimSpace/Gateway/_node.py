@@ -26,15 +26,19 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _is_notebook
 
+from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
 from ._requirements import File as _File
 from ._requirements import FileSet as _FileSet
 from ._requirements import Float as _Float
+from ._requirements import Energy as _Energy
 from ._requirements import Integer as _Integer
-from ._requirements import Temperature as _Temperature
-from ._requirements import Time as _Time
+from ._requirements import Length as _Length
 from ._requirements import Requirement as _Requirement
 from ._requirements import String as _String
+from ._requirements import Temperature as _Temperature
+from ._requirements import Time as _Time
+from ._requirements import Volume as _Volume
 
 import argparse as _argparse
 import collections as _collections
@@ -54,6 +58,9 @@ if _is_notebook():
     import zipfile as _zipfile
 
 __all__ = ["Node"]
+
+# Float types (including those with units).
+_float_types = [_Float, _Energy, _Length, _Area, _Volume, _Temperature, _Time]
 
 class _OutputAction(_argparse.Action):
     """Helper class for printing node output requirements."""
@@ -281,9 +288,6 @@ class Node():
            reset -- Whether to reset the widget data.
         """
 
-        # Float types (including those with units).
-        float_types = [_Float, _Temperature, _Time]
-
         # Create a widget button to indicate whether the requirement value
         # has been set.
         button = _widgets.Button(
@@ -422,7 +426,7 @@ class Node():
             self._widgets[name] = widget
 
         # Float types (including those with units).
-        elif type(input) in float_types:
+        elif type(input) in _float_types:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
