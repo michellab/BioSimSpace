@@ -20,13 +20,14 @@
 #####################################################################
 
 """
-Additional data types with units.
+Energy units.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._area import *
-from ._energy import *
-from ._length import *
-from ._temperature import *
-from ._time import *
-from ._volume import *
+from ...Types import Energy as _Energy
+
+__all__ = ["kcal_per_mol", "kj_per_mol", "kt"]
+
+kcal_per_mol = _Energy(1, "KILO CALORIES PER MOL")
+kj_per_mol = _Energy(1, "KILO JOULES PER MOL")
+kt = _Energy(1, "KT")

@@ -39,6 +39,7 @@ import zipfile as _zipfile
 __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "File", "FileSet",                           # File types.
            "Length", "Area", "Volume",                  # Length types.
+           "Energy",
            "Temperature",
            "Time"]
 
@@ -588,6 +589,55 @@ class Volume(Requirement):
             return _Types.Volume(value, self._unit)
         else:
             return _Types.Volume(value, unit)._convert_to(self._unit)
+
+class Energy(Requirement):
+    """An energy requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments:
+
+           help    -- The help string.
+           default -- The default value.
+           unit    -- The unit.
+           minimum -- The minimum allowed value.
+           maximum -- The maximum allowed value.
+           allowed -- A list of allowed values.
+        """
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, minimum=minimum,
+            maximum=maximum, allowed=allowed)
+
+        # Validate the unit.
+        if unit is not None:
+            temp = _Types.Energy(1, unit)
+            self._unit = temp.unit()
+        else:
+            raise ValueError("No unit has been specified!")
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        # Extract the value and unit from the argument string.
+        value, unit = _validate_unit_requirement(value, "temperature")
+
+        if unit is None:
+            return _Types.Energy(value, self._unit)
+        else:
+            return _Types.Energy(value, unit)._convert_to(self._unit)
 
 class Temperature(Requirement):
     """A temperature requirement."""

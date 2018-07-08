@@ -25,6 +25,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from . import Area
+from . import Energy
 from . import Length
 from . import Temperature
 from . import Time
