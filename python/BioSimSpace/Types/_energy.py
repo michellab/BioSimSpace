@@ -312,7 +312,7 @@ class Energy:
 
     def kcal_per_mol(self):
         """Return the energy in kcal per mol."""
-        return Energy((self._magnitude * self._supported_units[self._unit]).value(), "KILO CALORIES PER MOL")
+        return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kcal_per_mol), "KILO CALORIES PER MOL")
 
     def kj_per_mol(self):
         """Return the energy in kJ per mol."""
@@ -320,7 +320,7 @@ class Energy:
 
     def kt(self):
         """Return the energy in KT."""
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.447 * _Units.kJ_per_mol), "KT")
+        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _Units.kJ_per_mol), "KT")
 
     def _from_string(self, string):
         """Convert a string to a Energy object.
