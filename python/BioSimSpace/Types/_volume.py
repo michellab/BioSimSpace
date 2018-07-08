@@ -100,17 +100,17 @@ class Volume:
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
+        if self._magnitude > 1e4 or self._magnitude < 1e-4:
             return "%.4e %s" % (self._magnitude, self._abbrev)
         else:
-            return "%.2f %s" % (self._magnitude, self._abbrev)
+            return "%5.4f %s" % (self._magnitude, self._abbrev)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
+        if self._magnitude > 1e4 or self._magnitude < 1e-4:
             return "BioSimSpace.Types.Volume(%.4e, '%s')" % (self._magnitude, self._abbrev)
         else:
-            return "BioSimSpace.Types.Volume(%f, '%s')" % (self._magnitude, self._abbrev)
+            return "BioSimSpace.Types.Volume(%5.4f, '%s')" % (self._magnitude, self._abbrev)
 
     def __add__(self, other):
         """Addition operator."""
@@ -328,19 +328,19 @@ class Volume:
 
     def meters3(self):
         """Return the volume in cubic meters."""
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.meter2), "METER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.meter3), "METER3")
 
     def nanometers3(self):
         """Return the volume in cubic nanometers."""
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer2), "NANOMETER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer3), "NANOMETER3")
 
     def angstroms3(self):
         """Return the volume in cubic angstroms."""
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom2), "ANGSTROM3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom3), "ANGSTROM3")
 
     def picometers3(self):
         """Return the volume in cubic picometers."""
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer3), "PICOMETER3")
 
     def _from_string(self, string):
         """Convert a string to a Volume object.
