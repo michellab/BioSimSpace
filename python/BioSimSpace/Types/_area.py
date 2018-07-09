@@ -19,13 +19,20 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
+"""
+An area type.
+Author: Lester Hedges <lester.hedges@gmail.com>
+"""
+
 import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 import re as _re
 
 __all__ = ["Area"]
 
-class Area:
+class Area(_Type):
     # Dictionary of allowed units.
     _supported_units = { "METER2"      : _Units.meter2,
                          "NANOMETER2"  : _Units.nanometer2,
@@ -37,6 +44,12 @@ class Area:
                        "NM2" : "NANOMETER2",
                        "A2"  : "ANGSTROM2",
                        "PM2" : "PICOMETER2" }
+
+    # Print format.
+    _print_format = { "METER2"      : "m^2",
+                      "NANOMETER2"  : "nm^2",
+                      "ANGSTROM2"   : "A^2",
+                      "PICOMETER2"  : "pm^2" }
 
     def __init__(self, *args):
         """Constructor.
@@ -51,112 +64,12 @@ class Area:
            string    -- A string representation of the area.
         """
 
-        # The user has passed a magnitude and a unit.
-        if len(args) > 1:
-            magnitude = args[0]
-            unit = args[1]
+        # Call the base class constructor.
+        super().__init__(*args)
 
-            # Check that the magnitude is valid.
-            if type(magnitude) is int:
-                self._magnitude = float(magnitude)
-            elif type(magnitude) is float:
-                self._magnitude = magnitude
-            else:
-                raise TypeError("'magnitude' must be of type 'int' or 'float'")
-
-            # Don't support negative areas.
-            if magnitude < 0:
-                raise ValueError("The area cannot be negative!")
-
-            # Check that the unit is supported.
-            self._unit = self._validate_unit(unit)
-
-        # The user has passed a string representation of the area.
-        elif len(args) == 1:
-            if type(args[0]) != str:
-                raise TypeError("'string' must be of type 'str'")
-
-            # Convert the string to a Area object.
-            area = self._from_string(args[0])
-
-            # Store the magnitude and unit.
-            self._magnitude = area._magnitude
-            self._unit = area._unit
-
-        # No arguments.
-        else:
-            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
-
-        # Store the abbreviated unit.
-        try:
-            self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()
-            self._abbrev = self._abbrev[0:-1] + "^" + self._abbrev[-1]
-        except:
-            self._abbrev = self._unit.lower()
-
-        # Handle Angstrom separately.
-        if self._abbrev == "a^2":
-            self._abbrev = "A^2"
-
-    def __str__(self):
-        """Return a human readable string representation of the object."""
-        if self._magnitude > 1e4 or self._magnitude < 1e-4:
-            return "%.4e %s" % (self._magnitude, self._abbrev)
-        else:
-            return "%5.4f %s" % (self._magnitude, self._abbrev)
-
-    def __repr__(self):
-        """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e4 or self._magnitude < 1e-4:
-            return "BioSimSpace.Types.Area(%.4e, '%s')" % (self._magnitude, self._abbrev)
-        else:
-            return "BioSimSpace.Types.Area(%5.4f, '%s')" % (self._magnitude, self._abbrev)
-
-    def __add__(self, other):
-        """Addition operator."""
-
-        # Addition of another Area object.
-        if type(other) is Area:
-            # Add the magnitudes in a common unit.
-            mag = self.angstroms2().magnitude() + other.angstroms2().magnitude()
-
-            # Get new magnitude in the original unit.
-            # Left-hand operand takes precedence.
-            mag = Area(mag, "ANGSTROM2")._convert_to(self._unit).magnitude()
-
-            # Return a new length object.
-            return Area(mag, self._unit)
-
-        # Addition of a string.
-        elif type(other) is str:
-            area = self._from_string(other)
-            return self + area
-
-        else:
-            raise NotImplementedError
-
-    def __sub__(self, other):
-        """Subtraction operator."""
-
-        # Addition of another Area object.
-        if type(other) is Area:
-            # Subtract the magnitudes in a common unit.
-            mag = self.angstroms2().magnitude() - other.angstroms2().magnitude()
-
-            # Get new magnitude in the original unit.
-            # Left-hand operand takes precedence.
-            mag = Area(mag, "ANGSTROM2")._convert_to(self._unit).magnitude()
-
-            # Return a new Area object.
-            return Area(mag, self._unit)
-
-        # Subtraction of a string.
-        elif type(other) is str:
-            area = self._from_string(other)
-            return self - area
-
-        else:
-            raise NotImplementedError
+        # Don't support negative areas.
+        if self._magnitude < 0:
+            raise ValueError("The area cannot be negative!")
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -251,98 +164,6 @@ class Area:
         else:
             raise NotImplementedError
 
-    def __lt__(self, other):
-        """Less than operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() < other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() < self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __le__(self, other):
-        """Less than or equal to operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() <= other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() <= self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __eq__(self, other):
-        """Equals to operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() == other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() == self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __ne__(self, other):
-        """Not equals to operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() != other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() != self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __ge__(self, other):
-        """Greater than or equal to operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() >= other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() >= self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __gt__(self, other):
-        """Gretear than operator."""
-
-        # Compare with another Area object.
-        if type(other) is Area:
-            return self.angstroms2().magnitude() > other.angstroms2().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.angstroms2().magnitude() > self._from_string(other).angstroms2().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def magnitude(self):
-        """Return the magnitude."""
-        return self._magnitude
-
-    def unit(self):
-        """Return the unit."""
-        return self._unit
-
     def meters2(self):
         """Return the area in square meters."""
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.meter2), "METER2")
@@ -359,40 +180,17 @@ class Area:
         """Return the area in square picometers."""
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER2")
 
-    def _from_string(self, string):
-        """Convert a string to an Area object.
+    def _default_unit(self, mag=None):
+        """Internal method to return an object of the same type in the default unit.
 
-           Positional arguments:
+           Positional argument:
 
-           string -- The string to interpret.
+           mag -- The magnitude (optional).
         """
-
-        if type(string) is str:
-            # Strip white space from the string.
-            string = string.replace(" ", "")
-
-            # Try to match scientific format.
-            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
-
-            # Try to match decimal format.
-            if match is None:
-                match = _re.search("(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
-
-                # No matches, raise an error.
-                if match is None:
-                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
-
-            # Extract the value and unit.
-            value, unit = match.groups()
-
-            # Convert the value to a float.
-            value = float(value)
-
-            # Create and return a new Area object.
-            return Area(value, unit)
-
+        if mag is None:
+            return self.angstroms2()
         else:
-            raise TypeError("'string' must be of type 'str'")
+            return Area(mag, "ANGSTROM2")
 
     def _convert_to(self, unit):
         """Return the area in a different unit.

@@ -19,13 +19,20 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
+"""
+An energy type.
+Author: Lester Hedges <lester.hedges@gmail.com>
+"""
+
 import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 import re as _re
 
 __all__ = ["Energy"]
 
-class Energy:
+class Energy(_Type):
     # Dictionary of allowed units.
     _supported_units = { "KILO CALORIES PER MOL" : _Units.kcal_per_mol,
                          "KILO JOULES PER MOL"   : _Units.kJ_per_mol,
@@ -54,261 +61,8 @@ class Energy:
            string    -- A string representation of the energy.
         """
 
-        # The user has passed a magnitude and a unit.
-        if len(args) > 1:
-            magnitude = args[0]
-            unit = args[1]
-
-            # Check that the magnitude is valid.
-            if type(magnitude) is int:
-                self._magnitude = float(magnitude)
-            elif type(magnitude) is float:
-                self._magnitude = magnitude
-            else:
-                raise TypeError("'magnitude' must be of type 'int' or 'float'")
-
-            # Check that the unit is supported.
-            self._unit = self._validate_unit(unit)
-
-        # The user has passed a string representation of the temperature.
-        elif len(args) == 1:
-            if type(args[0]) != str:
-                raise TypeError("'string' must be of type 'str'")
-
-            # Convert the string to a Energy object.
-            nrg = self._from_string(args[0])
-
-            # Store the magnitude and unit.
-            self._magnitude = nrg._magnitude
-            self._unit = nrg._unit
-
-        # No arguments.
-        else:
-            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
-
-    def __str__(self):
-        """Return a human readable string representation of the object."""
-        if self._magnitude > 1e4 or self._magnitude < 1e-4:
-            return "%.4e %s" % (self._magnitude, self._print_format[self.unit])
-        else:
-            return "%5.4f %s" % (self._magnitude, self._print_format[self._unit])
-
-    def __repr__(self):
-        """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e4 or abs(self._magnitude) < 1e-4:
-            return "BioSimSpace.Types.Energy(%.4e, '%s')" % (self._magnitude, self._unit)
-        else:
-            return "BioSimSpace.Types.Energy(%5.4f, '%s')" % (self._magnitude, self._unit)
-
-    def __add__(self, other):
-        """Addition operator."""
-
-        # Addition of another Energy object.
-        if type(other) is Energy:
-            # Add the magnitudes in a common unit.
-            mag = self.kcal_per_mol().magnitude() + other.kcal_per_mol().magnitude()
-
-            # Get new magnitude in the original unit.
-            # Left-hand operand takes precedence.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
-
-            # Return a new temperature object.
-            return Energy(mag, self._unit)
-
-        # Addition of a string.
-        elif type(other) is str:
-            temp = self._from_string(other)
-            return self + temp
-
-        else:
-            raise NotImplementedError
-
-    def __sub__(self, other):
-        """Subtraction operator."""
-
-        # Subtraction of another Energy object.
-        if type(other) is Energy:
-            # Subtract the magnitudes in a common unit.
-            mag = self.kcal_per_mol().magnitude() - other.kcal_per_mol().magnitude()
-
-            # Get new magnitude in the original unit.
-            # Left-hand operand takes precedence.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
-
-            # Return a new temperature object.
-            return Energy(mag, self._unit)
-
-        # Addition of a string.
-        elif type(other) is str:
-            temp = self._from_string(other)
-            return self - temp
-
-        else:
-            raise NotImplementedError
-
-    def __mul__(self, other):
-        """Multiplication operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support multiplication by float.
-        if type(other) is float:
-            # Convert to kcal_per_mol and multiply.
-            mag = self.kcal_per_mol().magnitude() * other
-
-            # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
-
-            # Return the new temperature.
-            return Energy(mag, self._unit)
-
-        else:
-            raise NotImplementedError
-
-    def __rmul__(self, other):
-        """Multiplication operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support multiplication by float.
-        if type(other) is float:
-            # Convert to kcal_per_mol and multiply.
-            mag = self.kcal_per_mol().magnitude() * other
-
-            # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
-
-            # Return the new temperature.
-            return Energy(mag, self._unit)
-
-        else:
-            raise NotImplementedError
-
-    def __truediv__(self, other):
-        """Division operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Float division.
-        if type(other) is float:
-            # Convert to kcal_per_mol and divide.
-            mag = self.kcal_per_mol().magnitude() / other
-
-            # Get new magnitude in the original unit.
-            mag = Energy(mag, "kcal/mol")._convert_to(self._unit).magnitude()
-
-            # Return the new temperature.
-            return Energy(mag, self._unit)
-
-        # Division by another temperature.
-        elif type(other) is Energy:
-            return self.kcal_per_mol().magnitude() / other.kcal_per_mol().magnitude()
-
-        # Division by a string.
-        elif type(other) is str:
-            nrg = self._from_string(other)
-            return self / nrg
-
-        else:
-            raise NotImplementedError
-
-    def __lt__(self, other):
-        """Less than operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() < other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() < self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __le__(self, other):
-        """Less than or equal to operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() <= other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() <= self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __eq__(self, other):
-        """Equals to operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() == other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() == self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __ne__(self, other):
-        """Not equals to operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() != other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() != self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __ge__(self, other):
-        """Greater than or equal to operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() >= other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() >= self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def __gt__(self, other):
-        """Gretear than operator."""
-
-        # Compare to another Energy object.
-        if type(other) is Energy:
-            return self.kcal_per_mol().magnitude() > other.kcal_per_mol().magnitude()
-
-        # Compare with a string.
-        elif type(other) is str:
-            return self.kcal_per_mol().magnitude() > self._from_string(other).kcal_per_mol().magnitude()
-
-        else:
-            raise NotImplementedError
-
-    def magnitude(self):
-        """Return the magnitude."""
-        return self._magnitude
-
-    def unit(self):
-        """Return the unit."""
-        return self._unit
+        # Call the base class constructor.
+        super().__init__(*args)
 
     def kcal_per_mol(self):
         """Return the energy in kcal per mol."""
@@ -322,40 +76,17 @@ class Energy:
         """Return the energy in KT."""
         return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _Units.kJ_per_mol), "KT")
 
-    def _from_string(self, string):
-        """Convert a string to a Energy object.
+    def _default_unit(self, mag=None):
+        """Internal method to return an object of the same type in the default unit.
 
-           Positional arguments:
+           Positional argument:
 
-           string -- The string to interpret.
+           mag -- The magnitude (optional).
         """
-
-        if type(string) is str:
-            # Strip white space from the string.
-            string = string.replace(" ", "")
-
-            # Try to match scientific format.
-            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
-
-            # Try to match decimal format.
-            if match is None:
-                match = _re.search("(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
-
-                # No matches, raise an error.
-                if match is None:
-                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
-
-            # Extract the value and unit.
-            value, unit = match.groups()
-
-            # Convert the value to a float.
-            value = float(value)
-
-            # Create and return a new Energy object.
-            return Energy(value, unit)
-
+        if mag is None:
+            return self.kcal_per_mol()
         else:
-            raise TypeError("'string' must be of type 'str'")
+            return Energy(mag, "KILO CALORIES PER MOL")
 
     def _convert_to(self, unit):
         """Return the temperature in a different unit.
