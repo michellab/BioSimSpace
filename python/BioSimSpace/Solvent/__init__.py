@@ -306,6 +306,11 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
     # Add the output file.
     command += " -o output.gro"
 
+    with open("README.txt", "w") as f:
+        # Write the command to file.
+        f.write("# gmx solvate was run with the following command:\n")
+        f.write("%s\n" % command)
+
     # Run the command.
     proc = _subprocess.run(command, shell=True,
         stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
@@ -332,6 +337,12 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
 
                 for line in water_lines:
                     file.write("%s" % line)
+
+        else:
+            if work_dir is not None:
+                _os.chdir(dir)
+            raise ValueError("No water molecules were generated. Try increasing "
+                + "the 'box' size or 'shell' thickness.")
 
         # Create a TOP file for the water model. By default we use the Amber03
         # force field to generate a dummy topology for the water model.
