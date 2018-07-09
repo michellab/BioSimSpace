@@ -96,6 +96,7 @@ Each package has its own README page:
 - [BioSimSpace.Solvent](python/BioSimSpace/Solvent)
 - [BioSimSpace.Trajectory](python/BioSimSpace/Trajectory)
 - [BioSimSpace.Types](python/BioSimSpace/Types)
+- [BioSimSpace.Units](python/BioSimSpace/Units)
 
 Full API documentation and examples can be found at [biosimspace.org](https://biosimspace.org).
 
