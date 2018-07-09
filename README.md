@@ -90,7 +90,7 @@ Each package has its own README page:
 - [BioSimSpace.IO](python/BioSimSpace/IO)
 - [BioSimSpace.MD](python/BioSimSpace/MD)
 - [BioSimSpace.Notebook](python/BioSimSpace/Notebook)
-- [BioSimSpace.Parameters](python/BioSimSpace/Process)
+- [BioSimSpace.Parameters](python/BioSimSpace/Parameters)
 - [BioSimSpace.Process](python/BioSimSpace/Process)
 - [BioSimSpace.Protocol](python/BioSimSpace/Protocol)
 - [BioSimSpace.Solvent](python/BioSimSpace/Solvent)
