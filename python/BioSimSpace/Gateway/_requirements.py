@@ -89,7 +89,7 @@ class Requirement():
         # Set defaults
         self._value = None
         self._default = None
-        self._unit = None
+        self._unit = unit
         self._min = None
         self._max = None
         self._allowed = None
@@ -105,7 +105,7 @@ class Requirement():
 
         # Min and max.
         if minimum is not None and maximum is not None:
-            if maximum < minimum:
+            if self._max < self._min:
                 raise ValueError("The maximum value '%s' is less than the minimum '%s'"
                     % (maximum, minimum))
 
@@ -464,16 +464,17 @@ class Length(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            length = _Types.Length(1, unit)
+            length = _Types.Length("1 %s" % unit)
             self._unit = length.unit()
+            self._print_unit = length._print_format[length.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit, minimum=minimum,
+            maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -485,13 +486,17 @@ class Length(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "length")
+        if type(value) is _Types.Length:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Length(value, self._unit)
         else:
-            return _Types.Length(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "length")
+
+            if unit is None:
+                return _Types.Length(value, self._unit)
+            else:
+                return _Types.Length(value, unit)._convert_to(self._unit)
 
 class Area(Requirement):
     """An area requirement."""
@@ -513,16 +518,17 @@ class Area(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            area = _Types.Area(1, unit)
+            area = _Types.Area("1 %s" % unit)
             self._unit = area.unit()
+            self._print_unit = area._print_format[area.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -534,13 +540,17 @@ class Area(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "area")
+        if type(value) is _Types.Area:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Area(value, self._unit)
         else:
-            return _Types.Area(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "area")
+
+            if unit is None:
+                return _Types.Area(value, self._unit)
+            else:
+                return _Types.Area(value, unit)._convert_to(self._unit)
 
 class Volume(Requirement):
     """A volume requirement."""
@@ -562,16 +572,17 @@ class Volume(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            volume = _Types.Volume(1, unit)
+            volume = _Types.Volume("1 %s" % unit)
             self._unit = volume.unit()
+            self._print_unit = volume._print_format[volume.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -583,13 +594,17 @@ class Volume(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "volume")
+        if type(value) is _Types.Volume:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Volume(value, self._unit)
         else:
-            return _Types.Volume(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "volume")
+
+            if unit is None:
+                return _Types.Volume(value, self._unit)
+            else:
+                return _Types.Volume(value, unit)._convert_to(self._unit)
 
 class Energy(Requirement):
     """An energy requirement."""
@@ -611,16 +626,17 @@ class Energy(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Energy(1, unit)
-            self._unit = temp.unit()
+            nrg = _Types.Energy("1 %s" % unit)
+            self._unit = nrg.unit()
+            self._print_unit = nrg._print_format[nrg.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -632,13 +648,17 @@ class Energy(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "energy")
+        if type(value) is _Types.Energy:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Energy(value, self._unit)
         else:
-            return _Types.Energy(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "energy")
+
+            if unit is None:
+                return _Types.Energy(value, self._unit)
+            else:
+                return _Types.Energy(value, unit)._convert_to(self._unit)
 
 class Pressure(Requirement):
     """A pressure requirement."""
@@ -660,16 +680,17 @@ class Pressure(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Pressure(1, unit)
-            self._unit = temp.unit()
+            press = _Types.Pressure("1 %s" % unit)
+            self._unit = press.unit()
+            self._print_unit = press._print_format[press.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -681,13 +702,17 @@ class Pressure(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "pressure")
+        if type(value) is _Types.Pressure:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Pressure(value, self._unit)
         else:
-            return _Types.Pressure(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "pressure")
+
+            if unit is None:
+                return _Types.Pressure(value, self._unit)
+            else:
+                return _Types.Pressure(value, unit)._convert_to(self._unit)
 
 class Temperature(Requirement):
     """A temperature requirement."""
@@ -709,16 +734,17 @@ class Temperature(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            temp = _Types.Temperature(1, unit)
+            temp = _Types.Temperature("1 %s" % unit)
             self._unit = temp.unit()
+            self._print_unit = temp._print_format[temp.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -730,13 +756,17 @@ class Temperature(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "temperature")
+        if type(value) is _Types.Temperature:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Temperature(value, self._unit)
         else:
-            return _Types.Temperature(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "temperature")
+
+            if unit is None:
+                return _Types.Temperature(value, self._unit)
+            else:
+                return _Types.Temperature(value, unit)._convert_to(self._unit)
 
 class Time(Requirement):
     """A time requirement."""
@@ -758,16 +788,17 @@ class Time(Requirement):
            allowed -- A list of allowed values.
         """
 
-        # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
-
         # Validate the unit.
         if unit is not None:
-            time = _Types.Time(1, unit)
+            time = _Types.Time("1 %s" % unit)
             self._unit = time.unit()
+            self._print_unit = time._print_format[time.unit()]
         else:
             raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
         """Return the value."""
@@ -779,13 +810,17 @@ class Time(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        # Extract the value and unit from the argument string.
-        value, unit = _validate_unit_requirement(value, "time")
+        if type(value) is _Types.Time:
+            return value._convert_to(self._unit)
 
-        if unit is None:
-            return _Types.Time(value, self._unit)
         else:
-            return _Types.Time(value, unit)._convert_to(self._unit)
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "time")
+
+            if unit is None:
+                return _Types.Time(value, self._unit)
+            else:
+                return _Types.Time(value, unit)._convert_to(self._unit)
 
 def _validate_unit_requirement(value, unit_type):
     """Helper function to validate input requirements with units.

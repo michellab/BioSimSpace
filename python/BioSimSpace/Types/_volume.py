@@ -28,8 +28,6 @@ import Sire.Units as _Units
 
 from ._type import Type as _Type
 
-import re as _re
-
 __all__ = ["Volume"]
 
 class Volume(_Type):

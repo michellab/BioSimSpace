@@ -24,6 +24,8 @@ A collection of physical unit types.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import re as _re
+
 __all__ = ["Type"]
 
 class Type():
