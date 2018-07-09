@@ -31,6 +31,8 @@ from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
 
 import math as _math
 import os as _os
@@ -584,7 +586,7 @@ class Namd(_process.Process):
 
         return _Trajectory(process=self)
 
-    def getRecord(self, record, time_series=False, block="AUTO"):
+    def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
            Positional arguments:
@@ -594,6 +596,7 @@ class Namd(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a list of time series records.
+           unit        -- The unit to convert the record to.
            block       -- Whether to block until the process has finished running.
         """
 
@@ -604,9 +607,9 @@ class Namd(_process.Process):
             self.wait()
 
         self.stdout(0)
-        return self._get_stdout_record(record, time_series)
+        return self._get_stdout_record(record, time_series, unit)
 
-    def getCurrentRecord(self, record, time_series=False):
+    def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
            Positional arguments:
@@ -616,9 +619,10 @@ class Namd(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a list of time series records.
+           unit        -- The unit to convert the record to.
         """
         self.stdout(0)
-        return self._get_stdout_record(record, time_series)
+        return self._get_stdout_record(record, time_series, unit)
 
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
@@ -653,10 +657,10 @@ class Namd(_process.Process):
 
         else:
             # Get the list of time steps.
-            time_steps = self.getRecord("TS", time_series, block)
+            time_steps = self.getRecord("TS", time_series, None, block)
 
             # Convert the time step to nanoseconds.
-            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().nanoseconds()
 
             # Multiply by the integration time step.
             if time_steps is not None:
@@ -701,7 +705,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("BOND", time_series, block)
+        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
@@ -720,7 +724,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("ANGLE", time_series, block)
+        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
@@ -739,7 +743,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("DIHED", time_series, block)
+        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
@@ -758,7 +762,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("IMPRP", time_series, block)
+        return self.getRecord("IMPRP", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
@@ -777,7 +781,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("ELECT", time_series, block)
+        return self.getRecord("ELECT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current electrostatic energy.
@@ -796,7 +800,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("VDW", time_series)
+        return self.getRecord("VDW", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Waals energy.
@@ -815,7 +819,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("BOUNDARY", time_series, block)
+        return self.getRecord("BOUNDARY", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentBoundaryEnergy(self, time_series=False):
         """Get the current boundary energy.
@@ -834,7 +838,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("MISC", time_series, block)
+        return self.getRecord("MISC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentMiscEnergy(self, time_series=False):
         """Get the current external energy.
@@ -853,7 +857,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("KINETIC", time_series, block)
+        return self.getRecord("KINETIC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
@@ -872,7 +876,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("POTENTIAL", time_series, block)
+        return self.getRecord("POTENTIAL", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
@@ -891,7 +895,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TOTAL", time_series, block)
+        return self.getRecord("TOTAL", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current potential energy.
@@ -910,7 +914,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TOTAL2", time_series, block)
+        return self.getRecord("TOTAL2", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotal2Energy(self, time_series=False):
         """Get the current total energy. (Better KE conservation.)
@@ -929,7 +933,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TOTAL3", time_series, block)
+        return self.getRecord("TOTAL3", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)
@@ -948,7 +952,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TEMP", time_series, block)
+        return self.getRecord("TEMP", time_series, _Units.Temperature.kelvin, block)
 
     def getCurrentTemperature(self, time_series=False):
         """Get the temperature.
@@ -967,7 +971,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TEMPAVG", time_series, block)
+        return self.getRecord("TEMPAVG", time_series, _Units.Temperature.kelvin, block)
 
     def getCurrentTemperatureAverage(self, time_series=False):
         """Get the current average temperature.
@@ -986,7 +990,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("PRESSURE", time_series, block)
+        return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
@@ -1005,7 +1009,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("PRESSAVG", time_series, block)
+        return self.getRecord("PRESSAVG", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressureAverage(self, time_series=False):
         """Get the current average pressure.
@@ -1024,7 +1028,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("GPRESSURE", time_series, block)
+        return self.getRecord("GPRESSURE", time_series, _Units.Pressure.bar, block)
 
     def getCurrentGPressure(self, time_series=False):
         """Get the current pressure. (Hydrogens incorporated into bonded atoms.)
@@ -1043,7 +1047,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("GPRESSAVG", time_series, block)
+        return self.getRecord("GPRESSAVG", time_series, _Units.Pressure.bar, block)
 
     def getCurrentGPressureAverage(self, time_series=False):
         """Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
@@ -1062,7 +1066,7 @@ class Namd(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("VOLUME", time_series, block)
+        return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
 
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
@@ -1093,7 +1097,7 @@ class Namd(_process.Process):
                     # Try to find the "hours" record.
                     # If found, return the entry preceeding it.
                     try:
-                        return float(data[data.index("hours") - 1]) * 60
+                        return (float(data[data.index("hours") - 1]) * 60) * _Units.Time.minutes
 
                     # No record found.
                     except ValueError:
@@ -1148,7 +1152,7 @@ class Namd(_process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
-    def _get_stdout_record(self, key, time_series=False):
+    def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
            Positional arguments:
@@ -1158,6 +1162,7 @@ class Namd(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a time series of records.
+           unit        -- The unit to convert the record to.
         """
 
         # No data!
@@ -1168,13 +1173,21 @@ class Namd(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
         # Return the list of dictionary values.
         if time_series:
             try:
                 if key is "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
-                    return [float(x) for x in self._stdout_dict[key]]
+                    if unit is None:
+                        return [float(x) for x in self._stdout_dict[key]]
+                    else:
+                        return [float(x) * unit for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1185,7 +1198,10 @@ class Namd(_process.Process):
                 if key is "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
-                    return float(self._stdout_dict[key][-1])
+                    if unit is None:
+                        return float(self._stdout_dict[key][-1])
+                    else:
+                        return float(self._stdout_dict[key][-1]) * unit
 
             except KeyError:
                 return None

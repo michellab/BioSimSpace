@@ -32,6 +32,8 @@ from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
 
 from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
 from watchdog.observers import Observer as _Observer
@@ -506,7 +508,7 @@ class Amber(_process.Process):
 
         return _Trajectory(process=self)
 
-    def getRecord(self, record, time_series=False, block="AUTO"):
+    def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
            Positional arguments:
@@ -516,6 +518,7 @@ class Amber(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a list of time series records.
+           unit        -- The unit to convert the record to.
            block       -- Whether to block until the process has finished running.
         """
 
@@ -525,9 +528,9 @@ class Amber(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        return self._get_stdout_record(record.strip().upper(), time_series)
+        return self._get_stdout_record(record.strip().upper(), time_series, unit)
 
-    def getCurrentRecord(self, record, time_series=False):
+    def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
            Positional arguments:
@@ -537,8 +540,9 @@ class Amber(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a list of time series records.
+           unit        -- The unit to convert the record to.
         """
-        return self._get_stdout_record(record.strip().upper(), time_series)
+        return self._get_stdout_record(record.strip().upper(), time_series, unit)
 
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
@@ -574,14 +578,14 @@ class Amber(_process.Process):
             return None
 
         # Get the list of time steps.
-        time_steps = self.getRecord("TIME(PS)", time_series, block)
+        time_steps = self.getRecord("TIME(PS)", time_series, None, block)
 
         # Convert from picoseconds to nanoseconds.
         if time_steps is not None:
             if time_series:
-                return [x * 1e-3 for x in time_steps]
+                return [(x * _Units.Time.picosecond).nanoseconds() for x in time_steps]
             else:
-                return 1e-3 * time_steps
+                return (time_steps * _Units.Time.picosecond).nanoseconds()
 
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
@@ -619,7 +623,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("BOND", time_series, block)
+        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
@@ -638,7 +642,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("ANGLE", time_series, block)
+        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
@@ -657,7 +661,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("DIHED", time_series, block)
+        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
@@ -676,7 +680,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("EELECT", time_series, block)
+        return self.getRecord("EELECT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current dihedral energy.
@@ -695,7 +699,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("1-4 EEL", time_series, block)
+        return self.getRecord("1-4 EEL", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentElectrostaticEnergy14(self, time_series=False):
         """Get the current electrostatic energy between atoms 1 and 4.
@@ -714,7 +718,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("VDWAALS", time_series, block)
+        return self.getRecord("VDWAALS", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Vaals energy.
@@ -733,7 +737,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("EHBOND", time_series, block)
+        return self.getRecord("EHBOND", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentHydrogenBondEnergy(self, time_series=False):
         """Get the current hydrogen bond energy.
@@ -752,7 +756,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("RESTRAINT", time_series, block)
+        return self.getRecord("RESTRAINT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentRestraintEnergy(self, time_series=False):
         """Get the current restraint energy.
@@ -771,7 +775,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("EPTOT", time_series, block)
+        return self.getRecord("EPTOT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
@@ -790,7 +794,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("EKTOT", time_series, block)
+        return self.getRecord("EKTOT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
@@ -809,7 +813,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("1-4 NB", time_series, block)
+        return self.getRecord("1-4 NB", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentNonBondedEnergy14(self, time_series=False):
         """Get the current non-bonded energy between atoms 1 and 4.
@@ -829,9 +833,9 @@ class Amber(_process.Process):
            block       -- Whether to block until the process has finished running.
         """
         if type(self._protocol) is _Protocol.Minimisation:
-            return self.getRecord("ENERGY", time_series, block)
+            return self.getRecord("ENERGY", time_series, _Units.Energy.kcal_per_mol, block)
         else:
-            return self.getRecord("ETOT", time_series, block)
+            return self.getRecord("ETOT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current total energy.
@@ -850,7 +854,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("EKCMT", time_series, block)
+        return self.getRecord("EKCMT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentCentreOfMassKineticEnergy(self, time_series=False):
         """Get the current kinetic energy of the centre of mass in translation.
@@ -888,7 +892,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("TEMP(K)", time_series, block)
+        return self.getRecord("TEMP(K)", time_series, _Units.Temperature.kelvin, block)
 
     def getCurrentTemperature(self, time_series=False):
         """Get the current temperature.
@@ -907,7 +911,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("PRESS", time_series, block)
+        return self.getRecord("PRESS", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
@@ -926,7 +930,7 @@ class Amber(_process.Process):
            time_series -- Whether to return a list of time series records.
            block       -- Whether to block until the process has finished running.
         """
-        return self.getRecord("VOLUME", time_series, block)
+        return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
 
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
@@ -1054,7 +1058,7 @@ class Amber(_process.Process):
         self._watcher._observer.stop()
         self._watcher._observer.join()
 
-    def _get_stdout_record(self, key, time_series=False):
+    def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
            Positional arguments:
@@ -1064,6 +1068,7 @@ class Amber(_process.Process):
            Keyword arguments:
 
            time_series -- Whether to return a time series of records.
+           unit        -- The unit to convert the record to.
         """
 
         # No data!
@@ -1074,13 +1079,21 @@ class Amber(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
         # Return the list of dictionary values.
         if time_series:
             try:
                 if key is "NSTEP":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
-                    return [float(x) for x in self._stdout_dict[key]]
+                    if unit is None:
+                        return [float(x) for x in self._stdout_dict[key]]
+                    else:
+                        return [float(x) * unit for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1091,7 +1104,10 @@ class Amber(_process.Process):
                 if key is "NSTEP":
                     return int(self._stdout_dict[key][-1])
                 else:
-                    return float(self._stdout_dict[key][-1])
+                    if unit is None:
+                        return float(self._stdout_dict[key][-1])
+                    else:
+                        return float(self._stdout_dict[key][-1]) * unit
 
             except KeyError:
                 return None

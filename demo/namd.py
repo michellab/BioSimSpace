@@ -32,11 +32,11 @@ filenames = BSS.IO.saveMolecules("minimised", minimised, system.fileFormat())
 print("\nWritten minimised molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-print("\nMinimised energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Minimisation took %.2f minutes." % process.runTime())
+print("\nMinimised energy is %s." % process.getTotalEnergy())
+print("Minimisation took %s." % process.runTime())
 
 # Create a short equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.1, "nanosecond"))
+protocol = BSS.Protocol.Equilibration(runtime=0.1*BSS.Units.Time.nanosecond)
 
 # Initialise the NAMD process.
 print("\nInitialising equilibration process...")
@@ -58,11 +58,11 @@ filenames = BSS.IO.saveMolecules("equilibrated", equilibrated, system.fileFormat
 print("\nWritten equilibrated molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-print("\nEquilibrated energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Equilibration took %.2f minutes." % process.runTime())
+print("\nEquilibrated energy is %s." % process.getTotalEnergy())
+print("Equilibration took %s." % process.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.1, "nanosecond"))
+protocol = BSS.Protocol.Production(runtime=0.1*BSS.Units.Time.nanosecond)
 
 # Initialise the NAMD process.
 print("\nInitialising production process...")
@@ -90,14 +90,18 @@ filenames = BSS.IO.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
-print("\nFinal energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Production run took %.2f minutes." % process.runTime())
+print("\nFinal energy is %s." % process.getTotalEnergy())
+print("Production run took %s." % process.runTime())
 
 # Get a list of the time records and the corresponding total energies.
 time = process.getTime(time_series=True)
 energy = process.getTotalEnergy(time_series=True)
 
-print("Plotting total energy vs time.")
+# Convert to lists of floats.
+time = [time.magnitude() for time in time]
+energy = [energy.magnitude() for energy in energy]
+
+print("\nPlotting total energy vs time.")
 
 # Create a plot of the total energy vs time.
 fig, ax = plt.subplots()

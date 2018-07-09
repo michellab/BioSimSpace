@@ -31,6 +31,8 @@ from BioSimSpace import _is_interactive, _is_notebook
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 
+import BioSimSpace.Units as _Units
+
 import collections as _collections
 import operator as _operator
 import os as _os
@@ -627,7 +629,7 @@ class Process():
         # The process is still running.
         if self._process.isRunning():
             self._runtime = (_timeit.default_timer() - self._timer) / 60
-            return self._runtime
+            return self._runtime * _Units.Time.minute
 
         # The process has finished.
         else:
@@ -635,11 +637,11 @@ class Process():
             if self._timer is not None:
                 self._runtime = (_timeit.default_timer() - self._timer) / 60
                 self._timer = None
-                return self._runtime
+                return self._runtime * _Units.Time.minute
 
             # The process has finished. Return the previous run time.
             else:
-                return self._runtime
+                return self._runtime * _Units.Time.minute
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
