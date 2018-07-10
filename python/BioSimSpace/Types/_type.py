@@ -149,20 +149,8 @@ class Type():
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support multiplication by float.
-        if type(other) is float:
-            # Convert to default unit and multiply.
-            mag = self._default_unit().magnitude() * other
-
-            # Return a new object of the same type with the original unit.
-            return self._default_unit(mag)._convert_to(self._unit)
-
-        else:
-            raise NotImplementedError
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
 
     def __truediv__(self, other):
         """Division operator."""

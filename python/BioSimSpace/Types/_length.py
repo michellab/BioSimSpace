@@ -115,39 +115,8 @@ class Length(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Multiplication by float.
-        if type(other) is float:
-            mag = self._magnitude * other
-            return Length(mag, self._unit)
-
-        # Multiplication by another Length.
-        elif type(other) is Length:
-            mag = self.angstroms().magnitude() * other.angstroms().magnitude()
-            return _Area(mag, "A2")
-
-        # Multiplication by an Area.
-        elif type(other) is _Area:
-            mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
-            return _Volume(mag, "A3")
-
-        # Multiplication by a string.
-        elif type(other) is str:
-            try:
-                length = Length(other)
-                return self * length
-            except:
-                try:
-                    area = _Area(other)
-                    return self * area
-                except:
-                    raise ValueError("Could not convert the string to a "
-                        + "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
-        else:
-            raise NotImplementedError
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
 
     def meters(self):
         """Return the length in meters."""
