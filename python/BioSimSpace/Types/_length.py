@@ -110,7 +110,7 @@ class Length(_Type):
                     raise ValueError("Could not convert the string to a 'BioSimSpace.Length' "
                         + "or 'BioSimSpace.Area' type.")
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'" % (type(self), type(other)))
 
     def __rmul__(self, other):
         """Multiplication operator."""

@@ -113,7 +113,8 @@ class Volume(_Type):
                             + "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
                             + "or 'BioSimSpace.Types.Volume'")
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def meters3(self):
         """Return the volume in cubic meters."""

@@ -95,7 +95,8 @@ class Area(_Type):
                 raise ValueError("Could not convert the string to a 'BioSimSpace.Types.Length'")
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -138,7 +139,8 @@ class Area(_Type):
                         + "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def meters2(self):
         """Return the area in square meters."""

@@ -66,6 +66,154 @@ class Temperature(_Type):
         if self._kelvin() < 0:
             raise ValueError("The temperature cannot be less than absolute zero (0 Kelvin).")
 
+    def __add__(self, other):
+        """Addition operator."""
+
+        from ..Units import allow_offset
+
+        # Addition of another object of the same type.
+        if type(other) is type(self):
+            # The temperatures have the same unit.
+            if self._unit == other._unit:
+                if self._unit != "KELVIN":
+                    if not allow_offset:
+                        raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                    else:
+                        # Add the magnitudes in the original unit.
+                        mag = self._magnitude + other._magnitude
+
+                        # Return a new object of the same type with the original unit.
+                        return Temperature(mag, self._unit)
+                else:
+                    return super().__add__(other)
+            else:
+                if not allow_offset:
+                    raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                else:
+                    # Left-hand operand takes precendence.
+                    mag = self._magnitude + other._convert_to(self._unit).magnitude()
+
+                    # Return a new object of the same type with the original unit.
+                    return Temperature(mag, self._unit)
+
+        # Addition of a string.
+        elif type(other) is str:
+            temp = self._from_string(other)
+            return self + temp
+
+        else:
+            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __sub__(self, other):
+        """Subtraction operator."""
+
+        from ..Units import allow_offset
+
+        # Subtraction of another object of the same type.
+        if type(other) is type(self):
+            # The temperatures have the same unit.
+            if self._unit == other._unit:
+                if self._unit != "KELVIN":
+                    if not allow_offset:
+                        raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                    else:
+                        # Subtract the magnitudes in the original unit.
+                        mag = self._magnitude - other._magnitude
+
+                        # Return a new object of the same type with the original unit.
+                        return Temperature(mag, self._unit)
+                else:
+                    return super().__add__(other)
+            else:
+                if not allow_offset:
+                    raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                else:
+                    # Left-hand operand takes precendence.
+                    mag = self._magnitude - other._convert_to(self._unit).magnitude()
+
+                    # Return a new object of the same type with the original unit.
+                    return Temperature(mag, self._unit)
+
+        # Addition of a string.
+        elif type(other) is str:
+            temp = self._from_string(other)
+            return self - temp
+
+        else:
+            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __mul__(self, other):
+        """Multiplication operator."""
+
+        if self._unit != "KELVIN":
+            from ..Units import allow_offset
+            if not allow_offset:
+                raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+
+            else:
+                # Convert int to float.
+                if type(other) is int:
+                    other = float(other)
+
+                # Only support multiplication by float.
+                if type(other) is float:
+                    # Multiply magnitude.
+                    mag = self._magnitude * other
+
+                    # Return a new object of the same type with the original unit.
+                    return Temperature(mag, self._unit)
+
+                else:
+                    raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                        % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+        else:
+            return super().__mul__(other)
+
+    def __rmul__(self, other):
+        """Multiplication operator."""
+
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        """Division operator."""
+
+        if self._unit != "KELVIN":
+            from ..Units import allow_offset
+            if not allow_offset:
+                raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+
+            else:
+                # Convert int to float.
+                if type(other) is int:
+                    other = float(other)
+
+                # Float division.
+                if type(other) is float:
+                    # Divide magnitude.
+                    mag = self._magnitude / other
+
+                    # Return a new object of the same type with the original unit.
+                    return Temperature(mag, self._unit)
+
+                # Division by another object of the same type.
+                elif type(other) is type(self):
+                    return self._magnitude / other._convert_to(self._unit).magnitude()
+
+                # Division by a string.
+                elif type(other) is str:
+                    obj = self._from_string(other)
+                    return self / obj
+
+                else:
+                    raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                        % (self.__class__.__qualname__, other.__class__.__qualname__))
+        else:
+            return super().__truediv__(other)
+
     def _kelvin(self):
         """Return the magnitude of the temperature in Kelvin."""
         return (self._magnitude * self._supported_units[self._unit]).value()

@@ -107,7 +107,8 @@ class Type():
             return self + temp
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __sub__(self, other):
         """Subtraction operator."""
@@ -126,7 +127,8 @@ class Type():
             return self - temp
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -144,7 +146,8 @@ class Type():
             return self._default_unit(mag)._convert_to(self._unit)
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -177,7 +180,8 @@ class Type():
             return self / obj
 
         else:
-            raise NotImplementedError
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __lt__(self, other):
         """Less than operator."""
@@ -191,7 +195,8 @@ class Type():
             return self._default_unit().magnitude() < self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            raise TypeError("unorderable types: '%s' < '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __le__(self, other):
         """Less than or equal to operator."""
@@ -205,7 +210,8 @@ class Type():
             return self._default_unit().magnitude() <= self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            raise TypeError("unorderable types: '%s' <= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __eq__(self, other):
         """Equals to operator."""
@@ -219,7 +225,7 @@ class Type():
             return self._default_unit().magnitude() == self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            return False
 
     def __ne__(self, other):
         """Not equals to operator."""
@@ -233,7 +239,7 @@ class Type():
             return self._default_unit().magnitude() != self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            return True
 
     def __ge__(self, other):
         """Greater than or equal to operator."""
@@ -247,7 +253,8 @@ class Type():
             return self._default_unit().magnitude() >= self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            raise TypeError("unorderable types: '%s' >= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __gt__(self, other):
         """Gretear than operator."""
@@ -261,7 +268,8 @@ class Type():
             return self._default_unit().magnitude() > self._from_string(other)._default_unit().magnitude()
 
         else:
-            raise NotImplementedError
+            raise TypeError("unorderable types: '%s' > '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def magnitude(self):
         """Return the magnitude."""
@@ -279,6 +287,8 @@ class Type():
            string -- The string to interpret.
         """
 
+        string_copy = string
+
         if type(string) is str:
             # Strip white space from the string.
             string = string.replace(" ", "")
@@ -292,7 +302,8 @@ class Type():
 
                 # No matches, raise an error.
                 if match is None:
-                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+                    raise ValueError("Could not interpret '%s' as '%s'"
+                        % (string_copy, self.__class__.__qualname__))
 
             # Extract the value and unit.
             value, unit = match.groups()

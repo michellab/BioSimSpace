@@ -31,3 +31,7 @@ from . import Pressure
 from . import Temperature
 from . import Time
 from . import Volume
+
+# Whether to allow operations between offset units, see here for details:
+# http://pint.readthedocs.io/en/latest/nonmult.html
+allow_offset = False
