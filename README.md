@@ -82,6 +82,17 @@ simply add the following to `~/.matplotlib/matplotlibrc`
 backend: TkAgg
 ```
 
+Several additional packages are required for full access to all of BioSimSpace's
+functionality. Please download and install these packages according to their
+recommended installation instructions.
+
+* [Amber / AmberTools](http://ambermd.org): _Dynamics / Parameterisation / Solvation_
+* [Gromacs](http://www.gromacs.org/): _Dynamics / Parameterisation / Solvation_
+* [Namd](http://www.ks.uiuc.edu/Research/namd/): _Dynamics_ (optional)
+
+(Installation and use of these packages is subject to the terms of their
+respective licenses.)
+
 ## Documentation
 
 Each package has its own README page:
