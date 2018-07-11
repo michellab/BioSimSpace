@@ -16,6 +16,9 @@ system = BSS.IO.readMolecules("molecule.pdb")
 # Extract the first molecule from the system.
 molecule = system.getMolecules()[0]
 
+# Get a list of the available force fields.
+BSS.Parameters.forceFields()
+
 # Parameterise using the Amber03 force field.
 ff03_mol = BSS.Parameters.ff03(molecule)
 

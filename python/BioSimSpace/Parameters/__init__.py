@@ -40,14 +40,15 @@ def parameterise(molecule, forcefield, options={}, map={}):
        Positional arguments:
 
        molecule   -- The molecule to parameterise.
-       forcefield -- The force field to parameterise with.
+       forcefield -- The force field. Run BioSimSpace.Parameters.forceFields()
+                     to get a list of the supported force fields.
 
        Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       options    -- A dictionary of keyword options to override the protocol defaults.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if type(forcefield) is not str:
