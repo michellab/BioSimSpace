@@ -34,6 +34,7 @@ import BioSimSpace.IO as _IO
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
+import warnings as _warnings
 
 __all__ = ["Protocol"]
 
@@ -272,7 +273,8 @@ class Protocol():
                        }
 
         if self._forcefield not in supported_ff:
-            raise ValueError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
+            _warnings.warn("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
+            return None
 
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")

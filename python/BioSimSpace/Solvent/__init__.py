@@ -240,8 +240,8 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
                    own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
-    # Store the centre of the molecule.
     if molecule is not None:
+        # Store the centre of the molecule.
         center = molecule._getAABox().center()
 
         # Work out the vector from the centre of the molecule to the centre of the
