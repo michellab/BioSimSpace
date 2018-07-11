@@ -21,4 +21,10 @@ solvated_system = BSS.Solvent.tip3p(molecule, box=3 * [5 * BSS.Units.Length.nano
 # shell of solvent around the molecule.
 solvated_system = BSS.Solvent.tip3p(molecule, box=3 * [5 * BSS.Units.Length.nanometer],
                                               shell=BSS.Units.Length.nanometer)
+
+
+# Solvate the molecule, centred in a 5 nanometer box with an ionic strength
+# of 0.1 mol / litre and neutralised.
+solvated_system = BSS.Solvent.tip3p(molecule, box=3 * [5 * BSS.Units.Length.nanometer],
+                                              ion_conc=0.1, is_neutral=True)
 ```
