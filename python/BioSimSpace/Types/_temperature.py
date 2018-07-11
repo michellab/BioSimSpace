@@ -264,6 +264,12 @@ class Temperature(_Type):
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
+        # Strip all instances of "DEGREES", "DEGREE", "DEGS", & "DEG".
+        unit = unit.replace("DEGREES", "")
+        unit = unit.replace("DEGREE", "")
+        unit = unit.replace("DEGS", "")
+        unit = unit.replace("DEG", "")
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
