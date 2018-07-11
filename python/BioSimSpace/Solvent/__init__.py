@@ -44,17 +44,19 @@ if _gmx_exe is None or _gromacs_path is None:
     _warnings.warn("'BioSimSpace.Solvent' is not supported. Please "
         + "install GROMACS: http://www.gromacs.org")
 
-def spc(molecule=None, box=None, shell=None, map={}):
+def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC solvent.
 
        Keyword arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _gmx_exe is None or _gromacs_path is None:
@@ -62,22 +64,24 @@ def spc(molecule=None, box=None, shell=None, map={}):
         return None
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, map)
+    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spc", 3)
+    return _solvate(molecule, box, shell, "spc", 3, ion_conc, is_neutral)
 
-def spce(molecule=None, box=None, shell=None, map={}):
+def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC/E solvent.
 
        Keyword arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _gmx_exe is None:
@@ -85,22 +89,24 @@ def spce(molecule=None, box=None, shell=None, map={}):
         return None
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, map)
+    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spce", 3)
+    return _solvate(molecule, box, shell, "spce", 3, ion_conc, is_neutral)
 
-def tip3p(molecule=None, box=None, shell=None, map={}):
+def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP3P solvent.
 
        Keyword arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _gmx_exe is None:
@@ -108,22 +114,24 @@ def tip3p(molecule=None, box=None, shell=None, map={}):
         return None
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, map)
+    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "tip3p", 3)
+    return _solvate(molecule, box, shell, "tip3p", 3, ion_conc, is_neutral)
 
-def tip4p(molecule=None, box=None, shell=None, map={}):
+def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP4P solvent.
 
        Keyword arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimenion (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _gmx_exe is None:
@@ -131,22 +139,24 @@ def tip4p(molecule=None, box=None, shell=None, map={}):
         return None
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, map)
+    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip4p", 4)
+    return _solvate(molecule, box, shell, "tip4p", 4, ion_conc, is_neutral)
 
-def tip5p(molecule=None, box=None, shell=None, map={}):
+def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP5P solvent.
 
        Keyword arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimenion (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if _gmx_exe is None:
@@ -154,22 +164,24 @@ def tip5p(molecule=None, box=None, shell=None, map={}):
         return None
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, map)
+    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip5p", 5)
+    return _solvate(molecule, box, shell, "tip5p", 5, ion_conc, is_neutral)
 
-def _validate_input(molecule, box, shell, map):
+def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
     """Internal function to validate function arguments.
 
        Positional arguments:
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
-       shell    -- Thickness of the water shell around the solute.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if molecule is not None:
@@ -215,22 +227,31 @@ def _validate_input(molecule, box, shell, map):
     if type(map) is not dict:
         raise TypeError("'map' must be of type 'dict'")
 
+    if type(ion_conc) is not float and type(ion_conc) is not int:
+        raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
+
+    if type(is_neutral) is not bool:
+        raise TypeError("'is_neutral' must be of type 'bool'.")
+
     # Check that the box is large enough to hold the molecule.
     if molecule is not None and not _check_box_size(molecule, box):
         raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
     return (molecule, box, shell)
 
-def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
+def _solvate(molecule, box, shell, model, num_point,
+        ion_conc, is_neutral, work_dir=None, map={}):
     """Internal function to add solvent using 'gmx solvate'.
 
        Positional arguments:
 
-       molecule  -- A molecule, or system of molecules.
-       box       -- A list containing the box size in each dimension (in nm).
-       shell     -- Thickness of the water shell around the solute.
-       model     -- The name of the water model.
-       num_point -- The number of points in the model.
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       model      -- The name of the water model.
+       num_point  -- The number of points in the model.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
 
        Keyword arguments:
 
@@ -318,77 +339,133 @@ def _solvate(molecule, box, shell, model, num_point, work_dir=None, map={}):
 
     # gmx doesn't return sensible error codes, so we need to check that
     # the expected output was generated.
-    if _os.path.isfile("output.gro"):
+    if not _os.path.isfile("output.gro"):
+        _os.chdir(dir)
+        raise RuntimeError("'gmx solvate failed to generate output!")
 
-        # Extract the water lines from the GRO file.
-        water_lines = []
-        with open("output.gro", "r") as file:
-            for line in file:
-                if _re.search("SOL", line):
-                    water_lines.append(line)
+    # Extract the water lines from the GRO file.
+    water_lines = []
+    with open("output.gro", "r") as file:
+        for line in file:
+            if _re.search("SOL", line):
+                water_lines.append(line)
 
-            # Add any box information. This is the last line in the GRO file.
-            water_lines.append(line)
+        # Add any box information. This is the last line in the GRO file.
+        water_lines.append(line)
 
-        # Write a GRO file that contains only the water atoms.
-        if len(water_lines) - 1 > 0:
-            with open("water.gro", "w") as file:
-                file.write("BioSimSpace %s water box\n" % model.upper())
-                file.write("%d\n" % (len(water_lines)-1))
+    # Write a GRO file that contains only the water atoms.
+    if len(water_lines) - 1 > 0:
+        with open("water.gro", "w") as file:
+            file.write("BioSimSpace %s water box\n" % model.upper())
+            file.write("%d\n" % (len(water_lines)-1))
 
-                for line in water_lines:
-                    file.write("%s" % line)
+            for line in water_lines:
+                file.write("%s" % line)
+    else:
+        if work_dir is not None:
+            _os.chdir(dir)
+        raise ValueError("No water molecules were generated. Try increasing "
+            + "the 'box' size or 'shell' thickness.")
 
-        else:
-            if work_dir is not None:
-                _os.chdir(dir)
-            raise ValueError("No water molecules were generated. Try increasing "
-                + "the 'box' size or 'shell' thickness.")
+    # Create a TOP file for the water model. By default we use the Amber03
+    # force field to generate a dummy topology for the water model.
+    with open("water.top", "w") as file:
+        file.write("; Include AmberO3 force field\n")
+        file.write('#include "amber03.ff/forcefield.itp"\n\n')
+        file.write("; Include %s water topology\n" % model.upper())
+        file.write('#include "amber03.ff/%s.itp"\n\n' % model)
+        file.write("; Include ions\n")
+        file.write('#include "amber03.ff/ions.itp"\n\n')
+        file.write("[ system ] \n")
+        file.write("BioSimSpace %s water box\n\n" % model.upper())
+        file.write("[ molecules ] \n")
+        file.write(";molecule name    nr.\n")
+        file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
 
-        # Create a TOP file for the water model. By default we use the Amber03
-        # force field to generate a dummy topology for the water model.
-        with open("water.top", "w") as file:
-            file.write("; Include AmberO3 force field\n")
-            file.write('#include "amber03.ff/forcefield.itp"\n\n')
-            file.write("; Include %s water topology\n" % model.upper())
-            file.write('#include "amber03.ff/%s.itp"\n\n' % model)
-            file.write("[ system ] \n")
-            file.write("BioSimSpace %s water box\n\n" % model.upper())
-            file.write("[ molecules ] \n")
-            file.write(";molecule name    nr.\n")
-            file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
+    # Now we add ions to the system.
+    if ion_conc > 0:
 
+        # First write an mdp file.
+        with open("ions.mdp", "w") as file:
+            file.write("; Neighbour searching\n")
+            file.write("cutoff-scheme           = Verlet\n")
+            file.write("rlist                   = 1.1\n")
+            file.write("pbc                     = xyz\n")
+            file.write("verlet-buffer-tolerance = -1\n")
+            file.write("\n; Electrostatics\n")
+            file.write("coulombtype             = PME\n")
+            file.write("pme-order               = 4\n")
+            file.write("fourierspacing          = 0.10\n")
+            file.write("rcoulomb                = 1.0\n")
+            file.write("\n; VdW\n")
+            file.write("rvdw                    = 1.0\n")
+
+        # Create the grompp command.
+        command = "gmx grompp -f ions.mdp -po ions.out.mdp -c water.gro -p water.top -o ions.tpr"
+
+        with open("README.txt", "a") as f:
+            # Write the command to file.
+            f.write("\n# gmx grompp was run with the following command:\n")
+            f.write("%s\n" % command)
+
+        # Run the command.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Check for the tpr output file.
+        if not _os.path.isfile("ions.tpr"):
+            _os.chdir(dir)
+            raise RuntimeError("'gmx grommp' failed to generate output! "
+                + "Perhaps your box is too small?")
+
+        # Create the genion command.
+        command = "echo 2 | gmx genion -s ions.tpr -o water_ions.gro -p water.top -%s -conc %f" \
+            % ("neutral" if is_neutral else "noneutral", ion_conc)
+
+        # Now run genion using the ions.tpr file as input.
+        proc = _subprocess.run(command, shell=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Check for the tpr output file.
+        if not _os.path.isfile("water_ions.gro"):
+            _os.chdir(dir)
+            raise RuntimeError("'gmx genion' failed to add ions! Perhaps your box is too small?")
+
+        # Load the water plus ions box.
+        water = _IO.readMolecules(["water_ions.gro", "water.top"])
+
+    else:
         # Load the water box.
         water = _IO.readMolecules(["water.gro", "water.top"])
 
-        if molecule is not None:
-            # Translate the molecule and water back to the original position.
-            vec = [-x for x in vec]
-            molecule.translate(vec)
-            water.translate(vec)
+    if molecule is not None:
+        # Translate the molecule and water back to the original position.
+        vec = [-x for x in vec]
+        molecule.translate(vec)
+        water.translate(vec)
 
-        # Create a new system by adding the water to the original molecule.
-        if molecule is not None:
-            if type(molecule) is _System:
-                system = _System(molecule + water.getMolecules())
-            else:
-                system = molecule + water.getMolecules()
-
-            if "space" in map:
-                prop = map["space"]
-            else:
-                prop = "space"
-
-            # Add the space property from the water system.
-            system._sire_system.setProperty(prop, water._sire_system.property(prop))
+    # Create a new system by adding the water to the original molecule.
+    if molecule is not None:
+        if type(molecule) is _System:
+            system = _System(molecule + water.getMolecules())
         else:
-            system = water
+            system = molecule + water.getMolecules()
 
-        # Change back to the original directory.
-        if work_dir is not None:
-            _os.chdir(dir)
+        if "space" in map:
+            prop = map["space"]
+        else:
+            prop = "space"
 
-        return system
+        # Add the space property from the water system.
+        system._sire_system.setProperty(prop, water._sire_system.property(prop))
+    else:
+        system = water
+
+    # Change back to the original directory.
+    if work_dir is not None:
+        _os.chdir(dir)
+
+    return system
 
 def _check_box_size(molecule, box):
     """Internal function to check that box is big enough for the molecule.
