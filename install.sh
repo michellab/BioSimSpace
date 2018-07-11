@@ -38,6 +38,7 @@ download() {
 # Current Sire version.
 SIRE_VER=201820
 
+# MD5 checksums for the Sire binaries.
 # Store the current directory.
 CURR_DIR=$(pwd)
 
@@ -51,6 +52,15 @@ OS="$(uname)"
 if [[ ! ($OS == "Linux" || $OS == "Darwin") ]]; then
     echo "Installer only works on Linux and macOS!" >&2
     exit 1
+fi
+
+# Save MD5 program.
+if [[ $OS == "Linux" ]]; then
+    MD5_EXE=$(command -v md5sum)
+    CHECKSUM=5e6f8da9066df4cb3e8729f95459b333
+else
+    MD5_EXE=$(command -v md5)
+    CHECKSUM=75641f195f235517f3113b5e753b2cdd
 fi
 
 # Simple parser for command-line options.
@@ -127,9 +137,11 @@ if ! [ -z "$CLEAN_BUILD" ]; then
 
     # Download latest self-extracting Sire binary.
     if [[ $OS == "Linux" ]]; then
-    download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_linux.run "$INSTALL_DIR/sire.run"
+    #download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_linux.run "$INSTALL_DIR/sire.run"
+    download https://sire.blob.core.windows.net/releases/sire_2018_2_0_linux_pre.run "$INSTALL_DIR/sire.run"
     else
-        download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_osx.run "$INSTALL_DIR/sire.run"
+        #download http://siremol.org/largefiles/sire_releases/download.php?name=sire_2018_2_0_osx.run "$INSTALL_DIR/sire.run"
+        download https://sire.blob.core.windows.net/releases/sire_2018_2_0_osx_pre.run "$INSTALL_DIR/sire.run"
         mkdir -p "$HOME/.matplotlib"
         touch "$HOME/.matplotlib/matplotlibrc"
         if ! grep -q "backend" "$HOME/.matplotlib/matplotlibrc"; then
@@ -137,6 +149,12 @@ if ! [ -z "$CLEAN_BUILD" ]; then
         else
             sed -i '' 's/.*backend.*/backend: TkAgg/' "$HOME/.matplotlib/matplotlibrc"
         fi
+    fi
+
+    # Check the MD5 sum of the download.
+    if [[ "$($MD5_EXE "$INSTALL_DIR/sire.run" | awk '{print $1}')" != "$CHECKSUM" ]]; then
+        echo "Checksum mismatch for Sire binary!" >&2
+        exit 1
     fi
 
     # Make the binary executable.
