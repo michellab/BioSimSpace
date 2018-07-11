@@ -196,10 +196,6 @@ class System():
             raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
                 + "or a list of 'BioSimSpace.Molecule' types.")
 
-        # Renumber the atoms and residues in the molecules so that they are
-        # consistent with the existing system.
-        molecules = self._renumberMolecules(molecules)
-
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_system.nMolecules() == 0:
             self._sire_system = self._createSireSystem(molecules)
@@ -236,9 +232,6 @@ class System():
         for mol in molecules:
             self._sire_system.remove(mol._sire_molecule.number())
 
-        # Renumber all of the molecules and create a new system.
-        molecules = self._renumberMolecules(self.getMolecules(), is_rebuild=True)
-
         # Create a new Sire system from the molecules.
         self._sire_system = self._createSireSystem(molecules)
 
@@ -268,9 +261,6 @@ class System():
         # Update each of the molecules.
         for mol in molecule:
             self._sire_system.update(mol._sire_molecule)
-
-        # Renumber all of the molecules and create a new system.
-        molecules = self._renumberMolecules(self.getMolecules(), is_rebuild=True)
 
         # Create a new Sire system from the molecules.
         self._sire_system = self._createSireSystem(molecules)
