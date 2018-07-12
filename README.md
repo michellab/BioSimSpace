@@ -97,6 +97,7 @@ respective licenses.)
 
 Each package has its own README page:
 
+- [BioSimSpace.Align](python/BioSimSpace/Align)
 - [BioSimSpace.Gateway](python/BioSimSpace/Gateway)
 - [BioSimSpace.IO](python/BioSimSpace/IO)
 - [BioSimSpace.MD](python/BioSimSpace/MD)
