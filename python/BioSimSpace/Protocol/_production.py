@@ -84,15 +84,15 @@ class Production(_Protocol):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return ("<BioSimSpace.Protocol.Production: timestep=%.2f, runtime=%.2f, "
-                "temperature=%.2f, frames=%d, ensemble=%r, first_step=%d, restart=%r>"
+        return ("<BioSimSpace.Protocol.Production: timestep=%s, runtime=%s, "
+                "temperature=%s, frames=%d, ensemble=%r, first_step=%d, restart=%r>"
                ) % (self._timestep, self._runtime, self._temperature, self._frames,
                        self._ensemble, self._first_step, self._restart)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return ("BioSimSpace.Protocol.Production(timestep=%.2f, runtime=%.2f, "
-                "temperature=%.2f, frames=%d, ensemble=%r, first_step=%d, restart=%r)"
+        return ("BioSimSpace.Protocol.Production(timestep=%s, runtime=%s, "
+                "temperature=%s, frames=%d, ensemble=%r, first_step=%d, restart=%r)"
                ) % (self._timestep, self._runtime, self._temperature, self._frames,
                        self._ensemble, self._first_step, self._restart)
 
