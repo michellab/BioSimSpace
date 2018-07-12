@@ -70,8 +70,6 @@ if "AMBERHOME" in _environ:
     _amber_home = _environ.get("AMBERHOME")
 else:
     _amber_home = None
-    _warn("Missing 'AMBERHOME' environment variable. Please download and "
-        + "install AMBER from: http://ambermd.org")
 del(_environ)
 
 # Check to see if GROMACS is installed.
@@ -81,8 +79,6 @@ try:
     _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
 except:
     _gmx_exe = None
-    _warn("Cannot find 'gmx' executable. Please download and install "
-        + "GROMACS from: http://gromacs.org")
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
@@ -90,7 +86,6 @@ del(_SireBase)
 
 if not _path.isdir(_gromacs_path):
     _gromacs_path = None
-    _not_found = None
 
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
@@ -111,20 +106,10 @@ if not _path.isdir(_gromacs_path):
             # Check for the topology file directory.
             if not _path.isdir(_gromacs_path):
                 _gromacs_path = None
-                _not_found = True
-            else:
-                _not_found = False
-        else:
-            _not_found = True
 
         del(_path)
         del(_proc)
         del(_subprocess)
-
-    if _not_found:
-        _warn("Could not locate GROMACS topology file directory!")
-
-    del(_not_found)
 
 from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
@@ -170,4 +155,5 @@ def viewMolecules( files, idxs=None ):
 
 from ._version import get_versions
 __version__ = get_versions()['version']
+del _version
 del get_versions
