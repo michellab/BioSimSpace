@@ -114,6 +114,7 @@ if not _path.isdir(_gromacs_path):
 from BioSimSpace.MD import MD
 from BioSimSpace.Trajectory import Trajectory
 
+import BioSimSpace.Align as Align
 import BioSimSpace.Gateway as Gateway
 import BioSimSpace.IO as IO
 import BioSimSpace.Notebook as Notebook
