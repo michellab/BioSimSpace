@@ -30,11 +30,27 @@ import BioSimSpace.Types._type as _Type
 
 from warnings import warn as _warn
 
-try:
-    import matplotlib.pyplot as _plt
-    _has_matplotlib = True
-except ImportError:
+from os import environ as _environ
+
+# Check to see if DISPLAY is set.
+if "DISPLAY" in _environ:
+    _display = _environ.get("DISPLAY")
+else:
+    _display = ""
+del(_environ)
+
+if _display is not "":
+    _has_display = True
+    try:
+        import matplotlib.pyplot as _plt
+        _has_matplotlib = True
+    except ImportError:
+        _has_matplotlib = False
+else:
     _has_matplotlib = False
+    _has_display = False
+    _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+del(_display)
 
 __all__ = ["plot"]
 
@@ -72,7 +88,7 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
         return None
 
     # Matplotlib failed to import.
-    if not _has_matplotlib:
+    if not _has_matplotlib and _has_display:
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
             "to load. Please check your matplotlib installation.")
         return None
