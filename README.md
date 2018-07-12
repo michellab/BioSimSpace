@@ -82,19 +82,6 @@ simply add the following to `~/.matplotlib/matplotlibrc`
 backend: TkAgg
 ```
 
-If you are using BioSimSpace within IPython on a remote server without X
-forwarding, then you will see the following error on import:
-
-```python
-QXcbConnection: Could not connect to display
-```
-
-If so, you'll instead need to set the following backend:
-
-```bash
-backend: Agg
-```
-
 Several additional packages are required for full access to all of BioSimSpace's
 functionality. Please download and install these packages according to their
 recommended installation instructions.
