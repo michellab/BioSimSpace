@@ -26,15 +26,22 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _is_notebook
 
+from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
 from ._requirements import File as _File
 from ._requirements import FileSet as _FileSet
 from ._requirements import Float as _Float
+from ._requirements import Energy as _Energy
 from ._requirements import Integer as _Integer
-from ._requirements import Temperature as _Temperature
-from ._requirements import Time as _Time
+from ._requirements import Length as _Length
+from ._requirements import Pressure as _Pressure
 from ._requirements import Requirement as _Requirement
 from ._requirements import String as _String
+from ._requirements import Temperature as _Temperature
+from ._requirements import Time as _Time
+from ._requirements import Volume as _Volume
+
+import BioSimSpace.Types._type as _Type
 
 import argparse as _argparse
 import collections as _collections
@@ -54,6 +61,10 @@ if _is_notebook():
     import zipfile as _zipfile
 
 __all__ = ["Node"]
+
+# Float types (including those with units).
+_float_types = [_Float, _Energy, _Pressure, _Length, _Area, _Volume,
+    _Temperature, _Time]
 
 class _OutputAction(_argparse.Action):
     """Helper class for printing node output requirements."""
@@ -281,9 +292,6 @@ class Node():
            reset -- Whether to reset the widget data.
         """
 
-        # Float types (including those with units).
-        float_types = [_Float, _Temperature, _Time]
-
         # Create a widget button to indicate whether the requirement value
         # has been set.
         button = _widgets.Button(
@@ -357,25 +365,26 @@ class Node():
 
             else:
                 # Get the range of the input.
-                min_ = input.getMin()
-                max_ = input.getMax()
+                _min = input.getMin()
+                _max = input.getMax()
 
                 # Whether the integer is unbounded.
                 is_unbounded = True
 
-                if min_ is not None:
+                if _min is not None:
                     # Set the default.
                     if default is None:
-                        default = min_
+                        default = _min
 
                     # Bounded integer.
-                    if max_ is not None:
+                    if _max is not None:
+                        step=int((_max - _min) / 100)
                         # Create an int slider widget.
                         widget = _widgets.IntSlider(
                             value=default,
-                            min=min_,
-                            max=max_,
-                            step=1,
+                            min=_min,
+                            max=_max,
+                            step=step,
                             description=name,
                             tooltip=input.getHelp(),
                             continuous_update=False,
@@ -422,17 +431,25 @@ class Node():
             self._widgets[name] = widget
 
         # Float types (including those with units).
-        elif type(input) in float_types:
+        elif type(input) in _float_types:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
             # Get the default value.
             default = input.getDefault()
 
+            # Get the magnitude of types with units.
+            if isinstance(default, _Type.Type):
+                default = default.magnitude()
+
             if allowed is not None:
                 # Set the default.
                 if default is None:
                     default = allowed[0]
+
+                    # Get the magnitude of types with units.
+                    if isinstance(default, _Type.Type):
+                        default = default.magnitude()
 
                 # Create a dropdown for the list of allowed values.
                 widget = _widgets.Dropdown(
@@ -445,25 +462,32 @@ class Node():
 
             else:
                 # Get the range of the input.
-                min_ = input.getMin()
-                max_ = input.getMax()
+                _min = input.getMin()
+                _max = input.getMax()
+
+                # Get the magnitude of types with units.
+                if isinstance(_min, _Type.Type):
+                    _min = _min.magnitude()
+                if isinstance(_max, _Type.Type):
+                    _max = _max.magnitude()
 
                 # Whether the float is unbounded.
                 is_unbounded = True
 
-                if min_ is not None:
+                if _min is not None:
                     # Set the default.
                     if default is None:
-                        default = min_
+                        default = _min
 
                     # Bounded float.
-                    if max_ is not None:
+                    if _max is not None:
+                        step=(_max - _min) / 100
                         # Create a float slider widget.
                         widget = _widgets.FloatSlider(
                             value=default,
-                            min=min_,
-                            max=max_,
-                            step=0.1,
+                            min=_min,
+                            max=_max,
+                            step=step,
                             description=name,
                             tooltip=input.getHelp(),
                             continuous_update=False,
@@ -786,7 +810,7 @@ class Node():
             # Add the unit information.
             unit = self._inputs[name].getUnit()
             if unit is not None:
-                string += " (%s)" % unit
+                string += " (%s)" % self._inputs[name]._print_unit
 
             # Create the widget label.
             label = _widgets.Label(value=string)

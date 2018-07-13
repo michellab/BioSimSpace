@@ -29,7 +29,7 @@ import Sire as _Sire
 from BioSimSpace import _is_notebook
 
 from ..Process._process import Process as _Process
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import nglview as _nglview
 import os as _os
@@ -143,7 +143,7 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Loop over all of the indices.
@@ -196,7 +196,7 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)
@@ -319,8 +319,11 @@ class View():
 
         # Create a PDB object and write to file.
         if system is not None:
-            pdb = _Sire.IO.PDB2(system)
-            pdb.writeToFile(filename)
+            try:
+                pdb = _Sire.IO.PDB2(system)
+                pdb.writeToFile(filename)
+            except:
+                raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)

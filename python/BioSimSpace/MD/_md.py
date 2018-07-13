@@ -24,16 +24,16 @@ Functionality for configuring and driving molecular dynamics simulations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+from Sire.Base import findExe as _findExe
 
+from BioSimSpace import _amber_home
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
-from .._System import System as _System
+from .._SireWrappers import System as _System
 
 import BioSimSpace.Process as _Process
 
 import os as _os
-import subprocess as _subprocess
 
 __all__ = ["MD"]
 
@@ -84,96 +84,30 @@ def _find_md_package(system, protocol, use_gpu=True):
 
     # Loop over each executable in turn and see whether it exists on the system.
     for exe, gpu in _md_packages[package].items():
-
-        # AMBER.
         if package == "AMBER":
             # Search AMBERHOME, if set.
-            if "AMBERHOME" in _os.environ:
-                amber_home = _os.environ.get("AMBERHOME")
-                _exe = "%s/bin/%s" % (amber_home, exe)
+            if _amber_home is not None:
+                _exe = "%s/bin/%s" % (_amber_home, exe)
                 if _os.path.isfile(_exe):
                     return (package, _exe)
 
-            # Search within the Sire bin directory.
-            else:
-                bin_dir = _Sire.Base.getBinDir()
-                _exe = "%s/%s" % (bin_dir, exe)
-
-                if _os.path.isfile(_exe):
-                    # Although the executable exists, it may not work because it was
-                    # precompiled on a system with different hardware instructions.
-                    # We test this by running the executable and checking the error
-                    # code.
-                    command = "%s 2>&1 | grep 'Error opening unit'" % _exe
-                    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
-
-                    # The executable runs.
-                    if proc.returncode == 0:
-                        return (package, _exe)
-                    else:
-                        # Search the system PATH.
-                        try:
-                            exe = _Sire.Base.findExe(exe).absoluteFilePath()
-                            return (package, exe)
-                        except:
-                            pass
-
-                # Search system PATH.
-                else:
-                    try:
-                        exe = _Sire.Base.findExe(exe).absoluteFilePath()
-                        return (package, exe)
-                    except:
-                        pass
-
-        # GROMACS.
-        elif package == "GROMACS":
-            bin_dir = _Sire.Base.getBinDir()
-            _exe = "%s/%s" % (bin_dir, exe)
-
-            if _os.path.isfile(_exe):
-                # Although the executable exists, it may not work because it was
-                # precompiled on a system with different hardware instructions.
-                # We test this by running the executable and checking the error
-                # code.
-                proc = _subprocess.run(exe, shell=True,
-                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-
-                # The executable runs.
-                if proc.returncode == 0:
-                    return (package, _exe)
-                else:
-                    # Search the system PATH.
-                    try:
-                        exe = _Sire.Base.findExe(exe).absoluteFilePath()
-                        return (package, exe)
-                    except:
-                        pass
-
-            # Search system PATH.
-            else:
-                try:
-                    exe = _Sire.Base.findExe(exe).absoluteFilePath()
-                    return (package, exe)
-                except:
-                    pass
-
-        # NAMD.
+        # Search system PATH.
         else:
             try:
-                exe = _Sire.Base.findExe(exe).absoluteFilePath()
+                exe = _findExe(exe).absoluteFilePath()
                 return (package, exe)
             except:
                 pass
 
     # If we get this far, then no executable was found.
-    raise ValueError("No executable found for package: '%s'" % package)
+    raise ValueError("No executable found for package: '%s'" % package) from None
 
 class MD():
     """A simple class for driving molecular dynamics simulations."""
 
     @staticmethod
-    def run(system, protocol, autostart=True, name="md", work_dir=None, seed=None):
+    def run(system, protocol, autostart=True,
+            name="md", work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
@@ -187,6 +121,9 @@ class MD():
            name      -- The name of the process.
            work_dir  -- The working directory for the process.
            seed      -- A random number seed.
+           map       -- A dictionary that maps system "properties" to their user defined
+                        values. This allows the user to refer to properties with their
+                        own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Check that the system is valid.
@@ -208,15 +145,15 @@ class MD():
 
         # AMBER.
         if package == "AMBER":
-            process = _Process.Amber(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Amber(system, protocol, exe, name, work_dir, seed, map)
 
         # GROMACS.
         elif package == "GROMACS":
-            process = _Process.Gromacs(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Gromacs(system, protocol, exe, name, work_dir, seed, map)
 
         # NAMD.
         elif package == "NAMD":
-            process = _Process.Namd(system, protocol, exe=exe, name=name, work_dir=work_dir, seed=seed)
+            process = _Process.Namd(system, protocol, exe, name, work_dir, seed, map)
 
         # Start the process.
         if autostart:

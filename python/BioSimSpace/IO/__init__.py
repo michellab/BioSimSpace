@@ -24,35 +24,27 @@ Functionality for reading/writing molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import wrap as _wrap
-from Sire.IO import MoleculeParser as _MoleculeParser
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
+import Sire.System as _SireSystem
 
-from .._System import System as _System
+from BioSimSpace import _gromacs_path
+
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob
 from io import StringIO as _StringIO
+from warnings import warn as _warn
 
 import os.path as _path
-import subprocess as _subprocess
 import sys as _sys
 
-# Set the bundled GROMACS topology file directory.
-_gromacs_path = _path.dirname(_getBinDir()) + "/share/gromacs/top"
-
-# The directory is missing. GROMACS must not be installed.
-if not _path.isdir(_gromacs_path):
-    print("Missing GROMACS topology file directory: '%s'" % _gromacs_path)
-
-    # Attempt to install GROMACS.
-    print("Trying to install GROMACS.")
-    command = "%s/conda install -y -q -c bioconda gromacs" % _getBinDir()
-    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
-
-    # The installation failed.
-    if proc.returncode != 0:
-        raise RuntimeError("GROMACS installation failed: '%s'" % command)
+if _gromacs_path is None:
+    _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+           + "for GROMACS topology file support.")
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -69,7 +61,7 @@ class _Capturing(list):
 
 # Capture the supported format information
 with _Capturing() as format_info:
-    print(r"%s" % _MoleculeParser.supportedFormats())
+    print(r"%s" % _SireIO.MoleculeParser.supportedFormats())
 
 # Create a list of the supported formats.
 _formats = []
@@ -123,11 +115,38 @@ def readMolecules(files, map={}):
                 own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
+    # Convert to a list.
+    if type(files) is str:
+        files = [files]
+
+    # Check that all arguments are of type 'str'.
+    if type(files) is list:
+        if not all(isinstance(x, str) for x in files):
+            raise TypeError("'files' must be a list of 'str' types.")
+        if len(files) == 0:
+            raise ValueError("The list of input files is empty!")
+    else:
+        raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+
+    # Validate the map.
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
     # Add the GROMACS topology file path.
     if "GROMACS_PATH" not in map:
         map["GROMACS_PATH"] = _gromacs_path
 
-    system = _MoleculeParser.read(files, map)
+    # Try to read the files and return a molecular system.
+    try:
+        system = _SireIO.MoleculeParser.read(files, map)
+    except Exception as e:
+        if "There are no lead parsers!" in str(e):
+            msg = ("Failed to read molecules from %s. "
+                   "It looks like you failed to include a topology file."
+                  ) % files
+            raise IOError(msg) from None
+        else:
+            raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
 
@@ -142,22 +161,30 @@ def saveMolecules(filebase, system, fileformat, map={}):
 
        Keyword arguments:
 
-       map   -- A dictionary that maps system "properties" to their user defined
-                values. This allows the user to refer to properties with their
-                own naming scheme, e.g. { "charge" : "my-charge" }
+       map        -- A dictionary that maps system "properties" to their user
+                     defined values. This allows the user to refer to properties
+                     with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
-
-    # Add the GROMACS topology file path.
-    if "GROMACS_PATH" not in map:
-        map["GROMACS_PATH"] = _gromacs_path
 
     # Check that the filebase is a string.
     if type(filebase) is not str:
         raise TypeError("'filebase' must be of type 'str'")
 
     # Check that that the system is of the correct type.
-    if type(system) is not _System:
-        raise TypeError("'system' must be of type 'BioSimSpace.System'")
+
+    # A System object.
+    if type(system) is _System:
+        pass
+    # A Molecule object.
+    elif type(system) is _Molecule:
+        system = [system]
+    # A list of Molecule objects.
+    elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
+        pass
+    # Invalid type.
+    else:
+        raise TypeError("'system' must be of type 'BioSimSpace.System', "
+            + "'BioSimSpace.Molecule, or a list of 'BiSimSpace.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 
@@ -190,17 +217,47 @@ def saveMolecules(filebase, system, fileformat, map={}):
             raise ValueError("Unsupported file format '%s'. Supported formats "
                 "are: %s." % (format, str(_formats)))
 
+    # Validate the map.
+    if type(map) is not dict:
+        raise TypeError("'map' must be of type 'dict'")
+
+    # Copy the map.
+    _map = map.copy()
+
+    # Add the GROMACS topology file path.
+    if "GROMACS_PATH" not in _map:
+        _map["GROMACS_PATH"] = _gromacs_path
+
+    # We have a list of molecules. Create a new system and add each molecule.
+    if type(system) is list:
+
+        # Create a Sire system and molecule group.
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
+
+        # Add all of the molecules to the group.
+        for molecule in system:
+            m.add(molecule._getSireMolecule())
+
+        # Add the molecule group to the system.
+        s.add(m)
+
+        # Wrap the system.
+        system = _System(s)
+
     # A list of the files that have been written.
     files = []
 
     # Save the system using each file format.
     for format in formats:
         # Add the file format to the property map.
-        _map = map
-        map["fileformat"] = _wrap(format)
+        _map["fileformat"] = _SireBase.wrap(format)
 
         # Write the file.
-        file = _MoleculeParser.save(system._getSireSystem(), filebase, map)
-        files += file
+        try:
+            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
+            files += file
+        except:
+            raise IOError("Failed to save system to format: '%s'" % format) from None
 
     return files

@@ -63,8 +63,8 @@ finally:
     command = "%s/conda install -y -q mdanalysis" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: ambertools")
-    command = "%s/conda install -y -q -c ambermd ambertools" % bin_dir
+    print("Installing package: openbabel")
+    command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
     subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("Installing package: gromacs")
@@ -126,3 +126,8 @@ finally:
     print("\nDone!")
 
     print("\nIf you have problems with Jupyter permissions, try removing '$HOME/.jupyter' or '$HOME/.local/share/jupyter'")
+
+    print("\nFor optional package support...")
+    print("AMBER:   http://ambermd.org")
+    print("GROMACS: http://www.gromacs.org")
+    print("NAMD:    http://www.ks.uiuc.edu/Research/namd")

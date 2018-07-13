@@ -19,13 +19,18 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
+"""
+An energy type.
+Author: Lester Hedges <lester.hedges@gmail.com>
+"""
+
 import Sire.Units as _Units
 
-import re as _re
+from ._type import Type as _Type
 
 __all__ = ["Time"]
 
-class Time:
+class Time(_Type):
     # Dictionary of allowed units.
     _supported_units = { "DAY"         : _Units.day,
                          "HOUR"        : _Units.hour,
@@ -45,155 +50,47 @@ class Time:
                        "PS"  : "PICOSECOND",
                        "FS"  : "FEMTOSECOND" }
 
-    def __init__(self, magnitude, unit):
+    # Print formatting.
+    _print_format = { "DAY"         : "day",
+                      "HOUR"        : "hour",
+                      "MINUTE"      : "min",
+                      "SECOND"      : "sec",
+                      "MILLISECOND" : "ms",
+                      "NANOSECOND"  : "ns",
+                      "PICOSECOND"  : "ps",
+                      "FEMTOSECOND" : "fs" }
+
+    def __init__(self, *args):
         """Constructor.
 
            Positional arguments:
 
            magnitude -- The magnitude.
            unit      -- The unit.
+
+           or
+
+           string    -- A string representation of the time.
         """
 
-        # Check that the magnitude is valid.
-        if type(magnitude) is int:
-            self._magnitude = float(magnitude)
-        elif type(magnitude) is float:
-            self._magnitude = magnitude
-        else:
-            raise TypeError("'magnitude' must be of type 'int' or 'float'")
+        # Call the base class constructor.
+        super().__init__(*args)
 
         # Don't support negative times.
-        if magnitude < 0:
+        if self._magnitude < 0:
             raise ValueError("The time cannot be negative!")
-
-        # Check that the unit is supported.
-        self._unit = self._validate_unit(unit)
-
-        # Store the abbreviated unit.
-        try:
-            self._abbrev = list(self._abbreviations.keys())[list(self._abbreviations.values()).index(self._unit)].lower()
-        except:
-            self._abbrev = self._unit.lower()
-        if self._magnitude != 1:
-            if self._abbrev[-1] != "s":
-                self._abbrev += "s"
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
-            return "%.4e %s" % (self._magnitude, self._abbrev)
+
+        abbrev = self._print_format[self._unit]
+        if self._magnitude > 1:
+            if abbrev[-1] != "s":
+                abbrev = abbrev + "s"
+        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
+            return "%.4e %s" % (self._magnitude, abbrev)
         else:
-            return "%.2f %s" % (self._magnitude, self._abbrev)
-
-    def __repr__(self):
-        """Return a string showing how to instantiate the object."""
-        if self._magnitude > 1e6 or self._magnitude < 1e-6:
-            return "BioSimSpace.Types.Time(%.4e, '%s')" % (self._magnitude, self._abbrev)
-        else:
-            return "BioSimSpace.Types.Time(%f, '%s')" % (self._magnitude, self._abbrev)
-
-    def __add__(self, other):
-        """Addition operator."""
-
-        # Add the magnitudes in a common unit.
-        mag = self.picoseconds().magnitude() + other.picoseconds().magnitude()
-
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Time(mag, "PICOSECOND")._convert_to(self._unit).magnitude()
-
-        # Return a new time object.
-        return Time(mag, self._unit)
-
-    def __sub__(self, other):
-        """Subtraction operator."""
-
-        # Subtract the magnitudes in a common unit.
-        mag = self.picoseconds().magnitude() - other.picoseconds().magnitude()
-
-        # Get new magnitude in the original unit.
-        # Left-hand operand takes precedence.
-        mag = Time(mag, "PICOSECOND")._convert_to(self._unit).magnitude()
-
-        # Return a new time object.
-        return Time(mag, self._unit)
-
-    def __mul__(self, other):
-        """Multiplication operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support multiplication by float.
-        if type(other) is float:
-            mag = self._magnitude * other
-            return Time(mag, self._unit)
-
-        else:
-            raise NotImplementedError
-
-    def __rmul__(self, other):
-        """Multiplication operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support multiplication by float.
-        if type(other) is float:
-            mag = self._magnitude * other
-            return Time(mag, self._unit)
-
-        else:
-            raise NotImplementedError
-
-    def __truediv__(self, other):
-        """Division operator."""
-
-        # Convert int to float.
-        if type(other) is int:
-            other = float(other)
-
-        # Only support division by float.
-        if type(other) is float:
-            mag = self._magnitude / other
-            return Time(mag, self._unit)
-
-        else:
-            raise NotImplementedError
-
-    def __lt__(self, other):
-        """Less than operator."""
-        return self.picoseconds().magnitude() < other.picoseconds().magnitude()
-
-    def __le__(self, other):
-        """Less than or equal to operator."""
-        return self.picoseconds().magnitude() <= other.picoseconds().magnitude()
-
-    def __eq__(self, other):
-        """Equals to operator."""
-        return self.picoseconds().magnitude() == other.picoseconds().magnitude()
-
-    def __ne__(self, other):
-        """Not equals to operator."""
-        return self.picoseconds().magnitude() != other.picoseconds().magnitude()
-
-    def __ge__(self, other):
-        """Greater than or equal to operator."""
-        return self.picoseconds().magnitude() >= other.picoseconds().magnitude()
-
-    def __gt__(self, other):
-        """Gretear than operator."""
-        return self.picoseconds().magnitude() > other.picoseconds().magnitude()
-
-    def magnitude(self):
-        """Return the magnitude."""
-        return self._magnitude
-
-    def unit(self):
-        """Return the unit."""
-        return self._unit
+            return "%5.4f %s" % (self._magnitude, abbrev)
 
     def weeks(self):
         """Return the time in weeks."""
@@ -231,8 +128,20 @@ class Time:
         """Return the time in femtoseconds."""
         return Time((self._magnitude * self._supported_units[self._unit]).to(_Units.femtosecond), "FEMTOSECOND")
 
+    def _default_unit(self, mag=None):
+        """Internal method to return an object of the same type in the default unit.
+
+           Positional argument:
+
+           mag -- The magnitude (optional).
+        """
+        if mag is None:
+            return self.picoseconds()
+        else:
+            return Time(mag, "PICOSECOND")
+
     def _convert_to(self, unit):
-        """Return the temperature in a different unit.
+        """Return the time in a different unit.
 
            Positional arguments:
 

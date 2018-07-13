@@ -24,5 +24,10 @@ Additional data types with units.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._area import *
+from ._energy import *
+from ._length import *
+from ._pressure import *
 from ._temperature import *
 from ._time import *
+from ._volume import *

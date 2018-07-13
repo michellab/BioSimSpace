@@ -58,18 +58,14 @@ from module import *
 
 This results in a clean API and documentation, with all extraneous information,
 e.g. external modules, hidden from the user. This is important when working
-interactively, since [IPython](https://ipython.org) and (Jupyter)[https://jupyter.org]
+interactively, since [IPython](https://ipython.org) and [Jupyter](https://jupyter.org)
 do not respect the `__all__` variable when auto-completing, meaning that the
 user will see a full list of the available names when hitting tab. When
 following the conventions above, the user will only be able to access the
 exposed names. This greatly improves the clarity of the package, allowing
 a new user to quickly determine the available functionality. Any user wishing
-expose further implementation detail can of course type an underscore to
+expose further implementation detail can, of course, type an underscore to
 show the hidden names when searching.
-
-(An alternative method is to prefix all external imports local to a module
-with an underscore, e.g. `import sys as _sys`. However, this quickly becomes
-unwieldy and also loses the flexibility of the above approach.)
 
 ## Encapsulation
 

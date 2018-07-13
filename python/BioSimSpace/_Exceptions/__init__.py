@@ -20,10 +20,12 @@
 #####################################################################
 
 """
-A thin wrapper around Sire.System. This is an internal package and should
-not be directly exposed to the user.
-
+Custom exceptions for error handling.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._system import *
+class IncompatibleError(Exception):
+    pass
+
+class MissingSoftwareError(Exception):
+    pass

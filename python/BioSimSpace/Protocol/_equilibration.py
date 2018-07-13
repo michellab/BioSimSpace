@@ -41,7 +41,8 @@ class Equilibration(_Protocol):
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(0.2, "nanoseconds"),
                  temperature_start=_Types.Temperature(300, "kelvin"),
-                 temperature_end=None,
+                 temperature_end=_Types.Temperature(300, "kelvin"),
+                 temperature=None,
                  frames=20,
                  restrain_backbone=False
                 ):
@@ -53,6 +54,9 @@ class Equilibration(_Protocol):
            runtime           -- The running time (in nanoseconds).
            temperature_start -- The starting temperature (in Kelvin).
            temperature_end   -- The final temperature (in Kelvin).
+           temperature       -- The equilibration temperature (in Kelvin).
+                                This takes precedence of over the other
+                                temperatures, i.e. to run at fixed temperature.
            frames            -- The number of trajectory frames to record.
            restrain_backbone -- Whether the atoms in the backbone are fixed.
         """
@@ -63,23 +67,25 @@ class Equilibration(_Protocol):
         # Set the running time.
         self.setRunTime(runtime)
 
-        # Set the start temperature.
-        self.setStartTemperature(temperature_start)
+        # Constant temperature equilibration.
+        if temperature is not None:
+            self.setStartTemperature(temperature)
+            self.setEndTemperature(temperature)
+            self._is_const_temp = True
 
-        # Set the final temperature.
-        if temperature_end is not None:
-            self.setEndTemperature(temperature_end)
+        # Heating / cooling simulation.
+        else:
             self._is_const_temp = False
 
-            # Start and end temperature is the same.
-            if (self._temperature_start == self._temperature_end):
-                _warnings.warn("Start and end temperatures are the same!")
-                self._is_const_temp = True
+            # Set the start temperature.
+            self.setStartTemperature(temperature_start)
 
-        # Constant temperature simulation.
-        else:
-            self._temperature_end = self._temperature_start
-            self._is_const_temp = True
+            # Set the final temperature.
+            self.setEndTemperature(temperature_end)
+
+            # Constant temperature simulation.
+            if self._temperature_start == self._temperature_end:
+                self._is_const_temp = True
 
         # Set the number of trajectory frames.
         self.setFrames(frames)
@@ -89,15 +95,15 @@ class Equilibration(_Protocol):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return ("<BioSimSpace.Protocol.Equilibration: timestep=%.2f, runtime=%.2f, "
-                "temperature_start=%.2f, temperature_end=%.2f, frames=%d, restrain_backbone=%r>"
+        return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
+                "temperature_start=%s, temperature_end=%s, frames=%d, restrain_backbone=%r>"
                ) % (self._timestep, self._runtime, self._temperature_start,
                        self._temperature_end, self._frames, self._is_restrained)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return ("BioSimSpace.Protocol.Equilibration(timestep=%.2f, runtime=%.2f, "
-                "temperature_start=%.2f, temperature_end=%.2f, frames=%d, restrain_backbone=%r)"
+        return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
+                "temperature_start=%s, temperature_end=%s, frames=%d, restrain_backbone=%r)"
                ) % (self._timestep, self._runtime, self._temperature_start,
                        self._temperature_end, self._frames, self._is_restrained)
 

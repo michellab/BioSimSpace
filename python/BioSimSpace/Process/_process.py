@@ -29,7 +29,9 @@ import Sire as _Sire
 from BioSimSpace import _is_interactive, _is_notebook
 
 from ..Protocol._protocol import Protocol as _Protocol
-from .._System import System as _System
+from .._SireWrappers import System as _System
+
+import BioSimSpace.Units as _Units
 
 import collections as _collections
 import operator as _operator
@@ -54,7 +56,7 @@ class _MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name=None, work_dir=None, seed=None):
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
@@ -67,6 +69,9 @@ class Process():
            name      -- The name of the process.
            work_dir  -- The working directory for the process.
            seed      -- A random number seed.
+           map       -- A dictionary that maps system "properties" to their user defined
+                        values. This allows the user to refer to properties with their
+                        own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -80,6 +85,18 @@ class Process():
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
+
+        # Check that the working directory is valid.
+        if work_dir is not None and type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+
+        # Check that the seed is valid.
+        if seed is not None and type(seed) is not int:
+            raise TypeError("'seed' must be of type 'int'")
+
+        # Check that the map is valid.
+        if type(map) is not dict:
+            raise TypeError("'map' must be of type 'dict'")
 
         # Set the process to None.
         self._process = None
@@ -110,6 +127,9 @@ class Process():
         else:
             self._is_seeded = True
             self.setSeed(seed)
+
+        # Set the map.
+        self._map = map.copy()
 
         # Set the timer and running time None.
         self._timer = None
@@ -612,7 +632,7 @@ class Process():
         # The process is still running.
         if self._process.isRunning():
             self._runtime = (_timeit.default_timer() - self._timer) / 60
-            return self._runtime
+            return self._runtime * _Units.Time.minute
 
         # The process has finished.
         else:
@@ -620,45 +640,11 @@ class Process():
             if self._timer is not None:
                 self._runtime = (_timeit.default_timer() - self._timer) / 60
                 self._timer = None
-                return self._runtime
+                return self._runtime * _Units.Time.minute
 
             # The process has finished. Return the previous run time.
             else:
-                return self._runtime
-
-def _getAABox(system):
-    """Get the axis-aligned bounding box for the molecular system.
-
-       Keyword arguments:
-
-       system -- A Sire molecular system.
-    """
-
-    # Initialise the coordinates vector.
-    coord = []
-
-    # Loop over all of the molecules.
-    for n in system.molNums():
-
-        # Extract the atomic coordinates and append them to the vector.
-        try:
-            coord.extend(system[n].property("coordinates").toVector())
-
-        except UserWarning:
-            raise
-
-    # Return the AABox for the coordinates.
-    return _Sire.Vol.AABox(coord)
-
-def _get_box_size(system):
-    """Get the size of the periodic box."""
-
-    try:
-        box = system.property("space")
-        return box.dimensions()
-
-    except UserWarning:
-        return None
+                return self._runtime * _Units.Time.minute
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
