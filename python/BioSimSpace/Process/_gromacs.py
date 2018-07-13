@@ -28,6 +28,7 @@ import Sire as _Sire
 
 from BioSimSpace import _gmx_exe
 from . import _process
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
@@ -77,13 +78,16 @@ class Gromacs(_process.Process):
 
         if _gmx_exe is not None:
             self._exe = _gmx_exe
-
         else:
-            # Make sure executable exists.
-            if _os.path.isfile(exe):
-                self._exe = exe
+            if exe is not None:
+                # Make sure executable exists.
+                if _os.path.isfile(exe):
+                    self._exe = exe
+                else:
+                    raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
             else:
-                raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
+                raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
+                    + "Please install GROMACS (http://www.gromacs.org).")
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
