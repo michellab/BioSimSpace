@@ -26,12 +26,14 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
+from BioSimSpace import _gmx_exe
 from . import _process
-
-from .._System import System as _System
+from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
 
 import math as _math
 import os as _os
@@ -45,24 +47,27 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None):
+            work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments:
 
-           system        -- The molecular system.
-           protocol      -- The protocol for the GROMACS process.
+           system   -- The molecular system.
+           protocol -- The protocol for the GROMACS process.
 
            Keyword arguments:
 
-           exe           -- The full path to the GROMACS executable.
-           name          -- The name of the process.
-           work_dir      -- The working directory for the process.
-           seed          -- A random number seed.
+           exe      -- The full path to the GROMACS executable.
+           name     -- The name of the process.
+           work_dir -- The working directory for the process.
+           seed     -- A random number seed.
+           map      -- A dictionary that maps system "properties" to their user defined
+                       values. This allows the user to refer to properties with their
+                       own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed)
+        super().__init__(system, protocol, name, work_dir, seed, map)
 
         # Set the package name.
         self._package_name = "GROMACS"
@@ -70,29 +75,8 @@ class Gromacs(_process.Process):
         # This process can generate trajectory data.
         self._has_trajectory = True
 
-        if exe is None:
-            # Search Sire bin directory.
-            bin_dir = _Sire.Base.getBinDir()
-            exe = "%s/gmx" % bin_dir
-
-            if _os.path.isfile(exe):
-                # Although the executable exists, it may not work because it was
-                # precompiled on a system with different hardware instructions.
-                # We test this by running the executable and checking the error
-                # code.
-                proc = _subprocess.run(exe, shell=True,
-                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-
-                # The executable runs.
-                if proc.returncode == 0:
-                    self._exe = exe
-                # Search the system PATH.
-                else:
-                    self._exe = _Sire.Base.findExe("gmx").absoluteFilePath()
-
-            # Search the system PATH.
-            else:
-                self._exe = _Sire.Base.findExe("gmx").absoluteFilePath()
+        if _gmx_exe is not None:
+            self._exe = _gmx_exe
 
         else:
             # Make sure executable exists.
@@ -100,20 +84,6 @@ class Gromacs(_process.Process):
                 self._exe = exe
             else:
                 raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
-
-        # Now use the GROMACS exe to get the location of the data directory.
-
-        # Generate the shell command.
-        command = "%s -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % self._exe
-
-        # Run the command.
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
-
-        # Get the data prefix.
-        if proc.returncode != 0:
-            raise RuntimeError("Unable to determine GROMACS data prefix!")
-        else:
-            self._data_prefix = proc.stdout.decode("ascii").strip()
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
