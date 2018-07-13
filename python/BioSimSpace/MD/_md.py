@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from Sire.Base import findExe as _findExe
 
 from BioSimSpace import _amber_home
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..Protocol import Custom as _Custom
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
@@ -100,7 +101,7 @@ def _find_md_package(system, protocol, use_gpu=True):
                 pass
 
     # If we get this far, then no executable was found.
-    raise ValueError("No executable found for package: '%s'" % package) from None
+    raise _MissingSoftwareError("No executable found for package: '%s'" % package) from None
 
 class MD():
     """A simple class for driving molecular dynamics simulations."""

@@ -86,7 +86,7 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}
     """
 
     if _gmx_exe is None or _gromacs_path is None:
-        raise _MissingSoftwareError("'BioSimSpace.Sovlent.spc' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Solvent.spc' is not supported. "
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
@@ -111,7 +111,7 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Sovlent.spce' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Solvent.spce' is not supported. "
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
@@ -136,7 +136,7 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Sovlent.tip3p' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip3p' is not supported. "
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
@@ -161,7 +161,7 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Sovlent.tip4p' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip4p' is not supported. "
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
@@ -186,7 +186,7 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Sovlent.tip5p' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip5p' is not supported. "
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
