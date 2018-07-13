@@ -143,6 +143,10 @@ class Molecule():
         # Perform the translation.
         self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
 
+    def toSystem(self):
+        """Convert a single Molecule to a System."""
+        return _System(self)
+
     def _getSireMolecule(self):
         """Return the full Sire Molecule object."""
         return self._sire_molecule
