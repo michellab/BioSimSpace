@@ -44,6 +44,33 @@ if _gmx_exe is None or _gromacs_path is None:
     _warnings.warn("'BioSimSpace.Solvent' is not supported. Please "
         + "install GROMACS: http://www.gromacs.org")
 
+def solvate(model, molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
+    """Add SPC solvent.
+
+       Positional arguments:
+
+       model      -- The name of the water model.
+
+       Keyword arguments:
+
+       molecule   -- A molecule, or system of molecules.
+       box        -- A list containing the box size in each dimension (in nm).
+       shell      -- Thickness of the water shell around the solute.
+       ion_conc   -- The ion concentration in (mol per litre).
+       is_neutral -- Whether to neutralise the system.
+       map        -- A dictionary that maps system "properties" to their user defined
+                     values. This allows the user to refer to properties with their
+                     own naming scheme, e.g. { "charge" : "my-charge" }
+    """
+
+    if type(model) is not str:
+        raise TypeError("'model' must be of type 'str'")
+    else:
+        if model not in waterModels():
+            raise ValueError("Supported water models are: %s" % waterModels())
+
+    return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, map)
+
 def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC solvent.
 
@@ -490,3 +517,21 @@ def _check_box_size(molecule, box):
 
     # We made it this far, all dimensions are large enough.
     return True
+
+# Create a list of the water models names.
+# This needs to come after all of the solvation functions.
+_models = []
+_model_dict = {}
+import sys as _sys
+_namespace = _sys.modules[__name__]
+for _var in dir():
+    if _var[0] != "_" and _var != "solvate":
+        _models.append(_var)
+        _model_dict[_var] = getattr(_namespace, _var)
+del(_namespace)
+del(_sys)
+del(_var)
+
+def waterModels():
+    "Return a list of the supported water models"
+    return _models
