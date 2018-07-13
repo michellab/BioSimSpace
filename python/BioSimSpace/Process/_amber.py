@@ -28,6 +28,7 @@ import Sire as _Sire
 
 from BioSimSpace import _amber_home
 from . import _process
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
@@ -165,7 +166,8 @@ class Amber(_process.Process):
                 if _os.path.isfile(exe):
                     self._exe = exe
                 else:
-                    raise IOError("AMBER executable doesn't exist: '%s'" % exe)
+                    raise _MissingSoftwareError("'BioSimSpace.Process.Amber' is not supported. "
+                        + "Please install AMBER (http://ambermd.org).")
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):

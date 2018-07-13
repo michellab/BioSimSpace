@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from . import _process
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
@@ -80,8 +81,8 @@ class Namd(_process.Process):
             try:
                 self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
             except:
-                raise IOError("Failed to find 'namd2' executable in system path!.") from None
-
+                raise _MissingSoftwareError("'BioSimSpace.Process.Namd' is not supported. "
+                    + "Please install NAMD (http://www.ks.uiuc.edu/Research/namd).") from None
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
