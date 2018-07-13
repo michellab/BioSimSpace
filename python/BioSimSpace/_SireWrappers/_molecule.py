@@ -33,12 +33,10 @@ import Sire.MM as _SireMM
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
 __all__ = ["Molecule"]
-
-class IncompatibleError(Exception):
-    pass
 
 class Molecule():
     """A container class for storing a molecule."""
@@ -197,7 +195,7 @@ class Molecule():
 
         # The new molecule must have at least as many atoms.
         if mol1.nAtoms() < num_atoms:
-            raise IncompatibleError("The passed molecule does not contain enough atoms!")
+            raise _IncompatibleError("The passed molecule does not contain enough atoms!")
 
         # Whether the atoms have been renamed.
         is_renamed = False
@@ -220,7 +218,7 @@ class Molecule():
 
             # Have we matched all of the atoms?
             if len(matches) < num_atoms:
-                raise IncompatibleError("Failed to match all atoms!")
+                raise _IncompatibleError("Failed to match all atoms!")
 
             # Are the atoms in the same order?
             is_reordered = matcher.changesOrder(mol0, mol1)
@@ -267,7 +265,7 @@ class Molecule():
                         try:
                             edit_mol = edit_mol.setProperty(_map[prop], mol1.property(prop))
                         except:
-                            raise IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
+                            raise _IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
 
         # The atom order is different, we need to map the atoms when setting properties.
         else:
@@ -296,7 +294,7 @@ class Molecule():
                                 edit_mol = edit_mol.atom(idx0).setProperty(_map[prop], mol1.atom(idx1).property(prop)).molecule()
                                 seen_prop[prop] = True
                             except:
-                                raise IncompatibleError("Failed to copy property '%s' from %s to %s."
+                                raise _IncompatibleError("Failed to copy property '%s' from %s to %s."
                                     % (_map[prop], idx1, idx0)) from None
 
             # Now deal with all unseen properties. These will be non atom-based
@@ -322,7 +320,7 @@ class Molecule():
                                 try:
                                     edit_mol.setProperty(_map[prop], mol1.property(prop))
                                 except:
-                                    raise IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
+                                    raise _IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
 
         # Finally, rename the atoms.
 
@@ -342,7 +340,7 @@ class Molecule():
                 try:
                     edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
                 except:
-                    raise IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
+                    raise _IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
 
         # Commit the changes.
         self._sire_molecule = edit_mol.commit()

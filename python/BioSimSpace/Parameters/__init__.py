@@ -26,13 +26,14 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
 
-from warnings import warn as _warn
+__all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFields"]
 
 def parameterise(molecule, forcefield, options={}, map={}):
     """Parameterise using the a specified force field.
@@ -75,9 +76,8 @@ def ff99(molecule, options={}, map={}):
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
-        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
-            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99' is not supported. "
+            + "Please install AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
 
@@ -113,9 +113,8 @@ def ff99SB(molecule, options={}, map={}):
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
-        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
-            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SB' is not supported. "
+            + "Please install AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
 
@@ -151,9 +150,8 @@ def ff03(molecule, options={}, map={}):
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
-        _warn("'BioSimSpace.Parameters.ff99' is not supported. Please install "
-            + "AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff03' is not supported. "
+            + "Please install AMBER (http://ambermd.org) or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
 
@@ -189,9 +187,8 @@ def ff14SB(molecule, options={}, map={}):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.ff14SB' is not supported. Please install "
-            + "AMBER (http://ambermd.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff14SB' is not supported. "
+            + "Please install AMBER (http://ambermd.org).")
 
     # Validate arguments.
 
@@ -227,9 +224,8 @@ def gaff(molecule, options={}, map={}):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.gaff' is not supported. Please install "
-            + "AMBER (http://ambermd.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.gaff' is not supported. "
+            + "Please install AMBER (http://ambermd.org).")
 
     # Validate arguments.
 
@@ -265,9 +261,8 @@ def gaff2(molecule, options={}, map={}):
     """
 
     if _amber_home is None:
-        _warn("'BioSimSpace.Parameters.gaff2' is not supported. Please install "
-            + "AMBER (http://ambermd.org).")
-        return None
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.gaff2' is not supported. "
+            + "Please install AMBER (http://ambermd.org).")
 
     # Validate arguments.
 
