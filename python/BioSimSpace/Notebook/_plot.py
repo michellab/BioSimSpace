@@ -47,11 +47,16 @@ if _display is not "":
     except ImportError:
         _has_matplotlib = False
 else:
-    _has_matplotlib = False
-    _has_display = False
-
-    #if not _is_notebook():
-    #    _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+    if _is_notebook():
+        try:
+            import matplotlib.pyplot as _plt
+            _has_matplotlib = True   
+        except ImportError:
+            _has_matplotlib = False
+    else:
+        _has_matplotlib = False
+        _has_display = False
+        #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del(_display)
 
