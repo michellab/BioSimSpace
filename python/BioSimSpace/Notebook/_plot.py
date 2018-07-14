@@ -50,8 +50,8 @@ else:
     _has_matplotlib = False
     _has_display = False
 
-    if not _is_notebook():
-        _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+    #if not _is_notebook():
+    #    _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del(_display)
 
