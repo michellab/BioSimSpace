@@ -46,7 +46,7 @@ process = BSS.Process.Namd(minimised, protocol, name="equilibrate", work_dir="eq
 filenames = process.inputFiles()
 print("\nCreated NAMD input files: %s" % filenames)
 
-# Start the equlibration.
+# Start the equilibration.
 print("\nStarting equilibration...")
 process.start()
 
