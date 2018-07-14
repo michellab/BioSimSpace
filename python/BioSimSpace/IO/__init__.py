@@ -146,7 +146,6 @@ def readMolecules(files, map={}):
                   ) % files
             raise IOError(msg) from None
         else:
-            print(str(e))
             raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
@@ -226,7 +225,7 @@ def saveMolecules(filebase, system, fileformat, map={}):
     _map = map.copy()
 
     # Add the GROMACS topology file path.
-    if "GROMACS_PATH" not in _map:
+    if _gromacs_path and ("GROMACS_PATH" not in _map):
         _map["GROMACS_PATH"] = _gromacs_path
 
     # We have a list of molecules. Create a new system and add each molecule.
