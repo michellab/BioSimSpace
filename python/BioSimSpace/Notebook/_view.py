@@ -121,7 +121,9 @@ class View():
             return self.system(gui=gui)
 
         # Convert single indices to a list.
-        if type(indices) is not list:
+        if isinstance(indices, range):
+            indices = list(indices)
+        elif type(indices) is not list:
             indices = [indices]
 
         # Check that the indices is a list of integers.
