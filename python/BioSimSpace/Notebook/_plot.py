@@ -24,7 +24,7 @@ Tools for plotting data.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from BioSimSpace import _is_interactive
+from BioSimSpace import _is_interactive, _is_notebook
 
 import BioSimSpace.Types._type as _Type
 
