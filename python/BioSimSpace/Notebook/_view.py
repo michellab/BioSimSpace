@@ -63,7 +63,7 @@ class View():
             self._is_process = True
 
         # BioSimSpace system.
-        elif type(handle) is System:
+        elif type(handle) is _System:
             self._handle = handle._getSireSystem()
             self._is_process = False
 
