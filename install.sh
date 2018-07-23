@@ -57,10 +57,10 @@ fi
 # Save MD5 program.
 if [[ $OS == "Linux" ]]; then
     MD5_EXE=$(command -v md5sum)
-    CHECKSUM=5e6f8da9066df4cb3e8729f95459b333
+    CHECKSUM=31daea15eabae321960a5b12e5f99fea
 else
     MD5_EXE=$(command -v md5)
-    CHECKSUM=75641f195f235517f3113b5e753b2cdd
+    CHECKSUM=2031d5e6dec47454d2acbb2fd05a1259
 fi
 
 # Simple parser for command-line options.
