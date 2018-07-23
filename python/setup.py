@@ -41,87 +41,82 @@ try:
 finally:
     print("\nSetting up python environment...")
 
-    # Install Python dependencies and enable Jupyter widget extensions.
+    import os
 
-    print("Updating conda")
-    command = "%s/conda update -y -q -n base conda" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+    if not os.getenv("BSS_SKIP_INSTALL"):
+        # Install Python dependencies and enable Jupyter widget extensions.
 
-    print("Adding conda-forge channel")
-    command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Updating conda")
+        command = "%s/conda update -y -q -n base conda" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Disabling conda auto update")
-    command = "%s/conda config --system --set auto_update_conda false" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Adding conda-forge channel")
+        command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: mdtraj")
-    command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Disabling conda auto update")
+        command = "%s/conda config --system --set auto_update_conda false" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: mdanalysis")
-    command = "%s/conda install -y -q mdanalysis" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: mdtraj")
+        command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: openbabel")
-    command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: mdanalysis")
+        command = "%s/conda install -y -q mdanalysis" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: gromacs")
-    command = "%s/conda install -y -q -c bioconda gromacs" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: openbabel")
+        command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: icu")
-    command = "%s/conda install -y -q icu" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Upgrading pip")
+        command = "%s/pip install --upgrade pip" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Upgrading pip")
-    command = "%s/pip install --upgrade pip" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: watchdog")
+        command = "%s/pip install watchdog" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: watchdog")
-    command = "%s/pip install watchdog" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: jupyter")
+        command = "%s/pip install jupyter" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: jupyter")
-    command = "%s/pip install jupyter" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: duecredit")
+        command = "%s/pip install duecredit" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: duecredit")
-    command = "%s/pip install duecredit" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: mock")
+        command = "%s/pip install mock" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: mock")
-    command = "%s/pip install mock" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: pygtail")
+        command = "%s/pip install pygtail" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: pygtail")
-    command = "%s/pip install pygtail" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: fileupload")
+        command = "%s/pip install fileupload" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: fileupload")
-    command = "%s/pip install fileupload" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Activating notebook extension: fileupload")
+        command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Activating notebook extension: fileupload")
-    command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-    command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Installing package: nglview")
+        command = "%s/pip --no-cache-dir install nglview" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Installing package: nglview")
-    command = "%s/pip --no-cache-dir install nglview" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Activating notebook extension: nglview")
+        command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
-    print("Activating notebook extension: nglview")
-    command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-    command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-
-    print("Cleaning conda environment")
-    command = "%s/conda clean -all -y -q" % bin_dir
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        print("Cleaning conda environment")
+        command = "%s/conda clean -all -y -q" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
     print("\nDone!")
 

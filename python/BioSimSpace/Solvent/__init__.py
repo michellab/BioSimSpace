@@ -396,6 +396,7 @@ def _solvate(molecule, box, shell, model, num_point,
     # Create a TOP file for the water model. By default we use the Amber03
     # force field to generate a dummy topology for the water model.
     with open("water.top", "w") as file:
+        file.write("#define FLEXIBLE 1\n\n")
         file.write("; Include AmberO3 force field\n")
         file.write('#include "amber03.ff/forcefield.itp"\n\n')
         file.write("; Include %s water topology\n" % model.upper())
@@ -477,13 +478,13 @@ def _solvate(molecule, box, shell, model, num_point,
         else:
             system = molecule + water.getMolecules()
 
-        if "space" in map:
-            prop = map["space"]
-        else:
-            prop = "space"
+        # Add all of the water box properties to the new system.
+        for prop in water._sire_system.propertyKeys():
+            if prop in map:
+                prop = map[prop]
 
-        # Add the space property from the water system.
-        system._sire_system.setProperty(prop, water._sire_system.property(prop))
+            # Add the space property from the water system.
+            system._sire_system.setProperty(prop, water._sire_system.property(prop))
     else:
         system = water
 
