@@ -85,7 +85,7 @@ finally:
         print("Installing package: duecredit")
         command = "%s/pip install duecredit" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)
- 
+
         print("Installing package: mock")
         command = "%s/pip install mock" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)
@@ -93,7 +93,7 @@ finally:
         print("Installing package: pygtail")
         command = "%s/pip install pygtail" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)
- 
+
         print("Installing package: fileupload")
         command = "%s/pip install fileupload" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)

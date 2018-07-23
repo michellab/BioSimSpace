@@ -50,7 +50,7 @@ else:
     if _is_notebook():
         try:
             import matplotlib.pyplot as _plt
-            _has_matplotlib = True   
+            _has_matplotlib = True
         except ImportError:
             _has_matplotlib = False
     else:
