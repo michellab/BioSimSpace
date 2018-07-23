@@ -1,5 +1,5 @@
 # Set the minimum allowed Sire version.
-min_ver = "2018.1.0"
+min_ver = "2018.2.0"
 min_ver_int = int(min_ver.replace(".", ""))
 
 # Make sure we're using the Sire python interpreter.

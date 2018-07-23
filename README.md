@@ -82,6 +82,9 @@ simply add the following to `~/.matplotlib/matplotlibrc`
 backend: TkAgg
 ```
 
+Note that plotting functionality will be disabled if you are using BioSimSpace
+within IPython on a remote server without X forwarding.
+
 Several additional packages are required for full access to all of BioSimSpace's
 functionality. Please download and install these packages according to their
 recommended installation instructions.
