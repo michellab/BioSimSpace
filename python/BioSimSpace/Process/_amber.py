@@ -261,6 +261,7 @@ class Amber(_process.Process):
             self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
+            self.addToConfig("  ntc=2,")                    # Enable SHAKE.
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  maxcyc=%d,"
                 % self._protocol.getSteps())                # Set the number of steps.

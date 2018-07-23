@@ -70,18 +70,31 @@ if "AMBERHOME" in _environ:
     _amber_home = _environ.get("AMBERHOME")
 else:
     _amber_home = None
-del(_environ)
 
 # Check to see if GROMACS is installed.
 import Sire.Base as _SireBase
 from os import path as _path
-try:
-    _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
-except:
-    _gmx_exe = None
+
+# First, let the user tell us where to find GROMACS. This
+# assumes that gromacs is installed in $GROMACSHOME/bin/gmx
+_gmx_exe = None
+if "GROMACSHOME" in _environ:
+    try:
+        _gmx_exe = _SireBase.findExe("%s/bin/gmx" % _environ.get("GROMACSHOME")) \
+                            .absoluteFilePath()
+    except:
+        pass
+
+if _gmx_exe is None:
+    try:
+        # The user has not told us where it is, so need to look in $PATH
+        _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
+    except:
+        pass
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
+del(_environ)
 del(_SireBase)
 
 if not _path.isdir(_gromacs_path):

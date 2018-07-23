@@ -63,7 +63,7 @@ class View():
             self._is_process = True
 
         # BioSimSpace system.
-        elif type(handle) is System:
+        elif type(handle) is _System:
             self._handle = handle._getSireSystem()
             self._is_process = False
 
@@ -121,7 +121,9 @@ class View():
             return self.system(gui=gui)
 
         # Convert single indices to a list.
-        if type(indices) is not list:
+        if isinstance(indices, range):
+            indices = list(indices)
+        elif type(indices) is not list:
             indices = [indices]
 
         # Check that the indices is a list of integers.

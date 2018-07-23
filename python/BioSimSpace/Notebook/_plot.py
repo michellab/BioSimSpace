@@ -24,7 +24,7 @@ Tools for plotting data.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from BioSimSpace import _is_interactive
+from BioSimSpace import _is_interactive, _is_notebook
 
 import BioSimSpace.Types._type as _Type
 
@@ -47,9 +47,17 @@ if _display is not "":
     except ImportError:
         _has_matplotlib = False
 else:
-    _has_matplotlib = False
-    _has_display = False
-    _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+    if _is_notebook():
+        try:
+            import matplotlib.pyplot as _plt
+            _has_matplotlib = True
+        except ImportError:
+            _has_matplotlib = False
+    else:
+        _has_matplotlib = False
+        _has_display = False
+        #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+
 del(_display)
 
 __all__ = ["plot"]

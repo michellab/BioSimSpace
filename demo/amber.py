@@ -48,7 +48,7 @@ process = BSS.Process.Amber(minimised, protocol, name="equilibrate", work_dir="e
 filenames = process.inputFiles()
 print("\nCreated AMBER input files: %s" % filenames)
 
-# Start the equlibration.
+# Start the equilibration.
 print("\nStarting equilibration...")
 process.start()
 
