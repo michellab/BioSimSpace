@@ -478,13 +478,13 @@ def _solvate(molecule, box, shell, model, num_point,
         else:
             system = molecule + water.getMolecules()
 
-        if "space" in map:
-            prop = map["space"]
-        else:
-            prop = "space"
+        # Add all of the water box properties to the new system.
+        for prop in water._sire_system.propertyKeys():
+            if prop in map:
+                prop = map[prop]
 
-        # Add the space property from the water system.
-        system._sire_system.setProperty(prop, water._sire_system.property(prop))
+            # Add the space property from the water system.
+            system._sire_system.setProperty(prop, water._sire_system.property(prop))
     else:
         system = water
 
