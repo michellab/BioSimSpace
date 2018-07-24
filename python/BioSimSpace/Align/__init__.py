@@ -34,7 +34,7 @@ def matchAtoms(molecule0,
                molecule1,
                scoring_function="RMSD",
                matches=1,
-               prematcher=_SireMol.AtomMultiMatcher(),
+               prematch={},
                timeout=5*_Units.Time.second,
                match_light=True,
                map0={},
@@ -52,7 +52,7 @@ def matchAtoms(molecule0,
        scoring_function -- The scoring function used to match atoms. Available
                            options are: "something", "something else", ...
        matches          -- The maximum number of matches to return. (Sorted in order of score).
-       prematcher       -- A pre-matcher to use as the basis of the search.
+       prematch         -- A pre-match to use as the basis of the search.
        timeout          -- The timeout for the matching algorithm.
        match_light      -- Whether to match light atoms.
        map0             -- A dictionary that maps "properties" in molecule0 to their user
@@ -87,8 +87,12 @@ def matchAtoms(molecule0,
         if matches < 0:
             raise ValueError("'matches' must be positive!")
 
-    if not isinstance(prematcher, _SireMol.AtomMatcher):
-        raise TypeError("'prematcher' must be of type 'Sire.Mol.AtomMatcher'")
+    if type(prematch) is not dict:
+        raise TypeError("'prematch' must be of type 'dict'")
+    else:
+        for idx0, idx1 in prematch.items():
+            if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
+                raise TypeError("'prematch' dictionary key-value pairs must be of type 'Sire.Mol.AtomIdx'")
 
     if type(timeout) is not _Units.Time._Time:
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
@@ -114,8 +118,8 @@ def matchAtoms(molecule0,
 
     # Find all of the best maximum common substructure matches.
     mappings = ( mol0.evaluate()
-                     .findMCSmatches(mol1, prematcher, timeout,
-                         match_light, map0, map1, verbose)
+                     .findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
+                         timeout, match_light, map0, map1, verbose)
                )
 
     # No matches!
