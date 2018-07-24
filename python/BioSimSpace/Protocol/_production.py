@@ -155,11 +155,11 @@ class Production(_Protocol):
     def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble."""
 
-        if ensemble.strip().upper() not in _ensembles:
+        if ensemble.replace(" ", "").upper() not in _ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
             self._ensemble = "NPT"
         else:
-            self._ensemble = ensemble.strip().upper()
+            self._ensemble = ensemble.replace(" ", "").upper()
 
     def getFirstStep(self):
         """Return the first time step."""
