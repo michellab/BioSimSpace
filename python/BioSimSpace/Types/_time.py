@@ -84,17 +84,13 @@ class Time(_Type):
         """Return a human readable string representation of the object."""
 
         abbrev = self._print_format[self._unit]
-        if self._magnitude > 1:
+        if self._magnitude != 1:
             if abbrev[-1] != "s":
                 abbrev = abbrev + "s"
         if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
             return "%.4e %s" % (self._magnitude, abbrev)
         else:
             return "%5.4f %s" % (self._magnitude, abbrev)
-
-    def weeks(self):
-        """Return the time in weeks."""
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_Units.week), "WEEK")
 
     def days(self):
         """Return the time in days."""
@@ -147,9 +143,7 @@ class Time(_Type):
 
            unit -- The unit to convert to.
         """
-        if unit == "WEEK":
-            return self.weeks()
-        elif unit == "DAY":
+        if unit == "DAY":
             return self.days()
         elif unit == "HOUR":
             return self.hours()
