@@ -46,20 +46,41 @@ __all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 def solvate(model, molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC solvent.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       model      -- The name of the water model.
+       model : str
+           The name of the water model.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if type(model) is not str:
@@ -73,16 +94,35 @@ def solvate(model, molecule=None, box=None, shell=None, ion_conc=0, is_neutral=T
 def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC solvent.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if _gmx_exe is None or _gromacs_path is None:
@@ -98,16 +138,35 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}
 def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC/E solvent.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if _gmx_exe is None:
@@ -123,16 +182,35 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={
 def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP3P solvent.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if _gmx_exe is None:
@@ -148,16 +226,35 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
 def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP4P solvent.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if _gmx_exe is None:
@@ -173,16 +270,35 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
 def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP5P solvent.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           The solvated molecular system.
     """
 
     if _gmx_exe is None:
@@ -198,22 +314,41 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
 def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
     """Internal function to validate function arguments.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
+
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       (molecule, box, shell) : tuple
+           The validated input arguments.
     """
 
     if molecule is not None:
         if type(molecule) is not _Molecule and type(molecule) is not _System:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule' "
-                + "or 'BioSimSpace.System'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None:
@@ -269,22 +404,35 @@ def _solvate(molecule, box, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, map={}):
     """Internal function to add solvent using 'gmx solvate'.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule   -- A molecule, or system of molecules.
-       box        -- A list containing the box size in each dimension (in nm).
-       shell      -- Thickness of the water shell around the solute.
-       model      -- The name of the water model.
-       num_point  -- The number of points in the model.
-       ion_conc   -- The ion concentration in (mol per litre).
-       is_neutral -- Whether to neutralise the system.
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
 
-       Keyword arguments:
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
 
-       work_dir -- The working directory for the process.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       shell : BioSimSpace.Types.Length
+           Thickness of the water shell around the solute.
+
+       ion_conc : float
+           The ion concentration in (mol per litre).
+
+       is_neutral : bool
+           Whether to neutralise the system.
+
+
+       Keyword arguments
+       -----------------
+
+       work_dir : str
+           The working directory for the process.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if molecule is not None:
@@ -497,10 +645,14 @@ def _solvate(molecule, box, shell, model, num_point,
 def _check_box_size(molecule, box):
     """Internal function to check that box is big enough for the molecule.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- A molecule, or system of molecules.
-       box      -- A list containing the box size in each dimension (in nm).
+       molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
+           A molecule, or system of molecules.
+
+       box : [ BioSimSpace.Types.Length ]
+           A list containing the box size in each dimension (in nm).
     """
 
     # Get the axis-aligned bounding box of the molecule/system.

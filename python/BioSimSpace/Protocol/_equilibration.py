@@ -48,17 +48,31 @@ class Equilibration(_Protocol):
                 ):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           timestep          -- The integration timestep (in femtoseconds).
-           runtime           -- The running time (in nanoseconds).
-           temperature_start -- The starting temperature (in Kelvin).
-           temperature_end   -- The final temperature (in Kelvin).
-           temperature       -- The equilibration temperature (in Kelvin).
-                                This takes precedence of over the other
-                                temperatures, i.e. to run at fixed temperature.
-           frames            -- The number of trajectory frames to record.
-           restrain_backbone -- Whether the atoms in the backbone are fixed.
+           timestep : BioSimSpace.Types.Time
+               The integration timestep (in femtoseconds).
+
+           runtime : BioSimSpace.Types.Time
+               The running time (in nanoseconds).
+
+           temperature_start : BioSimSpace.Types.Temperature
+               The starting temperature (in Kelvin).
+
+           temperature_end : BioSimSpace.Types.Temperature
+               The final temperature (in Kelvin).
+
+           temperature : BioSimSpace.Types.Temperature
+               The equilibration temperature (in Kelvin). This takes
+               precedence of over the other temperatures, i.e. to run
+               at fixed temperature.
+
+           frames : int
+               The number of trajectory frames to record.
+
+           restrain_backbone : bool
+               Whether the atoms in the backbone are fixed.
         """
 
         # Set the time step.
@@ -108,35 +122,75 @@ class Equilibration(_Protocol):
                        self._temperature_end, self._frames, self._is_restrained)
 
     def getTimeStep(self):
-        """Return the time step."""
+        """Return the time step.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The integration time step.
+        """
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step."""
+        """Set the time step.
 
+           Positional arguments
+           --------------------
+
+           time : BioSimSpace.Types.Time
+               The integration time step.
+        """
         if type(timestep) is _Types.Time:
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
-        """Return the running time."""
+        """Return the running time.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The simulation run time.
+        """
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time."""
+        """Set the running time.
 
+           Positional arguments
+           --------------------
+
+           runtime : BioSimSpace.Types.Time
+               The simulation run time.
+        """
         if type(runtime) is _Types.Time:
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getStartTemperature(self):
-        """Return the starting temperature."""
+        """Return the starting temperature.
+
+           Returns
+           -------
+
+           temperature : BioSimSpace.Types.Temperature
+               The starting temperature.
+        """
         return self._temperature_start
 
     def setStartTemperature(self, temperature):
-        """Set the starting temperature."""
+        """Set the starting temperature.
+
+           Positional arguments
+           --------------------
+
+           temperature : BioSimSpace.Types.Time
+               The starting temperature.
+        """
 
         if type(temperature) is _Types.Temperature:
             if temperature.kelvin().magnitude() == _pytest.approx(0):
@@ -146,12 +200,25 @@ class Equilibration(_Protocol):
             raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getEndTemperature(self):
-        """Return the final temperature."""
+        """Return the final temperature.
+
+           Returns
+           -------
+
+           temperature : BioSimSpace.Types.Temperature
+               The final temperature.
+        """
         return self._temperature_end
 
     def setEndTemperature(self, temperature):
-        """Set the final temperature."""
+        """Set the final temperature.
 
+           Positional arguments
+           --------------------
+
+           temperature : BioSimSpace.Types.Time
+               The final temperature.
+        """
         if type(temperature) is _Types.Temperature:
             if temperature.kelvin().magnitude() == _pytest.approx(0):
                 temperature._magnitude = 0.01
@@ -160,12 +227,25 @@ class Equilibration(_Protocol):
             raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getFrames(self):
-        """Return the number of frames."""
+        """Return the number of frames.
+
+           Returns
+           -------
+
+           frames : int
+               The number of trajectory frames.
+        """
         return self._frames
 
     def setFrames(self, frames):
-        """Set the number of frames."""
+        """Set the number of frames.
 
+           Positional arguments
+           --------------------
+
+           frames : int
+               The number of trajectory frames.
+        """
         if type(frames) is not int:
             raise TypeError("'frames' must be of type 'int'")
 
@@ -176,12 +256,25 @@ class Equilibration(_Protocol):
             self._frames = _math.ceil(frames)
 
     def isRestrained(self):
-        """Return whether the backbone is restrained."""
+        """Return whether the backbone is restrained.
+
+           Returns
+           -------
+
+           is_restrained : bool
+               Whether the backbone is restrained.
+        """
         return self._is_restrained
 
     def setRestraint(self, restrain_backbone):
-        """Set the backbone restraint."""
+        """Set the backbone restraint.
 
+           Positional arguments
+           --------------------
+
+           is_restrained : bool
+               Whether the backbone is restrained.
+        """
         if type(restrain_backbone) is bool:
             self._is_restrained = restrain_backbone
         else:
@@ -189,5 +282,12 @@ class Equilibration(_Protocol):
             self._is_restrained = False
 
     def isConstantTemp(self):
-        """Return whether the protocol has a constant temperature."""
+        """Return whether the protocol has a constant temperature.
+
+           Returns
+           -------
+
+           is_const_temp : bool
+               Whether the temperature is fixed.
+        """
         return self._temperature_start == self._temperature_end

@@ -44,11 +44,17 @@ class Trajectory():
     def __init__(self, process=None, trajectory=None, topology=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           process    -- A BioSimSpace process object.
-           trajectory -- A trajectory file.
-           topology   -- A topology file.
+           process : BioSimSpace.Process
+               A BioSimSpace process object.
+
+           trajectory : str
+               A trajectory file.
+
+           topology : str
+               A topology file.
         """
 
         # Set default member variables.
@@ -102,9 +108,11 @@ class Trajectory():
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
+           format : str
+               Whether to return an 'MDTraj' or 'MDAnalysis' object.
         """
 
         if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
@@ -210,9 +218,11 @@ class Trajectory():
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of System objects.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           indices -- A list of trajectory frame indices, or time stamps (in ns).
+           indices : [ int ], [ float ]
+               A list of trajectory frame indices, or time stamps (in ns).
         """
 
         # The process is running. Grab the latest trajectory.
@@ -321,11 +331,17 @@ class Trajectory():
     def RMSD(self, frame=None, atoms=None, molecule=None):
         """Compute the root mean squared displacement.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           frame    -- The index of the reference frame.
-           atoms    -- A list of reference atom indices.
-           molecule -- The index of the reference molecule.
+           frame : int
+               The index of the reference frame.
+
+           atoms : [ int ]
+               A list of reference atom indices.
+
+           molecule : int
+               The index of the reference molecule.
         """
 
         # Default to the first frame.

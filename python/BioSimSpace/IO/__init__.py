@@ -92,9 +92,18 @@ def fileFormats():
 def formatInfo(format):
     """Return information for the specified file format.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       format -- The file format.
+       format : str
+           The file format.
+
+
+        Returns
+        -------
+
+        info : str
+            A description of the named file format.
     """
 
     try:
@@ -106,15 +115,27 @@ def formatInfo(format):
 def readPDB(id, map={}):
     """Read a molecular system from a PDB ID in the RSCB PDB website.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       id  -- The PDB ID string.
+       id : str
+           The PDB ID string.
 
-       Keyword arguments:
 
-       map -- A dictionary that maps system "properties" to their user defined
-              values. This allows the user to refer to properties with their
-              own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           A molecular system.
     """
 
     if type(id) is not str:
@@ -145,15 +166,27 @@ def readPDB(id, map={}):
 def readMolecules(files, map={}):
     """Read a molecular system from file.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       files -- A file name, or a list of file names.
+       files : str, [ str ]
+           A file name, or a list of file names.
 
-       Keyword arguments:
 
-       map   -- A dictionary that maps system "properties" to their user defined
-                values. This allows the user to refer to properties with their
-                own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           A molecular system.
     """
 
     # Convert to a list.
@@ -194,17 +227,27 @@ def readMolecules(files, map={}):
 def saveMolecules(filebase, system, fileformat, map={}):
     """Save a molecular system to file.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       filebase   -- The base name of the output file.
-       system     -- The molecular system.
-       fileformat -- The file format (or formats) to save to.
+       filebase : str
+           The base name of the output file.
 
-       Keyword arguments:
+       system : BioSimSpace._SireWrappers.System, BioSimSpace._SireWrappers.Molecule,
+                [ BioSimSpace._SireWrappers.Molecule ]
+           The molecular system.
 
-       map        -- A dictionary that maps system "properties" to their user
-                     defined values. This allows the user to refer to properties
-                     with their own naming scheme, e.g. { "charge" : "my-charge" }
+       fileformat : str, [ str ]
+           The file format (or formats) to save to.
+
+
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Check that the filebase is a string.

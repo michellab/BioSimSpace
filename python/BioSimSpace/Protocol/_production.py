@@ -50,15 +50,29 @@ class Production(_Protocol):
                 ):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           timestep    -- The integration timestep.
-           runtime     -- The running time.
-           temperature -- The temperature.
-           frames      -- The number of trajectory frames to record.
-           ensemble    -- The thermodynamic ensemble.
-           first_step  -- The initial time step (for restart simulations).
-           restart     -- Whether this is a continuation of a previous simulation.
+           timestep : BioSimSpace.Types.Time
+               The integration timestep.
+
+           runtime : BioSimSpace.Types.Time
+               The running time.
+
+           temperature : BioSimSpace.Types.Temperature
+               The temperature.
+
+           frames : int
+               The number of trajectory frames to record.
+
+           ensemble : str
+               The thermodynamic ensemble.
+
+           first_step : int
+               The initial time step (for restart simulations).
+
+           restart : bool
+               Whether this is a continuation of a previous simulation.
         """
 
         # Set the time step.
@@ -97,48 +111,100 @@ class Production(_Protocol):
                        self._ensemble, self._first_step, self._restart)
 
     def getTimeStep(self):
-        """Return the time step."""
+        """Return the time step.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The integration time step.
+        """
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step."""
+        """Set the time step.
 
+           Positional arguments
+           --------------------
+
+           timestep : BioSimSpace.Types.Time
+               The integration time step.
+        """
         if type(timestep) is _Types.Time:
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
-        """Return the running time."""
+        """Return the running time.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The simulation run time.
+        """
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time."""
+        """Set the running time.
 
+           Positional arguments
+           --------------------
+
+           runtime : BioSimSpace.Types.Time
+               The simulation run time.
+        """
         if type(runtime) is _Types.Time:
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
-        """Return temperature."""
+        """Return temperature.
+
+           Returns
+           -------
+
+           temperature : BioSimSpace.Types.Temperature
+               The simulation temperature.
+        """
         return self._temperature
 
     def setTemperature(self, temperature):
-        """Set the temperature."""
+        """Set the temperature.
 
+           Positional arguments
+           --------------------
+
+           temperature : BioSimSpace.Types.Time
+               The simulation temperature.
+        """
         if type(temperature) is _Types.Temperature:
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
 
     def getFrames(self):
-        """Return the number of frames."""
+        """Return the number of frames.
+
+           Returns
+           -------
+
+           frames : int
+               The number of trajectory frames.
+        """
         return self._frames
 
     def setFrames(self, frames):
-        """Set the number of frames."""
+        """Set the number of frames.
 
+           Positional arguments
+           --------------------
+
+           frames : int
+               The number of trajectory frames.
+        """
         if type(frames) is not int:
             raise TypeError("'frames' must be of type 'int'")
 
@@ -149,12 +215,25 @@ class Production(_Protocol):
             self._frames = _math.ceil(frames)
 
     def getEnsemble(self):
-        """Return the thermodynamic ensemble."""
+        """Return the thermodynamic ensemble.
+
+           Returns
+           -------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
         return self._ensemble
 
     def setEnsemble(self, ensemble):
-        """Set the thermodynamic ensemble."""
+        """Set the thermodynamic ensemble.
 
+           Positional arguments
+           --------------------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
         if ensemble.replace(" ", "").upper() not in _ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
             self._ensemble = "NPT"
@@ -162,12 +241,25 @@ class Production(_Protocol):
             self._ensemble = ensemble.replace(" ", "").upper()
 
     def getFirstStep(self):
-        """Return the first time step."""
+        """Return the first time step.
+
+           Returns
+           -------
+
+           step : int
+               The first time step.
+        """
         return self._first_step
 
     def setFirstStep(self, first_step):
-        """Set the initial time step."""
+        """Set the initial time step.
 
+           Positional arguments
+           --------------------
+
+           step : int
+               The first time step.
+        """
         if type(first_step) is not int:
             raise TypeError("'first_step' must be of type 'int'")
 
@@ -178,12 +270,25 @@ class Production(_Protocol):
             self._first_step = _math.ceil(first_step)
 
     def isRestart(self):
-        """Return whether this restart simulation."""
+        """Return whether this restart simulation.
+
+           Returns
+           -------
+
+           is_restart : bool
+               Whether this is a restart simulation.
+        """
         return self._restart
 
     def setRestart(self, restart):
-        """Set the restart flag."""
+        """Set the restart flag.
 
+           Positional arguments
+           --------------------
+
+           restart : bool
+               Whether this is a restart simulation.
+        """
         if type(restart) is bool:
             self._restart = restart
         else:

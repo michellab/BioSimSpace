@@ -42,25 +42,52 @@ def matchAtoms(molecule0,
                verbose=False):
     """Find mappings from atoms in molecule0 to those in molecule1.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule0        -- The reference molecule.
-       molecule1        -- The target molecule.
+       molecule0 : BioSimSpace._SireWrappers.Molecule
+           The reference molecule.
 
-       Keyword arguments:
+       molecule1 : BioSimSpace._SireWrappers.Molecule
+           The target molecule.
 
-       scoring_function -- The scoring function used to match atoms. Available
-                           options are: "something", "something else", ...
-       matches          -- The maximum number of matches to return. (Sorted in order of score).
-       prematch         -- A pre-match to use as the basis of the search.
-       timeout          -- The timeout for the matching algorithm.
-       match_light      -- Whether to match light atoms.
-       map0             -- A dictionary that maps "properties" in molecule0 to their user
-                           defined values. This allows the user to refer to properties
-                           with their own naming scheme, e.g. { "charge" : "my-charge" }
-       map1             -- A dictionary that maps "properties" in molecule1 to their user
-                           defined values.
-       verbose          -- Whether to print status information from the matcher.
+
+       Keyword arguments
+       -----------------
+
+       scoring_function : str
+           The scoring function used to match atoms. Available options are: "RMSD".
+
+       matches : int
+           The maximum number of matches to return. (Sorted in order of score).
+
+       prematch : dict
+           A pre-match to use as the basis of the search.
+
+       timeout : BioSimSpace.Types.Time
+           The timeout for the matching algorithm.
+
+       match_light : bool
+           Whether to match light atoms.
+
+       map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+
+       verbose : bool
+           Whether to print status information from the matcher.
+
+
+       Returns
+       -------
+
+       matches : dict, [dict]
+           The matching atom mappings.
     """
 
     # A list of supported scoring functions.
@@ -143,11 +170,24 @@ def rmsdAlign(molecule0, molecule1, mapping):
        translation vector (as opposed to merely taking the difference of
        centroids).
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule0 -- The reference molecule.
-       molecule1 -- The target molecule.
-       mapping   -- A dictionary mapping atoms in molecule0 to those in molecule1.
+       molecule0 : BioSimSpace._SireWrappers.Molecule
+           The reference molecule.
+
+       molecule1 : BioSimSpace._SireWrappers.Molecule
+           The target molecule.
+
+       mapping : dict
+           A dictionary mapping atoms in molecule0 to those in molecule1.
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The aligned molecule.
     """
 
     if type(molecule0) is not _Molecule:
@@ -179,12 +219,25 @@ def _score_rmsd(molecule0, molecule1, mappings):
        displacement between matched atoms that are aligned based on each mapping.
        Returns the mappings sorted based on their score from best to worst.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule0 -- The reference molecule.
-       molecule1 -- The target molecule.
-       mappings  -- A list of dictionaries mapping atoms in molecule0 to
-                    those in molecule1.
+       molecule0 : BioSimSpace._SireWrappers.Molecule
+           The reference molecule.
+
+       molecule1 : BioSimSpace._SireWrappers.Molecule
+           The target molecule.
+
+       mappings : [ dict ]
+           A list of dictionaries mapping  atoms in molecule0 to those in
+           molecule1.
+
+
+       Returns
+       -------
+
+       mappinps : [ dict ]
+           The sorted mappings.
     """
 
     # Initialise a list of scores.

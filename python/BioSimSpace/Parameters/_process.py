@@ -62,21 +62,30 @@ class Process():
     def __init__(self, molecule, protocol, work_dir=None, autostart=False):
         """Constructor
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule  -- The molecule to parameterise.
-           protocol  -- The parameterisation protocol.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to parameterise.
 
-           Keyword arguments:
+           protocol : BioSimSpace.Parameters.Protocol
+               The parameterisation protocol.
 
-           work_dir  -- The working directory for the process.
-           autostart -- Whether to automatically start the process.
+
+           Keyword arguments
+           -----------------
+
+           work_dir : str
+               The working directory for the process.
+
+           autostart : bool
+               Whether to automatically start the process.
         """
 
         # Validate arguments.
 
         if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
         if not isinstance(protocol, _Protocol._Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
@@ -142,6 +151,12 @@ class Process():
     def getMolecule(self):
         """Get the parameterised molecule. This method blocks until
            parameterisation is complete.
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The parameterised molecule.
         """
 
         # Start the process, if it's not already started.

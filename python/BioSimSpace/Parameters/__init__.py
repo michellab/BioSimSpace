@@ -38,18 +38,34 @@ __all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFi
 def parameterise(molecule, forcefield, options={}, map={}):
     """Parameterise using the a specified force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule   -- The molecule to parameterise.
-       forcefield -- The force field. Run BioSimSpace.Parameters.forceFields()
-                     to get a list of the supported force fields.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
+       forcefield : str
+           The force field. Run BioSimSpace.Parameters.forceFields() to get a
+           list of the supported force fields.
 
-       options    -- A dictionary of keyword options to override the protocol defaults.
-       map        -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if type(forcefield) is not str:
@@ -63,16 +79,30 @@ def parameterise(molecule, forcefield, options={}, map={}):
 def ff99(molecule, options={}, map={}):
     """Parameterise using the ff99 force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -82,7 +112,7 @@ def ff99(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
@@ -100,16 +130,30 @@ def ff99(molecule, options={}, map={}):
 def ff99SB(molecule, options={}, map={}):
     """Parameterise using the ff99SB force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -119,7 +163,7 @@ def ff99SB(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
@@ -137,16 +181,30 @@ def ff99SB(molecule, options={}, map={}):
 def ff03(molecule, options={}, map={}):
     """Parameterise using the ff03 force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
@@ -156,7 +214,7 @@ def ff03(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
@@ -174,16 +232,30 @@ def ff03(molecule, options={}, map={}):
 def ff14SB(molecule, options={}, map={}):
     """Parameterise using the ff14SB force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None:
@@ -193,7 +265,7 @@ def ff14SB(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
@@ -211,16 +283,30 @@ def ff14SB(molecule, options={}, map={}):
 def gaff(molecule, options={}, map={}):
     """Parameterise using the gaff force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None:
@@ -230,7 +316,7 @@ def gaff(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
@@ -248,16 +334,30 @@ def gaff(molecule, options={}, map={}):
 def gaff2(molecule, options={}, map={}):
     """Parameterise using the gaff force field.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       molecule -- The molecule to parameterise.
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
 
-       Keyword arguments:
 
-       options  -- A dictionary of keyword options to override the protocol defaults.
-       map      -- A dictionary that maps system "properties" to their user defined
-                   values. This allows the user to refer to properties with their
-                   own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The parameterised molecule.
     """
 
     if _amber_home is None:
@@ -267,7 +367,7 @@ def gaff2(molecule, options={}, map={}):
     # Validate arguments.
 
     if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")

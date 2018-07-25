@@ -57,15 +57,29 @@ class Requirement():
             maximum=None, allowed=None, optional=False):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help     -- The help string.
-           default  -- The default value.
-           unit     -- The unit.
-           minimum  -- The minimum allowed value.
-           maximum  -- The maximum allowed value.
-           allowed  -- A list of allowed values.
-           optional -- Whether the requirement is optional.
+           help : str
+               The help string.
+
+           default :
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum :
+               The minimum allowed value.
+
+           maximum :
+               The maximum allowed value.
+
+           allowed : list
+               A list of allowed values.
+
+           optional : bool
+               Whether the requirement is optional.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -129,7 +143,14 @@ class Requirement():
             self._is_optional = True
 
     def setValue(self, value):
-        """Validate and set the value."""
+        """Validate and set the value.
+
+           Positional arguments
+           --------------------
+
+           value :
+               The value of the input requirement.
+        """
 
         if value is None and not self._is_optional:
             raise ValueError("Value is unset!")
@@ -221,10 +242,14 @@ class Boolean(Requirement):
     def __init__(self, help=None, default=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
+           help : str
+               The help string.
+
+           default :
+               The default value.
         """
 
         # Call the base class constructor.
@@ -248,13 +273,23 @@ class Integer(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : int
+               The default value.
+
+           minimum : int
+               The minimum allowed value.
+
+           maximum : int
+               The maximum allowed value.
+
+           allowed : [ int ]
+               A list of allowed values.
         """
 
         # Call the base class constructor.
@@ -279,13 +314,23 @@ class Float(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : float
+               The default value.
+
+           minimum : float
+               The minimum allowed value.
+
+           maximum : float
+               The maximum allowed value.
+
+           allowed : [ float ]
+               A list of allowed values.
         """
 
         # Call the base class constructor.
@@ -311,11 +356,17 @@ class String(Requirement):
     def __init__(self, help=None, default=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : str
+               The default value.
+
+           allowed : [ str ]
+               A list of allowed values.
         """
 
         # Call the base class constructor.
@@ -338,10 +389,14 @@ class File(Requirement):
     def __init__(self, help=None, optional=False):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help     -- The help string.
-           optional -- Whether the file is optional.
+           help : str
+               The help string.
+
+           optional : bool
+               Whether the file is optional.
         """
 
         # Call the base class constructor.
@@ -380,10 +435,14 @@ class FileSet(Requirement):
     def __init__(self, help=None, optional=False):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help     -- The help string.
-           optional -- Whether the requirement is optional.
+           help : str
+               The help string.
+
+           optional : bool
+               Whether the file set is optional.
         """
 
         # Call the base class constructor.
@@ -454,14 +513,25 @@ class Length(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Length
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Length
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Length
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Length ]
         """
 
         # Validate the unit.
@@ -508,14 +578,25 @@ class Area(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Area
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Area
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Area
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Area ]
         """
 
         # Validate the unit.
@@ -562,14 +643,25 @@ class Volume(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Volume
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Volume
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Volume
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Volume ]
         """
 
         # Validate the unit.
@@ -616,14 +708,25 @@ class Energy(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Energy
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Energy
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Energy
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Energy ]
         """
 
         # Validate the unit.
@@ -670,14 +773,25 @@ class Pressure(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Pressure
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Pressure
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Pressure
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Pressure ]
         """
 
         # Validate the unit.
@@ -724,14 +838,25 @@ class Temperature(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Temperature
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Temperature
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Temperature
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Temperature ]
         """
 
         # Validate the unit.
@@ -778,14 +903,25 @@ class Time(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           help    -- The help string.
-           default -- The default value.
-           unit    -- The unit.
-           minimum -- The minimum allowed value.
-           maximum -- The maximum allowed value.
-           allowed -- A list of allowed values.
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Time
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Time
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Time
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Time ]
         """
 
         # Validate the unit.
@@ -825,10 +961,21 @@ class Time(Requirement):
 def _validate_unit_requirement(value, unit_type):
     """Helper function to validate input requirements with units.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       value     -- The value of the input requirement.
-       unit_type -- The unit type.
+       value : str
+           The value of the input requirement.
+
+       unit_type: str
+           The unit type.
+
+
+        Returns
+        -------
+
+        (value, unit) : tuple
+            The value and unit of the requirement.
     """
 
     # No unit by default.
@@ -878,7 +1025,21 @@ def _validate_unit_requirement(value, unit_type):
     return (value, unit)
 
 def _unarchive(name):
-    """Decompress an archive and return a list of files."""
+    """Decompress an archive and return a list of files.
+
+       Positional arguments
+       --------------------
+
+       name : str
+           The name of the archive (full path).
+
+
+       Returns
+       -------
+
+       files : [ str ]
+           A list of file names.
+    """
 
     # Get the directory name.
     dir = _os.path.dirname(name)

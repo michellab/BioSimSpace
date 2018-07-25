@@ -36,21 +36,36 @@ class Custom(_Protocol):
     def __init__(self, config):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           config -- The custom protocol configuration.
+           config : str, [ str ]
+               The custom protocol configuration.
         """
 
         # Set the protocol configuration.
         self.setConfig(config)
 
     def getConfig(self):
-        """Return the custom configuration."""
+        """Return the custom configuration.
+
+           Returns
+           -------
+
+           config : [ str ]
+               Return the list of configuration strings.
+        """
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the custom configuration."""
+        """Set the custom configuration.
+        
+           Positional arguments
+           --------------------
 
+           config : str, [ str ]
+               A config file, or list of configuration strings.
+        """
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
             self._config = config

@@ -59,19 +59,32 @@ class Process():
     def __init__(self, system, protocol, name=None, work_dir=None, seed=None, map={}):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           system    -- The molecular system.
-           protocol  -- The protocol for the process.
+           system : BioSimSpace._SireWrappers.System
+               The molecular system.
 
-           Keyword arguments:
+           protocol : BioSimSpace.Protocol
+               The protocol for the process.
 
-           name      -- The name of the process.
-           work_dir  -- The working directory for the process.
-           seed      -- A random number seed.
-           map       -- A dictionary that maps system "properties" to their user defined
-                        values. This allows the user to refer to properties with their
-                        own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Keyword arguments
+           -----------------
+
+           name : str
+               The name of the process.
+
+           work_dir : str
+               The working directory for the process.
+
+           seed : int
+               A random number seed.
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -80,7 +93,7 @@ class Process():
 
         # Check that the system is valid.
         if type(system) is not _System:
-            raise TypeError("'system' must be of type 'BioSimSpace.System'")
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
@@ -199,14 +212,27 @@ class Process():
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           system    -- The molecular system.
-           protocol  -- The simulation protocol.
-           autostart -- Whether to start the process automatically.
-           restart   -- Whether to restart the simulation, i.e. use the original system.
+           system : BioSimSpace._SireWrappers.System
+               The molecular system.
 
-           return    -- The new process object.
+           protocol : BioSimSpace.Protocol
+               The simulation protocol.
+
+           autostart : bool
+               Whether to start the process automatically.
+
+           restart : bool
+               Whether to restart the simulation, i.e. use the original system.
+
+
+           Returns
+           -------
+
+           process : BioSimSpace.Process
+               The new process object.
         """
 
         # Try to get the current system.
@@ -220,7 +246,7 @@ class Process():
         # Check that the new system is valid.
         else:
             if type(system) is not _System:
-                raise TypeError("'system' must be of type 'BioSimSpace.System'")
+                raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Use the existing protocol.
         if protocol is None:
@@ -249,7 +275,14 @@ class Process():
         return self._name
 
     def setName(self, name):
-        """Set the process name."""
+        """Set the process name.
+
+           Positional arguments
+           --------------------
+
+           name : str
+               The process name.
+        """
 
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'")
@@ -261,7 +294,14 @@ class Process():
         return self._seed
 
     def setSeed(self, seed):
-        """Set the random number seed."""
+        """Set the random number seed.
+
+           Positional arguments
+           --------------------
+
+           seed : int
+               The random number seed.
+        """
 
         if type(seed) is not int:
             _warnings.warn("The seed must be an integer. Disabling seeding.")
@@ -272,16 +312,18 @@ class Process():
     def wait(self, max_time=None):
         """Wait for the process to finish.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           max_time -- The maximimum time to wait (in minutes).
+           max_time: float
+               The maximimum time to wait (in minutes).
         """
 
         # The process isn't running.
         if not self.isRunning():
             return
 
-        if not max_time is None:
+        if max_time is not None:
             if max_time <= 0:
                 _warnings.warn("Maximum running time must be greater than zero. Using default (60 mins).")
                 max_time = 60
@@ -319,9 +361,11 @@ class Process():
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           n -- The number of lines to print.
+           n : int
+               The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -348,9 +392,11 @@ class Process():
     def stderr(self, n=10):
         """Print the last n lines of the stderr buffer.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           n -- The number of lines to print.
+           n : int
+               The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -389,9 +435,18 @@ class Process():
     def getStdout(self, block="AUTO"):
         """Return the entire stdout for the process as a list of strings.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           output : [ str ]
+               The list of stdout strings.
         """
 
         # Wait for the process to finish.
@@ -409,9 +464,18 @@ class Process():
     def getStderr(self, block="AUTO"):
         """Return the entire stderr for the process as a list of strings.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           error : [ str ]
+               The list of stderror strings.
         """
 
         # Wait for the process to finish.
@@ -429,10 +493,21 @@ class Process():
     def getOutput(self, name=None, block="AUTO"):
         """Return a link to a zip file of the working directory.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           name  -- The name of the zip file.
-           block -- Whether to block until the process has finished running.
+           name : str
+               The name of the zip file.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           ouput : str, IPython.display.FileLink
+               A path or file link to and archive of the process output.
         """
 
         if name is None:
@@ -475,7 +550,15 @@ class Process():
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the list of configuration file strings."""
+        """Set the list of configuration file strings.
+
+           Positional arguments
+           --------------------
+
+           config : str, [ str ]
+               The list of configuration strings, or a path to a configuration
+               file.
+        """
 
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
@@ -500,7 +583,16 @@ class Process():
             raise ValueError("'config' must be a list of strings, or a file path.")
 
     def addToConfig(self, config):
-        """Add a string to the configuration list."""
+        """Add a string to the configuration list.
+
+           Positional arguments
+           --------------------
+
+           config : str, [ str ]
+               A configuration string, a list of configuration strings, or a
+               path to a configuration file.
+        """
+
         # Append a single string.
         if type(config) is str:
             self._config.append(config)
@@ -565,50 +657,89 @@ class Process():
         return args
 
     def setArgs(self, args):
-        """Set the dictionary of command-line arguments."""
+        """Set the dictionary of command-line arguments.
+
+           Positional arguments
+           --------------------
+
+           args : dict, collections.OrderedDict
+               A dictionary of command line arguments.
+        """
         if isinstance(args, _collections.OrderedDict):
             self._args = args
 
         elif isinstance(args, dict):
             self._args = _collections.OrderedDict(args)
 
+        else:
+            raise TypeError("'args' must be of type 'dict' or 'collections.OrderedDict'")
+
     def setArg(self, arg, value):
         """Set a specific command-line argument.
 
-           Keyword arguments:
-
-           arg   -- The argument to set.
-           value -- The value of the argument.
-
            For command-line flags, i.e. boolean arguments, the key should
            specify whether the flag is enabled (True) or not (False).
+
+           Positional arguments
+           --------------------
+
+           arg : str
+               The argument to set.
+
+           value :
+               The value of the argument.
         """
+
+        if type(arg) is not str:
+            raise TypeError("'arg' must be of type 'str'.")
+
         self._args[arg] = value
 
     def insertArg(self, arg, value, index):
         """Insert a command-line argument at a specific index.
 
-           Keyword arguments:
+           Positional arguments
+           --------------------
 
-           arg   -- The argument to set.
-           value -- The value of the argument.
-           index -- The index in the dictionary.
+           arg : str
+               The argument to set.
+
+           value :
+               The value of the argument.
+
+           index : int
+               The index in the dictionary.
         """
+
+        if type(arg) is not str:
+            raise TypeError("'arg' must be of type 'str'.")
+
         _odict_insert(self._args, arg, value, index)
 
     def addArgs(self, args):
         """Append additional command-line arguments.
 
-           Keyword arguments:
+           Positional arguments
+           --------------------
 
-           args -- A dictionary of arguments.
+           args : dict, collections.OrderedDict
+               A dictionary of command line arguments.
         """
         if isinstance(args, dict) or isinstance(args, _collections.OrderedDict):
             for arg, value in args.items():
                 self._args[arg] = value
+        else:
+            raise TypeError("'args' must be of type 'dict' or 'collections.OrderedDict'")
 
     def deleteArg(self, arg):
-        """Delete an argument from the dictionary."""
+        """Delete an argument from the dictionary.
+
+           Positional arguments
+           --------------------
+
+           arg : str
+               The argument to delete.
+        """
         try:
             del self._args[arg]
 
@@ -646,9 +777,11 @@ class Process():
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
-        Keyword arguments:
+        Positional arguments
+        --------------------
 
-        system -- A Sire molecular system.
+        system : Sire.System.System
+            A Sire molecular system.
     """
 
     # Copy the original system.
@@ -715,6 +848,9 @@ def _is_list_of_strings(lst):
 
 def _odict_insert(dct, key, value, index):
     """Insert an item into an ordered dictionary."""
+
+    if type(index) is not int:
+        raise TypeError("'index' must be of type 'int'.")
 
     # Store the original size of the dictionary.
     n = len(dct)

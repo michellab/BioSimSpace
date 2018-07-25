@@ -45,9 +45,11 @@ class View():
     def __init__(self, handle):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           handle -- A handle to a BioSimSpace.System or BioSimSpace.Process object.
+           handle : BioSimSpace.Process, BioSimSpace._SireWrappers.System
+               A handle to a process or system.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -68,7 +70,7 @@ class View():
             self._is_process = False
 
         else:
-            raise ValueError("The handle must be a BioSimSpace.System or BioSimSpace.Process object.")
+            raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -80,9 +82,11 @@ class View():
     def system(self, gui=True):
         """View the entire molecular system.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           gui -- Whether to display the gui.
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -106,10 +110,14 @@ class View():
     def molecules(self, indices=None, gui=True):
         """View specific molecules.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           indices -- A list of molecule indices.
-           gui     -- Whether to display the gui.
+           indices : [ int ], range
+               A list of molecule indices.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -165,10 +173,14 @@ class View():
     def molecule(self, index=0, gui=True):
         """View a specific molecule.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           index -- The molecule index.
-           gui   -- Whether to display the gui.
+           index : int
+               The molecule index.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -209,10 +221,14 @@ class View():
     def reload(self, index=None, gui=True):
         """Reload a particular view.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           index -- The view index.
-           gui   -- Whether to display the gui.
+           index : int
+               The view index.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -245,13 +261,18 @@ class View():
     def savePDB(self, file, index=None):
         """Save a specific view as a PDB file.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           file  -- The name of the file to write to.
+           file : str
+               The name of the file to write to.
 
-           Keyword arguments:
 
-           index -- The view index.
+           Keyword arguments
+           -----------------
+
+           index : int
+               The view index.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -289,11 +310,17 @@ class View():
     def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           system -- A Sire molecular system.
-           view   -- The index of an existing view.
-           gui    -- Whether to display the gui.
+           system : Sire.System.System
+               A Sire molecular system.
+
+           view : int
+               The index of an existing view.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         if system is None and view is None:

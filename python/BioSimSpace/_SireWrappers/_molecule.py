@@ -44,9 +44,11 @@ class Molecule():
     def __init__(self, molecule):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- A Sire Molecule object.
+           molecule : Sire.Mol.Molecule
+               A Sire Molecule object.
         """
 
         # Check that the molecule is valid.
@@ -113,9 +115,11 @@ class Molecule():
     def translate(self, vector):
         """Translate the molecule.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           vector -- The translation vector (in Angstroms).
+           vector : list, tuple
+               The translation vector (in Angstroms).
         """
 
         # Convert tuple to a list.
@@ -154,16 +158,27 @@ class Molecule():
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule     -- The molecule to match with.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to match with.
 
-           Keyword arguments:
 
-           map          -- A map between property names and user supplied names.
-           overwrite    -- Whether to overwrite any duplicate properties.
-           rename_atoms -- Whether to rename atoms if they have changed.
-           verbose      -- Whether to report status updates to stdout.
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A map between property names and user supplied names.
+
+           overwrite : bool
+               Whether to overwrite any duplicate properties.
+
+           rename_atoms : bool
+               Whether to rename atoms if they have changed.
+
+           verbose : bool
+               Whether to report status updates to stdout.
         """
 
         # Validate input.
@@ -348,11 +363,21 @@ class Molecule():
     def _getAABox(self, map={}):
         """Get the axis-aligned bounding box for the molecule.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           aabox : Sire.Vol.AABox
+               The axis-aligned bounding box for the molecule.
         """
 
         # Initialise the coordinates vector.

@@ -80,14 +80,26 @@ if _has_matplotlib:
 def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
     """A simple function to create x/y plots with matplotlib.
 
-       Keyword arguments:
+       Keyword arguments
+       -----------------
 
-       x      -- A list of x data values.
-       y      -- A list of y data values.
-       xlabel -- The x axis label string.
-       ylabel -- The y axis label string.
-       logx   -- Whether the x axis is logarithmic.
-       logy   -- Whether the y axis is logarithmic.
+       x : list
+           A list of x data values.
+
+       y : list
+           A list of y data values.
+
+       xlabel : str
+           The x axis label string.
+
+       ylabel : str
+           The y axis label string.
+
+       logx : bool
+           Whether the x axis is logarithmic.
+
+       logy : bool
+           Whether the y axis is logarithmic.
     """
 
     # Make sure were running interactively.
