@@ -66,7 +66,7 @@ with _Capturing() as format_info:
 # Create a list of the supported formats.
 _formats = []
 
-# Create a dictionary of format-description key-value pairs.
+# Create a dictionary of format-description key:value pairs.
 _formats_dict = _OrderedDict()
 
 # Loop over the format information to populate the dictionary.

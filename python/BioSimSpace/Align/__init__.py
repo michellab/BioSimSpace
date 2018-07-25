@@ -92,7 +92,7 @@ def matchAtoms(molecule0,
     else:
         for idx0, idx1 in prematch.items():
             if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                raise TypeError("'prematch' dictionary key-value pairs must be of type 'Sire.Mol.AtomIdx'")
+                raise TypeError("'prematch' dictionary key:value pairs must be of type 'Sire.Mol.AtomIdx'")
 
     if type(timeout) is not _Units.Time._Time:
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
@@ -162,7 +162,7 @@ def rmsdAlign(molecule0, molecule1, mapping):
         # Make sure all key/value pairs are of type AtomIdx.
         for idx0, idx1 in mapping.items():
             if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                raise TypeError("key-value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+                raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
 
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireMolecule()
