@@ -40,7 +40,9 @@ from io import StringIO as _StringIO
 from warnings import warn as _warn
 
 import os.path as _path
+import pypdb as _pypdb
 import sys as _sys
+import tempfile as _tempfile
 
 if _gromacs_path is None:
     _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
@@ -100,6 +102,45 @@ def formatInfo(format):
     except KeyError:
         print("Unsupported format: '%s'" % format)
         return None
+
+def readPDB(id, map={}):
+    """Read a molecular system from a PDB ID in the RSCB PDB website.
+
+       Positional arguments:
+
+       id  -- The PDB ID string.
+
+       Keyword arguments:
+
+       map -- A dictionary that maps system "properties" to their user defined
+              values. This allows the user to refer to properties with their
+              own naming scheme, e.g. { "charge" : "my-charge" }
+    """
+
+    if type(id) is not str:
+        raise TypeError("'id' must be of type 'str'")
+
+    # Strip any whitespace from the PDB ID and convert to upper case.
+    id = id.replace(" ", "").upper()
+
+    # Create a temporary directory to write the PDB file.
+    tmp_dir = _tempfile.TemporaryDirectory()
+
+    # Attempt to download the PDB file. (Compression is currently broken!)
+    try:
+        pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
+    except:
+        raise IOError("Invalid PDB ID: '%s'" % id)
+
+    # Create the name of the PDB file.
+    pdb_file = "%s/%s.pdb" % (tmp_dir.name, id)
+
+    # Now write the PDB string to file.
+    with open(pdb_file, "w") as file:
+        file.write(pdb_string)
+
+    # Read the file and return a molecular system.
+    return readMolecules(pdb_file, map)
 
 def readMolecules(files, map={}):
     """Read a molecular system from file.
