@@ -489,8 +489,8 @@ class Process():
             self._config = []
 
             # Read the contents of the file.
-            with open(config, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line.rstrip())
 
             # Write the new configuration file.
@@ -515,8 +515,8 @@ class Process():
         elif _os.path.isfile(config):
 
             # Read the contents of the file.
-            with open(file, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line)
 
             # Write the new configuration file.

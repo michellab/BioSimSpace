@@ -443,14 +443,14 @@ class Amber(_process.Process):
         args = self.getArgStringList()
 
         # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as f:
+        with open("README.txt", "w") as file:
 
             # Set the command-line string.
             self._command = "%s " % self._exe + self.getArgString()
 
             # Write the command to file.
-            f.write("# AMBER was run with the following command:\n")
-            f.write("%s\n" % self._command)
+            file.write("# AMBER was run with the following command:\n")
+            file.write("%s\n" % self._command)
 
         # Start the timer.
         self._timer = _timeit.default_timer()
@@ -970,10 +970,10 @@ class Amber(_process.Process):
         is_header = False
 
         # Open the file for reading.
-        with open(self._nrg_file, "r") as f:
+        with open(self._nrg_file, "r") as file:
 
             # Loop over all of the lines.
-            for line in f:
+            for line in file:
 
                 # Skip empty lines and summary reports.
                 if len(line) > 0 and line[0] is not "|":

@@ -354,10 +354,10 @@ def _solvate(molecule, box, shell, model, num_point,
     # Add the output file.
     command += " -o output.gro"
 
-    with open("README.txt", "w") as f:
+    with open("README.txt", "w") as file:
         # Write the command to file.
-        f.write("# gmx solvate was run with the following command:\n")
-        f.write("%s\n" % command)
+        file.write("# gmx solvate was run with the following command:\n")
+        file.write("%s\n" % command)
 
     # Run the command.
     proc = _subprocess.run(command, shell=True,
@@ -430,10 +430,10 @@ def _solvate(molecule, box, shell, model, num_point,
         # Create the grompp command.
         command = "gmx grompp -f ions.mdp -po ions.out.mdp -c water.gro -p water.top -o ions.tpr"
 
-        with open("README.txt", "a") as f:
+        with open("README.txt", "a") as file:
             # Write the command to file.
-            f.write("\n# gmx grompp was run with the following command:\n")
-            f.write("%s\n" % command)
+            file.write("\n# gmx grompp was run with the following command:\n")
+            file.write("%s\n" % command)
 
         # Run the command.
         proc = _subprocess.run(command, shell=True,

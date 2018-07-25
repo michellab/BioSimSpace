@@ -62,8 +62,8 @@ class Custom(_Protocol):
             self._config = []
 
             # Read the contents of the file.
-            with open(config, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line.rstrip())
         else:
             raise ValueError("'config' must be a list of strings, or a file path.")

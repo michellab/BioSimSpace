@@ -160,10 +160,10 @@ class Namd(_process.Process):
         has_impropers = False
 
         # Open the PSF file for reading.
-        with open(self._psf_file) as f:
+        with open(self._psf_file) as file:
 
             # Loop over all lines.
-            for line in f:
+            for line in file:
 
                 # There are improper records.
                 if "!NIMPHI" in line:
@@ -183,27 +183,27 @@ class Namd(_process.Process):
 
         # Append empty improper record.
         if not has_impropers:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NIMPHI: impropers\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NIMPHI: impropers\n" % 0)
+            file.close()
 
         # Append empty donor record.
         if not has_donors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NDON: donors\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NDON: donors\n" % 0)
+            file.close()
 
         # Append empty acceptor record.
         if not has_acceptors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NACC: acceptors\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NACC: acceptors\n" % 0)
+            file.close()
 
         # Append empty non-bonded exclusion record.
         if not has_acceptors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NNB: excluded\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NNB: excluded\n" % 0)
+            file.close()
 
         # Generate the NAMD configuration file.
         if type(self._protocol) is _Protocol.Custom:
@@ -489,14 +489,14 @@ class Namd(_process.Process):
         _os.chdir(self._work_dir)
 
         # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as f:
+        with open("README.txt", "w") as file:
 
             # Set the command-line string.
             self._command = "%s %s.namd" % (self._exe, self._name)
 
             # Write the command to file.
-            f.write("# NAMD was run with the following command:\n")
-            f.write("%s\n" % self._command)
+            file.write("# NAMD was run with the following command:\n")
+            file.write("%s\n" % self._command)
 
         # Start the timer.
         self._timer = _timeit.default_timer()
