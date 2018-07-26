@@ -64,7 +64,13 @@ def matchAtoms(molecule0,
 
        scoring_function : str
            The scoring function used to match atoms. Available options are:
-           "RMSD", "RMSD align"
+             - "RMSD"
+                 Calculate the root mean squared distance between the
+                 coordinates of atoms in molecule0 to those that they
+                 map to in molecule1.
+             - "RMSD align"
+                 Align molecule0 to molecule1 based on the mapping before
+                 computing the above RMSD score.
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
