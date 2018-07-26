@@ -34,6 +34,7 @@ def matchAtoms(molecule0,
                molecule1,
                scoring_function="RMSD",
                matches=1,
+               return_scores=False,
                prematch={},
                timeout=5*_Units.Time.second,
                match_light=True,
@@ -66,6 +67,9 @@ def matchAtoms(molecule0,
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
 
+       return_scores : bool
+           Whether to return a list containing the scores for each mapping.
+
        prematch : dict
            A pre-match to use as the basis of the search.
 
@@ -91,8 +95,10 @@ def matchAtoms(molecule0,
        Returns
        -------
 
-       matches : dict, [dict]
-           The matching atom mappings.
+       matches : dict, [dict], ([dict], list)
+           The best atom mapping, a list containing a user specified number of
+           the best mappings ranked by their score, or a tuple containing the
+           list of best mappings and a list of the corresponding scores.
     """
 
     # A list of supported scoring functions.
@@ -163,10 +169,16 @@ def matchAtoms(molecule0,
     else:
         # Return the best match.
         if matches == 1:
-            return _score_rmsd(mol0, mol1, mappings)[0]
-        # Return a list of matches from best to worst.
+            return _score_rmsd(mol0, mol1, mappings)[0][0]
         else:
-            return _score_rmsd(mol0, mol1, mappings)[0:matches]
+            # Return a list of matches from best to worst.
+            if return_scores:
+                (mappings, scores) = _score_rmsd(mol0, mol1, mappings)
+                return (mappings[0:matches], scores[0:matches])
+            # Return a tuple containing the list of matches from best to
+            # worst along with the list of scores.
+            else:
+                return _score_rmsd(mol0, mol1, mappings)[0][0:matches]
 
 def rmsdAlign(molecule0, molecule1, mapping):
     """Align atoms in molecule0 to those in molecule1 using the mapping
@@ -259,5 +271,11 @@ def _score_rmsd(molecule0, molecule1, mappings):
     # Sort the scores and return the sorted keys. (Smaller RMSD is best)
     keys = sorted(range(len(scores)), key=lambda k: scores[k])
 
-    # Return the sorted mappings.
-    return [mappings[x] for x in keys]
+    # Sort the mappings.
+    mappings = [mappings[x] for x in keys]
+
+    # Sort the scores and convert to Angstroms.
+    scores = [scores[x] * _Units.Length.angstrom for x in keys]
+
+    # Return the sorted mappings and their scores.
+    return (mappings, scores)
