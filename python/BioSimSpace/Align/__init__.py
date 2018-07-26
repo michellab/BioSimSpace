@@ -24,6 +24,7 @@ Functionality for aligning molecules.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
 from .._SireWrappers import Molecule as _Molecule
@@ -32,7 +33,7 @@ import BioSimSpace.Units as _Units
 
 def matchAtoms(molecule0,
                molecule1,
-               scoring_function="RMSD",
+               scoring_function="RMSD align",
                matches=1,
                return_scores=False,
                prematch={},
@@ -62,7 +63,8 @@ def matchAtoms(molecule0,
        -----------------
 
        scoring_function : str
-           The scoring function used to match atoms. Available options are: "RMSD".
+           The scoring function used to match atoms. Available options are:
+           "RMSD", "RMSD align"
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
@@ -102,7 +104,7 @@ def matchAtoms(molecule0,
     """
 
     # A list of supported scoring functions.
-    scoring_functions = ["RMSD"]
+    scoring_functions = ["RMSD", "RMSDALIGN"]
 
     # Validate input.
 
@@ -115,7 +117,9 @@ def matchAtoms(molecule0,
     if type(scoring_function) is not str:
         raise TypeError("'scoring_function' must be of type 'str'")
     else:
-        if not scoring_function.replace(" ", "").upper() in scoring_functions:
+        # Strip whitespace and convert to upper case.
+        scoring_function = scoring_function.replace(" ", "").upper()
+        if not scoring_function in scoring_functions:
             raise ValueError("Unsupported scoring function '%s'. Options are: %s"
                 % (scoring_function, scoring_functions))
 
@@ -154,6 +158,12 @@ def matchAtoms(molecule0,
     # Convert the timeout to a Sire unit.
     timeout = timeout.magnitude() * timeout._supported_units[timeout.unit()]
 
+    # Are we performing an alignment before scoring.
+    if scoring_function == "RMSDALIGN":
+        is_align = True
+    else:
+        is_align = False
+
     # Find all of the best maximum common substructure matches.
     mappings = ( mol0.evaluate()
                      .findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
@@ -169,16 +179,16 @@ def matchAtoms(molecule0,
     else:
         # Return the best match.
         if matches == 1:
-            return _score_rmsd(mol0, mol1, mappings)[0][0]
+            return _score_rmsd(mol0, mol1, mappings, is_align)[0][0]
         else:
             # Return a list of matches from best to worst.
             if return_scores:
-                (mappings, scores) = _score_rmsd(mol0, mol1, mappings)
+                (mappings, scores) = _score_rmsd(mol0, mol1, mappings, is_align)
                 return (mappings[0:matches], scores[0:matches])
             # Return a tuple containing the list of matches from best to
             # worst along with the list of scores.
             else:
-                return _score_rmsd(mol0, mol1, mappings)[0][0:matches]
+                return _score_rmsd(mol0, mol1, mappings, is_align)[0][0:matches]
 
 def rmsdAlign(molecule0, molecule1, mapping):
     """Align atoms in molecule0 to those in molecule1 using the mapping
@@ -231,10 +241,13 @@ def rmsdAlign(molecule0, molecule1, mapping):
     # Return the aligned molecule.
     return _Molecule(mol0)
 
-def _score_rmsd(molecule0, molecule1, mappings):
+def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared
-       displacement between matched atoms that are aligned based on each mapping.
-       Returns the mappings sorted based on their score from best to worst.
+       displacement (RMSD) between mapped atoms in two molecules. Optionally,
+       molecule0 can first be aligned to molecule1 based on the mapping prior
+       to computing the RMSD. The function returns the mappings sorted based
+       on their score from best to worst, along with a list containing the
+       scores for each mapping.
 
        Positional arguments
        --------------------
@@ -248,6 +261,10 @@ def _score_rmsd(molecule0, molecule1, mappings):
        mappings : [ dict ]
            A list of dictionaries mapping  atoms in molecule0 to those in
            molecule1.
+
+       is_align : bool
+           Whether to align molecule0 to molecule1 based on the mapping
+           before calculating the RMSD score.
 
 
        Returns
@@ -263,10 +280,25 @@ def _score_rmsd(molecule0, molecule1, mappings):
     # Loop over all mappings.
     for map in mappings:
         # Align molecule0 to molecule1 based on the mapping.
-        aligned_mol = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(map))
+        if is_align:
+            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(map)).molecule()
 
-        # Compute the RMSD between the two molecules and add to the scores.
-        scores.append(molecule0.evaluate().rmsd(aligned_mol).value())
+        # We now compute the RMSD between the coordinates of the matched atoms
+        # in molecule0 and molecule1.
+
+        # Initialise lists to hold the coordinates.
+        c0 = []
+        c1 = []
+
+        # Loop over each atom index in the map.
+        for idx0, idx1 in map.items():
+            # Append the coordinates of the matched atom in molecule0.
+            c0.append(molecule0.atom(idx0).property("coordinates"))
+            # Append the coordinates of atom in molecule1 to which it maps.
+            c1.append(molecule1.atom(idx1).property("coordinates"))
+
+        # Compute the RMSD between the two sets of coordinates.
+        scores.append(_SireMaths.getRMSD(c0, c1))
 
     # Sort the scores and return the sorted keys. (Smaller RMSD is best)
     keys = sorted(range(len(scores)), key=lambda k: scores[k])
