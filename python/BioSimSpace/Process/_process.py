@@ -31,6 +31,7 @@ from BioSimSpace import _is_interactive, _is_notebook
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 
+import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 
 import collections as _collections
@@ -315,7 +316,7 @@ class Process():
            Keyword arguments
            -----------------
 
-           max_time: float
+           max_time: BioSimSpace.Types.Time, int, float
                The maximimum time to wait (in minutes).
         """
 
@@ -324,12 +325,24 @@ class Process():
             return
 
         if max_time is not None:
-            if max_time <= 0:
-                _warnings.warn("Maximum running time must be greater than zero. Using default (60 mins).")
-                max_time = 60
+            # Convert int to float.
+            if type(max_time) is int:
+                max_time = float(max_time)
 
-            # Convert the time to milliseconds.
-            max_time = max_time * 60 * 1000
+            # BioSimSpace.Types.Time
+            if isinstance(max_time, _Type.Type):
+                max_time = int(max_time.milliseconds().magnitude())
+
+            # Float.
+            elif type(max_time) is float:
+                if max_time <= 0:
+                    raise ValueError("'max_time' cannot be negative!")
+
+                # Convert the time to milliseconds.
+                max_time = int(max_time * 60 * 1000)
+
+            else:
+                raise TypeError("'max_time' must be of type 'BioSimSpace.Types.Time' or 'float'.")
 
             # Wait for the desired amount of time.
             self._process.wait(max_time)
