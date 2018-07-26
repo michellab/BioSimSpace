@@ -40,7 +40,12 @@ def matchAtoms(molecule0,
                map0={},
                map1={},
                verbose=False):
-    """Find mappings from atoms in molecule0 to those in molecule1.
+    """Find mappings between atom indices in molecule0 to those in molecule1.
+       Molecules are aligned using a Maximum Common Substructure (MCS) search.
+       When requesting more than one match, the mappings will be sorted using
+       a scoring function and returned in order of best to worst score. (Note
+       that, depending on the scoring function the "best" score may have the
+       lowest value.)
 
        Positional arguments
        --------------------
@@ -251,7 +256,7 @@ def _score_rmsd(molecule0, molecule1, mappings):
         # Compute the RMSD between the two molecules and add to the scores.
         scores.append(molecule0.evaluate().rmsd(aligned_mol).value())
 
-    # Sort the scores and return the sorted keys.
+    # Sort the scores and return the sorted keys. (Smaller RMSD is best)
     keys = sorted(range(len(scores)), key=lambda k: scores[k])
 
     # Return the sorted mappings.
