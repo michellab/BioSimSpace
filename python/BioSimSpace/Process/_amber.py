@@ -1547,12 +1547,36 @@ class Amber(_process.Process):
         if not self._process is None and self._process.isRunning():
             self._process.kill()
 
-    def wait(self):
-        """Wait for the process to finish."""
+    def wait(self, max_time=None):
+        """Wait for the process to finish.
+
+           Keyword arguments
+           -----------------
+
+           max_time: BioSimSpace.Types.Time, int, float
+               The maximimum time to wait (in minutes).
+        """
 
         # The process isn't running.
         if not self.isRunning():
             return
+
+        if max_time is not None:
+            # Convert int to float.
+            if type(max_time) is int:
+                max_time = float(max_time)
+
+            # BioSimSpace.Types.Time
+            if isinstance(max_time, _Type.Type):
+                max_time = max_time.minutes().magnitude()
+
+            # Float.
+            elif type(max_time) is float:
+                if max_time <= 0:
+                    raise ValueError("'max_time' cannot be negative!")
+
+            else:
+                raise TypeError("'max_time' must be of type 'BioSimSpace.Types.Time' or 'float'.")
 
         # Loop until the process is finished.
         # For some reason we can't use Sire.Base.Process.wait() since it
@@ -1560,6 +1584,12 @@ class Amber(_process.Process):
         # watchdog observer.
         while self._process.isRunning():
             _time.sleep(1)
+
+            # The maximum run time has been exceeded, kill the job.
+            if max_time is not None:
+                if self.runTime().magnitude() > max_time:
+                    self.kill()
+                    return
 
         # Stop and join the watchdog observer.
         self._watcher._observer.stop()
