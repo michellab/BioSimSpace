@@ -76,7 +76,7 @@ import Sire.Base as _SireBase
 from os import path as _path
 
 # First, let the user tell us where to find GROMACS. This
-# assumes that gromacs is installed in $GROMACSHOME/bin/gmx
+# assumes that gromacs is installed in $GROMACSHOME/bin/gmx.
 _gmx_exe = None
 if "GROMACSHOME" in _environ:
     try:
@@ -87,7 +87,7 @@ if "GROMACSHOME" in _environ:
 
 if _gmx_exe is None:
     try:
-        # The user has not told us where it is, so need to look in $PATH
+        # The user has not told us where it is, so need to look in $PATH.
         _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
     except:
         pass
@@ -124,19 +124,20 @@ if not _path.isdir(_gromacs_path):
         del(_proc)
         del(_subprocess)
 
-from BioSimSpace.MD import MD
-from BioSimSpace.Trajectory import Trajectory
+from . import Align
+from . import Gateway
+from . import IO
+from . import Notebook
+from . import Process
+from . import Parameters
+from . import Protocol
+from . import Solvent
+from . import Types
+from . import Units
 
-import BioSimSpace.Align as Align
-import BioSimSpace.Gateway as Gateway
-import BioSimSpace.IO as IO
-import BioSimSpace.Notebook as Notebook
-import BioSimSpace.Process as Process
-import BioSimSpace.Parameters as Parameters
-import BioSimSpace.Protocol as Protocol
-import BioSimSpace.Solvent as Solvent
-import BioSimSpace.Types as Types
-import BioSimSpace.Units as Units
+# Move to top-level namespace.
+from .MD import MD
+from .Trajectory import Trajectory
 
 # Top-level functions.
 
