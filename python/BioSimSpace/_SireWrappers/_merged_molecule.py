@@ -234,9 +234,9 @@ class MergedMolecule():
         # Create a new molecule to hold the merged molecule.
         molecule = _SireMol.Molecule()
 
-        # Add a single residue called RES.
+        # Add a single residue called LIG.
         res = molecule.edit().add(_SireMol.ResNum(1))
-        res.rename(_SireMol.ResName("RES"))
+        res.rename(_SireMol.ResName("LIG"))
 
         # Create a single cut-group.
         cg = res.molecule().add(_SireMol.CGName("1"))
