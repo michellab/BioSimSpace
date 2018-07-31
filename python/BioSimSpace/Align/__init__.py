@@ -115,10 +115,10 @@ def matchAtoms(molecule0,
     # Validate input.
 
     if type(molecule0) is not _Molecule:
-        raise TypeError("'molecule0' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(molecule1) is not _Molecule:
-        raise TypeError("'molecule1' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(scoring_function) is not str:
         raise TypeError("'scoring_function' must be of type 'str'")
@@ -224,10 +224,10 @@ def rmsdAlign(molecule0, molecule1, mapping):
     """
 
     if type(molecule0) is not _Molecule:
-        raise TypeError("'molecule0' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(molecule1) is not _Molecule:
-        raise TypeError("'molecule1' must be of type 'BioSimSpace.Molecule'")
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if type(mapping) is not dict:
         raise TypeError("'mapping' must be of type 'dict'.")

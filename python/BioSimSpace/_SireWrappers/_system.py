@@ -75,7 +75,7 @@ class System():
         # A list of BioSimSpace Molecule objects.
         elif type(system) is list:
             if not all(isinstance(x, _Molecule) for x in system):
-                raise TypeError("'system' must contain a of 'BioSimSpace.Molecule' types.")
+                raise TypeError("'system' must contain a of 'BioSimSpace._SireWrappers.Molecule' types.")
             else:
                 self._sire_system = _SireSystem.System("BioSimSpace System.")
                 self.addMolecules(system)
@@ -83,7 +83,7 @@ class System():
         # Invalid type.
         else:
             raise TypeError("'system' must be of type 'Sire.System._System.System' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -208,8 +208,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_system.nMolecules() == 0:
@@ -242,8 +242,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Remove the molecules in the system.
         for mol in molecules:
@@ -274,8 +274,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Update each of the molecules.
         for mol in molecule:

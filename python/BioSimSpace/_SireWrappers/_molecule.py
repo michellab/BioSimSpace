@@ -64,7 +64,7 @@ class Molecule():
         # Invalid type.
         else:
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
-                + "or 'BioSimSpace.Molecule'.")
+                + "or 'BioSimSpace._SireWrappers.Molecule'.")
 
         # Set the force field variable. This records the force field with which
         # the molecule has been parameterised, i.e. by BSS.Parameters.
@@ -94,8 +94,8 @@ class Molecule():
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
             molecules.extend(other)
         else:
-            raise TypeError("'other' must be of type 'BioSimSpace.Molecule', or a list "
-                + "of 'BioSimSpace.Molecule' types")
+            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Molecule', or a list "
+                + "of 'BioSimSpace._SireWrappers.Molecule' types")
 
         # Create and return a new system.
         return _System(molecules)
@@ -188,7 +188,7 @@ class Molecule():
         elif type(molecule) is Molecule:
             mol1 = molecule._sire_molecule
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule', or 'Sire.Mol._Mol.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol._Mol.Molecule'")
 
         if type(map) is not dict:
             raise TypeError("'map' must be of type 'dict'")
