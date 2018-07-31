@@ -21,7 +21,7 @@
 
 """
 Functionality for creating and storing merged molecules for use in
-dual-topology free energy calculations.
+single- and dual-topology free energy calculations.
 
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
