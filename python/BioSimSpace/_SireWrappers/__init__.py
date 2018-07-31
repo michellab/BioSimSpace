@@ -26,5 +26,6 @@ and should not be directly exposed to the user.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._merged_molecule import *
 from ._molecule import *
 from ._system import *

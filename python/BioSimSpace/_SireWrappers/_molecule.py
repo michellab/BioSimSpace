@@ -143,6 +143,28 @@ class Molecule():
         # Perform the translation.
         self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
 
+    def merge(self, other, mapping):
+        """Merge this molecule with another based the mapping.
+
+           Positional arguments
+           --------------------
+
+           molecule : BioSimSpace._SireWrappers.Molecule, Sire.Molecule.Molecule
+               The molecule to merge with.
+
+           mapping : dict
+               A dictionary containing the mapping from atom indices in this
+               molecule to those in 'other'.
+
+
+           Returns
+           -------
+
+           merged : BioSimSpace._SireWrappers.MergedMolecule
+               The merged molecule.
+        """
+        return _MergedMolecule(self, other, mapping)
+
     def toSystem(self):
         """Convert a single Molecule to a System."""
         return _System(self)
@@ -396,4 +418,5 @@ class Molecule():
         return _SireVol.AABox(coord)
 
 # Import at bottom of module to avoid circular dependency.
+from ._merged_molecule import MergedMolecule as _MergedMolecule
 from ._system import System as _System
