@@ -28,8 +28,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
-import Sire.Move as _SireMove
-import Sire.MM as _SireMM
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
