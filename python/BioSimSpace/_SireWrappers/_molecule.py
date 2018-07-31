@@ -143,7 +143,7 @@ class Molecule():
         # Perform the translation.
         self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
 
-    def merge(self, other, mapping):
+    def merge(self, other, mapping, map0={}, map1={}):
         """Merge this molecule with another based the mapping.
 
            Positional arguments
@@ -157,13 +157,26 @@ class Molecule():
                molecule to those in 'other'.
 
 
+           Keyword arguments
+           -----------------
+
+           map0 : dict
+               A dictionary that maps "properties" in molecule0 to their user
+               defined values. This allows the user to refer to properties
+               with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+           map1 : dict
+               A dictionary that maps "properties" in molecule1 to their user
+               defined values.
+
+
            Returns
            -------
 
            merged : BioSimSpace._SireWrappers.MergedMolecule
                The merged molecule.
         """
-        return _MergedMolecule(self, other, mapping)
+        return _MergedMolecule(self, other, mapping, map0, map1)
 
     def toSystem(self):
         """Convert a single Molecule to a System."""

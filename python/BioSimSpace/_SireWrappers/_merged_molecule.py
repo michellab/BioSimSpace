@@ -37,7 +37,7 @@ __all__ = ["MergedMolecule"]
 class MergedMolecule():
     """A container class for storing merged molecules."""
 
-    def __init__(self, molecule0, molecule1, mapping):
+    def __init__(self, molecule0, molecule1, mapping, map0={}, map1={}):
         """Constructor.
 
            Positional arguments
@@ -51,6 +51,19 @@ class MergedMolecule():
 
            mapping : dict
                The mapping between matching atom indices in the two molecules.
+
+
+           Keyword arguments
+           -----------------
+
+           map0 : dict
+               A dictionary that maps "properties" in molecule0 to their user
+               defined values. This allows the user to refer to properties
+               with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+           map1 : dict
+               A dictionary that maps "properties" in molecule1 to their user
+               defined values.
         """
 
         # Check that molecule0 is valid.
@@ -92,8 +105,15 @@ class MergedMolecule():
         else:
             raise TypeError("'mapping' must be of type 'dict'.")
 
+        if type(map0) is not dict:
+            raise TypeError("'map0' must be of type 'dict'")
+
+        if type(map1) is not dict:
+            raise TypeError("'map1' must be of type 'dict'")
+
         # Create the merged molecule.
-        self._sire_molecule = self._merge()
+        self._sire_molecule = self._merge(self._sire_molecule0, self._sire_molecule1,
+                                          mapping, map0, map1)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -152,12 +172,48 @@ class MergedMolecule():
         """Return the full Sire Molecule object."""
         return self._sire_molecule
 
-    def _merge(self):
-        """Create the merged molecule."""
+    def _merge(self, molecule0, molecule1, mapping, map0={}, map1={}):
+        """Create the merged molecule.
+
+           Positional arguments
+           --------------------
+
+           molecule0 : Sire.Mol.Molecule
+               The initial molecule.
+
+           molecule1 : Sire.Mol.Molecule
+               The final molecule.
+
+           mapping : dict
+               The mapping between matching atom indices in the two molecules.
+
+
+           Keyword arguments
+           -----------------
+
+           map0 : dict
+               A dictionary that maps "properties" in molecule0 to their user
+               defined values. This allows the user to refer to properties
+               with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+           map1 : dict
+               A dictionary that maps "properties" in molecule1 to their user
+               defined values.
+
+
+            Returns
+            -------
+
+            merged : Sire.Mol.Molecule
+                The merged molecule.
+        """
 
         # Get the atom indices from the mapping.
-        idx0 = self._mapping.keys()
-        idx1 = self._mapping.values()
+        idx0 = mapping.keys()
+        idx1 = mapping.values()
+
+        # Create the reverse mapping: molecule1 --> molecule0
+        inv_map = {v: k for k, v in mapping.items()}
 
         # Create lists to store the atoms that are unique to each molecule.
         atoms0 = []
@@ -166,20 +222,20 @@ class MergedMolecule():
         # Loop over each molecule to find the unique atom indices.
 
         # molecule0
-        for atom in self._sire_molecule0.atoms():
+        for atom in molecule0.atoms():
             if atom.index() not in idx0:
                 atoms0.append(atom)
 
         # molecule1
-        for atom in self._sire_molecule1.atoms():
+        for atom in molecule1.atoms():
             if atom.index() not in idx1:
                 atoms1.append(atom)
 
         # Create a new molecule to hold the merged molecule.
-        self._molecule = _SireMol.Molecule()
+        molecule = _SireMol.Molecule()
 
         # Add a single residue called RES.
-        res = self._molecule.edit().add(_SireMol.ResNum(1))
+        res = molecule.edit().add(_SireMol.ResNum(1))
         res.rename(_SireMol.ResName("RES"))
 
         # Create a single cut-group.
@@ -189,17 +245,22 @@ class MergedMolecule():
         num = 1
 
         # First add all of the atoms from molecule0.
-        for atom in self._sire_molecule0.atoms():
+        for atom in molecule0.atoms():
             added = cg.add(atom.name())
             added.renumber(_SireMol.AtomNum(num))
             added.reparent(_SireMol.ResIdx(0))
             num += 1
+
+        # Create a dictionary to map between the indices of the unique atoms in
+        # molecule1 to their index within the new merged molecule.
+        new_idx = {}
 
         # Now add all of the atoms from molecule1 that aren't in molecule0.
         for atom in atoms1:
             added = cg.add(atom.name())
             added.renumber(_SireMol.AtomNum(num))
             added.reparent(_SireMol.ResIdx(0))
+            new_idx[atom.index()] = _SireMol.AtomIdx(num-1)
             num += 1
 
         # Return the merged molecule.
