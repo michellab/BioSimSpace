@@ -27,7 +27,9 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Maths as _SireMaths
+import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
+import Sire.Units as _SireUnits
 import Sire.Vol as _SireVol
 
 from ..Types import Length as _Length
@@ -213,7 +215,11 @@ class MergedMolecule():
         idx1 = mapping.values()
 
         # Create the reverse mapping: molecule1 --> molecule0
-        inv_map = {v: k for k, v in mapping.items()}
+        inv_mapping = {v: k for k, v in mapping.items()}
+
+        # Invert the user property mappings.
+        inv_map0 = {v: k for k, v in map0.items()}
+        inv_map1 = {v: k for k, v in map1.items()}
 
         # Create lists to store the atoms that are unique to each molecule.
         atoms0 = []
@@ -231,8 +237,30 @@ class MergedMolecule():
             if atom.index() not in idx1:
                 atoms1.append(atom)
 
+        # Create lists of the actual property names in the molecules.
+        props0 = []
+        props1 = []
+
+        # molecule0
+        for prop in molecule0.propertyKeys():
+            if prop in inv_map0:
+                prop = inv_map0[prop]
+            props0.append(prop)
+
+        # molecule1
+        for prop in molecule1.propertyKeys():
+            if prop in inv_map1:
+                prop = inv_map1[prop]
+            props1.append(prop)
+
+        # Determine the common properties between the two molecules.
+        # These are the properties that can be perturbed.
+        shared_props = list(set(props0).intersection(props1))
+        del(props0)
+        del(props1)
+
         # Create a new molecule to hold the merged molecule.
-        molecule = _SireMol.Molecule()
+        molecule = _SireMol.Molecule("Merged Molecule")
 
         # Add a single residue called LIG.
         res = molecule.edit().add(_SireMol.ResNum(1))
@@ -246,6 +274,7 @@ class MergedMolecule():
 
         # First add all of the atoms from molecule0.
         for atom in molecule0.atoms():
+            # Add the atom.
             added = cg.add(atom.name())
             added.renumber(_SireMol.AtomNum(num))
             added.reparent(_SireMol.ResIdx(0))
@@ -263,8 +292,69 @@ class MergedMolecule():
             new_idx[atom.index()] = _SireMol.AtomIdx(num-1)
             num += 1
 
+        # Commit the changes to the molecule.
+        molecule = cg.molecule().commit()
+
+        # A list to track all of the properties that have been added.
+        added_props = []
+
+        # Make the molecule editable.
+        edit_mol = molecule.edit()
+
+        # Add the atom properties from molecule0.
+        for atom in molecule0.atoms():
+            # Loop over all atom properties.
+            for prop in atom.propertyKeys():
+                # Get the actual property name.
+                if prop in inv_map0:
+                    name = inv_map0[prop]
+                else:
+                    name = prop
+
+                # Add to the list of added properties.
+                if not name in added_props:
+                    added_props.append(name)
+
+                # This is a perturbable property. Rename to "property0", e.g. "charge0".
+                if name in shared_props:
+                    name = name + "0"
+
+                # Add the property to the atom in the merged molecule.
+                edit_mol = edit_mol.atom(atom.index()).setProperty(name, atom.property(prop)).molecule()
+
+        # Add the atom properties from molecule1.
+        for atom in atoms1:
+            # Get the atom index in the merged molecule.
+            idx = new_idx[atom.index()]
+
+            # Loop over all atom properties.
+            for prop in atom.propertyKeys():
+                # Get the actual property name.
+                if prop in inv_map1:
+                    name = inv_map1[prop]
+                else:
+                    name = prop
+
+                # Add to the list of added properties.
+                if not name in added_props:
+                    added_props.append(name)
+
+                # Zero the "charge" and "LJ" property for atoms that are unique to molecule1.
+                if name == "charge":
+                    edit_mol = edit_mol.atom(idx).setProperty("charge0", 0*_SireUnits.e_charge).molecule()
+                elif name == "LJ":
+                    lj = _SireMM.LJParameter(0*_SireUnits.angstrom, 0*_SireUnits.kcal_per_mol)
+                    edit_mol = edit_mol.atom(idx).setProperty("LJ0", lj).molecule()
+                else:
+                    # This is a perturbable property. Rename to "property0", e.g. "charge0".
+                    if name in shared_props:
+                        name = name + "0"
+
+                    # Add the property to the atom in the merged molecule.
+                    edit_mol = edit_mol.atom(idx).setProperty(name, atom.property(prop)).molecule()
+
         # Return the merged molecule.
-        return cg.molecule().commit()
+        return edit_mol.commit()
 
 # Import at bottom of module to avoid circular dependency.
 from ._molecule import Molecule as _Molecule
