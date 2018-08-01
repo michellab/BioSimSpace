@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
+from .._SireWrappers import MergedMolecule as _MergedMolecule
 from .._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.Units as _Units
@@ -196,7 +197,7 @@ def matchAtoms(molecule0,
             else:
                 return _score_rmsd(mol0, mol1, mappings, is_align)[0][0:matches]
 
-def rmsdAlign(molecule0, molecule1, mapping):
+def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
     """Align atoms in molecule0 to those in molecule1 using the mapping
        between matched atom indices. The molecule is aligned based on
        a root mean squared displacement (RMSD) fit to find the optimal
@@ -212,8 +213,21 @@ def rmsdAlign(molecule0, molecule1, mapping):
        molecule1 : BioSimSpace._SireWrappers.Molecule
            The target molecule.
 
+
+       Keyword arguments
+       -----------------
+
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
+
+       map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
 
 
        Returns
@@ -229,13 +243,25 @@ def rmsdAlign(molecule0, molecule1, mapping):
     if type(molecule1) is not _Molecule:
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(mapping) is not dict:
-        raise TypeError("'mapping' must be of type 'dict'.")
+    if type(map0) is not dict:
+        raise TypeError("'map0' must be of type 'dict'")
+
+    if type(map1) is not dict:
+        raise TypeError("'map1' must be of type 'dict'")
+
+    # The user has passed an atom mapping.
+    if mapping is not None:
+        if type(mapping) is not dict:
+            raise TypeError("'mapping' must be of type 'dict'.")
+        else:
+            # Make sure all key/value pairs are of type AtomIdx.
+            for idx0, idx1 in mapping.items():
+                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
+                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+
+    # Get the best match atom mapping.
     else:
-        # Make sure all key/value pairs are of type AtomIdx.
-        for idx0, idx1 in mapping.items():
-            if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+        mapping = matchAtoms(molecule0, molecule1, map0=map0, map1=map1)
 
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireMolecule()
@@ -246,6 +272,65 @@ def rmsdAlign(molecule0, molecule1, mapping):
 
     # Return the aligned molecule.
     return _Molecule(mol0)
+
+def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
+    """Create a merged molecule from 'molecule0' and 'molecule1' based on the
+       atom index 'mapping'. The merged molecule can be used in single- and
+       dual-toplogy free energy calculations.
+
+       molecule0 : Sire.Mol.Molecule
+           The initial molecule.
+
+       molecule1 : Sire.Mol.Molecule
+           The final molecule.
+
+
+       Keyword arguments
+       -----------------
+
+       mapping : dict
+           The mapping between matching atom indices in the two molecules.
+
+       map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+    """
+
+    if type(molecule0) is not _Molecule:
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(molecule1) is not _Molecule:
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(map0) is not dict:
+        raise TypeError("'map0' must be of type 'dict'")
+
+    if type(map1) is not dict:
+        raise TypeError("'map1' must be of type 'dict'")
+
+    # The user has passed an atom mapping.
+    if mapping is not None:
+        if type(mapping) is not dict:
+            raise TypeError("'mapping' must be of type 'dict'.")
+        else:
+            # Make sure all key/value pairs are of type AtomIdx.
+            for idx0, idx1 in mapping.items():
+                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
+                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+
+    # Get the best atom mapping and align molecule0 to molecule1 based on the
+    # mapping.
+    else:
+        mapping = matchAtoms(molecule0, molecule1, map0=map0, map1=map1)
+        molecule0 = rmsdAlign(molecule0, molecule1, mapping)
+
+    # Create and return the merged molecule.
+    return _MergedMolecule(molecule0, molecule1, mapping, map0=map0, map1=map1)
 
 def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared
