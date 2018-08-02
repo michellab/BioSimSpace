@@ -221,9 +221,11 @@ class MergedMolecule():
         inv_map0 = {v: k for k, v in map0.items()}
         inv_map1 = {v: k for k, v in map1.items()}
 
-        # Create lists to store the atoms that are unique to each molecule.
+        # Create lists to store the atoms that are unique to each molecule,
+        # along with their indices.
         atoms0 = []
         atoms1 = []
+        atoms0_idx = []
         atoms1_idx = []
 
         # Loop over each molecule to find the unique atom indices.
@@ -232,6 +234,7 @@ class MergedMolecule():
         for atom in molecule0.atoms():
             if atom.index() not in idx0:
                 atoms0.append(atom)
+                atoms0_idx.append(atom.index())
 
         # molecule1
         for atom in molecule1.atoms():
@@ -286,7 +289,7 @@ class MergedMolecule():
         # molecule1 to their index within the new merged molecule.
         new_idx = {}
 
-        # Now add all of the atoms from molecule1 that aren't in molecule0.
+        # Now add all of the atoms from molecule1 that aren't mapped from molecule0.
         for atom in atoms1:
             added = cg.add(atom.name())
             added.renumber(_SireMol.AtomNum(num))
@@ -297,11 +300,33 @@ class MergedMolecule():
         # Commit the changes to the molecule.
         molecule = cg.molecule().commit()
 
-        # A list to track all of the properties that have been added.
-        added_props = []
-
         # Make the molecule editable.
         edit_mol = molecule.edit()
+
+        # We now add properties to the merged molecule. The properties are used
+        # to represent the molecule at two states along the alchemical pathway:
+        #
+        # lambda = 0:
+        #   Here only molecule0 is active. The "charge" and "LJ" properties
+        #   for atoms that are part of molecule1 are set to zero. Other force
+        #   field properties, e.g. "bond", "angle", "dihedral", and "improper",
+        #   are retained for the atoms in molecule1, although the indices of
+        #   the atoms involved in the interactions must be re-mapped to their
+        #   positions in the merged molecule. (Also, the interactions may now
+        #   be between atoms of different type.) The properties are given the
+        #   suffix "0", e.g. "charge0".
+        #
+        # lambda = 1:
+        #   Here only molecule1 is active. We perform the same process as above,
+        #   only we modify the properties of the atoms that are unique to
+        #   molecule0. The properties are given the suffix "1", e.g. "charge1".
+        #
+        # Properties that aren't shared between the molecules (and thus can't
+        # be merged) are set using their original names.
+
+        ##############################
+        # SET PROPERTIES AT LAMBDA = 0
+        ##############################
 
         # Add the atom properties from molecule0.
         for atom in molecule0.atoms():
@@ -312,10 +337,6 @@ class MergedMolecule():
                     name = inv_map0[prop]
                 else:
                     name = prop
-
-                # Add to the list of added properties.
-                if not name in added_props:
-                    added_props.append(name)
 
                 # This is a perturbable property. Rename to "property0", e.g. "charge0".
                 if name in shared_props:
@@ -336,10 +357,6 @@ class MergedMolecule():
                     name = inv_map1[prop]
                 else:
                     name = prop
-
-                # Add to the list of added properties.
-                if not name in added_props:
-                    added_props.append(name)
 
                 # Zero the "charge" and "LJ" property for atoms that are unique to molecule1.
                 if name == "charge":
@@ -362,17 +379,21 @@ class MergedMolecule():
 
         # 1) bonds
         if "bond" in shared_props:
-            # Get the user defined property name.
-            prop = "bond"
-            if prop in inv_map0:
-                prop = inv_map0["bond"]
+            # Get the user defined property names.
+            prop0 = "bond"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["bond"]
+
+            prop1 = "bond"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["bond"]
 
             # Get the "bond" property from the two molecules.
-            bonds0 = molecule0.property("bond")
-            bonds1 = molecule1.property("bond")
+            bonds0 = molecule0.property(prop0)
+            bonds1 = molecule1.property(prop1)
 
             # Create a list to store the indices of bonds in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda0.
+            # involve atoms that are part of the merged molecule at lambda = 0.
             bond_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -380,7 +401,7 @@ class MergedMolecule():
 
             # Loop over all bonds in molecule1.
             for idx, bond in enumerate(bonds1.potentials()):
-                # This bond contains and atom that is unique to molecule1.
+                # This bond contains an atom that is unique to molecule1.
                 if info.atomIdx(bond.atom0()) in atoms1_idx or \
                    info.atomIdx(bond.atom1()) in atoms1_idx:
                        bond_idxs.append(idx)
@@ -395,7 +416,7 @@ class MergedMolecule():
             for bond in bonds0.potentials():
                 bonds.set(bond.atom0(), bond.atom1(), bond.function())
 
-            # Loop over all of the matched bonds.
+            # Loop over all of the additional bonds from molecule1.
             for idx in bond_idxs:
                 # Extract the bond information.
                 atom0 = info.atomIdx(potentials[idx].atom0())
@@ -422,17 +443,21 @@ class MergedMolecule():
 
         # 2) angles
         if "angle" in shared_props:
-            # Get the user defined property name.
-            prop = "angle"
-            if prop in inv_map0:
-                prop = inv_map0["angle"]
+            # Get the user defined property names.
+            prop0 = "angle"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["angle"]
+
+            prop1 = "angle"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["angle"]
 
             # Get the "angle" property from the two molecules.
-            angles0 = molecule0.property("angle")
-            angles1 = molecule1.property("angle")
+            angles0 = molecule0.property(prop0)
+            angles1 = molecule1.property(prop1)
 
             # Create a list to store the indices of angles in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda0.
+            # involve atoms that are part of the merged molecule at lambda = 0.
             angle_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -440,7 +465,7 @@ class MergedMolecule():
 
             # Loop over all angles in molecule1.
             for idx, angle in enumerate(angles1.potentials()):
-                # This angle contains and atom that is unique to molecule1.
+                # This angle contains an atom that is unique to molecule1.
                 if info.atomIdx(angle.atom0()) in atoms1_idx or \
                    info.atomIdx(angle.atom1()) in atoms1_idx or \
                    info.atomIdx(angle.atom2()) in atoms1_idx:
@@ -456,7 +481,7 @@ class MergedMolecule():
             for angle in angles0.potentials():
                 angles.set(angle.atom0(), angle.atom1(), angle.atom2(), angle.function())
 
-            # Loop over all of the matched angles.
+            # Loop over all of the additional angles from molecule1.
             for idx in angle_idxs:
                 # Extract the angle information.
                 atom0 = info.atomIdx(potentials[idx].atom0())
@@ -489,17 +514,21 @@ class MergedMolecule():
 
         # 3) dihedrals
         if "dihedral" in shared_props:
-            # Get the user defined property name.
-            prop = "dihedral"
-            if prop in inv_map0:
-                prop = inv_map0["dihedral"]
+            # Get the user defined property names.
+            prop0 = "dihedral"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["dihedral"]
+
+            prop1 = "dihedral"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["dihedral"]
 
             # Get the "dihedral" property from the two molecules.
-            dihedrals0 = molecule0.property("dihedral")
-            dihedrals1 = molecule1.property("dihedral")
+            dihedrals0 = molecule0.property(prop0)
+            dihedrals1 = molecule1.property(prop1)
 
             # Create a list to store the indices of dihedrals in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda0.
+            # involve atoms that are part of the merged molecule at lambda = 0.
             dihedral_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -507,7 +536,7 @@ class MergedMolecule():
 
             # Loop over all dihedrals in molecule1.
             for idx, dihedral in enumerate(dihedrals1.potentials()):
-                # This dihedral contains and atom that is unique to molecule1.
+                # This dihedral contains an atom that is unique to molecule1.
                 if info.atomIdx(dihedral.atom0()) in atoms1_idx or \
                    info.atomIdx(dihedral.atom1()) in atoms1_idx or \
                    info.atomIdx(dihedral.atom2()) in atoms1_idx or \
@@ -525,7 +554,7 @@ class MergedMolecule():
                 dihedrals.set(dihedral.atom0(), dihedral.atom1(),
                     dihedral.atom2(), dihedral.atom3(), dihedral.function())
 
-            # Loop over all of the matched dihedrals.
+            # Loop over all of the additional dihedrals from molecule1.
             for idx in dihedral_idxs:
                 # Extract the dihedral information.
                 atom0 = info.atomIdx(potentials[idx].atom0())
@@ -564,17 +593,21 @@ class MergedMolecule():
 
         # 4) impropers
         if "improper" in shared_props:
-            # Get the user defined property name.
-            prop = "improper"
-            if prop in inv_map0:
-                prop = inv_map0["improper"]
+            # Get the user defined property names.
+            prop0 = "improper"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["improper"]
+
+            prop1 = "improper"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["improper"]
 
             # Get the "improper" property from the two molecules.
-            impropers0 = molecule0.property("improper")
-            impropers1 = molecule1.property("improper")
+            impropers0 = molecule0.property(prop0)
+            impropers1 = molecule1.property(prop1)
 
             # Create a list to store the indices of impropers in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda0.
+            # involve atoms that are part of the merged molecule at lambda = 0.
             improper_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -582,7 +615,7 @@ class MergedMolecule():
 
             # Loop over all impropers in molecule1.
             for idx, improper in enumerate(impropers1.potentials()):
-                # This improper contains and atom that is unique to molecule1.
+                # This improper contains an atom that is unique to molecule1.
                 if info.atomIdx(improper.atom0()) in atoms1_idx or \
                    info.atomIdx(improper.atom1()) in atoms1_idx or \
                    info.atomIdx(improper.atom2()) in atoms1_idx or \
@@ -600,7 +633,7 @@ class MergedMolecule():
                 impropers.set(improper.atom0(), improper.atom1(),
                     improper.atom2(), improper.atom3(), improper.function())
 
-            # Loop over all of the matched impropers.
+            # Loop over all of the additional impropers from molecule1.
             for idx in improper_idxs:
                 # Extract the improper information.
                 atom0 = info.atomIdx(potentials[idx].atom0())
@@ -636,6 +669,382 @@ class MergedMolecule():
 
             # Add the impropers to the merged molecule.
             edit_mol.setProperty("improper0", impropers)
+
+        ##############################
+        # SET PROPERTIES AT LAMBDA = 1
+        ##############################
+
+        # Add the atom properties from molecule1.
+        for atom in molecule1.atoms():
+            # This atom has a match in molecule0.
+            if atom.index() in inv_mapping:
+                idx = inv_mapping[atom.index()]
+            # This atom is unique to molecule, get its index in the merged molecule.
+            else:
+                idx = new_idx[atom.index()]
+
+            # Loop over all atom properties.
+            for prop in atom.propertyKeys():
+                # Get the actual property name.
+                if prop in inv_map0:
+                    name = inv_map0[prop]
+                else:
+                    name = prop
+
+                # This is a perturbable property. Rename to "property1", e.g. "charge1".
+                if name in shared_props:
+                    name = name + "1"
+
+                # Add the property to the atom in the merged molecule.
+                edit_mol = edit_mol.atom(idx).setProperty(name, atom.property(prop)).molecule()
+
+        # Add the properties from atoms unique to molecule0.
+        for atom in atoms0:
+            # Loop over all atom properties.
+            for prop in atom.propertyKeys():
+                # Get the actual property name.
+                if prop in inv_map1:
+                    name = inv_map1[prop]
+                else:
+                    name = prop
+
+                # Zero the "charge" and "LJ" property for atoms that are unique to molecule0.
+                if name == "charge":
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("charge1", 0*_SireUnits.e_charge).molecule()
+                elif name == "LJ":
+                    lj = _SireMM.LJParameter(0*_SireUnits.angstrom, 0*_SireUnits.kcal_per_mol)
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("LJ1", lj).molecule()
+                else:
+                    # This is a perturbable property. Rename to "property1", e.g. "charge1".
+                    if name in shared_props:
+                        name = name + "0"
+
+                    # Add the property to the atom in the merged molecule.
+                    edit_mol = edit_mol.atom(atom.index()).setProperty(name, atom.property(prop)).molecule()
+
+        # We now need to merge "bond", "angle", "dihedral", and "improper" parameters.
+        # To do so, we extract the properties from molecule1, then add the additional
+        # properties from molecule0, making sure to update the atom indices, and bond
+        # atoms from molecule0 to the atoms to which they map in molecule1.
+
+        # 1) bonds
+        if "bond" in shared_props:
+            # Get the user defined property names.
+            prop0 = "bond"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["bond"]
+
+            prop1 = "bond"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["bond"]
+
+            # Get the "bond" property from the two molecules.
+            bonds0 = molecule0.property(prop0)
+            bonds1 = molecule1.property(prop1)
+
+            # Create a list to store the indices of bonds in molecule0 that
+            # involve atoms that are part of the merged molecule at lambda = 1.
+            bond_idxs = []
+
+            # Get the molInfo object for molecule0.
+            info = molecule0.info()
+
+            # Loop over all bonds in molecule0
+            for idx, bond in enumerate(bonds0.potentials()):
+                # This bond contains an atom that is unique to molecule0.
+                if info.atomIdx(bond.atom0()) in atoms0_idx or \
+                   info.atomIdx(bond.atom1()) in atoms0_idx:
+                       bond_idxs.append(idx)
+
+            # Store the bond potentials for molecule0.
+            potentials = bonds0.potentials()
+
+            # Create the new set of bonds.
+            bonds = _SireMM.TwoAtomFunctions(edit_mol.info())
+
+            # Add all of the bonds from molecule1.
+            for bond in bonds1.potentials():
+                # Extract the bond information.
+                atom0 = info.atomIdx(bond.atom0())
+                atom1 = info.atomIdx(bond.atom1())
+
+                # Map the atom indices to their position in the merged molecule.
+
+                if atom0 in inv_mapping:
+                    atom0 = inv_mapping[atom0]
+                else:
+                    atom0 = new_idx[atom0]
+
+                if atom1 in inv_mapping:
+                    atom1 = inv_mapping[atom1]
+                else:
+                    atom1 = new_idx[atom1]
+
+                # Set the new bond.
+                bonds.set(atom0, atom1, exprn)
+
+            # Loop over all of the additional bonds from molecule0.
+            for idx in bond_idxs:
+                # Extract the bond information.
+                atom0 = info.atomIdx(potentials[idx].atom0())
+                atom1 = info.atomIdx(potentials[idx].atom1())
+                exprn = potentials[idx].function()
+
+                # Set the new bond.
+                bonds.set(atom0, atom1, exprn)
+
+            # Add the bonds to the merged molecule.
+            edit_mol.setProperty("bond1", bonds)
+
+        # 2) angles
+        if "angle" in shared_props:
+            # Get the user defined property names.
+            prop0 = "angle"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["angle"]
+
+            prop1 = "angle"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["angle"]
+
+            # Get the "angle" property from the two molecules.
+            angles0 = molecule0.property(prop0)
+            angles1 = molecule1.property(prop1)
+
+            # Create a list to store the indices of angles in molecule0 that
+            # involve atoms that are part of the merged molecule at lambda = 1.
+            angle_idxs = []
+
+            # Get the molInfo object for molecule0.
+            info = molecule0.info()
+
+            # Loop over all angles in molecule0.
+            for idx, angle in enumerate(angles0.potentials()):
+                # This angle contains an atom that is unique to molecule0.
+                if info.atomIdx(angle.atom0()) in atoms0_idx or \
+                   info.atomIdx(angle.atom1()) in atoms0_idx or \
+                   info.atomIdx(angle.atom2()) in atoms0_idx:
+                       angle_idxs.append(idx)
+
+            # Store the angle potentials for molecule0.
+            potentials = angles0.potentials()
+
+            # Create the new set of angles.
+            angles = _SireMM.ThreeAtomFunctions(edit_mol.info())
+
+            # Add all of the angles from molecule1.
+            for angle in angles1.potentials():
+                # Extract the angle information.
+                atom0 = info.atomIdx(angle.atom0())
+                atom1 = info.atomIdx(angle.atom1())
+                atom2 = info.atomIdx(angle.atom2())
+                exprn = angle.function()
+
+                # Map the atom indices to their position in the merged molecule.
+
+                if atom0 in inv_mapping:
+                    atom0 = inv_mapping[atom0]
+                else:
+                    atom0 = new_idx[atom0]
+
+                if atom1 in inv_mapping:
+                    atom1 = inv_mapping[atom1]
+                else:
+                    atom1 = new_idx[atom1]
+
+                if atom2 in inv_mapping:
+                    atom2 = inv_mapping[atom2]
+                else:
+                    atom2 = new_idx[atom2]
+
+                # Set the new angle.
+                angles.set(atom0, atom1, atom2, exprn)
+
+            # Loop over all of the additional angles from molecule0.
+            for idx in angle_idxs:
+                # Extract the angle information.
+                atom0 = info.atomIdx(potentials[idx].atom0())
+                atom1 = info.atomIdx(potentials[idx].atom1())
+                atom2 = info.atomIdx(potentials[idx].atom2())
+                exprn = potentials[idx].function()
+
+                # Set the new angle.
+                angles.set(atom0, atom1, atom2, exprn)
+
+            # Add the angles to the merged molecule.
+            edit_mol.setProperty("angle1", angles)
+
+        # 3) dihedrals
+        if "dihedral" in shared_props:
+            # Get the user defined property names.
+            prop0 = "dihedral"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["dihedral"]
+
+            prop1 = "dihedral"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["dihedral"]
+
+            # Get the "dihedral" property from the two molecules.
+            dihedrals0 = molecule0.property(prop0)
+            dihedrals1 = molecule1.property(prop1)
+
+            # Create a list to store the indices of dihedrals in molecule0 that
+            # involve atoms that are part of the merged molecule at lambda = 1.
+            dihedral_idxs = []
+
+            # Get the molInfo object for molecule0
+            info = molecule0.info()
+
+            # Loop over all dihedrals in molecule0.
+            for idx, dihedral in enumerate(dihedrals0.potentials()):
+                # This dihedral contains an atom that is unique to molecule0.
+                if info.atomIdx(dihedral.atom0()) in atoms0_idx or \
+                   info.atomIdx(dihedral.atom1()) in atoms0_idx or \
+                   info.atomIdx(dihedral.atom2()) in atoms0_idx or \
+                   info.atomIdx(dihedral.atom3()) in atoms0_idx:
+                       dihedral_idxs.append(idx)
+
+            # Store the dihedral potentials for molecule0.
+            potentials = dihedrals0.potentials()
+
+            # Create the new set of dihedrals.
+            dihedrals = _SireMM.FourAtomFunctions(edit_mol.info())
+
+            # Add all of the dihedrals from molecule1.
+            for dihedral in dihedrals1.potentials():
+                # Extract the dihedral information.
+                atom0 = info.atomIdx(dihedral.atom0())
+                atom1 = info.atomIdx(dihedral.atom1())
+                atom2 = info.atomIdx(dihedral.atom2())
+                atom3 = info.atomIdx(dihedral.atom3())
+                exprn = dihedral.function()
+
+                # Map the atom indices to their position in the merged molecule.
+
+                if atom0 in inv_mapping:
+                    atom0 = inv_mapping[atom0]
+                else:
+                    atom0 = new_idx[atom0]
+
+                if atom1 in inv_mapping:
+                    atom1 = inv_mapping[atom1]
+                else:
+                    atom1 = new_idx[atom1]
+
+                if atom2 in inv_mapping:
+                    atom2 = inv_mapping[atom2]
+                else:
+                    atom2 = new_idx[atom2]
+
+                if atom3 in inv_mapping:
+                    atom3 = inv_mapping[atom3]
+                else:
+                    atom3 = new_idx[atom3]
+
+                # Set the new dihedral.
+                dihedrals.set(atom0, atom1, atom2, atom3, exprn)
+
+            # Loop over all of the additional dihedrals from molecule0.
+            for idx in dihedral_idxs:
+                # Extract the dihedral information.
+                atom0 = info.atomIdx(potentials[idx].atom0())
+                atom1 = info.atomIdx(potentials[idx].atom1())
+                atom2 = info.atomIdx(potentials[idx].atom2())
+                atom3 = info.atomIdx(potentials[idx].atom3())
+                exprn = potentials[idx].function()
+
+                # Set the new dihedral.
+                dihedrals.set(atom0, atom1, atom2, atom3, exprn)
+
+            # Add the dihedrals to the merged molecule.
+            edit_mol.setProperty("dihedral1", dihedrals)
+
+        # 4) impropers
+        if "improper" in shared_props:
+            # Get the user defined property names.
+            prop0 = "improper"
+            if prop0 in inv_map0:
+                prop0 = inv_map0["improper"]
+
+            prop1 = "improper"
+            if prop1 in inv_map1:
+                prop1 = inv_map1["improper"]
+
+            # Get the "improper" property from the two molecules.
+            impropers0 = molecule0.property(prop0)
+            impropers1 = molecule1.property(prop1)
+
+            # Create a list to store the indices of impropers in molecule0 that
+            # involve atoms that are part of the merged molecule at lambda = 1.
+            improper_idxs = []
+
+            # Get the molInfo object for molecule0.
+            info = molecule0.info()
+
+            # Loop over all impropers in molecule0.
+            for idx, improper in enumerate(impropers0.potentials()):
+                # This improper contains an atom that is unique to molecule0.
+                if info.atomIdx(improper.atom0()) in atoms0_idx or \
+                   info.atomIdx(improper.atom1()) in atoms0_idx or \
+                   info.atomIdx(improper.atom2()) in atoms0_idx or \
+                   info.atomIdx(improper.atom3()) in atoms0_idx:
+                       improper_idxs.append(idx)
+
+            # Store the improper potentials for molecule0.
+            potentials = impropers0.potentials()
+
+            # Create the new set of impropers.
+            impropers = _SireMM.FourAtomFunctions(edit_mol.info())
+
+            # Add all of the impropers from molecule1.
+            for improper in impropers1.potentials():
+                # Extract the improper information.
+                atom0 = info.atomIdx(improper.atom0())
+                atom1 = info.atomIdx(improper.atom1())
+                atom2 = info.atomIdx(improper.atom2())
+                atom3 = info.atomIdx(improper.atom3())
+                exprn = improper.function()
+
+                # Map the atom indices to their position in the merged molecule.
+
+                if atom0 in inv_mapping:
+                    atom0 = inv_mapping[atom0]
+                else:
+                    atom0 = new_idx[atom0]
+
+                if atom1 in inv_mapping:
+                    atom1 = inv_mapping[atom1]
+                else:
+                    atom1 = new_idx[atom1]
+
+                if atom2 in inv_mapping:
+                    atom2 = inv_mapping[atom2]
+                else:
+                    atom2 = new_idx[atom2]
+
+                if atom3 in inv_mapping:
+                    atom3 = inv_mapping[atom3]
+                else:
+                    atom3 = new_idx[atom3]
+
+                # Set the new improper.
+                impropers.set(atom0, atom1, atom2, atom3, exprn)
+
+            # Loop over all of the additional impropers from molecule0.
+            for idx in improper_idxs:
+                # Extract the improper information.
+                atom0 = info.atomIdx(potentials[idx].atom0())
+                atom1 = info.atomIdx(potentials[idx].atom1())
+                atom2 = info.atomIdx(potentials[idx].atom2())
+                atom3 = info.atomIdx(potentials[idx].atom3())
+                exprn = potentials[idx].function()
+
+                # Set the new improper.
+                impropers.set(atom0, atom1, atom2, atom3, exprn)
+
+            # Add the impropers to the merged molecule.
+            edit_mol.setProperty("improper1", impropers)
 
         # Return the merged molecule.
         return edit_mol.commit()
