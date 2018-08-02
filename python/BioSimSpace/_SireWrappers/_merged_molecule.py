@@ -326,8 +326,7 @@ class MergedMolecule():
                 if name == "charge":
                     edit_mol = edit_mol.atom(idx).setProperty("charge0", 0*_SireUnits.e_charge).molecule()
                 elif name == "LJ":
-                    lj = _SireMM.LJParameter(0*_SireUnits.angstrom, 0*_SireUnits.kcal_per_mol)
-                    edit_mol = edit_mol.atom(idx).setProperty("LJ0", lj).molecule()
+                    edit_mol = edit_mol.atom(idx).setProperty("LJ0", _SireMM.LJParameter()).molecule()
                 else:
                     # This is a perturbable property. Rename to "property0", e.g. "charge0".
                     if name in shared_props:
@@ -676,8 +675,7 @@ class MergedMolecule():
                 if name == "charge":
                     edit_mol = edit_mol.atom(atom.index()).setProperty("charge1", 0*_SireUnits.e_charge).molecule()
                 elif name == "LJ":
-                    lj = _SireMM.LJParameter(0*_SireUnits.angstrom, 0*_SireUnits.kcal_per_mol)
-                    edit_mol = edit_mol.atom(atom.index()).setProperty("LJ1", lj).molecule()
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("LJ1", _SireMM.LJParameter()).molecule()
                 else:
                     # This is a perturbable property. Rename to "property1", e.g. "charge1".
                     if name in shared_props:
