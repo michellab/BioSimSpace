@@ -278,11 +278,11 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
 
-       molecule0 : Sire.Mol.Molecule
-           The initial molecule.
+       molecule0 : BioSimSpace._SireWrappers.Molecule
+           A molecule object.
 
-       molecule1 : Sire.Mol.Molecule
-           The final molecule.
+       molecule1 : BioSimSpace._SireWrappers.Molecule
+           A second molecule object.
 
 
        Keyword arguments
@@ -290,6 +290,9 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
 
        mapping : dict
            The mapping between matching atom indices in the two molecules.
+           If no mapping is provided, then atoms in molecule0 will be mapped
+           to those in molecule1 using "findMCSmatches", with "rmsdAlign" then
+           used to align molecule0 to molecule1 based on the resulting mapping.
 
        map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
