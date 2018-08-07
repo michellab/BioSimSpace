@@ -606,7 +606,7 @@ class Namd(_process.Process):
             return None
 
     def getCurrentSystem(self):
-        """Get the latest molecular configuration as a Sire system.
+        """Get the latest molecular system.
 
            Returns
            -------
