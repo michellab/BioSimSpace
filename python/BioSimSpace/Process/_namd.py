@@ -536,7 +536,7 @@ class Namd(_process.Process):
         return self
 
     def getSystem(self, block="AUTO"):
-        """Get the latest molecular configuration as a Sire system.
+        """Get the latest molecular system.
 
            Keyword arguments
            -----------------
