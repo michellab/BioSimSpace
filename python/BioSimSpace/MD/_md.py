@@ -56,19 +56,33 @@ def _find_md_package(system, protocol, use_gpu=True):
     """Find a molecular dynamics package on the system and return
        a handle to it as a MDPackage object.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       system   -- The molecular system.
-       protocol -- The simulation protocol.
+       system : BioSimSpace._SireWrappers.System
+           The molecular system.
 
-       Keyword arguments:
+       protocol : BioSimSpace.Protocol
+           The simulation protocol.
 
-       use_gpu  -- Whether to use GPU support.
+
+       Keyword arguments
+       -----------------
+
+       use_gpu : bool
+           Whether to use GPU support.
+
+
+       Returns
+       -------
+
+       (package, exe) : tuple
+           The name of the MD package and a path to its executable.
     """
 
     # Check that the system is valid.
     if type(system) is not _System:
-        raise TypeError("'system' must be of type 'BioSimSpace.System'")
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     # Check that the use_gpu flag is valid.
     if type(use_gpu) is not bool:
@@ -111,25 +125,40 @@ class MD():
             name="md", work_dir=None, seed=None, map={}):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           system    -- The molecular system.
-           protocol  -- The protocol for the simulation.
+           system : BioSimSpace._SireWrappers.System
+               The molecular system.
 
-           Keyword arguments:
+           protocol : BioSimSpace.Protocol
+               The simulation protocol.
 
-           autostart -- Whether to start the process automatically.
-           name      -- The name of the process.
-           work_dir  -- The working directory for the process.
-           seed      -- A random number seed.
-           map       -- A dictionary that maps system "properties" to their user defined
-                        values. This allows the user to refer to properties with their
-                        own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Keyword arguments
+           -----------------
+
+           autostart : bool
+               Whether to start the process automatically.
+
+           name : str
+               The name of the process.
+
+           work_dir : str
+               The working directory for the process.
+
+           seed : int
+               A random number seed.
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Check that the system is valid.
         if type(system) is not _System:
-            raise TypeError("'system' must be of type 'BioSimSpace.System'")
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):

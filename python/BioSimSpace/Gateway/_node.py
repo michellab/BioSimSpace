@@ -97,13 +97,17 @@ class Node():
     def __init__(self, description, name=None):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           description -- A description of the node.
+           description : str
+               A description of the node.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           name        -- The name of the node.
+           name : str
+               The name of the node.
         """
 
         if type(description) is not str:
@@ -179,10 +183,14 @@ class Node():
     def addInput(self, name, input):
         """Add an input requirement.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : BioSimSpace.Gateway.Requirement
+               The input requirement object.
         """
 
         if type(name) is not str:
@@ -218,10 +226,14 @@ class Node():
     def _addInputCommandLine(self, name, input):
         """Add an input requirement for the command-line.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : BioSimSpace.Gateway.Requirement
+               The input requirement object.
         """
 
         # Append long-form argument name if not present.
@@ -275,21 +287,35 @@ class Node():
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : BioSimSpace.Gateway.Requirement
+               The input requirement object.
         """
         return None
 
     def _addInputJupyter(self, name, input, reset=False):
         """Add an input requirement for Jupyter.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
-           reset -- Whether to reset the widget data.
+           name : str
+               The name of the input.
+
+           input : BioSimSpace.Gateway.Requirement
+               The input requirement object.
+
+
+           Keyword arguments
+           -----------------
+
+           reset : bool
+               Whether to reset the widget data.
         """
 
         # Create a widget button to indicate whether the requirement value
@@ -665,10 +691,14 @@ class Node():
     def addOutput(self, name, output):
         """Add an output requirement.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name   -- The name of the output.
-           output -- The output requirement object.
+           name : str
+               The name of the output.
+
+           output : BioSimSpace.Gateway.Requirement
+               The output requirement object.
         """
 
         if type(name) is not str:
@@ -687,12 +717,15 @@ class Node():
     def setOutput(self, name, value):
         """Set the value of an output.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name  -- The name of the output.
-           value -- The value of the output.
+           name : str
+               The name of the output.
+
+           value :
+               The value of the output.
         """
-
         try:
             self._outputs[name].setValue(value)
         except KeyError:
@@ -701,9 +734,18 @@ class Node():
     def getInput(self, name):
         """Get the value of the named input.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           name -- The name of the input requirement.
+           name : str
+               The name of the input requirement.
+
+
+           Returns
+           -------
+
+           input :
+               The value of the named input requirement.
         """
 
         if type(name) is not str:
@@ -722,7 +764,14 @@ class Node():
             raise
 
     def getInputs(self):
-        """Get all of the input requirements."""
+        """Get all of the input requirements.
+
+           Returns
+           -------
+
+           inputs : { str : BioSimSpace.Gateway.Requirement }
+               The dictionary of input requirements.
+        """
 
         # Validate the inputs.
         self._is_valid_input = self._validateInput()
@@ -730,7 +779,14 @@ class Node():
         return self._inputs.copy()
 
     def addError(self, error):
-        """Add an error message."""
+        """Add an error message.
+
+           Positional arguments
+           --------------------
+
+           error : str
+               The error message.
+        """
 
         if type(error) is not str:
             raise TypeError("The error message must be of type 'str'")
@@ -740,11 +796,17 @@ class Node():
     def addAuthor(self, name=None, email=None, affiliation=None):
         """Add an author for the node.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           name        -- The author's name.
-           email       -- The author's email address.
-           affiliation -- The author's affiliation.
+           name : str
+               The author's name.
+
+           email : str
+               The author's email address.
+
+           affiliation : str
+               The author's affiliation.
         """
 
         if name is None:
@@ -767,23 +829,50 @@ class Node():
                 self._authors.append(author)
 
     def getAuthors(self):
-        """Return the list of authors."""
+        """Return the list of authors.
+
+           Returns
+           -------
+
+           authors : [ dict ]
+              A list of author dictionaries.
+        """
         return self._authors.copy()
 
     def setLicense(self, license):
-        """Set the license for the node."""
+        """Set the license for the node.
 
+           Positional arguments
+           --------------------
+
+           license : str
+               The license type.
+        """
         if type(license) is not str:
             raise TypeError("The license must be of type 'str'")
         else:
             self._license = license
 
     def getLicense(self):
-        """Return the license."""
+        """Return the license.
+
+           Returns
+           -------
+
+           license : str
+               The license of the node.
+        """
         return self._license
 
     def showControls(self):
-        """Show the Jupyter widget GUI to allow the user to enter input."""
+        """Show the Jupyter widget GUI to allow the user to enter input.
+
+           Returns
+           -------
+
+           controls : ipywidgets.form
+              A gui control panel for setting input requirements.
+        """
 
         if not self._is_notebook:
             return
@@ -956,9 +1045,18 @@ class Node():
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           input -- The input requirement.
+           input : BioSimSpace.Gateway.Requirement
+               The input requirement.
+
+
+           Returns
+           -------
+
+           help : str
+               The formatted help string.
         """
 
         # Initialise the help string.
@@ -995,7 +1093,14 @@ class Node():
         return help
 
     def _print_output(self):
-        """Print the output requirements of the node."""
+        """Print the output requirements of the node.
+
+           Returns
+           -------
+
+           output : str
+               A string listing the output requirements.
+        """
 
         # Initialise the output string.
         string = "This node outputs the following...\n"

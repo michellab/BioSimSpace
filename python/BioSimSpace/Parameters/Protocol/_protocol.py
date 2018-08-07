@@ -79,15 +79,20 @@ class Protocol():
     def __init__(self, forcefield, map={}):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           forcefield -- The name of the force field.
+           forcefield : str
+               The name of the force field.
 
-           Keyword arguments:
 
-           map        -- A dictionary that maps system "properties" to their user defined
-                         values. This allows the user to refer to properties with their
-                         own naming scheme, e.g. { "charge" : "my-charge" }
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -114,15 +119,28 @@ class Protocol():
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- The molecule to apply the parameterisation protocol to.
-           work_dir -- The working directory.
-           queue    -- The thread queue is which this method has been run.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to apply the parameterisation protocol to.
+
+           work_dir : str
+               The working directory.
+
+           queue : queue.Queue
+               The thread queue is which this method has been run.
+
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The parameterised molecule.
         """
 
         if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
         if type(work_dir) is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
@@ -208,9 +226,11 @@ class Protocol():
     def _run_tleap(self, molecule):
         """Run using tLEaP.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- The molecule to apply the parameterisation protocol to.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to apply the parameterisation protocol to.
         """
 
         # Create a new system and molecule group.
@@ -232,19 +252,19 @@ class Protocol():
         ff = _find_force_field(self._forcefield)
 
         # Write the LEaP input file.
-        with open("leap.txt", "w") as f:
-            f.write("source %s\n" % ff)
-            f.write("mol = loadPdb leap.pdb\n")
-            f.write("saveAmberParm mol leap.top leap.crd\n")
-            f.write("quit")
+        with open("leap.txt", "w") as file:
+            file.write("source %s\n" % ff)
+            file.write("mol = loadPdb leap.pdb\n")
+            file.write("saveAmberParm mol leap.top leap.crd\n")
+            file.write("quit")
 
         # Generate the tLEaP command.
         command = "%s -f leap.txt" % _tleap_exe
 
-        with open("README.txt", "w") as f:
+        with open("README.txt", "w") as file:
             # Write the command to file.
-            f.write("# tLEaP was run with the following command:\n")
-            f.write("%s\n" % command)
+            file.write("# tLEaP was run with the following command:\n")
+            file.write("%s\n" % command)
 
         # Run tLEaP as a subprocess.
         proc = _subprocess.run(command, shell=True,
@@ -260,9 +280,11 @@ class Protocol():
     def _run_pdb2gmx(self, molecule):
         """Run using pdb2gmx.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- The molecule to apply the parameterisation protocol to.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to apply the parameterisation protocol to.
         """
 
         # A list of supported force fields, mapping to their GROMACS ID string.
@@ -295,10 +317,10 @@ class Protocol():
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
             % (_gmx_exe, supported_ff[self._forcefield])
 
-        with open("README.txt", "w") as f:
+        with open("README.txt", "w") as file:
             # Write the command to file.
-            f.write("# pdb2gmx was run with the following command:\n")
-            f.write("%s\n" % command)
+            file.write("# pdb2gmx was run with the following command:\n")
+            file.write("%s\n" % command)
 
         # Run pdb2gmx as a subprocess.
         proc = _subprocess.run(command, shell=True,
@@ -311,7 +333,21 @@ class Protocol():
             return None
 
 def _find_force_field(forcefield):
-    """Internal function to search LEaP compatible force field files."""
+    """Internal function to search LEaP compatible force field files.
+
+       Positional arguments
+       --------------------
+
+       forcefield : str
+           The name of the force field.
+
+
+       Returns
+       -------
+
+       file : str
+           The full path of the matching force field file.
+    """
 
     # Whether the force field is found.
     is_found = False

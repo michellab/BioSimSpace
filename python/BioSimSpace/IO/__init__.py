@@ -40,7 +40,9 @@ from io import StringIO as _StringIO
 from warnings import warn as _warn
 
 import os.path as _path
+import pypdb as _pypdb
 import sys as _sys
+import tempfile as _tempfile
 
 if _gromacs_path is None:
     _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
@@ -66,7 +68,7 @@ with _Capturing() as format_info:
 # Create a list of the supported formats.
 _formats = []
 
-# Create a dictionary of format-description key-value pairs.
+# Create a dictionary of format-description key:value pairs.
 _formats_dict = _OrderedDict()
 
 # Loop over the format information to populate the dictionary.
@@ -90,9 +92,18 @@ def fileFormats():
 def formatInfo(format):
     """Return information for the specified file format.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       format -- The file format.
+       format : str
+           The file format.
+
+
+        Returns
+        -------
+
+        info : str
+            A description of the named file format.
     """
 
     try:
@@ -101,18 +112,81 @@ def formatInfo(format):
         print("Unsupported format: '%s'" % format)
         return None
 
+def readPDB(id, map={}):
+    """Read a molecular system from a PDB ID in the RSCB PDB website.
+
+       Positional arguments
+       --------------------
+
+       id : str
+           The PDB ID string.
+
+
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           A molecular system.
+    """
+
+    if type(id) is not str:
+        raise TypeError("'id' must be of type 'str'")
+
+    # Strip any whitespace from the PDB ID and convert to upper case.
+    id = id.replace(" ", "").upper()
+
+    # Create a temporary directory to write the PDB file.
+    tmp_dir = _tempfile.TemporaryDirectory()
+
+    # Attempt to download the PDB file. (Compression is currently broken!)
+    try:
+        pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
+    except:
+        raise IOError("Invalid PDB ID: '%s'" % id)
+
+    # Create the name of the PDB file.
+    pdb_file = "%s/%s.pdb" % (tmp_dir.name, id)
+
+    # Now write the PDB string to file.
+    with open(pdb_file, "w") as file:
+        file.write(pdb_string)
+
+    # Read the file and return a molecular system.
+    return readMolecules(pdb_file, map)
+
 def readMolecules(files, map={}):
     """Read a molecular system from file.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       files -- A file name, or a list of file names.
+       files : str, [ str ]
+           A file name, or a list of file names.
 
-       Keyword arguments:
 
-       map   -- A dictionary that maps system "properties" to their user defined
-                values. This allows the user to refer to properties with their
-                own naming scheme, e.g. { "charge" : "my-charge" }
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       system : BioSimSpace._SireWrappers.System
+           A molecular system.
     """
 
     # Convert to a list.
@@ -153,17 +227,27 @@ def readMolecules(files, map={}):
 def saveMolecules(filebase, system, fileformat, map={}):
     """Save a molecular system to file.
 
-       Positional arguments:
+       Positional arguments
+       --------------------
 
-       filebase   -- The base name of the output file.
-       system     -- The molecular system.
-       fileformat -- The file format (or formats) to save to.
+       filebase : str
+           The base name of the output file.
 
-       Keyword arguments:
+       system : BioSimSpace._SireWrappers.System, BioSimSpace._SireWrappers.Molecule,
+                [ BioSimSpace._SireWrappers.Molecule ]
+           The molecular system.
 
-       map        -- A dictionary that maps system "properties" to their user
-                     defined values. This allows the user to refer to properties
-                     with their own naming scheme, e.g. { "charge" : "my-charge" }
+       fileformat : str, [ str ]
+           The file format (or formats) to save to.
+
+
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Check that the filebase is a string.
@@ -183,8 +267,8 @@ def saveMolecules(filebase, system, fileformat, map={}):
         pass
     # Invalid type.
     else:
-        raise TypeError("'system' must be of type 'BioSimSpace.System', "
-            + "'BioSimSpace.Molecule, or a list of 'BiSimSpace.Molecule' types.")
+        raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
+            + "'BioSimSpace._SireWrappers.Molecule, or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 

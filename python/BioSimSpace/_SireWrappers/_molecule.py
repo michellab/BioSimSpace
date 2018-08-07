@@ -28,8 +28,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
-import Sire.Move as _SireMove
-import Sire.MM as _SireMM
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
@@ -44,9 +42,11 @@ class Molecule():
     def __init__(self, molecule):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- A Sire Molecule object.
+           molecule : Sire.Mol.Molecule
+               A Sire Molecule object.
         """
 
         # Check that the molecule is valid.
@@ -62,7 +62,7 @@ class Molecule():
         # Invalid type.
         else:
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
-                + "or 'BioSimSpace.Molecule'.")
+                + "or 'BioSimSpace._SireWrappers.Molecule'.")
 
         # Set the force field variable. This records the force field with which
         # the molecule has been parameterised, i.e. by BSS.Parameters.
@@ -92,8 +92,8 @@ class Molecule():
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
             molecules.extend(other)
         else:
-            raise TypeError("'other' must be of type 'BioSimSpace.Molecule', or a list "
-                + "of 'BioSimSpace.Molecule' types")
+            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Molecule', or a list "
+                + "of 'BioSimSpace._SireWrappers.Molecule' types")
 
         # Create and return a new system.
         return _System(molecules)
@@ -113,9 +113,11 @@ class Molecule():
     def translate(self, vector):
         """Translate the molecule.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           vector -- The translation vector (in Angstroms).
+           vector : list, tuple
+               The translation vector (in Angstroms).
         """
 
         # Convert tuple to a list.
@@ -141,6 +143,41 @@ class Molecule():
         # Perform the translation.
         self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
 
+    def merge(self, other, mapping, map0={}, map1={}):
+        """Merge this molecule with another based the mapping.
+
+           Positional arguments
+           --------------------
+
+           molecule : BioSimSpace._SireWrappers.Molecule, Sire.Molecule.Molecule
+               The molecule to merge with.
+
+           mapping : dict
+               A dictionary containing the mapping from atom indices in this
+               molecule to those in 'other'.
+
+
+           Keyword arguments
+           -----------------
+
+           map0 : dict
+               A dictionary that maps "properties" in molecule0 to their user
+               defined values. This allows the user to refer to properties
+               with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+           map1 : dict
+               A dictionary that maps "properties" in molecule1 to their user
+               defined values.
+
+
+           Returns
+           -------
+
+           merged : BioSimSpace._SireWrappers.MergedMolecule
+               The merged molecule.
+        """
+        return _MergedMolecule(self, other, mapping, map0, map1)
+
     def toSystem(self):
         """Convert a single Molecule to a System."""
         return _System(self)
@@ -154,16 +191,27 @@ class Molecule():
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule     -- The molecule to match with.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to match with.
 
-           Keyword arguments:
 
-           map          -- A map between property names and user supplied names.
-           overwrite    -- Whether to overwrite any duplicate properties.
-           rename_atoms -- Whether to rename atoms if they have changed.
-           verbose      -- Whether to report status updates to stdout.
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A map between property names and user supplied names.
+
+           overwrite : bool
+               Whether to overwrite any duplicate properties.
+
+           rename_atoms : bool
+               Whether to rename atoms if they have changed.
+
+           verbose : bool
+               Whether to report status updates to stdout.
         """
 
         # Validate input.
@@ -173,7 +221,7 @@ class Molecule():
         elif type(molecule) is Molecule:
             mol1 = molecule._sire_molecule
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule', or 'Sire.Mol._Mol.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol._Mol.Molecule'")
 
         if type(map) is not dict:
             raise TypeError("'map' must be of type 'dict'")
@@ -348,11 +396,21 @@ class Molecule():
     def _getAABox(self, map={}):
         """Get the axis-aligned bounding box for the molecule.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           aabox : Sire.Vol.AABox
+               The axis-aligned bounding box for the molecule.
         """
 
         # Initialise the coordinates vector.
@@ -373,4 +431,5 @@ class Molecule():
         return _SireVol.AABox(coord)
 
 # Import at bottom of module to avoid circular dependency.
+from ._merged_molecule import MergedMolecule as _MergedMolecule
 from ._system import System as _System

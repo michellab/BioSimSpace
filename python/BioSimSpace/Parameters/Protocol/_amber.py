@@ -47,11 +47,13 @@ class FF03(_protocol.Protocol):
     def __init__(self, map={}):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -67,11 +69,13 @@ class FF99(_protocol.Protocol):
     def __init__(self, map={}):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -107,11 +111,13 @@ class FF14SB(_protocol.Protocol):
     def __init__(self, map={}):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -134,12 +140,17 @@ class GAFF(_protocol.Protocol):
     def __init__(self, charge_method="BCC", map={}):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           charge_method -- The method to use when calculating atomic charges.
-           map           -- A dictionary that maps system "properties" to their user defined
-                            values. This allows the user to refer to properties with their
-                            own naming scheme, e.g. { "charge" : "my-charge" }
+           charge_method : str
+               The method to use when calculating atomic charges:
+               "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         if type(charge_method) is not str:
@@ -173,15 +184,28 @@ class GAFF(_protocol.Protocol):
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecule -- The molecule to apply the parameterisation protocol to.
-           work_dir -- The working directory.
-           queue    -- The thread queue is which this method has been run.
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule to apply the parameterisation protocol to.
+
+           work_dir : str
+               The working directory.
+
+           queue : queue.Queue
+               The thread queue is which this method has been run.
+
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The parameterised molecule.
         """
 
         if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
         if type(work_dir) is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
@@ -226,10 +250,10 @@ class GAFF(_protocol.Protocol):
                   ) % (_protocol._antechamber_exe,
                         self._version, self._charge_method.lower())
 
-        with open("README.txt", "w") as f:
+        with open("README.txt", "w") as file:
             # Write the command to file.
-            f.write("# Antechamber was run with the following command:\n")
-            f.write("%s\n" % command)
+            file.write("# Antechamber was run with the following command:\n")
+            file.write("%s\n" % command)
 
         # Run Antechamber as a subprocess.
         proc = _subprocess.run(command, shell=True,
@@ -244,10 +268,10 @@ class GAFF(_protocol.Protocol):
                        "-o antechamber.frcmod"
                       ) % (_protocol._parmchk_exe, self._version)
 
-            with open("README.txt", "a") as f:
+            with open("README.txt", "a") as file:
                 # Write the command to file.
-                f.write("\n# ParmChk was run with the following command:\n")
-                f.write("%s\n" % command)
+                file.write("\n# ParmChk was run with the following command:\n")
+                file.write("%s\n" % command)
 
             # Run parmchk as a subprocess.
             proc = _subprocess.run(command, shell=True,
@@ -267,20 +291,20 @@ class GAFF(_protocol.Protocol):
                     ff = _protocol._find_force_field("gaff2")
 
                 # Write the LEaP input file.
-                with open("leap.txt", "w") as f:
-                    f.write("source %s\n" % ff)
-                    f.write("mol = loadMol2 antechamber.mol2\n")
-                    f.write("loadAmberParams antechamber.frcmod\n")
-                    f.write("saveAmberParm mol leap.top leap.crd\n")
-                    f.write("quit")
+                with open("leap.txt", "w") as file:
+                    file.write("source %s\n" % ff)
+                    file.write("mol = loadMol2 antechamber.mol2\n")
+                    file.write("loadAmberParams antechamber.frcmod\n")
+                    file.write("saveAmberParm mol leap.top leap.crd\n")
+                    file.write("quit")
 
                 # Generate the tLEaP command.
                 command = "%s -f leap.txt" % _protocol._tleap_exe
 
-                with open("README.txt", "a") as f:
+                with open("README.txt", "a") as file:
                     # Write the command to file.
-                    f.write("\n# tLEaP was run with the following command:\n")
-                    f.write("%s\n" % command)
+                    file.write("\n# tLEaP was run with the following command:\n")
+                    file.write("%s\n" % command)
 
                 # Run tLEaP as a subprocess.
                 proc = _subprocess.run(command, shell=True,
@@ -332,12 +356,17 @@ class GAFF2(_protocol.Protocol):
     def __init__(self, charge_method="BCC", map={}):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           charge_method -- The method to use when calculating atomic charges.
-           map           -- A dictionary that maps system "properties" to their user defined
-                            values. This allows the user to refer to properties with their
-                            own naming scheme, e.g. { "charge" : "my-charge" }
+           charge_method : str
+               The method to use when calculating atomic charges:
+               "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Strip whitespace and convert to upper case.

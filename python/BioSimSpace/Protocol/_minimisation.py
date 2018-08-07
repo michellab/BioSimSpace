@@ -36,9 +36,11 @@ class Minimisation(_Protocol):
     def __init__(self, steps=10000):
         """Constructor.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           steps -- The maximum number of steps to perform.
+           steps : int
+               The maximum number of steps to perform.
         """
 
         # Set the number of steps.
@@ -53,12 +55,25 @@ class Minimisation(_Protocol):
         return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
 
     def getSteps(self):
-        """Return the maximum number of steps."""
+        """Return the maximum number of steps.
+
+           Returns
+           -------
+
+           steps : int
+               The maximum number of minimisation steps.
+        """
         return self._steps
 
     def setSteps(self, steps):
-        """Set the maximum number of steps."""
+        """Set the maximum number of steps.
 
+           Positional arguments
+           --------------------
+
+           steps : int
+               The maximum number of minimisation steps.
+        """
         if type(steps) is not int:
             raise TypeError("'steps' must be of type 'int'")
 

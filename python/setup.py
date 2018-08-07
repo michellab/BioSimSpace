@@ -74,6 +74,10 @@ finally:
         command = "%s/pip install --upgrade pip" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 
+        print("Installing package: pypdb")
+        command = "%s/pip install pypdb" % bin_dir
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
         print("Installing package: watchdog")
         command = "%s/pip install watchdog" % bin_dir
         subprocess.run(command, shell=True, stdout=subprocess.PIPE)

@@ -28,7 +28,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
-import Sire.Move as _SireMove
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
@@ -46,9 +45,11 @@ class System():
     def __init__(self, system):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           system -- A Sire System object.
+           system : Sire.System.System
+               A Sire System object.
         """
 
         # Check that the system is valid.
@@ -73,7 +74,7 @@ class System():
         # A list of BioSimSpace Molecule objects.
         elif type(system) is list:
             if not all(isinstance(x, _Molecule) for x in system):
-                raise TypeError("'system' must contain a of 'BioSimSpace.Molecule' types.")
+                raise TypeError("'system' must contain a of 'BioSimSpace._SireWrappers.Molecule' types.")
             else:
                 self._sire_system = _SireSystem.System("BioSimSpace System.")
                 self.addMolecules(system)
@@ -81,7 +82,7 @@ class System():
         # Invalid type.
         else:
             raise TypeError("'system' must be of type 'Sire.System._System.System' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -158,9 +159,20 @@ class System():
     def fileFormat(self, map={}):
         """Return the file formats associated with the system.
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           format : str
+              The file formats associated with the system.
         """
 
         if type(map) is not dict:
@@ -176,9 +188,11 @@ class System():
     def addMolecules(self, molecules):
         """Add a molecule, or list of molecules to the system.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecules -- A Molecule, or list of Molecule objects.
+           molecules : BioSimSpace._SireWrappers.Molecule
+              A Molecule, or list of Molecule objects.
         """
 
         # Convert tuple to a list.
@@ -193,8 +207,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_system.nMolecules() == 0:
@@ -208,9 +222,11 @@ class System():
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecules -- A Molecule, or list of Molecule objects.
+           molecules : BioSimSpace._SireWrappers.Molecule
+              A Molecule, or list of Molecule objects.
         """
 
         # Convert tuple to a list.
@@ -225,8 +241,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Remove the molecules in the system.
         for mol in molecules:
@@ -238,9 +254,11 @@ class System():
     def udpateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecules -- A Molecule, or list of Molecule objects.
+           molecules : BioSimSpace._SireWrappers.Molecule
+              A Molecule, or list of Molecule objects.
         """
 
         # Convert tuple to a list.
@@ -255,8 +273,8 @@ class System():
             pass
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace.Molecule' "
-                + "or a list of 'BioSimSpace.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Update each of the molecules.
         for mol in molecule:
@@ -268,9 +286,18 @@ class System():
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           group -- The name of the molecule group.
+           group : str
+               The name of the molecule group.
+
+
+           Returns
+           -------
+
+           molecule : [ BioSimSpace._SireWrappers.Molecule ]
+               The list of molecules in the group.
         """
 
         if type(group) is not str:
@@ -298,9 +325,18 @@ class System():
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           resname -- The name of a residue unique to the molecule.
+           resname : str
+               The name of a residue unique to the molecule.
+
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The matching molecule.
         """
         try:
             return _Molecule(self._sire_system[_MolWithResName(resname)])
@@ -310,9 +346,11 @@ class System():
     def translate(self, vector):
         """Translate the system.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           vector -- The translation vector (in Angstroms).
+           vector : list, tuple
+               The translation vector (in Angstroms).
         """
 
         # Convert tuple to a list.
@@ -347,12 +385,23 @@ class System():
     def _getBoxSize(self, map={}):
         """Get the size of the periodic box.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           system -- A Sire molecular system.
-           map    -- A dictionary that maps system "properties" to their user defined
-                     values. This allows the user to refer to properties with their
-                     own naming scheme, e.g. { "charge" : "my-charge" }
+           system : Sire.System.System
+               A Sire molecular system.
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           box_size : tuple
+               The size of the box in each dimension (in Angstroms).
         """
 
         try:
@@ -369,11 +418,21 @@ class System():
     def _getAABox(self, map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           map -- A dictionary that maps system "properties" to their user defined
-                  values. This allows the user to refer to properties with their
-                  own naming scheme, e.g. { "charge" : "my-charge" }
+           map : dict
+
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           aabox : Sire.Vol.AABox
+               The axis-aligned bounding box for the molecule.
         """
 
         # Initialise the coordinates vector.
@@ -400,9 +459,18 @@ class System():
         """Helper function to renumber the molecules to be consistent with the
            system.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecules -- A list of Molecule objects.
+           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+               A list of molecule objects.
+
+
+           Returns
+           -------
+
+           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+               The renumber list of molecule objects.
         """
 
         # Renumber everything.
@@ -468,9 +536,17 @@ class System():
     def _createSireSystem(molecules):
         """Create a Sire system from a list of molecules.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           molecules -- A list of Molecule objects.
+           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+
+
+           Returns
+           -------
+
+           system : Sire.System.System
+               A Sire system object.
         """
 
         # Create an empty Sire System.

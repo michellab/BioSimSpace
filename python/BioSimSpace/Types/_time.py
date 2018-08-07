@@ -63,14 +63,19 @@ class Time(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           magnitude -- The magnitude.
-           unit      -- The unit.
+           magnitude : float
+               The magnitude.
+
+           unit : str
+               The unit.
 
            or
 
-           string    -- A string representation of the time.
+           string : str
+               A string representation of the time.
         """
 
         # Call the base class constructor.
