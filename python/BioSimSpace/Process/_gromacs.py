@@ -38,6 +38,7 @@ import BioSimSpace.Units as _Units
 
 import math as _math
 import os as _os
+import pygtail as _pygtail
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
@@ -106,7 +107,9 @@ class Gromacs(_process.Process):
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
-        self._stdout_title = None
+
+        # Store the name of the GROMACS log file.
+        self._log_file = "%s/%s.log" % (self._work_dir, name)
 
         # The names of the input files.
         self._gro_file = "%s/%s.gro" % (self._work_dir, name)
@@ -340,3 +343,232 @@ class Gromacs(_process.Process):
 
         else:
             return None
+
+    def stdout(self, n=10):
+        """Print the last n lines of the stdout buffer.
+
+           Keyword arguments
+           -----------------
+
+           n : int
+               The number of lines to print.
+        """
+
+        # Note that thermodynamic records, e.g. energy, pressure, temperture,
+        # are redirected to a log file.
+
+        # Ensure that the number of lines is positive.
+        if n < 0:
+            raise ValueError("The number of lines must be positive!")
+
+        # Append any new lines to the stdout list.
+        for line in _pygtail.Pygtail(self._stdout_file):
+            self._stdout.append(line.rstrip())
+
+        # Get the current number of lines.
+        num_lines = len(self._stdout)
+
+        # Set the line from which to start printing.
+        if num_lines < n:
+            start = 0
+        else:
+            start = num_lines - n
+
+        # Print the lines.
+        for x in range(start, num_lines):
+            print(self._stdout[x])
+
+    def _update_stdout_dict(self):
+        """Update the dictonary of thermodynamic records."""
+
+        # A list of the new record lines.
+        lines = []
+
+        # Append any new lines.
+        for line in _pygtail.Pygtail(self._log_file):
+            lines.append(line)
+
+        # Store the number of lines.
+        num_lines = len(lines)
+
+        # Line index counter.
+        x = 0
+
+        # Append any new records to the stdout dictionary.
+        while x < num_lines:
+
+            # We've hit any energy record section.
+            if lines[x].strip() == "Energies (kJ/mol)":
+
+                # Initialise lists to hold all of the key/value pairs.
+                keys = []
+                values = []
+
+                # Loop until we reach a blank line, or the end of the lines.
+                while True:
+
+                    # End of file.
+                    if x + 2 >= num_lines:
+                        break
+
+                    # Extract the lines with the keys and values.
+                    k_line = lines[x+1]
+                    v_line = lines[x+2]
+
+                    # Empty line:
+                    if len(k_line.strip()) == 0 or len(v_line.strip()) == 0:
+                        break
+
+                    # Add whitespace at the end so that the splitting algorithm
+                    # below works properly.
+                    k_line = k_line + " "
+                    v_line = v_line + " "
+
+                    # Set the starting index of a record.
+                    start_idx = 0
+
+                    # Create lists to hold the keys and values.
+                    k = []
+                    v = []
+
+                    # Split the lines into the record headings and corresponding
+                    # values.
+                    for idx, val in enumerate(v_line):
+                        # We've hit the end of the line.
+                        if idx + 1 == len(v_line):
+                            break
+
+                        # This is the end of a record, i.e. we've gone from a
+                        # character to whitespace. Record the key and value and
+                        # update the start index for the next record.
+                        if val != " " and v_line[idx+1] == " ":
+                            k.append(k_line[start_idx:idx+1])
+                            v.append(v_line[start_idx:idx+1])
+                            start_idx=idx+1
+
+                    # Update the keys and values, making sure the number of
+                    # values matches the number of keys.
+                    keys.extend(k)
+                    values.extend(v[:len(k)])
+
+                    # Update the line index.
+                    x = x + 2
+
+                # Add the records to the dictionary.
+                if (len(keys) == len(values)):
+                    for key, value in zip(keys, values):
+                        # Replace certain characters in the key in order to make
+                        # the formatting consistent.
+                        
+                        # Convert to upper case.
+                        key = key.upper()
+
+                        # Strip whitespace and newlines from beginning and end.
+                        key = key.strip()
+
+                        # Remove whitespace.
+                        key = key.replace(" ", "")
+
+                        # Remove periods.
+                        key = key.replace(".", "")
+
+                        # Remove hyphens.
+                        key = key.replace("-", "")
+
+                        # Remove parentheses.
+                        key = key.replace("(", "")
+                        key = key.replace(")", "")
+
+                        # Remove instances of BAR.
+                        key = key.replace("BAR", "")
+
+                        # Add the record.
+                        self._stdout_dict[key] = value.strip()
+
+            # This is a time record.
+            elif "Step" in lines[x].strip():
+                if x + 1 < num_lines:
+                    records = lines[x+1].split()
+
+                    # There should be two records, 'Step' and 'Time'.
+                    if len(records) == 2:
+                        self._stdout_dict["STEP"] = records[0].strip()
+                        self._stdout_dict["TIME"] = records[1].strip()
+
+                # Update the line index.
+                x += 2
+
+            # We've reached an averages section, abort.
+            elif " A V E R A G E S" in lines[x]:
+                break
+
+            # No match, move to the next line.
+            else:
+                x += 1
+
+    def _get_stdout_record(self, key, time_series=False, unit=None):
+        """Helper function to get a stdout record from the dictionary.
+
+           Positional arguments
+           --------------------
+
+           key : str
+               The record key.
+
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a time series of records.
+
+           unit : BioSimSpace.Types._type.Type
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record :
+               The matching stdout record.
+        """
+
+        # No data!
+        if len(self._stdout_dict) is 0:
+            return None
+
+        if type(time_series) is not bool:
+            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
+            time_series = False
+
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
+        # Return the list of dictionary values.
+        if time_series:
+            try:
+                if key is "STEP":
+                    return [int(x) for x in self._stdout_dict[key]]
+                else:
+                    if unit is None:
+                        return [float(x) for x in self._stdout_dict[key]]
+                    else:
+                        return [float(x) * unit for x in self._stdout_dict[key]]
+
+            except KeyError:
+                return None
+
+        # Return the most recent dictionary value.
+        else:
+            try:
+                if key is "STEP":
+                    return int(self._stdout_dict[key][-1])
+                else:
+                    if unit is None:
+                        return float(self._stdout_dict[key][-1])
+                    else:
+                        return float(self._stdout_dict[key][-1]) * unit
+
+            except KeyError:
+                return None
