@@ -355,6 +355,933 @@ class Gromacs(_process.Process):
         """
         return self.getSystem(block=False)
 
+    def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
+        """Get a record from the stdout dictionary.
+
+           Positional arguments
+           --------------------
+
+           record : str
+               The record key.
+
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           unit : BioSimSpace.Types.Type
+               The unit to convert the record to.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           record :
+               The matching record.
+        """
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        self._update_stdout_dict()
+        return self._get_stdout_record(record, time_series, unit)
+
+    def getCurrentRecord(self, record, time_series=False, unit=None):
+        """Get a current record from the stdout dictionary.
+
+           Positional arguments
+           --------------------
+
+           record : str
+               The record key.
+
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           unit : BioSimSpace.Types.Type
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record :
+               The matching record.
+        """
+        self._update_stdout_dict()
+        return self._get_stdout_record(record, time_series, unit)
+
+    def getRecords(self, block="AUTO"):
+        """Return the dictionary of stdout time-series records.
+
+           Keyword arguments:
+
+           block       -- Whether to block until the process has finished running.
+        """
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        return self._stdout_dict.copy()
+
+    def getCurrentRecords(self):
+        """Return the current dictionary of stdout time-series records.
+
+           Keyword arguments
+           -----------------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           records : BioSimSpace.Process._process._MultiDict
+              The dictionary of time-series records.
+        """
+        return getRecords(block=False)
+
+    def getTime(self, time_series=False, block="AUTO"):
+        """Get the time (in nanoseconds).
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The current simulation time in nanoseconds.
+        """
+
+        if type(self._protocol) is _Protocol.Minimisation:
+            return None
+
+        else:
+            return self.getRecord("TIME", time_series, _Units.Time.nanosecond, block)
+
+    def getCurrentTime(self, time_series=False):
+        """Get the current time (in nanoseconds).
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The current simulation time in nanoseconds.
+        """
+        return self.getTime(time_series, block=False)
+
+    def getStep(self, time_series=False, block="AUTO"):
+        """Get the number of integration steps.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           step : int
+               The current number of integration steps.
+        """
+        return self.getRecord("STEP", time_series, None, block)
+
+    def getCurrentStep(self, time_series=False):
+        """Get the current number of integration steps.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           step : int
+               The current number of integration steps.
+        """
+        return self.getStep(time_series, block=False)
+
+    def getBondEnergy(self, time_series=False, block="AUTO"):
+        """Get the bond energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The bond energy.
+        """
+        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentBondEnergy(self, time_series=False):
+        """Get the current bond energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The bond energy.
+        """
+        return self.getBondEnergy(time_series, block=False)
+
+    def getAngleEnergy(self, time_series=False, block="AUTO"):
+        """Get the angle energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The angle energy.
+        """
+        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentAngleEnergy(self, time_series=False):
+        """Get the current angle energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The angle energy.
+        """
+        return self.getAngleEnergy(time_series, block=False)
+
+    def getDihedralEnergy(self, time_series=False, block="AUTO"):
+        """Get the dihedral energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dihedral energy.
+        """
+        return self.getRecord("PROPERDIH", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentDihedralEnergy(self, time_series=False):
+        """Get the current dihedral energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dihedral energy.
+        """
+        return self.getDihedralEnergy(time_series, block=False)
+
+    def getImproperEnergy(self, time_series=False, block="AUTO"):
+        """Get the improper energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The improper energy.
+        """
+        return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentImproperEnergy(self, time_series=False):
+        """Get the current improper energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The improper energy.
+        """
+        return self.getImproperEnergy(time_series, block=False)
+
+    def getLennardJones14(self, time_series=False, block="AUTO"):
+        """Get the Lennard-Jones energy between atoms 1 and 4.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Lennard-Jones energy.
+        """
+        return self.getRecord("LJ14", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentLennardJones14(self, time_series=False):
+        """Get the current Lennard-Jones energy between atoms 1 and 4.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Lennard-Jones energy.
+        """
+        return self.getLennardJones14(time_series, block=False)
+
+    def getLennardJonesSR(self, time_series=False, block="AUTO"):
+        """Get the short-range Lennard-Jones energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The short-range Lennard-Jones energy.
+        """
+        return self.getRecord("LJSR", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentLennardJonesSR(self, time_series=False):
+        """Get the current short-range Lennard-Jones energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Lennard-Jones energy.
+        """
+        return self.getLennardJonesSR(time_series, block=False)
+
+    def getCoulomb14(self, time_series=False, block="AUTO"):
+        """Get the Coulomb energy between atoms 1 and 4.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getRecord("COULOMB14", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentCoulomb14(self, time_series=False):
+        """Get the current Coulomb energy between atoms 1 and 4.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getCoulomb14(time_series, block=False)
+
+    def getCoulombSR(self, time_series=False, block="AUTO"):
+        """Get the short-range Coulomb energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getRecord("COULOMBSR", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentCoulombSR(self, time_series=False):
+        """Get the current short-range Coulomb energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getCoulombSR(time_series, block=False)
+
+    def getCoulombReciprocal(self, time_series=False, block="AUTO"):
+        """Get the reciprocal space Coulomb energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getRecord("COULRECIP", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentCoulombReciprocal(self, time_series=False):
+        """Get the current reciprocal space Coulomb energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The Coulomb energy.
+        """
+        return self.getCoulombReciprocal(time_series, block=False)
+
+    def getDispersionCorrection(self, time_series=False, block="AUTO"):
+        """Get the dispersion correction.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dispersion correction.
+        """
+        return self.getRecord("DISPERCORR", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentDispersionCorrection(self, time_series=False):
+        """Get the current dispersion correction.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dispersion correction.
+        """
+        return self.getDispersionCorrection(time_series, block=False)
+
+    def getRestraintEnergy(self, time_series=False, block="AUTO"):
+        """Get the position restraint energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dispersion correction.
+        """
+        return self.getRecord("POSITIONREST", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentRestraintEnergy(self, time_series=False):
+        """Get the current position restraint energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The dispersion correction.
+        """
+        return self.getRestraintEnergy(time_series, block=False)
+
+    def getPotentialEnergy(self, time_series=False, block="AUTO"):
+        """Get the potential energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The potential energy.
+        """
+        return self.getRecord("POTENTIAL", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentPotentialEnergy(self, time_series=False):
+        """Get the current potential energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The potential energy.
+        """
+        return self.getPotentialEnergy(time_series, block=False)
+
+    def getKinetecEnergy(self, time_series=False, block="AUTO"):
+        """Get the kinetic energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The kinetic energy.
+        """
+        return self.getRecord("KINETICEN", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentKineticEnergy(self, time_series=False):
+        """Get the current kinetic energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The kinetic energy.
+        """
+        return self.getKineticEnergy(time_series, block=False)
+
+    def getTotalEnergy(self, time_series=False, block="AUTO"):
+        """Get the total energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The total energy.
+        """
+        return self.getRecord("TOTALENERGY", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentTotalEnergy(self, time_series=False):
+        """Get the current total energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The total energy.
+        """
+        return self.getTotalEnergy(time_series, block=False)
+
+    def getConservedEnergy(self, time_series=False, block="AUTO"):
+        """Get the conserved energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The conserved energy.
+        """
+        return self.getRecord("CONSERVEDEN", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentConservedEnergy(self, time_series=False):
+        """Get the current conserved energy.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The conserved energy.
+        """
+        return self.getConservedEnergy(time_series, block=False)
+
+    def getTemperature(self, time_series=False, block="AUTO"):
+        """Get the temperature.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Temperature
+               The temperature.
+        """
+        return self.getRecord("TEMPERATURE", time_series, _Units.Temperature.kelvin, block)
+
+    def getCurrentTemperature(self, time_series=False):
+        """Get the current temperature.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Temperature
+               The current temperature.
+        """
+        return self.getTemperature(time_series, block=False)
+
+    def getPressure(self, time_series=False, block="AUTO"):
+        """Get the pressure.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Pressure
+               The pressure.
+        """
+        return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
+
+    def getCurrentPressure(self, time_series=False):
+        """Get the current pressure.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Pressure
+               The current pressure.
+        """
+        return self.getPressure(time_series, block=False)
+
+    def getPressureDC(self, time_series=False, block="AUTO"):
+        """Get the DC pressure.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Pressure
+               The DC pressure.
+        """
+        return self.getRecord("PRESDC", time_series, _Units.Pressure.bar, block)
+
+    def getCurrentPressureDC(self, time_series=False):
+        """Get the current DC pressure.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Pressure
+               The current pressure.
+        """
+        return self.getPressureDC(time_series, block=False)
+
+    def getConstraintRMSD(self, time_series=False, block="AUTO"):
+        """Get the RMSD of the constrained atoms.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Length
+               The constrained RMSD.
+        """
+        return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
+
+    def getCurrentConstraintRMSD(self, time_series=False):
+        """Get the current RMSD of the constrained atoms.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Length
+               The current constrained RMSD.
+        """
+        return self.getConstraintRMSD(time_series, block=False)
+
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
@@ -470,7 +1397,7 @@ class Gromacs(_process.Process):
                     for key, value in zip(keys, values):
                         # Replace certain characters in the key in order to make
                         # the formatting consistent.
-                        
+
                         # Convert to upper case.
                         key = key.upper()
 
