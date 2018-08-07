@@ -44,6 +44,9 @@ download, run:
 ./install.sh --clean
 ```
 
+BioSimSpace runs many subprocess in temporary working directories. To control
+the directory location, set the `TMPDIR` environment variable.
+
 Full installation details are given below for those who wish to install
 BioSimSpace manually, or already have built their own Sire application.
 

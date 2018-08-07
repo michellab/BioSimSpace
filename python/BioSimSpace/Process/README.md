@@ -47,6 +47,10 @@ process = BSS.Process.Amber(system, work_dir="/my/custom/path")
 The directory will be created if it doesn't already exist (assuming write
 privileges on the path).
 
+To change the location of temporary directory, e.g. if `/tmp` doesn't have
+enough space, simply set the `TMPDIR` environment variable before using
+BioSimSpace.
+
 ### _Executable_
 
 BioSimSpace will search your `PATH` to find an appropriate executable to run
