@@ -344,6 +344,17 @@ class Gromacs(_process.Process):
         else:
             return None
 
+    def getCurrentSystem(self):
+        """Get the latest molecular system.
+
+           Returns
+           -------
+
+           system : BioSimSpace._SireWrappers.System
+               The latest molecular system.
+        """
+        return self.getSystem(block=False)
+
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
