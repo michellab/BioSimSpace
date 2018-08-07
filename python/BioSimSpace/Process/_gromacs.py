@@ -560,7 +560,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The bond energy.
         """
-        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("BOND", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
@@ -599,7 +599,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The angle energy.
         """
-        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("ANGLE", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
@@ -638,7 +638,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The dihedral energy.
         """
-        return self.getRecord("PROPERDIH", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
@@ -677,7 +677,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The improper energy.
         """
-        return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
@@ -716,7 +716,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The Lennard-Jones energy.
         """
-        return self.getRecord("LJ14", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("LJ14", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentLennardJones14(self, time_series=False):
         """Get the current Lennard-Jones energy between atoms 1 and 4.
@@ -755,7 +755,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The short-range Lennard-Jones energy.
         """
-        return self.getRecord("LJSR", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("LJSR", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentLennardJonesSR(self, time_series=False):
         """Get the current short-range Lennard-Jones energy.
@@ -794,7 +794,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The Coulomb energy.
         """
-        return self.getRecord("COULOMB14", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("COULOMB14", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulomb14(self, time_series=False):
         """Get the current Coulomb energy between atoms 1 and 4.
@@ -833,7 +833,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The Coulomb energy.
         """
-        return self.getRecord("COULOMBSR", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("COULOMBSR", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulombSR(self, time_series=False):
         """Get the current short-range Coulomb energy.
@@ -872,7 +872,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The Coulomb energy.
         """
-        return self.getRecord("COULRECIP", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("COULRECIP", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulombReciprocal(self, time_series=False):
         """Get the current reciprocal space Coulomb energy.
@@ -911,7 +911,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The dispersion correction.
         """
-        return self.getRecord("DISPERCORR", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("DISPERCORR", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentDispersionCorrection(self, time_series=False):
         """Get the current dispersion correction.
@@ -950,7 +950,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The dispersion correction.
         """
-        return self.getRecord("POSITIONREST", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("POSITIONREST", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentRestraintEnergy(self, time_series=False):
         """Get the current position restraint energy.
@@ -989,7 +989,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The potential energy.
         """
-        return self.getRecord("POTENTIAL", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("POTENTIAL", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
@@ -1028,7 +1028,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The kinetic energy.
         """
-        return self.getRecord("KINETICEN", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("KINETICEN", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
@@ -1067,7 +1067,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The total energy.
         """
-        return self.getRecord("TOTALENERGY", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("TOTALENERGY", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current total energy.
@@ -1106,7 +1106,7 @@ class Gromacs(_process.Process):
            energy : BioSimSpace.Types.Energy
                The conserved energy.
         """
-        return self.getRecord("CONSERVEDEN", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("CONSERVEDEN", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentConservedEnergy(self, time_series=False):
         """Get the current conserved energy.
