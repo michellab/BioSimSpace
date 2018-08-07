@@ -816,7 +816,7 @@ class Namd(_process.Process):
            step : int
                The current number of integration steps.
         """
-        return self.getRecord("TS", time_series, block)
+        return self.getRecord("TS", time_series, None, block)
 
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
