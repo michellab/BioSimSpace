@@ -174,7 +174,7 @@ class Gromacs(_process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
-            config.append("integrator = cg")            # Use conjugate gradient.
+            config.append("integrator = steep")         # Use steepest descent.
             config.append("nsteps = %d"
                 % self._protocol.getSteps())            # Set the number of steps.
             config.append("nstxout = 10")               # Write coordinates every 10 steps.
