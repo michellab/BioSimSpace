@@ -112,8 +112,8 @@ class _Handler(_PatternMatchingEventHandler):
         # Since the watchdog package is cross-platform it doesn't support
         # detection of "close-write" operations, so multiple "modified" events
         # can be triggered while the log file is being written. As such, we
-        # check to see if the file has been updated by seeing whether the
-        # NSTEP record is different to the most recent entry in the dictionary.
+        # check whether the file has been updated by seeing if the NSTEP record
+        # is different to the most recent entry in the dictionary.
         # So far, no issues have been found with processing partially written
         # files, i.e. duplicate or missing records.
 
