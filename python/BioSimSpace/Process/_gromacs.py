@@ -51,20 +51,35 @@ class Gromacs(_process.Process):
             work_dir=None, seed=None, map={}):
         """Constructor.
 
-           Positional arguments:
+           Positional arguments
+           --------------------
 
-           system   -- The molecular system.
-           protocol -- The protocol for the GROMACS process.
+           system : BioSimSpace._SireWrappers.System
+               The molecular system.
 
-           Keyword arguments:
+           protocol : BioSimSpace.Protocol
+               The protocol for the AMBER process.
 
-           exe      -- The full path to the GROMACS executable.
-           name     -- The name of the process.
-           work_dir -- The working directory for the process.
-           seed     -- A random number seed.
-           map      -- A dictionary that maps system "properties" to their user defined
-                       values. This allows the user to refer to properties with their
-                       own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Keyword arguments
+           -----------------
+
+           exe : str
+               The full path to the AMBER executable.
+
+           name : str
+               The name of the process.
+
+           work_dir :
+               The working directory for the process.
+
+           seed : int
+               A random number seed.
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -202,7 +217,15 @@ class Gromacs(_process.Process):
             raise RuntimeError("Unable to generate GROMACS binary run input file")
 
     def addToConfig(self, config):
-        """Add a string to the configuration list."""
+        """Add a string to the configuration list.
+
+           Positional arguments
+           --------------------
+
+           config : str, [ str ]
+               A configuration string, a list of configuration strings, or a
+               path to a configuration file.
+        """
 
         # Call the base class method.
         super().addToConfig(config)
@@ -218,7 +241,15 @@ class Gromacs(_process.Process):
         self._generate_binary_run_file()
 
     def setConfig(self, config):
-        """Set the list of configuration file strings."""
+        """Set the list of configuration file strings.
+
+           Positional arguments
+           --------------------
+
+           config : str, [ str ]
+               The list of configuration strings, or a path to a configuration
+               file.
+        """
 
         # Call the base class method.
         super().setConfig(config)
@@ -277,11 +308,20 @@ class Gromacs(_process.Process):
         return self
 
     def getSystem(self, block="AUTO"):
-        """Get the latest molecular configuration as a Sire system.
+        """Get the latest molecular system.
 
-           Keyword arguments:
+           Keyword arguments
+           -----------------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           system : BioSimSpace._SireWrappers.System
+               The latest molecular system.
         """
 
         # Wait for the process to finish.
