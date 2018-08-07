@@ -523,7 +523,7 @@ class Process():
            -------
 
            ouput : str, IPython.display.FileLink
-               A path or file link to and archive of the process output.
+               A path, or file link, to an archive of the process output.
         """
 
         if name is None:
