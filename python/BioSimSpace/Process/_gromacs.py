@@ -189,6 +189,9 @@ class Gromacs(_process.Process):
             config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
             config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
 
+        else:
+            raise NotImplementedError("Only 'minimisation' protocol is currently supported.")
+
         # Set the configuration.
         self.setConfig(config)
 
