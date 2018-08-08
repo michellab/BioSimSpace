@@ -1043,20 +1043,30 @@ class MergedMolecule():
 
         # Create the connectivity object. We know the connectivity is consistent
         # at lambda = 0 and lambda = 1 so we can use either set of bonds.
-        c = _SireMol.Connectivity(edit_mol.info()).edit()
+        conn = _SireMol.Connectivity(edit_mol.info()).edit()
 
         # Connect the bonded atoms.
         for bond in edit_mol.property("bond0").potentials():
-            c.connect(bond.atom0(), bond.atom1())
+            conn.connect(bond.atom0(), bond.atom1())
+        conn = conn.commit()
 
         # Set the "connectivity" property.
-        edit_mol.setProperty("connectivity", c.commit())
+        edit_mol.setProperty("connectivity", conn)
 
-        # Set the force field properties.
+        # Create the CLJNBPairs matrix.
+        ff = molecule0.property(ff0)
+        clj_scale_factors = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
+                                                   ff.vdw14ScaleFactor())
+        clj_nb_pairs = _SireMM.CLJNBPairs(conn, clj_scale_factors)
+
+        # Set the "intrascale" property.
+        edit_mol.setProperty("intrascale", clj_nb_pairs)
+
+        # Set the "forcefield" properties.
         edit_mol.setProperty("forcefield0", molecule0.property(ff0))
         edit_mol.setProperty("forcefield1", molecule0.property(ff1))
 
-        # Flag that this molecule is pertubable.
+        # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
         # Return the merged molecule.
