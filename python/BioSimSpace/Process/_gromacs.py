@@ -180,8 +180,8 @@ class Gromacs(_process.Process):
             config.append("integrator = steep")         # Use steepest descent.
             config.append("nsteps = %d"
                 % self._protocol.getSteps())            # Set the number of steps.
-            config.append("nstxout = 10")               # Write coordinates every 10 steps.
-            config.append("nstlog = 10")                # Write energies every 10 steps.
+            config.append("nstxout = %d"
+                % self._protocol.getSteps())            # Only write the final coordinates.
             config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
             config.append("ns-type = grid")             # Use a grid to search for neighbours.
             if has_box:
