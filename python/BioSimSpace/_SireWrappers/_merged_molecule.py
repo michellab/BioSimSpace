@@ -692,6 +692,10 @@ class MergedMolecule():
 
         # 1) bonds
         if "bond" in shared_props:
+            # Get the info objects for the two molecules.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
+
             # Get the user defined property names.
             prop0 = "bond"
             if prop0 in inv_map0:
@@ -709,14 +713,11 @@ class MergedMolecule():
             # involve atoms that are part of the merged molecule at lambda = 1.
             bond_idxs = []
 
-            # Get the molInfo object for molecule0.
-            info = molecule0.info()
-
             # Loop over all bonds in molecule0
             for idx, bond in enumerate(bonds0.potentials()):
                 # This bond contains an atom that is unique to molecule0.
-                if info.atomIdx(bond.atom0()) in atoms0_idx or \
-                   info.atomIdx(bond.atom1()) in atoms0_idx:
+                if info0.atomIdx(bond.atom0()) in atoms0_idx or \
+                   info0.atomIdx(bond.atom1()) in atoms0_idx:
                        bond_idxs.append(idx)
 
             # Store the bond potentials for molecule0.
@@ -728,8 +729,8 @@ class MergedMolecule():
             # Add all of the bonds from molecule1.
             for bond in bonds1.potentials():
                 # Extract the bond information.
-                atom0 = info.atomIdx(bond.atom0())
-                atom1 = info.atomIdx(bond.atom1())
+                atom0 = info1.atomIdx(bond.atom0())
+                atom1 = info1.atomIdx(bond.atom1())
 
                 # Map the atom indices to their position in the merged molecule.
 
@@ -749,8 +750,8 @@ class MergedMolecule():
             # Loop over all of the additional bonds from molecule0.
             for idx in bond_idxs:
                 # Extract the bond information.
-                atom0 = info.atomIdx(potentials[idx].atom0())
-                atom1 = info.atomIdx(potentials[idx].atom1())
+                atom0 = info0.atomIdx(potentials[idx].atom0())
+                atom1 = info0.atomIdx(potentials[idx].atom1())
                 exprn = potentials[idx].function()
 
                 # Set the new bond.
@@ -761,6 +762,10 @@ class MergedMolecule():
 
         # 2) angles
         if "angle" in shared_props:
+            # Get the info objects for the two molecules.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
+
             # Get the user defined property names.
             prop0 = "angle"
             if prop0 in inv_map0:
@@ -778,15 +783,12 @@ class MergedMolecule():
             # involve atoms that are part of the merged molecule at lambda = 1.
             angle_idxs = []
 
-            # Get the molInfo object for molecule0.
-            info = molecule0.info()
-
             # Loop over all angles in molecule0.
             for idx, angle in enumerate(angles0.potentials()):
                 # This angle contains an atom that is unique to molecule0.
-                if info.atomIdx(angle.atom0()) in atoms0_idx or \
-                   info.atomIdx(angle.atom1()) in atoms0_idx or \
-                   info.atomIdx(angle.atom2()) in atoms0_idx:
+                if info0.atomIdx(angle.atom0()) in atoms0_idx or \
+                   info0.atomIdx(angle.atom1()) in atoms0_idx or \
+                   info0.atomIdx(angle.atom2()) in atoms0_idx:
                        angle_idxs.append(idx)
 
             # Store the angle potentials for molecule0.
@@ -798,9 +800,9 @@ class MergedMolecule():
             # Add all of the angles from molecule1.
             for angle in angles1.potentials():
                 # Extract the angle information.
-                atom0 = info.atomIdx(angle.atom0())
-                atom1 = info.atomIdx(angle.atom1())
-                atom2 = info.atomIdx(angle.atom2())
+                atom0 = info1.atomIdx(angle.atom0())
+                atom1 = info1.atomIdx(angle.atom1())
+                atom2 = info1.atomIdx(angle.atom2())
                 exprn = angle.function()
 
                 # Map the atom indices to their position in the merged molecule.
@@ -826,9 +828,9 @@ class MergedMolecule():
             # Loop over all of the additional angles from molecule0.
             for idx in angle_idxs:
                 # Extract the angle information.
-                atom0 = info.atomIdx(potentials[idx].atom0())
-                atom1 = info.atomIdx(potentials[idx].atom1())
-                atom2 = info.atomIdx(potentials[idx].atom2())
+                atom0 = info0.atomIdx(potentials[idx].atom0())
+                atom1 = info0.atomIdx(potentials[idx].atom1())
+                atom2 = info0.atomIdx(potentials[idx].atom2())
                 exprn = potentials[idx].function()
 
                 # Set the new angle.
@@ -839,6 +841,10 @@ class MergedMolecule():
 
         # 3) dihedrals
         if "dihedral" in shared_props:
+            # Get the info objects for the two molecules.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
+
             # Get the user defined property names.
             prop0 = "dihedral"
             if prop0 in inv_map0:
@@ -856,16 +862,13 @@ class MergedMolecule():
             # involve atoms that are part of the merged molecule at lambda = 1.
             dihedral_idxs = []
 
-            # Get the molInfo object for molecule0
-            info = molecule0.info()
-
             # Loop over all dihedrals in molecule0.
             for idx, dihedral in enumerate(dihedrals0.potentials()):
                 # This dihedral contains an atom that is unique to molecule0.
-                if info.atomIdx(dihedral.atom0()) in atoms0_idx or \
-                   info.atomIdx(dihedral.atom1()) in atoms0_idx or \
-                   info.atomIdx(dihedral.atom2()) in atoms0_idx or \
-                   info.atomIdx(dihedral.atom3()) in atoms0_idx:
+                if info0.atomIdx(dihedral.atom0()) in atoms0_idx or \
+                   info0.atomIdx(dihedral.atom1()) in atoms0_idx or \
+                   info0.atomIdx(dihedral.atom2()) in atoms0_idx or \
+                   info0.atomIdx(dihedral.atom3()) in atoms0_idx:
                        dihedral_idxs.append(idx)
 
             # Store the dihedral potentials for molecule0.
@@ -877,10 +880,10 @@ class MergedMolecule():
             # Add all of the dihedrals from molecule1.
             for dihedral in dihedrals1.potentials():
                 # Extract the dihedral information.
-                atom0 = info.atomIdx(dihedral.atom0())
-                atom1 = info.atomIdx(dihedral.atom1())
-                atom2 = info.atomIdx(dihedral.atom2())
-                atom3 = info.atomIdx(dihedral.atom3())
+                atom0 = info1.atomIdx(dihedral.atom0())
+                atom1 = info1.atomIdx(dihedral.atom1())
+                atom2 = info1.atomIdx(dihedral.atom2())
+                atom3 = info1.atomIdx(dihedral.atom3())
                 exprn = dihedral.function()
 
                 # Map the atom indices to their position in the merged molecule.
@@ -911,10 +914,10 @@ class MergedMolecule():
             # Loop over all of the additional dihedrals from molecule0.
             for idx in dihedral_idxs:
                 # Extract the dihedral information.
-                atom0 = info.atomIdx(potentials[idx].atom0())
-                atom1 = info.atomIdx(potentials[idx].atom1())
-                atom2 = info.atomIdx(potentials[idx].atom2())
-                atom3 = info.atomIdx(potentials[idx].atom3())
+                atom0 = info0.atomIdx(potentials[idx].atom0())
+                atom1 = info0.atomIdx(potentials[idx].atom1())
+                atom2 = info0.atomIdx(potentials[idx].atom2())
+                atom3 = info0.atomIdx(potentials[idx].atom3())
                 exprn = potentials[idx].function()
 
                 # Set the new dihedral.
@@ -925,6 +928,10 @@ class MergedMolecule():
 
         # 4) impropers
         if "improper" in shared_props:
+            # Get the info objects for the two molecules.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
+
             # Get the user defined property names.
             prop0 = "improper"
             if prop0 in inv_map0:
@@ -942,16 +949,13 @@ class MergedMolecule():
             # involve atoms that are part of the merged molecule at lambda = 1.
             improper_idxs = []
 
-            # Get the molInfo object for molecule0.
-            info = molecule0.info()
-
             # Loop over all impropers in molecule0.
             for idx, improper in enumerate(impropers0.potentials()):
                 # This improper contains an atom that is unique to molecule0.
-                if info.atomIdx(improper.atom0()) in atoms0_idx or \
-                   info.atomIdx(improper.atom1()) in atoms0_idx or \
-                   info.atomIdx(improper.atom2()) in atoms0_idx or \
-                   info.atomIdx(improper.atom3()) in atoms0_idx:
+                if info0.atomIdx(improper.atom0()) in atoms0_idx or \
+                   info0.atomIdx(improper.atom1()) in atoms0_idx or \
+                   info0.atomIdx(improper.atom2()) in atoms0_idx or \
+                   info0.atomIdx(improper.atom3()) in atoms0_idx:
                        improper_idxs.append(idx)
 
             # Store the improper potentials for molecule0.
@@ -963,10 +967,10 @@ class MergedMolecule():
             # Add all of the impropers from molecule1.
             for improper in impropers1.potentials():
                 # Extract the improper information.
-                atom0 = info.atomIdx(improper.atom0())
-                atom1 = info.atomIdx(improper.atom1())
-                atom2 = info.atomIdx(improper.atom2())
-                atom3 = info.atomIdx(improper.atom3())
+                atom0 = info1.atomIdx(improper.atom0())
+                atom1 = info1.atomIdx(improper.atom1())
+                atom2 = info1.atomIdx(improper.atom2())
+                atom3 = info1.atomIdx(improper.atom3())
                 exprn = improper.function()
 
                 # Map the atom indices to their position in the merged molecule.
@@ -997,10 +1001,10 @@ class MergedMolecule():
             # Loop over all of the additional impropers from molecule0.
             for idx in improper_idxs:
                 # Extract the improper information.
-                atom0 = info.atomIdx(potentials[idx].atom0())
-                atom1 = info.atomIdx(potentials[idx].atom1())
-                atom2 = info.atomIdx(potentials[idx].atom2())
-                atom3 = info.atomIdx(potentials[idx].atom3())
+                atom0 = info0.atomIdx(potentials[idx].atom0())
+                atom1 = info0.atomIdx(potentials[idx].atom1())
+                atom2 = info0.atomIdx(potentials[idx].atom2())
+                atom3 = info0.atomIdx(potentials[idx].atom3())
                 exprn = potentials[idx].function()
 
                 # Set the new improper.
