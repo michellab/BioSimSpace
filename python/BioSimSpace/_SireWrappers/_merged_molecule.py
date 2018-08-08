@@ -32,6 +32,8 @@ import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
 import Sire.Units as _SireUnits
 
+from .._Exceptions import IncompatibleError as _IncompatibleError
+
 __all__ = ["MergedMolecule"]
 
 class MergedMolecule():
@@ -185,6 +187,27 @@ class MergedMolecule():
         # Invert the user property mappings.
         inv_map0 = {v: k for k, v in map0.items()}
         inv_map1 = {v: k for k, v in map1.items()}
+
+        # Make sure that the molecules have a "forcefield" property and that
+        # the two force fields are compatible.
+
+        # Get the user name for the "forcefield" property.
+        ff0 = "forcefield"
+        ff1 = "forcefield"
+        if "forcefield" in inv_map0:
+            ff0 = inv_map0["forcefield"]
+        if "forcefield" in inv_map1:
+            ff1 = inv_map1["forcefield"]
+
+        # Force field information is missing.
+        if not molecule0.hasProperty(ff0):
+            raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule0'!")
+        if not molecule1.hasProperty(ff0):
+            raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule1'!")
+
+        # The force fields are incompatible.
+        if not molecule0.property(ff0).isCompatibleWith(molecule1.property(ff1)):
+            raise _IncompatibleError("Cannot merge molecules with incompatible force fields!")
 
         # Create lists to store the atoms that are unique to each molecule,
         # along with their indices.
@@ -1012,6 +1035,10 @@ class MergedMolecule():
 
             # Add the impropers to the merged molecule.
             edit_mol.setProperty("improper1", impropers)
+
+        # Set the force field properties.
+        edit_mol.setProperty("forcefield0", molecule0.property(ff0))
+        edit_mol.setProperty("forcefield1", molecule0.property(ff1))
 
         # Flag that this molecule is pertubable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
