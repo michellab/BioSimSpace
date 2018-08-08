@@ -26,6 +26,7 @@ single- and dual-topology free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Base as _SireBase
 import Sire.Maths as _SireMaths
 import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
@@ -1007,6 +1008,9 @@ class MergedMolecule():
 
             # Add the impropers to the merged molecule.
             edit_mol.setProperty("improper1", impropers)
+
+        # Flag that this molecule is pertubable.
+        edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
         # Return the merged molecule.
         return edit_mol.commit()
