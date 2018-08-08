@@ -1036,6 +1036,22 @@ class MergedMolecule():
             # Add the impropers to the merged molecule.
             edit_mol.setProperty("improper1", impropers)
 
+        # The number of potentials should be consistent for the "bond0"
+        # and "bond1" properties.
+        if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
+            raise RuntimeError("Inconsistent number of bonds in merged molecule!")
+
+        # Create the connectivity object. We know the connectivity is consistent
+        # at lambda = 0 and lambda = 1 so we can use either set of bonds.
+        c = _SireMol.Connectivity(edit_mol.info()).edit()
+
+        # Connect the bonded atoms.
+        for bond in edit_mol.property("bond0").potentials():
+            c.connect(bond.atom0(), bond.atom1())
+
+        # Set the "connectivity" property.
+        edit_mol.setProperty("connectivity", c.commit())
+
         # Set the force field properties.
         edit_mol.setProperty("forcefield0", molecule0.property(ff0))
         edit_mol.setProperty("forcefield1", molecule0.property(ff1))
