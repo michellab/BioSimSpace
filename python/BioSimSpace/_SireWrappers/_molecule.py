@@ -417,6 +417,8 @@ class Molecule():
         # Cannot merge an already merged molecule.
         if self._is_merged:
             raise IncompatibleError("This molecule has already been merged!")
+        if other._is_merged:
+            raise IncompatibleError("'other' has already been merged!")
 
         # Validate input.
 
