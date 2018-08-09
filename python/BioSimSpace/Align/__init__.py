@@ -332,7 +332,7 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create and return the merged molecule.
-    return molecule0.merge(molecule1, mapping, map0=map0, map1=map1)
+    return molecule0._merge(molecule1, mapping, map0=map0, map1=map1)
 
 def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared
