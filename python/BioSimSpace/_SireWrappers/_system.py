@@ -48,7 +48,8 @@ class System():
            Positional arguments
            --------------------
 
-           system : Sire.System.System
+           system : Sire.System.System, BioSimSpace._SireWrappers.System,
+                    BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
                A Sire System object.
         """
 
@@ -74,15 +75,16 @@ class System():
         # A list of BioSimSpace Molecule objects.
         elif type(system) is list:
             if not all(isinstance(x, _Molecule) for x in system):
-                raise TypeError("'system' must contain a of 'BioSimSpace._SireWrappers.Molecule' types.")
+                raise TypeError("'system' must contain a list of 'BioSimSpace._SireWrappers.Molecule' types.")
             else:
                 self._sire_system = _SireSystem.System("BioSimSpace System.")
                 self.addMolecules(system)
 
         # Invalid type.
         else:
-            raise TypeError("'system' must be of type 'Sire.System._System.System' "
-                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+            raise TypeError("'system' must be of type 'Sire.System._System.System', "
+                + "'BioSimSpace._SireWrappers.System', 'BioSimSpace._SireWrappers.Molecule', "
+                +  "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -191,7 +193,7 @@ class System():
            Positional arguments
            --------------------
 
-           molecules : BioSimSpace._SireWrappers.Molecule
+           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
         """
 
@@ -202,9 +204,11 @@ class System():
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
+
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
             pass
+
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
@@ -225,7 +229,7 @@ class System():
            Positional arguments
            --------------------
 
-           molecules : BioSimSpace._SireWrappers.Molecule
+           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
         """
 
@@ -236,9 +240,11 @@ class System():
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
+
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
             pass
+
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
@@ -257,7 +263,7 @@ class System():
            Positional arguments
            --------------------
 
-           molecules : BioSimSpace._SireWrappers.Molecule
+           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
         """
 
@@ -268,9 +274,11 @@ class System():
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
+
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
             pass
+
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "

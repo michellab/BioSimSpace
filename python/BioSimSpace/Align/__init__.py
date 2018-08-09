@@ -27,7 +27,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
-from .._SireWrappers import MergedMolecule as _MergedMolecule
 from .._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.Units as _Units
@@ -333,7 +332,7 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create and return the merged molecule.
-    return _MergedMolecule(molecule0, molecule1, mapping, map0=map0, map1=map1)
+    return molecule0.merge(molecule1, mapping, map0=map0, map1=map1)
 
 def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared
