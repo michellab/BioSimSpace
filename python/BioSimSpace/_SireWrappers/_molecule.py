@@ -648,8 +648,8 @@ class Molecule():
             bonds0 = molecule0.property(prop0)
             bonds1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of bonds in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda = 0.
+            # Create a list to store the indices of the additional bonds from
+            # molecule1 that are part of the merged molecule at lambda = 0.
             bond_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -712,8 +712,8 @@ class Molecule():
             angles0 = molecule0.property(prop0)
             angles1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of angles in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda = 0.
+            # Create a list to store the indices of the additional angles from
+            # molecule1 that are part of the merged molecule at lambda = 0.
             angle_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -783,8 +783,8 @@ class Molecule():
             dihedrals0 = molecule0.property(prop0)
             dihedrals1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of dihedrals in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda = 0.
+            # Create a list to store the indices of the additional dihedrals from
+            # molecule1 that are part of the merged molecule at lambda = 0.
             dihedral_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -862,8 +862,8 @@ class Molecule():
             impropers0 = molecule0.property(prop0)
             impropers1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of impropers in molecule1 that
-            # involve atoms that are part of the merged molecule at lambda = 0.
+            # Create a list to store the indices of the additional impropers from
+            # molecule1 that are part of the merged molecule at lambda = 0.
             improper_idxs = []
 
             # Get the molInfo object for molecule1.
@@ -1001,8 +1001,8 @@ class Molecule():
             bonds0 = molecule0.property(prop0)
             bonds1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of bonds in molecule0 that
-            # involve atoms that are part of the merged molecule at lambda = 1.
+            # Create a list to store the indices of the additional bonds from
+            # molecule0 that are part of the merged molecule at lambda = 1.
             bond_idxs = []
 
             # Loop over all bonds in molecule0
@@ -1023,6 +1023,7 @@ class Molecule():
                 # Extract the bond information.
                 atom0 = info1.atomIdx(bond.atom0())
                 atom1 = info1.atomIdx(bond.atom1())
+                exprn = bond.function()
 
                 # Map the atom indices to their position in the merged molecule.
 
@@ -1071,8 +1072,8 @@ class Molecule():
             angles0 = molecule0.property(prop0)
             angles1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of angles in molecule0 that
-            # involve atoms that are part of the merged molecule at lambda = 1.
+            # Create a list to store the indices of the additional angles from
+            # molecule0 that are part of the merged molecule at lambda = 1.
             angle_idxs = []
 
             # Loop over all angles in molecule0.
@@ -1150,8 +1151,8 @@ class Molecule():
             dihedrals0 = molecule0.property(prop0)
             dihedrals1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of dihedrals in molecule0 that
-            # involve atoms that are part of the merged molecule at lambda = 1.
+            # Create a list to store the indices of the additional dihedrals from
+            # molecule0 that are part of the merged molecule at lambda = 1.
             dihedral_idxs = []
 
             # Loop over all dihedrals in molecule0.
@@ -1237,8 +1238,8 @@ class Molecule():
             impropers0 = molecule0.property(prop0)
             impropers1 = molecule1.property(prop1)
 
-            # Create a list to store the indices of impropers in molecule0 that
-            # involve atoms that are part of the merged molecule at lambda = 1.
+            # Create a list to store the indices of the additional impropers from
+            # molecule0 that are part of the merged molecule at lambda = 1.
             improper_idxs = []
 
             # Loop over all impropers in molecule0.
@@ -1310,11 +1311,11 @@ class Molecule():
         if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
             raise RuntimeError("Inconsistent number of bonds in merged molecule!")
 
-        # Create the connectivity object. We know the connectivity is consistent
-        # at lambda = 0 and lambda = 1 so we can use either set of bonds.
+        # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
 
-        # Connect the bonded atoms.
+        # Connect the bonded atoms. Connectivity is the same at lambda = 0
+        # and lambda = 1.
         for bond in edit_mol.property("bond0").potentials():
             conn.connect(bond.atom0(), bond.atom1())
         conn = conn.commit()
@@ -1322,14 +1323,130 @@ class Molecule():
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
 
-        # Create the CLJNBPairs matrix.
+        # Create the CLJNBPairs matrices.
         ff = molecule0.property(ff0)
-        clj_scale_factors = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
-                                                   ff.vdw14ScaleFactor())
-        clj_nb_pairs = _SireMM.CLJNBPairs(conn, clj_scale_factors)
 
-        # Set the "intrascale" property.
-        edit_mol.setProperty("intrascale", clj_nb_pairs)
+        clj_nb_pairs0 = _SireMM.CLJNBPairs(edit_mol.info(),
+            _SireMM.CLJScaleFactor(0, 0))
+
+        # Loop over all atoms unique to molecule0.
+        for idx0 in atoms0_idx:
+            # Loop over all atoms unique to molecule1.
+            for idx1 in atoms1_idx:
+                # Map the index to its position in the merged molecule.
+                if idx1 in inv_mapping:
+                    idx1 = inv_mapping[idx1]
+                else:
+                    idx1 = new_idx[idx1]
+
+                # Work out the connection type between the atoms.
+                conn_type = conn.connectionType(idx0, idx1)
+
+                # The atoms aren't bonded.
+                if conn_type == 0:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(1, 1)
+                    clj_nb_pairs0.set(idx0, idx1, clj_scale_factor)
+
+                # The atoms are part of a dihedral.
+                elif conn_type == 4:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
+                                                              ff.vdw14ScaleFactor())
+                    clj_nb_pairs0.set(idx0, idx1, clj_scale_factor)
+
+        # Copy the intrascale matrix.
+        clj_nb_pairs1 = clj_nb_pairs0.__deepcopy__()
+
+        # Extract the intrascale property from both molecules.
+
+        # Get the user defined property names.
+        prop0 = "intrascale"
+        if prop0 in inv_map0:
+            prop0 = inv_map0["intrascale"]
+
+        prop1 = "intrascale"
+        if prop1 in inv_map1:
+            prop1 = inv_map1["intrascale"]
+
+        # Get the "intrascale" property from the two molecules.
+        intrascale0 = molecule0.property(prop0)
+        intrascale1 = molecule1.property(prop1)
+
+        # Copy the intrascale from molecule1 into clj_nb_pairs0.
+
+        # Perform a triangular loop over all atoms from molecule1.
+        for x in range(0, molecule1.nAtoms()):
+            # Convert to an AtomIdx.
+            idx = _SireMol.AtomIdx(x)
+
+            # Map the index to its position in the merged molecule.
+            if idx in inv_mapping:
+                idx = inv_mapping[idx]
+            else:
+                idx = new_idx[idx]
+
+            for y in range(x+1, molecule1.nAtoms()):
+                # Convert to an AtomIdx.
+                idy = _SireMol.AtomIdx(y)
+
+                # Map the index to its position in the merged molecule.
+                if idy in inv_mapping:
+                    idy = inv_mapping[idy]
+                else:
+                    idy = new_idx[idy]
+
+                # Get the intrascale value.
+                intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
+
+                # Only set if there is a non-zero value.
+                # Set using the re-mapped atom indices.
+                if not intra.coulomb() == 0:
+                    clj_nb_pairs0.set(idx, idy, intra)
+
+        # Now copy in all intrascale values from molecule0 into both
+        # clj_nb_pairs matrices.
+
+        # Perform a triangular loop over all atoms from molecule0.
+        for x in range(0, molecule0.nAtoms()):
+            for y in range(x+1, molecule0.nAtoms()):
+                # Get the intrascale value.
+                intra = intrascale0.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
+
+                # Set the value in the new matrices.
+                clj_nb_pairs0.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
+                clj_nb_pairs1.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
+
+        # Finally, copy the intrascale from molecule1 into clj_nb_pairs1.
+
+        # Perform a triangular loop over all atoms from molecule1.
+        for x in range(0, molecule1.nAtoms()):
+            # Convert to an AtomIdx.
+            idx = _SireMol.AtomIdx(x)
+
+            # Map the index to its position in the merged molecule.
+            if idx in inv_mapping:
+                idx = inv_mapping[idx]
+            else:
+                idx = new_idx[idx]
+
+            for y in range(x+1, molecule1.nAtoms()):
+                # Convert to an AtomIdx.
+                idy = _SireMol.AtomIdx(y)
+
+                # Map the index to its position in the merged molecule.
+                if idy in inv_mapping:
+                    idy = inv_mapping[idy]
+                else:
+                    idy = new_idx[idy]
+
+                # Get the intrascale value.
+                intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
+
+                # Set the value in the new matrix using the re-mapped atom indices.
+                clj_nb_pairs1.set(idx, idy, intra)
+
+        # Set the "intrascale" properties.
+        edit_mol.setProperty("intrascale0", clj_nb_pairs0)
+        edit_mol.setProperty("intrascale1", clj_nb_pairs1)
 
         # Set the "forcefield" properties.
         edit_mol.setProperty("forcefield0", molecule0.property(ff0))
