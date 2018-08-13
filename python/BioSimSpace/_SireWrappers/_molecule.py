@@ -1203,9 +1203,7 @@ class Molecule():
         # Copy the intrascale matrix.
         clj_nb_pairs1 = clj_nb_pairs0.__deepcopy__()
 
-        # Extract the intrascale property from both molecules.
-
-        # Get the user defined property names.
+        # Get the user defined "intrascale" property names.
         prop0 = "intrascale"
         if prop0 in inv_map0:
             prop0 = inv_map0["intrascale"]
