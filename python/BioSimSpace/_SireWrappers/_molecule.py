@@ -1370,7 +1370,7 @@ class Molecule():
 
         # Set the "forcefield" properties.
         edit_mol.setProperty("forcefield0", molecule0.property(ff0))
-        edit_mol.setProperty("forcefield1", molecule0.property(ff1))
+        edit_mol.setProperty("forcefield1", molecule1.property(ff1))
 
         # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
