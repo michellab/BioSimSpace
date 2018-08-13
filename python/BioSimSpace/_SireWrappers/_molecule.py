@@ -542,20 +542,12 @@ class Molecule():
             added.reparent(_SireMol.ResIdx(0))
             num += 1
 
-        # Create a dictionary to map between the indices of the unique atoms in
-        # molecule1 to their index within the new merged molecule.
-        new_idx = {}
-
-        # Add the atoms from the inverse mapping.
-        for idx1, idx0 in inv_mapping.items():
-            new_idx[idx1] = idx0
-
         # Now add all of the atoms from molecule1 that aren't mapped from molecule0.
         for atom in atoms1:
             added = cg.add(atom.name())
             added.renumber(_SireMol.AtomNum(num))
             added.reparent(_SireMol.ResIdx(0))
-            new_idx[atom.index()] = _SireMol.AtomIdx(num-1)
+            inv_mapping[atom.index()] = _SireMol.AtomIdx(num-1)
             num += 1
 
         # Commit the changes to the molecule.
@@ -609,7 +601,7 @@ class Molecule():
         # Add the atom properties from molecule1.
         for atom in atoms1:
             # Get the atom index in the merged molecule.
-            idx = new_idx[atom.index()]
+            idx = inv_mapping[atom.index()]
 
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
@@ -674,8 +666,8 @@ class Molecule():
                     exprn = bond.function()
 
                     # Map the atom indices to their position in the merged molecule.
-                    atom0 = new_idx[atom0]
-                    atom1 = new_idx[atom1]
+                    atom0 = inv_mapping[atom0]
+                    atom1 = inv_mapping[atom1]
 
                     # Set the new bond.
                     bonds.set(atom0, atom1, exprn)
@@ -722,9 +714,9 @@ class Molecule():
                        exprn = angle.function()
 
                        # Map the atom indices to their position in the merged molecule.
-                       atom0 = new_idx[atom0]
-                       atom1 = new_idx[atom1]
-                       atom2 = new_idx[atom2]
+                       atom0 = inv_mapping[atom0]
+                       atom1 = inv_mapping[atom1]
+                       atom2 = inv_mapping[atom2]
 
                        # Set the new angle.
                        angles.set(atom0, atom1, atom2, exprn)
@@ -774,10 +766,10 @@ class Molecule():
                        exprn = dihedral.function()
 
                        # Map the atom indices to their position in the merged molecule.
-                       atom0 = new_idx[atom0]
-                       atom1 = new_idx[atom1]
-                       atom2 = new_idx[atom2]
-                       atom3 = new_idx[atom3]
+                       atom0 = inv_mapping[atom0]
+                       atom1 = inv_mapping[atom1]
+                       atom2 = inv_mapping[atom2]
+                       atom3 = inv_mapping[atom3]
 
                        # Set the new dihedral.
                        dihedrals.set(atom0, atom1, atom2, atom3, exprn)
@@ -827,10 +819,10 @@ class Molecule():
                        exprn = improper.function()
 
                        # Map the atom indices to their position in the merged molecule.
-                       atom0 = new_idx[atom0]
-                       atom1 = new_idx[atom1]
-                       atom2 = new_idx[atom2]
-                       atom3 = new_idx[atom3]
+                       atom0 = inv_mapping[atom0]
+                       atom1 = inv_mapping[atom1]
+                       atom2 = inv_mapping[atom2]
+                       atom3 = inv_mapping[atom3]
 
                        # Set the new improper.
                        impropers.set(atom0, atom1, atom2, atom3, exprn)
@@ -845,7 +837,7 @@ class Molecule():
         # Add the atom properties from molecule1.
         for atom in molecule1.atoms():
             # Get the atom index in the merged molecule.
-            idx = new_idx[atom.index()]
+            idx = inv_mapping[atom.index()]
 
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
@@ -920,8 +912,8 @@ class Molecule():
                 exprn = bond.function()
 
                 # Map the atom indices to their position in the merged molecule.
-                atom0 = new_idx[atom0]
-                atom1 = new_idx[atom1]
+                atom0 = inv_mapping[atom0]
+                atom1 = inv_mapping[atom1]
 
                 # Set the new bond.
                 bonds.set(atom0, atom1, exprn)
@@ -974,9 +966,9 @@ class Molecule():
                 exprn = angle.function()
 
                 # Map the atom indices to their position in the merged molecule.
-                atom0 = new_idx[atom0]
-                atom1 = new_idx[atom1]
-                atom2 = new_idx[atom2]
+                atom0 = inv_mapping[atom0]
+                atom1 = inv_mapping[atom1]
+                atom2 = inv_mapping[atom2]
 
                 # Set the new angle.
                 angles.set(atom0, atom1, atom2, exprn)
@@ -1032,10 +1024,10 @@ class Molecule():
                 exprn = dihedral.function()
 
                 # Map the atom indices to their position in the merged molecule.
-                atom0 = new_idx[atom0]
-                atom1 = new_idx[atom1]
-                atom2 = new_idx[atom2]
-                atom3 = new_idx[atom3]
+                atom0 = inv_mapping[atom0]
+                atom1 = inv_mapping[atom1]
+                atom2 = inv_mapping[atom2]
+                atom3 = inv_mapping[atom3]
 
                 # Set the new dihedral.
                 dihedrals.set(atom0, atom1, atom2, atom3, exprn)
@@ -1093,10 +1085,10 @@ class Molecule():
                 exprn = improper.function()
 
                 # Map the atom indices to their position in the merged molecule.
-                atom0 = new_idx[atom0]
-                atom1 = new_idx[atom1]
-                atom2 = new_idx[atom2]
-                atom3 = new_idx[atom3]
+                atom0 = inv_mapping[atom0]
+                atom1 = inv_mapping[atom1]
+                atom2 = inv_mapping[atom2]
+                atom3 = inv_mapping[atom3]
 
                 # Set the new improper.
                 impropers.set(atom0, atom1, atom2, atom3, exprn)
@@ -1156,14 +1148,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            idx = new_idx[idx]
+            idx = inv_mapping[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                idy = new_idx[idy]
+                idy = inv_mapping[idy]
 
                 if c1.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
                    conn.connectionType(idx, idy):
@@ -1184,7 +1176,7 @@ class Molecule():
             # Loop over all atoms unique to molecule1.
             for idx1 in atoms1_idx:
                 # Map the index to its position in the merged molecule.
-                idx1 = new_idx[idx1]
+                idx1 = inv_mapping[idx1]
 
                 # Work out the connection type between the atoms.
                 conn_type = conn.connectionType(idx0, idx1)
@@ -1224,14 +1216,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            idx = new_idx[idx]
+            idx = inv_mapping[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                idy = new_idx[idy]
+                idy = inv_mapping[idy]
 
                 # Get the intrascale value.
                 intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
@@ -1265,14 +1257,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            idx = new_idx[idx]
+            idx = inv_mapping[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                idy = new_idx[idy]
+                idy = inv_mapping[idy]
 
                 # Get the intrascale value.
                 intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
