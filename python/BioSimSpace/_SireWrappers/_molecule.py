@@ -872,7 +872,7 @@ class Molecule():
                 else:
                     # This is a perturbable property. Rename to "property1", e.g. "charge1".
                     if name in shared_props:
-                        name = name + "0"
+                        name = name + "1"
 
                     # Add the property to the atom in the merged molecule.
                     edit_mol = edit_mol.atom(atom.index()).setProperty(name, atom.property(prop)).molecule()
