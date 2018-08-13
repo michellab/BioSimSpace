@@ -546,6 +546,10 @@ class Molecule():
         # molecule1 to their index within the new merged molecule.
         new_idx = {}
 
+        # Add the atoms from the inverse mapping.
+        for idx1, idx0 in inv_mapping.items():
+            new_idx[idx1] = idx0
+
         # Now add all of the atoms from molecule1 that aren't mapped from molecule0.
         for atom in atoms1:
             added = cg.add(atom.name())
@@ -670,16 +674,8 @@ class Molecule():
                     exprn = bond.function()
 
                     # Map the atom indices to their position in the merged molecule.
-
-                    if atom0 in inv_mapping:
-                        atom0 = inv_mapping[atom0]
-                    else:
-                        atom0 = new_idx[atom0]
-
-                    if atom1 in inv_mapping:
-                        atom1 = inv_mapping[atom1]
-                    else:
-                        atom1 = new_idx[atom1]
+                    atom0 = new_idx[atom0]
+                    atom1 = new_idx[atom1]
 
                     # Set the new bond.
                     bonds.set(atom0, atom1, exprn)
@@ -726,21 +722,9 @@ class Molecule():
                        exprn = angle.function()
 
                        # Map the atom indices to their position in the merged molecule.
-
-                       if atom0 in inv_mapping:
-                           atom0 = inv_mapping[atom0]
-                       else:
-                           atom0 = new_idx[atom0]
-
-                       if atom1 in inv_mapping:
-                           atom1 = inv_mapping[atom1]
-                       else:
-                           atom1 = new_idx[atom1]
-
-                       if atom2 in inv_mapping:
-                           atom2 = inv_mapping[atom2]
-                       else:
-                           atom2 = new_idx[atom2]
+                       atom0 = new_idx[atom0]
+                       atom1 = new_idx[atom1]
+                       atom2 = new_idx[atom2]
 
                        # Set the new angle.
                        angles.set(atom0, atom1, atom2, exprn)
@@ -790,26 +774,10 @@ class Molecule():
                        exprn = dihedral.function()
 
                        # Map the atom indices to their position in the merged molecule.
-
-                       if atom0 in inv_mapping:
-                           atom0 = inv_mapping[atom0]
-                       else:
-                           atom0 = new_idx[atom0]
-
-                       if atom1 in inv_mapping:
-                           atom1 = inv_mapping[atom1]
-                       else:
-                           atom1 = new_idx[atom1]
-
-                       if atom2 in inv_mapping:
-                           atom2 = inv_mapping[atom2]
-                       else:
-                           atom2 = new_idx[atom2]
-
-                       if atom3 in inv_mapping:
-                           atom3 = inv_mapping[atom3]
-                       else:
-                           atom3 = new_idx[atom3]
+                       atom0 = new_idx[atom0]
+                       atom1 = new_idx[atom1]
+                       atom2 = new_idx[atom2]
+                       atom3 = new_idx[atom3]
 
                        # Set the new dihedral.
                        dihedrals.set(atom0, atom1, atom2, atom3, exprn)
@@ -859,26 +827,10 @@ class Molecule():
                        exprn = improper.function()
 
                        # Map the atom indices to their position in the merged molecule.
-
-                       if atom0 in inv_mapping:
-                           atom0 = inv_mapping[atom0]
-                       else:
-                           atom0 = new_idx[atom0]
-
-                       if atom1 in inv_mapping:
-                           atom1 = inv_mapping[atom1]
-                       else:
-                           atom1 = new_idx[atom1]
-
-                       if atom2 in inv_mapping:
-                           atom2 = inv_mapping[atom2]
-                       else:
-                           atom2 = new_idx[atom2]
-
-                       if atom3 in inv_mapping:
-                           atom3 = inv_mapping[atom3]
-                       else:
-                           atom3 = new_idx[atom3]
+                       atom0 = new_idx[atom0]
+                       atom1 = new_idx[atom1]
+                       atom2 = new_idx[atom2]
+                       atom3 = new_idx[atom3]
 
                        # Set the new improper.
                        impropers.set(atom0, atom1, atom2, atom3, exprn)
@@ -892,12 +844,8 @@ class Molecule():
 
         # Add the atom properties from molecule1.
         for atom in molecule1.atoms():
-            # This atom has a match in molecule0.
-            if atom.index() in inv_mapping:
-                idx = inv_mapping[atom.index()]
-            # This atom is unique to molecule, get its index in the merged molecule.
-            else:
-                idx = new_idx[atom.index()]
+            # Get the atom index in the merged molecule.
+            idx = new_idx[atom.index()]
 
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
@@ -972,16 +920,8 @@ class Molecule():
                 exprn = bond.function()
 
                 # Map the atom indices to their position in the merged molecule.
-
-                if atom0 in inv_mapping:
-                    atom0 = inv_mapping[atom0]
-                else:
-                    atom0 = new_idx[atom0]
-
-                if atom1 in inv_mapping:
-                    atom1 = inv_mapping[atom1]
-                else:
-                    atom1 = new_idx[atom1]
+                atom0 = new_idx[atom0]
+                atom1 = new_idx[atom1]
 
                 # Set the new bond.
                 bonds.set(atom0, atom1, exprn)
@@ -1034,21 +974,9 @@ class Molecule():
                 exprn = angle.function()
 
                 # Map the atom indices to their position in the merged molecule.
-
-                if atom0 in inv_mapping:
-                    atom0 = inv_mapping[atom0]
-                else:
-                    atom0 = new_idx[atom0]
-
-                if atom1 in inv_mapping:
-                    atom1 = inv_mapping[atom1]
-                else:
-                    atom1 = new_idx[atom1]
-
-                if atom2 in inv_mapping:
-                    atom2 = inv_mapping[atom2]
-                else:
-                    atom2 = new_idx[atom2]
+                atom0 = new_idx[atom0]
+                atom1 = new_idx[atom1]
+                atom2 = new_idx[atom2]
 
                 # Set the new angle.
                 angles.set(atom0, atom1, atom2, exprn)
@@ -1104,26 +1032,10 @@ class Molecule():
                 exprn = dihedral.function()
 
                 # Map the atom indices to their position in the merged molecule.
-
-                if atom0 in inv_mapping:
-                    atom0 = inv_mapping[atom0]
-                else:
-                    atom0 = new_idx[atom0]
-
-                if atom1 in inv_mapping:
-                    atom1 = inv_mapping[atom1]
-                else:
-                    atom1 = new_idx[atom1]
-
-                if atom2 in inv_mapping:
-                    atom2 = inv_mapping[atom2]
-                else:
-                    atom2 = new_idx[atom2]
-
-                if atom3 in inv_mapping:
-                    atom3 = inv_mapping[atom3]
-                else:
-                    atom3 = new_idx[atom3]
+                atom0 = new_idx[atom0]
+                atom1 = new_idx[atom1]
+                atom2 = new_idx[atom2]
+                atom3 = new_idx[atom3]
 
                 # Set the new dihedral.
                 dihedrals.set(atom0, atom1, atom2, atom3, exprn)
@@ -1181,26 +1093,10 @@ class Molecule():
                 exprn = improper.function()
 
                 # Map the atom indices to their position in the merged molecule.
-
-                if atom0 in inv_mapping:
-                    atom0 = inv_mapping[atom0]
-                else:
-                    atom0 = new_idx[atom0]
-
-                if atom1 in inv_mapping:
-                    atom1 = inv_mapping[atom1]
-                else:
-                    atom1 = new_idx[atom1]
-
-                if atom2 in inv_mapping:
-                    atom2 = inv_mapping[atom2]
-                else:
-                    atom2 = new_idx[atom2]
-
-                if atom3 in inv_mapping:
-                    atom3 = inv_mapping[atom3]
-                else:
-                    atom3 = new_idx[atom3]
+                atom0 = new_idx[atom0]
+                atom1 = new_idx[atom1]
+                atom2 = new_idx[atom2]
+                atom3 = new_idx[atom3]
 
                 # Set the new improper.
                 impropers.set(atom0, atom1, atom2, atom3, exprn)
@@ -1260,20 +1156,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            if idx in inv_mapping:
-                idx = inv_mapping[idx]
-            else:
-                idx = new_idx[idx]
+            idx = new_idx[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                if idy in inv_mapping:
-                    idy = inv_mapping[idy]
-                else:
-                    idy = new_idx[idy]
+                idy = new_idx[idy]
 
                 if c1.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
                    conn.connectionType(idx, idy):
@@ -1294,10 +1184,7 @@ class Molecule():
             # Loop over all atoms unique to molecule1.
             for idx1 in atoms1_idx:
                 # Map the index to its position in the merged molecule.
-                if idx1 in inv_mapping:
-                    idx1 = inv_mapping[idx1]
-                else:
-                    idx1 = new_idx[idx1]
+                idx1 = new_idx[idx1]
 
                 # Work out the connection type between the atoms.
                 conn_type = conn.connectionType(idx0, idx1)
@@ -1339,20 +1226,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            if idx in inv_mapping:
-                idx = inv_mapping[idx]
-            else:
-                idx = new_idx[idx]
+            idx = new_idx[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                if idy in inv_mapping:
-                    idy = inv_mapping[idy]
-                else:
-                    idy = new_idx[idy]
+                idy = new_idx[idy]
 
                 # Get the intrascale value.
                 intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
@@ -1386,20 +1267,14 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            if idx in inv_mapping:
-                idx = inv_mapping[idx]
-            else:
-                idx = new_idx[idx]
+            idx = new_idx[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                if idy in inv_mapping:
-                    idy = inv_mapping[idy]
-                else:
-                    idy = new_idx[idy]
+                idy = new_idx[idy]
 
                 # Get the intrascale value.
                 intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
