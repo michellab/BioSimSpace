@@ -902,8 +902,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map0:
-                    name = inv_map0[prop]
+                if prop in inv_map1:
+                    name = inv_map1[prop]
                 else:
                     name = prop
 
@@ -919,8 +919,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map1:
-                    name = inv_map1[prop]
+                if prop in inv_map0:
+                    name = inv_map0[prop]
                 else:
                     name = prop
 
