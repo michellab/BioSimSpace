@@ -1240,6 +1240,46 @@ class Molecule():
             conn.connect(bond.atom0(), bond.atom1())
         conn = conn.commit()
 
+        # Get the connectivity of the two molecules.
+        c0 = molecule0.property("connectivity")
+        c1 = molecule1.property("connectivity")
+
+        # Check that the merge hasn't modified the connectivity.
+
+        # molecule0
+        for x in range(0, molecule0.nAtoms()):
+            for y in range(x+1, molecule0.nAtoms()):
+                if c0.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
+                   conn.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)):
+                       raise _IncompatibleError("Merge has changed the molecular connectivity! "
+                           + "Check your atom mapping.")
+
+        # molecule1
+        for x in range(0, molecule1.nAtoms()):
+            # Convert to an AtomIdx.
+            idx = _SireMol.AtomIdx(x)
+
+            # Map the index to its position in the merged molecule.
+            if idx in inv_mapping:
+                idx = inv_mapping[idx]
+            else:
+                idx = new_idx[idx]
+
+            for y in range(x+1, molecule1.nAtoms()):
+                # Convert to an AtomIdx.
+                idy = _SireMol.AtomIdx(y)
+
+                # Map the index to its position in the merged molecule.
+                if idy in inv_mapping:
+                    idy = inv_mapping[idy]
+                else:
+                    idy = new_idx[idy]
+
+                if c1.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
+                   conn.connectionType(idx, idy):
+                       raise _IncompatibleError("Merge has changed the molecular connectivity! "
+                           + "Check your atom mapping.")
+
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
 
