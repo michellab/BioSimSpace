@@ -1293,7 +1293,7 @@ class Molecule():
 
         # Copy the intrascale from molecule1 into clj_nb_pairs0.
 
-        # Perform a triangular loop over all atoms from molecule1.
+        # Perform a triangular loop over atoms from molecule1.
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
             idx = _SireMol.AtomIdx(x)
@@ -1325,19 +1325,22 @@ class Molecule():
         # Now copy in all intrascale values from molecule0 into both
         # clj_nb_pairs matrices.
 
-        # Perform a triangular loop over all atoms from molecule0.
+        # Perform a triangular loop over atoms from molecule0.
         for x in range(0, molecule0.nAtoms()):
             for y in range(x+1, molecule0.nAtoms()):
                 # Get the intrascale value.
                 intra = intrascale0.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
 
-                # Set the value in the new matrices.
+                # Set the value in the new matrix, overwriting existing value.
                 clj_nb_pairs0.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
-                clj_nb_pairs1.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
+
+                # Only set if there is a non-zero value.
+                if not intra.coulomb() == 0:
+                    clj_nb_pairs1.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
 
         # Finally, copy the intrascale from molecule1 into clj_nb_pairs1.
 
-        # Perform a triangular loop over all atoms from molecule1.
+        # Perform a triangular loop over atoms from molecule1.
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
             idx = _SireMol.AtomIdx(x)
@@ -1361,7 +1364,7 @@ class Molecule():
                 # Get the intrascale value.
                 intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
 
-                # Set the value in the new matrix using the re-mapped atom indices.
+                # Set the value in the new matrix, overwriting existing value.
                 clj_nb_pairs1.set(idx, idy, intra)
 
         # Set the "intrascale" properties.
