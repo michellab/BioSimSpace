@@ -74,6 +74,10 @@ class Molecule():
         # Set the molecule as un-merged.
         self._is_merged = False
 
+        # Set the components of the merged molecule to None.
+        self._molecule0 = None
+        self._molecule1 = None
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
@@ -116,6 +120,30 @@ class Molecule():
 
         # Create and return a new system.
         return _System(molecules)
+
+    def molecule0(self):
+        """Return the component of the merged molecule at lambda = 0.
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule, None
+               The component of the merged molecule at lambda = 0.
+               Returns None if this isn't a merged molecule.
+        """
+        return self._molecule0
+
+    def molecule1(self):
+        """Return the component of the merged molecule at lambda = 1.
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule, None
+               The component of the merged molecule at lambda = 1.
+               Returns None if this isn't a merged molecule.
+        """
+        return self._molecule1
 
     def nAtoms(self):
         """Return the number of atoms in the molecule."""
@@ -1288,6 +1316,10 @@ class Molecule():
 
         # Flag that the molecule has been merged.
         mol._is_merged = True
+
+        # Store the components of the merged molecule.
+        mol._molecule0 = Molecule(molecule0)
+        mol._molecule1 = Molecule(molecule1)
 
         # Return the new molecule.
         return mol
