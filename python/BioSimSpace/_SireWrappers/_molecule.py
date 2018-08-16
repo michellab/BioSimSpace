@@ -72,6 +72,8 @@ class Molecule():
         # A Sire Molecule object.
         if type(molecule) is _SireMol.Molecule:
             self._sire_molecule = molecule.__deepcopy__()
+            if self._sire_molecule.hasProperty("is_perturbable"):
+                self._convertFromMergedMolecule()
 
         # Another BioSimSpace Molecule object.
         elif type(molecule) is Molecule:
@@ -458,6 +460,27 @@ class Molecule():
 
         # Commit the changes.
         self._sire_molecule = edit_mol.commit()
+
+    def _convertFromMergedMolecule(self):
+        """Convert from a merged molecule."""
+
+        # Get the property keys.
+        props = self._sire_molecule.propertyKeys()
+
+        # Create maps for the properties at lambda = 0 and 1.
+
+        map0 = {}
+        map1 = {}
+        for prop in props:
+            if prop[-1] == "0":
+                map0[prop[:-1]] = prop
+            elif prop[-1] == "1":
+                map1[prop[:-1]] = prop
+
+        # Need to create two new Sire molecules and copy across the
+        # atoms and properties from the two sub-molecules. These will
+        # be all of the atoms with non-zero "LJ" and "charge" properties
+        # at lambda = 0 and 1.
 
     def _fixCharge(self, map={}):
         """Make the molecular charge an integer value.
