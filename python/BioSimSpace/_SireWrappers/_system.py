@@ -183,7 +183,7 @@ class System():
             # Reset the map.
             _map = map
 
-            # This is a merged molecule.
+            # If the molecule is merged, then re-map the charge property.
             if mol.isMerged():
                 if is_lambda1:
                     _map = { "charge" : "charge1" }
@@ -192,7 +192,7 @@ class System():
 
             # Add the charge.
             try:
-                charge += mol.charge()
+                charge += mol.charge(_map)
             except:
                 pass
 
@@ -368,6 +368,10 @@ class System():
         # Loop over all of the molecules in the group and append to the list.
         for num in nums:
             mols.append(_Molecule(molgrp[num]))
+
+            # This is a merged molecule.
+            if mols[-1]._sire_molecule.hasProperty("is_perturbable"):
+                mols[-1]._is_merged = True
 
         return mols
 

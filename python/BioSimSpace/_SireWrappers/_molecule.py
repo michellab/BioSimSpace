@@ -56,21 +56,6 @@ class Molecule():
                A Sire Molecule object.
         """
 
-        # Check that the molecule is valid.
-
-        # A Sire Molecule object.
-        if type(molecule) is _SireMol.Molecule:
-            self._sire_molecule = molecule.__deepcopy__()
-
-        # Another BioSimSpace Molecule object.
-        elif type(molecule) is Molecule:
-            self._sire_molecule = molecule._sire_molecule.__deepcopy__()
-
-        # Invalid type.
-        else:
-            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
-                + "or 'BioSimSpace._SireWrappers.Molecule'.")
-
         # Set the force field variable. This records the force field with which
         # the molecule has been parameterised, i.e. by BSS.Parameters.
         self._forcefield = None
@@ -81,6 +66,27 @@ class Molecule():
         # Set the components of the merged molecule to None.
         self._molecule0 = None
         self._molecule1 = None
+
+        # Check that the molecule is valid.
+
+        # A Sire Molecule object.
+        if type(molecule) is _SireMol.Molecule:
+            self._sire_molecule = molecule.__deepcopy__()
+
+        # Another BioSimSpace Molecule object.
+        elif type(molecule) is Molecule:
+            self._sire_molecule = molecule._sire_molecule.__deepcopy__()
+            if molecule._molecule0 is not None:
+                self._molecule0 = Molecule(molecule._molecule0)
+            if molecule._molecule1 is not None:
+                self._molecule1 = Molecule(molecule._molecule1)
+            self._forcefield = molecule._forcefield
+            self._is_merged = molecule._is_merged
+
+        # Invalid type.
+        else:
+            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
+                + "or 'BioSimSpace._SireWrappers.Molecule'.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -165,7 +171,7 @@ class Molecule():
         """Whether this molecule has been merged with another."""
         return self._is_merged
 
-    def charge(self, map={}):
+    def charge(self, map={}, is_lambda1=False):
         """Return the total molecular charge.
 
            Keyword argument
@@ -175,10 +181,23 @@ class Molecule():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+              Whether to use the charge at lambda = 1 if the molecule is merged.
         """
 
+        # Copy the map.
+        _map = map
+
+        # This is a merged molecule.
+        if self.isMerged():
+            if is_lambda1:
+                _map = { "charge" : "charge1" }
+            else:
+                _map = { "charge" : "charge0" }
+
         # Calculate the charge.
-        charge = self._sire_molecule.evaluate().charge(map).value()
+        charge = self._sire_molecule.evaluate().charge(_map).value()
 
         # Return the charge.
         return charge * _Units.Charge.electron_charge
