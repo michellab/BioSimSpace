@@ -20,19 +20,13 @@
 #####################################################################
 
 """
-A set of common physical units.
+Charge units.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from . import Area
-from . import Charge
-from . import Energy
-from . import Length
-from . import Pressure
-from . import Temperature
-from . import Time
-from . import Volume
+from ...Types import Charge as _Charge
 
-# Whether to allow operations between offset units, see here for details:
-# http://pint.readthedocs.io/en/latest/nonmult.html
-allow_offset = False
+__all__ = ["electron_charge", "coulomb"]
+
+electron_charge = _Charge(1, "ELECTRON CHARGE")
+coulomb = _Charge(1, "COULOMB")
