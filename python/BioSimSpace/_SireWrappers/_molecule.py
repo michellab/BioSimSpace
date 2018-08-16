@@ -550,7 +550,7 @@ class Molecule():
         del(props1)
 
         # Create a new molecule to hold the merged molecule.
-        molecule = _SireMol.Molecule("Merged Molecule")
+        molecule = _SireMol.Molecule("Merged_Molecule")
 
         # Add a single residue called LIG.
         res = molecule.edit().add(_SireMol.ResNum(1))
