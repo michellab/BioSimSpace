@@ -25,6 +25,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ._area import *
+from ._charge import *
 from ._energy import *
 from ._length import *
 from ._pressure import *

@@ -92,7 +92,7 @@ class Energy(_Type):
             return Energy(mag, "KILO CALORIES PER MOL")
 
     def _convert_to(self, unit):
-        """Return the temperature in a different unit.
+        """Return the energy in a different unit.
 
            Positional arguments:
 

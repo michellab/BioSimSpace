@@ -85,7 +85,7 @@ class Pressure(_Type):
             return Pressure(mag, "ATMOSPHERE")
 
     def _convert_to(self, unit):
-        """Return the temperature in a different unit.
+        """Return the pressure in a different unit.
 
            Positional arguments:
 
