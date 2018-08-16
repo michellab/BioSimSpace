@@ -37,6 +37,8 @@ import Sire.Vol as _SireVol
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
+import BioSimSpace.Units as _Units
+
 from pytest import approx as _approx
 
 __all__ = ["Molecule"]
@@ -162,6 +164,24 @@ class Molecule():
     def isMerged(self):
         """Whether this molecule has been merged with another."""
         return self._is_merged
+
+    def charge(self, map={}):
+        """Return the total molecular charge.
+
+           Keyword argument
+           ----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Calculate the charge.
+        charge = self._sire_molecule.evaluate().charge(map).value()
+
+        # Return the charge.
+        return charge * _Units.Charge.electron_charge
 
     def translate(self, vector, map={}):
         """Translate the molecule.
@@ -439,7 +459,7 @@ class Molecule():
             prop = "charge"
 
         # Calculate the charge.
-        charge = self._sire_molecule.evaluate().charge(map).value()
+        charge = self.charge().magnitude()
 
         # Calculate the difference from the nearest integer value.
         delta = round(charge) - charge
