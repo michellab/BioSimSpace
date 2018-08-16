@@ -161,7 +161,7 @@ class Molecule():
         """Whether this molecule has been merged with another."""
         return self._is_merged
 
-    def translate(self, vector):
+    def translate(self, vector, map={}):
         """Translate the molecule.
 
            Positional arguments
@@ -169,6 +169,15 @@ class Molecule():
 
            vector : list, tuple
                The translation vector (in Angstroms).
+
+
+           Keyword argument
+           ----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Convert tuple to a list.
@@ -192,7 +201,7 @@ class Molecule():
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
         # Perform the translation.
-        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec)).commit()
+        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec), map).commit()
 
     def toSystem(self):
         """Convert a single Molecule to a System."""
@@ -1331,7 +1340,6 @@ class Molecule():
            -----------------
 
            map : dict
-
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }

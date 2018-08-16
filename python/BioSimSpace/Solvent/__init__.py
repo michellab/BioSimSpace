@@ -130,10 +130,10 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
+    molecule, box, shell, map = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spc", 3, ion_conc, is_neutral)
+    return _solvate(molecule, box, shell, "spc", 3, ion_conc, is_neutral, map=map)
 
 def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add SPC/E solvent.
@@ -174,10 +174,10 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
+    molecule, box, shell, map = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spce", 3, ion_conc, is_neutral)
+    return _solvate(molecule, box, shell, "spce", 3, ion_conc, is_neutral, map=map)
 
 def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP3P solvent.
@@ -218,10 +218,10 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
+    molecule, box, shell, map = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "tip3p", 3, ion_conc, is_neutral)
+    return _solvate(molecule, box, shell, "tip3p", 3, ion_conc, is_neutral, map=map)
 
 def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP4P solvent.
@@ -262,10 +262,10 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
+    molecule, box, shell, map = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip4p", 4, ion_conc, is_neutral)
+    return _solvate(molecule, box, shell, "tip4p", 4, ion_conc, is_neutral, map=map)
 
 def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map={}):
     """Add TIP5P solvent.
@@ -306,10 +306,10 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True, map=
             + "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
+    molecule, box, shell, map = _validate_input(molecule, box, shell, ion_conc, is_neutral, map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip5p", 5, ion_conc, is_neutral)
+    return _solvate(molecule, box, shell, "tip5p", 5, ion_conc, is_neutral, map=map)
 
 def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
     """Internal function to validate function arguments.
@@ -341,7 +341,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
        Returns
        -------
 
-       (molecule, box, shell) : tuple
+       (molecule, box, shell, map) : tuple
            The validated input arguments.
     """
 
@@ -388,6 +388,21 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
     if type(map) is not dict:
         raise TypeError("'map' must be of type 'dict'")
 
+    # If the molecule is merged, make sure the user has remapped the coordinates
+    # property.
+    if molecule.isMerged():
+        # No mapping is present. Default to solvating using the coordinates
+        # at lambda = 0.
+        if not "coordinates" in map:
+            map["coordinates"] = "coordinates0"
+        # The mapping is wrong, again use lambda = 0 default.
+        else:
+            if map["coordinates"] != "coordinates0" and \
+               map["coordinates"] != "coordinates1":
+                   _warnings.warn("Incorrect coordinate mapping for merged molecule. "
+                        + "Using coordiantes from lambda = 0.")
+                   map["coordinates"] = "coordinates0"
+
     if type(ion_conc) is not float and type(ion_conc) is not int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
 
@@ -395,10 +410,10 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, map):
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
     # Check that the box is large enough to hold the molecule.
-    if molecule is not None and not _check_box_size(molecule, box):
+    if molecule is not None and not _check_box_size(molecule, box, map):
         raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
-    return (molecule, box, shell)
+    return (molecule, box, shell, map)
 
 def _solvate(molecule, box, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, map={}):
@@ -437,7 +452,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
     if molecule is not None:
         # Store the centre of the molecule.
-        center = molecule._getAABox().center()
+        center = molecule._getAABox(map).center()
 
         # Work out the vector from the centre of the molecule to the centre of the
         # water box, converting the distance in each direction to Angstroms.
@@ -447,7 +462,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Translate the molecule. This allows us to create a water box
         # around the molecule.
-        molecule.translate(vec)
+        molecule.translate(vec, map)
 
     # Store the current working directory.
     dir = _os.getcwd()
@@ -616,7 +631,7 @@ def _solvate(molecule, box, shell, model, num_point,
     if molecule is not None:
         # Translate the molecule and water back to the original position.
         vec = [-x for x in vec]
-        molecule.translate(vec)
+        molecule.translate(vec, map)
         water.translate(vec)
 
     # Create a new system by adding the water to the original molecule.
@@ -642,7 +657,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
     return system
 
-def _check_box_size(molecule, box):
+def _check_box_size(molecule, box, map={}):
     """Internal function to check that box is big enough for the molecule.
 
        Positional arguments
@@ -653,10 +668,19 @@ def _check_box_size(molecule, box):
 
        box : [ BioSimSpace.Types.Length ]
            A list containing the box size in each dimension (in nm).
+
+
+       Keyword arguments
+       -----------------
+
+       map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Get the axis-aligned bounding box of the molecule/system.
-    aabox = molecule._getAABox()
+    aabox = molecule._getAABox(map)
 
     # Calculate the box size in each dimension, storing each component as a
     # length in Angstroms.
