@@ -33,6 +33,8 @@ import Sire.Vol as _SireVol
 
 from ..Types import Length as _Length
 
+import BioSimSpace.Units as _Units
+
 __all__ = ["System"]
 
 class _MolWithResName(_SireMol.MolWithResID):
@@ -157,6 +159,45 @@ class System():
             tally += self._sire_system[n].nAtoms()
 
         return tally
+
+    def charge(self, map={}, is_lambda1=False):
+        """Return the total molecular charge.
+
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+              Whether to use the charge at lambda = 1 if the molecule is merged.
+        """
+
+        # Zero the charge.
+        charge = 0 * _Units.Charge.electron_charge
+
+        # Loop over all molecules and add the charge.
+        for mol in self.getMolecules():
+            # Reset the map.
+            _map = map
+
+            # This is a merged molecule.
+            if mol.isMerged():
+                if is_lambda1:
+                    _map = { "charge" : "charge1" }
+                else:
+                    _map = { "charge" : "charge0" }
+
+            # Add the charge.
+            try:
+                charge += mol.charge()
+            except:
+                pass
+
+        # Return the total charge.
+        return charge
 
     def fileFormat(self, map={}):
         """Return the file formats associated with the system.
