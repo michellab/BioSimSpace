@@ -192,6 +192,9 @@ class Process():
                 print("Parameterisation failed! Check output: '%s.zip'" % self._hash)
                 return None
         else:
+            # Fix the charges so that the total is integer values.
+            self._new_molecule._fixCharge()
+
             return self._new_molecule
 
     def getHash(self):

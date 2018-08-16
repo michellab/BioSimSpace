@@ -37,6 +37,8 @@ import Sire.Vol as _SireVol
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
+from pytest import approx as _approx
+
 __all__ = ["Molecule"]
 
 class Molecule():
@@ -416,6 +418,50 @@ class Molecule():
                     raise _IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
 
         # Commit the changes.
+        self._sire_molecule = edit_mol.commit()
+
+    def _fixCharge(self, map={}):
+        """Make the molecular charge an integer value.
+
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A dictionary that maps "properties" in this molecule to their
+               user defined values. This allows the user to refer to properties
+               with their own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Get the user defined charge property.
+        if "charge" in map:
+            prop = map["charge"]
+        else:
+            prop = "charge"
+
+        # Calculate the charge.
+        charge = self._sire_molecule.evaluate().charge(map).value()
+
+        # Calculate the difference from the nearest integer value.
+        delta = round(charge) - charge
+
+        # The difference is too small to care about.
+        if charge + delta == _approx(charge):
+            return
+
+        # Normalise by the number of atoms.
+        delta /= self.nAtoms()
+
+        # Make the molecule editable.
+        edit_mol = self._sire_molecule.edit()
+
+        # Shift the charge of each atom in the molecule by delta.
+        for atom in edit_mol.atoms():
+            charge = edit_mol.atom(atom.index()).property(prop).value()
+            edit_mol = edit_mol.atom(atom.index()) \
+                               .setProperty(prop, (charge + delta)*_SireUnits.e_charge) \
+                               .molecule()
+
+        # Update the Sire molecule.
         self._sire_molecule = edit_mol.commit()
 
     def _merge(self, other, mapping, map0={}, map1={}):
