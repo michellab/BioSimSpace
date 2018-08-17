@@ -464,23 +464,70 @@ class Molecule():
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""
 
-        # Get the property keys.
-        props = self._sire_molecule.propertyKeys()
+        # We need to create two new Sire molecules and copy across the
+        # atoms and properties from the two sub-molecules.
 
-        # Create maps for the properties at lambda = 0 and 1.
+        # Try to get the list of atom indices in each molecule.
+        try:
+            idx0 = self._sire_molecule.property("atoms0")
+            idx1 = self._sire_molecule.property("atoms1")
+        except:
+            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
 
-        map0 = {}
-        map1 = {}
-        for prop in props:
-            if prop[-1] == "0":
-                map0[prop[:-1]] = prop
-            elif prop[-1] == "1":
-                map1[prop[:-1]] = prop
+        # Create two selection objects to extract the atoms.
+        sel0 = self._sire_molecule.selection()
+        sel1 = self._sire_molecule.selection()
+        sel0.deselectAll()
+        sel1.deselectAll()
 
-        # Need to create two new Sire molecules and copy across the
-        # atoms and properties from the two sub-molecules. These will
-        # be all of the atoms with non-zero "LJ" and "charge" properties
-        # at lambda = 0 and 1.
+        try:
+            # Loop over all atoms in the merged molecule and add the unique
+            # atoms for each component.
+            for idx in idx0:
+                sel0.select(_SireMol.AtomIdx(idx))
+            for idx in idx1:
+                sel1.select(_SireMol.AtomIdx(idx))
+        except:
+            raise _IncompatibleError("Mismatched atom indices in the merged molecule!")
+
+        # Use the selections to create two partial molecules for the atoms
+        # at lamba = 0/1.
+        par_mol0 = _SireMol.PartialMolecule(self._sire_molecule, sel0)
+        par_mol1 = _SireMol.PartialMolecule(self._sire_molecule, sel1)
+
+        # Extract the sub-molecules and make them editable.
+        mol0 = par_mol0.extract().molecule().edit()
+        mol1 = par_mol1.extract().molecule().edit()
+
+        # Now rename all of the properties for each molecule and remove the
+        # redundant values.
+
+        try:
+            # mol0
+            for prop in mol0.propertyKeys():
+                if prop[-1] == "0":
+                    mol0.setProperty(prop[:-1], mol0.property(prop))
+                    mol0.removeProperty(prop)
+                elif prop[-1] == "1":
+                    mol0.removeProperty(prop)
+                elif prop == "is_perturbable":
+                    mol0.removeProperty(prop)
+
+            # mol1
+            for prop in mol1.propertyKeys():
+                if prop[-1] == "1":
+                    mol1.setProperty(prop[:-1], mol1.property(prop))
+                    mol1.removeProperty(prop)
+                elif prop[-1] == "0":
+                    mol1.removeProperty(prop)
+                elif prop == "is_perturbable":
+                    mol1.removeProperty(prop)
+        except:
+            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
+
+        # Finally, commit and save the molecules.
+        self._molecule0 = Molecule(mol0.commit())
+        self._molecule1 = Molecule(mol1.commit())
 
     def _fixCharge(self, map={}):
         """Make the molecular charge an integer value.
@@ -1427,6 +1474,16 @@ class Molecule():
 
         # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
+
+        # Store the indices of the atoms that are unique to each molecule.
+        atom_list0 = _SireBase.IntegerArrayProperty()
+        atom_list1 = _SireBase.IntegerArrayProperty()
+        for atom in molecule0.atoms():
+            atom_list0.append(atom.index().value())
+        for atom in molecule1.atoms():
+            atom_list1.append(inv_mapping[atom.index()].value())
+        edit_mol.setProperty("atoms0", atom_list0)
+        edit_mol.setProperty("atoms1", atom_list1)
 
         # Update the Sire molecule object of the new molecule.
         mol._sire_molecule = edit_mol.commit()
