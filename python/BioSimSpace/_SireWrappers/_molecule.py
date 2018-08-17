@@ -465,14 +465,9 @@ class Molecule():
         """Convert from a merged molecule."""
 
         # We need to create two new Sire molecules and copy across the
-        # atoms and properties from the two sub-molecules.
-
-        # Try to get the list of atom indices in each molecule.
-        try:
-            idx0 = self._sire_molecule.property("atoms0")
-            idx1 = self._sire_molecule.property("atoms1")
-        except:
-            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
+        # atoms and properties from the two sub-molecules. These will
+        # be all of the atoms with non-zero "LJ" and "charge" properties
+        # at lambda = 0 and 1.
 
         # Create two selection objects to extract the atoms.
         sel0 = self._sire_molecule.selection()
@@ -481,14 +476,19 @@ class Molecule():
         sel1.deselectAll()
 
         try:
-            # Loop over all atoms in the merged molecule and add the unique
+            # Loop over all atoms in the merged molecule and find the unique
             # atoms for each component.
-            for idx in idx0:
-                sel0.select(_SireMol.AtomIdx(idx))
-            for idx in idx1:
-                sel1.select(_SireMol.AtomIdx(idx))
+            for atom in self._sire_molecule.atoms():
+                # Atom is part of sub-molecule 0.
+                if atom.property("charge0").value() != 0 or \
+                   atom.property("LJ0").epsilon().value() != 0:
+                    sel0.select(atom.index())
+                # Atom is part of sub-molecule 1.
+                if atom.property("charge1").value() != 0 or \
+                   atom.property("LJ1").epsilon().value() != 0:
+                    sel1.select(atom.index())
         except:
-            raise _IncompatibleError("Mismatched atom indices in the merged molecule!")
+            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
 
         # Use the selections to create two partial molecules for the atoms
         # at lamba = 0/1.
@@ -1474,16 +1474,6 @@ class Molecule():
 
         # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
-
-        # Store the indices of the atoms that are unique to each molecule.
-        atom_list0 = _SireBase.IntegerArrayProperty()
-        atom_list1 = _SireBase.IntegerArrayProperty()
-        for atom in molecule0.atoms():
-            atom_list0.append(atom.index().value())
-        for atom in molecule1.atoms():
-            atom_list1.append(inv_mapping[atom.index()].value())
-        edit_mol.setProperty("atoms0", atom_list0)
-        edit_mol.setProperty("atoms1", atom_list1)
 
         # Update the Sire molecule object of the new molecule.
         mol._sire_molecule = edit_mol.commit()
