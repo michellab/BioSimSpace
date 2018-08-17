@@ -31,6 +31,7 @@ from ._requirements import Boolean as _Boolean
 from ._requirements import File as _File
 from ._requirements import FileSet as _FileSet
 from ._requirements import Float as _Float
+from ._requirements import Charge as _Charge
 from ._requirements import Energy as _Energy
 from ._requirements import Integer as _Integer
 from ._requirements import Length as _Length
@@ -63,7 +64,7 @@ if _is_notebook():
 __all__ = ["Node"]
 
 # Float types (including those with units).
-_float_types = [_Float, _Energy, _Pressure, _Length, _Area, _Volume,
+_float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
 
 class _OutputAction(_argparse.Action):

@@ -39,6 +39,7 @@ import zipfile as _zipfile
 __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "File", "FileSet",                           # File types.
            "Length", "Area", "Volume",                  # Length types.
+           "Charge",
            "Energy",
            "Pressure",
            "Temperature",
@@ -697,6 +698,71 @@ class Volume(Requirement):
                 return _Types.Volume(value, self._unit)
             else:
                 return _Types.Volume(value, unit)._convert_to(self._unit)
+
+class Charge(Requirement):
+    """A charge requirement."""
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Keyword arguments
+           -----------------
+
+           help : str
+               The help string.
+
+           default : BioSimSpace.Types.Charge
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : BioSimSpace.Types.Charge
+               The minimum allowed value.
+
+           maximum : BioSimSpace.Types.Charge
+               The maximum allowed value.
+
+           allowed : [ BioSimSpace.Types.Charge ]
+        """
+
+        # Validate the unit.
+        if unit is not None:
+            nrg = _Types.Charge("1 %s" % unit)
+            self._unit = nrg.unit()
+            self._print_unit = nrg._print_format[nrg.unit()]
+        else:
+            raise ValueError("No unit has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
+
+    def getValue(self):
+        """Return the value."""
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        if type(value) is _Types.Charge:
+            return value._convert_to(self._unit)
+
+        else:
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "energy")
+
+            if unit is None:
+                return _Types.Charge(value, self._unit)
+            else:
+                return _Types.Charge(value, unit)._convert_to(self._unit)
 
 class Energy(Requirement):
     """An energy requirement."""
