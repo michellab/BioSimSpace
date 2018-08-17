@@ -107,6 +107,12 @@ class Charge(_Type):
         # Replace all instances of ELECTRON with E.
         unit = unit.replace("ELECTRON", "E")
 
+        # Replace all instances of ELECT with E.
+        unit = unit.replace("ELECT", "E")
+
+        # Replace all instances of ELEC with E.
+        unit = unit.replace("ELEC", "E")
+
         # Strip all instances of CHARGE.
         unit = unit.replace("CHARGE", "");
 
@@ -118,6 +124,9 @@ class Charge(_Type):
 
         # Replace all instance of COULOMB with C.
         unit = unit.replace("COULOMB", "C")
+
+        # Replace all instance of COUL with C.
+        unit = unit.replace("COUL", "C")
 
         # Check that the unit is supported.
         if unit in self._abbreviations:
