@@ -205,7 +205,7 @@ class Molecule():
         try:
             charge = self._sire_molecule.evaluate().charge(_map).value()
         except:
-            return None
+            charge = 0
 
         # Return the charge.
         return charge * _Units.Charge.electron_charge

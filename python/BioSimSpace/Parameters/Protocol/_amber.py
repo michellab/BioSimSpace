@@ -237,6 +237,9 @@ class GAFF(_protocol.Protocol):
         m.add(molecule._getSireMolecule())
         s.add(m)
 
+        # Get the total formal charge on the molecule.
+        charge = new_mol.charge(map={"charge" : "formal_charge"}).magnitude()
+
         # Write the system to a PDB file.
         try:
             pdb = _Sire.IO.PDB2(s)
@@ -246,9 +249,9 @@ class GAFF(_protocol.Protocol):
 
         # Generate the Antechamber command.
         command = ("%s -at %d -i antechamber.pdb -fi pdb " +
-                   "-o antechamber.mol2 -fo mol2 -c %s -s 2"
-                  ) % (_protocol._antechamber_exe,
-                        self._version, self._charge_method.lower())
+                   "-o antechamber.mol2 -fo mol2 -c %s -s 2 -nc %d"
+                  ) % (_protocol._antechamber_exe, self._version,
+                        self._charge_method.lower(), charge)
 
         with open("README.txt", "w") as file:
             # Write the command to file.
