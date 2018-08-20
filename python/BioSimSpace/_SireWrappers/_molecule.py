@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Base as _SireBase
+import Sire.CAS as _SireCAS
 import Sire.Maths as _SireMaths
 import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
@@ -40,6 +41,8 @@ from ..Types import Length as _Length
 import BioSimSpace.Units as _Units
 
 from pytest import approx as _approx
+
+import os.path as _path
 
 __all__ = ["Molecule"]
 
@@ -192,14 +195,17 @@ class Molecule():
         _map = map
 
         # This is a merged molecule.
-        if self.isMerged():
+        if self._is_merged:
             if is_lambda1:
                 _map = { "charge" : "charge1" }
             else:
                 _map = { "charge" : "charge0" }
 
         # Calculate the charge.
-        charge = self._sire_molecule.evaluate().charge(_map).value()
+        try:
+            charge = self._sire_molecule.evaluate().charge(_map).value()
+        except:
+            return None
 
         # Return the charge.
         return charge * _Units.Charge.electron_charge
@@ -547,6 +553,9 @@ class Molecule():
         else:
             prop = "charge"
 
+        if not self._sire_molecule.hasProperty(prop):
+            raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
+
         # Calculate the charge.
         charge = self.charge().magnitude()
 
@@ -572,6 +581,162 @@ class Molecule():
 
         # Update the Sire molecule.
         self._sire_molecule = edit_mol.commit()
+
+    def _fromPertFile(self, filename):
+        """Create a merged molecule from a perturbation file.
+
+           Positional arguments
+           --------------------
+
+           filename: str
+               The location of the perturbation file.
+        """
+
+        if not _path.isfile(filename):
+            raise IOError("Perturbation file doesn't exist: '%s'" % filename)
+
+    def _toPertFile(self, filename="MORPH.pert"):
+        """Write the merged molecule to a perturbation file.
+
+           Keyword arguments
+           -----------------
+
+           filename: str
+               The name of the perturbation file.
+        """
+
+        if not self._is_merged:
+            raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
+
+        if not self._sire_molecule.property("forcefield0").isAmberStyle():
+            raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
+
+        # The pert file uses atom names for identification purposes. This means
+        # that the names must be unique. As such we need to count the number of
+        # atoms with a particular name, then append an index to their name.
+
+        # A dictionary to track the atom names.
+        atom_names = {}
+
+        # Loop over all atoms in the merged molecule.
+        for atom in self._sire_molecule.atoms():
+            if atom.name() in atom_names:
+                atom_names[atom.name()] += 1
+            else:
+                atom_names[atom.name()] = 1
+
+        # If there are duplicate names, then we need to rename the atoms.
+        if sum(atom_names.values()) > len(atom_names.keys()):
+
+            # Create a dictionary to tally the number of each atom name.
+            name_tally = {}
+            for name in atom_names.keys():
+                name_tally[name] = 1
+
+            # Make the molecule editable.
+            edit_mol = self._sire_molecule.edit()
+
+            # Loop over all atoms in the merged molecule.
+            for atom in self._sire_molecule.atoms():
+                # Extract the atom name.
+                name = atom.name()
+
+                # There is more than one atom with this name. Rename it
+                # and increment the tally counter for the original name.
+                if atom_names[name] > 1:
+                    new_name = _SireMol.AtomName(name.value() + "%d" % name_tally[name])
+                    edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+                    name_tally[name] += 1
+
+            # Store the updated molecule.
+            self._sire_molecule = edit_mol.commit()
+
+        # Now write the perturbation file.
+
+        with open(filename, "w") as file:
+            # Get the info object for the molecule.
+            info = self._sire_molecule.info()
+
+            # Write the version header.
+            file.write("version 1\n")
+
+            # Start molecule record.
+            file.write("molecule LIG\n")
+
+            # 1) Atoms.
+            for atom in self._sire_molecule.atoms():
+                # Start atom record.
+                file.write("    atom\n")
+
+                # Get the initial/final Lennard-Jones properties.
+                LJ0 = atom.property("LJ0");
+                LJ1 = atom.property("LJ1");
+
+                # Atom data.
+                file.write("        name           %s\n"     % atom.name().value())
+                file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+
+                # End atom record.
+                file.write("    endatom\n")
+
+            # 2) Bonds.
+
+            # Extract the bonds at lambda = 0 and 1.
+            bonds0 = self._sire_molecule.property("bond0").potentials()
+            bonds1 = self._sire_molecule.property("bond1").potentials()
+
+            # There are bond potentials.
+            if len(bonds0) > 0:
+
+                # Create a dictionary to store the BondIDs at lambda = 0.
+                bonds0_idx = {}
+                for idx, bond in enumerate(bonds0):
+                    # Get the AtomIdx for the atoms in the bond.
+                    idx0 = info.atomIdx(bond.atom0())
+                    idx1 = info.atomIdx(bond.atom1())
+                    bonds0_idx[_SireMol.BondID(idx0, idx1)] = idx
+
+                # Now loop over all of the bonds at lambda = 1 and match to
+                # those at lambda = 0.
+                for bond1 in bonds1:
+                    # Get the AtomIdx for the atoms in the bond.
+                    idx0 = info.atomIdx(bond1.atom0())
+                    idx1 = info.atomIdx(bond1.atom1())
+
+                    # Create the BondID.
+                    bond_id = _SireMol.BondID(idx0, idx1)
+
+                    # Get the matching bond at lambda = 0.
+                    try:
+                        bond0 = bonds0[bonds0_idx[bond_id]]
+                    except:
+                        bond0 = bonds0[bonds0_idx[bond_id.mirror()]]
+
+                    # Start bond record.
+                    file.write("    bond\n")
+
+                    # Cast the bonds as AmberBonds.
+                    amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
+                    amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+
+                    # Atom data.
+                    file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                    file.write("        initial_force  %.2f\n" % amber_bond0.k())
+                    file.write("        initial_equil  %.2f\n" % amber_bond0.r0())
+                    file.write("        final_force    %.2f\n" % amber_bond1.k())
+                    file.write("        final_equil    %.2f\n" % amber_bond1.r0())
+
+                    # End bond record.
+                    file.write("    endbond\n")
+
+            # End molecule record.
+            file.write("endmolecule\n")
 
     def _merge(self, other, mapping, map0={}, map1={}):
         """Merge this molecule with 'other'.
