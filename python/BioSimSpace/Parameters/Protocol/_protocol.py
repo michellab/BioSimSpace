@@ -266,9 +266,12 @@ class Protocol():
             file.write("# tLEaP was run with the following command:\n")
             file.write("%s\n" % command)
 
+        # Create files for stdout/stderr.
+        stdout = open("tleap.out", "w")
+        stderr = open("tleap.err", "w")
+
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
@@ -322,9 +325,12 @@ class Protocol():
             file.write("# pdb2gmx was run with the following command:\n")
             file.write("%s\n" % command)
 
+        # Create files for stdout/stderr.
+        stdout = open("pdb2gmx.out", "w")
+        stderr = open("pdb2gmx.err", "w")
+
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Check for the expected output.
         if _os.path.isfile("output.gro") and _os.path.isfile("output.top"):

@@ -255,9 +255,12 @@ class GAFF(_protocol.Protocol):
             file.write("# Antechamber was run with the following command:\n")
             file.write("%s\n" % command)
 
+        # Create files for stdout/stderr.
+        stdout = open("antechamber.out", "w")
+        stderr = open("antechamber.err", "w")
+
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Antechamber doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
@@ -273,9 +276,12 @@ class GAFF(_protocol.Protocol):
                 file.write("\n# ParmChk was run with the following command:\n")
                 file.write("%s\n" % command)
 
+            # Create files for stdout/stderr.
+            stdout = open("parmchk.out", "w")
+            stderr = open("parmchk.err", "w")
+
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(command, shell=True,
-                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
             # The frcmod file was created.
             if _os.path.isfile("antechamber.frcmod"):
@@ -306,9 +312,12 @@ class GAFF(_protocol.Protocol):
                     file.write("\n# tLEaP was run with the following command:\n")
                     file.write("%s\n" % command)
 
+                # Create files for stdout/stderr.
+                stdout = open("tleap.out", "w")
+                stderr = open("tleap.err", "w")
+
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(command, shell=True,
-                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.

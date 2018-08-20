@@ -524,9 +524,12 @@ def _solvate(molecule, box, shell, model, num_point,
         file.write("# gmx solvate was run with the following command:\n")
         file.write("%s\n" % command)
 
-    # Run the command.
-    proc = _subprocess.run(command, shell=True,
-        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+    # Create files for stdout/stderr.
+    stdout = open("solvate.out", "w")
+    stderr = open("solvate.err", "w")
+
+    # Run gmx solvate as a subprocess.
+    proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
     # gmx doesn't return sensible error codes, so we need to check that
     # the expected output was generated.
@@ -636,9 +639,12 @@ def _solvate(molecule, box, shell, model, num_point,
             file.write("\n# gmx grompp was run with the following command:\n")
             file.write("%s\n" % command)
 
-        # Run the command.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        # Create files for stdout/stderr.
+        stdout = open("grommp.out", "w")
+        stderr = open("grommp.err", "w")
+
+        # Run grompp as a subprocess.
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Check for the tpr output file.
         if not _os.path.isfile("ions.tpr"):
@@ -672,9 +678,12 @@ def _solvate(molecule, box, shell, model, num_point,
             file.write("\n# gmx genion was run with the following command:\n")
             file.write("%s\n" % command)
 
-        # Now run genion using the ions.tpr file as input.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        # Create files for stdout/stderr.
+        stdout = open("genion.out", "w")
+        stderr = open("genion.err", "w")
+
+        # Run genion as a subprocess.
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Check for the tpr output file.
         if not _os.path.isfile("solvated_ions.gro"):
