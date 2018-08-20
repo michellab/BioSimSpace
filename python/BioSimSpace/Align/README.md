@@ -24,4 +24,9 @@ mappings = BSS.Align.matchAtoms(mol0, mol1, matches=10)
 # on a root mean squared displacement fit to find the optimal translation vector
 # (as opposed to merely taking the difference of centroids).
 mol0 = BSS.Align.rmsdAlign(mol0, mol1, mapping)
+
+# Merge the properties of the two molecules based on the atom mapping.
+# The resulting "merged-molecule" can be used in single-toplogy free
+# energy simulations.
+merged = BSS.Align.merge(mol0, mol1, mappings)
 ```
