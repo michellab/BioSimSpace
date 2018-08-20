@@ -115,7 +115,7 @@ class Process():
 
             # Create the directory if it doesn't already exist.
             if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir)
+                _os.makedirs(work_dir, exist_ok=True)
 
         # Flag that the process hasn't started/finished.
         self._is_started = False

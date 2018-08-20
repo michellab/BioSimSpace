@@ -166,7 +166,7 @@ class Process():
 
             # Create the directory if it doesn't already exist.
             if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir)
+                _os.makedirs(work_dir, exist_ok=True)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)

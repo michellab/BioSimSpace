@@ -478,7 +478,7 @@ def _solvate(molecule, box, shell, model, num_point,
     else:
         # Create the directory if it doesn't already exist.
         if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir)
+            _os.makedirs(work_dir, exist_ok=True)
 
     if work_dir is not None:
         # Change to the working directory for the process.
