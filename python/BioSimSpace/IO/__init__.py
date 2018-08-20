@@ -39,7 +39,7 @@ from glob import glob
 from io import StringIO as _StringIO
 from warnings import warn as _warn
 
-import os.path as _path
+import os as _os
 import pypdb as _pypdb
 import sys as _sys
 import tempfile as _tempfile
@@ -329,6 +329,20 @@ def saveMolecules(filebase, system, fileformat, map={}):
         # Wrap the system.
         system = _System(s)
 
+    # If the user has passed a directory, make sure that is exists.
+    if _os.path.basename(filebase) != filebase:
+        dirname = _os.path.dirname(filebase)
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(dirname):
+            _os.makedirs(dirname, exist_ok=True)
+
+    # Store the current working directory.
+    dir = _os.getcwd()
+
+    # Change to the working directory for the process.
+    # This avoid problems with relative paths.
+    _os.chdir(dirname)
+
     # A list of the files that have been written.
     files = []
 
@@ -342,6 +356,11 @@ def saveMolecules(filebase, system, fileformat, map={}):
             file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
             files += file
         except:
+            _os.chdir(dir)
             raise IOError("Failed to save system to format: '%s'" % format) from None
 
+    # Change back to the original directory.
+    _os.chdir(dir)
+
+    # Return the list of files.
     return files
