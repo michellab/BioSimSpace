@@ -238,7 +238,11 @@ class GAFF(_protocol.Protocol):
         s.add(m)
 
         # Get the total formal charge on the molecule.
-        charge = new_mol.charge(map={"charge" : "formal_charge"}).magnitude()
+        if "formal_charge" in self._map:
+            _map = { "charge": self._map["formal_charge"] }
+        else:
+            _map = { "charge": "formal_charge" }
+        charge = new_mol.charge(map=_map).magnitude()
 
         # Write the system to a PDB file.
         try:
