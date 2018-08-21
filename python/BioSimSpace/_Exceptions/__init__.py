@@ -29,3 +29,6 @@ class IncompatibleError(Exception):
 
 class MissingSoftwareError(Exception):
     pass
+
+class ParameterisationError(Exception):
+    pass

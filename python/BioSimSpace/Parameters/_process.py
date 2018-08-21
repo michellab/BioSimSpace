@@ -41,6 +41,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from BioSimSpace import _is_notebook
 
 from . import Protocol as _Protocol
+from .._Exceptions import ParameterisationError as _ParameterisationError
 from .._SireWrappers import Molecule as _Molecule
 
 import glob as _glob
@@ -178,7 +179,8 @@ class Process():
             # No molecule was return, parameterisation failed.
             if self._new_molecule is None:
                 self._is_error = True
-                raise RuntimeError("Parameterisation failed! Check output: '%s'" % self._zipname)
+                raise _ParameterisationError("Parameterisation failed! "
+                    + "Run 'getOutput() to see intermediate files.")
             else:
                 # Fix the charges so that the total is integer values.
                 self._new_molecule._fixCharge()
