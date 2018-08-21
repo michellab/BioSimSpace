@@ -991,7 +991,15 @@ class Node():
                 self._inputs[key].setValue(value)
 
     def validate(self):
-        """Whether the output requirements are satisfied."""
+        """Whether the output requirements are satisfied.
+
+           Returns
+           -------
+
+           file_link : IPython.lib.display.FileLink
+               A link to a zipfile containing the validated output.
+               (Only if running interactively.)
+        """
 
         # Flag that we have validated output.
         self._is_output_validated = True
