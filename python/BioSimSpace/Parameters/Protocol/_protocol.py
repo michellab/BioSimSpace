@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from BioSimSpace import _amber_home, _gmx_exe
+from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
@@ -175,10 +176,12 @@ class Protocol():
             else:
                 output = None
 
-            # If there was no output, try using pdbgmx
+            # If there was no output, try using pdbgmx.
             if output is None:
                 if _gmx_exe:
-                    output = self._run_pdb2gmx(molecule)
+                    # Only try if the force field is supported.
+                    if self._forcefield in ["ff99", "ff99SB", "ff03"]:
+                        output = self._run_pdb2gmx(molecule)
                 else:
                     output = None
 
@@ -300,8 +303,7 @@ class Protocol():
                        }
 
         if self._forcefield not in supported_ff:
-            _warnings.warn("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
-            return None
+            raise _IncompatibleError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
 
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")
