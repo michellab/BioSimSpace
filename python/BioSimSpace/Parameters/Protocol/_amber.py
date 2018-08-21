@@ -229,20 +229,48 @@ class GAFF(_protocol.Protocol):
         # Create a new molecule using a deep copy of the internal Sire Molecule.
         new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
+        # The user will likely have passed a bare PDB or Mol2 file.
+        # Antechamber expects the molecule to be uncharged, or integer
+        # charged (where the charge, or number of electrons, is passed with
+        # the -nc flag).
+
+        # Get the total charge on the molecule.
+        if "charge" in self._map:
+            _map = { "charge": self._map["charge"] }
+            prop = self._map["charge"]
+        else:
+            _map = { "charge": "charge" }
+            prop = "charge"
+
+        # The molecule has a charge property.
+        if new_mol._getSireMolecule.hasProperty(prop):
+            charge = new_mol.charge(map=_map).magnitude()
+
+            # Charge is non-integer, try to fix it.
+            if abs(round(charge) - charge) > 0:
+                new_mol._fixCharge(map=_map)
+                charge = round(charge)
+        else:
+            charge = None
+
+        # Only try "formal_charge" when "charge" is missing. Unlikely to have
+        # both if this is a bare molecule, but the user could be re-parameterising
+        # an existing molecule.
+        if charge is None:
+            # Get the total formal charge on the molecule.
+            if "formal_charge" in self._map:
+                _map = { "charge": self._map["formal_charge"] }
+            else:
+                _map = { "charge": "formal_charge" }
+            charge = new_mol.charge(map=_map).magnitude()
+
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireMolecule())
+        m.add(new_mol._getSireMolecule())
         s.add(m)
-
-        # Get the total formal charge on the molecule.
-        if "formal_charge" in self._map:
-            _map = { "charge": self._map["formal_charge"] }
-        else:
-            _map = { "charge": "formal_charge" }
-        charge = new_mol.charge(map=_map).magnitude()
 
         # Write the system to a PDB file.
         try:
