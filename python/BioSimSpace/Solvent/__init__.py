@@ -530,6 +530,8 @@ def _solvate(molecule, box, shell, model, num_point,
 
     # Run gmx solvate as a subprocess.
     proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+    stdout.close()
+    stderr.close()
 
     # gmx doesn't return sensible error codes, so we need to check that
     # the expected output was generated.
@@ -645,6 +647,8 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Run grompp as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
 
         # Check for the tpr output file.
         if not _os.path.isfile("ions.tpr"):
@@ -684,6 +688,8 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Run genion as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
 
         # Check for the tpr output file.
         if not _os.path.isfile("solvated_ions.gro"):

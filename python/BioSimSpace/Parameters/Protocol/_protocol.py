@@ -272,6 +272,8 @@ class Protocol():
 
         # Run tLEaP as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
@@ -331,6 +333,8 @@ class Protocol():
 
         # Run pdb2gmx as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
 
         # Check for the expected output.
         if _os.path.isfile("output.gro") and _os.path.isfile("output.top"):

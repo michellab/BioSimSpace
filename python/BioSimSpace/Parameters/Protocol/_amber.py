@@ -296,6 +296,8 @@ class GAFF(_protocol.Protocol):
 
         # Run Antechamber as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
 
         # Antechamber doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
@@ -317,6 +319,8 @@ class GAFF(_protocol.Protocol):
 
             # Run parmchk as a subprocess.
             proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+            stdout.close()
+            stderr.close()
 
             # The frcmod file was created.
             if _os.path.isfile("antechamber.frcmod"):
@@ -353,6 +357,8 @@ class GAFF(_protocol.Protocol):
 
                 # Run tLEaP as a subprocess.
                 proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+                stdout.close()
+                stderr.close()
 
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
