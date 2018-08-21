@@ -200,18 +200,38 @@ class Process():
 
         return self._is_error
 
-    def getOutput(self):
+    def getOutput(self, filename=None):
         """Return the output of the parameterisation process.
+
+           Keyword arguments
+           -----------------
+
+           filename : str
+               The name to write the output to.
+
 
            Returns
            -------
+
+           file_link : str, IPython.lib.display.FileLink
+               The name of, or link to, a zipfile containing the output.
         """
 
         # Try to get the molecule.
         self.getMolecule()
 
-        if self._zipfile is None:
-            zipname = "%s.zip" % self._hash
+        if self._zipfile is None or filename is not None:
+            if filename is not None:
+                zipname = "%s.zip" % filename
+
+                # If the user has passed a directory, make sure that is exists.
+                if _os.path.basename(filename) != filename:
+                    dirname = _os.path.dirname(filename)
+                    # Create the directory if it doesn't already exist.
+                    if not _os.path.isdir(dirname):
+                        _os.makedirs(dirname, exist_ok=True)
+            else:
+                zipname = "%s.zip" % self._hash
 
             # Append the files to the archive.
             with _zipfile.ZipFile(zipname, "w") as zip:
