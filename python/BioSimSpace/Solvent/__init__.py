@@ -480,10 +480,9 @@ def _solvate(molecule, box, shell, model, num_point,
         if not _os.path.isdir(work_dir):
             _os.makedirs(work_dir, exist_ok=True)
 
-    if work_dir is not None:
-        # Change to the working directory for the process.
-        # This avoid problems with relative paths.
-        _os.chdir(work_dir)
+    # Change to the working directory for the process.
+    # This avoid problems with relative paths.
+    _os.chdir(work_dir)
 
     # Create the gmx command.
     if num_point == 3:
@@ -566,8 +565,7 @@ def _solvate(molecule, box, shell, model, num_point,
             for line in water_lines:
                 file.write("%s" % line)
     else:
-        if work_dir is not None:
-            _os.chdir(dir)
+        _os.chdir(dir)
         raise ValueError("No water molecules were generated. Try increasing "
             + "the 'box' size or 'shell' thickness.")
 
@@ -785,8 +783,7 @@ def _solvate(molecule, box, shell, model, num_point,
             system = water_ions
 
     # Change back to the original directory.
-    if work_dir is not None:
-        _os.chdir(dir)
+    _os.chdir(dir)
 
     return system
 
