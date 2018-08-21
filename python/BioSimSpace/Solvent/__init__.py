@@ -669,9 +669,9 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Add enough counter ions to neutralise the charge.
             if charge > 0:
-                command += " -nn %d" % charge
+                command += " -nn %d" % abs(charge)
             else:
-                command += " -np %d" % charge
+                command += " -np %d" % abs(charge)
         else:
             # Create the genion command.
             command = "echo SOL | gmx genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
