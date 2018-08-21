@@ -100,6 +100,8 @@ class Process():
         self._molecule = molecule
         self._protocol = protocol
         self._new_molecule = None
+        self._is_error = False
+        self._zipfile = None
 
         # Create a hash for the object.
         self._hash = hash((molecule, protocol)) % ((_sys.maxsize + 1) * 2)
@@ -173,8 +175,42 @@ class Process():
             # Flag that the thread has finished.
             self._is_finished = True
 
-        # No molecule was return, parameterisation failed.
-        if self._new_molecule is None:
+            # No molecule was return, parameterisation failed.
+            if self._new_molecule is None:
+                self._is_error = True
+                raise RuntimeError("Parameterisation failed! Check output: '%s'" % self._zipname)
+            else:
+                # Fix the charges so that the total is integer values.
+                self._new_molecule._fixCharge()
+
+        return self._new_molecule
+
+    def isError(self):
+        """Return whether there was a parameterisation error.
+
+           Returns
+           -------
+
+           is_error : bool
+               Whether there was an error during parameterisation.
+        """
+
+        # Try to get the parameterised molecule.
+        self.getMolecule()
+
+        return self._is_error
+
+    def getOutput(self):
+        """Return the output of the parameterisation process.
+
+           Returns
+           -------
+        """
+
+        # Try to get the molecule.
+        self.getMolecule()
+
+        if self._zipfile is None:
             zipname = "%s.zip" % self._hash
 
             # Append the files to the archive.
@@ -183,19 +219,14 @@ class Process():
                 for file in _glob.glob("%s/*" % self._work_dir):
                     zip.write(file, arcname=_os.path.basename(file))
 
-            # Return a link to the archive.
-            if _is_notebook():
-                print("Parameterisation failed! Check output:")
-                return _FileLink(zipname)
-            # Return the name of the zip archive.
-            else:
-                print("Parameterisation failed! Check output: '%s.zip'" % self._hash)
-                return None
-        else:
-            # Fix the charges so that the total is integer values.
-            self._new_molecule._fixCharge()
+            # Store the location of the zip file.
+            self._zipfile = zipname
 
-            return self._new_molecule
+        # Return a link to the archive.
+        if _is_notebook():
+            return _FileLink(self._zipfile)
+        else:
+            return self._zipfile
 
     def getHash(self):
         """Get the object hash."""

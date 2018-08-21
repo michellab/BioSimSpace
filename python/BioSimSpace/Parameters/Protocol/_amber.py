@@ -243,7 +243,7 @@ class GAFF(_protocol.Protocol):
             prop = "charge"
 
         # The molecule has a charge property.
-        if new_mol._getSireMolecule.hasProperty(prop):
+        if new_mol._getSireMolecule().hasProperty(prop):
             charge = new_mol.charge(map=_map).magnitude()
 
             # Charge is non-integer, try to fix it.
