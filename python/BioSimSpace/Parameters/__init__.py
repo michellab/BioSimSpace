@@ -35,7 +35,7 @@ from . import Protocol as _Protocol
 
 __all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFields"]
 
-def parameterise(molecule, forcefield, options={}, map={}):
+def parameterise(molecule, forcefield, options={}, work_dir=None, map={}):
     """Parameterise using the a specified force field.
 
        Positional arguments
@@ -54,6 +54,9 @@ def parameterise(molecule, forcefield, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -74,9 +77,9 @@ def parameterise(molecule, forcefield, options={}, map={}):
         if forcefield not in forceFields():
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, options=options, map=map)
+    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, map=map)
 
-def ff99(molecule, options={}, map={}):
+def ff99(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the ff99 force field.
 
        Positional arguments
@@ -91,6 +94,9 @@ def ff99(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -125,9 +131,9 @@ def ff99(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff99SB(molecule, options={}, map={}):
+def ff99SB(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the ff99SB force field.
 
        Positional arguments
@@ -142,6 +148,9 @@ def ff99SB(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -176,9 +185,9 @@ def ff99SB(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff03(molecule, options={}, map={}):
+def ff03(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the ff03 force field.
 
        Positional arguments
@@ -193,6 +202,9 @@ def ff03(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -227,9 +239,9 @@ def ff03(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff14SB(molecule, options={}, map={}):
+def ff14SB(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the ff14SB force field.
 
        Positional arguments
@@ -244,6 +256,9 @@ def ff14SB(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -278,9 +293,9 @@ def ff14SB(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def gaff(molecule, options={}, map={}):
+def gaff(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments
@@ -295,6 +310,9 @@ def gaff(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -329,9 +347,9 @@ def gaff(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def gaff2(molecule, options={}, map={}):
+def gaff2(molecule, options={}, work_dir=None, map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments
@@ -346,6 +364,9 @@ def gaff2(molecule, options={}, map={}):
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
 
        map : dict
            A dictionary that maps system "properties" to their user defined
@@ -380,7 +401,7 @@ def gaff2(molecule, options={}, map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
