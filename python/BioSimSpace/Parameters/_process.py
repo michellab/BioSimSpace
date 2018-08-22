@@ -57,6 +57,37 @@ if _is_notebook():
 
 __all__ = ["Process"]
 
+def _wrap_protocol(protocol_function, molecule, dir, work_dir, queue):
+    """A simple decorator function to wrap the running of parameterisation
+       protocols and catch exceptions.
+
+       Positional arguments
+       --------------------
+
+       protocol_function : function
+           The protocol function.
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule to parameterise.
+
+       dir : str
+           The directory from which the process was launched.
+
+       work_dir : str
+           The working directory for the parameterisation process.
+
+       queue : queue.Queue
+           The thread queue is which this method has been run.
+    """
+    try:
+        protocol_function(molecule, work_dir, queue)
+    except Exception as e:
+        with open("error.txt", "w") as file:
+            file.write(str(e))
+        _os.chdir(dir)
+        raise _ParameterisationError("Parameterisation failed!. "
+            + "Check error message in '%s/error.txt'." % work_dir) from None
+
 class Process():
     """A class for running parameterisation protocols as a background process."""
 
@@ -104,6 +135,9 @@ class Process():
         self._is_error = False
         self._zipfile = None
 
+        # Store the directory from which the process was launched.
+        self._dir = _os.getcwd()
+
         # Create a hash for the object.
         self._hash = hash((molecule, protocol)) % ((_sys.maxsize + 1) * 2)
 
@@ -145,8 +179,9 @@ class Process():
         self._queue = _queue.Queue()
 
         # Create the thread.
-        self._thread = _threading.Thread(target=self._protocol.run,
-                                         args=[self._molecule, self._work_dir, self._queue])
+        self._thread = _threading.Thread(target=_wrap_protocol,
+                                         args=[self._protocol.run, self._molecule,
+                                               self._dir, self._work_dir, self._queue])
 
         # Start the thread.
         self._thread.start()
@@ -219,9 +254,6 @@ class Process():
                The name of, or link to, a zipfile containing the output.
         """
 
-        # Try to get the molecule.
-        self.getMolecule()
-
         if self._zipfile is None or filename is not None:
             if filename is not None:
                 zipname = "%s.zip" % filename
@@ -241,14 +273,16 @@ class Process():
                 for file in _glob.glob("%s/*" % self._work_dir):
                     zip.write(file, arcname=_os.path.basename(file))
 
-            # Store the location of the zip file.
-            self._zipfile = zipname
+            # Store the location of the zip file. Only do so if the
+            # parameterisation has finished.
+            if not self._is_finished:
+                self._zipfile = zipname
 
         # Return a link to the archive.
         if _is_notebook():
-            return _FileLink(self._zipfile)
+            return _FileLink(zipname)
         else:
-            return self._zipfile
+            return zipname
 
     def getHash(self):
         """Get the object hash."""

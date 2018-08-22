@@ -28,6 +28,8 @@ import Sire as _Sire
 
 from BioSimSpace import _amber_home, _gmx_exe
 from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
@@ -169,38 +171,30 @@ class Protocol():
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
         # tLEaP fails to produce output.
 
-        # Parameterise using tLEaP.
+        # First, try parameterise using tLEaP.
         if self._tleap:
             if _tleap_exe is not None:
                 output = self._run_tleap(molecule)
-            else:
-                output = None
-
-            # If there was no output, try using pdbgmx.
-            if output is None:
-                if _gmx_exe:
-                    # Only try if the force field is supported.
-                    if self._forcefield in ["ff99", "ff99SB", "ff03"]:
-                        output = self._run_pdb2gmx(molecule)
+            # Otherwise, try using pdb2gmx.
+            elif self._pdb2gmx:
+                if _gmx_exe is not None:
+                    output = self._run_pdb2gmx(molecule)
                 else:
-                    output = None
+                    raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
 
         # Parameterise using pdb2gmx.
-        else:
-            if _gmx_exe:
+        elif self._pdb2gmx:
+            if _gmx_exe is not None:
                 output = self._run_pdb2gmx(molecule)
             else:
-                return None
+                raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
 
         # Change back to the original directory.
         if work_dir is not None:
             _os.chdir(dir)
 
-        # No output, parameterisation failed.
-        if output is None:
-            if queue is not None:
-                queue.put(None)
-            return None
+        if queue is not None:
+            queue.put(None)
 
         else:
             # Prepend the working directory to the output file names.
@@ -283,7 +277,7 @@ class Protocol():
         if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
             return ["leap.top", "leap.crd"]
         else:
-            return None
+            raise _ParameterisationError("tLEaP failed!")
 
     def _run_pdb2gmx(self, molecule):
         """Run using pdb2gmx.
@@ -342,7 +336,7 @@ class Protocol():
         if _os.path.isfile("output.gro") and _os.path.isfile("output.top"):
             return ["output.gro", "output.top"]
         else:
-            return None
+            raise _ParameterisationError("pdb2gmx failed!")
 
 def _find_force_field(forcefield):
     """Internal function to search LEaP compatible force field files.

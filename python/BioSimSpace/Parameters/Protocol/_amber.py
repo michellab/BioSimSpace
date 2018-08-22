@@ -31,6 +31,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from . import _protocol
+from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
@@ -379,11 +380,11 @@ class GAFF(_protocol.Protocol):
                     new_mol._forcefield = ff
 
                 else:
-                    new_mol = None
+                    raise _ParameterisationError("tLEaP failed!")
             else:
-                new_mol = None
+                raise _ParameterisationError("Parmchk failed!")
         else:
-            new_mol = None
+            raise _ParameterisationError("Antechamber failed!")
 
         # Change back to the current directory.
         _os.chdir(dir)
