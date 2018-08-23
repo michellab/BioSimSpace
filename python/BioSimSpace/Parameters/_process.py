@@ -82,6 +82,7 @@ def _wrap_protocol(protocol_function, molecule, dir, work_dir, queue):
     try:
         protocol_function(molecule, work_dir, queue)
     except Exception as e:
+        self._is_error = True
         with open("error.txt", "w") as file:
             file.write(str(e))
         _os.chdir(dir)
