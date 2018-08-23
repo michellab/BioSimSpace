@@ -57,7 +57,7 @@ if _is_notebook():
 
 __all__ = ["Process"]
 
-def _wrap_protocol(protocol_function, molecule, dir, work_dir, queue):
+def _wrap_protocol(protocol_function, process):
     """A simple decorator function to wrap the running of parameterisation
        protocols and catch exceptions.
 
@@ -67,27 +67,22 @@ def _wrap_protocol(protocol_function, molecule, dir, work_dir, queue):
        protocol_function : function
            The protocol function.
 
-       molecule : BioSimSpace._SireWrappers.Molecule
-           The molecule to parameterise.
-
-       dir : str
-           The directory from which the process was launched.
-
-       work_dir : str
-           The working directory for the parameterisation process.
-
-       queue : queue.Queue
-           The thread queue is which this method has been run.
+       process : BioSimSpace.Parameters.Process
+           A handle to the parent process.
     """
     try:
-        protocol_function(molecule, work_dir, queue)
+        protocol_function(process._molecule, process._work_dir, process._queue)
     except Exception as e:
-        self._is_error = True
-        with open("error.txt", "w") as file:
-            file.write(str(e))
-        _os.chdir(dir)
-        raise _ParameterisationError("Parameterisation failed!. "
-            + "Check error message in '%s/error.txt'." % work_dir) from None
+        # Record that an error has been thrown.
+        process._is_error = True
+        process._last_error = e
+
+        # Add None to the queue (no molecule).
+        if process._queue is not None:
+            process._queue.put(None)
+
+        # Return to the user directory.
+        _os.chdir(process._dir)
 
 class Process():
     """A class for running parameterisation protocols as a background process."""
@@ -134,6 +129,7 @@ class Process():
         self._protocol = protocol
         self._new_molecule = None
         self._is_error = False
+        self._last_error = None
         self._zipfile = None
 
         # Store the directory from which the process was launched.
@@ -180,9 +176,7 @@ class Process():
         self._queue = _queue.Queue()
 
         # Create the thread.
-        self._thread = _threading.Thread(target=_wrap_protocol,
-                                         args=[self._protocol.run, self._molecule,
-                                               self._dir, self._work_dir, self._queue])
+        self._thread = _threading.Thread(target=_wrap_protocol, args=[self._protocol.run, self])
 
         # Start the thread.
         self._thread.start()
@@ -212,14 +206,13 @@ class Process():
             # Flag that the thread has finished.
             self._is_finished = True
 
-            # No molecule was return, parameterisation failed.
-            if self._new_molecule is None:
-                self._is_error = True
-                raise _ParameterisationError("Parameterisation failed! "
-                    + "Run 'getOutput() to see intermediate files.")
-            else:
-                # Fix the charges so that the total is integer values.
+            # Fix the charges so that the total is integer values.
+            if self._new_molecule is not None:
                 self._new_molecule._fixCharge()
+
+        # If there was an problem, return the last error.
+        if self._is_error:
+            raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
 
         return self._new_molecule
 
@@ -232,9 +225,6 @@ class Process():
            is_error : bool
                Whether there was an error during parameterisation.
         """
-
-        # Try to get the parameterised molecule.
-        self.getMolecule()
 
         return self._is_error
 
