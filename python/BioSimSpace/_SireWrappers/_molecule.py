@@ -434,15 +434,19 @@ class Molecule():
                         if (not mol0.hasProperty(_map[prop])) or overwrite:
                             if verbose:
                                 print("  %s" % _map[prop])
-                            # Try to match with atoms in the original molecule.
-                            try:
-                                edit_mol.setProperty(_map[prop], mol1.property(prop).makeCompatibleWith(mol0, matches))
-                            # This is probably just a molecule property, such as a forcefield definition.
-                            except AttributeError:
+
+                            # Get the property from the parameterised molecule.
+                            propty = mol1.property(_map[prop])
+
+                            # Try making it compatible with the original molecule.
+                            if hasattr(propty, "makeCompatibleWith"):
                                 try:
-                                    edit_mol.setProperty(_map[prop], mol1.property(prop))
+                                    propty = propty.makeCompatibleWith(mol0, matches)
                                 except:
-                                    raise _IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
+                                    raise _IncompatibleError("Incompatible property: %s" % _map[prop]) from None
+
+                            # Now try to set the property.
+                            edit_mol.setProperty(_map[prop], propty)
 
         # Finally, rename the atoms.
 
@@ -750,7 +754,7 @@ class Molecule():
                 # Get the AtomIdx for the atoms in the angle.
                 idx0 = info.atomIdx(angle.atom0())
                 idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom1())
+                idx2 = info.atomIdx(angle.atom2())
 
                 # Create the AngleID.
                 angle_id = _SireMol.AngleID(idx0, idx1, idx2)
@@ -763,7 +767,7 @@ class Molecule():
                 # Get the AtomIdx for the atoms in the angle.
                 idx0 = info.atomIdx(angle.atom0())
                 idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom1())
+                idx2 = info.atomIdx(angle.atom2())
 
                 # Create the AngleID.
                 angle_id = _SireMol.AngleID(idx0, idx1, idx2)
@@ -779,6 +783,155 @@ class Molecule():
             angles0_unique_idx = {}
             angles1_unique_idx = {}
             angles_shared_idx = {}
+
+            # lambda = 0.
+            for idx in angles0_idx.keys():
+                if idx not in angles1_idx.keys():
+                    angles0_unique_idx[idx] = angles0_idx[idx]
+                else:
+                    angles_shared_idx[idx] = (angles0_idx[idx], angles1_idx[idx])
+
+            # lambda = 1.
+            for idx in angles1_idx.keys():
+                if idx not in angles0_idx.keys():
+                    angles1_unique_idx[idx] = angles1_idx[idx]
+                elif idx not in angles_shared_idx.keys():
+                    angles_shared_idx[idx] = (angles0_idx[idx], angles1_idx[idx])
+
+            # First create records for the angles that are unique to lamda = 0 and 1.
+
+            # lambda = 0.
+            for idx in angles0_unique_idx.values():
+                # Get the angle potential.
+                angle = angles0[idx]
+
+                # Get the AtomIdx for the atoms in the angle.
+                idx0 = info.atomIdx(angle.atom0())
+                idx1 = info.atomIdx(angle.atom1())
+                idx2 = info.atomIdx(angle.atom2())
+
+                # Cast the function as an AmberAngle.
+                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
+
+                # Start angle record.
+                file.write("    angle\n")
+
+                # Angle data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        initial_force  %.2f\n" % amber_angle.k())
+                file.write("        initial_equil  %.2f\n" % amber_angle.theta0())
+                file.write("        final_force    %.2f\n" % 0.0)
+                file.write("        final_equil    %.2f\n" % 0.0)
+
+                # End angle record.
+                file.write("    endangle\n")
+
+            # lambda = 0.
+            for idx in angles1_unique_idx.values():
+                # Get the angle potential.
+                angle = angles1[idx]
+
+                # Get the AtomIdx for the atoms in the angle.
+                idx0 = info.atomIdx(angle.atom0())
+                idx1 = info.atomIdx(angle.atom1())
+                idx2 = info.atomIdx(angle.atom2())
+
+                # Cast the function as an AmberAngle.
+                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
+
+                # Start angle record.
+                file.write("    angle\n")
+
+                # Angle data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        initial_force  %.2f\n" % 0.0)
+                file.write("        initial_equil  %.2f\n" % 0.0)
+                file.write("        final_force    %.2f\n" % amber_angle.k())
+                file.write("        final_equil    %.2f\n" % amber_angle.theta0())
+
+                # End angle record.
+                file.write("    endangle\n")
+
+            # Now add records for the share angles.
+            for idx0, idx in angles_shared_idx.values():
+                # Get the angle potentials.
+                angle0 = angles0[idx]
+                angle1 = angles1[idx]
+
+                # Get the AtomIdx for the atoms in the angle.
+                idx0 = info.atomIdx(angle.atom0())
+                idx1 = info.atomIdx(angle.atom1())
+                idx2 = info.atomIdx(angle.atom2())
+
+                # Cast the functions as AmberAngles.
+                amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
+                amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
+
+                # Start angle record.
+                file.write("    endangle\n")
+
+                # Angle data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        initial_force  %.2f\n" % amber_angle0.k())
+                file.write("        initial_equil  %.2f\n" % amber_angle0.theta0())
+                file.write("        final_force    %.2f\n" % amber_angle1.k())
+                file.write("        final_equil    %.2f\n" % amber_angle1.theta0())
+
+                # End angle record.
+                file.write("    endangle\n")
+
+            # 3) Dihedrals.
+
+            # Extract the dihedrals at lambda = 0 and 1.
+            dihedrals0 = self._sire_molecule.property("dihedral1").potentials()
+            dihedrals1 = self._sire_molecule.property("dihedral1").potentials()
+
+            # Dictionaries to store the DihedralIDs at lambda = 0 and 1.
+            dihedrals0_idx = {}
+            dihedrals1_idx = {}
+
+            # Loop over all dihedrals at lambda = 0.
+            for idx, dihedral in enumerate(dihedrals0):
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral.atom0())
+                idx1 = info.atomIdx(dihedral.atom1())
+                idx2 = info.atomIdx(dihedral.atom2())
+                idx3 = info.atomIdx(dihedral.atom3())
+
+                # Create the DihedralID.
+                dihedral_id = _SireMol.DihedralID(idx0, idx1, idx2, idx3)
+
+                # Add to the list of ids.
+                dihedrals0_idx[dihedral_id] = idx
+
+            # Loop over all dihedrals at lambda = 1.
+            for idx, dihedral in enumerate(dihedrals1):
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral.atom0())
+                idx1 = info.atomIdx(dihedral.atom1())
+                idx2 = info.atomIdx(dihedral.atom2())
+                idx3 = info.atomIdx(dihedral.atom3())
+
+                # Create the DihedralID.
+                dihedral_id = _SireMol.AngleID(idx0, idx1, idx2)
+
+                # Add to the list of ids.
+                if dihedral_id.mirror() in dihedrals0_idx:
+                    dihedrals1_idx[dihedral_id.mirror()] = idx
+                else:
+                    dihedrals1_idx[dihedral_id] = idx
+
+            # Now work out the DihedralIDs that are unique at lambda = 0 and 1
+            # as well as those that are shared.
+            dihedrals0_unique_idx = {}
+            dihedrals1_unique_idx = {}
+            dihedrals_shared_idx = {}
 
             # lambda = 0.
             for idx in angles0_idx.keys():
@@ -881,6 +1034,8 @@ class Molecule():
 
                 # End angle record.
                 file.write("    angle\n")
+
+
 
             # End molecule record.
             file.write("endmolecule\n")
