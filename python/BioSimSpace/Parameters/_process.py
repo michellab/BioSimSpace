@@ -215,6 +215,10 @@ class Process():
             raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
 
         return self._new_molecule
+    
+    def isRunning(self):
+        """Return whether the parameterising protocol is still running."""
+        return not self._is_finished
 
     def isError(self):
         """Return whether there was a parameterisation error.
@@ -225,7 +229,6 @@ class Process():
            is_error : bool
                Whether there was an error during parameterisation.
         """
-
         return self._is_error
 
     def getOutput(self, filename=None):
