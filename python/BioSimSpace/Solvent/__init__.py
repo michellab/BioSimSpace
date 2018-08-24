@@ -629,7 +629,7 @@ def _solvate(molecule, box, shell, model, num_point,
             file.write("rvdw                    = 1.0\n")
 
         # Create the grompp command.
-        command = "gmx grompp -f ions.mdp -po ions.out.mdp -c solvated.gro -p solvated.top -o ions.tpr"
+        command = "%s grompp -f ions.mdp -po ions.out.mdp -c solvated.gro -p solvated.top -o ions.tpr" % _gmx_exe
 
         with open("README.txt", "a") as file:
             # Write the command to file.
@@ -655,17 +655,17 @@ def _solvate(molecule, box, shell, model, num_point,
             charge = round(charge.magnitude())
 
             # Create the genion command.
-            command = "echo SOL | gmx genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral"
+            command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
 
             # Add enough counter ions to neutralise the charge.
-            if charge > 0:
-                command += " -nn %d" % charge
-            else:
-                command += " -np %d" % charge
+            #if charge > 0:
+            #    command += " -nn %d" % charge
+            #else:
+            #    command += " -np %d" % charge
         else:
             # Create the genion command.
-            command = "echo SOL | gmx genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
-                % ("neutral" if is_neutral else "noneutral", ion_conc)
+            command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
+                % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
 
         with open("README.txt", "a") as file:
             # Write the command to file.
