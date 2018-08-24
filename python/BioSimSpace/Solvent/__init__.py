@@ -658,10 +658,10 @@ def _solvate(molecule, box, shell, model, num_point,
             command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
 
             # Add enough counter ions to neutralise the charge.
-            if charge > 0:
-                command += " -nn %d" % charge
-            else:
-                command += " -np %d" % charge
+            #if charge > 0:
+            #    command += " -nn %d" % charge
+            #else:
+            #    command += " -np %d" % charge
         else:
             # Create the genion command.
             command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
