@@ -474,70 +474,16 @@ class Molecule():
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""
 
-        # We need to create two new Sire molecules and copy across the
-        # atoms and properties from the two sub-molecules. These will
-        # be all of the atoms with non-zero "LJ" and "charge" properties
-        # at lambda = 0 and 1.
-
-        # Create two selection objects to extract the atoms.
-        sel0 = self._sire_molecule.selection()
-        sel1 = self._sire_molecule.selection()
-        sel0.deselectAll()
-        sel1.deselectAll()
-
+        # Extract the components of the merged molecule.
         try:
-            # Loop over all atoms in the merged molecule and find the unique
-            # atoms for each component.
-            for atom in self._sire_molecule.atoms():
-                # Atom is part of sub-molecule 0.
-                if atom.property("charge0").value() != 0 or \
-                   atom.property("LJ0").epsilon().value() != 0:
-                    sel0.select(atom.index())
-                # Atom is part of sub-molecule 1.
-                if atom.property("charge1").value() != 0 or \
-                   atom.property("LJ1").epsilon().value() != 0:
-                    sel1.select(atom.index())
+            mol0 = self._sire_molecule.property("molecule0")
+            mol1 = self._sire_molecule.property("molecule1")
         except:
             raise _IncompatibleError("The merged molecule doesn't have the required properties!")
 
-        # Use the selections to create two partial molecules for the atoms
-        # at lamba = 0/1.
-        par_mol0 = _SireMol.PartialMolecule(self._sire_molecule, sel0)
-        par_mol1 = _SireMol.PartialMolecule(self._sire_molecule, sel1)
-
-        # Extract the sub-molecules and make them editable.
-        mol0 = par_mol0.extract().molecule().edit()
-        mol1 = par_mol1.extract().molecule().edit()
-
-        # Now rename all of the properties for each molecule and remove the
-        # redundant values.
-
-        try:
-            # mol0
-            for prop in mol0.propertyKeys():
-                if prop[-1] == "0":
-                    mol0.setProperty(prop[:-1], mol0.property(prop))
-                    mol0.removeProperty(prop)
-                elif prop[-1] == "1":
-                    mol0.removeProperty(prop)
-                elif prop == "is_perturbable":
-                    mol0.removeProperty(prop)
-
-            # mol1
-            for prop in mol1.propertyKeys():
-                if prop[-1] == "1":
-                    mol1.setProperty(prop[:-1], mol1.property(prop))
-                    mol1.removeProperty(prop)
-                elif prop[-1] == "0":
-                    mol1.removeProperty(prop)
-                elif prop == "is_perturbable":
-                    mol1.removeProperty(prop)
-        except:
-            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
-
-        # Finally, commit and save the molecules.
-        self._molecule0 = Molecule(mol0.commit())
-        self._molecule1 = Molecule(mol1.commit())
+        # Store the components.
+        self._molecule0 = Molecule(mol0)
+        self._molecule1 = Molecule(mol1)
 
     def _fixCharge(self, map={}):
         """Make the molecular charge an integer value.
@@ -1930,6 +1876,10 @@ class Molecule():
 
                 # Set the value in the new matrix, overwriting existing value.
                 clj_nb_pairs1.set(idx, idy, intra)
+
+        # Store the two molecular components.
+        edit_mol.setProperty("molecule0", molecule0)
+        edit_mol.setProperty("molecule1", molecule1)
 
         # Set the "intrascale" properties.
         edit_mol.setProperty("intrascale0", clj_nb_pairs0)
