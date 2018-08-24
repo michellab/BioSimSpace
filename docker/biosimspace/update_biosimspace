@@ -1,0 +1,12 @@
+#!/opt/conda/bin/python
+
+import os
+
+print("Updating BioSimSpace...")
+
+print("  -- [u] BioSimSpace")
+os.chdir("/home/biosimspace/python")
+os.system("git pull")
+os.system("/opt/conda/bin/python setup.py install >> /dev/null 2>&1")
+
+print("\nEverything updated :-)")
