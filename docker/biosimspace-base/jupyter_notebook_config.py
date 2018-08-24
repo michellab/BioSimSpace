@@ -14,6 +14,9 @@ c.NotebookApp.port = 8888
 c.NotebookApp.open_browser = False
 c.JupyterHub.authenticator_class = tmpauthenticator.TmpAuthenticator
 
+# https://github.com/jupyter/notebook/issues/3130
+c.FileContentsManager.delete_to_trash = False
+
 # Generate a self-signed certificate
 if 'GEN_CERT' in os.environ:
     dir_name = jupyter_data_dir()

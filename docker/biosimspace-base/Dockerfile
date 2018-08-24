@@ -8,7 +8,7 @@
 # for any errors or problems
 
 # Start from ubuntu :-)
-FROM ubuntu@sha256:84c334414e2bfdcae99509a6add166bbb4fa4041dc3fa6af08046a66fed3005f
+FROM ubuntu:bionic-20180526@sha256:c8c275751219dadad8fa56b3ac41ca6cb22219ff117ca98fe82b42f24e1ba64e
 
 LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>"
 
@@ -36,13 +36,6 @@ RUN apt-get update && apt-get -yq dist-upgrade \
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen
 
-# Install Tini - this is a tiny init system that is useful
-# for containers that need to start many processes
-RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.10.0/tini && \
-    echo "1361527f39190a7338a0b434bd8c88ff7233ce7b9a4876f3315c22fce7eca1b0 *tini" | sha256sum -c - && \
-    mv tini /usr/local/bin/tini && \
-    chmod +x /usr/local/bin/tini
-
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
     SHELL=/bin/bash \
@@ -64,8 +57,21 @@ ADD fix-permissions /usr/local/bin/fix-permissions
 
 # Create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
-RUN useradd -m -s $SHELL -N -u $NB_UID $NB_USER && \
+RUN groupadd wheel -g 11 && \
+    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
+    useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
+    chmod g+w /etc/passwd && \
     fix-permissions $HOME
+
+# Download and install amber16 into /home using wget
+RUN wget https://biosimspace.blob.core.windows.net/dependencies/amber16.tar.bz2 -O amber16.tar.bz2 && \
+    tar -jxvf amber16.tar.bz2 && \
+    rm amber16.tar.bz2
+
+# Download and install gromacs into /home using wget
+RUN wget https://biosimspace.blob.core.windows.net/dependencies/gromacs.tar.bz2 -O gromacs.tar.bz2 && \
+    tar -jxvf gromacs.tar.bz2 && \
+    rm gromacs.tar.bz2
 
 # Install the latest sire-devel package...
 RUN wget https://sire.blob.core.windows.net/development/sire_devel_latest_linux.run -O sire.run && \
@@ -81,45 +87,39 @@ RUN git clone https://github.com/michellab/biosimspace && \
     chown -R $NB_USER:$NB_GID /home/biosimspace && \
     fix-permissions /home/biosimspace
 
-# Download and install amber16 into /home using wget
-RUN wget https://biosimspace.blob.core.windows.net/dependencies/amber16.tar.bz2 -O amber1$
-    tar -jxvf amber16.tar.bz2 && \
-    rm amber16.tar.bz2
-
-# Download and install gromacs into /home using wget
-RUN wget https://biosimspace.blob.core.windows.net/dependencies/gromacs.tar.bz2 -O gromac$
-    tar -jxvf gromacs.tar.bz2 && \
-    rm gromacs.tar.bz2
-
-# Configure container startup. This starts the tini init system
-# telling it to run the start_notebook.sh as the primary process.
-# This is a script provided by JupyterHub that will start different
-# processes depending on whether this is the hub or a notebook
-ENTRYPOINT ["tini", "--"]
-CMD ["start-notebook.sh"]
-
-# Make sure that the jupyter notebook port is accessible from
-# outside the container
-EXPOSE 8888
-
-# Now copy in all of the files that are needed to run JupyterHub
-# This includes jupyter-notebook_config.py that is used to
-# configure the jupyterhub server
-COPY start.sh /usr/local/bin/
-COPY start-notebook.sh /usr/local/bin/
-COPY start-singleuser.sh /usr/local/bin/
-COPY jupyter_notebook_config.py /etc/jupyter/
-RUN fix-permissions /etc/jupyter/
-
 # Do all conda work as $NB_USER
 USER $NB_USER
 WORKDIR $HOME
 
-# Install Jupyter Notebook and Hub and other useful packages
 RUN conda config --system --prepend channels conda-forge && \
     conda config --system --set auto_update_conda false && \
-    conda config --system --set show_channel_urls true && \
-    conda install --quiet --yes 'notebook=5.2.*' 'jupyterhub=0.9.*' 'jupyterlab=0.31.*'
+    conda config --system --set show_channel_urls true
+
+# Install Tini
+RUN conda install --quiet --yes 'tini=0.18.0' && \
+    conda list tini | grep tini | tr -s ' ' | cut -d ' ' -f 1,2 >> $CONDA_DIR/conda-meta/pinned && \
+    conda clean -tipsy && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
+
+# Install Jupyter Notebook, Lab, and Hub
+# Generate a notebook server config
+# Cleanup temporary files
+# Correct permissions
+# Do all this in a single RUN command to avoid duplicating all of the
+# files across image layers when the permissions change
+RUN conda install --quiet --yes \
+    'notebook=5.6.*' \
+    'jupyterhub=0.9.*' \
+    'jupyterlab=0.34.*' && \
+    conda clean -tipsy && \
+    jupyter labextension install @jupyterlab/hub-extension@^0.11.0 && \
+    npm cache clean --force && \
+    jupyter notebook --generate-config && \
+    rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
+    rm -rf /home/$NB_USER/.cache/yarn && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
 
 RUN conda install watchdog
 
@@ -144,17 +144,16 @@ RUN conda config --add channels conda-forge && \
 RUN conda install -c omnia mdtraj
 RUN conda install -c omnia pymbar
 
-# Install BioSimSpace (updating to the latest version here to
-# limit cache busting)
+# Install BioSimSpace - we install at the end to prevent
+# everything from being reinstalled every time we update
+# BioSimSpace
 RUN cd /home/biosimspace/python && \
     git checkout devel && \
     git pull && \
     python setup.py install
 
-# Reinstall an older version of tornado as tornado 5
-# and clean up after conda, including clearing the cache
-RUN conda install tornado=4.5.3 && \
-    conda clean -tipsy && \
+# Clean up after conda, including clearing the cache
+RUN conda clean -tipsy && \
     npm cache clean --force && \
     rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
     fix-permissions $CONDA_DIR && \
@@ -163,6 +162,22 @@ RUN conda install tornado=4.5.3 && \
 # Link the BioSimSpace directory into $HOME so that we can access
 # this from the notebook
 RUN ln -s /home/biosimspace $HOME/
+
+USER root
+
+EXPOSE 8888
+WORKDIR $HOME
+
+# Configure container startup
+ENTRYPOINT ["tini", "-g", "--"]
+CMD ["start-notebook.sh"]
+
+# Add local files as late as possible to avoid cache busting
+COPY start.sh /usr/local/bin/
+COPY start-notebook.sh /usr/local/bin/
+COPY start-singleuser.sh /usr/local/bin/
+COPY jupyter_notebook_config.py /etc/jupyter/
+RUN fix-permissions /etc/jupyter/
 
 # End as the User to make sure that we don't
 # accidentally run the container as root

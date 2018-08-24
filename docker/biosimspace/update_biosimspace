@@ -7,6 +7,6 @@ print("Updating BioSimSpace...")
 print("  -- [u] BioSimSpace")
 os.chdir("/home/biosimspace/python")
 os.system("git pull")
-os.system("/opt/conda/bin/python setup.py install >> /dev/null 2>&1")
+os.system("BSS_SKIP_INSTALL=1 /opt/conda/bin/python setup.py install >> /dev/null 2>&1")
 
 print("\nEverything updated :-)")

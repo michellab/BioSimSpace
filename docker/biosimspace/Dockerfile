@@ -23,5 +23,20 @@ COPY update_biosimspace /opt/conda/bin/
 # everything)
 RUN /opt/conda/bin/update_biosimspace
 
+# Last fixes
+ENV AMBERHOME=/amber16 \
+    GROMACSHOME=/gromacs
+
+USER root
+
+RUN apt-get update && apt-get -yq dist-upgrade \
+ && apt-get install -yq --no-install-recommends \
+    libgomp1 \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# Trigger a BioSimSpace update
+RUN update_biosimspace
+
 # Ensure that the container runs as $NB_USER
 USER $NB_USER
