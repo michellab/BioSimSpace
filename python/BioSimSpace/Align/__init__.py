@@ -170,10 +170,11 @@ def matchAtoms(molecule0,
     else:
         is_align = False
 
-    # Find all of the best maximum common substructure matches.
+    # Find all of the best maximum common substructure matches. We include light
+    # atoms in the match and allow mappings between light and heavy atoms.
     mappings = ( mol0.evaluate()
                      .findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
-                         timeout, match_light, map0, map1, verbose)
+                         timeout, match_light, map0, map1, 0, verbose)
                )
 
     # No matches!
