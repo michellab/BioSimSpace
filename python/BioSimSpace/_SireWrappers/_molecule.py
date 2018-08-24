@@ -1221,6 +1221,10 @@ class Molecule():
                     edit_mol = edit_mol.atom(idx).setProperty("charge0", 0*_SireUnits.e_charge).molecule()
                 elif name == "LJ":
                     edit_mol = edit_mol.atom(idx).setProperty("LJ0", _SireMM.LJParameter()).molecule()
+                elif name == "ambertype":
+                    edit_mol = edit_mol.atom(idx).setProperty("ambertype0", "du").molecule()
+                elif name == "element":
+                    edit_mol = edit_mol.atom(idx).setProperty("element0", _SireMol.Element(0)).molecule()
                 else:
                     # This is a perturbable property. Rename to "property0", e.g. "charge0".
                     if name in shared_props:
@@ -1474,6 +1478,10 @@ class Molecule():
                     edit_mol = edit_mol.atom(atom.index()).setProperty("charge1", 0*_SireUnits.e_charge).molecule()
                 elif name == "LJ":
                     edit_mol = edit_mol.atom(atom.index()).setProperty("LJ1", _SireMM.LJParameter()).molecule()
+                elif name == "ambertype":
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("ambertype1", "du").molecule()
+                elif name == "element":
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("element1", _SireMol.Element(0)).molecule()
                 else:
                     # This is a perturbable property. Rename to "property1", e.g. "charge1".
                     if name in shared_props:
