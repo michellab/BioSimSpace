@@ -744,7 +744,7 @@ class Molecule():
                 elif idx not in angles_shared_idx.keys():
                     angles_shared_idx[idx] = (angles0_idx[idx], angles1_idx[idx])
 
-            # First create records for the angles that are unique to lamda = 0 and 1.
+            # First create records for the angles that are unique to lambda = 0 and 1.
 
             # lambda = 0.
             for idx in angles0_unique_idx.values():
@@ -774,7 +774,7 @@ class Molecule():
                 # End angle record.
                 file.write("    endangle\n")
 
-            # lambda = 0.
+            # lambda = 1.
             for idx in angles1_unique_idx.values():
                 # Get the angle potential.
                 angle = angles1[idx]
@@ -802,23 +802,23 @@ class Molecule():
                 # End angle record.
                 file.write("    endangle\n")
 
-            # Now add records for the share angles.
+            # Now add records for the shared angles.
             for idx0, idx in angles_shared_idx.values():
                 # Get the angle potentials.
                 angle0 = angles0[idx]
                 angle1 = angles1[idx]
 
                 # Get the AtomIdx for the atoms in the angle.
-                idx0 = info.atomIdx(angle.atom0())
-                idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom2())
+                idx0 = info.atomIdx(angle0.atom0())
+                idx1 = info.atomIdx(angle0.atom1())
+                idx2 = info.atomIdx(angle0.atom2())
 
                 # Cast the functions as AmberAngles.
                 amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
                 amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
 
                 # Start angle record.
-                file.write("    endangle\n")
+                file.write("    angle\n")
 
                 # Angle data.
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
@@ -865,7 +865,7 @@ class Molecule():
                 idx3 = info.atomIdx(dihedral.atom3())
 
                 # Create the DihedralID.
-                dihedral_id = _SireMol.AngleID(idx0, idx1, idx2)
+                dihedral_id = _SireMol.DihedralID(idx0, idx1, idx2, idx3)
 
                 # Add to the list of ids.
                 if dihedral_id.mirror() in dihedrals0_idx:
@@ -880,108 +880,277 @@ class Molecule():
             dihedrals_shared_idx = {}
 
             # lambda = 0.
-            for idx in angles0_idx.keys():
-                if idx not in angles1_idx.keys():
-                    angles0_unique_idx[idx] = angles0_idx[idx]
+            for idx in dihedrals0_idx.keys():
+                if idx not in dihedrals1_idx.keys():
+                    dihedrals0_unique_idx[idx] = dihedrals0_idx[idx]
                 else:
-                    angles_shared_idx[idx] = (angles0_idx[idx], angles1_idx[idx])
+                    dihedrals_shared_idx[idx] = (dihedrals0_idx[idx], dihedrals1_idx[idx])
 
             # lambda = 1.
-            for idx in angles1_idx.keys():
-                if idx not in angles0_idx.keys():
-                    angles1_unique_idx[idx] = angles1_idx[idx]
-                elif idx not in angles_shared_idx.keys():
-                    angles_shared_idx[idx] = (angles0_idx[idx], angles1_idx[idx])
+            for idx in dihedrals1_idx.keys():
+                if idx not in dihedrals0_idx.keys():
+                    dihedrals1_unique_idx[idx] = dihedrals1_idx[idx]
+                elif idx not in dihedrals_shared_idx.keys():
+                    dihedrals_shared_idx[idx] = (dihedrals0_idx[idx], dihedrals1_idx[idx])
 
-            # First create records for the angles that are unique to lamda = 0 and 1.
-
-            # lambda = 0.
-            for idx in angles0_unique_idx.values():
-                # Get the angle potential.
-                angle = angles0[idx]
-
-                # Get the AtomIdx for the atoms in the angle.
-                idx0 = info.atomIdx(angle.atom0())
-                idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom2())
-
-                # Cast the function as an AmberAngle.
-                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
-
-                # Start angle record.
-                file.write("    angle\n")
-
-                # Angle data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % amber_angle.k())
-                file.write("        initial_equil  %.2f\n" % amber_angle.theta0())
-                file.write("        final_force    %.2f\n" % 0.0)
-                file.write("        final_equil    %.2f\n" % 0.0)
-
-                # End angle record.
-                file.write("    angle\n")
+            # First create records for the dihedrals that are unique to lambda = 0 and 1.
 
             # lambda = 0.
-            for idx in angles1_unique_idx.values():
-                # Get the angle potential.
-                angle = angles1[idx]
+            for idx in dihedrals0_unique_idx.values():
+                # Get the dihedral potential.
+                dihedral = dihedrals0[idx]
 
-                # Get the AtomIdx for the atoms in the angle.
-                idx0 = info.atomIdx(angle.atom0())
-                idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom2())
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral.atom0())
+                idx1 = info.atomIdx(dihedral.atom1())
+                idx2 = info.atomIdx(dihedral.atom2())
+                idx3 = info.atomIdx(dihedral.atom3())
 
-                # Cast the function as an AmberAngle.
-                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
+                # Cast the function as an AmberDihedral.
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
-                # Start angle record.
-                file.write("    angle\n")
+                # Start dihedral record.
+                file.write("    dihedral\n")
 
-                # Angle data.
+                # Dihedral data.
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % 0.0)
-                file.write("        initial_equil  %.2f\n" % 0.0)
-                file.write("        final_force    %.2f\n" % amber_angle.k())
-                file.write("        final_equil    %.2f\n" % amber_angle.theta0())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form  ")
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+                file.write("        final_form     0.0 0.0 0.0\n")
 
-                # End angle record.
-                file.write("    angle\n")
+                # End dihedral record.
+                file.write("    enddihedral\n")
 
-            # Now add records for the share angles.
-            for idx0, idx in angles_shared_idx.values():
-                # Get the angle potentials.
-                angle0 = angles0[idx]
-                angle1 = angles1[idx]
+            # lambda = 1.
+            for idx in dihedrals1_unique_idx.values():
+                # Get the dihedral potential.
+                dihedral = dihedrals1[idx]
 
-                # Get the AtomIdx for the atoms in the angle.
-                idx0 = info.atomIdx(angle.atom0())
-                idx1 = info.atomIdx(angle.atom1())
-                idx2 = info.atomIdx(angle.atom2())
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral.atom0())
+                idx1 = info.atomIdx(dihedral.atom1())
+                idx2 = info.atomIdx(dihedral.atom2())
+                idx3 = info.atomIdx(dihedral.atom3())
 
-                # Cast the functions as AmberAngles.
-                amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
-                amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
+                # Cast the function as an AmberDihedral.
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
-                # Start angle record.
-                file.write("    angle\n")
+                # Start dihedral record.
+                file.write("    dihedral\n")
 
-                # Angle data.
+                # Dihedral data.
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % amber_angle0.k())
-                file.write("        initial_equil  %.2f\n" % amber_angle0.theta0())
-                file.write("        final_force    %.2f\n" % amber_angle1.k())
-                file.write("        final_equil    %.2f\n" % amber_angle1.theta0())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form   0.0 0.0 0.0\n")
+                file.write("        final_form    ")
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
 
-                # End angle record.
-                file.write("    angle\n")
+                # End dihedral record.
+                file.write("    enddihedral\n")
 
+            # Now add records for the shared dihedrals.
+            for idx0, idx in dihedrals_shared_idx.values():
+                # Get the dihedral potentials.
+                dihedral0 = dihedrals0[idx]
+                dihedral1 = dihedrals1[idx]
 
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral0.atom0())
+                idx1 = info.atomIdx(dihedral0.atom1())
+                idx2 = info.atomIdx(dihedral0.atom2())
+                idx3 = info.atomIdx(dihedral0.atom3())
+
+                # Cast the functions as AmberDihedrals.
+                amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
+
+                # Start dihedral record.
+                file.write("    dihedral\n")
+
+                # Dihedral data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form  ")
+                for term in amber_dihedral0.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+                file.write("        final_form    ")
+                for term in amber_dihedral1.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+
+                # End dihedral record.
+                file.write("    enddihedral\n")
+
+            # 3) Impropers.
+
+            # Extract the impropers at lambda = 0 and 1.
+            impropers0 = self._sire_molecule.property("improper0").potentials()
+            impropers1 = self._sire_molecule.property("improper1").potentials()
+
+            # Dictionaries to store the ImproperIDs at lambda = 0 and 1.
+            impropers0_idx = {}
+            impropers1_idx = {}
+
+            # Loop over all impropers at lambda = 0.
+            for idx, improper in enumerate(impropers0):
+                # Get the AtomIdx for the atoms in the improper.
+                idx0 = info.atomIdx(improper.atom0())
+                idx1 = info.atomIdx(improper.atom1())
+                idx2 = info.atomIdx(improper.atom2())
+                idx3 = info.atomIdx(improper.atom3())
+
+                # Create the ImproperID.
+                improper_id = _SireMol.ImproperID(idx0, idx1, idx2, idx3)
+
+                # Add to the list of ids.
+                impropers0_idx[improper_id] = idx
+
+            # Loop over all impropers at lambda = 1.
+            for idx, improper in enumerate(impropers1):
+                # Get the AtomIdx for the atoms in the improper.
+                idx0 = info.atomIdx(improper.atom0())
+                idx1 = info.atomIdx(improper.atom1())
+                idx2 = info.atomIdx(improper.atom2())
+                idx3 = info.atomIdx(improper.atom3())
+
+                # Create the ImproperID.
+                improper_id = _SireMol.ImproperID(idx0, idx1, idx2, idx3)
+
+                # Add to the list of ids.
+                # You cannot mirror an improper!
+                impropers1_idx[improper_id] = idx
+
+            # Now work out the ImproperIDs that are unique at lambda = 0 and 1
+            # as well as those that are shared.
+            impropers0_unique_idx = {}
+            impropers1_unique_idx = {}
+            impropers_shared_idx = {}
+
+            # lambda = 0.
+            for idx in impropers0_idx.keys():
+                if idx not in impropers1_idx.keys():
+                    impropers0_unique_idx[idx] = impropers0_idx[idx]
+                else:
+                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+
+            # lambda = 1.
+            for idx in impropers1_idx.keys():
+                if idx not in impropers0_idx.keys():
+                    impropers1_unique_idx[idx] = impropers1_idx[idx]
+                elif idx not in impropers_shared_idx.keys():
+                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+
+            # First create records for the impropers that are unique to lambda = 0 and 1.
+
+            # lambda = 0.
+            for idx in impropers0_unique_idx.values():
+                # Get the improper potential.
+                improper = impropers0[idx]
+
+                # Get the AtomIdx for the atoms in the improper.
+                idx0 = info.atomIdx(improper.atom0())
+                idx1 = info.atomIdx(improper.atom1())
+                idx2 = info.atomIdx(improper.atom2())
+                idx3 = info.atomIdx(improper.atom3())
+
+                # Cast the function as an AmberDihedral.
+                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
+
+                # Start improper record.
+                file.write("    improper\n")
+
+                # Improper data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form  ")
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+                file.write("        final_form     0.0 0.0 0.0\n")
+
+                # End improper record.
+                file.write("    endimproper\n")
+
+            # lambda = 1.
+            for idx in impropers1_unique_idx.values():
+                # Get the improper potential.
+                improper = impropers1[idx]
+
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(improper.atom0())
+                idx1 = info.atomIdx(improper.atom1())
+                idx2 = info.atomIdx(improper.atom2())
+                idx3 = info.atomIdx(improper.atom3())
+
+                # Cast the function as an AmberDihedral.
+                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
+
+                # Start improper record.
+                file.write("    improper\n")
+
+                # Dihedral data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form   0.0 0.0 0.0\n")
+                file.write("        final_form    ")
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+
+                # End improper record.
+                file.write("    endimproper\n")
+
+            # Now add records for the shared impropers.
+            for idx0, idx in impropers_shared_idx.values():
+                # Get the improper potentials.
+                improper0 = imropers0[idx]
+                improper1 = imropers1[idx]
+
+                # Get the AtomIdx for the atoms in the improper.
+                idx0 = info.atomIdx(improper0.atom0())
+                idx1 = info.atomIdx(improper0.atom1())
+                idx2 = info.atomIdx(improper0.atom2())
+                idx3 = info.atomIdx(improper0.atom3())
+
+                # Cast the functions as AmberDihedrals.
+                amber_dihedral0 = _SireMM.AmberDihedral(improper0.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral1 = _SireMM.AmberDihedral(improper1.function(), _SireCAS.Symbol("phi"))
+
+                # Start improper record.
+                file.write("    improper\n")
+
+                # Improper data.
+                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        initial_form  ")
+                for term in amber_dihedral0.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+                file.write("        final_form    ")
+                for term in amber_dihedral1.terms():
+                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                file.write("\n")
+
+                # End improper record.
+                file.write("    endimproper\n")
 
             # End molecule record.
             file.write("endmolecule\n")
