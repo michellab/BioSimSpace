@@ -919,7 +919,7 @@ class Molecule():
                 file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form     0.0 0.0 0.0\n")
 
@@ -951,7 +951,7 @@ class Molecule():
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End dihedral record.
@@ -983,11 +983,11 @@ class Molecule():
                 file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End dihedral record.
@@ -1078,7 +1078,7 @@ class Molecule():
                 file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form     0.0 0.0 0.0\n")
 
@@ -1110,7 +1110,7 @@ class Molecule():
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End improper record.
@@ -1142,11 +1142,11 @@ class Molecule():
                 file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.2f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End improper record.
