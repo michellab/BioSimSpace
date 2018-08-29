@@ -1188,6 +1188,10 @@ class Molecule():
 
         # Add the atom properties from molecule0.
         for atom in molecule0.atoms():
+            # Add an "name0" property.
+            edit_mol = edit_mol.atom(atom.index()) \
+                               .setProperty("name0", atom.name().value()).molecule()
+
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
@@ -1207,6 +1211,9 @@ class Molecule():
         for atom in atoms1:
             # Get the atom index in the merged molecule.
             idx = inv_mapping[atom.index()]
+
+            # Add an "name0" property.
+            edit_mol = edit_mol.atom(idx).setProperty("name0", atom.name().value()).molecule()
 
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
@@ -1448,6 +1455,9 @@ class Molecule():
             # Get the atom index in the merged molecule.
             idx = inv_mapping[atom.index()]
 
+            # Add an "name1" property.
+            edit_mol = edit_mol.atom(idx).setProperty("name1", atom.name().value()).molecule()
+
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
@@ -1465,6 +1475,10 @@ class Molecule():
 
         # Add the properties from atoms unique to molecule0.
         for atom in atoms0:
+            # Add an "name1" property.
+            edit_mol = edit_mol.atom(atom.index()) \
+                               .setProperty("name1", atom.name().value()).molecule()
+
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
