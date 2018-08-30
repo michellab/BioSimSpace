@@ -212,7 +212,7 @@ class Process():
 
         # If there was an problem, return the last error.
         if self._is_error:
-            raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
+            raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
 
         return self._new_molecule
     
