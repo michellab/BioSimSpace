@@ -1916,7 +1916,7 @@ class Molecule():
         # The number of potentials should be consistent for the "bond0"
         # and "bond1" properties.
         if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-            raise RuntimeError("Inconsistent number of bonds in merged molecule!")
+            raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
 
         # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
