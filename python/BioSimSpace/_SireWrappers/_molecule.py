@@ -1119,8 +1119,8 @@ class Molecule():
             # Now add records for the shared impropers.
             for idx0, idx in impropers_shared_idx.values():
                 # Get the improper potentials.
-                improper0 = imropers0[idx]
-                improper1 = imropers1[idx]
+                improper0 = impropers0[idx]
+                improper1 = impropers1[idx]
 
                 # Get the AtomIdx for the atoms in the improper.
                 idx0 = info.atomIdx(improper0.atom0())
