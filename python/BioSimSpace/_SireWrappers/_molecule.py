@@ -523,10 +523,13 @@ class Molecule():
         edit_mol = self._sire_molecule.edit()
 
         # Shift the charge of each atom in the molecule by delta.
+        # Make sure to invert the sign of the charge since it is in
+        # units of -1 |e|.
         for atom in edit_mol.atoms():
             charge = edit_mol.atom(atom.index()).property(prop).value()
+            charge = -(charge + delta)
             edit_mol = edit_mol.atom(atom.index()) \
-                               .setProperty(prop, (charge + delta)*_SireUnits.e_charge) \
+                               .setProperty(prop, charge * _SireUnits.e_charge) \
                                .molecule()
 
         # Update the Sire molecule.
