@@ -188,7 +188,7 @@ class Amber(_process.Process):
                     self._exe = exe
                 else:
                     raise _MissingSoftwareError("'BioSimSpace.Process.Amber' is not supported. "
-                        + "Please install AMBER (http://ambermd.org).")
+                                                "Please install AMBER (http://ambermd.org).")
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):

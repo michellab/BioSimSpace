@@ -113,7 +113,7 @@ class Length(_Type):
                     return self * area
                 except:
                     raise ValueError("Could not convert the string to a 'BioSimSpace.Length' "
-                        + "or 'BioSimSpace.Area' type.")
+                                     "or 'BioSimSpace.Area' type.")
         else:
             raise TypeError("unsupported operand type(s) for *: '%s' and '%s'" % (type(self), type(other)))
 

@@ -85,8 +85,8 @@ class System():
         # Invalid type.
         else:
             raise TypeError("'system' must be of type 'Sire.System._System.System', "
-                + "'BioSimSpace._SireWrappers.System', 'BioSimSpace._SireWrappers.Molecule', "
-                +  "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "'BioSimSpace._SireWrappers.System', 'BioSimSpace._SireWrappers.Molecule', "
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -253,7 +253,7 @@ class System():
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_system.nMolecules() == 0:
@@ -289,7 +289,7 @@ class System():
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Remove the molecules in the system.
         for mol in molecules:
@@ -323,7 +323,7 @@ class System():
         # Invalid argument.
         else:
             raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                + "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Update each of the molecules.
         for mol in molecule:
@@ -422,7 +422,7 @@ class System():
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
-                        + "'BioSimSpace.Types.Length' types only!")
+                                    "'BioSimSpace.Types.Length' types only!")
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 

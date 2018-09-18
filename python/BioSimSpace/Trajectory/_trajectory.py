@@ -100,7 +100,7 @@ class Trajectory():
         # Invalid arguments.
         else:
             raise ValueError("BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
-                "or a trajectory and topology file.")
+                             "or a trajectory and topology file.")
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory()
@@ -277,7 +277,8 @@ class Trajectory():
         # Unsupported argument.
         else:
             raise ValueError("Unsupported argument. Indices or time stamps "
-                "must be an 'int' or 'float', or list of 'int' or 'float' types.")
+                             "must be an 'int' or 'float', or list of 'int' or "
+                             "'float' types.")
 
         # Intialise the list of frames.
         frames = []
@@ -387,7 +388,8 @@ class Trajectory():
             elif type(molecule) is _Sire.Mol.Molecule:
                 pass
             else:
-                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', 'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
+                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', "
+                                "'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
 
             # Initialise the list of atom indices.
             atoms = []

@@ -135,7 +135,7 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
 
     if _gmx_exe is None or _gromacs_path is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.spc' is not supported. "
-            + "Please install GROMACS (http://www.gromacs.org).")
+                                    "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
     molecule, box, shell, work_dir, map = \
@@ -185,7 +185,7 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
 
     if _gmx_exe is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.spce' is not supported. "
-            + "Please install GROMACS (http://www.gromacs.org).")
+                                    "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
     molecule, box, shell, work_dir, map = \
@@ -235,7 +235,7 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
 
     if _gmx_exe is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.tip3p' is not supported. "
-            + "Please install GROMACS (http://www.gromacs.org).")
+                                    "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
     molecule, box, shell, work_dir, map = \
@@ -285,7 +285,7 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
 
     if _gmx_exe is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.tip4p' is not supported. "
-            + "Please install GROMACS (http://www.gromacs.org).")
+                                    "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
     molecule, box, shell, work_dir, map = \
@@ -335,7 +335,7 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
 
     if _gmx_exe is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.tip5p' is not supported. "
-            + "Please install GROMACS (http://www.gromacs.org).")
+                                    "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
     molecule, box, shell, work_dir, map = \
@@ -385,7 +385,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
     if molecule is not None:
         if type(molecule) is not _Molecule and type(molecule) is not _System:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                + "or 'BioSimSpace._SireWrappers.System'")
+                            "or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None:
@@ -399,7 +399,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
                 raise ValueError("The system has no box information. Please use "
-                    + "the 'box' keyword argument.")
+                                 "the 'box' keyword argument.")
         else:
             if box is None:
                 raise ValueError("Missing 'box' keyword argument!")
@@ -608,7 +608,7 @@ def _solvate(molecule, box, shell, model, num_point,
     else:
         _os.chdir(dir)
         raise ValueError("No water molecules were generated. Try increasing "
-            + "the 'box' size or 'shell' thickness.")
+                         "the 'box' size or 'shell' thickness.")
 
     # Create a TOP file for the water model. By default we use the Amber03
     # force field to generate a dummy topology for the water model.
@@ -693,7 +693,7 @@ def _solvate(molecule, box, shell, model, num_point,
         if not _os.path.isfile("ions.tpr"):
             _os.chdir(dir)
             raise RuntimeError("'gmx grommp' failed to generate output! "
-                + "Perhaps your box is too small?")
+                               "Perhaps your box is too small?")
 
         # The ion concentration is unset.
         if ion_conc == 0:

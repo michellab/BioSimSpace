@@ -141,7 +141,7 @@ class Area(_Type):
                     return self / area
                 except:
                     raise ValueError("Could not convert the string to a "
-                        + "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
+                                     "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
 
         else:
             raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"

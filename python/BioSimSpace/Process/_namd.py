@@ -97,7 +97,7 @@ class Namd(_process.Process):
                 self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
             except:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Namd' is not supported. "
-                    + "Please install NAMD (http://www.ks.uiuc.edu/Research/namd).") from None
+                                            "Please install NAMD (http://www.ks.uiuc.edu/Research/namd).") from None
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):

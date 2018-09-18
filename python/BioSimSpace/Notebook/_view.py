@@ -198,7 +198,6 @@ class View():
             # No system.
             if system is None:
                 return
-
         else:
             system = self._handle
 

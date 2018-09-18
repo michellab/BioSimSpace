@@ -103,7 +103,7 @@ class Gromacs(_process.Process):
                     raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
             else:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
-                    + "Please install GROMACS (http://www.gromacs.org).")
+                                            "Please install GROMACS (http://www.gromacs.org).")
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()

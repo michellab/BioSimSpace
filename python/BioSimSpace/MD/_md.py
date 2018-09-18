@@ -166,7 +166,7 @@ class MD():
                 protocol = _Custom(protocol)
             else:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
-                    "or the path to a custom configuration file.")
+                                "or the path to a custom configuration file.")
 
         # Find a molecular dynamics package and executable.
         package, exe = _find_md_package(system, protocol)

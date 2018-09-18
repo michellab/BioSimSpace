@@ -91,7 +91,7 @@ class Molecule():
         # Invalid type.
         else:
             raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
-                + "or 'BioSimSpace._SireWrappers.Molecule'.")
+                            "or 'BioSimSpace._SireWrappers.Molecule'.")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -130,8 +130,8 @@ class Molecule():
         # Unsupported.
         else:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
-                + "'BioSimSpace._SireWrappers.Molecule', or a list "
-                + "of 'BioSimSpace._SireWrappers.Molecule' types")
+                            "'BioSimSpace._SireWrappers.Molecule', or a list "
+                            "of 'BioSimSpace._SireWrappers.Molecule' types")
 
         # Create and return a new system.
         return _System(molecules)
@@ -245,7 +245,7 @@ class Molecule():
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
-                        + "'BioSimSpace.Types.Length' types only!")
+                                    "'BioSimSpace.Types.Length' types only!")
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
@@ -1939,7 +1939,7 @@ class Molecule():
                 if c0.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
                    conn.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)):
                        raise _IncompatibleError("Merge has changed the molecular connectivity! "
-                           + "Check your atom mapping.")
+                                                "Check your atom mapping.")
 
         # molecule1
         for x in range(0, molecule1.nAtoms()):
@@ -1959,7 +1959,7 @@ class Molecule():
                 if c1.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
                    conn.connectionType(idx, idy):
                        raise _IncompatibleError("Merge has changed the molecular connectivity! "
-                           + "Check your atom mapping.")
+                                                "Check your atom mapping.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)

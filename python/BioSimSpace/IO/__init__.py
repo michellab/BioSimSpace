@@ -268,7 +268,8 @@ def saveMolecules(filebase, system, fileformat, map={}):
     # Invalid type.
     else:
         raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-            + "'BioSimSpace._SireWrappers.Molecule, or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
+                        "'BioSimSpace._SireWrappers.Molecule, or a list of "
+                        "'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 

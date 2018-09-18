@@ -115,8 +115,8 @@ class Volume(_Type):
                         return self / volume
                     except:
                         raise ValueError("Could not convert the string to a "
-                            + "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
-                            + "or 'BioSimSpace.Types.Volume'")
+                                         "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
+                                         "or 'BioSimSpace.Types.Volume'")
         else:
             raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
