@@ -38,18 +38,18 @@ try:
 
 # Post setup configuration.
 finally:
-    print("\nSetting up python environment...")
-
     import os
-    import subprocess
     import sys
 
-    # Open files for stdout/stderr.
-    stdout = open("setup.out", "w")
-    stderr = open("setup.err", "w")
+    if "install" in sys.argv and not os.getenv("BSS_SKIP_INSTALL"):
+        import subprocess
 
-    if not os.getenv("BSS_SKIP_INSTALL"):
         # Install Python dependencies and enable Jupyter widget extensions.
+        print("\nSetting up python environment...")
+
+        # Open files for stdout/stderr.
+        stdout = open("setup.out", "w")
+        stderr = open("setup.err", "w")
 
         print("Updating conda")
         command = "%s/conda update -y -q -n base conda" % bin_dir
@@ -127,25 +127,25 @@ finally:
         command = "%s/conda clean -all -y -q" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
-    # Close the file handles.
-    stdout.close()
-    stderr.close()
+        # Close the file handles.
+        stdout.close()
+        stderr.close()
 
-    try:
-        import BioSimSpace
+        try:
+            import BioSimSpace
 
-        # Installation worked. Remove the stdout/stderr files.
-        os.remove("setup.out")
-        os.remove("setup.err")
-    except:
-        print("\nInstallation of BioSimSpace failed. Please check output in 'setup.out' and 'setup.err'")
-        sys.exit()
+            # Installation worked. Remove the stdout/stderr files.
+            os.remove("setup.out")
+            os.remove("setup.err")
+        except:
+            print("\nInstallation of BioSimSpace failed. Please check output in 'setup.out' and 'setup.err'")
+            sys.exit()
 
-    print("\nDone!")
+        print("\nDone!")
 
-    print("\nIf you have problems with Jupyter permissions, try removing '$HOME/.jupyter' or '$HOME/.local/share/jupyter'")
+        print("\nIf you have problems with Jupyter permissions, try removing '$HOME/.jupyter' or '$HOME/.local/share/jupyter'")
 
-    print("\nFor optional package support...")
-    print("AMBER:   http://ambermd.org")
-    print("GROMACS: http://www.gromacs.org")
-    print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
+        print("\nFor optional package support...")
+        print("AMBER:   http://ambermd.org")
+        print("GROMACS: http://www.gromacs.org")
+        print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
