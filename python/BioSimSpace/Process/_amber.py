@@ -558,7 +558,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           trajectory : mdtraj.Trajectory, MDAnalysis.Universe
+           trajectory : BioSimSpace.Trajectory
         """
 
         # Wait for the process to finish.
