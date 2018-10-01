@@ -124,11 +124,14 @@ class Trajectory():
         # Get the trajectory from the process.
         if self._process is not None:
 
-            # AMBER.
-            if self._process_name.upper() == "AMBER":
+            # AMBER / SOMD.
+            if self._process_name.upper() == "AMBER" or self._process_name.upper() == "SOMD":
 
                 # Path to the trajectory file.
-                traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
+                if self._process_name.upper() == "AMBER":
+                    traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
+                else:
+                    traj_file = "%s/traj000000001.dcd" % self._process._work_dir
 
                 # MDTraj currently doesn't support the .prm7 extension, so we
                 # need to copy the topology file to a temporary .parm7 file.
@@ -242,10 +245,10 @@ class Trajectory():
         # TODO:
         # How can we do this in a robust way if the trajectory is loaded from file?
         # Some formats do not store time information as part of the trajectory.
-        if self._process is not None:
-            time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
-        else:
-            if n_frames > 1:
+        if n_frames > 1:
+            if self._process is not None:
+                time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
+            else:
                 time_interval = self._trajectory.timestep / 1000
 
         # Create the indices array.
@@ -260,12 +263,12 @@ class Trajectory():
 
         # A single time stamp.
         elif type(indices) is _Time:
-            if n_frames <= 1:
+            if n_frames > 1:
+                # Round time stamp to nearest frame index.
+                indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
+            else:
                 raise _IncompatibleError("Cannot determine time stamps for a trajectory "
                                          "with only one frame!")
-
-            # Round time stamp to nearest frame index.
-            indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
 
         # A list of frame indices.
         elif all(isinstance(x, int) for x in indices):
