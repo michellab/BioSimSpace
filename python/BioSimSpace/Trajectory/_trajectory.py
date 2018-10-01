@@ -26,9 +26,11 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire as _Sire
 
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
+from ..Types import Time as _Time
 
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj
@@ -221,7 +223,7 @@ class Trajectory():
            Keyword arguments
            -----------------
 
-           indices : [ int ], [ float ]
+           indices : [ int ], [ BioSimSpace.Types.Time ]
                A list of trajectory frame indices, or time stamps (in ns).
         """
 
@@ -233,6 +235,9 @@ class Trajectory():
             if self._trajectory is None:
                 return None
 
+        # Store the number of frames.
+        n_frames = self._trajectory.n_frames
+
         # Work out the frame spacing in nanoseconds.
         # TODO:
         # How can we do this in a robust way if the trajectory is loaded from file?
@@ -240,7 +245,8 @@ class Trajectory():
         if self._process is not None:
             time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
         else:
-            time_interval = self._trajectory.timestep / 1000
+            if n_frames > 1:
+                time_interval = self._trajectory.timestep / 1000
 
         # Create the indices array.
 
@@ -252,48 +258,45 @@ class Trajectory():
         elif type(indices) is int:
             indices = [indices]
 
+        # A single time stamp.
+        elif type(indices) is _Time:
+            if n_frames <= 1:
+                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
+                                         "with only one frame!")
+
+            # Round time stamp to nearest frame index.
+            indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
+
         # A list of frame indices.
         elif all(isinstance(x, int) for x in indices):
             pass
 
-        # A single time stamp.
-        elif type(indices) is float:
-            if indices < 0:
-                raise ValueError("Time stamp cannot be negative.")
-
-            # Round time stamp to nearest frame index.
-            indices = [round(indices / time_interval) - 1]
-
         # A list of time stamps.
-        elif all(isinstance(x, float) for x in indices):
-            # Make sure no time stamps are negative.
-            for x in indices:
-                if x < 0:
-                    raise ValueError("Time stamp cannot be negative.")
+        elif all(isinstance(x, _Time) for x in indices):
+            if n_frames <= 1:
+                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
+                                         "with only one frame!")
 
             # Round time stamps to nearest frame indices.
-            indices = [round(x / time_interval) - 1 for x in indices]
+            indices = [round(x.nanoseconds().magnitude() / time_interval) - 1 for x in indices]
 
         # Unsupported argument.
         else:
             raise ValueError("Unsupported argument. Indices or time stamps "
-                             "must be an 'int' or 'float', or list of 'int' or "
-                             "'float' types.")
+                             "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
+                             "'BioSimSpace.Types.Time' types.")
 
         # Intialise the list of frames.
         frames = []
-
-        # Store the number of frames.
-        n_frames = self._trajectory.n_frames
 
         # Loop over all indices.
         for x in indices:
 
             # Make sure the frame index is within range.
             if x > 0 and x >= n_frames:
-                raise ValueError("Frame index (%d) of of range (0 to %d)." %s (x, n_frames - 1))
+                raise ValueError("Frame index (%d) of of range (0 to %d)." % (x, n_frames - 1))
             elif x < -n_frames:
-                raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (x, n_frames))
+                raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (x, n_frames))
 
             # The name of the frame coordinate file.
             frame_file = ".frame.nc"
