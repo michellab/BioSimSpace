@@ -36,7 +36,6 @@ import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 
-import math as _math
 import os as _os
 import pygtail as _pygtail
 import subprocess as _subprocess
