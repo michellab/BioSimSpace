@@ -278,7 +278,7 @@ class Amber(_process.Process):
         if type(self._protocol) is _Protocol.Minimisation:
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  imin=1,")                   # Minisation simulation.
+            self.addToConfig("  imin=1,")                   # Minimisation simulation.
             self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
             self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
