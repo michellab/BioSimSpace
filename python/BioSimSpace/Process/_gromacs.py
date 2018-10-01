@@ -59,14 +59,14 @@ class Gromacs(_process.Process):
                The molecular system.
 
            protocol : BioSimSpace.Protocol
-               The protocol for the AMBER process.
+               The protocol for the GROMACS process.
 
 
            Keyword arguments
            -----------------
 
            exe : str
-               The full path to the AMBER executable.
+               The full path to the GROMACS executable.
 
            name : str
                The name of the process.
