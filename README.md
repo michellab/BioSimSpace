@@ -164,6 +164,19 @@ process and check that all unit tests pass.
 For those who wish to run things locally, a test suite can be found
 [here](https://github.com/michellab/BioSimSpaceUnitTests).
 
+## Issues
+
+Please report bugs and other issues using the GitHub [issue tracker](https://github.com/michellab/BioSimSpace/issues).
+When reporting issues please try to include a minimal code snippet that reproduces
+the problem. Additional files can be also be uploaded as an archive, e.g. a zip
+file. Please also report the branch on which you are experiencing the issue,
+along with the BioSimSpace version number. This can be found by running:
+
+```python
+import BioSimSpace as BSS
+print(BSS.__version__)
+```
+
 ## Versioning
 
 BioSimSpace uses the following versioning convention for releases, `YYYY.MAJOR.MINOR`,
