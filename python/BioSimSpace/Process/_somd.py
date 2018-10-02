@@ -213,6 +213,10 @@ class Somd(_process.Process):
             if not self._protocol.isConstantTemp():
                 raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
 
+            # Backbone restraints aren't supported.
+            if self._protocol.isRestrained():
+                raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
+
             # Work out the number of cycles. We save coordinates every cycle,
             # which is 100 MD steps (moves) in length (this is for consistency
             # with other MD drivers). Note that SOMD only save coordinates to
