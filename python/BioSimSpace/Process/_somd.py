@@ -409,8 +409,16 @@ class Somd(_process.Process):
         # Call the base class method.
         super()._clear_output()
 
-        # Delete any simulation restart files in the working
-        # directory.
-        restart_file = "%s/sim_restart.s3"
-        if _os.path.isfile(restart_file):
-            _os.remove(restart_file)
+        # Delete any restart and trajectory files in the working
+
+        file = "%s/sim_restart.s3" % self._work_dir
+        if _os.path.isfile(file):
+            _os.remove(file)
+
+        file = "%s/SYSTEM.s3" % self._work_dir
+        if _os.path.isfile(file):
+            _os.remove(file)
+
+        file = "%s/traj000000001.dcd" % self._work_dir
+        if _os.path.isfile(file):
+            _os.remove(file)
