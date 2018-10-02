@@ -419,8 +419,7 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() /
-                               self._protocol.getTimeStep().nanoseconds().magnitude())
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
             steps = 20 * _math.ceil(steps / 20)
 
             # Heating/cooling simulation.
@@ -478,8 +477,7 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() /
-                               self._protocol.getTimeStep().nanoseconds().magnitude())
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
             steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.

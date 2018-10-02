@@ -296,11 +296,8 @@ class Amber(_process.Process):
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
 
-            # Convert the timestep to nanoseconds.
-            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
-
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
             # Set the random number seed.
             if self._is_seeded:
@@ -360,11 +357,8 @@ class Amber(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
-            # Convert the timestep to nanoseconds.
-            timestep = self._protocol.getTimeStep().nanoseconds().magnitude()
-
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime().nanoseconds().magnitude() / timestep)
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
             # Set the random number seed.
             if self._seed is None:
