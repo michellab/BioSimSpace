@@ -1660,17 +1660,3 @@ class Amber(_process.Process):
 
             except KeyError:
                 return None
-
-    def _get_trajectory_files(self):
-        """Get all files associated with the molecular trajectory."""
-
-        # Name of the trajectory file.
-        traj_file = "%s/%s.nc" % (self._work_dir, self._name)
-
-        # Return the trajectory and topology file.
-        if _os.path.isfile(traj_file):
-            return (traj_file, self._top_file)
-
-        # No trajectory file.
-        else:
-            return None
