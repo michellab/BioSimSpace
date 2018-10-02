@@ -334,7 +334,7 @@ class Somd(_process.Process):
 
         # SOMD uses the stdout stream for all output.
         with open(self._stderr_file, "w") as f:
-            f.write("All output has been redirected to the stdout stream!")
+            f.write("All output has been redirected to the stdout stream!\n")
 
         # Change back to the original working directory.
         _os.chdir(dir)

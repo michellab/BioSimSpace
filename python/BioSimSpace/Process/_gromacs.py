@@ -305,7 +305,7 @@ class Gromacs(_process.Process):
         # redirect all output to stdout, and place a message in the stderr file
         # to highlight this.
         with open(self._stderr_file, "w") as f:
-            f.write("All output has been redirected to the stdout stream!")
+            f.write("All output has been redirected to the stdout stream!\n")
 
         # Change back to the original working directory.
         _os.chdir(dir)
