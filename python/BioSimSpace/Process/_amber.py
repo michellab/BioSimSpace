@@ -28,6 +28,7 @@ import Sire as _Sire
 
 from BioSimSpace import _amber_home
 from . import _process
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -408,6 +409,9 @@ class Amber(_process.Process):
                 self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
 
             self.addToConfig(" /")
+
+        else:
+            raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""

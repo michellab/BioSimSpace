@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from . import _process
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -485,6 +486,9 @@ class Namd(_process.Process):
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
+
+        else:
+            raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
     def start(self):
         """Start the NAMD process.
