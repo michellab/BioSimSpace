@@ -222,16 +222,50 @@ class Somd(_process.Process):
             # is disregarded.
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            # Convert the timestep to femtoseconds.
+            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+
+            # Convert the temperature to Kelvin.
+            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
 
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
             self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
-                                                                        # System temperature.
-            self.addToConfig("temperature = %.2f kelvin" \
-                % self._protocol.getStartTemperature().kelvin().magnitude())
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+            if not has_box:
+                self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
+                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            if self._is_seeded:
+                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+
+        # Add configuration variables for a production simulation.
+        elif type(self._protocol) is _Protocol.Production:
+
+            # Work out the number of cycles. We save coordinates every cycle,
+            # which is 100 MD steps (moves) in length (this is for consistency
+            # with other MD drivers). Note that SOMD only save coordinates to
+            # a DCD trajectory file, so it's impossible to decouple the
+            # frequency of recording configurations and trajectory frames,
+            # i.e. the number of trajectory frames specified in the protocol
+            # is disregarded.
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+
+            # Convert the timestep to femtoseconds.
+            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+
+            # Convert the temperature to Kelvin.
+            temperature = self._protocol.getTemperature().kelvin().magnitude()
+
+            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
+            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
+            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+            if self._protocol.getEnsemble() == "NVT":
+                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             if not has_box:
                 self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
                 self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
@@ -293,6 +327,10 @@ class Somd(_process.Process):
         # Start the simulation.
         self._process = _Sire.Base.Process.run(self._exe, args,
             "%s.out"  % self._name, "%s.err"  % self._name)
+
+        # SOMD uses the stdout stream for all output.
+        with open(self._stderr_file, "w") as f:
+            f.write("All output has been redirected to the stdout stream!")
 
         # Change back to the original working directory.
         _os.chdir(dir)
