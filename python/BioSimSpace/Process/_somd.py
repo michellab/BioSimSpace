@@ -401,7 +401,11 @@ class Somd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        return _Trajectory(process=self)
+        try:
+            return _Trajectory(process=self)
+
+        except:
+            return None
 
     def _clear_output(self):
         """Reset stdout and stderr."""
