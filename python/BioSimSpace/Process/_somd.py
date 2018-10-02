@@ -27,6 +27,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import Sire as _Sire
 
 from . import _process
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -35,6 +36,7 @@ import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 
+import math as _math
 import os as _os
 import timeit as _timeit
 import warnings as _warnings
@@ -204,6 +206,40 @@ class Somd(_process.Process):
             if not has_box:
                 self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
                 self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+
+        # Add configuration variables for an equilibration simulation.
+        elif type(self._protocol) is _Protocol.Equilibration:
+            # Only constant temperature equilibration simulations are supported.
+            if not self._protocol.isConstantTemp():
+                raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
+
+            # Work out the number of cycles. We save coordinates every cycle,
+            # which is 100 MD steps (moves) in length (this is for consistency
+            # with other MD drivers). Note that SOMD only save coordinates to
+            # a DCD trajectory file, so it's impossible to decouple the
+            # frequency of recording configurations and trajectory frames,
+            # i.e. the number of trajectory frames specified in the protocol
+            # is disregarded.
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
+            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
+            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+                                                                        # System temperature.
+            self.addToConfig("temperature = %.2f kelvin" \
+                % self._protocol.getStartTemperature().kelvin().magnitude())
+            if not has_box:
+                self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
+                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            if self._is_seeded:
+                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+
+        else:
+            raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
