@@ -358,7 +358,7 @@ class Namd(_process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        if type(self._protocol) is _Protocol.Equilibration:
+        elif type(self._protocol) is _Protocol.Equilibration:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
