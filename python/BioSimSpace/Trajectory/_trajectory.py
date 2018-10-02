@@ -107,6 +107,14 @@ class Trajectory():
         # Get the current trajectory.
         self._trajectory = self.getTrajectory()
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
 
