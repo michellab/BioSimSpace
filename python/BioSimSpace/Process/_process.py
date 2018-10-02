@@ -790,6 +790,10 @@ class Process():
             else:
                 return self._runtime * _Units.Time.minute
 
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
+        self.clearArgs()
+
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
@@ -817,43 +821,41 @@ def _restrain_backbone(system):
         # Extract the molecule and make it editable.
         m = s.molecule(n).edit()
 
-        # Protein flag.
-        is_protein = False
+        # Initialise a list of protein residues.
+        protein_residues = []
 
         # Compare each residue name against the amino acid list.
         for res in m.residues():
 
             # This residue is an amino acid.
             if res.name().value().upper() in amino_acids:
-                is_protein = True
-                break
+                protein_residues.append(res.index())
 
-        # Restrain the protein backbone.
-        if is_protein:
+        # Loop over all of the protein residues.
+        for residx in protein_residues:
 
-            # Select the backbone.
-            backbone = m.atoms(_Sire.Mol.AtomName("CA", _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("N",  _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("C",  _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("O",  _Sire.ID.CaseInsensitive))
+            # Loop over all of the atoms in the residue.
+            for atom in m.residue(residx).atoms():
 
-            # Set the restrained property for each atom in the backbone.
-            for atom in backbone:
-                m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
+                # Try to compare the atom element property against the list of
+                # backbone atoms and set the "restrained" property if a match
+                # is found.
+                try:
+                    element = atom.property("element")
+                    if element == _Sire.Mol.Element("CA") or \
+                       element == _Sire.Mol.Element("N")  or \
+                       element == _Sire.Mol.Element("C")  or \
+                       element == _Sire.Mol.Element("O"):
+                           m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
 
-            # Update the system.
-            s.update(m.commit())
+                except:
+                    pass
+
+        # Update the system.
+        s.update(m.commit())
 
     # Return the new system.
     return s
-
-    def _generate_args(self):
-        """Generate the dictionary of command-line arguments."""
-        self.clearArgs()
-
-    def _get_trajectory_files(self):
-        """Get all files associated with the molecular trajectory."""
-        return None
 
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
