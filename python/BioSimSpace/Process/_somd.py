@@ -45,7 +45,7 @@ class Somd(_process.Process):
     """A class for running simulations using SOMD."""
 
     def __init__(self, system, protocol, exe=None, name="somd",
-            platform="CUDA", work_dir=None, seed=None, map={}):
+            platform="GPU", work_dir=None, seed=None, map={}):
         """Constructor.
 
            Positional arguments
@@ -68,7 +68,7 @@ class Somd(_process.Process):
                The name of the process.
 
            platform : str
-               The platform for the simulation: "CUDA" or "CPU".
+               The platform for the simulation: "GPU" or "CPU".
 
            work_dir :
                The working directory for the process.
@@ -98,8 +98,8 @@ class Somd(_process.Process):
             platform = platform.replace(" ", "").upper()
 
             # Check for platform support.
-            if platform not in ["CUDA", "CPU"]:
-                raise ValueError("Supported platforms are: 'CUDA' and 'CPU'")
+            if platform not in ["GPU", "CPU"]:
+                raise ValueError("Supported platforms are: 'GPU' and 'CPU'")
             else:
                 self._platform = platform
 
@@ -215,7 +215,10 @@ class Somd(_process.Process):
         self.setArg("-c", self._rst_file)       # Coordinate restart file.
         self.setArg("-t", self._top_file)       # Topology file.
         self.setArg("-C", self._config_file)    # Config file.
-        self.setArg("-p", self._platform)       # Platform.
+        if self._platform == "GPU":             # Platform.
+            self.setArg("-p", "CUDA")
+        else:
+            self.setArg("-p", "CPU")
 
     def start(self):
         """Start the SOMD process."""
