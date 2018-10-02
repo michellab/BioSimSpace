@@ -175,8 +175,12 @@ class Process():
         # Initialise the configuration file string list.
         self._config = []
 
-        # Initaliae the command-line argument dictionary.
+        # Initalise the command-line argument dictionary.
         self._args = _collections.OrderedDict()
+
+        # Clear any existing output in the current working directory
+        # and set out stdout/stderr files.
+        self._clear_output()
 
     def __str__(self):
         """Return a human readable string representation of the object."""
