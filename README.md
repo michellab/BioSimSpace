@@ -100,6 +100,14 @@ recommended installation instructions.
 (Installation and use of these packages is subject to the terms of their
 respective licenses.)
 
+For Somd support you'll need to export the following (Bash style) environment
+variable:
+
+```bash
+# Use the appropriate path for your Sire installation.
+OPENMM_PLUGIN_DIR=$HOME/sire.app/lib/plugins/
+```
+
 ## Documentation
 
 Each package has its own README page:
