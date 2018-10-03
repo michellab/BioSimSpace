@@ -222,7 +222,7 @@ echo "# BioSimSpace aliases." > "$HOME/.biosimspacerc"
     echo "alias bss_ipython='$SIRE_DIR/bin/ipython'"
     echo "alias bss_jupyter='$SIRE_DIR/bin/jupyter'"
     echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'"
-    echo "export OPENMM_PLUGIN_DIR="$SIRE_DIR/lib/plugins/"
+    echo "export OPENMM_PLUGIN_DIR=$SIRE_DIR/lib/plugins/"
 } >> "$HOME/.biosimspacerc"
 
 # Store the name of the shell rc file.
