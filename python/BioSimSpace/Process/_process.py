@@ -778,7 +778,7 @@ class Process():
         """Return the running time for the process (in minutes)."""
 
         # The process is still running.
-        if self._process.isRunning():
+        if self.isRunning():
             self._runtime = (_timeit.default_timer() - self._timer) / 60
             return self._runtime * _Units.Time.minute
 
@@ -790,9 +790,13 @@ class Process():
                 self._timer = None
                 return self._runtime * _Units.Time.minute
 
-            # The process has finished. Return the previous run time.
             else:
-                return self._runtime * _Units.Time.minute
+                # The process hasn't been started.
+                if self._runtime is None:
+                    return 0 * _Units.Time.minute
+                # The process has finished, return the final runtime.
+                else:
+                    return self._runtime * _Units.Time.minute
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
