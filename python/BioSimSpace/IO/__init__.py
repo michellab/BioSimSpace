@@ -99,11 +99,11 @@ def formatInfo(format):
            The file format.
 
 
-        Returns
-        -------
+       Returns
+       -------
 
-        info : str
-            A description of the named file format.
+       info : str
+           A description of the named file format.
     """
 
     try:
