@@ -265,6 +265,10 @@ class Gromacs(_process.Process):
     def start(self):
         """Start the GROMACS process."""
 
+        # The process is currently queued.
+        if self.isQueued():
+            return
+
         # Process is already running.
         if self._process is not None:
             if self._process.isRunning():

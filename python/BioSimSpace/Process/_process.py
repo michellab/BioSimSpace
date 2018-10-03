@@ -128,6 +128,9 @@ class Process():
         self._system = system._getSireSystem()
         self._protocol = protocol
 
+        # Flag that the process isn't queued.
+        self._is_queued = False
+
         # Set the name
         if name is None:
             self._name = None
@@ -358,8 +361,12 @@ class Process():
             # Wait for the process to finish.
             self._process.wait()
 
+    def isQueued(self):
+        """Return whether the process is queued."""
+        return self._is_queued
+
     def isRunning(self):
-        """Return whether the process is running"""
+        """Return whether the process is running."""
         try:
             return self._process.isRunning()
         except AttributeError:

@@ -450,6 +450,10 @@ class Amber(_process.Process):
                The process object.
         """
 
+        # The process is currently queued.
+        if self.isQueued():
+            return
+
         # Process is already running.
         if self._process is not None:
             if self._process.isRunning():
