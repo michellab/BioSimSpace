@@ -53,10 +53,10 @@ def matchAtoms(molecule0,
        --------------------
 
        molecule0 : BioSimSpace._SireWrappers.Molecule
-           The reference molecule.
+           The molecule of interest.
 
        molecule1 : BioSimSpace._SireWrappers.Molecule
-           The target molecule.
+           The reference molecule.
 
 
        Keyword arguments
@@ -208,10 +208,10 @@ def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
        --------------------
 
        molecule0 : BioSimSpace._SireWrappers.Molecule
-           The reference molecule.
+           The molecule to align.
 
        molecule1 : BioSimSpace._SireWrappers.Molecule
-           The target molecule.
+           The reference molecule.
 
 
        Keyword arguments
