@@ -154,6 +154,13 @@ class MD():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           process : BioSimSpace.Process
+               A process to run the molecular dynamics protocol.
         """
 
         # Check that the system is valid.

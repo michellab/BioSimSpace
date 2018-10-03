@@ -123,6 +123,13 @@ class Trajectory():
 
            format : str
                Whether to return an 'MDTraj' or 'MDAnalysis' object.
+
+
+           Returns
+           -------
+
+           trajectory : mdtraj.core.trajectory.Trajectory, MDAnalysis.core.universe.Universe
+               The trajectory in MDTraj or MDAnalysis format.
         """
 
         if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
@@ -236,6 +243,13 @@ class Trajectory():
 
            indices : [ int ], [ BioSimSpace.Types.Time ]
                A list of trajectory frame indices, or time stamps (in ns).
+
+
+           Returns
+           -------
+
+           frames : [ BioSimSpace._SireWrappers.System ]
+               The list of System objects.
         """
 
         # The process is running. Grab the latest trajectory.
@@ -331,7 +345,14 @@ class Trajectory():
         return frames
 
     def nFrames(self):
-        """Return the current number of trajectory frames."""
+        """Return the current number of trajectory frames.
+
+           Returns
+           -------
+
+           nFrames : int
+               The number of trajectory frames.
+        """
 
         # First get the current MDTraj object.
         if self._process is not None and self._process.isRunning():
@@ -357,6 +378,13 @@ class Trajectory():
 
            molecule : int
                The index of the reference molecule.
+
+
+           Returns
+           -------
+
+           rmsd : [ float ]
+               A list containing the RMSD value at each time point.
         """
 
         # Default to the first frame.
