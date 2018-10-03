@@ -330,7 +330,7 @@ class Somd(_process.Process):
 
         # Start the simulation.
         self._process = _Sire.Base.Process.run(self._exe, args,
-            "%s.out"  % self._name, "%s.err"  % self._name)
+            "%s.out"  % self._name, "%s.out"  % self._name)
 
         # SOMD uses the stdout stream for all output.
         with open(self._stderr_file, "w") as f:
