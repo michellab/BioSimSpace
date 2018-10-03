@@ -94,6 +94,7 @@ recommended installation instructions.
 
 * [Amber / AmberTools](http://ambermd.org): _Dynamics / Parameterisation / Solvation_
 * [Gromacs](http://www.gromacs.org/): _Dynamics / Parameterisation / Solvation_
+* [Somd](https://siremol.org/tutorials/somd/): _Dynamics_ (bundled)
 * [Namd](http://www.ks.uiuc.edu/Research/namd/): _Dynamics_ (optional)
 
 (Installation and use of these packages is subject to the terms of their

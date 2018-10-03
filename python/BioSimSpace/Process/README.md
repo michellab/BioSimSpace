@@ -6,8 +6,10 @@ simulation processes.
 The package provides a base class, `Process`, that defines common properties
 and methods for all processes. Derived classes, such as `Namd`, define
 functionality for running process with a particular software package. At
-present we provide support for [NAMD](http://www.ks.uiuc.edu/Research/namd)
-and [AMBER](http://ambermd.org).
+present we provide support for [AMBER](http://ambermd.org),
+[GROMACS](http://www.gromacs.org/), [NAMD](http://www.ks.uiuc.edu/Research/namd),
+and [SOMD](https://siremol.org/tutorials/somd). (GROMACS support is
+currently limited.)
 
 ## Object instantiation
 
