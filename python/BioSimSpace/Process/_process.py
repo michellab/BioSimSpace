@@ -187,7 +187,7 @@ class Process():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s', seed=%s>" \
             % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
