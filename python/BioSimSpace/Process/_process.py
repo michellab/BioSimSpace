@@ -377,8 +377,7 @@ class Process():
         try:
             return self._process.isError()
         except AttributeError:
-            print("The process hasn't been started!")
-            return None
+            return False
 
     def kill(self):
         """Kill the running process."""
