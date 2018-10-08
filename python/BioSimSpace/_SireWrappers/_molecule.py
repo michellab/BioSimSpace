@@ -680,10 +680,10 @@ class Molecule():
                     # Angle data.
                     file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                     file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                    file.write("        initial_force  %.2f\n" % amber_bond0.k())
-                    file.write("        initial_equil  %.2f\n" % amber_bond0.r0())
-                    file.write("        final_force    %.2f\n" % amber_bond1.k())
-                    file.write("        final_equil    %.2f\n" % amber_bond1.r0())
+                    file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                    file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                    file.write("        final_force    %.5f\n" % amber_bond1.k())
+                    file.write("        final_equil    %.5f\n" % amber_bond1.r0())
 
                     # End bond record.
                     file.write("    endbond\n")
@@ -769,10 +769,10 @@ class Molecule():
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % amber_angle.k())
-                file.write("        initial_equil  %.2f\n" % amber_angle.theta0())
-                file.write("        final_force    %.2f\n" % 0.0)
-                file.write("        final_equil    %.2f\n" % 0.0)
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % 0.0)
 
                 # End angle record.
                 file.write("    endangle\n")
@@ -797,10 +797,10 @@ class Molecule():
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % 0.0)
-                file.write("        initial_equil  %.2f\n" % 0.0)
-                file.write("        final_force    %.2f\n" % amber_angle.k())
-                file.write("        final_equil    %.2f\n" % amber_angle.theta0())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % 0.0)
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
 
                 # End angle record.
                 file.write("    endangle\n")
@@ -827,10 +827,10 @@ class Molecule():
                 file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        initial_force  %.2f\n" % amber_angle0.k())
-                file.write("        initial_equil  %.2f\n" % amber_angle0.theta0())
-                file.write("        final_force    %.2f\n" % amber_angle1.k())
-                file.write("        final_equil    %.2f\n" % amber_angle1.theta0())
+                file.write("        initial_force  %.5f\n" % amber_angle0.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle1.k())
+                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
 
                 # End angle record.
                 file.write("    endangle\n")
