@@ -170,12 +170,34 @@ def matchAtoms(molecule0,
     else:
         is_align = False
 
-    # Find all of the best maximum common substructure matches. We include light
-    # atoms in the match and allow mappings between light and heavy atoms.
-    mappings = ( mol0.evaluate()
-                     .findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
-                         timeout, match_light, map0, map1, 0, verbose)
-               )
+    # Find all of the best maximum common substructure matches.
+    # We perform two matches to handle different edge cases. The best
+    # match is the one that matches the greater number of atom pairs.
+    # Ideally the two runs should be performed concurrently, but this
+    # isn't currently possible from within Python since the underlying
+    # Sire objects aren't pickable.
+
+    # Regular match. Include light atoms, but don't allow matches between heavy
+    # and light atoms.
+    m0 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
+                                        timeout, match_light, map0, map1, 6, verbose)
+
+    # Include light atoms, and allow matches between heavy and light atoms.
+    # This captures mappings such as O --> H in methane to methanol.
+    m1 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
+                                        timeout, match_light, map0, map1, 0, verbose)
+
+    # Take the mapping with the larger number of matches.
+    if len(m1) > 0:
+        if len(m0) > 0:
+            if len(m1[0]) > len(m0[0]):
+                mappings = m1
+            else:
+                mappings = m0
+        else:
+            mappings = m1
+    else:
+        mappings = m0
 
     # No matches!
     if len(mappings) == 0:
