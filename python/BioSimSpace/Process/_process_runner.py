@@ -61,7 +61,7 @@ class ProcessRunner():
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
-            raise TypeError("'processes' must be a list of 'BioSimSpace.Process.Process' types.")
+            raise TypeError("'processes' must be a list of 'BioSimSpace.Process' types.")
 
         # Make sure all of the processes aren't running.
         if not all(process.isRunning() == False for process in processes):
@@ -70,6 +70,11 @@ class ProcessRunner():
         # Check that the working directory is valid.
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
+
+        # Check that the nest_dirs flag is valid.
+        if type(nest_dirs) is not bool:
+            raise TypeError("'nest_dirs' must be of type 'bool'")
+        self._nest_dirs = nest_dirs
 
         # Set the list of processes.
         self._processes = processes
@@ -95,18 +100,7 @@ class ProcessRunner():
 
         # Nest all of the process working directories inside the runner directory.
         if nest_dirs:
-            # Loop over each process.
-            for idx, process in enumerate(self._processes):
-                # Create the new working directory name.
-                new_dir = "%s/process_%03d" % (self._work_dir, idx)
-
-                # Create a new process object using the nested directory.
-                if process._package_name == "SOMD":
-                    self._processes[idx] = type(process)(_System(process._system), process._protocol,
-                        process._exe, process._name, process._platform, new_dir, process._seed, process._map)
-                else:
-                    self._processes[idx] = type(process)(_System(process._system), process._protocol,
-                        process._exe, process._name, new_dir, process._seed, process._map)
+            self._processes = self._nest_directories(self._processes)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -167,6 +161,53 @@ class ProcessRunner():
             raise TypeError("'name' must be of type 'str'")
         else:
             self._name = name
+
+    def addProcess(self, process):
+        """Add a process to the runner.
+
+           Positional arguments
+           --------------------
+
+           process : BioSimSpace.Process, [ BioSimSpace.Process ]
+               The process/processes to add.
+        """
+
+        # Convert to a list.
+        if type(process) is not list:
+            processes = [ process ]
+
+        # Check that the list of processes is valid.
+        if not all(isinstance(process, _Process) for process in processes):
+            raise TypeError("'processes' must be a list of 'BioSimSpace.Process' types.")
+
+        # Make sure all of the processes aren't running.
+        if not all(process.isRunning() == False for process in processes):
+            raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
+
+        # Nest the directories inside the process runner's working directory.
+        if self._nest_dirs:
+            # Extend the list of procesess.
+            self._processes.extend(self._nest_directories(processes, len(self._processes)))
+
+    def removeProcess(self, index):
+        """Remove a process from the runner.
+
+           Positional arguments
+           --------------------
+
+           index : int
+               The index of the process.
+        """
+
+        try:
+            # Pop the chosen process from the list.
+            process = self._processes.pop(index)
+
+            # Kill the process.
+            process.kill()
+
+        except IndexError:
+            raise("'index' is out of range: [0-%d]" % len(self._processes))
 
     def nProcesses(self):
         """Return the number of processes.
@@ -363,3 +404,43 @@ class ProcessRunner():
             run_time.append(p.runTime())
 
         return run_time
+
+    def _nest_directories(self, processes, idx_offset=0):
+        """Helper function to nest processes inside the runner's working
+           directory.
+
+           Positional arguments
+           --------------------
+
+           processes : [ BioSimSpace.Process ]
+               A list of process objects.
+
+           idx_offset : int
+               The index of the first process.
+
+
+           Returns
+           -------
+
+           new_processes : [ BioSimSpace.Process ]
+               A list of procesess with updated working directories.
+        """
+
+        # Create the list of new processes.
+        new_processes = []
+
+        # Loop over each process.
+        for idx, process in enumerate(processes):
+            # Create the new working directory name.
+            new_dir = "%s/process_%03d" % (self._work_dir, idx + idx_offset)
+
+            # Create a new process object using the nested directory.
+            if process._package_name == "SOMD":
+                new_processes.append(type(process)(_System(process._system), process._protocol,
+                    process._exe, process._name, process._platform, new_dir, process._seed, process._map))
+            else:
+                new_processes.append(type(process)(_System(process._system), process._protocol,
+                    process._exe, process._name, new_dir, process._seed, process._map))
+
+
+        return new_processes
