@@ -388,6 +388,59 @@ class ProcessRunner():
 
         return bool_list
 
+    def start(self, index):
+        """Start a specific process. The same can be achieved using:
+               runner.processes()[index].start()
+
+           Positional arguments
+           --------------------
+
+           index : int
+               The index of the process.
+        """
+
+        try:
+            self._processes[index].start()
+
+        except IndexError:
+            raise("'index' is out of range: [0-%d]" % len(self._processes))
+
+    def startAll(self):
+        """Start all of the processes."""
+
+        for p in self._processes:
+            p.start()
+
+    def kill(self, index):
+        """Kill a specific process. The same can be achieved using:
+               runner.processes()[index].kill()
+
+           Positional arguments
+           --------------------
+
+           index : int
+               The index of the process.
+        """
+
+        try:
+            self._processes[index].kill()
+
+        except IndexError:
+            raise("'index' is out of range: [0-%d]" % len(self._processes))
+
+    def killAll(self):
+        """Kill all of the processes."""
+
+        for p in self._processes:
+            p.kill()
+
+    def restartFailed(self):
+        """Restart any jobs that are in an error state."""
+
+        for p in self._processes:
+            if p.isError():
+                p.start()
+
     def runTime(self):
         """Return the run time for each process.
 
