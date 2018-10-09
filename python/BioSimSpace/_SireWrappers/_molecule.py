@@ -176,6 +176,55 @@ class Molecule():
         """Whether this molecule has been merged with another."""
         return self._is_merged
 
+    def isWater(self):
+        """Whether this is a water molecule."""
+
+        # Water models have 5 or less atoms.
+        if self.nAtoms() > 5:
+            return False
+
+        is_water = False
+
+        # Tally counters for the number of H and O atoms.
+        num_hydrogen = 0
+        num_oxygen = 0
+
+        # Loop over all atoms in the molecule.
+        for atom in self._sire_molecule.atoms():
+
+            # First try using the "element" property of the atom.
+            try:
+                # Hydrogen.
+                if atom.property("element") == _SireMol.Element("H"):
+                    num_hydrogen += 1
+                # Oxygen.
+                elif atom.property("element") == _SireMol.Element("O"):
+                    num_oxygen += 1
+
+            # Otherwise, try to infer the element from the atom name.
+            except:
+                # Strip all digits from the name.
+                name = "".join([x for x in atom.name().value() if not x.isdigit()])
+
+                # Remove any whitespace.
+                name = name.replace(" ", "")
+
+                # Try to infer the element.
+                element = _SireMol.Element.biologicalElement(name)
+
+                # Hydrogen.
+                if element == _SireMol.Element("H"):
+                    num_hydrogen += 1
+                # Oxygen.
+                elif element == _SireMol.Element("O"):
+                    num_oxygen += 1
+
+        # A water molecule has two Hydrogens and one Oxygen.
+        if num_hydrogen == 2 and num_oxygen == 1:
+            return True
+        else:
+            return False
+
     def charge(self, map={}, is_lambda1=False):
         """Return the total molecular charge.
 
