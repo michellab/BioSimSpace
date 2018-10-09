@@ -295,8 +295,15 @@ class System():
         for mol in molecules:
             self._sire_system.remove(mol._sire_molecule.number())
 
-        # Create a new Sire system from the molecules.
-        self._sire_system = self._createSireSystem(molecules)
+    def removeWaterMolecules(self):
+        """Remove all of the water molecules from the system."""
+
+        # Get the list of water molecules.
+        waters = self.getWaterMolecules()
+
+        # Remove the molecules in the system.
+        for mol in waters:
+            self._sire_system.remove(mol._sire_molecule.number())
 
     def udpateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -374,6 +381,63 @@ class System():
                 mols[-1]._is_merged = True
 
         return mols
+
+    def getWaterMolecules(self):
+        """Return a list containing all of the water molecules in the system.
+
+           Returns
+           -------
+
+           waters : [ BioSimSpace._SireWrappers.Molecule ]
+               A list of water molecule objects.
+        """
+
+        waters = []
+
+        for mol in self.getMolecules():
+            if mol.isWater():
+                waters.append(mol)
+
+        return waters
+
+    def getWaterMoleculeIndices(self):
+        """Return a list containing the indices of the water molecules.
+
+           Returns
+           -------
+
+           waters : [ int ]
+               A list containing the indices of the water molecules.
+        """
+
+        waters = []
+
+        for idx, mol in enumerate(self.getMolecules()):
+            if mol.isWater():
+                waters.append(idx)
+
+        return waters
+
+    def isWaterMolecule(self):
+        """Return a list indicating whether each molecule in the system is a
+           water molecule.
+
+           Returns
+           -------
+
+           is_water : [ bool ]
+               A list indicating whether each molecule is a water.
+        """
+
+        waters = []
+
+        for mol in self.getMolecules():
+            if mol.isWater():
+                waters.append(True)
+            else:
+                waters.append(False)
+
+        return waters
 
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
