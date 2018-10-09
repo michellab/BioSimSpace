@@ -431,7 +431,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
 
     # If the molecule is merged, make sure the user has remapped the coordinates
     # property.
-    if molecule.isMerged():
+    if molecule is not None and molecule.isMerged():
         # No mapping is present. Default to solvating using the coordinates
         # at lambda = 0.
         if not "coordinates" in map:
