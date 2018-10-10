@@ -361,7 +361,7 @@ class System():
 
         # Try to extract the molecule group.
         try:
-            molgrp = self._sire_system.group(_SireMol.MGName(group)).molecules()
+            molgrp = self._sire_system.group(_SireMol.MGName(group))
         except:
             raise ValueError("No molecules in group '%s'" % group)
 
@@ -370,11 +370,10 @@ class System():
 
         # Get a list of the MolNums in the group and sort them.
         nums = molgrp.molNums()
-        nums.sort()
 
         # Loop over all of the molecules in the group and append to the list.
         for num in nums:
-            mols.append(_Molecule(molgrp[num]))
+            mols.append(_Molecule(molgrp.molecule(num)))
 
             # This is a merged molecule.
             if mols[-1]._sire_molecule.hasProperty("is_perturbable"):
