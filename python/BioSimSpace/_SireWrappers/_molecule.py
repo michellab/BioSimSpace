@@ -228,8 +228,8 @@ class Molecule():
     def charge(self, map={}, is_lambda1=False):
         """Return the total molecular charge.
 
-           Keyword argument
-           ----------------
+           Keyword arguments
+           -----------------
 
            map : dict
                A dictionary that maps system "properties" to their user defined
@@ -269,8 +269,8 @@ class Molecule():
                The translation vector (in Angstroms).
 
 
-           Keyword argument
-           ----------------
+           Keyword arguments
+           -----------------
 
            map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1233,11 +1233,11 @@ class Molecule():
                their user defined values.
 
 
-            Returns
-            -------
+           Returns
+           -------
 
-            merged : Sire.Mol.Molecule
-                The merged molecule.
+           merged : Sire.Mol.Molecule
+               The merged molecule.
         """
 
         # Cannot merge an already merged molecule.
