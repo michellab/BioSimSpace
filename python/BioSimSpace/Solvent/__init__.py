@@ -431,18 +431,20 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
 
     # If the molecule is merged, make sure the user has remapped the coordinates
     # property.
-    if molecule is not None and molecule.isMerged():
-        # No mapping is present. Default to solvating using the coordinates
-        # at lambda = 0.
-        if not "coordinates" in map:
-            map["coordinates"] = "coordinates0"
-        # The mapping is wrong, again use lambda = 0 default.
-        else:
-            if map["coordinates"] != "coordinates0" and \
-               map["coordinates"] != "coordinates1":
-                   _warnings.warn("Incorrect coordinate mapping for merged molecule. "
-                        + "Using coordiantes from lambda = 0.")
-                   map["coordinates"] = "coordinates0"
+    if molecule is not None:
+        if (type(molecule) is _System and molecule.nPerturbableMolecules() > 0) or \
+            molecule.isMerged():
+                # No mapping is present. Default to solvating using the coordinates
+                # at lambda = 0.
+                if not "coordinates" in map:
+                    map["coordinates"] = "coordinates0"
+                # The mapping is wrong, again use lambda = 0 default.
+                else:
+                    if map["coordinates"] != "coordinates0" and \
+                    map["coordinates"] != "coordinates1":
+                        _warnings.warn("Incorrect coordinate mapping for merged molecule. "
+                                        "Using coordinates from lambda = 0.")
+                        map["coordinates"] = "coordinates0"
 
     if type(ion_conc) is not float and type(ion_conc) is not int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
