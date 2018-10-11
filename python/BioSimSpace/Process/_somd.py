@@ -151,16 +151,46 @@ class Somd(_process.Process):
 
         # Create the input files...
 
+        # In SOMD, all water molecules must be given the residue label "WAT".
+        # We extract all of the waters from the system and relabel the
+        # residues as appropriate.
+
+        # First create a system from the Sire system.
+        system = _System(self._system)
+
+        # Extract all of the water molecules.
+        waters = system.getWaterMolecules()
+
+        # Loop over all of the water molecules and update the residue names.
+        for mol in waters:
+            # Get the corresponding molecule from the Sire system.
+            mol = system._sire_system.molecule(mol._sire_molecule.number())
+
+            # Update the molecule with the new residue name.
+            mol = mol.edit().residue(_Sire.Mol.ResIdx(0))     \
+                            .rename(_Sire.Mol.ResName("WAT")) \
+                            .molecule()                       \
+                            .commit()
+
+            # Delete the old molecule from the system and add the renamed one
+            # back in. (This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.)
+            system._sire_system.remove(mol.number())
+            system._sire_system.add(mol, _Sire.Mol.MGName("all"))
+
+        # Extract the updated Sire system.
+        system = system._sire_system
+
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(self._system)
+            rst = _Sire.IO.AmberRst7(system)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(self._system)
+            prm = _Sire.IO.AmberPrm(system)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
