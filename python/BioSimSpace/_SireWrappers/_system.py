@@ -438,6 +438,85 @@ class System():
 
         return waters
 
+    def nWaterMolecules(self):
+        """Return the number of water molecules in the system.
+
+           Returns
+           -------
+
+           num_waters : int
+               The number of water molecules in the system.
+        """
+        return len(self.getWaterMolecules())
+
+    def getPerturbableMolecules(self):
+        """Return a list containing all of the perturbable molecules in the system.
+
+           Returns
+           -------
+
+           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+               A list of perturbable molecules.
+        """
+
+        molecules = []
+
+        for mol in self.getMolecules():
+            if mol.isMerged():
+                molecules.append(mol)
+
+        return molecules
+
+    def getPerturbableMoleculeIndices(self):
+        """Return a list containing the indices of the perturbable molecules.
+
+           Returns
+           -------
+
+           indices : [ int ]
+               A list containing the indices of the perturbable molecules.
+        """
+
+        indices = []
+
+        for idx, mol in enumerate(self.getMolecules()):
+            if mol.isMerged():
+                indices.append(idx)
+
+        return indices
+
+    def isPerturbableMolecule(self):
+        """Return a list indicating whether each molecule in the system is
+           perturbable.
+
+           Returns
+           -------
+
+           is_perturbable : [ bool ]
+               A list indicating whether each molecule is perturbable.
+        """
+
+        is_perturbable = []
+
+        for mol in self.getMolecules():
+            if mol.isMerged():
+                is_perturbable.append(True)
+            else:
+                is_perturbable.append(False)
+
+        return is_perturbable
+
+    def nPerturbableMolecules(self):
+        """Return the number of perturbable molecules in the system.
+
+           Returns
+           -------
+
+           num_perturbable : int
+               The number of perturbable molecules in the system.
+        """
+        return len(self.getPerturbableMolecules())
+
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
 
@@ -459,7 +538,7 @@ class System():
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 
-    def translate(self, vector):
+    def translate(self, vector, map={}):
         """Translate the system.
 
            Positional arguments
@@ -467,6 +546,15 @@ class System():
 
            vector : list, tuple
                The translation vector (in Angstroms).
+
+           Keyword arguments
+           -----------------
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
         """
 
         # Convert tuple to a list.
@@ -491,7 +579,7 @@ class System():
 
         # Translate each of the molecules in the system.
         for n in self._sire_system.molNums():
-            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec)).commit()
+            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec), map).commit()
             self._sire_system.update(mol)
 
     def _getSireSystem(self):
