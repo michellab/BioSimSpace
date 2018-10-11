@@ -1,0 +1,351 @@
+######################################################################
+# BioSimSpace: Making biomolecular simulation a breeze!
+#
+# Copyright: 2017-2018
+#
+# Authors: Lester Hedges <lester.hedges@gmail.com>
+#
+# BioSimSpace is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# BioSimSpace is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
+#####################################################################
+
+"""
+Functionality for free energy protocols.
+Author: Lester Hedges <lester.hedges@gmail.com>
+"""
+
+from ._protocol import Protocol as _Protocol
+
+import BioSimSpace.Types as _Types
+
+__all__ = ["FreeEnergy"]
+
+# A list of allowed thermodynamic ensembles.
+# Update as support is added.
+_ensembles = ["NVT", "NPT"]
+
+class FreeEnergy(_Protocol):
+    """A class for storing free energy protocols."""
+
+    def __init__(self,
+                 lam=0.0,
+                 lam_vals=None,
+                 min_lam=0.0,
+                 max_lam=1.0,
+                 num_lam=11,
+                 timestep=_Types.Time(2, "femtosecond"),
+                 runtime=_Types.Time(1, "nanosecond"),
+                 temperature=_Types.Temperature(300, "kelvin"),
+                 ensemble="NPT"
+                ):
+        """Constructor.
+
+           Keyword arguments
+           -----------------
+
+           lam : float
+               The perturbation parameter: [0.0, 1.0]
+
+           lam_vals : [ float ]
+               The list of lambda parameters.
+
+           min_lam : float
+               The minimum lambda value.
+
+           max_lam : float
+               The maximum lambda value.
+
+           num_lam : int
+               The number of lambda values.
+
+           timestep : BioSimSpace.Types.Time
+               The integration timestep.
+
+           runtime : BioSimSpace.Types.Time
+               The running time.
+
+           temperature : BioSimSpace.Types.Temperature
+               The temperature.
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
+
+        # Validate and set the lambda values.
+        self.setLambdaValues(lam, lam_vals, min_lam, max_lam, num_lam)
+
+        # Set the time step.
+        self.setTimeStep(timestep)
+
+        # Set the runtime.
+        self.setRunTime(runtime)
+
+        # Set the system temperature.
+        self.setTemperature(temperature)
+
+        # Set the thermodynamic ensemble.
+        self.setEnsemble(ensemble)
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
+                "timestep=%s, runtime=%s, temperature=%s, ensemble=%r>"
+               ) % (self._lambda, self._lambda_vals, self._timestep,
+                    self._runtime, self._temperature, self._ensemble)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return ("BioSimSpace.Protocol.Production(lam=%5.4f, lam_vals=%r, "
+                "timestep=%s, runtime=%s, temperature=%s, ensemble=%r)"
+               ) % (self._lambda, self._lambda_vals, self._timestep,
+                    self._runtime, self._temperature, self._ensemble)
+
+    def getLambda(self):
+        """Get the value of the perturbation parameter.
+
+           Returns
+           -------
+
+           lam : float
+               The value of the perturbation parameter.
+        """
+        return self._lambda
+
+    def getLambdaValues(self):
+        """Get the list of lambda values.
+
+           Returns
+           -------
+
+           lam_vals : [ float ]
+               The list of lambda values.
+        """
+        return self._lambda_vals
+
+    def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
+        """Set the list of lambda values.
+
+           Positional arguments
+           --------------------
+
+           lam : float
+               The perturbation parameter: [0.0, 1.0]
+
+           Keyword arguments
+           -----------------
+
+           lam_vals : [ float ]
+               A list of lambda values.
+
+           min_lam : float
+               The minimum lambda value.
+
+           max_lam : float
+               The maximum lambda value.
+
+           num_lam : int
+               The number of lambda values.
+        """
+
+        # Convert int to float.
+        if type(lam) is int:
+            lam = float(lam)
+
+        # Validate the lambda parameter.
+        if type(lam) is not float:
+            raise TypeError("'lam' must be of type 'float'.")
+
+        self._lambda = lam
+
+        # A list of lambda values takes precedence.
+        if lam_vals is not None:
+            # Convert tuple to list.
+            if type(lam_vals) is tuple:
+                lam_vals = list(lam_vals)
+
+            # Make sure list (or tuple) has been passed.
+            if type(lam_vals) is not list:
+                raise TypeError("'lam_vals' must be of type 'list'.")
+
+            # Make sure all lambda values are of type 'float'.
+            if not all(isinstance(x, float) for x in lam_vals):
+                raise TypeError("'lam_vals' must contain values of type 'float'.")
+
+            # Make sure all values are in range [0.0, 1.0]
+            for lam in lam_vals:
+                if lam < 0:
+                    raise ValueError("'lam_vals' must contain values in range [0.0, 1.0]")
+                elif lam > 1:
+                    raise ValueError("'lam_vals' must contain values in range [0.0, 1.0]")
+
+            # Sort the values.
+            lam_vals.sort()
+
+            # Make sure there are no duplicates.
+            if len(set(lam_vals)) < len(lam_vals):
+                raise ValueError("'lam_vals' cannot contain duplicate values!")
+
+            # Make sure the lambda value is in the list.
+            if not lam in lam_vals:
+                raise ValueError("'lam' is not a member of the 'lam_vals' list!")
+
+            # Set the values.
+            self._lambda_vals = lam_vals
+
+        else:
+            # Convert int to float.
+
+            if type(min_lam) is int:
+                min_lam = float(min_lam)
+
+            if type(max_lam) is int:
+                max_lam = float(max_lam)
+
+            # Validate type.
+
+            if type(min_lam) is not float:
+                raise TypeError("'min_lam' must be of type 'float'.")
+
+            if type(max_lam) is not float:
+                raise TypeError("'max_lam' must be of type 'float'.")
+
+            if type(num_lam) is not int:
+                raise TypeError("'num_lam' must be of type 'int'.")
+
+            # Validate values.
+
+            if min_lam < 0 or min_lam > 1:
+                raise ValueError("'min_lam' must be in range [0.0, 1.0]")
+
+            if max_lam < 0 or max_lam > 1:
+                raise ValueError("'max_lam' must be in range [0.0, 1.0]")
+
+            if num_lam <=2:
+                raise ValueError("'num_lam' must be greater than 2!")
+
+            if min_lam >= max_lam:
+                raise ValueError("'min_lam' must be less than 'max_lam'!")
+
+            # Set values.
+
+            self._lambda_vals = []
+            step = (max_lam - min_lam) / (num_lam - 1)
+
+            for x in range(0, num_lam):
+                self._lambda_vals.append(round(min_lam + (x * step), 5))
+
+            # Make sure the lambda value is in the list.
+            if not self._lambda in self._lambda_vals:
+                raise ValueError("'lam' (%5.4f) is not a member of the 'lam_vals' list: %s" \
+                    % (self._lambda, self._lambda_vals))
+
+    def getTimeStep(self):
+        """Return the time step.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The integration time step.
+        """
+        return self._timestep
+
+    def setTimeStep(self, timestep):
+        """Set the time step.
+
+           Positional arguments
+           --------------------
+
+           timestep : BioSimSpace.Types.Time
+               The integration time step.
+        """
+        if type(timestep) is _Types.Time:
+            self._timestep = timestep
+        else:
+            raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
+
+    def getRunTime(self):
+        """Return the running time.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The simulation run time.
+        """
+        return self._runtime
+
+    def setRunTime(self, runtime):
+        """Set the running time.
+
+           Positional arguments
+           --------------------
+
+           runtime : BioSimSpace.Types.Time
+               The simulation run time.
+        """
+        if type(runtime) is _Types.Time:
+            self._runtime = runtime
+        else:
+            raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
+
+    def getTemperature(self):
+        """Return temperature.
+
+           Returns
+           -------
+
+           temperature : BioSimSpace.Types.Temperature
+               The simulation temperature.
+        """
+        return self._temperature
+
+    def setTemperature(self, temperature):
+        """Set the temperature.
+
+           Positional arguments
+           --------------------
+
+           temperature : BioSimSpace.Types.Time
+               The simulation temperature.
+        """
+        if type(temperature) is _Types.Temperature:
+            self._temperature = temperature
+        else:
+            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
+
+    def getEnsemble(self):
+        """Return the thermodynamic ensemble.
+
+           Returns
+           -------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
+        return self._ensemble
+
+    def setEnsemble(self, ensemble):
+        """Set the thermodynamic ensemble.
+
+           Positional arguments
+           --------------------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
+        if ensemble.replace(" ", "").upper() not in _ensembles:
+            warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
+            self._ensemble = "NPT"
+        else:
+            self._ensemble = ensemble.replace(" ", "").upper()

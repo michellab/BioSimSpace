@@ -26,5 +26,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from ._custom import *
 from ._equilibration import *
+from ._free_energy import *
 from ._minimisation import *
 from ._production import *
