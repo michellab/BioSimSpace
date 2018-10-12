@@ -154,7 +154,7 @@ class Somd(_process.Process):
 
         # Create the input files...
 
-        # First create a system from the Sire system.
+        # First create a copy of the system.
         system = _System(self._system)
 
         # If the we are performing a free energy simulation, then check that
