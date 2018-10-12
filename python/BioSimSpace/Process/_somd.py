@@ -262,8 +262,11 @@ class Somd(_process.Process):
             self.addToConfig("nmoves = 1")                              # Perform a single MD move.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
             if not has_box:
-                self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
                 self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            else:
+                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
+                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
 
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
@@ -298,9 +301,19 @@ class Somd(_process.Process):
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
+            self.addToConfig("barostat = False")                        # Disable barostat (constant volume).
+            if self._has_water:
+                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+            else:
+                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
             if not has_box:
-                self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
                 self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            else:
+                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
+                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
 
@@ -330,13 +343,77 @@ class Somd(_process.Process):
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+            elif self._has_water:
+                self.addToConfig("barostat = True")                     # Enable barostat.
+                self.addToConfig("pressure = 1 atm")                    # Atmospheric pressure.
+            if self._has_water:
+                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+            else:
+                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
             if not has_box:
-                self.addToConfig("cutoff type = cutofftypenonperiodic") # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
                 self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            else:
+                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
+                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+
+        # Add configuration variables for a free energy simulation.
+        elif type(self._protocol) is _Protocol.FreeEnergy:
+
+            # Work out the number of cycles. We save coordinates every cycle,
+            # which is 100 MD steps (moves) in length (this is for consistency
+            # with other MD drivers). Note that SOMD only saves coordinates to
+            # a DCD trajectory file, so it's impossible to decouple the
+            # frequency of recording configurations and trajectory frames,
+            # i.e. the number of trajectory frames specified in the protocol
+            # is disregarded. This also means that we lose the ability to use
+            # the user "property map" when reading configurations from the
+            # trajectory.
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+
+            # Convert the timestep to femtoseconds.
+            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+
+            # Convert the temperature to Kelvin.
+            temperature = self._protocol.getTemperature().kelvin().magnitude()
+
+            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
+            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
+            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
+            if self._protocol.getEnsemble() == "NVT":
+                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+            elif self._has_water:
+                self.addToConfig("barostat = True")                     # Enable barostat.
+                self.addToConfig("pressure = 1 atm")                    # Atmospheric pressure.
+            if self._has_water:
+                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+            else:
+                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
+            if not has_box:
+                self.addToConfig("cutoff type = cutoffperiodic")        # No periodic box.
+                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            else:
+                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
+                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
+            if self._is_seeded:
+                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+            self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
+                                                                        # The lambda value array.
+            self.addToConfig("lambda array = %s" \
+                % ", ".join([str(x) for x in self._protocol.getLambdaValues()]))
+            self.addToConfig("lambda_val = %s" \
+                % self._protocol.getLambda())                           # The value of lambda.
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
