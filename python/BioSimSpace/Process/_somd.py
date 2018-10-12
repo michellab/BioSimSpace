@@ -128,6 +128,9 @@ class Somd(_process.Process):
         # Set the path for the SOMD configuration file.
         self._config_file = "%s/%s.txt" % (self._work_dir, name)
 
+        # Set the path for the perturbation file.
+        self._pert_file = "%s/%s.pert" % (self._work_dir, name)
+
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
@@ -151,12 +154,36 @@ class Somd(_process.Process):
 
         # Create the input files...
 
+        # First create a system from the Sire system.
+        system = _System(self._system)
+
+        # If the we are performing a free energy simulation, then check that
+        # the system contains a single perturbable molecule. If so, then create
+        # and write a perturbation file to the work directory.
+        if type(self._protocol) is _Protocol.FreeEnergy:
+            if system.nPerturbableMolecules() == 1:
+                # Extract the perturbable molecule.
+                pert_mol = system.getPerturbableMolecules()[0]
+
+                # Write the perturbation file and get the molecule corresponding
+                # to the lambda = 0 state.
+                pert_mol = pert_mol._toPertFile(self._pert_file, self._map)
+                self._input_files.append(self._pert_file)
+
+                # Now update the molecule in the system.
+                # TODO: This is a hack since the "update" method of Sire.System
+                # doesn't work properly at present.
+                system._sire_system.remove(pert_mol.number())
+                system._sire_system.add(pert_mol, _Sire.Mol.MGName("all"))
+
+            else:
+                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
+                                 "perturbable molecule. The system has %d" \
+                                  % system.nPerturbableMolecules())
+
         # In SOMD, all water molecules must be given the residue label "WAT".
         # We extract all of the waters from the system and relabel the
         # residues as appropriate.
-
-        # First create a system from the Sire system.
-        system = _System(self._system)
 
         # Extract all of the water molecules.
         waters = system.getWaterMolecules()
