@@ -126,7 +126,7 @@ class Somd(_process.Process):
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # Set the path for the SOMD configuration file.
-        self._config_file = "%s/%s.txt" % (self._work_dir, name)
+        self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Set the path for the perturbation file.
         self._pert_file = "%s/%s.pert" % (self._work_dir, name)
