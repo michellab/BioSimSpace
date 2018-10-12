@@ -128,6 +128,9 @@ class Process():
         self._system = system._getSireSystem()
         self._protocol = protocol
 
+        # Flag whether the system contains water molecules.
+        self._has_water = system.nWaterMolecules() > 0
+
         # Flag that the process isn't queued.
         self._is_queued = False
 
