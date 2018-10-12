@@ -333,8 +333,12 @@ class System():
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Update each of the molecules.
+        # TODO: Currently the Sire.System.update method doesn't work correctly
+        # for certain changes to the Molecule molInfo object. As such, we remove
+        # the old molecule from the system, then add the new one in.
         for mol in molecule:
-            self._sire_system.update(mol._sire_molecule)
+            self._sire_system.remove(mol._sire_molecule.number())
+            self._sire_system.add(mol._sire_molecule, _SireMol.MGName("all"))
 
         # Create a new Sire system from the molecules.
         self._sire_system = self._createSireSystem(molecules)

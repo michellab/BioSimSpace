@@ -173,8 +173,9 @@ class Somd(_process.Process):
                             .commit()
 
             # Delete the old molecule from the system and add the renamed one
-            # back in. (This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.)
+            # back in.
+            # TODO: This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.
             system._sire_system.remove(mol.number())
             system._sire_system.add(mol, _Sire.Mol.MGName("all"))
 
