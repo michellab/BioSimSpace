@@ -597,7 +597,7 @@ class Molecule():
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(self, filename="MORPH.pert"):
+    def _toPertFile(self, filename="MORPH.pert", map={}):
         """Write the merged molecule to a perturbation file.
 
            Keyword arguments
@@ -605,6 +605,18 @@ class Molecule():
 
            filename: str
                The name of the perturbation file.
+
+           map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+           Returns
+           -------
+
+           molecule : Sire.Mol.Molecule
+               The molecule with properties corresponding to the lamda = 0 state.
         """
 
         if not self._is_merged:
@@ -612,6 +624,9 @@ class Molecule():
 
         if not self._sire_molecule.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
+
+        # Extract and copy the Sire molecule.
+        mol = self._sire_molecule.__deepcopy__()
 
         # The pert file uses atom names for identification purposes. This means
         # that the names must be unique. As such we need to count the number of
@@ -621,7 +636,7 @@ class Molecule():
         atom_names = {}
 
         # Loop over all atoms in the merged molecule.
-        for atom in self._sire_molecule.atoms():
+        for atom in mol.atoms():
             if atom.name() in atom_names:
                 atom_names[atom.name()] += 1
             else:
@@ -636,7 +651,7 @@ class Molecule():
                 name_tally[name] = 1
 
             # Make the molecule editable.
-            edit_mol = self._sire_molecule.edit()
+            edit_mol = mol.edit()
 
             # Loop over all atoms in the merged molecule.
             for atom in self._sire_molecule.atoms():
@@ -651,13 +666,13 @@ class Molecule():
                     name_tally[name] += 1
 
             # Store the updated molecule.
-            self._sire_molecule = edit_mol.commit()
+            mol = edit_mol.commit()
 
         # Now write the perturbation file.
 
         with open(filename, "w") as file:
             # Get the info object for the molecule.
-            info = self._sire_molecule.info()
+            info = mol.info()
 
             # Write the version header.
             file.write("version 1\n")
@@ -666,7 +681,7 @@ class Molecule():
             file.write("molecule LIG\n")
 
             # 1) Atoms.
-            for atom in self._sire_molecule.atoms():
+            for atom in mol.atoms():
                 # Start atom record.
                 file.write("    atom\n")
 
@@ -689,8 +704,8 @@ class Molecule():
             # 2) Bonds.
 
             # Extract the bonds at lambda = 0 and 1.
-            bonds0 = self._sire_molecule.property("bond0").potentials()
-            bonds1 = self._sire_molecule.property("bond1").potentials()
+            bonds0 = mol.property("bond0").potentials()
+            bonds1 = mol.property("bond1").potentials()
 
             # There are bond potentials.
             if len(bonds0) > 0:
@@ -727,8 +742,8 @@ class Molecule():
                     file.write("    bond\n")
 
                     # Angle data.
-                    file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                     file.write("        initial_force  %.5f\n" % amber_bond0.k())
                     file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
                     file.write("        final_force    %.5f\n" % amber_bond1.k())
@@ -740,8 +755,8 @@ class Molecule():
             # 3) Angles.
 
             # Extract the angles at lambda = 0 and 1.
-            angles0 = self._sire_molecule.property("angle0").potentials()
-            angles1 = self._sire_molecule.property("angle1").potentials()
+            angles0 = mol.property("angle0").potentials()
+            angles1 = mol.property("angle1").potentials()
 
             # Dictionaries to store the AngleIDs at lambda = 0 and 1.
             angles0_idx = {}
@@ -815,9 +830,9 @@ class Molecule():
                 file.write("    angle\n")
 
                 # Angle data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        initial_force  %.5f\n" % amber_angle.k())
                 file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
                 file.write("        final_force    %.5f\n" % 0.0)
@@ -843,9 +858,9 @@ class Molecule():
                 file.write("    angle\n")
 
                 # Angle data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        initial_force  %.5f\n" % 0.0)
                 file.write("        initial_equil  %.5f\n" % 0.0)
                 file.write("        final_force    %.5f\n" % amber_angle.k())
@@ -873,9 +888,9 @@ class Molecule():
                 file.write("    angle\n")
 
                 # Angle data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        initial_force  %.5f\n" % amber_angle0.k())
                 file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
                 file.write("        final_force    %.5f\n" % amber_angle1.k())
@@ -887,8 +902,8 @@ class Molecule():
             # 3) Dihedrals.
 
             # Extract the dihedrals at lambda = 0 and 1.
-            dihedrals0 = self._sire_molecule.property("dihedral1").potentials()
-            dihedrals1 = self._sire_molecule.property("dihedral1").potentials()
+            dihedrals0 = mol.property("dihedral1").potentials()
+            dihedrals1 = mol.property("dihedral1").potentials()
 
             # Dictionaries to store the DihedralIDs at lambda = 0 and 1.
             dihedrals0_idx = {}
@@ -965,10 +980,10 @@ class Molecule():
                 file.write("    dihedral\n")
 
                 # Dihedral data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -996,10 +1011,10 @@ class Molecule():
                 file.write("    dihedral\n")
 
                 # Dihedral data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
@@ -1029,10 +1044,10 @@ class Molecule():
                 file.write("    dihedral\n")
 
                 # Dihedral data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral0.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -1048,8 +1063,8 @@ class Molecule():
             # 3) Impropers.
 
             # Extract the impropers at lambda = 0 and 1.
-            impropers0 = self._sire_molecule.property("improper0").potentials()
-            impropers1 = self._sire_molecule.property("improper1").potentials()
+            impropers0 = mol.property("improper0").potentials()
+            impropers1 = mol.property("improper1").potentials()
 
             # Dictionaries to store the ImproperIDs at lambda = 0 and 1.
             impropers0_idx = {}
@@ -1124,10 +1139,10 @@ class Molecule():
                 file.write("    improper\n")
 
                 # Improper data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -1155,10 +1170,10 @@ class Molecule():
                 file.write("    improper\n")
 
                 # Dihedral data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
@@ -1188,10 +1203,10 @@ class Molecule():
                 file.write("    improper\n")
 
                 # Improper data.
-                file.write("        atom0          %s\n" % self._sire_molecule.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % self._sire_molecule.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % self._sire_molecule.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % self._sire_molecule.atom(idx3).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral0.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -1206,6 +1221,34 @@ class Molecule():
 
             # End molecule record.
             file.write("endmolecule\n")
+
+        # Finally, convert the molecule to the lambda = 0 state.
+
+        # Make the molecule editable.
+        mol = mol.edit()
+
+        # Remove the perturbable molecule flag.
+        mol = mol.removeProperty("is_perturbable").molecule()
+
+        # Rename all properties in the molecule: "prop0" --> "prop".
+        # Delete all properties named "prop0" and "prop1".
+        for prop in mol.propertyKeys():
+            if prop[-1] == "0":
+                # See if this property exists in the user map.
+                if prop[:-1] in map:
+                    new_prop = map[prop[:-1]]
+                else:
+                    new_prop = prop[:-1]
+
+                # Copy the property using the updated name.
+                mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
+
+                # Delete redundant properties.
+                mol = mol.removeProperty(prop).molecule()
+                mol = mol.removeProperty(prop[:-1] + "1").molecule()
+
+        # Return the updated molecule.
+        return mol.commit()
 
     def _merge(self, other, mapping, map0={}, map1={}):
         """Merge this molecule with 'other'.
