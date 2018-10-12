@@ -44,7 +44,7 @@ import warnings as _warnings
 __all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 
 def solvate(model, molecule=None, box=None, shell=None,
-        ion_conc=0, is_neutral=True, work_dir=None, map={}):
+        ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
        Positional arguments
@@ -74,7 +74,7 @@ def solvate(model, molecule=None, box=None, shell=None,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -93,10 +93,10 @@ def solvate(model, molecule=None, box=None, shell=None,
         if model not in waterModels():
             raise ValueError("Supported water models are: %s" % waterModels())
 
-    return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
 def spc(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, map={}):
+        is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
        Keyword arguments
@@ -120,7 +120,7 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -138,15 +138,15 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    molecule, box, shell, work_dir, property_map = \
+        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "spc", 3, ion_conc,
-            is_neutral, work_dir=work_dir, map=map)
+            is_neutral, work_dir=work_dir, property_map=property_map)
 
 def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
-        work_dir=None, map={}):
+        work_dir=None, property_map={}):
     """Add SPC/E solvent.
 
        Keyword arguments
@@ -170,7 +170,7 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -188,15 +188,15 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    molecule, box, shell, work_dir, property_map = \
+        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "spce", 3, ion_conc,
-            is_neutral, work_dir=work_dir, map=map)
+            is_neutral, work_dir=work_dir, property_map=property_map)
 
 def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, map={}):
+        is_neutral=True, work_dir=None, property_map={}):
     """Add TIP3P solvent.
 
        Keyword arguments
@@ -220,7 +220,7 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -238,15 +238,15 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    molecule, box, shell, work_dir, property_map = \
+        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, shell, "tip3p", 3, ion_conc,
-            is_neutral, work_dir=work_dir, map=map)
+            is_neutral, work_dir=work_dir, property_map=property_map)
 
 def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, map={}):
+        is_neutral=True, work_dir=None, property_map={}):
     """Add TIP4P solvent.
 
        Keyword arguments
@@ -270,7 +270,7 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -288,15 +288,15 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    molecule, box, shell, work_dir, property_map = \
+        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
     return _solvate(molecule, box, shell, "tip4p", 4, ion_conc,
-            is_neutral, work_dir=work_dir, map=map)
+            is_neutral, work_dir=work_dir, property_map=property_map)
 
 def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, map={}):
+        is_neutral=True, work_dir=None, property_map={}):
     """Add TIP5P solvent.
 
        Keyword arguments
@@ -320,7 +320,7 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -338,14 +338,14 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map)
+    molecule, box, shell, work_dir, property_map = \
+        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
     return _solvate(molecule, box, shell, "tip5p", 5, ion_conc,
-            is_neutral, work_dir=work_dir, map=map)
+            is_neutral, work_dir=work_dir, property_map=property_map)
 
-def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
+def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map):
     """Internal function to validate function arguments.
 
        Positional arguments
@@ -369,7 +369,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -378,7 +378,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
        Returns
        -------
 
-       (molecule, box, shell, work_dir, map) : tuple
+       (molecule, box, shell, work_dir, property_map) : tuple
            The validated input arguments.
     """
 
@@ -390,8 +390,8 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None:
             try:
-                if "space" in map:
-                    prop = map["space"]
+                if "space" in property_map:
+                    prop = property_map["space"]
                 else:
                     prop = "space"
                 box = system.property(prop).dimensions()
@@ -422,8 +422,8 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
         if type(shell) is not _Length:
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Check that the working directory is valid.
     if work_dir is not None and type(work_dir) is not str:
@@ -436,15 +436,15 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
             molecule.isMerged():
                 # No mapping is present. Default to solvating using the coordinates
                 # at lambda = 0.
-                if not "coordinates" in map:
-                    map["coordinates"] = "coordinates0"
+                if not "coordinates" in property_map:
+                    property_map["coordinates"] = "coordinates0"
                 # The mapping is wrong, again use lambda = 0 default.
                 else:
-                    if map["coordinates"] != "coordinates0" and \
-                    map["coordinates"] != "coordinates1":
+                    if property_map["coordinates"] != "coordinates0" and \
+                    property_map["coordinates"] != "coordinates1":
                         _warnings.warn("Incorrect coordinate mapping for merged molecule. "
-                                        "Using coordinates from lambda = 0.")
-                        map["coordinates"] = "coordinates0"
+                                       "Using coordinates from lambda = 0.")
+                        property_map["coordinates"] = "coordinates0"
 
     if type(ion_conc) is not float and type(ion_conc) is not int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
@@ -455,13 +455,13 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, map):
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
     # Check that the box is large enough to hold the molecule.
-    if molecule is not None and not _check_box_size(molecule, box, map):
+    if molecule is not None and not _check_box_size(molecule, box, property_map):
         raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
-    return (molecule, box, shell, work_dir, map)
+    return (molecule, box, shell, work_dir, property_map)
 
 def _solvate(molecule, box, shell, model, num_point,
-        ion_conc, is_neutral, work_dir=None, map={}):
+        ion_conc, is_neutral, work_dir=None, property_map={}):
     """Internal function to add solvent using 'gmx solvate'.
 
        Positional arguments
@@ -489,7 +489,7 @@ def _solvate(molecule, box, shell, model, num_point,
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -497,7 +497,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
     if molecule is not None:
         # Store the centre of the molecule.
-        center = molecule._getAABox(map).center()
+        center = molecule._getAABox(property_map).center()
 
         # Work out the vector from the centre of the molecule to the centre of the
         # water box, converting the distance in each direction to Angstroms.
@@ -507,7 +507,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Translate the molecule. This allows us to create a water box
         # around the molecule.
-        molecule.translate(vec, map)
+        molecule.translate(vec, property_map)
 
     # Store the current working directory.
     dir = _os.getcwd()
@@ -635,7 +635,7 @@ def _solvate(molecule, box, shell, model, num_point,
     if molecule is not None:
         # Translate the molecule and water back to the original position.
         vec = [-x for x in vec]
-        molecule.translate(vec, map)
+        molecule.translate(vec, property_map)
         water.translate(vec)
 
         if type(molecule) is _System:
@@ -645,8 +645,8 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Add all of the water box properties to the new system.
         for prop in water._sire_system.propertyKeys():
-            if prop in map:
-                prop = map[prop]
+            if prop in property_map:
+                prop = property_map[prop]
 
             # Add the space property from the water system.
             system._sire_system.setProperty(prop, water._sire_system.property(prop))
@@ -817,8 +817,8 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Add all of the water box properties to the new system.
             for prop in water_ions._sire_system.propertyKeys():
-                if prop in map:
-                    prop = map[prop]
+                if prop in property_map:
+                    prop = property_map[prop]
 
                 # Add the space property from the water system.
                 system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
@@ -830,7 +830,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
     return system
 
-def _check_box_size(molecule, box, map={}):
+def _check_box_size(molecule, box, property_map={}):
     """Internal function to check that box is big enough for the molecule.
 
        Positional arguments
@@ -846,14 +846,14 @@ def _check_box_size(molecule, box, map={}):
        Keyword arguments
        -----------------
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Get the axis-aligned bounding box of the molecule/system.
-    aabox = molecule._getAABox(map)
+    aabox = molecule._getAABox(property_map)
 
     # Calculate the box size in each dimension, storing each component as a
     # length in Angstroms.

@@ -160,13 +160,13 @@ class System():
 
         return tally
 
-    def charge(self, map={}, is_lambda1=False):
+    def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -181,31 +181,31 @@ class System():
         # Loop over all molecules and add the charge.
         for mol in self.getMolecules():
             # Reset the map.
-            _map = map
+            _property_map = property_map.copy()
 
             # If the molecule is merged, then re-map the charge property.
             if mol.isMerged():
                 if is_lambda1:
-                    _map = { "charge" : "charge1" }
+                    _property_map = { "charge" : "charge1" }
                 else:
-                    _map = { "charge" : "charge0" }
+                    _property_map = { "charge" : "charge0" }
 
             # Add the charge.
             try:
-                charge += mol.charge(_map)
+                charge += mol.charge(_property_map)
             except:
                 pass
 
         # Return the total charge.
         return charge
 
-    def fileFormat(self, map={}):
+    def fileFormat(self, property_map={}):
         """Return the file formats associated with the system.
 
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -218,11 +218,11 @@ class System():
               The file formats associated with the system.
         """
 
-        if type(map) is not dict:
-            raise TypeError("'map' must be of type 'dict'")
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
-        if "fileformat" in map:
-            prop = map["fileformat"]
+        if "fileformat" in property_map:
+            prop = property_map["fileformat"]
         else:
             prop = "fileformat"
 
@@ -542,7 +542,7 @@ class System():
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 
-    def translate(self, vector, map={}):
+    def translate(self, vector, property_map={}):
         """Translate the system.
 
            Positional arguments
@@ -554,7 +554,7 @@ class System():
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -581,16 +581,19 @@ class System():
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
         # Translate each of the molecules in the system.
         for n in self._sire_system.molNums():
-            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec), map).commit()
+            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec), property_map).commit()
             self._sire_system.update(mol)
 
     def _getSireSystem(self):
         """Return the full Sire System object."""
         return self._sire_system
 
-    def _getBoxSize(self, map={}):
+    def _getBoxSize(self, property_map={}):
         """Get the size of the periodic box.
 
            Keyword arguments
@@ -599,7 +602,7 @@ class System():
            system : Sire.System.System
                A Sire molecular system.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -613,8 +616,8 @@ class System():
         """
 
         try:
-            if "space" in map:
-                prop = map["space"]
+            if "space" in property_map:
+                prop = property_map["space"]
             else:
                 prop = "space"
             box = self._sire_system.property(prop)
@@ -623,14 +626,13 @@ class System():
         except UserWarning:
             return None
 
-    def _getAABox(self, map={}):
+    def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
            Keyword arguments
            -----------------
 
-           map : dict
-
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -651,8 +653,8 @@ class System():
 
             # Extract the atomic coordinates and append them to the vector.
             try:
-                if "coordinates" in map:
-                    prop = map["coordinates"]
+                if "coordinates" in property_map:
+                    prop = property_map["coordinates"]
                 else:
                     prop = "coordinates"
                 coord.extend(self._sire_system[n].property(prop).toVector())

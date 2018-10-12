@@ -112,7 +112,7 @@ def formatInfo(format):
         print("Unsupported format: '%s'" % format)
         return None
 
-def readPDB(id, map={}):
+def readPDB(id, property_map={}):
     """Read a molecular system from a PDB ID in the RSCB PDB website.
 
        Positional arguments
@@ -125,7 +125,7 @@ def readPDB(id, map={}):
        Keyword arguments
        -----------------
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -161,9 +161,9 @@ def readPDB(id, map={}):
         file.write(pdb_string)
 
     # Read the file and return a molecular system.
-    return readMolecules(pdb_file, map)
+    return readMolecules(pdb_file, property_map)
 
-def readMolecules(files, map={}):
+def readMolecules(files, property_map={}):
     """Read a molecular system from file.
 
        Positional arguments
@@ -176,7 +176,7 @@ def readMolecules(files, map={}):
        Keyword arguments
        -----------------
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -203,16 +203,16 @@ def readMolecules(files, map={}):
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
 
     # Validate the map.
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in map):
-        map["GROMACS_PATH"] = _gromacs_path
+    if _gromacs_path is not None and ("GROMACS_PATH" not in property_map):
+        property_map["GROMACS_PATH"] = _gromacs_path
 
     # Try to read the files and return a molecular system.
     try:
-        system = _SireIO.MoleculeParser.read(files, map)
+        system = _SireIO.MoleculeParser.read(files, property_map)
     except Exception as e:
         if "There are no lead parsers!" in str(e):
             msg = ("Failed to read molecules from %s. "
@@ -224,7 +224,7 @@ def readMolecules(files, map={}):
 
     return _System(system)
 
-def saveMolecules(filebase, system, fileformat, map={}):
+def saveMolecules(filebase, system, fileformat, property_map={}):
     """Save a molecular system to file.
 
        Positional arguments
@@ -244,7 +244,7 @@ def saveMolecules(filebase, system, fileformat, map={}):
        Keyword arguments
        -----------------
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
@@ -303,15 +303,15 @@ def saveMolecules(filebase, system, fileformat, map={}):
                 "are: %s." % (format, str(_formats)))
 
     # Validate the map.
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Copy the map.
-    _map = map.copy()
+    _property_map = property_map.copy()
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in _map):
-        _map["GROMACS_PATH"] = _gromacs_path
+    if _gromacs_path is not None and ("GROMACS_PATH" not in _property_map):
+        _property_map["GROMACS_PATH"] = _gromacs_path
 
     # We have a list of molecules. Create a new system and add each molecule.
     if type(system) is list:
@@ -353,11 +353,11 @@ def saveMolecules(filebase, system, fileformat, map={}):
     # Save the system using each file format.
     for format in formats:
         # Add the file format to the property map.
-        _map["fileformat"] = _SireBase.wrap(format)
+        _property_map["fileformat"] = _SireBase.wrap(format)
 
         # Write the file.
         try:
-            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _map)
+            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _property_map)
             files += file
         except:
             if dirname != "":

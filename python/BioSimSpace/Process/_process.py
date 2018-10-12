@@ -57,7 +57,7 @@ class _MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, map={}):
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -82,7 +82,7 @@ class Process():
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -109,8 +109,8 @@ class Process():
             raise TypeError("'seed' must be of type 'int'")
 
         # Check that the map is valid.
-        if type(map) is not dict:
-            raise TypeError("'map' must be of type 'dict'")
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Set the process to None.
         self._process = None
@@ -146,7 +146,7 @@ class Process():
             self.setSeed(seed)
 
         # Set the map.
-        self._map = map.copy()
+        self._property_map = property_map.copy()
 
         # Set the timer and running time None.
         self._timer = None

@@ -47,7 +47,7 @@ class Somd(_process.Process):
     """A class for running simulations using SOMD."""
 
     def __init__(self, system, protocol, exe=None, name="somd",
-            platform="GPU", work_dir=None, seed=None, map={}):
+            platform="GPU", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -78,14 +78,14 @@ class Somd(_process.Process):
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map)
 
         # Set the package name.
         self._package_name = "SOMD"
@@ -167,7 +167,7 @@ class Somd(_process.Process):
 
                 # Write the perturbation file and get the molecule corresponding
                 # to the lambda = 0 state.
-                pert_mol = pert_mol._toPertFile(self._pert_file, self._map)
+                pert_mol = pert_mol._toPertFile(self._pert_file, self._property_map)
                 self._input_files.append(self._pert_file)
 
                 # Now update the molecule in the system.
@@ -211,14 +211,14 @@ class Somd(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(system)
+            rst = _Sire.IO.AmberRst7(system, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(system)
+            prm = _Sire.IO.AmberPrm(system, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None

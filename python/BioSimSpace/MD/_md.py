@@ -122,7 +122,7 @@ class MD():
 
     @staticmethod
     def run(system, protocol, autostart=True,
-            name="md", work_dir=None, seed=None, map={}):
+            name="md", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -150,7 +150,7 @@ class MD():
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -182,15 +182,15 @@ class MD():
 
         # AMBER.
         if package == "AMBER":
-            process = _Process.Amber(system, protocol, exe, name, work_dir, seed, map)
+            process = _Process.Amber(system, protocol, exe, name, work_dir, seed, property_map)
 
         # GROMACS.
         elif package == "GROMACS":
-            process = _Process.Gromacs(system, protocol, exe, name, work_dir, seed, map)
+            process = _Process.Gromacs(system, protocol, exe, name, work_dir, seed, property_map)
 
         # NAMD.
         elif package == "NAMD":
-            process = _Process.Namd(system, protocol, exe, name, work_dir, seed, map)
+            process = _Process.Namd(system, protocol, exe, name, work_dir, seed, property_map)
 
         # Start the process.
         if autostart:

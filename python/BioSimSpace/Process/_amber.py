@@ -133,7 +133,7 @@ class Amber(_process.Process):
     """A class for running simulations using AMBER."""
 
     def __init__(self, system, protocol, exe=None, name="amber",
-            work_dir=None, seed=None, map={}):
+            work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -161,14 +161,14 @@ class Amber(_process.Process):
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map)
 
         # Set the package name.
         self._package_name = "AMBER"
@@ -229,14 +229,14 @@ class Amber(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(self._system, map)
+            rst = _Sire.IO.AmberRst7(self._system, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(self._system, map)
+            prm = _Sire.IO.AmberPrm(self._system, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -261,8 +261,8 @@ class Amber(_process.Process):
         # Clear the existing configuration list.
         self._config = []
 
-        if "space" in self._map:
-            prop = self._map["space"]
+        if "space" in self._property_map:
+            prop = self._property_map["space"]
         else:
             prop = "space"
 
@@ -528,7 +528,7 @@ class Amber(_process.Process):
         if _os.path.isfile(restart):
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], map))
+                return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], self._property_map))
             except:
                 print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
                 return None

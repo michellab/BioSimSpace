@@ -35,7 +35,7 @@ from . import Protocol as _Protocol
 
 __all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFields"]
 
-def parameterise(molecule, forcefield, options={}, work_dir=None, map={}):
+def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
     """Parameterise using the a specified force field.
 
        Positional arguments
@@ -58,7 +58,7 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -77,9 +77,9 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, map={}):
         if forcefield not in forceFields():
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, map=map)
+    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, property_map=map)
 
-def ff99(molecule, options={}, work_dir=None, map={}):
+def ff99(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Positional arguments
@@ -98,7 +98,7 @@ def ff99(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -124,17 +124,17 @@ def ff99(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99(map=map)
+    protocol = _Protocol.FF99(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff99SB(molecule, options={}, work_dir=None, map={}):
+def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Positional arguments
@@ -153,7 +153,7 @@ def ff99SB(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -179,17 +179,17 @@ def ff99SB(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SB(map=map)
+    protocol = _Protocol.FF99SB(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff03(molecule, options={}, work_dir=None, map={}):
+def ff03(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Positional arguments
@@ -208,7 +208,7 @@ def ff03(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -234,17 +234,17 @@ def ff03(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF03(map=map)
+    protocol = _Protocol.FF03(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def ff14SB(molecule, options={}, work_dir=None, map={}):
+def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Positional arguments
@@ -263,7 +263,7 @@ def ff14SB(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -288,17 +288,17 @@ def ff14SB(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF14SB(map=map)
+    protocol = _Protocol.FF14SB(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def gaff(molecule, options={}, work_dir=None, map={}):
+def gaff(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments
@@ -317,7 +317,7 @@ def gaff(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -342,17 +342,17 @@ def gaff(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF(map=map)
+    protocol = _Protocol.GAFF(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
 
-def gaff2(molecule, options={}, work_dir=None, map={}):
+def gaff2(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Positional arguments
@@ -371,7 +371,7 @@ def gaff2(molecule, options={}, work_dir=None, map={}):
        work_dir : str
            The working directory for the process.
 
-       map : dict
+       property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
@@ -396,11 +396,11 @@ def gaff2(molecule, options={}, work_dir=None, map={}):
     if type(options) is not dict:
         raise TypeError("'options' must be of type 'dict'")
 
-    if type(map) is not dict:
-        raise TypeError("'map' must be of type 'dict'")
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF2(map=map)
+    protocol = _Protocol.GAFF2(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.

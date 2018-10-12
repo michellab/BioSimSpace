@@ -490,10 +490,10 @@ class ProcessRunner():
             # Create a new process object using the nested directory.
             if process._package_name == "SOMD":
                 new_processes.append(type(process)(_System(process._system), process._protocol,
-                    process._exe, process._name, process._platform, new_dir, process._seed, process._map))
+                    process._exe, process._name, process._platform, new_dir, process._seed, process._property_map))
             else:
                 new_processes.append(type(process)(_System(process._system), process._protocol,
-                    process._exe, process._name, new_dir, process._seed, process._map))
+                    process._exe, process._name, new_dir, process._seed, process._property_map))
 
 
         return new_processes

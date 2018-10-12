@@ -79,7 +79,7 @@ if _amber_home is not None:
 class Protocol():
     """A base class for parameterisation protocols."""
 
-    def __init__(self, forcefield, map={}):
+    def __init__(self, forcefield, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -92,7 +92,7 @@ class Protocol():
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -109,10 +109,10 @@ class Protocol():
             self._forcefield = forcefield
 
         # Validate and set the property map.
-        if type(map) is not dict:
-            raise TypeError("'map' must be of type 'dict'")
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
         else:
-            self._map = map.copy()
+            self._property_map = property_map.copy()
 
         # Set default compatability flags for the utility programs.
         # These must be overridden in the constructor of any derived classes.
@@ -207,7 +207,7 @@ class Protocol():
         # Make the molecule 'mol' compatible with 'par_mol'. This will create
         # a mapping between atom indices in the two molecules and add all of
         # the new properties from 'par_mol' to 'mol'.
-        new_mol._makeCompatibleWith(par_mol, map=self._map, overwrite=True, verbose=False)
+        new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -236,7 +236,7 @@ class Protocol():
 
         # Write the system to a PDB file.
         try:
-            pdb = _Sire.IO.PDB2(s)
+            pdb = _Sire.IO.PDB2(s, self._property_map)
             pdb.writeToFile("leap.pdb")
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
@@ -305,7 +305,7 @@ class Protocol():
 
         # Write the system to a PDB file.
         try:
-            pdb = _Sire.IO.PDB2(s)
+            pdb = _Sire.IO.PDB2(s, self._property_map)
             pdb.writeToFile("input.pdb")
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None

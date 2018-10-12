@@ -48,7 +48,7 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, map={}):
+            work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -76,14 +76,14 @@ class Gromacs(_process.Process):
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map)
 
         # Set the package name.
         self._package_name = "GROMACS"
@@ -129,11 +129,11 @@ class Gromacs(_process.Process):
         # Create the input files...
 
         # GRO87 file.
-        gro = _Sire.IO.Gro87(self._system, top)
+        gro = _Sire.IO.Gro87(self._system, self._property_map)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _Sire.IO.GroTop(self._system, map)
+        top = _Sire.IO.GroTop(self._system, self._property_map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
@@ -345,7 +345,7 @@ class Gromacs(_process.Process):
         # Check that the file exists.
         if _os.path.isfile(restart):
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], map))
+            return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
         else:
             return None

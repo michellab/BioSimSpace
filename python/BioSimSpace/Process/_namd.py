@@ -48,7 +48,7 @@ class Namd(_process.Process):
     """A class for running simulations using NAMD."""
 
     def __init__(self, system, protocol, exe=None,
-            name="namd", work_dir=None, seed=None, map={}):
+            name="namd", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -76,14 +76,14 @@ class Namd(_process.Process):
            seed : int
                A random number seed.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map)
 
         # Set the package name.
         self._package_name = "NAMD"
@@ -133,14 +133,14 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _Sire.IO.CharmmPSF(self._system, map)
+            psf = _Sire.IO.CharmmPSF(self._system, self._property_map)
             psf.writeToFile(self._psf_file)
         except:
             raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
         try:
-            pdb = _Sire.IO.PDB2(self._system, map)
+            pdb = _Sire.IO.PDB2(self._system, self._property_map)
             pdb.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
@@ -240,8 +240,8 @@ class Namd(_process.Process):
         # Flag that the system doesn't contain a box.
         has_box = False
 
-        if "space" in self._map:
-            prop = self._map["space"]
+        if "space" in self._property_map:
+            prop = self._property_map["space"]
         else:
             prop = "space"
 
@@ -264,8 +264,8 @@ class Namd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        if "param_format" in self._map:
-            prop = self._map["param_format"]
+        if "param_format" in self._property_map:
+            prop = self._property_map["param_format"]
         else:
             prop = "param_format"
 
@@ -398,8 +398,8 @@ class Namd(_process.Process):
                 restrained = _process._restrain_backbone(self._system)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
-                if "occupancy" in self._map:
-                    prop = self._map["occupancy"]
+                if "occupancy" in self._property_map:
+                    prop = self._property_map["occupancy"]
                 else:
                     prop = "occupancy"
 
@@ -606,7 +606,7 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read(files, map))
+                return _System(_Sire.IO.MoleculeParser.read(files, self._property_map))
             except:
                 return None
 

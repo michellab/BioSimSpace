@@ -39,8 +39,8 @@ def matchAtoms(molecule0,
                prematch={},
                timeout=5*_Units.Time.second,
                match_light=True,
-               map0={},
-               map1={},
+               property_map0={},
+               property_map1={},
                verbose=False):
     """Find mappings between atom indices in molecule0 to those in molecule1.
        Molecules are aligned using a Maximum Common Substructure (MCS) search.
@@ -87,12 +87,12 @@ def matchAtoms(molecule0,
        match_light : bool
            Whether to match light atoms.
 
-       map0 : dict
+       property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       map1 : dict
+       property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
 
@@ -148,11 +148,11 @@ def matchAtoms(molecule0,
     if type(match_light) is not bool:
         raise TypeError("'match_light' must be of type 'bool'")
 
-    if type(map0) is not dict:
-        raise TypeError("'map0' must be of type 'dict'")
+    if type(property_map0) is not dict:
+        raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(map1) is not dict:
-        raise TypeError("'map1' must be of type 'dict'")
+    if type(property_map1) is not dict:
+        raise TypeError("'property_map1' must be of type 'dict'")
 
     if type(verbose) is not bool:
         raise TypeError("'verbose' must be of type 'bool'")
@@ -180,12 +180,14 @@ def matchAtoms(molecule0,
     # Regular match. Include light atoms, but don't allow matches between heavy
     # and light atoms.
     m0 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
-                                        timeout, match_light, map0, map1, 6, verbose)
+                                        timeout, match_light, property_map0,
+                                        property_map1, 6, verbose)
 
     # Include light atoms, and allow matches between heavy and light atoms.
     # This captures mappings such as O --> H in methane to methanol.
     m1 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(prematch),
-                                        timeout, match_light, map0, map1, 0, verbose)
+                                        timeout, match_light, property_map0,
+                                        property_map1, 0, verbose)
 
     # Take the mapping with the larger number of matches.
     if len(m1) > 0:
@@ -219,7 +221,7 @@ def matchAtoms(molecule0,
             else:
                 return _score_rmsd(mol0, mol1, mappings, is_align)[0][0:matches]
 
-def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
+def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
     """Align atoms in molecule0 to those in molecule1 using the mapping
        between matched atom indices. The molecule is aligned based on
        a root mean squared displacement (RMSD) fit to find the optimal
@@ -242,12 +244,12 @@ def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
 
-       map0 : dict
+       property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       map1 : dict
+       property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
 
@@ -265,11 +267,11 @@ def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
     if type(molecule1) is not _Molecule:
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(map0) is not dict:
-        raise TypeError("'map0' must be of type 'dict'")
+    if type(property_map0) is not dict:
+        raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(map1) is not dict:
-        raise TypeError("'map1' must be of type 'dict'")
+    if type(property_map1) is not dict:
+        raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
@@ -283,7 +285,8 @@ def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
 
     # Get the best match atom mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, map0=map0, map1=map1)
+        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0,
+                             property_map1=property_map1)
 
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireMolecule()
@@ -295,7 +298,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, map0={}, map1={}):
     # Return the aligned molecule.
     return _Molecule(mol0)
 
-def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
+def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
@@ -316,12 +319,12 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
            to those in molecule1 using "findMCSmatches", with "rmsdAlign" then
            used to align molecule0 to molecule1 based on the resulting mapping.
 
-       map0 : dict
+       property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       map1 : dict
+       property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
     """
@@ -332,11 +335,11 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
     if type(molecule1) is not _Molecule:
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(map0) is not dict:
-        raise TypeError("'map0' must be of type 'dict'")
+    if type(property_map0) is not dict:
+        raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(map1) is not dict:
-        raise TypeError("'map1' must be of type 'dict'")
+    if type(property_map1) is not dict:
+        raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
@@ -351,11 +354,11 @@ def merge(molecule0, molecule1, mapping=None, map0={}, map1={}):
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, map0=map0, map1=map1)
+        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0, property_map1=property_map1)
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create and return the merged molecule.
-    return molecule0._merge(molecule1, mapping, map0=map0, map1=map1)
+    return molecule0._merge(molecule1, mapping, property_map0=property_map0, property_map1=property_map1)
 
 def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared
@@ -394,10 +397,10 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     scores = []
 
     # Loop over all mappings.
-    for map in mappings:
+    for mapping in mappings:
         # Align molecule0 to molecule1 based on the mapping.
         if is_align:
-            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(map)).molecule()
+            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
 
         # We now compute the RMSD between the coordinates of the matched atoms
         # in molecule0 and molecule1.
@@ -407,7 +410,7 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
         c1 = []
 
         # Loop over each atom index in the map.
-        for idx0, idx1 in map.items():
+        for idx0, idx1 in mapping.items():
             # Append the coordinates of the matched atom in molecule0.
             c0.append(molecule0.atom(idx0).property("coordinates"))
             # Append the coordinates of atom in molecule1 to which it maps.

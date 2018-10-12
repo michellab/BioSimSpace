@@ -225,13 +225,13 @@ class Molecule():
         else:
             return False
 
-    def charge(self, map={}, is_lambda1=False):
+    def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -241,25 +241,25 @@ class Molecule():
         """
 
         # Copy the map.
-        _map = map
+        _property_map = property_map.copy()
 
         # This is a merged molecule.
         if self._is_merged:
             if is_lambda1:
-                _map = { "charge" : "charge1" }
+                _property_map = { "charge" : "charge1" }
             else:
-                _map = { "charge" : "charge0" }
+                _property_map = { "charge" : "charge0" }
 
         # Calculate the charge.
         try:
-            charge = self._sire_molecule.evaluate().charge(_map).value()
+            charge = self._sire_molecule.evaluate().charge(_property_map).value()
         except:
             charge = 0
 
         # Return the charge.
         return charge * _Units.Charge.electron_charge
 
-    def translate(self, vector, map={}):
+    def translate(self, vector, property_map={}):
         """Translate the molecule.
 
            Positional arguments
@@ -272,7 +272,7 @@ class Molecule():
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -298,8 +298,11 @@ class Molecule():
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
         # Perform the translation.
-        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec), map).commit()
+        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec), property_map).commit()
 
     def toSystem(self):
         """Convert a single Molecule to a System."""
@@ -309,7 +312,7 @@ class Molecule():
         """Return the full Sire Molecule object."""
         return self._sire_molecule
 
-    def _makeCompatibleWith(self, molecule, map={}, overwrite=True,
+    def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
@@ -324,7 +327,7 @@ class Molecule():
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A map between property names and user supplied names.
 
            overwrite : bool
@@ -346,8 +349,8 @@ class Molecule():
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol._Mol.Molecule'")
 
-        if type(map) is not dict:
-            raise TypeError("'map' must be of type 'dict'")
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         if type(overwrite) is not bool:
             raise TypeError("'overwrite' must be of type 'bool'")
@@ -406,18 +409,18 @@ class Molecule():
         props1 = mol1.propertyKeys()
 
         # Copy the property map.
-        _map = map.copy()
+        _property_map = property_map.copy()
 
         # See if any of the new properties are in the map, add them if not.
         for prop in props1:
-            if not prop in _map:
-                _map[prop] = prop
+            if not prop in _property_map:
+                _property_map[prop] = prop
 
         # Make the molecule editable.
         edit_mol = mol0.edit()
 
-        if "parameters" in _map:
-            param = _map["parameters"]
+        if "parameters" in _property_map:
+            param = _property_map["parameters"]
         else:
             param = "parameters"
 
@@ -430,13 +433,13 @@ class Molecule():
                 # Skip 'parameters' property, since it contains references to other parameters.
                 if prop != param:
                     # This is a new property, or we are allowed to overwrite.
-                    if (not mol0.hasProperty(_map[prop])) or overwrite:
+                    if (not mol0.hasProperty(_property_map[prop])) or overwrite:
                         if verbose:
-                            print("  %s" % _map[prop])
+                            print("  %s" % _property_map[prop])
                         try:
-                            edit_mol = edit_mol.setProperty(_map[prop], mol1.property(prop))
+                            edit_mol = edit_mol.setProperty(_property_map[prop], mol1.property(prop))
                         except:
-                            raise _IncompatibleError("Failed to set property '%s'" % _map[prop]) from None
+                            raise _IncompatibleError("Failed to set property '%s'" % _property_map[prop]) from None
 
         # The atom order is different, we need to map the atoms when setting properties.
         else:
@@ -453,20 +456,20 @@ class Molecule():
             # Loop over all of the keys in the new molecule.
             for prop in props1:
                 # This is a new property, or we are allowed to overwrite.
-                if (not mol0.hasProperty(_map[prop])) or overwrite:
+                if (not mol0.hasProperty(_property_map[prop])) or overwrite:
                     # Loop over all of the atom mapping pairs and set the property.
                     for idx0, idx1 in matches.items():
                         # Does the atom have this property?
                         # If so, add it to the matching atom in this molecule.
                         if mol1.atom(idx1).hasProperty(prop):
                             if verbose:
-                                print("  %-20s %s --> %s" % (_map[prop], idx1, idx0))
+                                print("  %-20s %s --> %s" % (_property_map[prop], idx1, idx0))
                             try:
-                                edit_mol = edit_mol.atom(idx0).setProperty(_map[prop], mol1.atom(idx1).property(prop)).molecule()
+                                edit_mol = edit_mol.atom(idx0).setProperty(_property_map[prop], mol1.atom(idx1).property(prop)).molecule()
                                 seen_prop[prop] = True
                             except:
                                 raise _IncompatibleError("Failed to copy property '%s' from %s to %s."
-                                    % (_map[prop], idx1, idx0)) from None
+                                    % (_property_map[prop], idx1, idx0)) from None
 
             # Now deal with all unseen properties. These will be non atom-based
             # properties, such as TwoAtomFunctions, StringProperty, etc.
@@ -480,22 +483,22 @@ class Molecule():
                     # Skip 'parameters' property, since it contains references to other parameters.
                     if prop != "parameters":
                         # This is a new property, or we are allowed to overwrite.
-                        if (not mol0.hasProperty(_map[prop])) or overwrite:
+                        if (not mol0.hasProperty(_property_map[prop])) or overwrite:
                             if verbose:
-                                print("  %s" % _map[prop])
+                                print("  %s" % _property_map[prop])
 
                             # Get the property from the parameterised molecule.
-                            propty = mol1.property(_map[prop])
+                            propty = mol1.property(_property_map[prop])
 
                             # Try making it compatible with the original molecule.
                             if hasattr(propty, "makeCompatibleWith"):
                                 try:
                                     propty = propty.makeCompatibleWith(mol0, matches)
                                 except:
-                                    raise _IncompatibleError("Incompatible property: %s" % _map[prop]) from None
+                                    raise _IncompatibleError("Incompatible property: %s" % _property_map[prop]) from None
 
                             # Now try to set the property.
-                            edit_mol.setProperty(_map[prop], propty)
+                            edit_mol.setProperty(_property_map[prop], propty)
 
         # Finally, rename the atoms.
 
@@ -534,21 +537,21 @@ class Molecule():
         self._molecule0 = Molecule(mol0)
         self._molecule1 = Molecule(mol1)
 
-    def _fixCharge(self, map={}):
+    def _fixCharge(self, property_map={}):
         """Make the molecular charge an integer value.
 
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps "properties" in this molecule to their
                user defined values. This allows the user to refer to properties
                with their own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Get the user defined charge property.
-        if "charge" in map:
-            prop = map["charge"]
+        if "charge" in property_map:
+            prop = property_map["charge"]
         else:
             prop = "charge"
 
@@ -597,7 +600,7 @@ class Molecule():
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(self, filename="MORPH.pert", map={}):
+    def _toPertFile(self, filename="MORPH.pert", property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Keyword arguments
@@ -606,7 +609,7 @@ class Molecule():
            filename: str
                The name of the perturbation file.
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -1235,8 +1238,8 @@ class Molecule():
         for prop in mol.propertyKeys():
             if prop[-1] == "0":
                 # See if this property exists in the user map.
-                if prop[:-1] in map:
-                    new_prop = map[prop[:-1]]
+                if prop[:-1] in property_map:
+                    new_prop = property_map[prop[:-1]]
                 else:
                     new_prop = prop[:-1]
 
@@ -1250,7 +1253,7 @@ class Molecule():
         # Return the updated molecule.
         return mol.commit()
 
-    def _merge(self, other, mapping, map0={}, map1={}):
+    def _merge(self, other, mapping, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Positional arguments
@@ -1266,12 +1269,12 @@ class Molecule():
            Keyword arguments
            -----------------
 
-           map0 : dict
+           property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
                user defined values. This allows the user to refer to properties
                with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-           map1 : dict
+           property_map1 : dict
                A dictionary that maps "properties" in ther other molecule to
                their user defined values.
 
@@ -1294,11 +1297,11 @@ class Molecule():
         if type(other) is not Molecule:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-        if type(map0) is not dict:
-            raise TypeError("'map0' must be of type 'dict'")
+        if type(property_map0) is not dict:
+            raise TypeError("'property_map0' must be of type 'dict'")
 
-        if type(map1) is not dict:
-            raise TypeError("'map1' must be of type 'dict'")
+        if type(property_map1) is not dict:
+            raise TypeError("'property_map1' must be of type 'dict'")
 
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
@@ -1323,8 +1326,8 @@ class Molecule():
         inv_mapping = {v: k for k, v in mapping.items()}
 
         # Invert the user property mappings.
-        inv_map0 = {v: k for k, v in map0.items()}
-        inv_map1 = {v: k for k, v in map1.items()}
+        inv_property_map0 = {v: k for k, v in property_map0.items()}
+        inv_property_map1 = {v: k for k, v in property_map1.items()}
 
         # Make sure that the molecules have a "forcefield" property and that
         # the two force fields are compatible.
@@ -1332,10 +1335,10 @@ class Molecule():
         # Get the user name for the "forcefield" property.
         ff0 = "forcefield"
         ff1 = "forcefield"
-        if "forcefield" in inv_map0:
-            ff0 = inv_map0["forcefield"]
-        if "forcefield" in inv_map1:
-            ff1 = inv_map1["forcefield"]
+        if "forcefield" in inv_property_map0:
+            ff0 = inv_property_map0["forcefield"]
+        if "forcefield" in inv_property_map1:
+            ff1 = inv_property_map1["forcefield"]
 
         # Force field information is missing.
         if not molecule0.hasProperty(ff0):
@@ -1374,14 +1377,14 @@ class Molecule():
 
         # molecule0
         for prop in molecule0.propertyKeys():
-            if prop in inv_map0:
-                prop = inv_map0[prop]
+            if prop in inv_property_map0:
+                prop = inv_property_map0[prop]
             props0.append(prop)
 
         # molecule1
         for prop in molecule1.propertyKeys():
-            if prop in inv_map1:
-                prop = inv_map1[prop]
+            if prop in inv_property_map1:
+                prop = inv_property_map1[prop]
             props1.append(prop)
 
         # Determine the common properties between the two molecules.
@@ -1459,8 +1462,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map0:
-                    name = inv_map0[prop]
+                if prop in inv_property_map0:
+                    name = inv_property_map0[prop]
                 else:
                     name = prop
 
@@ -1482,8 +1485,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map1:
-                    name = inv_map1[prop]
+                if prop in inv_property_map1:
+                    name = inv_property_map1[prop]
                 else:
                     name = prop
 
@@ -1513,12 +1516,12 @@ class Molecule():
         if "bond" in shared_props:
             # Get the user defined property names.
             prop0 = "bond"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["bond"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["bond"]
 
             prop1 = "bond"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["bond"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["bond"]
 
             # Get the "bond" property from the two molecules.
             bonds0 = molecule0.property(prop0)
@@ -1559,12 +1562,12 @@ class Molecule():
         if "angle" in shared_props:
             # Get the user defined property names.
             prop0 = "angle"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["angle"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["angle"]
 
             prop1 = "angle"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["angle"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["angle"]
 
             # Get the "angle" property from the two molecules.
             angles0 = molecule0.property(prop0)
@@ -1608,12 +1611,12 @@ class Molecule():
         if "dihedral" in shared_props:
             # Get the user defined property names.
             prop0 = "dihedral"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["dihedral"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["dihedral"]
 
             prop1 = "dihedral"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["dihedral"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["dihedral"]
 
             # Get the "dihedral" property from the two molecules.
             dihedrals0 = molecule0.property(prop0)
@@ -1661,12 +1664,12 @@ class Molecule():
         if "improper" in shared_props:
             # Get the user defined property names.
             prop0 = "improper"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["improper"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["improper"]
 
             prop1 = "improper"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["improper"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["improper"]
 
             # Get the "improper" property from the two molecules.
             impropers0 = molecule0.property(prop0)
@@ -1725,8 +1728,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map1:
-                    name = inv_map1[prop]
+                if prop in inv_property_map1:
+                    name = inv_property_map1[prop]
                 else:
                     name = prop
 
@@ -1746,8 +1749,8 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_map0:
-                    name = inv_map0[prop]
+                if prop in inv_property_map0:
+                    name = inv_property_map0[prop]
                 else:
                     name = prop
 
@@ -1781,12 +1784,12 @@ class Molecule():
 
             # Get the user defined property names.
             prop0 = "bond"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["bond"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["bond"]
 
             prop1 = "bond"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["bond"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["bond"]
 
             # Get the "bond" property from the two molecules.
             bonds0 = molecule0.property(prop0)
@@ -1834,12 +1837,12 @@ class Molecule():
 
             # Get the user defined property names.
             prop0 = "angle"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["angle"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["angle"]
 
             prop1 = "angle"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["angle"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["angle"]
 
             # Get the "angle" property from the two molecules.
             angles0 = molecule0.property(prop0)
@@ -1891,12 +1894,12 @@ class Molecule():
 
             # Get the user defined property names.
             prop0 = "dihedral"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["dihedral"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["dihedral"]
 
             prop1 = "dihedral"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["dihedral"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["dihedral"]
 
             # Get the "dihedral" property from the two molecules.
             dihedrals0 = molecule0.property(prop0)
@@ -1952,12 +1955,12 @@ class Molecule():
 
             # Get the user defined property names.
             prop0 = "improper"
-            if prop0 in inv_map0:
-                prop0 = inv_map0["improper"]
+            if prop0 in inv_property_map0:
+                prop0 = inv_property_map0["improper"]
 
             prop1 = "improper"
-            if prop1 in inv_map1:
-                prop1 = inv_map1["improper"]
+            if prop1 in inv_property_map1:
+                prop1 = inv_property_map1["improper"]
 
             # Get the "improper" property from the two molecules.
             impropers0 = molecule0.property(prop0)
@@ -2088,12 +2091,12 @@ class Molecule():
 
         # Get the user defined "intrascale" property names.
         prop0 = "intrascale"
-        if prop0 in inv_map0:
-            prop0 = inv_map0["intrascale"]
+        if prop0 in inv_property_map0:
+            prop0 = inv_property_map0["intrascale"]
 
         prop1 = "intrascale"
-        if prop1 in inv_map1:
-            prop1 = inv_map1["intrascale"]
+        if prop1 in inv_property_map1:
+            prop1 = inv_property_map1["intrascale"]
 
         # Get the "intrascale" property from the two molecules.
         intrascale0 = molecule0.property(prop0)
@@ -2191,13 +2194,13 @@ class Molecule():
         # Return the new molecule.
         return mol
 
-    def _getAABox(self, map={}):
+    def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecule.
 
            Keyword arguments
            -----------------
 
-           map : dict
+           property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
@@ -2215,8 +2218,8 @@ class Molecule():
 
         # Extract the atomic coordinates and append them to the vector.
         try:
-            if "coordinates" in map:
-                prop = map["coordinates"]
+            if "coordinates" in property_map:
+                prop = property_map["coordinates"]
             else:
                 prop = "coordinates"
             coord.extend(self._sire_molecule.property(prop).toVector())
