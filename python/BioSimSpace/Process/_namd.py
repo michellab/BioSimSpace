@@ -133,14 +133,14 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _Sire.IO.CharmmPSF(self._system)
+            psf = _Sire.IO.CharmmPSF(self._system, map)
             psf.writeToFile(self._psf_file)
         except:
             raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
         try:
-            pdb = _Sire.IO.PDB2(self._system)
+            pdb = _Sire.IO.PDB2(self._system, map)
             pdb.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
@@ -606,7 +606,7 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read(files))
+                return _System(_Sire.IO.MoleculeParser.read(files, map))
             except:
                 return None
 

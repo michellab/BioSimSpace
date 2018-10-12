@@ -229,14 +229,14 @@ class Amber(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(self._system)
+            rst = _Sire.IO.AmberRst7(self._system, map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(self._system)
+            prm = _Sire.IO.AmberPrm(self._system, map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -528,7 +528,7 @@ class Amber(_process.Process):
         if _os.path.isfile(restart):
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
+                return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], map))
             except:
                 print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
                 return None

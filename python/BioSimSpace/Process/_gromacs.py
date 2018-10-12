@@ -129,11 +129,11 @@ class Gromacs(_process.Process):
         # Create the input files...
 
         # GRO87 file.
-        gro = _Sire.IO.Gro87(self._system)
+        gro = _Sire.IO.Gro87(self._system, top)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _Sire.IO.GroTop(self._system)
+        top = _Sire.IO.GroTop(self._system, map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
@@ -345,7 +345,7 @@ class Gromacs(_process.Process):
         # Check that the file exists.
         if _os.path.isfile(restart):
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read(restart, self._top_file))
+            return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], map))
 
         else:
             return None
