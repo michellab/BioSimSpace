@@ -277,11 +277,13 @@ class Somd(_process.Process):
 
             # Work out the number of cycles. We save coordinates every cycle,
             # which is 100 MD steps (moves) in length (this is for consistency
-            # with other MD drivers). Note that SOMD only save coordinates to
+            # with other MD drivers). Note that SOMD only saves coordinates to
             # a DCD trajectory file, so it's impossible to decouple the
             # frequency of recording configurations and trajectory frames,
             # i.e. the number of trajectory frames specified in the protocol
-            # is disregarded.
+            # is disregarded. This also means that we lose the ability to use
+            # the user "property map" when reading configurations from the
+            # trajectory.
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
             # Convert the timestep to femtoseconds.
@@ -307,11 +309,13 @@ class Somd(_process.Process):
 
             # Work out the number of cycles. We save coordinates every cycle,
             # which is 100 MD steps (moves) in length (this is for consistency
-            # with other MD drivers). Note that SOMD only save coordinates to
+            # with other MD drivers). Note that SOMD only saves coordinates to
             # a DCD trajectory file, so it's impossible to decouple the
             # frequency of recording configurations and trajectory frames,
             # i.e. the number of trajectory frames specified in the protocol
-            # is disregarded.
+            # is disregarded. This also means that we lose the ability to use
+            # the user "property map" when reading configurations from the
+            # trajectory.
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
             # Convert the timestep to femtoseconds.
