@@ -984,7 +984,7 @@ class Node():
         # Command-line.
         else:
             # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_args())
+            args = vars(self._parser.parse_known_args()[0])
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():

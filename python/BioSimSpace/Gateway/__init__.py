@@ -25,4 +25,9 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ._node import *
+from ._resources import *
 from ._requirements import *
+
+# Create and initialise the hardware resource manager.
+ResourceManager = ResourceManager()
+ResourceManager._initialise()
