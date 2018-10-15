@@ -38,6 +38,7 @@ import BioSimSpace.Units as _Units
 
 import math as _math
 import os as _os
+import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
 
@@ -133,6 +134,10 @@ class Somd(_process.Process):
 
         # Set the path for the perturbation file.
         self._pert_file = "%s/%s.pert" % (self._work_dir, name)
+
+        # Set the path for the gradient file and create the gradient list.
+        self._gradient_file = "%s/gradients.dat" % self._work_dir
+        self._gradients = []
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
@@ -308,8 +313,8 @@ class Somd(_process.Process):
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("barostat = False")                        # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
@@ -341,8 +346,8 @@ class Somd(_process.Process):
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             elif self._has_water:
@@ -375,11 +380,12 @@ class Somd(_process.Process):
 
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
             self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
             self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             elif self._has_water:
@@ -397,7 +403,6 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
-            self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
                                                                         # The lambda value array.
             self.addToConfig("lambda array = %s" \
                 % ", ".join([str(x) for x in self._protocol.getLambdaValues()]))
@@ -414,11 +419,11 @@ class Somd(_process.Process):
         self.clearArgs()
 
         # Add the default arguments.
-        self.setArg("-c", self._rst_file)                               # Coordinate restart file.
-        self.setArg("-t", self._top_file)                               # Topology file.
+        self.setArg("-c", "%s.rst7" % self._name)                       # Coordinate restart file.
+        self.setArg("-t", "%s.prm7" % self._name)                       # Topology file.
         if type(self._protocol) is _Protocol.FreeEnergy:
-            self.setArg("-m", self._pert_file)                          # Perturbation file.
-        self.setArg("-C", self._config_file)                            # Config file.
+            self.setArg("-m", "%s.pert" % self._name)                   # Perturbation file.
+        self.setArg("-C", "%s.cfg" % self._name)                        # Config file.
         if self._platform == "GPU":                                     # Platform.
             self.setArg("-p", "CUDA")
         else:
@@ -467,7 +472,7 @@ class Somd(_process.Process):
             "%s.out"  % self._name, "%s.out"  % self._name)
 
         # SOMD uses the stdout stream for all output.
-        with open(self._stderr_file, "w") as f:
+        with open(_os.path.basename(self._stderr_file), "w") as f:
             f.write("All output has been redirected to the stdout stream!\n")
 
         # Change back to the original working directory.
@@ -540,6 +545,119 @@ class Somd(_process.Process):
 
         except:
             return None
+
+    def getTime(self, time_series=False, block="AUTO"):
+        """Get the time (in nanoseconds).
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The current simulation time in nanoseconds.
+        """
+
+        # No time records for minimisation protocols.
+        if type(self._protocol) is _Protocol.Minimisation:
+            return None
+
+        # Get the number of trajectory frames.
+        num_frames = self.getTrajectory(block=block).nFrames()
+
+        if num_frames == 0:
+            return None
+
+        # Create the list of time records. (Frames are saved every 100 MD steps.)
+        try:
+            times = [(100 * self._protocol.getTimeStep().nanoseconds()) * x for x in range(1, num_frames + 1)]
+        except:
+            return None
+
+        if time_series:
+            return times
+        else:
+            return times[-1]
+
+    def getCurrentTime(self, time_series=False):
+        """Get the current time (in nanoseconds).
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           time : BioSimSpace.Types.Time
+               The current simulation time in nanoseconds.
+        """
+        return self.getTime(time_series, block=False)
+
+    def getGradient(self, time_series=False, block="AUTO"):
+        """Get the free energy gradient.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           gradient : float
+               The free energy gradient.
+        """
+
+        # No gradient file.
+        if not _os.path.isfile(self._gradient_file):
+            return None
+
+        # Append any new lines to the gradients list.
+        for line in _pygtail.Pygtail(self._gradient_file):
+            # Ignore comments.
+            if line[0] != "#":
+                self._gradients.append(float(line.rstrip().split()[-1]))
+
+        if len(self._gradients) == 0:
+            return None
+
+        if time_series:
+            return self._gradients
+        else:
+            return self._gradients[-1]
+
+    def getCurrentGradient(self, time_series=False):
+        """Get the current free energy gradient.
+
+           Keyword arguments
+           -----------------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           gradient : float
+               The current free energy gradient.
+        """
+        return self.getGradient(time_series, block=False)
 
     def _clear_output(self):
         """Reset stdout and stderr."""
