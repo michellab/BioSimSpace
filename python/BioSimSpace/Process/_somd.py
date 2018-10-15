@@ -109,7 +109,10 @@ class Somd(_process.Process):
         # executable.
         if exe is None:
             # Generate the name of the SOMD exe.
-            somd_exe = _Sire.Base.getBinDir() + "/somd"
+            if type(self._protocol) is _Protocol.FreeEnergy:
+                somd_exe = _Sire.Base.getBinDir() + "/somd-freenrg"
+            else:
+                somd_exe = _Sire.Base.getBinDir() + "/somd"
             if not _os.path.isfile(somd_exe):
                 raise _MissingSoftwareError("'Cannot find SOMD executable in expected location: '%s'" % somd_exe)
             else:
@@ -411,10 +414,12 @@ class Somd(_process.Process):
         self.clearArgs()
 
         # Add the default arguments.
-        self.setArg("-c", self._rst_file)       # Coordinate restart file.
-        self.setArg("-t", self._top_file)       # Topology file.
-        self.setArg("-C", self._config_file)    # Config file.
-        if self._platform == "GPU":             # Platform.
+        self.setArg("-c", self._rst_file)                               # Coordinate restart file.
+        self.setArg("-t", self._top_file)                               # Topology file.
+        if type(self._protocol) is _Protocol.FreeEnergy:
+            self.setArg("-m", self._pert_file)                          # Perturbation file.
+        self.setArg("-C", self._config_file)                            # Config file.
+        if self._platform == "GPU":                                     # Platform.
             self.setArg("-p", "CUDA")
         else:
             self.setArg("-p", "CPU")
