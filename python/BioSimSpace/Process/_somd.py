@@ -302,7 +302,6 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
             self.addToConfig("barostat = False")                        # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
@@ -344,7 +343,6 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             elif self._has_water:
@@ -390,7 +388,6 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("andersen = True")                         # Use the Andersen thermostat.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             elif self._has_water:
