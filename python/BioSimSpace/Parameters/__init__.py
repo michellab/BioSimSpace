@@ -77,7 +77,7 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
         if forcefield not in forceFields():
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, property_map=map)
+    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, property_map=property_map)
 
 def ff99(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
