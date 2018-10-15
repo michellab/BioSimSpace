@@ -44,10 +44,6 @@ import pypdb as _pypdb
 import sys as _sys
 import tempfile as _tempfile
 
-if _gromacs_path is None:
-    _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
-           + "for GROMACS topology file support.")
-
 # Context manager for capturing stdout.
 # Taken from:
 # https://stackoverflow.com/questions/16571150/how-to-capture-stdout-output-from-a-python-function-call
@@ -189,6 +185,10 @@ def readMolecules(files, property_map={}):
            A molecular system.
     """
 
+    if _gromacs_path is None:
+        _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+              "for GROMACS topology file support.")
+
     # Convert to a list.
     if type(files) is str:
         files = [files]
@@ -249,6 +249,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
     """
+
+    if _gromacs_path is None:
+        _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+              "for GROMACS topology file support.")
 
     # Check that the filebase is a string.
     if type(filebase) is not str:
