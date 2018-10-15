@@ -36,10 +36,10 @@ from os import environ as _environ
 if "DISPLAY" in _environ:
     _display = _environ.get("DISPLAY")
 else:
-    _display = ""
+    _display = None
 del(_environ)
 
-if _display is not "":
+if _display is not None:
     _has_display = True
     try:
         import matplotlib.pyplot as _plt
