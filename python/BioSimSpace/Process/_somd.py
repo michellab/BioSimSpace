@@ -252,6 +252,10 @@ class Somd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # While the configuration parameters below share a lot of overlap,
+        # we choose the keep them separate so that the user can modify options
+        # for a given protocol in a single place.
+
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
             self.addToConfig("minimise = True")                         # Minimisation simulation.
@@ -268,6 +272,15 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
                 self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
 
+        # In the following protocols we save coordinates every cycle, which is
+        # 100 MD steps (moves) in length (this is for consistency with other
+        # MD drivers). Note that SOMD only saves coordinates to a DCD
+        # trajectory file, so it's impossible to decouple the frequency of
+        # recording configurations and trajectory frames, i.e. the number of
+        # trajectory frames specified in the protocol is disregarded. This also
+        # means that we lose the ability to use the user "property map" when
+        # reading configurations from the trajectory.
+
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
             # Only constant temperature equilibration simulations are supported.
@@ -278,15 +291,7 @@ class Somd(_process.Process):
             if self._protocol.isRestrained():
                 raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
 
-            # Work out the number of cycles. We save coordinates every cycle,
-            # which is 100 MD steps (moves) in length (this is for consistency
-            # with other MD drivers). Note that SOMD only saves coordinates to
-            # a DCD trajectory file, so it's impossible to decouple the
-            # frequency of recording configurations and trajectory frames,
-            # i.e. the number of trajectory frames specified in the protocol
-            # is disregarded. This also means that we lose the ability to use
-            # the user "property map" when reading configurations from the
-            # trajectory.
+            # Work out the number of cycles. (100 MD steps per cycle.)
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
             # Convert the timestep to femtoseconds.
@@ -319,15 +324,7 @@ class Somd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
-            # Work out the number of cycles. We save coordinates every cycle,
-            # which is 100 MD steps (moves) in length (this is for consistency
-            # with other MD drivers). Note that SOMD only saves coordinates to
-            # a DCD trajectory file, so it's impossible to decouple the
-            # frequency of recording configurations and trajectory frames,
-            # i.e. the number of trajectory frames specified in the protocol
-            # is disregarded. This also means that we lose the ability to use
-            # the user "property map" when reading configurations from the
-            # trajectory.
+            # Work out the number of cycles. (100 MD steps per cycle.)
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
             # Convert the timestep to femtoseconds.
@@ -364,15 +361,7 @@ class Somd(_process.Process):
         # Add configuration variables for a free energy simulation.
         elif type(self._protocol) is _Protocol.FreeEnergy:
 
-            # Work out the number of cycles. We save coordinates every cycle,
-            # which is 100 MD steps (moves) in length (this is for consistency
-            # with other MD drivers). Note that SOMD only saves coordinates to
-            # a DCD trajectory file, so it's impossible to decouple the
-            # frequency of recording configurations and trajectory frames,
-            # i.e. the number of trajectory frames specified in the protocol
-            # is disregarded. This also means that we lose the ability to use
-            # the user "property map" when reading configurations from the
-            # trajectory.
+            # Work out the number of cycles. (100 MD steps per cycle.)
             ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
 
             # Convert the timestep to femtoseconds.

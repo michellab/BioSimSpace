@@ -174,6 +174,10 @@ class Gromacs(_process.Process):
         # to re-compile the binary run input file each time.
         config = []
 
+        # While the configuration parameters below share a lot of overlap,
+        # we choose the keep them separate so that the user can modify options
+        # for a given protocol in a single place.
+
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
             config.append("integrator = steep")         # Use steepest descent.

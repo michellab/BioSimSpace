@@ -275,6 +275,10 @@ class Amber(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # While the configuration parameters below share a lot of overlap,
+        # we choose the keep them separate so that the user can modify options
+        # for a given protocol in a single place.
+
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
             self.addToConfig("Minimisation")
