@@ -47,8 +47,13 @@ __all__ = ["Somd"]
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""
 
+    # Dictionary of platforms and their OpenMM keyword.
+    _platforms = { "CPU"    : "CPU",
+                   "CUDA"   : "CUDA",
+                   "OPENCL" : "OpenCL" }
+
     def __init__(self, system, protocol, exe=None, name="somd",
-            platform="GPU", work_dir=None, seed=None, property_map={}):
+            platform="CPU", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Positional arguments
@@ -71,7 +76,7 @@ class Somd(_process.Process):
                The name of the process.
 
            platform : str
-               The platform for the simulation: "GPU" or "CPU".
+               The platform for the simulation: "CPU", "CUDA", or "OPENCL".
 
            work_dir :
                The working directory for the process.
@@ -101,10 +106,10 @@ class Somd(_process.Process):
             platform = platform.replace(" ", "").upper()
 
             # Check for platform support.
-            if platform not in ["GPU", "CPU"]:
-                raise ValueError("Supported platforms are: 'GPU' and 'CPU'")
+            if platform not in self._platforms:
+                raise ValueError("Supported platforms are: %s" % self._platforms.keys())
             else:
-                self._platform = platform
+                self._platform = self._platforms[platform]
 
         # If the path to the executable wasn't specified, then use the bundled SOMD
         # executable.
@@ -424,10 +429,7 @@ class Somd(_process.Process):
         if type(self._protocol) is _Protocol.FreeEnergy:
             self.setArg("-m", "%s.pert" % self._name)                   # Perturbation file.
         self.setArg("-C", "%s.cfg" % self._name)                        # Config file.
-        if self._platform == "GPU":                                     # Platform.
-            self.setArg("-p", "CUDA")
-        else:
-            self.setArg("-p", "CPU")
+        self.setArg("-p", self._platform)                               # Simulation platform.
 
     def start(self):
         """Start the SOMD process."""
