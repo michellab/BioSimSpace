@@ -83,14 +83,21 @@ if "GROMACSHOME" in _environ:
         _gmx_exe = _SireBase.findExe("%s/bin/gmx" % _environ.get("GROMACSHOME")) \
                             .absoluteFilePath()
     except:
-        pass
+        try:
+            _gmx_exe = _SireBase.findExe("%s/bin/gmx_mpi" % _environ.get("GROMACSHOME")) \
+                                .absoluteFilePath()
+        except:
+            pass
 
 if _gmx_exe is None:
+    # The user has not told us where it is, so need to look in $PATH.
     try:
-        # The user has not told us where it is, so need to look in $PATH.
         _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
     except:
-        pass
+        try:
+            _gmx_exe = _SireBase.findExe("gmx_mpi").absoluteFilePath()
+        except:
+            pass
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
