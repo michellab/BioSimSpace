@@ -278,12 +278,11 @@ class Somd(_process.Process):
             self.addToConfig("ncycles = 1")                             # Perform a single SOMD cycle.
             self.addToConfig("nmoves = 1")                              # Perform a single MD move.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
-                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
             else:
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
+            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
 
         # In the following protocols we save coordinates every cycle, which is
         # 100 MD steps (moves) in length (this is for consistency with other
@@ -325,12 +324,11 @@ class Somd(_process.Process):
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
             else:
                 self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
-                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
             else:
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
+            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
 
@@ -355,19 +353,21 @@ class Somd(_process.Process):
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
-            elif self._has_water:
-                self.addToConfig("barostat = True")                     # Enable barostat.
-                self.addToConfig("pressure = 1 atm")                    # Atmospheric pressure.
+            else:
+                if self._has_water and has_box:
+                    self.addToConfig("barostat = True")                 # Enable barostat.
+                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                else:
+                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
             else:
                 self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
-                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
             else:
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
+            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
 
@@ -393,19 +393,21 @@ class Somd(_process.Process):
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
             if self._protocol.getEnsemble() == "NVT":
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
-            elif self._has_water:
-                self.addToConfig("barostat = True")                     # Enable barostat.
-                self.addToConfig("pressure = 1 atm")                    # Atmospheric pressure.
+            else:
+                if self._has_water and has_box:
+                    self.addToConfig("barostat = True")                 # Enable barostat.
+                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                else:
+                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
             else:
                 self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
-            if not has_box:
-                self.addToConfig("cutoff type = cutoffperiodic")        # No periodic box.
-                self.addToConfig("cutoff distance = 1000 angstrom")     # Non-bonded cut-off.
+            if not has_box or not self._has_water:
+                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
             else:
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-                self.addToConfig("cutoff distance = 10 angstrom")       # Non-bonded cut-off.
+            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
                                                                         # The lambda value array.
