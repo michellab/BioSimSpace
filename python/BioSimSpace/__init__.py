@@ -132,6 +132,7 @@ if not _path.isdir(_gromacs_path):
         del(_subprocess)
 
 from . import Align
+from . import FreeEnergy
 from . import Gateway
 from . import IO
 from . import Notebook
@@ -148,7 +149,7 @@ from .Trajectory import Trajectory
 
 # Top-level functions.
 
-def viewMolecules( files, idxs=None ):
+def viewMolecules(files, idxs=None):
     """View the molecules contained in the passed file(s). Optionally supply
        a list of indices of molecules you want to view. This views the molecules
        and also returns a view object that will allow you to change the view,

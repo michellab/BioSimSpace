@@ -669,7 +669,7 @@ class Somd(_process.Process):
         # Call the base class method.
         super()._clear_output()
 
-        # Delete any restart and trajectory files in the working
+        # Delete any restart and trajectory files in the working directory.
 
         file = "%s/sim_restart.s3" % self._work_dir
         if _os.path.isfile(file):
@@ -682,3 +682,14 @@ class Somd(_process.Process):
         file = "%s/traj000000001.dcd" % self._work_dir
         if _os.path.isfile(file):
             _os.remove(file)
+
+        # Additional files for free energy simulations.
+        if type(self._protocol) is _Protocol.FreeEnergy:
+
+            file = "%s/gradients.dat" % self._work_dir
+            if _os.path.isfile(file):
+                _os.remove(file)
+
+            file = "%s/simfile.dat" % self._work_dir
+            if _os.path.isfile(file):
+                _os.remove(file)

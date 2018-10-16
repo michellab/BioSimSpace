@@ -24,9 +24,11 @@ Functionality for running multiple processes.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ..Gateway import ResourceManager as _ResourceManager
 from ._process import Process as _Process
 from .._SireWrappers import System as _System
 
+import os as _os
 import tempfile as _tempfile
 
 __all__ = ["ProcessRunner"]
@@ -458,7 +460,7 @@ class ProcessRunner():
 
         return run_time
 
-    def _nest_directories(self, processes, idx_offset=0):
+    def _nest_directories(self, processes, preserve_dir_name=False):
         """Helper function to nest processes inside the runner's working
            directory.
 
@@ -467,9 +469,6 @@ class ProcessRunner():
 
            processes : [ BioSimSpace.Process ]
                A list of process objects.
-
-           idx_offset : int
-               The index of the first process.
 
 
            Returns
@@ -483,9 +482,9 @@ class ProcessRunner():
         new_processes = []
 
         # Loop over each process.
-        for idx, process in enumerate(processes):
+        for process in processes:
             # Create the new working directory name.
-            new_dir = "%s/process_%03d" % (self._work_dir, idx + idx_offset)
+            new_dir = "%s/%s" % (self._work_dir, process._work_dir)
 
             # Create a new process object using the nested directory.
             if process._package_name == "SOMD":
@@ -494,6 +493,5 @@ class ProcessRunner():
             else:
                 new_processes.append(type(process)(_System(process._system), process._protocol,
                     process._exe, process._name, new_dir, process._seed, process._property_map))
-
 
         return new_processes
