@@ -265,12 +265,25 @@ class Somd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # Work out the GPU device ID.
+        if self._platform == "CUDA":
+            if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                try:
+                    # Get the ID of the first available device.
+                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
+                except:
+                    raise EnvironmentError("Cannot parse 'CUDA_VISIBLE_DEVICES' environment variable!")
+            else:
+                raise EnvironmentError("Missing 'CUDA_VISIBLE_DEVICES' environment variable!")
+
         # While the configuration parameters below share a lot of overlap,
         # we choose the keep them separate so that the user can modify options
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
+            if self._platform == "CUDA":
+                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("minimise = True")                         # Minimisation simulation.
             self.addToConfig("minimise maximum iterations = %d"         # Maximum number of steps.
                 % self._protocol.getSteps())
@@ -312,6 +325,8 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getStartTemperature().kelvin().magnitude()
 
+            if self._platform == "CUDA":
+                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
             self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
@@ -344,6 +359,8 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
+            if self._platform == "CUDA":
+                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
             self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
@@ -383,6 +400,8 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
+            if self._platform == "CUDA":
+                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
             self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
             self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
