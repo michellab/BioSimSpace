@@ -410,6 +410,8 @@ class Somd(_process.Process):
             self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
             if self._is_seeded:
                 self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+            self.addToConfig("minimise = True")                         # Perform a minimisation.
+            self.addToConfig("equilibrate = True")                      # Perform an equilibration.
                                                                         # The lambda value array.
             self.addToConfig("lambda array = %s" \
                 % ", ".join([str(x) for x in self._protocol.getLambdaValues()]))
