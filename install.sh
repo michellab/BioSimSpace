@@ -215,7 +215,7 @@ rm -r BioSimSpaceUnitTests-master
 # Switch back to original workspace.
 cd "$CURR_DIR" || exit 1
 
-# Add aliases to ~/.biosimspacerc
+# Add aliases and environment variables to ~/.biosimspacerc
 echo "# BioSimSpace aliases." > "$HOME/.biosimspacerc"
 {
     echo "alias bss_python='$SIRE_DIR/bin/python'"
