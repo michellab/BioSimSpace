@@ -319,8 +319,8 @@ class Somd(_process.Process):
             if self._protocol.isRestrained():
                 raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
 
-            # Work out the number of cycles. (100 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+            # Work out the number of cycles. (10000 MD steps per cycle.)
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -331,9 +331,9 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
@@ -353,8 +353,8 @@ class Somd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
-            # Work out the number of cycles. (100 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+            # Work out the number of cycles. (10000 MD steps per cycle.)
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -365,9 +365,9 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
@@ -394,8 +394,8 @@ class Somd(_process.Process):
         # Add configuration variables for a free energy simulation.
         elif type(self._protocol) is _Protocol.FreeEnergy:
 
-            # Work out the number of cycles. (100 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+            # Work out the number of cycles. (10000 MD steps per cycle.)
+            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -406,10 +406,10 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 100")                            # Perform 100 MD moves per cycle.
+            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
             self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 100")    # Save coordinates every 100 steps.
+            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
