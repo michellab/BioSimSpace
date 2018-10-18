@@ -206,18 +206,21 @@ class Somd(_process.Process):
             # Get the corresponding molecule from the Sire system.
             mol = system._sire_system.molecule(mol._sire_molecule.number())
 
-            # Update the molecule with the new residue name.
-            mol = mol.edit().residue(_Sire.Mol.ResIdx(0))     \
-                            .rename(_Sire.Mol.ResName("WAT")) \
-                            .molecule()                       \
-                            .commit()
+            # Only update if necessary, since deleting and readding the
+            # molecule is slow.
+            if mol.residue(_Sire.Mol.ResIdx(0)).name().value() != "WAT":
+                # Update the molecule with the new residue name.
+                mol = mol.edit().residue(_Sire.Mol.ResIdx(0))     \
+                                .rename(_Sire.Mol.ResName("WAT")) \
+                                .molecule()                       \
+                                .commit()
 
-            # Delete the old molecule from the system and add the renamed one
-            # back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
-            system._sire_system.remove(mol.number())
-            system._sire_system.add(mol, _Sire.Mol.MGName("all"))
+                # Delete the old molecule from the system and add the renamed one
+                # back in.
+                # TODO: This is a hack since the "update" method of Sire.System
+                # doesn't work properly at present.
+                system._sire_system.remove(mol.number())
+                system._sire_system.add(mol, _Sire.Mol.MGName("all"))
 
         # Extract the updated Sire system.
         system = system._sire_system
