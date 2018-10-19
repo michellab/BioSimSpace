@@ -24,16 +24,10 @@ Functionality for running solvation free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ..Gateway import ResourceManager as _ResourceManager
-from ..Process import ProcessRunner as _ProcessRunner
-from ..Process import Somd as _Somd
-from ..Protocol import FreeEnergy as _FreeEnergy
+from . import _free_energy
 from .._SireWrappers import System as _System
 
-import os as _os
-import tempfile as _tempfile
-
-class Solvation():
+class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
     def __init__(self, system, protocol=None, work_dir=None):
@@ -56,6 +50,9 @@ class Solvation():
                The working directory for the simulation.
         """
 
+        # Call the base class constructor.
+        super().__init__(protocol, work_dir)
+
         # Validate the input.
 
         if type(system) is not _System:
@@ -76,58 +73,31 @@ class Solvation():
             self._system_vacuum = _System(system._getSireSystem().__deepcopy__())
             self._system_vacuum.removeWaterMolecules()
 
-        if protocol is not None:
-            if type(protocol) is not _FreeEnergy:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
-            else:
-                self._protocol = protocol
-        else:
-            # Use a default protocol.
-            self._protocol = _FreeEnergy()
+        # Initialise the process runner with all of the simulations required
+        # for each leg.
+        self._initialise_runner(self._system_solvated, self._system_vacuum)
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
+    def analyse(self):
+        """Analyse the solvation free energy data.
 
-        # User specified working directory.
-        else:
-            self._work_dir = work_dir
+           Returns
+           -------
 
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+           pmf_free : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+               The potential of mean force (PMF) for the free leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
 
-        # Initalise lists to hold all of the process objects for the free and
-        # vacuum legs.
-        free = []
-        vacuum = []
+           pmf_vacuum : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+               The potential of mean force (PMF) for the vacuum leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
 
-        # Set the directories for the free and vacuum legs.
-        free_dir = "%s/free" % self._work_dir
-        vacuum_dir = "%s/vacuum" % self._work_dir
+           free_energy : ( BioSimSpace.Types.Energy, BioSimSpace.Types.Energy )
+               The solvation free energy difference and its associated error.
+        """
 
-        # Get the lambda values from the protocol.
-        lam_vals = self._protocol.getLambdaValues()
-
-        # Loop over all of the lambda values.
-        for lam in lam_vals:
-            # Update the protocol lambda values.
-            self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
-
-            # Create and append the required processes for each leg.
-            # Nest the working directories inside self._work_dir.
-
-            free.append(_Somd(self._system_solvated, self._protocol,
-                platform="CPU", work_dir="%s/lambda_%s" % (free_dir, lam)))
-
-            vacuum.append(_Somd(self._system_vacuum, self._protocol,
-                platform="CPU", work_dir="%s/lambda_%s" % (vacuum_dir, lam)))
-
-        # Initialise the process runner. All processes have already been nested
-        # inside the working directory of the Solvation object.
-        self._runner = _ProcessRunner(free + vacuum, work_dir=self._work_dir, nest_dirs=False)
-
-    def run(self):
-        """Run the solvation free energy simulation."""
-        self._runner.startAll()
+        # This method is just a wrapper to provide simulation specific doc
+        # strings. We just ball the base class method, which is aware of
+        # the simulation type.
+        return super().analyse()
