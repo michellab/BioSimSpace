@@ -77,7 +77,7 @@ if _has_matplotlib:
     _plt.rc('legend', fontsize=_SMALL_SIZE)    # legend fontsize
     _plt.rc('figure', titlesize=_BIGGER_SIZE)  # fontsize of the figure title
 
-def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
+def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=False, logy=False):
     """A simple function to create x/y plots with matplotlib.
 
        Keyword arguments
@@ -88,6 +88,12 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
 
        y : list
            A list of y data values.
+
+       xerr: list
+           A list of error values for the x data.
+
+       yerr: list
+           A list of error values for the y data.
 
        xlabel : str
            The x axis label string.
@@ -118,6 +124,10 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
         x = list(x)
     if type(y) is tuple:
         y = list(y)
+    if type(xerr) is tuple:
+        xerr = list(xerr)
+    if type(yerr) is tuple:
+        yerr = list(yerr)
 
     # Whether we need to convert the x and y data to floats.
     is_unit_x = False
@@ -147,6 +157,20 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
         if not all(isinstance(xx, _type) for xx in x):
             raise TypeError("All 'x' data values must be of same type")
 
+        # Convert int to float.
+        if _type is int:
+            x = [float(xx) for xx in x]
+            _type = float
+
+        # Make sure any associated error has the same unit.
+        if xerr is not None:
+            if not all(isinstance(x, _type) for x in xerr):
+                raise TypeError("All 'xerr' values must be of same type as x data")
+
+            # Convert int to float.
+            if _type is int:
+                xerr = [float(x) for x in xerr]
+
         # Does this type have units?
         if isinstance(x[0], _Type.Type):
             is_unit_x = True
@@ -160,6 +184,20 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
         _type = type(y[0])
         if not all(isinstance(yy, _type) for yy in y):
             raise TypeError("All 'y' data values must be of same type")
+
+        # Convert int to float.
+        if _type is int:
+            y = [float(yy) for yy in y]
+            _type = float
+
+        # Make sure any associated error has the same unit.
+        if yerr is not None:
+            if not all(isinstance(y, _type) for y in yerr):
+                raise TypeError("All 'yerr' values must be of same type as y data")
+
+            # Convert int to float.
+            if _type is int:
+                yerr = [float(y) for y in yerr]
 
         # Does this type have units?
         if isinstance(y[0], _Type.Type):
@@ -179,6 +217,11 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
         else:
             x = x[:len_y]
 
+        if xerr is not None:
+            xerr = xerr[:len(x)]
+        if yerr is not None:
+            yerr = yerr[:len(y)]
+
     if xlabel is not None:
         if type(xlabel) is not str:
             raise TypeError("'xlabel' must be of type 'str'")
@@ -196,14 +239,27 @@ def plot(x=None, y=None, xlabel=None, ylabel=None, logx=False, logy=False):
     # Convert the x and y values to floats.
     if is_unit_x:
         x = [x.magnitude() for x in x]
+        if xerr is not None:
+            xerr = [x.magnitude() for x in xerr]
     if is_unit_y:
         y = [y.magnitude() for y in y]
+        if yerr is not None:
+            yerr = [y.magnitude() for y in yerr]
 
     # Set the figure size.
     _plt.figure(figsize=(8, 6))
 
     # Create the plot.
-    _plt.plot(x, y, "-bo")
+    if xerr is None and yerr is None:
+        _plt.plot(x, y, "-bo")
+    else:
+        if xerr is None:
+            _plt.errorbar(x, y, yerr=yerr, fmt="-bo")
+        else:
+            if yerr is None:
+                _plt.errorbar(x, y, xerr=xerr, fmt="-bo")
+            else:
+                _plt.errorbar(x, y, xerr=xerr, yerr=yerr, fmt="-bo")
 
     # Add axis labels.
     if xlabel is not None:
