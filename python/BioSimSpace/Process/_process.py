@@ -35,6 +35,7 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 
 import collections as _collections
+import glob as _glob
 import operator as _operator
 import os as _os
 import pygtail as _pygtail
