@@ -98,6 +98,6 @@ class Solvation(_free_energy.FreeEnergy):
         """
 
         # This method is just a wrapper to provide simulation specific doc
-        # strings. We just ball the base class method, which is aware of
+        # strings. We just call the base class method, which is aware of
         # the simulation type.
         return super().analyse()
