@@ -24,6 +24,7 @@ Functionality for solvating molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Base as _SireBase
 import Sire.Mol as _SireMol
 
 from BioSimSpace import _gmx_exe, _gromacs_path
@@ -497,6 +498,12 @@ def _solvate(molecule, box, shell, model, num_point,
        shell : BioSimSpace.Types.Length
            Thickness of the water shell around the solute.
 
+       model : str
+           The name of the water model.
+
+       num_point : int
+           The number of atoms in the water model.
+
        ion_conc : float
            The ion concentration in (mol per litre).
 
@@ -875,7 +882,7 @@ def _solvate(molecule, box, shell, model, num_point,
             else:
                 system = molecule + water_ions.getMolecules()
 
-            # Add all of the water box properties to the new system.
+            # Add all of the water molecules' properties to the new system.
             for prop in water_ions._sire_system.propertyKeys():
                 if prop in property_map:
                     prop = property_map[prop]
@@ -884,6 +891,9 @@ def _solvate(molecule, box, shell, model, num_point,
                 system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
         else:
             system = water_ions
+
+    # Store the name of the water model as a system property.
+    system._sire_system.setProperty("water_model", _SireBase.wrap(model))
 
     # Change back to the original directory.
     _os.chdir(dir)
