@@ -24,6 +24,8 @@ Functionality for solvating molecular systems.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import Sire.Mol as _SireMol
+
 from BioSimSpace import _gmx_exe, _gromacs_path
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -382,8 +384,14 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
            The validated input arguments.
     """
 
+    # Validate the molecule and create a local copy called _molecule to ensure
+    # that the passed molecule is preserved.
     if molecule is not None:
-        if type(molecule) is not _Molecule and type(molecule) is not _System:
+        if type(molecule) is _Molecule:
+            _molecule = _Molecule(molecule)
+        elif type(molecule) is _System:
+            _molecule = _System(molecule)
+        else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
                             "or 'BioSimSpace._SireWrappers.System'")
 
@@ -394,7 +402,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
                     prop = property_map["space"]
                 else:
                     prop = "space"
-                box = system.property(prop).dimensions()
+                box = molecule.property(prop).dimensions()
                 # Convert to a list of Length objects.
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
@@ -404,6 +412,8 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
             if box is None:
                 raise ValueError("Missing 'box' keyword argument!")
     else:
+        _molecule = None
+
         if box is None:
             raise ValueError("Missing 'box' keyword argument!")
 
@@ -432,19 +442,30 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     # If the molecule is merged, make sure the user has remapped the coordinates
     # property.
     if molecule is not None:
-        if (type(molecule) is _System and molecule.nPerturbableMolecules() > 0) or \
-            molecule.isMerged():
-                # No mapping is present. Default to solvating using the coordinates
-                # at lambda = 0.
-                if not "coordinates" in property_map:
+        # Check that the molecule is perturbable.
+        if type(molecule) is _System:
+            if molecule.nPerturbableMolecules() > 0:
+                is_perturbable = True
+            else:
+                is_perturbable = False
+        elif molecule.isMerged():
+            is_perturbable = True
+        else:
+            is_perturbable = False
+
+        # If necessary, remap the coordinates property.
+        if is_perturbable:
+            # No mapping is present. Default to solvating using the coordinates
+            # at lambda = 0.
+            if not "coordinates" in property_map:
+                property_map["coordinates"] = "coordinates0"
+            # The mapping is wrong, again use lambda = 0 default.
+            else:
+                if property_map["coordinates"] != "coordinates0" and \
+                   property_map["coordinates"] != "coordinates1":
+                    _warnings.warn("Incorrect coordinate mapping for merged molecule. "
+                                   "Using coordinates from lambda = 0.")
                     property_map["coordinates"] = "coordinates0"
-                # The mapping is wrong, again use lambda = 0 default.
-                else:
-                    if property_map["coordinates"] != "coordinates0" and \
-                    property_map["coordinates"] != "coordinates1":
-                        _warnings.warn("Incorrect coordinate mapping for merged molecule. "
-                                       "Using coordinates from lambda = 0.")
-                        property_map["coordinates"] = "coordinates0"
 
     if type(ion_conc) is not float and type(ion_conc) is not int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
@@ -458,7 +479,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     if molecule is not None and not _check_box_size(molecule, box, property_map):
         raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
-    return (molecule, box, shell, work_dir, property_map)
+    return (_molecule, box, shell, work_dir, property_map)
 
 def _solvate(molecule, box, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, property_map={}):
@@ -508,6 +529,33 @@ def _solvate(molecule, box, shell, model, num_point,
         # Translate the molecule. This allows us to create a water box
         # around the molecule.
         molecule.translate(vec, property_map)
+
+        if type(molecule) is _System:
+
+            # Create a copy of the system.
+            system = molecule._getSireSystem()
+
+            # Extract all of the water molecules.
+            waters = molecule.getWaterMolecules()
+
+            # Loop over all of the water molecules and update the residue and
+            # atom names to match the expected GROMACS water topology.
+            for mol in waters:
+                # Get the corresponding molecule from the Sire system.
+                mol = system.molecule(mol._sire_molecule.number())
+
+                # Update the names.
+                mol = _rename_water_molecule(mol)
+
+                # Delete the old molecule from the system and add the renamed one
+                # back in.
+                # TODO: This is a hack since the "update" method of Sire.System
+                # doesn't work properly at present.
+                system.remove(mol.number())
+                system.add(mol, _SireMol.MGName("all"))
+
+            # Recreate the "molecule" from the updated system.
+            molecule = _System(system)
 
     # Store the current working directory.
     dir = _os.getcwd()
@@ -639,7 +687,13 @@ def _solvate(molecule, box, shell, model, num_point,
         water.translate(vec)
 
         if type(molecule) is _System:
-            system = _System(molecule + water.getMolecules())
+            # Extract the non-water molecules from the original system.
+            non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+
+            # Create a system by adding these to the water molecules from
+            # gmx solvate, which will include the original waters.
+            system = _System(non_waters + water.getMolecules())
+
         else:
             system = molecule + water.getMolecules()
 
@@ -811,7 +865,13 @@ def _solvate(molecule, box, shell, model, num_point,
         if molecule is not None:
 
             if type(molecule) is _System:
-                system = _System(molecule + water_ions.getMolecules())
+                # Extract the non-water molecules from the original system.
+                non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+
+                # Create a system by adding these to the water and ion
+                # molecules from gmx solvate, which will include the
+                # original waters.
+                system = _System(non_waters + water_ions.getMolecules())
             else:
                 system = molecule + water_ions.getMolecules()
 
@@ -866,6 +926,85 @@ def _check_box_size(molecule, box, property_map={}):
 
     # We made it this far, all dimensions are large enough.
     return True
+
+def _rename_water_molecule(molecule):
+    """Internal function to rename residues/atoms in a water molecule to match
+       the naming conventions used by GROMACS.
+
+       Positional arguments
+       --------------------
+
+       molecule : Sire.Mol.Molecule
+           A Sire Molecule object.
+
+
+       Returns
+       -------
+
+       molecule : Sire.Mol.Molecule
+           The updated Sire Molecule object.
+    """
+
+    # Make the molecule editable.
+    molecule = molecule.edit()
+
+    # In GROMACS, all water molecules must be given the residue label "SOL".
+    # We extract all of the waters from the system and relabel the
+    # residues as appropriate.
+    #
+    # We need to work out what to do if existing water molecules don't contain
+    # all of the required atoms, e.g. if we have crystal water oxygen sites
+    # from a PDB file, or if the system is to be solvated with a 4- or 5-point
+    # water model (where we need to add virtual sites).
+
+    # Update the molecule with the new residue name.
+    molecule = molecule.residue(_SireMol.ResIdx(0))     \
+                       .rename(_SireMol.ResName("SOL")) \
+                       .molecule()
+
+    # Index for the hydrogen atoms.
+    hydrogen_idx = 1
+
+    # Gromacs water models use HW1/HW2 for hydrogen atoms at OW for water.
+    for atom in molecule.atoms():
+        try:
+            # Hydrogen.
+            if atom.property("element") == _SireMol.Element("H"):
+                molecule = molecule.atom(atom.number())                              \
+                                   .rename(_SireMol.AtomName("HW%d" % hydrogen_idx)) \
+                                   .molecule()
+                hydrogen_idx += 1
+            # Oxygen.
+            elif atom.property("element") == _SireMol.Element("O"):
+                molecule = molecule.atom(atom.number())             \
+                                   .rename(_SireMol.AtomName("OW")) \
+                                   .molecule()
+
+        # Otherwise, try to infer the element from the atom name.
+        except:
+            # Strip all digits from the name.
+            name = "".join([x for x in atom.name().value() if not x.isdigit()])
+
+            # Remove any whitespace.
+            name = name.replace(" ", "")
+
+            # Try to infer the element.
+            element = _SireMol.Element.biologicalElement(name)
+
+            # Hydrogen.
+            if element == _SireMol.Element("H"):
+                molecule = molecule.atom(atom.number())                              \
+                                   .rename(_SireMol.AtomName("HW%d" % hydrogen_idx)) \
+                                   .molecule()
+                hydrogen_idx += 1
+            # Oxygen.
+            elif element == _SireMol.Element("O"):
+                molecule = molecule.atom(atom.number())             \
+                                   .rename(_SireMol.AtomName("OW")) \
+                                   .molecule()
+
+    # Commit and return the updated molecule.
+    return molecule.commit()
 
 # Create a list of the water models names.
 # This needs to come after all of the solvation functions.
