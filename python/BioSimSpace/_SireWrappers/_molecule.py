@@ -229,6 +229,7 @@ class Molecule():
     def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
+
            Keyword arguments
            -----------------
 
@@ -303,8 +304,21 @@ class Molecule():
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        # Perform the translation.
-        self._sire_molecule = self._sire_molecule.move().translate(_SireMaths.Vector(vec), property_map).commit()
+        # Make a local copy of the property map.
+        _property_map = property_map.copy()
+
+        try:
+            if "coordinates" not in property_map and self._is_merged:
+                _property_map["coordinates"] = "coordinates0"
+
+            # Perform the translation.
+            self._sire_molecule = self._sire_molecule                                   \
+                                      .move()                                           \
+                                      .translate(_SireMaths.Vector(vec), _property_map) \
+                                      .commit()
+
+        except UserWarning:
+            raise UserWarning("Molecule has no coordinate property.") from None
 
     def toSystem(self):
         """Convert a single Molecule to a System."""
@@ -543,6 +557,7 @@ class Molecule():
     def _fixCharge(self, property_map={}):
         """Make the molecular charge an integer value.
 
+
            Keyword arguments
            -----------------
 
@@ -606,6 +621,7 @@ class Molecule():
 
     def _toPertFile(self, filename="MORPH.pert", property_map={}):
         """Write the merged molecule to a perturbation file.
+
 
            Keyword arguments
            -----------------
@@ -2226,7 +2242,10 @@ class Molecule():
             if "coordinates" in property_map:
                 prop = property_map["coordinates"]
             else:
-                prop = "coordinates"
+                if self._is_merged:
+                    prop = "coordinates0"
+                else:
+                    prop = "coordinates"
             coord.extend(self._sire_molecule.property(prop).toVector())
 
         except UserWarning:

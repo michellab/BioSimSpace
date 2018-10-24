@@ -164,6 +164,7 @@ class System():
     def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
+
            Keyword arguments
            -----------------
 
@@ -202,6 +203,7 @@ class System():
 
     def fileFormat(self, property_map={}):
         """Return the file formats associated with the system.
+
 
            Keyword arguments
            -----------------
@@ -308,7 +310,7 @@ class System():
         for mol in waters:
             self._sire_system.remove(mol._sire_molecule.number())
 
-    def udpateMolecules(self, molecules):
+    def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
 
 
@@ -340,7 +342,7 @@ class System():
         # TODO: Currently the Sire.System.update method doesn't work correctly
         # for certain changes to the Molecule molInfo object. As such, we remove
         # the old molecule from the system, then add the new one in.
-        for mol in molecule:
+        for mol in molecules:
             self._sire_system.remove(mol._sire_molecule.number())
             self._sire_system.add(mol._sire_molecule, _SireMol.MGName("all"))
 
@@ -349,6 +351,7 @@ class System():
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
+
 
            Keyword arguments
            -----------------
@@ -557,6 +560,7 @@ class System():
            vector : list, tuple
                The translation vector (in Angstroms).
 
+
            Keyword arguments
            -----------------
 
@@ -590,10 +594,15 @@ class System():
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
+        # Get all of the molecules in the system.
+        mols = self.getMolecules()
+
         # Translate each of the molecules in the system.
-        for n in self._sire_system.molNums():
-            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec), property_map).commit()
-            self._sire_system.update(mol)
+        for mol in mols:
+            mol.translate(vector, property_map)
+
+        # Update the molecules in the original system.
+        self.updateMolecules(mols)
 
     def _getSireSystem(self):
         """Return the full Sire System object."""
@@ -601,6 +610,7 @@ class System():
 
     def _getBoxSize(self, property_map={}):
         """Get the size of the periodic box.
+
 
            Keyword arguments
            -----------------
@@ -635,6 +645,7 @@ class System():
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
+
            Keyword arguments
            -----------------
 
@@ -654,16 +665,22 @@ class System():
         # Initialise the coordinates vector.
         coord = []
 
+        # Get all of the molecules in the system.
+        mols = self.getMolecules()
+
         # Loop over all of the molecules.
-        for n in self._sire_system.molNums():
+        for mol in mols:
 
             # Extract the atomic coordinates and append them to the vector.
             try:
                 if "coordinates" in property_map:
                     prop = property_map["coordinates"]
                 else:
-                    prop = "coordinates"
-                coord.extend(self._sire_system[n].property(prop).toVector())
+                    if mol.isMerged():
+                        prop = "coordinates0"
+                    else:
+                        prop = "coordinates"
+                coord.extend(mol._sire_molecule.property(prop).toVector())
 
             except UserWarning:
                 raise UserWarning("Molecule %s has no coordinate property.") from None
