@@ -49,6 +49,7 @@ def matchAtoms(molecule0,
        that, depending on the scoring function the "best" score may have the
        lowest value.)
 
+
        Positional arguments
        --------------------
 
@@ -228,6 +229,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        translation vector (as opposed to merely taking the difference of
        centroids).
 
+
        Positional arguments
        --------------------
 
@@ -367,6 +369,7 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
        to computing the RMSD. The function returns the mappings sorted based
        on their score from best to worst, along with a list containing the
        scores for each mapping.
+
 
        Positional arguments
        --------------------

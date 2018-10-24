@@ -33,6 +33,7 @@ class Solvation(_free_energy.FreeEnergy):
     def __init__(self, system, protocol=None, work_dir=None):
         """Constructor.
 
+
            Positional arguments
            --------------------
 

@@ -135,6 +135,7 @@ class FreeEnergy(_Protocol):
     def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
         """Set the list of lambda values.
 
+
            Positional arguments
            --------------------
 
@@ -263,6 +264,7 @@ class FreeEnergy(_Protocol):
     def setTimeStep(self, timestep):
         """Set the time step.
 
+
            Positional arguments
            --------------------
 
@@ -287,6 +289,7 @@ class FreeEnergy(_Protocol):
 
     def setRunTime(self, runtime):
         """Set the running time.
+
 
            Positional arguments
            --------------------
@@ -313,6 +316,7 @@ class FreeEnergy(_Protocol):
     def setTemperature(self, temperature):
         """Set the temperature.
 
+
            Positional arguments
            --------------------
 
@@ -337,6 +341,7 @@ class FreeEnergy(_Protocol):
 
     def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble.
+
 
            Positional arguments
            --------------------

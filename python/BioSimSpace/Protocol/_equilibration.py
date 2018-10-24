@@ -135,6 +135,7 @@ class Equilibration(_Protocol):
     def setTimeStep(self, timestep):
         """Set the time step.
 
+
            Positional arguments
            --------------------
 
@@ -160,6 +161,7 @@ class Equilibration(_Protocol):
     def setRunTime(self, runtime):
         """Set the running time.
 
+
            Positional arguments
            --------------------
 
@@ -184,6 +186,7 @@ class Equilibration(_Protocol):
 
     def setStartTemperature(self, temperature):
         """Set the starting temperature.
+
 
            Positional arguments
            --------------------
@@ -213,6 +216,7 @@ class Equilibration(_Protocol):
     def setEndTemperature(self, temperature):
         """Set the final temperature.
 
+
            Positional arguments
            --------------------
 
@@ -239,6 +243,7 @@ class Equilibration(_Protocol):
 
     def setFrames(self, frames):
         """Set the number of frames.
+
 
            Positional arguments
            --------------------
@@ -268,6 +273,7 @@ class Equilibration(_Protocol):
 
     def setRestraint(self, restrain_backbone):
         """Set the backbone restraint.
+
 
            Positional arguments
            --------------------

@@ -98,6 +98,7 @@ class Node():
     def __init__(self, description, name=None):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -184,6 +185,7 @@ class Node():
     def addInput(self, name, input):
         """Add an input requirement.
 
+
            Positional arguments
            --------------------
 
@@ -226,6 +228,7 @@ class Node():
 
     def _addInputCommandLine(self, name, input):
         """Add an input requirement for the command-line.
+
 
            Positional arguments
            --------------------
@@ -288,6 +291,7 @@ class Node():
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
 
+
            Positional arguments
            --------------------
 
@@ -301,6 +305,7 @@ class Node():
 
     def _addInputJupyter(self, name, input, reset=False):
         """Add an input requirement for Jupyter.
+
 
            Positional arguments
            --------------------
@@ -692,6 +697,7 @@ class Node():
     def addOutput(self, name, output):
         """Add an output requirement.
 
+
            Positional arguments
            --------------------
 
@@ -718,6 +724,7 @@ class Node():
     def setOutput(self, name, value):
         """Set the value of an output.
 
+
            Positional arguments
            --------------------
 
@@ -734,6 +741,7 @@ class Node():
 
     def getInput(self, name):
         """Get the value of the named input.
+
 
            Positional arguments
            --------------------
@@ -781,6 +789,7 @@ class Node():
 
     def addError(self, error):
         """Add an error message.
+
 
            Positional arguments
            --------------------
@@ -842,6 +851,7 @@ class Node():
 
     def setLicense(self, license):
         """Set the license for the node.
+
 
            Positional arguments
            --------------------
@@ -1053,6 +1063,7 @@ class Node():
 
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
+
 
            Positional arguments
            --------------------

@@ -57,6 +57,7 @@ class _Watcher:
     def __init__(self, proc):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -90,6 +91,7 @@ class _Handler(_PatternMatchingEventHandler):
     def __init__(self, proc):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -100,6 +102,7 @@ class _Handler(_PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified.
+
 
            Positional arguments
            --------------------
@@ -135,6 +138,7 @@ class Amber(_process.Process):
     def __init__(self, system, protocol, exe=None, name="amber",
             work_dir=None, seed=None, property_map={}):
         """Constructor.
+
 
            Positional arguments
            --------------------
@@ -582,6 +586,7 @@ class Amber(_process.Process):
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
+
            Positional arguments
            --------------------
 
@@ -619,6 +624,7 @@ class Amber(_process.Process):
 
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
+
 
            Positional arguments
            --------------------
@@ -1607,6 +1613,7 @@ class Amber(_process.Process):
 
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
+
 
            Positional arguments
            --------------------

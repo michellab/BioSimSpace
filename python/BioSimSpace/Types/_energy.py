@@ -49,6 +49,7 @@ class Energy(_Type):
     def __init__(self, *args):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -93,6 +94,7 @@ class Energy(_Type):
 
     def _convert_to(self, unit):
         """Return the energy in a different unit.
+
 
            Positional arguments:
 

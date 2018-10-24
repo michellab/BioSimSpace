@@ -33,6 +33,7 @@ class Type():
     def __init__(self, *args):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -286,6 +287,7 @@ class Type():
 
     def _from_string(self, string):
         """Convert a string to an object of the same type.
+
 
            Positional arguments:
 

@@ -51,6 +51,7 @@ class Gromacs(_process.Process):
             work_dir=None, seed=None, property_map={}):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -228,6 +229,7 @@ class Gromacs(_process.Process):
     def addToConfig(self, config):
         """Add a string to the configuration list.
 
+
            Positional arguments
            --------------------
 
@@ -251,6 +253,7 @@ class Gromacs(_process.Process):
 
     def setConfig(self, config):
         """Set the list of configuration file strings.
+
 
            Positional arguments
            --------------------
@@ -368,6 +371,7 @@ class Gromacs(_process.Process):
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
+
            Positional arguments
            --------------------
 
@@ -406,6 +410,7 @@ class Gromacs(_process.Process):
 
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
+
 
            Positional arguments
            --------------------
@@ -1456,6 +1461,7 @@ class Gromacs(_process.Process):
 
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
+
 
            Positional arguments
            --------------------

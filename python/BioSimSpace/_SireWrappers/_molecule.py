@@ -52,6 +52,7 @@ class Molecule():
     def __init__(self, molecule):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -262,6 +263,7 @@ class Molecule():
     def translate(self, vector, property_map={}):
         """Translate the molecule.
 
+
            Positional arguments
            --------------------
 
@@ -316,6 +318,7 @@ class Molecule():
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
+
 
            Positional arguments
            --------------------
@@ -589,6 +592,7 @@ class Molecule():
 
     def _fromPertFile(self, filename):
         """Create a merged molecule from a perturbation file.
+
 
            Positional arguments
            --------------------
@@ -1255,6 +1259,7 @@ class Molecule():
 
     def _merge(self, other, mapping, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
+
 
            Positional arguments
            --------------------

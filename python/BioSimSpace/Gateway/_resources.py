@@ -80,6 +80,7 @@ class ResourceManager():
     def setNodes(self, nodes):
         """Set the number of nodes.
 
+
            Positional arguments
            --------------------
 
@@ -109,6 +110,7 @@ class ResourceManager():
     def setCores(self, cores):
         """Set the number of cores.
 
+
            Positional arguments
            --------------------
 
@@ -137,6 +139,7 @@ class ResourceManager():
 
     def setGPUs(self, gpus):
         """Set the number of GPUs.
+
 
            Positional arguments
            --------------------

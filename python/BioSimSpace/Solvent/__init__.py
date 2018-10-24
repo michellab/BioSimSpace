@@ -50,6 +50,7 @@ def solvate(model, molecule=None, box=None, shell=None,
         ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
+
        Positional arguments
        --------------------
 
@@ -351,6 +352,7 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
 def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map):
     """Internal function to validate function arguments.
 
+
        Positional arguments
        --------------------
 
@@ -485,6 +487,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
 def _solvate(molecule, box, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, property_map={}):
     """Internal function to add solvent using 'gmx solvate'.
+
 
        Positional arguments
        --------------------
@@ -903,6 +906,7 @@ def _solvate(molecule, box, shell, model, num_point,
 def _check_box_size(molecule, box, property_map={}):
     """Internal function to check that box is big enough for the molecule.
 
+
        Positional arguments
        --------------------
 
@@ -940,6 +944,7 @@ def _check_box_size(molecule, box, property_map={}):
 def _rename_water_molecule(molecule):
     """Internal function to rename residues/atoms in a water molecule to match
        the naming conventions used by GROMACS.
+
 
        Positional arguments
        --------------------

@@ -56,6 +56,7 @@ class Somd(_process.Process):
             platform="CPU", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
+
            Positional arguments
            --------------------
 

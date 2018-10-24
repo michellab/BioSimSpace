@@ -60,6 +60,7 @@ class Custom(_Protocol):
     def setConfig(self, config):
         """Set the custom configuration.
         
+
            Positional arguments
            --------------------
 

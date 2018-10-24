@@ -63,6 +63,7 @@ class Time(_Type):
     def __init__(self, *args):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -143,6 +144,7 @@ class Time(_Type):
 
     def _convert_to(self, unit):
         """Return the time in a different unit.
+
 
            Positional arguments:
 

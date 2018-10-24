@@ -49,6 +49,7 @@ class Temperature(_Type):
     def __init__(self, *args):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -249,6 +250,7 @@ class Temperature(_Type):
 
     def _convert_to(self, unit):
         """Return the temperature in a different unit.
+
 
            Positional arguments:
 

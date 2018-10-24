@@ -46,6 +46,7 @@ class Charge(_Type):
     def __init__(self, *args):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -86,6 +87,7 @@ class Charge(_Type):
 
     def _convert_to(self, unit):
         """Return the charge in a different unit.
+
 
            Positional arguments:
 

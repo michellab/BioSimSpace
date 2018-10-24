@@ -47,6 +47,7 @@ class System():
     def __init__(self, system):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -231,6 +232,7 @@ class System():
     def addMolecules(self, molecules):
         """Add a molecule, or list of molecules to the system.
 
+
            Positional arguments
            --------------------
 
@@ -266,6 +268,7 @@ class System():
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
+
 
            Positional arguments
            --------------------
@@ -307,6 +310,7 @@ class System():
 
     def udpateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
+
 
            Positional arguments
            --------------------
@@ -524,6 +528,7 @@ class System():
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
 
+
            Positional arguments
            --------------------
 
@@ -544,6 +549,7 @@ class System():
 
     def translate(self, vector, property_map={}):
         """Translate the system.
+
 
            Positional arguments
            --------------------
@@ -669,6 +675,7 @@ class System():
         """Helper function to renumber the molecules to be consistent with the
            system.
 
+
            Positional arguments
            --------------------
 
@@ -745,6 +752,7 @@ class System():
     @staticmethod
     def _createSireSystem(molecules):
         """Create a Sire system from a list of molecules.
+
 
            Positional arguments
            --------------------

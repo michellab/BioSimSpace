@@ -82,6 +82,7 @@ class Protocol():
     def __init__(self, forcefield, property_map={}):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -121,6 +122,7 @@ class Protocol():
 
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
+
 
            Positional arguments
            --------------------
@@ -219,6 +221,7 @@ class Protocol():
     def _run_tleap(self, molecule):
         """Run using tLEaP.
 
+
            Positional arguments
            --------------------
 
@@ -278,6 +281,7 @@ class Protocol():
     def _run_pdb2gmx(self, molecule):
         """Run using pdb2gmx.
 
+
            Positional arguments
            --------------------
 
@@ -336,6 +340,7 @@ class Protocol():
 
 def _find_force_field(forcefield):
     """Internal function to search LEaP compatible force field files.
+
 
        Positional arguments
        --------------------

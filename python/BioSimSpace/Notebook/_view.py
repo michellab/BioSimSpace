@@ -45,6 +45,7 @@ class View():
     def __init__(self, handle):
         """Constructor.
 
+
            Positional arguments
            --------------------
 
@@ -259,6 +260,7 @@ class View():
 
     def savePDB(self, file, index=None):
         """Save a specific view as a PDB file.
+
 
            Positional arguments
            --------------------

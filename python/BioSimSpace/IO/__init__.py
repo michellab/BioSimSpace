@@ -88,6 +88,7 @@ def fileFormats():
 def formatInfo(format):
     """Return information for the specified file format.
 
+
        Positional arguments
        --------------------
 
@@ -110,6 +111,7 @@ def formatInfo(format):
 
 def readPDB(id, property_map={}):
     """Read a molecular system from a PDB ID in the RSCB PDB website.
+
 
        Positional arguments
        --------------------
@@ -161,6 +163,7 @@ def readPDB(id, property_map={}):
 
 def readMolecules(files, property_map={}):
     """Read a molecular system from file.
+
 
        Positional arguments
        --------------------
@@ -226,6 +229,7 @@ def readMolecules(files, property_map={}):
 
 def saveMolecules(filebase, system, fileformat, property_map={}):
     """Save a molecular system to file.
+
 
        Positional arguments
        --------------------

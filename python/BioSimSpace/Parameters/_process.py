@@ -61,6 +61,7 @@ def _wrap_protocol(protocol_function, process):
     """A simple decorator function to wrap the running of parameterisation
        protocols and catch exceptions.
 
+
        Positional arguments
        --------------------
 
@@ -89,6 +90,7 @@ class Process():
 
     def __init__(self, molecule, protocol, work_dir=None, autostart=False):
         """Constructor
+
 
            Positional arguments
            --------------------
