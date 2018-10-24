@@ -594,15 +594,10 @@ class System():
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        # Get all of the molecules in the system.
-        mols = self.getMolecules()
-
         # Translate each of the molecules in the system.
-        for mol in mols:
-            mol.translate(vector, property_map)
-
-        # Update the molecules in the original system.
-        self.updateMolecules(mols)
+        for n in self._sire_system.molNums():
+            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec)).commit()
+            self._sire_system.update(mol)
 
     def _getSireSystem(self):
         """Return the full Sire System object."""
