@@ -442,34 +442,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     if work_dir is not None and type(work_dir) is not str:
         raise TypeError("'work_dir' must be of type 'str'")
 
-    # If the molecule is merged, make sure the user has remapped the coordinates
-    # property.
-    if molecule is not None:
-        # Check that the molecule is perturbable.
-        if type(molecule) is _System:
-            if molecule.nPerturbableMolecules() > 0:
-                is_perturbable = True
-            else:
-                is_perturbable = False
-        elif molecule.isMerged():
-            is_perturbable = True
-        else:
-            is_perturbable = False
-
-        # If necessary, remap the coordinates property.
-        if is_perturbable:
-            # No mapping is present. Default to solvating using the coordinates
-            # at lambda = 0.
-            if not "coordinates" in property_map:
-                property_map["coordinates"] = "coordinates0"
-            # The mapping is wrong, again use lambda = 0 default.
-            else:
-                if property_map["coordinates"] != "coordinates0" and \
-                   property_map["coordinates"] != "coordinates1":
-                    _warnings.warn("Incorrect coordinate mapping for merged molecule. "
-                                   "Using coordinates from lambda = 0.")
-                    property_map["coordinates"] = "coordinates0"
-
+    # Check that the ion concentration is valid.
     if type(ion_conc) is not float and type(ion_conc) is not int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
     elif ion_conc < 0:
