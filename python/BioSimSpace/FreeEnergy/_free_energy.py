@@ -261,10 +261,10 @@ class FreeEnergy():
             # Create and append the required processes for each leg.
             # Nest the working directories inside self._work_dir.
 
-            leg0.append(_Somd(self._system_solvated, self._protocol,
+            leg0.append(_Somd(system0, self._protocol,
                 platform="CPU", work_dir="%s/lambda_%s" % (self._dir0, lam)))
 
-            leg1.append(_Somd(self._system_vacuum, self._protocol,
+            leg1.append(_Somd(system1, self._protocol,
                 platform="CPU", work_dir="%s/lambda_%s" % (self._dir1, lam)))
 
         # Initialise the process runner. All processes have already been nested

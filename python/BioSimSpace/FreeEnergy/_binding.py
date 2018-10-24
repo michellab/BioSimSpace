@@ -23,3 +23,113 @@
 Functionality for running binding free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+from . import _free_energy
+from .._SireWrappers import System as _System
+
+import BioSimSpace.Solvent as _Solvent
+import BioSimSpace.Units as _Units
+
+class Binding(_free_energy.FreeEnergy):
+    """A class for configuring and running binding free energy simulations."""
+
+    def __init__(self, system, protocol=None, work_dir=None, property_map={}):
+        """Constructor.
+
+           Positional arguments
+           --------------------
+
+           system : BioSimSpace._SireWrappers.System
+               The molecular system.
+
+
+           Keyword arguments
+           -----------------
+
+           protocol : BioSimSpace.Protocol.FreeEnergy
+               The simulation protocol.
+
+           work_dir : str
+               The working directory for the simulation.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Call the base class constructor.
+        super().__init__(protocol, work_dir)
+
+        # Validate the input.
+
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+        else:
+            # Store a copy of the bound system. (Used for the first leg.)
+            self._system0 = _System(system._getSireSystem().__deepcopy__())
+
+            # The system must have a single perturbable molecule.
+            if system.nPerturbableMolecules() != 1:
+                raise ValueError("The system must contain a single perturbable molecule!")
+
+            # The system must be solvated.
+            if system.nWaterMolecules() == 0:
+                raise ValueError("The system must be solvated!")
+
+            # There must be at least one additional molecule in the system.
+            if system.nMolecules() == (system.nWaterMolecules() + system.nPerturbableMolecules()):
+                raise ValueError("The system does not contain a protein molecule!")
+
+            # Extract the perturbable molecule.
+            molecule = system.getPerturbableMolecules()[0]
+
+            # Get the box size of the original system.
+            try:
+                if "space" in property_map:
+                    prop = property_map["space"]
+                else:
+                    prop = "space"
+                box = list(system._sire_system.property(prop).dimensions().toVector())
+                box = [_Units.Length.angstrom * x for x in box_size]
+            except:
+                raise ValueError("The solvated protein-ligand system has no box information!")
+
+            # Get the water model.
+            try:
+                water_model = system._sire_system.property("water_model").toString()
+            except:
+                raise ValueError("Canot deduce water model of solvated protein-ligand system!")
+
+            # Solvate the perturbable molecule using the same water model as
+            # the original system. (This is used for the second leg.)
+            self._system1 = _Solvent.solvate(molecule=molecule, box=box)
+
+        # Initialise the process runner with all of the simulations required
+        # for each leg.
+        self._initialise_runner(self._system0, self._system1)
+
+    def analyse(self):
+        """Analyse the solvation free energy data.
+
+           Returns
+           -------
+
+           pmf_free : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+               The potential of mean force (PMF) for the free leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           pmf_vacuum : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+               The potential of mean force (PMF) for the vacuum leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           free_energy : ( BioSimSpace.Types.Energy, BioSimSpace.Types.Energy )
+               The solvation free energy difference and its associated error.
+        """
+
+        # This method is just a wrapper to provide simulation specific doc
+        # strings. We just call the base class method, which is aware of
+        # the simulation type.
+        return super().analyse()
