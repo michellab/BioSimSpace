@@ -318,7 +318,7 @@ class Molecule():
                                       .commit()
 
         except UserWarning:
-            raise UserWarning("Molecule has no coordinate property.") from None
+            raise UserWarning("Molecule has no 'coordinates' property.") from None
 
     def toSystem(self):
         """Convert a single Molecule to a System."""
@@ -2249,7 +2249,7 @@ class Molecule():
             coord.extend(self._sire_molecule.property(prop).toVector())
 
         except UserWarning:
-            raise UserWarning("Molecule has no coordinate property.") from None
+            raise UserWarning("Molecule has no 'coordinates' property.") from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)

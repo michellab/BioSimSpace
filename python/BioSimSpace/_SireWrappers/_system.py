@@ -669,7 +669,7 @@ class System():
         mols = self.getMolecules()
 
         # Loop over all of the molecules.
-        for mol in mols:
+        for idx, mol in enumerate(mols):
 
             # Extract the atomic coordinates and append them to the vector.
             try:
@@ -683,7 +683,7 @@ class System():
                 coord.extend(mol._sire_molecule.property(prop).toVector())
 
             except UserWarning:
-                raise UserWarning("Molecule %s has no coordinate property.") from None
+                raise UserWarning("Molecule %d has no 'coordinates' property." % idx) from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
