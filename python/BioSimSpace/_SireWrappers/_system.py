@@ -596,7 +596,14 @@ class System():
 
         # Translate each of the molecules in the system.
         for n in self._sire_system.molNums():
-            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec)).commit()
+            # Copy the property map.
+            _property_map = property_map.copy()
+
+            # If this is a perturbable molecule, use the coordinates at lambda = 0.
+            if self._sire_system.molecule(n).hasProperty("is_perturbable"):
+                _property_map["coordinates"] = "coordinates0"
+
+            mol = self._sire_system[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_system.update(mol)
 
     def _getSireSystem(self):

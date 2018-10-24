@@ -2199,15 +2199,6 @@ class Molecule():
         edit_mol.setProperty("forcefield0", molecule0.property(ff0))
         edit_mol.setProperty("forcefield1", molecule1.property(ff1))
 
-        # Copy the "coordinates0" property to "coordinates".
-        # TODO: Work out a better way of doing this, e.g. preserving the user name
-        # from the property map. This is just a hack to enable fast translation of
-        # molecules.
-        try:
-            edit_mol.setProperty("coordinates", edit_mol.property("coordinates0"))
-        except:
-            pass
-
         # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
