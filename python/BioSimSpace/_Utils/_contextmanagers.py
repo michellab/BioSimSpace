@@ -29,17 +29,27 @@ import os as _os
 
 __all__ = ["cd"]
 
+# Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
-def cd(path):
+def cd(work_dir):
+    """Execute the context in the directory 'dir'
+
+
+       Positional arguments
+       --------------------
+
+       work_dir : str
+           The working directory for the context.
+    """
     # Store the current directory.
     old_dir = _os.getcwd()
 
-    # Create the new directory if it doesn't exist.
-    if not _os.path.isdir(path):
-        _os.makedirs(path)
+    # Create the working directory if it doesn't exist.
+    if not _os.path.isdir(work_dir):
+        _os.makedirs(work_dir)
 
     # Change to the new directory.
-    _os.chdir(path)
+    _os.chdir(work_dir)
 
     # Execute context.
     try:
