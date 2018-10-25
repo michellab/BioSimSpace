@@ -35,6 +35,7 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
+import BioSimSpace._Utils as _Utils
 
 import os as _os
 import queue as _queue
@@ -216,180 +217,170 @@ class GAFF(_protocol.Protocol):
         if type(queue) is not None and type(queue) is not _queue.Queue:
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Set work_dir to the current directory.
+        if work_dir is None:
+            work_dir = _os.getcwd()
 
-        # Set up the working directory.
-        if work_dir is not None:
-            # Create the working directory, if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir)
+        # Run parameterisation in the working directory.
+        with _Utils.cd(work_dir):
+            # Create a new molecule using a deep copy of the internal Sire Molecule.
+            new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
-            # Change to the working directory for the process.
-            # This avoid problems with relative paths.
-            _os.chdir(work_dir)
+            # The user will likely have passed a bare PDB or Mol2 file.
+            # Antechamber expects the molecule to be uncharged, or integer
+            # charged (where the charge, or number of electrons, is passed with
+            # the -nc flag).
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
-
-        # The user will likely have passed a bare PDB or Mol2 file.
-        # Antechamber expects the molecule to be uncharged, or integer
-        # charged (where the charge, or number of electrons, is passed with
-        # the -nc flag).
-
-        # Get the total charge on the molecule.
-        if "charge" in self._property_map:
-            _property_map = { "charge": self._property_map["charge"] }
-            prop = self._property_map["charge"]
-        else:
-            _property_map = { "charge": "charge" }
-            prop = "charge"
-
-        # The molecule has a charge property.
-        if new_mol._getSireMolecule().hasProperty(prop):
-            charge = new_mol.charge(property_map=_property_map).magnitude()
-
-            # Charge is non-integer, try to fix it.
-            if abs(round(charge) - charge) > 0:
-                new_mol._fixCharge(property_map=_property_map)
-                charge = round(charge)
-        else:
-            charge = None
-
-        # Only try "formal_charge" when "charge" is missing. Unlikely to have
-        # both if this is a bare molecule, but the user could be re-parameterising
-        # an existing molecule.
-        if charge is None:
-            # Get the total formal charge on the molecule.
-            if "formal_charge" in self._property_map:
-                _property_map = { "charge": self._property_map["formal_charge"] }
+            # Get the total charge on the molecule.
+            if "charge" in self._property_map:
+                _property_map = { "charge": self._property_map["charge"] }
+                prop = self._property_map["charge"]
             else:
-                _property_map = { "charge": "formal_charge" }
-            charge = new_mol.charge(property_map=_property_map).magnitude()
+                _property_map = { "charge": "charge" }
+                prop = "charge"
 
-        # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+            # The molecule has a charge property.
+            if new_mol._getSireMolecule().hasProperty(prop):
+                charge = new_mol.charge(property_map=_property_map).magnitude()
 
-        # Add the molecule.
-        m.add(new_mol._getSireMolecule())
-        s.add(m)
+                # Charge is non-integer, try to fix it.
+                if abs(round(charge) - charge) > 0:
+                    new_mol._fixCharge(property_map=_property_map)
+                    charge = round(charge)
+            else:
+                charge = None
 
-        # Write the system to a PDB file.
-        try:
-            pdb = _Sire.IO.PDB2(s)
-            pdb.writeToFile("antechamber.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+            # Only try "formal_charge" when "charge" is missing. Unlikely to have
+            # both if this is a bare molecule, but the user could be re-parameterising
+            # an existing molecule.
+            if charge is None:
+                # Get the total formal charge on the molecule.
+                if "formal_charge" in self._property_map:
+                    _property_map = { "charge": self._property_map["formal_charge"] }
+                else:
+                    _property_map = { "charge": "formal_charge" }
+                charge = new_mol.charge(property_map=_property_map).magnitude()
 
-        # Generate the Antechamber command.
-        command = ("%s -at %d -i antechamber.pdb -fi pdb " +
-                   "-o antechamber.mol2 -fo mol2 -c %s -s 2 -nc %d"
-                  ) % (_protocol._antechamber_exe, self._version,
-                        self._charge_method.lower(), charge)
+            # Create a new system and molecule group.
+            s = _Sire.System.System("BioSimSpace System")
+            m = _Sire.Mol.MoleculeGroup("all")
 
-        with open("README.txt", "w") as file:
-            # Write the command to file.
-            file.write("# Antechamber was run with the following command:\n")
-            file.write("%s\n" % command)
+            # Add the molecule.
+            m.add(new_mol._getSireMolecule())
+            s.add(m)
 
-        # Create files for stdout/stderr.
-        stdout = open("antechamber.out", "w")
-        stderr = open("antechamber.err", "w")
+            # Write the system to a PDB file.
+            try:
+                pdb = _Sire.IO.PDB2(s)
+                pdb.writeToFile("antechamber.pdb")
+            except:
+                raise IOError("Failed to write system to 'PDB' format.") from None
 
-        # Run Antechamber as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-        stdout.close()
-        stderr.close()
+            # Generate the Antechamber command.
+            command = ("%s -at %d -i antechamber.pdb -fi pdb " +
+                    "-o antechamber.mol2 -fo mol2 -c %s -s 2 -nc %d"
+                    ) % (_protocol._antechamber_exe, self._version,
+                            self._charge_method.lower(), charge)
 
-        # Antechamber doesn't return sensible error codes, so we need to check that
-        # the expected output was generated.
-        if _os.path.isfile("antechamber.mol2"):
-
-            # Run parmchk to check for missing parameters.
-            command = ("%s -s %d -i antechamber.mol2 -f mol2 " +
-                       "-o antechamber.frcmod"
-                      ) % (_protocol._parmchk_exe, self._version)
-
-            with open("README.txt", "a") as file:
+            with open("README.txt", "w") as file:
                 # Write the command to file.
-                file.write("\n# ParmChk was run with the following command:\n")
+                file.write("# Antechamber was run with the following command:\n")
                 file.write("%s\n" % command)
 
             # Create files for stdout/stderr.
-            stdout = open("parmchk.out", "w")
-            stderr = open("parmchk.err", "w")
+            stdout = open("antechamber.out", "w")
+            stderr = open("antechamber.err", "w")
 
-            # Run parmchk as a subprocess.
+            # Run Antechamber as a subprocess.
             proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
-            # The frcmod file was created.
-            if _os.path.isfile("antechamber.frcmod"):
+            # Antechamber doesn't return sensible error codes, so we need to check that
+            # the expected output was generated.
+            if _os.path.isfile("antechamber.mol2"):
 
-                # Now call tLEaP using the partially parameterised molecule and the frcmod file.
-                # tLEap will run in the same working directory, using the Mol2 file generated by
-                # Antechamber.
-
-                # Try to find a force field file.
-                if self._version == 1:
-                    ff = _protocol._find_force_field("gaff")
-                else:
-                    ff = _protocol._find_force_field("gaff2")
-
-                # Write the LEaP input file.
-                with open("leap.txt", "w") as file:
-                    file.write("source %s\n" % ff)
-                    file.write("mol = loadMol2 antechamber.mol2\n")
-                    file.write("loadAmberParams antechamber.frcmod\n")
-                    file.write("saveAmberParm mol leap.top leap.crd\n")
-                    file.write("quit")
-
-                # Generate the tLEaP command.
-                command = "%s -f leap.txt" % _protocol._tleap_exe
+                # Run parmchk to check for missing parameters.
+                command = ("%s -s %d -i antechamber.mol2 -f mol2 " +
+                        "-o antechamber.frcmod"
+                        ) % (_protocol._parmchk_exe, self._version)
 
                 with open("README.txt", "a") as file:
                     # Write the command to file.
-                    file.write("\n# tLEaP was run with the following command:\n")
+                    file.write("\n# ParmChk was run with the following command:\n")
                     file.write("%s\n" % command)
 
                 # Create files for stdout/stderr.
-                stdout = open("tleap.out", "w")
-                stderr = open("tleap.err", "w")
+                stdout = open("parmchk.out", "w")
+                stderr = open("parmchk.err", "w")
 
-                # Run tLEaP as a subprocess.
+                # Run parmchk as a subprocess.
                 proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
 
-                # tLEaP doesn't return sensible error codes, so we need to check that
-                # the expected output was generated.
-                if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
-                    # Load the parameterised molecule.
-                    try:
-                        par_mol = _Molecule(_IO.readMolecules(["leap.top", "leap.crd"])
-                                  ._getSireSystem()[_Sire.Mol.MolIdx(0)])
-                    except:
-                        raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
+                # The frcmod file was created.
+                if _os.path.isfile("antechamber.frcmod"):
 
-                    # Make the molecule 'mol' compatible with 'par_mol'. This will create
-                    # a mapping between atom indices in the two molecules and add all of
-                    # the new properties from 'par_mol' to 'mol'.
-                    new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+                    # Now call tLEaP using the partially parameterised molecule and the frcmod file.
+                    # tLEap will run in the same working directory, using the Mol2 file generated by
+                    # Antechamber.
 
-                    # Record the forcefield used to parameterise the molecule.
-                    new_mol._forcefield = ff
+                    # Try to find a force field file.
+                    if self._version == 1:
+                        ff = _protocol._find_force_field("gaff")
+                    else:
+                        ff = _protocol._find_force_field("gaff2")
 
+                    # Write the LEaP input file.
+                    with open("leap.txt", "w") as file:
+                        file.write("source %s\n" % ff)
+                        file.write("mol = loadMol2 antechamber.mol2\n")
+                        file.write("loadAmberParams antechamber.frcmod\n")
+                        file.write("saveAmberParm mol leap.top leap.crd\n")
+                        file.write("quit")
+
+                    # Generate the tLEaP command.
+                    command = "%s -f leap.txt" % _protocol._tleap_exe
+
+                    with open("README.txt", "a") as file:
+                        # Write the command to file.
+                        file.write("\n# tLEaP was run with the following command:\n")
+                        file.write("%s\n" % command)
+
+                    # Create files for stdout/stderr.
+                    stdout = open("tleap.out", "w")
+                    stderr = open("tleap.err", "w")
+
+                    # Run tLEaP as a subprocess.
+                    proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+                    stdout.close()
+                    stderr.close()
+
+                    # tLEaP doesn't return sensible error codes, so we need to check that
+                    # the expected output was generated.
+                    if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
+                        # Load the parameterised molecule.
+                        try:
+                            par_mol = _Molecule(_IO.readMolecules(["leap.top", "leap.crd"])
+                                    ._getSireSystem()[_Sire.Mol.MolIdx(0)])
+                        except:
+                            raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
+
+                        # Make the molecule 'mol' compatible with 'par_mol'. This will create
+                        # a mapping between atom indices in the two molecules and add all of
+                        # the new properties from 'par_mol' to 'mol'.
+                        new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+
+                        # Record the forcefield used to parameterise the molecule.
+                        new_mol._forcefield = ff
+
+                    else:
+                        raise _ParameterisationError("tLEaP failed!")
                 else:
-                    raise _ParameterisationError("tLEaP failed!")
+                    raise _ParameterisationError("Parmchk failed!")
             else:
-                raise _ParameterisationError("Parmchk failed!")
-        else:
-            raise _ParameterisationError("Antechamber failed!")
-
-        # Change back to the current directory.
-        _os.chdir(dir)
+                raise _ParameterisationError("Antechamber failed!")
 
         if queue is not None:
             queue.put(new_mol)

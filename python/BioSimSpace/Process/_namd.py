@@ -35,6 +35,7 @@ from ..Trajectory import Trajectory as _Trajectory
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
+import BioSimSpace._Utils as _Utils
 
 import math as _math
 import os as _os
@@ -515,32 +516,25 @@ class Namd(_process.Process):
         # Clear any existing output.
         self._clear_output()
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Run the process in the working directory.
+        with _Utils.cd(self._work_dir):
 
-        # Change to the working directory for the process.
-        # This avoids problems with relative paths.
-        _os.chdir(self._work_dir)
+            # Write the command-line process to a README.txt file.
+            with open("README.txt", "w") as file:
 
-        # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as file:
+                # Set the command-line string.
+                self._command = "%s %s.namd" % (self._exe, self._name)
 
-            # Set the command-line string.
-            self._command = "%s %s.namd" % (self._exe, self._name)
+                # Write the command to file.
+                file.write("# NAMD was run with the following command:\n")
+                file.write("%s\n" % self._command)
 
-            # Write the command to file.
-            file.write("# NAMD was run with the following command:\n")
-            file.write("%s\n" % self._command)
+            # Start the timer.
+            self._timer = _timeit.default_timer()
 
-        # Start the timer.
-        self._timer = _timeit.default_timer()
-
-        # Start the simulation.
-        self._process = _Sire.Base.Process.run(self._exe,
-            "%s.namd" % self._name, "%s.out" % self._name, "%s.err" % self._name)
-
-        # Change back to the original working directory.
-        _os.chdir(dir)
+            # Start the simulation.
+            self._process = _Sire.Base.Process.run(self._exe,
+                "%s.namd" % self._name, "%s.out" % self._name, "%s.err" % self._name)
 
         return self
 

@@ -36,6 +36,7 @@ from ..Trajectory import Trajectory as _Trajectory
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
+import BioSimSpace._Utils as _Utils
 
 from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
 from watchdog.observers import Observer as _Observer
@@ -470,35 +471,28 @@ class Amber(_process.Process):
         # Reset the watcher.
         self._is_watching = False
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Run the process in the working directory.
+        with _Utils.cd(self._work_dir):
 
-        # Change to the working directory for the process.
-        # This avoid problems with relative paths.
-        _os.chdir(self._work_dir)
+            # Create the arguments string list.
+            args = self.getArgStringList()
 
-        # Create the arguments string list.
-        args = self.getArgStringList()
+            # Write the command-line process to a README.txt file.
+            with open("README.txt", "w") as file:
 
-        # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as file:
+                # Set the command-line string.
+                self._command = "%s " % self._exe + self.getArgString()
 
-            # Set the command-line string.
-            self._command = "%s " % self._exe + self.getArgString()
+                # Write the command to file.
+                file.write("# AMBER was run with the following command:\n")
+                file.write("%s\n" % self._command)
 
-            # Write the command to file.
-            file.write("# AMBER was run with the following command:\n")
-            file.write("%s\n" % self._command)
+            # Start the timer.
+            self._timer = _timeit.default_timer()
 
-        # Start the timer.
-        self._timer = _timeit.default_timer()
-
-        # Start the simulation.
-        self._process = _Sire.Base.Process.run(self._exe, args,
-            "%s.out"  % self._name, "%s.err"  % self._name)
-
-        # Change back to the original working directory.
-        _os.chdir(dir)
+            # Start the simulation.
+            self._process = _Sire.Base.Process.run(self._exe, args,
+                "%s.out"  % self._name, "%s.err"  % self._name)
 
 	# Watch the energy info file for changes.
         self._watcher = _Watcher(self)

@@ -33,6 +33,7 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
+import BioSimSpace._Utils as _Utils
 
 import os as _os
 import queue as _queue
@@ -153,52 +154,41 @@ class Protocol():
         if type(queue) is not None and type(queue) is not _queue.Queue:
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Set work_dir to the current directory.
+        if work_dir is None:
+            work_dir = _os.getcwd()
 
-        # Set up the working directory.
-        if work_dir is not None:
-            # Create the working directory, if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir)
+        # Run parameterisation in the working directory.
+        with _Utils.cd(work_dir):
 
-            # Change to the working directory for the process.
-            # This avoid problems with relative paths.
-            _os.chdir(work_dir)
+            # Create a new molecule using a deep copy of the internal Sire Molecule.
+            new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
+            # Choose the program to run with depending on the force field compatibility.
+            # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
+            # tLEaP fails to produce output.
 
-        # Choose the program to run with depending on the force field compatibility.
-        # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
-        # tLEaP fails to produce output.
+            # First, try parameterise using tLEaP.
+            if self._tleap:
+                if _tleap_exe is not None:
+                    output = self._run_tleap(molecule)
+                # Otherwise, try using pdb2gmx.
+                elif self._pdb2gmx:
+                    if _gmx_exe is not None:
+                        output = self._run_pdb2gmx(molecule)
+                    else:
+                        raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
 
-        # First, try parameterise using tLEaP.
-        if self._tleap:
-            if _tleap_exe is not None:
-                output = self._run_tleap(molecule)
-            # Otherwise, try using pdb2gmx.
+            # Parameterise using pdb2gmx.
             elif self._pdb2gmx:
                 if _gmx_exe is not None:
                     output = self._run_pdb2gmx(molecule)
                 else:
-                    raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
-
-        # Parameterise using pdb2gmx.
-        elif self._pdb2gmx:
-            if _gmx_exe is not None:
-                output = self._run_pdb2gmx(molecule)
-            else:
-                raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
-
-        # Change back to the original directory.
-        if work_dir is not None:
-            _os.chdir(dir)
+                    raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
 
         # Prepend the working directory to the output file names.
-        if work_dir is not None:
-            output = ["%s/%s" % (work_dir, output[0]),
-                        "%s/%s" % (work_dir, output[1])]
+        output = ["%s/%s" % (work_dir, output[0]),
+                  "%s/%s" % (work_dir, output[1])]
 
         try:
             # Load the parameterised molecule.

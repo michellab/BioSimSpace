@@ -35,6 +35,7 @@ from ..Trajectory import Trajectory as _Trajectory
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
+import BioSimSpace._Utils as _Utils
 
 import math as _math
 import os as _os
@@ -473,39 +474,32 @@ class Somd(_process.Process):
         # Clear any existing output.
         self._clear_output()
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Run the process in the working directory.
+        with _Utils.cd(self._work_dir):
 
-        # Change to the working directory for the process.
-        # This avoids problems with relative paths.
-        _os.chdir(self._work_dir)
+            # Create the arguments string list.
+            args = self.getArgStringList()
 
-        # Create the arguments string list.
-        args = self.getArgStringList()
+            # Write the command-line process to a README.txt file.
+            with open("README.txt", "w") as f:
 
-        # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as f:
+                # Set the command-line string.
+                self._command = "%s " % self._exe + self.getArgString()
 
-            # Set the command-line string.
-            self._command = "%s " % self._exe + self.getArgString()
+                # Write the command to file.
+                f.write("# SOMD was run with the following command:\n")
+                f.write("%s\n" % self._command)
 
-            # Write the command to file.
-            f.write("# SOMD was run with the following command:\n")
-            f.write("%s\n" % self._command)
+            # Start the timer.
+            self._timer = _timeit.default_timer()
 
-        # Start the timer.
-        self._timer = _timeit.default_timer()
+            # Start the simulation.
+            self._process = _Sire.Base.Process.run(self._exe, args,
+                "%s.out"  % self._name, "%s.out"  % self._name)
 
-        # Start the simulation.
-        self._process = _Sire.Base.Process.run(self._exe, args,
-            "%s.out"  % self._name, "%s.out"  % self._name)
-
-        # SOMD uses the stdout stream for all output.
-        with open(_os.path.basename(self._stderr_file), "w") as f:
-            f.write("All output has been redirected to the stdout stream!\n")
-
-        # Change back to the original working directory.
-        _os.chdir(dir)
+            # SOMD uses the stdout stream for all output.
+            with open(_os.path.basename(self._stderr_file), "w") as f:
+                f.write("All output has been redirected to the stdout stream!\n")
 
         return self
 
