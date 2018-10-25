@@ -25,6 +25,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from contextlib import contextmanager as _contextmanager
+
 import os as _os
 
 __all__ = ["cd"]
@@ -51,7 +52,7 @@ def cd(work_dir):
     # Change to the new directory.
     _os.chdir(work_dir)
 
-    # Execute context.
+    # Execute the context.
     try:
         yield
 
