@@ -91,8 +91,8 @@ class Binding(_free_energy.FreeEnergy):
                     prop = property_map["space"]
                 else:
                     prop = "space"
-                box = list(system._sire_system.property(prop).dimensions().toVector())
-                box = [_Units.Length.angstrom * x for x in box_size]
+                box = system._sire_system.property(prop).dimensions()
+                box = [_Units.Length.angstrom * x for x in box]
             except:
                 raise ValueError("The solvated protein-ligand system has no box information!")
 
