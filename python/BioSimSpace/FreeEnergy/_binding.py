@@ -104,7 +104,7 @@ class Binding(_free_energy.FreeEnergy):
 
             # Solvate the perturbable molecule using the same water model as
             # the original system. (This is used for the second leg.)
-            self._system1 = _Solvent.solvate(molecule=molecule, box=box)
+            self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box)
 
         # Initialise the process runner with all of the simulations required
         # for each leg.
