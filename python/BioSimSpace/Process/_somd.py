@@ -40,6 +40,7 @@ import BioSimSpace._Utils as _Utils
 import math as _math
 import os as _os
 import pygtail as _pygtail
+import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
@@ -200,29 +201,32 @@ class Somd(_process.Process):
         # We extract all of the waters from the system and relabel the
         # residues as appropriate.
 
+        # Presently, the following is too slow to perform using Sire so is
+        # commented out.
+
         # Extract all of the water molecules.
-        waters = system.getWaterMolecules()
+        #waters = system.getWaterMolecules()
 
         # Loop over all of the water molecules and update the residue names.
-        for mol in waters:
+        #for mol in waters:
             # Get the corresponding molecule from the Sire system.
-            mol = system._sire_system.molecule(mol._sire_molecule.number())
+            #mol = system._sire_system.molecule(mol._sire_molecule.number())
 
             # Only update if necessary, since deleting and readding the
             # molecule is slow.
-            if mol.residue(_Sire.Mol.ResIdx(0)).name().value() != "WAT":
+            #if mol.residue(_Sire.Mol.ResIdx(0)).name().value() != "WAT":
                 # Update the molecule with the new residue name.
-                mol = mol.edit().residue(_Sire.Mol.ResIdx(0))     \
-                                .rename(_Sire.Mol.ResName("WAT")) \
-                                .molecule()                       \
-                                .commit()
+                #mol = mol.edit().residue(_Sire.Mol.ResIdx(0))     \
+                                #.rename(_Sire.Mol.ResName("WAT")) \
+                                #.molecule()                       \
+                                #.commit()
 
                 # Delete the old molecule from the system and add the renamed one
                 # back in.
                 # TODO: This is a hack since the "update" method of Sire.System
                 # doesn't work properly at present.
-                system._sire_system.remove(mol.number())
-                system._sire_system.add(mol, _Sire.Mol.MGName("all"))
+                #system._sire_system.remove(mol.number())
+                #system._sire_system.add(mol, _Sire.Mol.MGName("all"))
 
         # Extract the updated Sire system.
         system = system._sire_system
@@ -240,6 +244,18 @@ class Somd(_process.Process):
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
+
+        # TODO: The following hack is a shortcut to change the water topology
+        # naming scheme to something compatible with SOMD. When fixed, we can
+        # use Sire to rename the atoms and residues.
+        command = "sed -i 's/SOL/WAT/g' %s" % self._top_file
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        command = "sed -i 's/HW1/H1/g' %s" % self._top_file
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        command = "sed -i 's/HW2/H2/g' %s" % self._top_file
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        command = "sed -i 's/OW/O/g' %s" % self._top_file
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
