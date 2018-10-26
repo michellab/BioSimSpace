@@ -24,4 +24,5 @@ Functionality for running free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+from ._binding import *
 from ._solvation import *
