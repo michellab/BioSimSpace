@@ -417,6 +417,7 @@ class ProcessRunner():
 
         for p in self._processes:
             p.start()
+            p.wait()
 
     def kill(self, index):
         """Kill a specific process. The same can be achieved using:

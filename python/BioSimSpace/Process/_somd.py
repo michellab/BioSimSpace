@@ -291,7 +291,8 @@ class Somd(_process.Process):
             if "CUDA_VISIBLE_DEVICES" in _os.environ:
                 try:
                     # Get the ID of the first available device.
-                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
+                    #gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
+                    gpu_id = 0
                 except:
                     raise EnvironmentError("Cannot parse 'CUDA_VISIBLE_DEVICES' environment variable!")
             else:
