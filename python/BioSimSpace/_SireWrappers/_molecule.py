@@ -922,7 +922,7 @@ class Molecule():
                 # End angle record.
                 file.write("    endangle\n")
 
-            # 3) Dihedrals.
+            # 4) Dihedrals.
 
             # Extract the dihedrals at lambda = 0 and 1.
             dihedrals0 = mol.property("dihedral1").potentials()
@@ -1083,7 +1083,7 @@ class Molecule():
                 # End dihedral record.
                 file.write("    enddihedral\n")
 
-            # 3) Impropers.
+            # 5) Impropers.
 
             # Extract the impropers at lambda = 0 and 1.
             impropers0 = mol.property("improper0").potentials()
