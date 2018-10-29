@@ -257,6 +257,8 @@ class Somd(_process.Process):
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         command = "sed -i 's/OW/O/g' %s" % self._top_file
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        command = "sed -i 's/WATTY/SOLTY/g' %s" % self._top_file
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
