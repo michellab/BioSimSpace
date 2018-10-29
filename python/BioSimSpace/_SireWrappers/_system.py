@@ -51,7 +51,7 @@ class System():
            Positional arguments
            --------------------
 
-           system : Sire.System.System, BioSimSpace._SireWrappers.System,
+           system : Sire.System.System, BioSimSpace._SireWrappers.System, Sire.Mol.Molecule,
                     BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
                A Sire System object.
         """
@@ -70,6 +70,11 @@ class System():
         elif type(system) is System:
             self._sire_system = system._sire_system.__deepcopy__()
 
+        # A Sire Molecule object.
+        elif type(system) is _SireMol.Molecule:
+            self._sire_system = _SireSystem.System("BioSimSpace System.")
+            self.addMolecules(_Molecule(system))
+
         # A BioSimSpace Molecule object.
         elif type(system) is _Molecule:
             self._sire_system = _SireSystem.System("BioSimSpace System.")
@@ -85,8 +90,8 @@ class System():
 
         # Invalid type.
         else:
-            raise TypeError("'system' must be of type 'Sire.System._System.System', "
-                            "'BioSimSpace._SireWrappers.System', 'BioSimSpace._SireWrappers.Molecule', "
+            raise TypeError("'system' must be of type 'Sire.System._System.System', 'BioSimSpace._SireWrappers.System', "
+                            " Sire.Mol._Mol.Molecule', 'BioSimSpace._SireWrappers.Molecule', "
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
     def __str__(self):
