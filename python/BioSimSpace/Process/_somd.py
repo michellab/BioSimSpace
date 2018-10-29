@@ -256,15 +256,13 @@ class Somd(_process.Process):
         # TODO: The following hack is a shortcut to change the water topology
         # naming scheme to something compatible with SOMD. When fixed, we can
         # use Sire to rename the atoms and residues.
-        command = "sed -i 's/SOL/WAT/g' %s" % self._top_file
+        command = "sed -i 's/\<SOL\>/WAT/g' %s" % self._top_file
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        command = "sed -i 's/HW1/H1/g' %s" % self._top_file
+        command = "sed -i 's/\<HW1\>/H1/g' %s" % self._top_file
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        command = "sed -i 's/HW2/H2/g' %s" % self._top_file
+        command = "sed -i 's/\<HW2\>/H2/g' %s" % self._top_file
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        command = "sed -i 's/OW/O/g' %s" % self._top_file
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        command = "sed -i 's/WATTY/SOLTY/g' %s" % self._top_file
+        command = "sed -i 's/\<OW\>/O/g' %s" % self._top_file
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Generate the SOMD configuration file.
