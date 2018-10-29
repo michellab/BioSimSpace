@@ -186,11 +186,12 @@ class Somd(_process.Process):
                 pert_mol = pert_mol._toPertFile(self._pert_file, self._property_map)
                 self._input_files.append(self._pert_file)
 
-                # Now update the molecule in the system.
-                # TODO: This is a hack since the "update" method of Sire.System
-                # doesn't work properly at present.
+                # Remove the perturbable molecule.
                 system._sire_system.remove(pert_mol.number())
-                system._sire_system.add(pert_mol, _Sire.Mol.MGName("all"))
+
+                # Recreate the system, putting the perturbable molecule with
+                # renamed properties first.
+                system = _System(pert_mol) + _System(system)
 
             else:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
