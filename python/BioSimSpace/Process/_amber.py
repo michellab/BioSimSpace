@@ -24,7 +24,8 @@ Functionality for running simulations using AMBER.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
 
 from BioSimSpace import _amber_home
 from . import _process
@@ -234,14 +235,14 @@ class Amber(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(self._system, self._property_map)
+            rst = _SireIO.AmberRst7(self._system, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(self._system, self._property_map)
+            prm = _SireIO.AmberPrm(self._system, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -491,7 +492,7 @@ class Amber(_process.Process):
             self._timer = _timeit.default_timer()
 
             # Start the simulation.
-            self._process = _Sire.Base.Process.run(self._exe, args,
+            self._process = _SireBase.Process.run(self._exe, args,
                 "%s.out"  % self._name, "%s.err"  % self._name)
 
 	# Watch the energy info file for changes.
@@ -530,7 +531,7 @@ class Amber(_process.Process):
         if _os.path.isfile(restart):
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], self._property_map))
+                return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
             except:
                 print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
                 return None

@@ -24,7 +24,8 @@ Functionality for running simulations using NAMD.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
 
 from . import _process
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -97,7 +98,7 @@ class Namd(_process.Process):
         # for it in $PATH.
         if exe is None:
             try:
-                self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
+                self._exe = _SireBase.findExe("namd2").absoluteFilePath()
             except:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Namd' is not supported. "
                                             "Please install NAMD (http://www.ks.uiuc.edu/Research/namd).") from None
@@ -135,14 +136,14 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _Sire.IO.CharmmPSF(self._system, self._property_map)
+            psf = _SireIO.CharmmPSF(self._system, self._property_map)
             psf.writeToFile(self._psf_file)
         except:
             raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
         try:
-            pdb = _Sire.IO.PDB2(self._system, self._property_map)
+            pdb = _SireIO.PDB2(self._system, self._property_map)
             pdb.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
@@ -406,7 +407,7 @@ class Namd(_process.Process):
                     prop = "occupancy"
 
                 try:
-                    p = _Sire.IO.PDB2(restrained, {prop : "restrained"})
+                    p = _SireIO.PDB2(restrained, {prop : "restrained"})
 
                     # File name for the restraint file.
                     self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
@@ -533,7 +534,7 @@ class Namd(_process.Process):
             self._timer = _timeit.default_timer()
 
             # Start the simulation.
-            self._process = _Sire.Base.Process.run(self._exe,
+            self._process = _SireBase.Process.run(self._exe,
                 "%s.namd" % self._name, "%s.out" % self._name, "%s.err" % self._name)
 
         return self
@@ -601,7 +602,7 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                return _System(_Sire.IO.MoleculeParser.read(files, self._property_map))
+                return _System(_SireIO.MoleculeParser.read(files, self._property_map))
             except:
                 return None
 

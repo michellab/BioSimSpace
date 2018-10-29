@@ -24,7 +24,8 @@ Functionality for running simulations with GROMACS.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
 
 from BioSimSpace import _gmx_exe
 from . import _process
@@ -131,11 +132,11 @@ class Gromacs(_process.Process):
         # Create the input files...
 
         # GRO87 file.
-        gro = _Sire.IO.Gro87(self._system, self._property_map)
+        gro = _SireIO.Gro87(self._system, self._property_map)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _Sire.IO.GroTop(self._system, self._property_map)
+        top = _SireIO.GroTop(self._system, self._property_map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
@@ -305,7 +306,7 @@ class Gromacs(_process.Process):
             self._timer = _timeit.default_timer()
 
             # Start the simulation.
-            self._process = _Sire.Base.Process.run(self._exe, args,
+            self._process = _SireBase.Process.run(self._exe, args,
                 "%s.out" % self._name, "%s.out" % self._name)
 
             # For historical reasons (console message aggregation with MPI), Gromacs
@@ -346,7 +347,7 @@ class Gromacs(_process.Process):
         # Check that the file exists.
         if _os.path.isfile(restart):
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read([restart, self._top_file], self._property_map))
+            return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
         else:
             return None

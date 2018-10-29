@@ -24,7 +24,8 @@ Functionality for reading and analysing molecular trajectories.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
 
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Process._process import Process as _Process
@@ -331,7 +332,7 @@ class Trajectory():
 
             # Create a Sire system.
             try:
-                system = _System(_Sire.IO.MoleculeParser.read([self._top_file, frame_file]))
+                system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
             except:
                 raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
 
@@ -413,11 +414,11 @@ class Trajectory():
             # Integer molecule index.
             if type(molecule) is int:
                 try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[_Sire.Mol.MolIdx(molecule)]
+                    molecule = self.getFrames(frame)[0]._getSireSystem()[_SireMol.MolIdx(molecule)]
                 except:
                     raise ValueError("Missing molecule index '%d' in System" % molecule)
             # Sire.Mol.MolIdx index.
-            elif type(molecule) is _Sire.Mol.MolIdx:
+            elif type(molecule) is _SireMol.MolIdx:
                 try:
                     molecule = self.getFrames(frame)[0]._getSireSystem()[molecule]
                 except:
@@ -427,7 +428,7 @@ class Trajectory():
             elif type(molecule) is _Molecule:
                 molecule = molecule._getSireMolecule()
             # A Sire.Mol.Molecule object.
-            elif type(molecule) is _Sire.Mol.Molecule:
+            elif type(molecule) is _SireMol.Molecule:
                 pass
             else:
                 raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', "

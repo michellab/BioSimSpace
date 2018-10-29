@@ -24,7 +24,7 @@ Functionality for running simulation processes.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.Mol as _SireMol
 
 from BioSimSpace import _is_interactive, _is_notebook
 
@@ -871,10 +871,10 @@ def _restrain_backbone(system):
                 # is found.
                 try:
                     element = atom.property("element")
-                    if element == _Sire.Mol.Element("CA") or \
-                       element == _Sire.Mol.Element("N")  or \
-                       element == _Sire.Mol.Element("C")  or \
-                       element == _Sire.Mol.Element("O"):
+                    if element == _SireMol.Element("CA") or \
+                       element == _SireMol.Element("N")  or \
+                       element == _SireMol.Element("C")  or \
+                       element == _SireMol.Element("O"):
                            m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
 
                 except:

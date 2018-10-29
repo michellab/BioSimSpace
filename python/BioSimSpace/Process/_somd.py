@@ -24,7 +24,9 @@ Functionality for running simulations with SOMD.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
 
 from . import _process
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -119,9 +121,9 @@ class Somd(_process.Process):
         if exe is None:
             # Generate the name of the SOMD exe.
             if type(self._protocol) is _Protocol.FreeEnergy:
-                somd_exe = _Sire.Base.getBinDir() + "/somd-freenrg"
+                somd_exe = _SireBase.getBinDir() + "/somd-freenrg"
             else:
-                somd_exe = _Sire.Base.getBinDir() + "/somd"
+                somd_exe = _SireBase.getBinDir() + "/somd"
             if not _os.path.isfile(somd_exe):
                 raise _MissingSoftwareError("'Cannot find SOMD executable in expected location: '%s'" % somd_exe)
             else:
@@ -230,14 +232,14 @@ class Somd(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _Sire.IO.AmberRst7(system, self._property_map)
+            rst = _SireIO.AmberRst7(system, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _Sire.IO.AmberPrm(system, self._property_map)
+            prm = _SireIO.AmberPrm(system, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -496,7 +498,7 @@ class Somd(_process.Process):
             self._timer = _timeit.default_timer()
 
             # Start the simulation.
-            self._process = _Sire.Base.Process.run(self._exe, args,
+            self._process = _SireBase.Process.run(self._exe, args,
                 "%s.out"  % self._name, "%s.out"  % self._name)
 
             # SOMD uses the stdout stream for all output.
