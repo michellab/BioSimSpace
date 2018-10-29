@@ -893,10 +893,10 @@ class Molecule():
                 file.write("    endangle\n")
 
             # Now add records for the shared angles.
-            for idx0, idx in angles_shared_idx.values():
+            for idx0, idx1 in angles_shared_idx.values():
                 # Get the angle potentials.
-                angle0 = angles0[idx]
-                angle1 = angles1[idx]
+                angle0 = angles0[idx0]
+                angle1 = angles1[idx1]
 
                 # Get the AtomIdx for the atoms in the angle.
                 idx0 = info.atomIdx(angle0.atom0())
@@ -1048,10 +1048,10 @@ class Molecule():
                 file.write("    enddihedral\n")
 
             # Now add records for the shared dihedrals.
-            for idx0, idx in dihedrals_shared_idx.values():
+            for idx0, idx1 in dihedrals_shared_idx.values():
                 # Get the dihedral potentials.
-                dihedral0 = dihedrals0[idx]
-                dihedral1 = dihedrals1[idx]
+                dihedral0 = dihedrals0[idx0]
+                dihedral1 = dihedrals1[idx1]
 
                 # Get the AtomIdx for the atoms in the dihedral.
                 idx0 = info.atomIdx(dihedral0.atom0())
@@ -1207,10 +1207,10 @@ class Molecule():
                 file.write("    endimproper\n")
 
             # Now add records for the shared impropers.
-            for idx0, idx in impropers_shared_idx.values():
+            for idx0, idx1 in impropers_shared_idx.values():
                 # Get the improper potentials.
-                improper0 = impropers0[idx]
-                improper1 = impropers1[idx]
+                improper0 = impropers0[idx0]
+                improper1 = impropers1[idx1]
 
                 # Get the AtomIdx for the atoms in the improper.
                 idx0 = info.atomIdx(improper0.atom0())
