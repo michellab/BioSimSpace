@@ -784,6 +784,8 @@ class Molecule():
         # The pert file uses atom names for identification purposes. This means
         # that the names must be unique. As such we need to count the number of
         # atoms with a particular name, then append an index to their name.
+        # We also append the letter P, to indicate that this atom is part of a
+        # "perturbed" molecule.
 
         # A dictionary to track the atom names.
         atom_names = {}
@@ -808,15 +810,21 @@ class Molecule():
 
             # Loop over all atoms in the merged molecule.
             for atom in self._sire_molecule.atoms():
-                # Extract the atom name.
+                # Extract the original atom name.
                 name = atom.name()
 
-                # There is more than one atom with this name. Rename it
+                # Create the new name by appending "P" to the name.
+                new_name = name.value() + "P"
+
+                # There is more than one atom with this name. Append the index
                 # and increment the tally counter for the original name.
                 if atom_names[name] > 1:
-                    new_name = _SireMol.AtomName(name.value() + "%d" % name_tally[name])
-                    edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+                    new_name += "%d" % name_tally[name]
                     name_tally[name] += 1
+
+                # Convert to an AtomName and rename the atom.
+                new_name = _SireMol.AtomName(new_name)
+                edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
 
             # Store the updated molecule.
             mol = edit_mol.commit()
