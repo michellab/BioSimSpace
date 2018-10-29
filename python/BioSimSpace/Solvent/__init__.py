@@ -516,30 +516,21 @@ def _solvate(molecule, box, shell, model, num_point,
 
         if type(molecule) is _System:
 
-            # Create a copy of the system.
-            system = molecule._getSireSystem()
-
             # Extract all of the water molecules.
             waters = molecule.getWaterMolecules()
 
             # Loop over all of the water molecules and update the residue and
             # atom names to match the expected GROMACS water topology.
-            for mol in waters:
-                # Get the corresponding molecule from the Sire system.
-                mol = system.molecule(mol._sire_molecule.number())
-
-                # Update the names.
-                mol = _rename_water_molecule(mol)
+            for wat in waters:
+                # Rename.
+                wat._toGromacsWater()
 
                 # Delete the old molecule from the system and add the renamed one
                 # back in.
                 # TODO: This is a hack since the "update" method of Sire.System
                 # doesn't work properly at present.
-                system.remove(mol.number())
-                system.add(mol, _SireMol.MGName("all"))
-
-            # Recreate the "molecule" from the updated system.
-            molecule = _System(system)
+                molecule._sire_system.remove(wat._sire_molecule.number())
+                molecule._sire_system.add(wat._sire_molecule, _SireMol.MGName("all"))
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
