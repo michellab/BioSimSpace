@@ -925,7 +925,7 @@ class Molecule():
             # 4) Dihedrals.
 
             # Extract the dihedrals at lambda = 0 and 1.
-            dihedrals0 = mol.property("dihedral1").potentials()
+            dihedrals0 = mol.property("dihedral0").potentials()
             dihedrals1 = mol.property("dihedral1").potentials()
 
             # Dictionaries to store the DihedralIDs at lambda = 0 and 1.
