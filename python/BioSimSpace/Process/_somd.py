@@ -191,7 +191,14 @@ class Somd(_process.Process):
 
                 # Recreate the system, putting the perturbable molecule with
                 # renamed properties first.
-                system = _System(pert_mol) + _System(system)
+                updated_system = _System(pert_mol) + _System(system)
+
+                # Copy across all of the properties from the orginal system.
+                for prop in system._sire_system.propertyKeys():
+                    updated_system._sire_system.setProperty(prop, system._sire_system.property(prop))
+
+                # Copy the updated system object across.
+                system = updated_system
 
             else:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
