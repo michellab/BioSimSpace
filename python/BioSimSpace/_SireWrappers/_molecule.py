@@ -554,6 +554,9 @@ class Molecule():
         self._molecule0 = Molecule(mol0)
         self._molecule1 = Molecule(mol1)
 
+        # Flag that the molecule is merged.
+        self._is_merged = True
+
     def _fixCharge(self, property_map={}):
         """Make the molecular charge an integer value.
 
