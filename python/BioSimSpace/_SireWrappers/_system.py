@@ -409,48 +409,8 @@ class System():
 
         waters = []
 
-        for mol in self.getMolecules():
-            if mol.isWater():
-                waters.append(mol)
-
-        return waters
-
-    def getWaterMoleculeIndices(self):
-        """Return a list containing the indices of the water molecules.
-
-           Returns
-           -------
-
-           waters : [ int ]
-               A list containing the indices of the water molecules.
-        """
-
-        waters = []
-
-        for idx, mol in enumerate(self.getMolecules()):
-            if mol.isWater():
-                waters.append(idx)
-
-        return waters
-
-    def isWaterMolecule(self):
-        """Return a list indicating whether each molecule in the system is a
-           water molecule.
-
-           Returns
-           -------
-
-           is_water : [ bool ]
-               A list indicating whether each molecule is a water.
-        """
-
-        waters = []
-
-        for mol in self.getMolecules():
-            if mol.isWater():
-                waters.append(True)
-            else:
-                waters.append(False)
+        for mol in self._sire_system.search("water"):
+            waters.append(_Molecule(mol))
 
         return waters
 
@@ -477,50 +437,10 @@ class System():
 
         molecules = []
 
-        for mol in self.getMolecules():
-            if mol.isMerged():
-                molecules.append(mol)
+        for mol in self._sire_system.search("perturbable"):
+            molecules.append(_Molecule(mol))
 
         return molecules
-
-    def getPerturbableMoleculeIndices(self):
-        """Return a list containing the indices of the perturbable molecules.
-
-           Returns
-           -------
-
-           indices : [ int ]
-               A list containing the indices of the perturbable molecules.
-        """
-
-        indices = []
-
-        for idx, mol in enumerate(self.getMolecules()):
-            if mol.isMerged():
-                indices.append(idx)
-
-        return indices
-
-    def isPerturbableMolecule(self):
-        """Return a list indicating whether each molecule in the system is
-           perturbable.
-
-           Returns
-           -------
-
-           is_perturbable : [ bool ]
-               A list indicating whether each molecule is perturbable.
-        """
-
-        is_perturbable = []
-
-        for mol in self.getMolecules():
-            if mol.isMerged():
-                is_perturbable.append(True)
-            else:
-                is_perturbable.append(False)
-
-        return is_perturbable
 
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
