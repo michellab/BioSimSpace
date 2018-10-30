@@ -595,18 +595,11 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Extract the water lines from the GRO file.
         water_lines = []
-        water_nums = []
         with open("output.gro", "r") as file:
             for line in file:
                 if _re.search("SOL", line):
                     # Store the SOL atom record.
                     water_lines.append(line)
-
-                    # Now match the atom number of the SOL atom.
-                    match = _re.search("(^[0-9]+)[A-Z]", line.strip())
-
-                    # Store the number of the water atom.
-                    water_nums.append(match.groups()[0])
 
             # Add any box information. This is the last line in the GRO file.
             water_lines.append(line)
@@ -757,31 +750,21 @@ def _solvate(molecule, box, shell, model, num_point,
             num_na = 0
             num_cl = 0
 
-            # We now need to loop through the GRO file to work out which water
-            # atoms have been replace by ions.
+            # We now need to loop through the GRO file to extract the lines
+            # corresponding to water or ion atoms.
             water_ion_lines = []
 
             with open("solvated_ions.gro", "r") as file:
                 for line in file:
                     # This is a Sodium atom.
                     if _re.search("NA", line):
-                        # Get the atom number.
-                        match = _re.search("(^[0-9]+)[A-Z]", line.strip())
-
-                        # This ion has replaced a water atom.
-                        if match.groups()[0] in water_nums:
-                            water_ion_lines.append(line)
-                            num_na += 1
+                        water_ion_lines.append(line)
+                        num_na += 1
 
                     # This is a Chlorine atom.
                     if _re.search("CL", line):
-                        # Get the atom number.
-                        match = _re.search("(^[0-9]+)[A-Z]", line.strip())
-
-                        # This ion has replaced a water atom.
-                        if match.groups()[0] in water_nums:
-                            water_ion_lines.append(line)
-                            num_cl += 1
+                        water_ion_lines.append(line)
+                        num_cl += 1
 
                     # This is a water atom.
                     elif _re.search("SOL", line):
@@ -816,8 +799,10 @@ def _solvate(molecule, box, shell, model, num_point,
                     file.write("[ molecules ] \n")
                     file.write(";molecule name    nr.\n")
                     file.write("SOL               %d\n" % (num_sol / num_point))
-                    file.write("NA                %d\n" % num_na)
-                    file.write("CL                %d\n" % num_cl)
+                    if num_na > 0:
+                        file.write("NA                %d\n" % num_na)
+                    if num_cl > 0:
+                        file.write("CL                %d\n" % num_cl)
 
             # Load the water/ion box.
             water_ions = _IO.readMolecules(["water_ions.gro", "water_ions.top"])
