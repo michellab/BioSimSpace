@@ -26,6 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 import Sire.Base as _SireBase
 import Sire.Mol as _SireMol
+import Sire.MM as _SireMM
 
 from BioSimSpace import _gmx_exe, _gromacs_path
 
@@ -516,21 +517,17 @@ def _solvate(molecule, box, shell, model, num_point,
 
         if type(molecule) is _System:
 
-            # Extract all of the water molecules.
-            waters = molecule.getWaterMolecules()
+            # Reformat all of the water molecules so that they match the
+            # expected GROMACS topology template.
+            waters = _SireMM.setGromacsWater(molecule._sire_system.search("water"))
 
-            # Loop over all of the water molecules and update the residue and
-            # atom names to match the expected GROMACS water topology.
+            # Loop over all of the renamed water molecules, delete the old one
+            # from the system, then add the renamed one back in.
+            # TODO: This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.
             for wat in waters:
-                # Rename.
-                wat._toGromacsWater()
-
-                # Delete the old molecule from the system and add the renamed one
-                # back in.
-                # TODO: This is a hack since the "update" method of Sire.System
-                # doesn't work properly at present.
-                molecule._sire_system.remove(wat._sire_molecule.number())
-                molecule._sire_system.add(wat._sire_molecule, _SireMol.MGName("all"))
+                molecule._sire_system.remove(wat.number())
+                molecule._sire_system.add(wat, _SireMol.MGName("all"))
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:

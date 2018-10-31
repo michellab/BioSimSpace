@@ -207,26 +207,6 @@ class Somd(_process.Process):
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
-        # In SOMD, all water molecules must be given the residue label "WAT".
-        # We extract all of the waters from the system and relabel the
-        # residues as appropriate.
-
-        # Extract all of the water molecules.
-        waters = system.getWaterMolecules()
-
-        # Rename all of the water molecules to match the template expected
-        # by SOMD, i.e. AMBER format.
-        for wat in waters:
-            # Rename to the AMBER template.
-            wat._toAmberWater()
-
-            # Delete the old molecule from the system and add the renamed one
-            # back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
-            system._sire_system.remove(wat._sire_molecule.number())
-            system._sire_system.add(wat._sire_molecule, _SireMol.MGName("all"))
-
         # Extract the updated Sire system.
         system = system._sire_system
 
