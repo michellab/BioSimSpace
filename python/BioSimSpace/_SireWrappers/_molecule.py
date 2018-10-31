@@ -774,19 +774,22 @@ class Molecule():
                     amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
                     amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
 
-                    # Start bond record.
-                    file.write("    bond\n")
+                    # Only write record if the bond parameters change.
+                    if amber_bond0 != amber_bond1:
 
-                    # Angle data.
-                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                    file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                    file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                    file.write("        final_force    %.5f\n" % amber_bond1.k())
-                    file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                        # Start bond record.
+                        file.write("    bond\n")
 
-                    # End bond record.
-                    file.write("    endbond\n")
+                        # Angle data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+
+                        # End bond record.
+                        file.write("    endbond\n")
 
             # 3) Angles.
 
@@ -920,20 +923,23 @@ class Molecule():
                 amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
                 amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
 
-                # Start angle record.
-                file.write("    angle\n")
+                # Only write record if the angle parameters change.
+                if amber_angle0 != amber_angle1:
 
-                # Angle data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        initial_force  %.5f\n" % amber_angle0.k())
-                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
-                file.write("        final_force    %.5f\n" % amber_angle1.k())
-                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+                    # Start angle record.
+                    file.write("    angle\n")
 
-                # End angle record.
-                file.write("    endangle\n")
+                    # Angle data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        initial_force  %.5f\n" % amber_angle0.k())
+                    file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
+                    file.write("        final_force    %.5f\n" % amber_angle1.k())
+                    file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+
+                    # End angle record.
+                    file.write("    endangle\n")
 
             # 4) Dihedrals.
 
@@ -1076,25 +1082,28 @@ class Molecule():
                 amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
                 amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
 
-                # Start dihedral record.
-                file.write("    dihedral\n")
+                # Only write record if the dihedral parameters change.
+                if amber_dihedral0 != amber_dihedral1:
 
-                # Dihedral data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                file.write("\n")
-                file.write("        final_form    ")
-                for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                file.write("\n")
+                    # Start dihedral record.
+                    file.write("    dihedral\n")
 
-                # End dihedral record.
-                file.write("    enddihedral\n")
+                    # Dihedral data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                    file.write("        initial_form  ")
+                    for term in amber_dihedral0.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+                    file.write("        final_form    ")
+                    for term in amber_dihedral1.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+
+                    # End dihedral record.
+                    file.write("    enddihedral\n")
 
             # 5) Impropers.
 
@@ -1235,25 +1244,28 @@ class Molecule():
                 amber_dihedral0 = _SireMM.AmberDihedral(improper0.function(), _SireCAS.Symbol("phi"))
                 amber_dihedral1 = _SireMM.AmberDihedral(improper1.function(), _SireCAS.Symbol("phi"))
 
-                # Start improper record.
-                file.write("    improper\n")
+                # Only write record if the improper parameters change.
+                if amber_dihedral0 != amber_dihedral1:
 
-                # Improper data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                file.write("\n")
-                file.write("        final_form    ")
-                for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                file.write("\n")
+                    # Start improper record.
+                    file.write("    improper\n")
 
-                # End improper record.
-                file.write("    endimproper\n")
+                    # Improper data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                    file.write("        initial_form  ")
+                    for term in amber_dihedral0.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+                    file.write("        final_form    ")
+                    for term in amber_dihedral1.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+
+                    # End improper record.
+                    file.write("    endimproper\n")
 
             # End molecule record.
             file.write("endmolecule\n")
