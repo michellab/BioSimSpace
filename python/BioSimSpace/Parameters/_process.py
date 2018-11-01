@@ -208,9 +208,9 @@ class Process():
             # Flag that the thread has finished.
             self._is_finished = True
 
-            # Fix the charges so that the total is integer values.
+            # Fix the charges so that the total is integer valued.
             if self._new_molecule is not None:
-                self._new_molecule._fixCharge()
+                self._new_molecule._fixCharge(property_map=self._protocol._property_map)
 
         # If there was an problem, return the last error.
         if self._is_error:
