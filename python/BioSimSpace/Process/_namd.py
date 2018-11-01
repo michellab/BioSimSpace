@@ -121,7 +121,7 @@ class Namd(_process.Process):
         self._restraint_file = None
 
         # Set the path for the NAMD configuration file.
-        self._config_file = "%s/%s.namd" % (self._work_dir, name)
+        self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._psf_file, self._top_file, self._param_file]

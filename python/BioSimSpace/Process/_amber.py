@@ -220,7 +220,7 @@ class Amber(_process.Process):
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # Set the path for the AMBER configuration file.
-        self._config_file = "%s/%s.amber" % (self._work_dir, name)
+        self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
