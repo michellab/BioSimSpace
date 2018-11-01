@@ -137,6 +137,10 @@ class Molecule():
         # Create and return a new system.
         return _System(molecules)
 
+    def copy(self):
+        """Create a copy of this molecule."""
+        return Molecule(self)
+
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
 
@@ -1297,6 +1301,71 @@ class Molecule():
 
         # Return the updated molecule.
         return mol.commit()
+
+    def _toRegularMolecule(self, property_map={}, is_lambda1=False):
+        """Internal function to convert a merged molecule to a regular molecule.
+
+           
+           Keyword arguments
+           --------------------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+               Whether to use the molecule at the lambda = 1 end state.
+               By default, the state at lambda = 0 is used.
+
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule at the chosen end state.
+        """
+
+        if type(is_lambda1) is not bool:
+            raise TypeError("'is_lambda1' must be of type 'bool'")
+
+        if is_lambda1:
+            lam = "1"
+        else:
+            lam = "0"
+
+        if not self._is_merged:
+            return Molecule(self._sire_molecule)
+
+        # Extract and copy the Sire molecule.
+        mol = self._sire_molecule.__deepcopy__()
+
+        # Make the molecule editable.
+        mol = mol.edit()
+
+        # Remove the perturbable molecule flag.
+        mol = mol.removeProperty("is_perturbable").molecule()
+
+        # Rename all properties in the molecule for the corrsponding end state,
+        # e.g.: "prop0" --> "prop". Then delete all properties named "prop0"
+        # and "prop1".
+        for prop in mol.propertyKeys():
+            if prop[-1] == lam:
+                # See if this property exists in the user map.
+                if prop[:-1] in property_map:
+                    new_prop = property_map[prop[:-1]]
+                else:
+                    new_prop = prop[:-1]
+
+                # Copy the property using the updated name.
+                mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
+
+                # Delete redundant properties.
+                mol = mol.removeProperty(prop[:-1] + "0").molecule()
+                mol = mol.removeProperty(prop[:-1] + "1").molecule()
+
+        # Return the updated molecule.
+        return Molecule(mol.commit())
 
     def _merge(self, other, mapping, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.

@@ -132,6 +132,10 @@ class System():
         # Return the new system.
         return system
 
+    def copy(self):
+        """Create a copy of this system."""
+        return System(self)
+
     def nMolecules(self):
         """Return the number of molecules in the system."""
         return self._sire_system.nMolecules()
