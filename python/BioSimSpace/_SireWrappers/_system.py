@@ -31,6 +31,7 @@ import Sire.Mol as _SireMol
 import Sire.System as _SireSystem
 import Sire.Vol as _SireVol
 
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
 import BioSimSpace.Units as _Units
@@ -352,11 +353,11 @@ class System():
         # for certain changes to the Molecule molInfo object. As such, we remove
         # the old molecule from the system, then add the new one in.
         for mol in molecules:
-            self._sire_system.remove(mol._sire_molecule.number())
-            self._sire_system.add(mol._sire_molecule, _SireMol.MGName("all"))
-
-        # Create a new Sire system from the molecules.
-        self._sire_system = self._createSireSystem(molecules)
+            try:
+                self._sire_system.update(mol._sire_molecule)
+            except:
+                self._sire_system.remove(mol._sire_molecule.number())
+                self._sire_system.add(mol._sire_molecule, _SireMol.MGName("all"))
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
@@ -696,6 +697,88 @@ class System():
 
         # Return the renumbered molecules.
         return new_molecules
+
+    def _updateCoordinates(self, system, property_map0={}, property_map1={},
+            is_lambda1=False):
+        """Update the coordinates of atoms in the system.
+
+
+           Positional arguments
+           --------------------
+
+           system : BioSimSpace._SireWrappers.System
+               A system containing the updated coordinates.
+
+
+           Keyword arguments
+           -----------------
+
+           property_map0 : dict
+               A dictionary that maps system "properties" to their user defined
+               values in this system.
+
+           property_map1 : dict
+               A dictionary that maps system "properties" to their user defined
+               values in the passed system.
+
+           is_lambda1 : bool
+              Whether to update coordinates of perturbed molecules at lambda = 1.
+              By default, coordinates at lambda = 0 are used.
+        """
+
+        # Validate the system.
+        if type(system) is not System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # Check that the passed system contains the same number of molecules.
+        if self.nMolecules() != system.nMolecules():
+            raise _IncompatibleError("The passed 'system' contains a different number of "
+                                     "molecules. Expected '%d', found '%d'"
+                                     % (self.nMolecules, system.nMolecules()))
+
+        # Check that each molecule in the system contains the same number of atoms.
+        for idx in range(0, self.nMolecules()):
+            # Extract the number of atoms in the molecules.
+            num_atoms0 = self._sire_system.molecule(_SireMol.MolIdx(idx)).nAtoms()
+            num_atoms1 = self._sire_system.molecule(_SireMol.MolIdx(idx)).nAtoms()
+
+            if num_atoms0 != num_atoms1:
+                raise _IncompatibleError("Mismatch in atom count for molecule '%d': "
+                                         "Expected '%d', found '%d'" % (num_atoms0, num_atoms1))
+
+        # Work out the name of the "coordinates" property.
+        if "coordinates" in property_map0:
+            prop0 = property_map0["coordinates"]
+        else:
+            prop0 = "coordinates"
+        if "coordinates" in property_map1:
+            prop1 = property_map1["coordinates"]
+        else:
+            prop1 = "coordinates"
+
+        # Loop over all molecules and update the coordinates.
+        for idx in range(0, self.nMolecules()):
+            # Extract the molecules from each system.
+            mol0 = self._sire_system.molecule(_SireMol.MolIdx(idx))
+            mol1 = system._sire_system.molecule(_SireMol.MolIdx(idx))
+
+            # Check whether the molecule is perturbable.
+            if mol0.hasProperty("is_perturbable"):
+                if is_lambda1:
+                    prop = "coordinates1"
+                else:
+                    prop = "coordinates0"
+            else:
+                prop = prop0
+
+            # Try to update the coordinates property.
+            try:
+                mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
+            except:
+                raise _IncompatibleError("Unable to update 'coordinates' for molecule index '%d'" % idx)
+
+            # Update the molecule in the original system.
+            self._sire_system.update(mol0)
 
     @staticmethod
     def _createSireSystem(molecules):
