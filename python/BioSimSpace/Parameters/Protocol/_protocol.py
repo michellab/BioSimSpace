@@ -33,7 +33,6 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
-import BioSimSpace._Utils as _Utils
 
 import os as _os
 import queue as _queue
@@ -158,37 +157,36 @@ class Protocol():
         if work_dir is None:
             work_dir = _os.getcwd()
 
-        # Run parameterisation in the working directory.
-        with _Utils.cd(work_dir):
+        # Create the file prefix.
+        prefix = work_dir + "/"
 
-            # Create a new molecule using a deep copy of the internal Sire Molecule.
-            new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
+        # Create a new molecule using a deep copy of the internal Sire Molecule.
+        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
 
-            # Choose the program to run with depending on the force field compatibility.
-            # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
-            # tLEaP fails to produce output.
+        # Choose the program to run with depending on the force field compatibility.
+        # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
+        # tLEaP fails to produce output.
 
-            # First, try parameterise using tLEaP.
-            if self._tleap:
-                if _tleap_exe is not None:
-                    output = self._run_tleap(molecule)
-                # Otherwise, try using pdb2gmx.
-                elif self._pdb2gmx:
-                    if _gmx_exe is not None:
-                        output = self._run_pdb2gmx(molecule)
-                    else:
-                        raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
-
-            # Parameterise using pdb2gmx.
+        # First, try parameterise using tLEaP.
+        if self._tleap:
+            if _tleap_exe is not None:
+                output = self._run_tleap(molecule, work_dir)
+            # Otherwise, try using pdb2gmx.
             elif self._pdb2gmx:
                 if _gmx_exe is not None:
-                    output = self._run_pdb2gmx(molecule)
+                    output = self._run_pdb2gmx(molecule, work_dir)
                 else:
-                    raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
+                    raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
+
+        # Parameterise using pdb2gmx.
+        elif self._pdb2gmx:
+            if _gmx_exe is not None:
+                output = self._run_pdb2gmx(molecule, work_dir)
+            else:
+                raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
 
         # Prepend the working directory to the output file names.
-        output = ["%s/%s" % (work_dir, output[0]),
-                  "%s/%s" % (work_dir, output[1])]
+        output = [prefix + output[0], prefix + output[1]]
 
         try:
             # Load the parameterised molecule.
@@ -208,7 +206,7 @@ class Protocol():
             queue.put(new_mol)
         return new_mol
 
-    def _run_tleap(self, molecule):
+    def _run_tleap(self, molecule, work_dir):
         """Run using tLEaP.
 
 
@@ -217,6 +215,9 @@ class Protocol():
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
+
+           work_dir : str
+               The working directory.
         """
 
         # Create a new system and molecule group.
@@ -227,10 +228,13 @@ class Protocol():
         m.add(molecule._getSireMolecule())
         s.add(m)
 
+        # Create the file prefix.
+        prefix = work_dir + "/"
+
         # Write the system to a PDB file.
         try:
             pdb = _Sire.IO.PDB2(s, self._property_map)
-            pdb.writeToFile("leap.pdb")
+            pdb.writeToFile(prefix + "leap.pdb")
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
 
@@ -238,7 +242,7 @@ class Protocol():
         ff = _find_force_field(self._forcefield)
 
         # Write the LEaP input file.
-        with open("leap.txt", "w") as file:
+        with open(prefix + "leap.txt", "w") as file:
             file.write("source %s\n" % ff)
             file.write("mol = loadPdb leap.pdb\n")
             file.write("saveAmberParm mol leap.top leap.crd\n")
@@ -247,28 +251,28 @@ class Protocol():
         # Generate the tLEaP command.
         command = "%s -f leap.txt" % _tleap_exe
 
-        with open("README.txt", "w") as file:
+        with open(prefix + "README.txt", "w") as file:
             # Write the command to file.
             file.write("# tLEaP was run with the following command:\n")
             file.write("%s\n" % command)
 
         # Create files for stdout/stderr.
-        stdout = open("tleap.out", "w")
-        stderr = open("tleap.err", "w")
+        stdout = open(prefix + "tleap.out", "w")
+        stderr = open(prefix + "tleap.err", "w")
 
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
-        if _os.path.isfile("leap.top") and _os.path.isfile("leap.crd"):
+        if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
 
-    def _run_pdb2gmx(self, molecule):
+    def _run_pdb2gmx(self, molecule, work_dir):
         """Run using pdb2gmx.
 
 
@@ -277,6 +281,9 @@ class Protocol():
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
+
+           work_dir : str
+               The working directory.
         """
 
         # A list of supported force fields, mapping to their GROMACS ID string.
@@ -297,10 +304,13 @@ class Protocol():
         m.add(molecule._getSireMolecule())
         s.add(m)
 
+        # Create the file prefix.
+        prefix = work_dir + "/"
+
         # Write the system to a PDB file.
         try:
             pdb = _Sire.IO.PDB2(s, self._property_map)
-            pdb.writeToFile("input.pdb")
+            pdb.writeToFile(prefix + "input.pdb")
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
 
@@ -308,22 +318,22 @@ class Protocol():
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
             % (_gmx_exe, supported_ff[self._forcefield])
 
-        with open("README.txt", "w") as file:
+        with open(prefix + "README.txt", "w") as file:
             # Write the command to file.
             file.write("# pdb2gmx was run with the following command:\n")
             file.write("%s\n" % command)
 
         # Create files for stdout/stderr.
-        stdout = open("pdb2gmx.out", "w")
-        stderr = open("pdb2gmx.err", "w")
+        stdout = open(prefix + "pdb2gmx.out", "w")
+        stderr = open(prefix + "pdb2gmx.err", "w")
 
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
         # Check for the expected output.
-        if _os.path.isfile("output.gro") and _os.path.isfile("output.top"):
+        if _os.path.isfile(prefix + "output.gro") and _os.path.isfile(prefix + "output.top"):
             return ["output.gro", "output.top"]
         else:
             raise _ParameterisationError("pdb2gmx failed!")
