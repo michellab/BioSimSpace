@@ -31,12 +31,9 @@ import Sire.MM as _SireMM
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..Gateway import ResourceManager as _ResourceManager
-from ..Process import Amber as _Amber
-from ..Process import ProcessRunner as _ProcessRunner
-from ..Process import Somd as _Somd
-from ..Protocol import FreeEnergy as _FreeEnergy
 from .._SireWrappers import System as _System
 
+import BioSimSpace.Process as _Process
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Units as _Units
 
@@ -74,7 +71,7 @@ class FreeEnergy():
         # Validate the input.
 
         if protocol is not None:
-            if type(protocol) is not _FreeEnergy:
+            if type(protocol) is not _Protocol.FreeEnergy:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
             else:
                 self._protocol = protocol
@@ -291,7 +288,7 @@ class FreeEnergy():
             protocol = _Protocol.Minimisation(steps=1000)
 
             # Initialise the AMBER process.
-            process = _Amber(system, protocol)
+            process = _Process.Amber(system, protocol)
 
             # Start the process.
             process.start()
@@ -309,7 +306,7 @@ class FreeEnergy():
                                                restrain_backbone=True)
 
             # Initialise the AMBER process.
-            process = _Amber(process.getSystem(), protocol)
+            process = _Process.Amber(process.getSystem(), protocol)
 
             # Start the process.
             process.start()
@@ -340,7 +337,7 @@ class FreeEnergy():
             protocol = _Protocol.Minimisation(steps=1000)
 
             # Initialise the AMBER process.
-            process = _Amber(system, protocol)
+            process = _Process.Amber(system, protocol)
 
             # Start the process.
             process.start()
@@ -358,7 +355,7 @@ class FreeEnergy():
                                                restrain_backbone=True)
 
             # Initialise the AMBER process.
-            process = _Amber(process.getSystem(), protocol)
+            process = _Process.Amber(process.getSystem(), protocol)
 
             # Start the process.
             process.start()
@@ -384,12 +381,12 @@ class FreeEnergy():
             # Create and append the required processes for each leg.
             # Nest the working directories inside self._work_dir.
 
-            leg0.append(_Somd(system0, self._protocol,
+            leg0.append(_Process.Somd(system0, self._protocol,
                 platform="CUDA", work_dir="%s/lambda_%s" % (self._dir0, lam)))
 
-            leg1.append(_Somd(system1, self._protocol,
+            leg1.append(_Process.Somd(system1, self._protocol,
                 platform="CUDA", work_dir="%s/lambda_%s" % (self._dir1, lam)))
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory of the Solvation object.
-        self._runner = _ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
+        self._runner = _Process.ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
