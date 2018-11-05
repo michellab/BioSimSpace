@@ -20,8 +20,8 @@ molecule = system.getMolecules()[0]
 BSS.Parameters.forceFields()
 
 # Parameterise using the Amber03 force field.
-ff03_mol = BSS.Parameters.ff03(molecule)
+ff03_mol = BSS.Parameters.ff03(molecule).getMolecule()
 
 # Parameterise using the Generalized Amber Force Field.
-gaff_mol = BSS.Parameters.gaff(molecule)
+gaff_mol = BSS.Parameters.gaff(molecule).getMolecule()
 ```
