@@ -431,7 +431,7 @@ class Amber(_process.Process):
 
         # Add the default arguments.
         self.setArg("-O", True)                             # Overwrite.
-        self.setArg("-i", "%s.amber" % self._name)          # Input file.
+        self.setArg("-i", "%s.cfg" % self._name)            # Input file.
         self.setArg("-p", "%s.prm7" % self._name)           # Topology file.
         self.setArg("-c", "%s.rst7" % self._name)           # Coordinate file.
         self.setArg("-o", "stdout")                         # Redirect to stdout.

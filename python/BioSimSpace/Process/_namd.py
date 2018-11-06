@@ -524,7 +524,7 @@ class Namd(_process.Process):
             with open("README.txt", "w") as file:
 
                 # Set the command-line string.
-                self._command = "%s %s.namd" % (self._exe, self._name)
+                self._command = "%s %s.cfg" % (self._exe, self._name)
 
                 # Write the command to file.
                 file.write("# NAMD was run with the following command:\n")
@@ -535,7 +535,7 @@ class Namd(_process.Process):
 
             # Start the simulation.
             self._process = _SireBase.Process.run(self._exe,
-                "%s.namd" % self._name, "%s.out" % self._name, "%s.err" % self._name)
+                "%s.cfg" % self._name, "%s.out" % self._name, "%s.err" % self._name)
 
         return self
 
