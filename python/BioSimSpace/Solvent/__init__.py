@@ -40,7 +40,6 @@ import BioSimSpace._Utils as _Utils
 
 import os as _os
 import re as _re
-import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
@@ -547,7 +546,7 @@ def _solvate(molecule, box, shell, model, num_point,
         if molecule is not None:
             # Write the molecule/system to a GRO files.
             _IO.saveMolecules("input", molecule, "gro87")
-            _shutil.copyfile("input.gro87", "input.gro")
+            _os.rename("input.gro87", "input.gro")
 
             # Update the command.
             command += " -cp input.gro"
@@ -666,8 +665,8 @@ def _solvate(molecule, box, shell, model, num_point,
             # Write the molecule + water system to file.
             _IO.saveMolecules("solvated", system, "gro87")
             _IO.saveMolecules("solvated", system, "grotop")
-            _shutil.copyfile("solvated.gro87", "solvated.gro")
-            _shutil.copyfile("solvated.grotop", "solvated.top")
+            _os.rename("solvated.gro87", "solvated.gro")
+            _os.rename("solvated.grotop", "solvated.top")
 
             # First write an mdp file.
             with open("ions.mdp", "w") as file:
