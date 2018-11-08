@@ -26,8 +26,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from Sire.Base import getBinDir as _getBinDir
 
+import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
-import Sire.MM as _SireMM
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..Gateway import ResourceManager as _ResourceManager
@@ -253,20 +253,27 @@ class FreeEnergy():
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
+        # Try to get the water model property of the system.
+        try:
+            water_model = system0._sire_system.property("water_model").toString()
+        # Default to TIP3P.
+        except:
+            water_model = "tip3p"
+
         # Reformat all of the water molecules so that they match the expected
         # AMBER topology template. (Required by SOMD.)
-        waters0 = _SireMM.setAmberWater(system0._sire_system.search("water"))
-        waters1 = _SireMM.setAmberWater(system1._sire_system.search("water"))
+        waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), water_model)
+        waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), water_model)
 
         # Loop over all of the renamed water molecules, delete the old one
         # from the system, then add the renamed one back in.
         # TODO: This is a hack since the "update" method of Sire.System
         # doesn't work properly at present.
+        system0.removeWaterMolecules()
+        system1.removeWaterMolecules()
         for wat in waters0:
-            system0._sire_system.remove(wat.number())
             system0._sire_system.add(wat, _SireMol.MGName("all"))
         for wat in waters1:
-            system1._sire_system.remove(wat.number())
             system1._sire_system.add(wat, _SireMol.MGName("all"))
 
         # If there are waters in either system, then we need to minimise and

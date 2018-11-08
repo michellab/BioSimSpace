@@ -25,8 +25,8 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Base as _SireBase
+import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
-import Sire.MM as _SireMM
 
 from BioSimSpace import _gmx_exe, _gromacs_path
 
@@ -518,14 +518,14 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
-            waters = _SireMM.setGromacsWater(molecule._sire_system.search("water"))
+            waters = _SireIO.setGromacsWater(molecule._sire_system.search("water"), model)
 
             # Loop over all of the renamed water molecules, delete the old one
             # from the system, then add the renamed one back in.
             # TODO: This is a hack since the "update" method of Sire.System
             # doesn't work properly at present.
+            molecule.removeWaterMolecules()
             for wat in waters:
-                molecule._sire_system.remove(wat.number())
                 molecule._sire_system.add(wat, _SireMol.MGName("all"))
 
     # Create a temporary working directory and store the directory name.
