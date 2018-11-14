@@ -289,14 +289,14 @@ class Amber(_process.Process):
         if type(self._protocol) is _Protocol.Minimisation:
 
             # Work out the number of steepest descent cycles.
-            # This is 100 or 10% of the number of steps, whichever is larger.
+            # This is 1000 or 10% of the number of steps, whichever is larger.
             num_steps = self._protocol.getSteps()
-            if num_steps <= 100:
+            if num_steps <= 1000:
                 num_steep = num_steps
             else:
                 num_steep = _math.ceil(num_steps/10)
-                if num_steep < 100:
-                    num_steep = 100
+                if num_steep < 1000:
+                    num_steep = 1000
 
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
