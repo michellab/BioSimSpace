@@ -298,8 +298,6 @@ class Equilibration(_Protocol):
         else:
             self._ensemble = ensemble.replace(" ", "").upper()
 
-
-
     def isRestrained(self):
         """Return whether the backbone is restrained.
 
