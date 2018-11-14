@@ -385,7 +385,7 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if not self._protocol.isConstantTemp():
+            if self._protocol.getEnsemble() == "NPT":
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  1.01325")
                 self.addToConfig("langevinPistonPeriod  100.")

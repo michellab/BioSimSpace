@@ -323,7 +323,14 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
-            self.addToConfig("barostat = False")                        # Disable barostat (constant volume).
+            if self._protocol.getEnsemble() == "NVT":
+                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+            else:
+                if self._has_water and has_box:
+                    self.addToConfig("barostat = True")                 # Enable barostat.
+                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                else:
+                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
             else:

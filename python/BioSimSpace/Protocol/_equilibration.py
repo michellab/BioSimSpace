@@ -37,6 +37,10 @@ __all__ = ["Equilibration"]
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
+    # A list of allowed thermodynamic ensembles.
+    # Update as support is added.
+    _ensembles = ["NVT", "NPT"]
+
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(0.2, "nanoseconds"),
@@ -44,6 +48,7 @@ class Equilibration(_Protocol):
                  temperature_end=_Types.Temperature(300, "kelvin"),
                  temperature=None,
                  frames=20,
+                 ensemble="NVT",
                  restrain_backbone=False
                 ):
         """Constructor.
@@ -70,6 +75,9 @@ class Equilibration(_Protocol):
 
            frames : int
                The number of trajectory frames to record.
+
+           ensemble : str
+               The thermodynamic ensemble.
 
            restrain_backbone : bool
                Whether the atoms in the backbone are fixed.
@@ -104,22 +112,25 @@ class Equilibration(_Protocol):
         # Set the number of trajectory frames.
         self.setFrames(frames)
 
+        # Set the thermodynamic ensemble.
+        self.setEnsemble(ensemble)
+
         # Set the backbone restraint.
         self.setRestraint(restrain_backbone)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, frames=%d, restrain_backbone=%r>"
+                "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r>"
                ) % (self._timestep, self._runtime, self._temperature_start,
-                       self._temperature_end, self._frames, self._is_restrained)
+                       self._temperature_end, self._frames, self._ensemble, self._is_restrained)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, frames=%d, restrain_backbone=%r)"
+                "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r)"
                ) % (self._timestep, self._runtime, self._temperature_start,
-                       self._temperature_end, self._frames, self._is_restrained)
+                       self._temperature_end, self._frames, self._ensemble, self._is_restrained)
 
     def getTimeStep(self):
         """Return the time step.
@@ -259,6 +270,35 @@ class Equilibration(_Protocol):
             self._frames = 20
         else:
             self._frames = _math.ceil(frames)
+
+    def getEnsemble(self):
+        """Return the thermodynamic ensemble.
+
+           Returns
+           -------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
+        return self._ensemble
+
+    def setEnsemble(self, ensemble):
+        """Set the thermodynamic ensemble.
+
+
+           Positional arguments
+           --------------------
+
+           ensemble : str
+               The thermodynamic ensemble.
+        """
+        if ensemble.replace(" ", "").upper() not in self._ensembles:
+            warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
+            self._ensemble = "NPT"
+        else:
+            self._ensemble = ensemble.replace(" ", "").upper()
+
+
 
     def isRestrained(self):
         """Return whether the backbone is restrained.

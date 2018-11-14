@@ -32,12 +32,12 @@ import math as _math
 
 __all__ = ["Production"]
 
-# A list of allowed thermodynamic ensembles.
-# Update as support is added.
-_ensembles = ["NVT", "NPT"]
-
 class Production(_Protocol):
     """A class for storing production protocols."""
+
+    # A list of allowed thermodynamic ensembles.
+    # Update as support is added.
+    _ensembles = ["NVT", "NPT"]
 
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
@@ -239,7 +239,7 @@ class Production(_Protocol):
            ensemble : str
                The thermodynamic ensemble.
         """
-        if ensemble.replace(" ", "").upper() not in _ensembles:
+        if ensemble.replace(" ", "").upper() not in self._ensembles:
             warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
             self._ensemble = "NPT"
         else:
