@@ -287,6 +287,17 @@ class Amber(_process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
+
+            # Work out the number of steepest descent cycles.
+            # This is 100 or 10% of the number of steps, whichever is larger.
+            num_steps = self._protocol.getSteps()
+            if num_steps <= 100:
+                num_steep = num_steps
+            else:
+                num_steep = _math.ceil(num_steps/10)
+                if num_steep < 100:
+                    num_steep = 100
+
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
             self.addToConfig("  imin=1,")                   # Minimisation simulation.
@@ -295,8 +306,8 @@ class Amber(_process.Process):
             self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
             self.addToConfig("  ntc=2,")                    # Enable SHAKE.
             self.addToConfig("  irest=0,")                  # Don't restart.
-            self.addToConfig("  maxcyc=%d,"
-                % self._protocol.getSteps())                # Set the number of steps.
+            self.addToConfig("  maxcyc=%d," % num_steps)    # Set the number of steps.
+            self.addToConfig("  ncyc=%d," % num_steep)      # Set the number of steepest descent steps.
             if not has_box:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
