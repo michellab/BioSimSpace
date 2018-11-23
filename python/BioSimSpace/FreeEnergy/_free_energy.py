@@ -288,10 +288,10 @@ class FreeEnergy():
             # Nest the working directories inside self._work_dir.
 
             leg0.append(_Process.Somd(system0, self._protocol,
-                platform="CUDA", work_dir="%s/lambda_%s" % (self._dir0, lam)))
+                platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
             leg1.append(_Process.Somd(system1, self._protocol,
-                platform="CUDA", work_dir="%s/lambda_%s" % (self._dir1, lam)))
+                platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory of the Solvation object.
