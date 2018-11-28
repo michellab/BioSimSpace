@@ -103,6 +103,10 @@ finally:
         command = "%s/pip install pygtail" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
+        print("Installing package: pymbar")
+        command = "%s/pip install pymbar" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
         print("Installing package: fileupload")
         command = "%s/pip install fileupload" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
