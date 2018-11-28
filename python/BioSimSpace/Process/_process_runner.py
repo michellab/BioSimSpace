@@ -416,8 +416,28 @@ class ProcessRunner():
         """Start all of the processes."""
 
         for p in self._processes:
-            p.start()
-            p.wait()
+            # Initialise the error state.
+            is_error = True
+
+            # Zero the tally of failed processes.
+            num_failed = 0
+
+            # Retry failed processes up to a maximum of 5 times.
+            while is_error:
+                # Start the process and wait for it to finish.
+                p.start()
+                p.wait()
+
+                # Check the error state.
+                is_error = p.isError()
+
+                # Increment the number of failures.
+                if is_error:
+                    num_failed += 1
+
+                    # Maximum retries reached, move to the next process.
+                    if num_failed == 5:
+                        break
 
     def kill(self, index):
         """Kill a specific process. The same can be achieved using:
