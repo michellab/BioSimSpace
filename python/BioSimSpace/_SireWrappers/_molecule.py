@@ -730,7 +730,7 @@ class Molecule():
                 LJ1 = atom.property("LJ1");
 
                 # Atom data.
-                file.write("        name           %s\n"     % atom.name().value())
+                file.write("        name           %s\n" % atom.name().value())
                 file.write("        initial_type   %s\n" % atom.property("ambertype0"))
                 file.write("        final_type     %s\n" % atom.property("ambertype1"))
                 file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
@@ -1305,7 +1305,7 @@ class Molecule():
     def _toRegularMolecule(self, property_map={}, is_lambda1=False):
         """Internal function to convert a merged molecule to a regular molecule.
 
-           
+
            Keyword arguments
            --------------------
 
