@@ -113,6 +113,7 @@ OPENMM_PLUGIN_DIR=$HOME/sire.app/lib/plugins/
 Each package has its own README page:
 
 - [BioSimSpace.Align](python/BioSimSpace/Align)
+- [BioSimSpace.FreeEnergy](python/BioSimSpace/FreeEnergy)
 - [BioSimSpace.Gateway](python/BioSimSpace/Gateway)
 - [BioSimSpace.IO](python/BioSimSpace/IO)
 - [BioSimSpace.MD](python/BioSimSpace/MD)
