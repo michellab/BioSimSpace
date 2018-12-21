@@ -239,7 +239,10 @@ class System():
         else:
             prop = "fileformat"
 
-        return self._sire_system.property(prop).value()
+        try:
+            return self._sire_system.property(prop).value()
+        except:
+            return None
 
     def addMolecules(self, molecules):
         """Add a molecule, or list of molecules to the system.
