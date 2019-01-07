@@ -965,5 +965,5 @@ del(_sys)
 del(_var)
 
 def waterModels():
-    "Return a list of the supported water models"
+    "Return a list of the supported water models."
     return _models

@@ -428,5 +428,5 @@ del(_sys)
 del(_var)
 
 def forceFields():
-    "Return a list of the supported force fields"
+    "Return a list of the supported force fields."
     return _forcefields
