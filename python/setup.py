@@ -142,7 +142,7 @@ finally:
             os.remove("setup.out")
             os.remove("setup.err")
         except:
-            print("\nInstallation of BioSimSpace failed. Please check output in 'setup.out' and 'setup.err'")
+            print("\nPossible installation issues. Please check output in 'setup.out' and 'setup.err'")
             sys.exit()
 
         print("\nDone!")
