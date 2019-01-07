@@ -286,6 +286,7 @@ class FreeEnergy():
 
             # Create and append the required processes for each leg.
             # Nest the working directories inside self._work_dir.
+            # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
 
             leg0.append(_Process.Somd(system0, self._protocol,
                 platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
