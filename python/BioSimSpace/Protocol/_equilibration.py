@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
