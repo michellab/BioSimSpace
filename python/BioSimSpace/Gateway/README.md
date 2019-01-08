@@ -60,11 +60,11 @@ node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affili
 node.setLicence("GPLv3")
 
 # Specify the input requirements for the node.
-node.addInput("files", BSS.Gateway.FileSet(help="a set of molecular input files"))
-node.addInput("steps", BSS.Gateway.Integer(help="the number of minimisation steps", minimum=0, maximum=100000, default=10000))
+node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
+node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
 
 # Specify the output of the node.
-node.addOutput("minimised", BSS.Gateway.FileSet(help="the minimised molecular system"))
+node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
 
 # Show the control panel so that the user to set the inputs. This will bring
 # up a GUI if running from within Jupyter.
