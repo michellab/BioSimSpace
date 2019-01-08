@@ -15,8 +15,15 @@ values and constraints. These are:
 - `BioSimSpace.Gateway.Boolean`
 - `BioSimSpace.Gateway.Integer`
 - `BioSimSpace.Gateway.Float`
+- `BioSimSpace.Gateway.String`
 - `BioSimSpace.Gateway.File`
 - `BioSimSpace.Gateway.FileSet`
+- `BioSimSpace.Gateway.Length`
+- `BioSimSpace.Gateway.Area`
+- `BioSimSpace.Gateway.Volume`
+- `BioSimSpace.Gateway.Charge`
+- `BioSimSpace.Gateway.Energy`
+- `BioSimSpace.Gateway.Pressure`
 - `BioSimSpace.Gateway.Temperature`
 - `BioSimSpace.Gateway.Time`
 
