@@ -126,8 +126,6 @@ Each package has its own README page:
 - [BioSimSpace.Types](python/BioSimSpace/Types)
 - [BioSimSpace.Units](python/BioSimSpace/Units)
 
-Full API documentation and examples can be found at [biosimspace.org](https://biosimspace.org).
-
 ## Dependencies
 
 BioSimSpace makes use of several external python packages. These should be
