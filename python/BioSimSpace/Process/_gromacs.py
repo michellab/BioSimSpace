@@ -224,7 +224,7 @@ class Gromacs(_process.Process):
         proc = _subprocess.run(command, shell=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
-        # Get the data prefix.
+        # Check that grompp ran successfully.
         if proc.returncode != 0:
             raise RuntimeError("Unable to generate GROMACS binary run input file")
 
