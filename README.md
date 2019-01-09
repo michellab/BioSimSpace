@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/michellab/BioSimSpace.svg?branch=testing)](https://travis-ci.org/michellab/BioSimSpace)
 
 Code and resources for the [EPSRC](https://epsrc.ukri.org)
-[BioSimSpace](https://biosimspace.org) project.
+BioSimSpace project.
 
 BioSimSpace is an interoperable framework for biomolecular simulation. With it you
 can:
