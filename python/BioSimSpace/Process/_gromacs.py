@@ -290,7 +290,7 @@ class Gromacs(_process.Process):
                     for line in top_lines:
                         file.write("%s\n" % line)
 
-                # Remove the temporary run file.
+                # Remove the temporary gro file.
                 if _os.path.isfile(gro_file):
                     _os.remove(gro_file)
 
