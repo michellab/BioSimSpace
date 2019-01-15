@@ -52,6 +52,7 @@ import os as _os
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
+import yaml as _yaml
 
 # Enable Jupyter widgets.
 if _is_notebook():
@@ -1057,7 +1058,26 @@ class Node():
                 # Return a link to the archive.
                 return _FileLink(zipname)
         else:
-            return True
+            # Initialise an empty dictionary to store the output data.
+            data = {}
+
+            # Populate the dictionary.
+            for name, output in self._outputs.items():
+
+                # Convert FileSet output to correct format.
+                if type(output) is _FileSet:
+                    value = ", ".join(output.getValue())
+                else:
+                    value = output.getValue()
+
+                # Insert item into dictionary.
+                data[name] = value
+
+            # Write the outputs to a yaml file.
+            with open("output.yml", "w") as file:
+                _yaml.dump(data, file, default_flow_style=False)
+
+            return "output.yml"
 
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
