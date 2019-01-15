@@ -44,7 +44,7 @@ from ._requirements import Volume as _Volume
 
 import BioSimSpace.Types._type as _Type
 
-import argparse as _argparse
+import configargparse as _argparse
 import collections as _collections
 import io as _io
 import __main__
@@ -169,10 +169,7 @@ class Node():
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-o", "--output", action=_OutputAction, help="Show the output of this node.")
-
-            # TODO: Add an option to allow the user to load a configuration from file.
-            # config = File(help="path to a configuration file", optional=True)
-            # self.addInput("config", config)
+            self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
 
     def __del__(self):
         """Destructor."""
@@ -998,7 +995,8 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                self._inputs[key].setValue(value)
+                if key is not "config":
+                    self._inputs[key].setValue(value)
 
     def validate(self):
         """Whether the output requirements are satisfied.
