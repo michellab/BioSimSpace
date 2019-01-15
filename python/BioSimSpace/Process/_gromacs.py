@@ -121,7 +121,7 @@ class Gromacs(_process.Process):
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Create the list of input files.
-        self._run_files = [self._config_file, self._gro_file, self._top_file]
+        self._input_files = [self._config_file, self._gro_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -141,7 +141,7 @@ class Gromacs(_process.Process):
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
-        self._run_files.append(self._tpr_file)
+        self._input_files.append(self._tpr_file)
 
         # Generate the GROMACS configuration file.
         # Skip if the user has passed a custom config.
@@ -155,7 +155,7 @@ class Gromacs(_process.Process):
         self._generate_args()
 
         # Return the list of input files.
-        return self._run_files
+        return self._input_files
 
     def _generate_config(self):
         """Generate GROMACS configuration file strings."""
@@ -195,6 +195,105 @@ class Gromacs(_process.Process):
             config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
             config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
 
+        # Add configuration variables for an equilibration simulation.
+        elif type(self._protocol) is _Protocol.Equilibration:
+            config.append("integrator = steep")         # Use steepest descent.
+            config.append("nsteps = 1000")
+            config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+            config.append("ns-type = grid")             # Use a grid to search for neighbours.
+            config.append("pbc = xyz")                  # Simulate a fully periodic box.
+            config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+            config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+
+            # Restrain backbone atoms in all non-water or ion molecules.
+            if self._protocol.isRestrained():
+
+                # Copy the user property map.
+                property_map = self._property_map.copy()
+
+                # Parse the topology in serial to ensure that molecules are
+                # ordered correctly. Don't sort based on name.
+                property_map["parallel"] = _SireBase.wrap(False)
+                property_map["sort"] = _SireBase.wrap(False)
+
+                # Create a GROMACS topology object.
+                top = _SireIO.GroTop(self._system, property_map)
+
+                # Get the top file as a list of lines.
+                top_lines = top.lines()
+
+                # List of 'moleculetype' record indices.
+                moleculetypes_idx = []
+
+                # Store the line index for the start of each 'moleculetype' record.
+                for idx, line in enumerate(top_lines):
+                    if "[ moleculetype ]" in line:
+                        moleculetypes_idx.append(idx)
+
+                # Extract all of the molecules from the system.
+                mols = _System(self._system).getMolecules()
+
+                # The number of restraint files.
+                num_restraint = 1
+
+                # Loop over all of the molecules and create a constraint file for
+                # each, excluding any water molecules or ions.
+                for idx, mol in enumerate(mols):
+                    if not mol.isWater() and mol.nAtoms() > 1:
+                        # Create a GRO file from the molecule.
+                        gro = _SireIO.Gro87(mol.toSystem()._sire_system)
+
+                        # Create the name of the temporary gro file.
+                        gro_file = "%s/tmp.gro" % self._work_dir
+
+                        # Write to a temporary file.
+                        gro.writeToFile(gro_file)
+
+                        # Create the name of the restrant file.
+                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+
+                        # Use genrestr to generate a restraint file for the molecule.
+                        command = "echo Backbone | %s genrestr -f %s -o %s" % (self._exe, gro_file, restraint_file)
+
+                        # Run the command.
+                        proc = _subprocess.run(command, shell=True,
+                            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+                        # Check that grompp ran successfully.
+                        if proc.returncode != 0:
+                            raise RuntimeError("Unable to generate GROMACS restraint file.")
+
+                        # Include the position restraint file in the correct place within
+                        # the topology file. We put the additional include directove at the
+                        # end of the block so we move to the line before the next moleculetype
+                        # record.
+                        new_top_lines = top_lines[:moleculetypes_idx[idx+1]-1]
+
+                        # Append the additional information.
+                        new_top_lines.append('#include "%s"' % restraint_file)
+                        new_top_lines.append("")
+
+                        # Now extend with the remainder of the file.
+                        new_top_lines.extend(top_lines[moleculetypes_idx[idx+1]:])
+
+                        # Overwrite the topology file lines.
+                        top_lines = new_top_lines
+
+                        # Increment the number of restraint files.
+                        num_restraint += 1
+
+                        # Append the restraint file to the list of autogenerated inputs.
+                        self._input_files.append(restraint_file)
+
+                # Write the updated topology to file.
+                with open(self._top_file, "w") as file:
+                    for line in top_lines:
+                        file.write("%s\n" % line)
+
+                # Remove the temporary gro file.
+                if _os.path.isfile(gro_file):
+                    _os.remove(gro_file)
+
         else:
             raise NotImplementedError("Only 'minimisation' protocol is currently supported.")
 
@@ -216,9 +315,9 @@ class Gromacs(_process.Process):
         """Use grommp to generate the binary run input file."""
 
         # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -o %s" \
+        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -r %s -o %s" \
             % (self._exe, self._config_file, self._config_file.split(".")[0],
-                self._gro_file, self._top_file, self._tpr_file)
+                self._gro_file, self._top_file, self._gro_file, self._tpr_file)
 
         # Run the command.
         proc = _subprocess.run(command, shell=True,
@@ -226,7 +325,7 @@ class Gromacs(_process.Process):
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
-            raise RuntimeError("Unable to generate GROMACS binary run input file")
+            raise RuntimeError("Unable to generate GROMACS binary run input file.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list.

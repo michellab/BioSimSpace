@@ -79,6 +79,14 @@ finally:
         command = "%s/pip install --upgrade pip" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
+        print("Installing package: configargparse")
+        command = "%s/pip install configargparse" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
+        print("Installing package: pyaml")
+        command = "%s/pip install pyaml" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
         print("Installing package: pypdb")
         command = "%s/pip install pypdb" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)

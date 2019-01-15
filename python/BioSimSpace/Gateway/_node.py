@@ -44,7 +44,7 @@ from ._requirements import Volume as _Volume
 
 import BioSimSpace.Types._type as _Type
 
-import argparse as _argparse
+import configargparse as _argparse
 import collections as _collections
 import io as _io
 import __main__
@@ -52,6 +52,7 @@ import os as _os
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
+import yaml as _yaml
 
 # Enable Jupyter widgets.
 if _is_notebook():
@@ -121,6 +122,10 @@ class Node():
                 self._name = _os.path.basename(__main__.__file__)
             except:
                 self._name = None
+        else:
+            if type(name) is not str:
+                raise TypeError("The 'name' keyword must be of type 'str'.")
+            self._name = name
 
         # Set the node description string.
         self._description = description
@@ -169,10 +174,7 @@ class Node():
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-o", "--output", action=_OutputAction, help="Show the output of this node.")
-
-            # TODO: Add an option to allow the user to load a configuration from file.
-            # config = File(help="path to a configuration file", optional=True)
-            # self.addInput("config", config)
+            self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
 
     def __del__(self):
         """Destructor."""
@@ -998,18 +1000,29 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                self._inputs[key].setValue(value)
+                if key is not "config":
+                    self._inputs[key].setValue(value)
 
-    def validate(self):
+    def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
+
+           Keyword arguments
+           -----------------
+
+           file_prefix : str
+               The prefix of the output file name.
 
            Returns
            -------
 
-           file_link : IPython.lib.display.FileLink
-               A link to a zipfile containing the validated output.
-               (Only if running interactively.)
+           output : IPython.lib.display.FileLink, str
+               If running interatvely: A link to a zipfile containing the
+               validated output, else the name of a YAML file containing
+               the node output.
         """
+
+        if type(file_prefix) is not str:
+            raise TypeError("The 'file_prefix' keyword must be of type 'str'.")
 
         # Flag that we have validated output.
         self._is_output_validated = True
@@ -1040,10 +1053,7 @@ class Node():
             # There are files.
             if len(file_outputs) > 0:
                 # Create the archive name.
-                if self._name is None:
-                    zipname = "output.zip"
-                else:
-                    zipname = "%s.zip" % self._name
+                zipname = "%s.zip" % file_prefix
 
                 # Append the files to the archive.
                 with _zipfile.ZipFile(zipname, "w") as zip:
@@ -1059,7 +1069,29 @@ class Node():
                 # Return a link to the archive.
                 return _FileLink(zipname)
         else:
-            return True
+            # Initialise an empty dictionary to store the output data.
+            data = {}
+
+            # Create the YAML file name.
+            ymlname = "%s.yml" % file_prefix
+
+            # Populate the dictionary.
+            for name, output in self._outputs.items():
+
+                # Convert FileSet output to correct format.
+                if type(output) is _FileSet:
+                    value = ", ".join(output.getValue())
+                else:
+                    value = output.getValue()
+
+                # Insert item into dictionary.
+                data[name] = value
+
+            # Write the outputs to a YAML file.
+            with open(ymlname, "w") as file:
+                _yaml.dump(data, file, default_flow_style=False)
+
+            return ymlname
 
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
