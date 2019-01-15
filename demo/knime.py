@@ -4,7 +4,7 @@ import pandas
 import subprocess
 import yaml
 
-# Set the BioSimSpace python interpreter.
+# Set the BioSimSpace Python interpreter.
 bss_python = "/home/lester/sire.app/bin/python"
 
 # Set the script name.
