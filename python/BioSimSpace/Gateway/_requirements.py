@@ -143,7 +143,7 @@ class Requirement():
             # Flag the the requirement is optional.
             self._is_optional = True
 
-    def setValue(self, value):
+    def setValue(self, value, name):
         """Validate and set the value.
 
 
@@ -152,10 +152,20 @@ class Requirement():
 
            value :
                The value of the input requirement.
+
+
+           Keyword arguments
+           -----------------
+
+           name : str
+               The name of the requirement.
         """
 
         if value is None and not self._is_optional:
-            raise ValueError("Value is unset!")
+            if type(name) is str:
+                raise ValueError("Value is unset for requirement '%s'!" % name)
+            else:
+                raise ValueError("Value is unset!")
 
         # Validate the value.
         value = self._validate(value)
