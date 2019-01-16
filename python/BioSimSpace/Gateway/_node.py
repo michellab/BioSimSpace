@@ -164,7 +164,8 @@ class Node():
             # Create the parser.
             description = "\n".join(_textwrap.wrap(self._description, 80))
             self._parser = _argparse.ArgumentParser(description=description,
-                formatter_class=_argparse.RawTextHelpFormatter, add_help=False)
+                formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
+                config_file_parser_class=_argparse.YAMLConfigFileParser)
 
             # Bind _print_output method to parser.
             self._parser._print_output = self._print_output
@@ -737,7 +738,7 @@ class Node():
                The value of the output.
         """
         try:
-            self._outputs[name].setValue(value)
+            self._outputs[name].setValue(value, name=name)
         except KeyError:
             raise
 
@@ -991,7 +992,7 @@ class Node():
                     else:
                         value = None
 
-                self._inputs[key].setValue(value)
+                self._inputs[key].setValue(value, name=key)
 
         # Command-line.
         else:
@@ -1001,7 +1002,7 @@ class Node():
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
                 if key is not "config":
-                    self._inputs[key].setValue(value)
+                    self._inputs[key].setValue(value, name=key)
 
     def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
@@ -1077,15 +1078,7 @@ class Node():
 
             # Populate the dictionary.
             for name, output in self._outputs.items():
-
-                # Convert FileSet output to correct format.
-                if type(output) is _FileSet:
-                    value = ", ".join(output.getValue())
-                else:
-                    value = output.getValue()
-
-                # Insert item into dictionary.
-                data[name] = value
+                data[name] = output.getValue()
 
             # Write the outputs to a YAML file.
             with open(ymlname, "w") as file:

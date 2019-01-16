@@ -25,7 +25,7 @@ output = "output.yml"
 # and passed as input to this node.)
 
 # For example, create a dictionary to hold the input arguments.
-input_dict = {"steps" : 1000, "files" : "amber/ala/ala.crd, amber/ala/ala.top"}
+input_dict = {"steps" : 1000, "files" : ["amber/ala/ala.crd", "amber/ala/ala.top"]}
 
 # Insert the dictionary into the input DataFrame with label "input".
 input_table = pandas.DataFrame(data={"input" : input_dict})
