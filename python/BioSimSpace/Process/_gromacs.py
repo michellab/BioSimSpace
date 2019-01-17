@@ -38,6 +38,7 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
+import math as _math
 import os as _os
 import pygtail as _pygtail
 import subprocess as _subprocess
@@ -183,30 +184,103 @@ class Gromacs(_process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
-            config.append("integrator = steep")         # Use steepest descent.
+            config.append("integrator = steep")             # Use steepest descent.
             config.append("nsteps = %d"
-                % self._protocol.getSteps())            # Set the number of steps.
+                % self._protocol.getSteps())                # Set the number of steps.
             config.append("nstxout = %d"
-                % self._protocol.getSteps())            # Only write the final coordinates.
-            config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-            config.append("ns-type = grid")             # Use a grid to search for neighbours.
+                % self._protocol.getSteps())                # Only write the final coordinates.
+            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
             if has_box:
-                config.append("pbc = xyz")              # Simulate a fully periodic box.
-            config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-            config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+            else:
+                config.append("pbc = no")                   # No boundary conditions.
+                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                  # Zero short-range cutoff.
+                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+            config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+            config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
 
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
-            config.append("integrator = steep")         # Use steepest descent.
-            config.append("nsteps = 1000")
-            config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-            config.append("ns-type = grid")             # Use a grid to search for neighbours.
-            config.append("pbc = xyz")                  # Simulate a fully periodic box.
-            config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-            config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Set the random number seed.
+            if self._is_seeded:
+                seed = self._seed
+            else:
+                seed = -1
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)            # Random number seed.
+            config.append("dt = %.3f" % timestep)           # Integration time step.
+            config.append("nsteps = %d" % steps)            # Number of integration steps.
+            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+            config.append("nstlog = 100")                   # Write to log file every 100 steps.
+            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
+            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            if has_box:
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+            else:
+                config.append("pbc = no")                   # No boundary conditions.
+                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                  # Zero short-range cutoff.
+                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+            config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+            config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+
+            # Temperature control.
+            # No need for "berendsen" with integrator "sd".
+            config.append("tc-grps = system")               # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
+                                                            # Set the reference temperature.
+            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().magnitude())
+
+            # Heating/cooling protocol.
+            if not self._protocol.isConstantTemp():
+                # Work out the final time of the simulation.
+                end_time = _math.floor(timestep*steps)
+
+                config.append("annealing = single")         # Single sequence of annealing points.
+                config.append("annealing-npoints = 2")      # Two annealing points for "system" temperature group.
+
+                # Linearly change temperature between start and end times.
+                config.append("annealing-time = 0 %d" % end_time)
+                config.append("annealing-temp = %.2f %.2f"
+                    % (self._protocol.getStartTemperature().kelvin().magnitude(),
+                       self._protocol.getEndTemperature().kelvin().magnitude()))
+
+            # Pressure control.
+            if self._protocol.getEnsemble() == "NPT" and has_box:
+                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
+                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Restrain backbone atoms in all non-water or ion molecules.
             if self._protocol.isRestrained():
+
+                # Scale reference coordinates with the scaling matrix of the pressure coupling.
+                config.append("refcoord-scaling = all")
 
                 # Copy the user property map.
                 property_map = self._property_map.copy()
