@@ -44,7 +44,7 @@ classes and functions.
 i.e. `_process.py`
 
 * Where possible, external packages are hidden inside each module,
-e.g. `import mdtraj as _mdtraj.`
+e.g. `import mdtraj as _mdtraj`
 
 * Each module file contains an `__all__` variable that lists the specific items
 that should be imported.
