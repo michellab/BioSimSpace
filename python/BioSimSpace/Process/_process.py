@@ -170,6 +170,9 @@ class Process():
 
         # User specified working directory.
         else:
+            # Use full path.
+            if work_dir[0] != "/":
+                work_dir = _os.getcwd() + "/" + work_dir
             self._work_dir = work_dir
 
             # Create the directory if it doesn't already exist.
