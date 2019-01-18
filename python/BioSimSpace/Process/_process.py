@@ -221,7 +221,7 @@ class Process():
         offset_files = _glob.glob("%s/*.offset" % self._work_dir)
 
         for file in offset_files:
-            _os.remove(files)
+            _os.remove(file)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
