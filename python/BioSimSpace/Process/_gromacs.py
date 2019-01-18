@@ -189,21 +189,23 @@ class Gromacs(_process.Process):
                 % self._protocol.getSteps())                # Set the number of steps.
             config.append("nstxout = %d"
                 % self._protocol.getSteps())                # Only write the final coordinates.
-            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-            if not has_box or not self._has_water:
+            if has_box and self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
                 config.append("rlist = 1.2")                # Set short-range cutoff.
                 config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
             else:
                 config.append("pbc = no")                   # No boundary conditions.
+                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
                 config.append("nstlist = 0")                # Single neighbour list (all particles interact).
                 config.append("rlist = 0")                  # Zero short-range cutoff.
                 config.append("rvdw = 0")                   # Zero van der Waals cutoff.
                 config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-            config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-            config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
 
         # Add configuration variables for an equilibration simulation.
@@ -225,25 +227,26 @@ class Gromacs(_process.Process):
             config.append("ld-seed = %d" % seed)            # Random number seed.
             config.append("dt = %.3f" % timestep)           # Integration time step.
             config.append("nsteps = %d" % steps)            # Number of integration steps.
-            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
             config.append("nstlog = 100")                   # Write to log file every 100 steps.
             config.append("nstenergy = 100")                # Write to energy file every 100 steps.
             config.append("nstxout = 500")                  # Write coordinates every 500 steps.
-            if not has_box or not self._has_water:
+            if has_box and self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
                 config.append("rlist = 1.2")                # Set short-range cutoff.
                 config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
             else:
                 config.append("pbc = no")                   # No boundary conditions.
+                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
                 config.append("nstlist = 0")                # Single neighbour list (all particles interact).
                 config.append("rlist = 0")                  # Zero short-range cutoff.
                 config.append("rvdw = 0")                   # Zero van der Waals cutoff.
                 config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-            config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-            config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")          # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
@@ -367,6 +370,66 @@ class Gromacs(_process.Process):
                 # Remove the temporary gro file.
                 if _os.path.isfile(gro_file):
                     _os.remove(gro_file)
+
+        # Add configuration variables for a production simulation.
+        elif type(self._protocol) is _Protocol.Production:
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Set the random number seed.
+            if self._is_seeded:
+                seed = self._seed
+            else:
+                seed = -1
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)            # Random number seed.
+            config.append("dt = %.3f" % timestep)           # Integration time step.
+            config.append("nsteps = %d" % steps)            # Number of integration steps.
+            config.append("init-step = %d"
+                % self._protocol.getFirstStep()             # First time step.
+            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+            config.append("nstlog = 100")                   # Write to log file every 100 steps.
+            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
+            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            if not has_box or not self._has_water:
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+            else:
+                config.append("pbc = no")                   # No boundary conditions.
+                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                  # Zero short-range cutoff.
+                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+
+            # Temperature control.
+            # No need for "berendsen" with integrator "sd".
+            config.append("tc-grps = system")               # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
+                                                            # Set the reference temperature.
+            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().magnitude())
+
+            # Pressure control.
+            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
+                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
+                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
         else:
             raise NotImplementedError("Only 'minimisation' protocol is currently supported.")
@@ -514,16 +577,25 @@ class Gromacs(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        # Create the name of the restart GRO file.
-        restart = "%s/%s.gro" % (self._work_dir, self._name)
+        if type(self._protocol) is _Protocol.Minimisation:
+            # Create the name of the restart GRO file.
+            restart = "%s/%s.gro" % (self._work_dir, self._name)
 
-        # Check that the file exists.
-        if _os.path.isfile(restart):
-            # Create and return the molecular system.
-            return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
+            # Check that the file exists.
+            if _os.path.isfile(restart):
+                # Create and return the molecular system.
+                return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
+
+            else:
+                return None
 
         else:
-            return None
+            # Grab the first frame from the current trajectory file.
+            try:
+                return self.getTrajectory().getFrames()[0]
+
+            except:
+                return None
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -535,6 +607,34 @@ class Gromacs(_process.Process):
                The latest molecular system.
         """
         return self.getSystem(block=False)
+
+    def getTrajectory(self, block="AUTO"):
+        """Return a trajectory object.
+
+           Keyword arguments
+           -----------------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           trajectory : BioSimSpace.Trajectory
+        """
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        try:
+            return _Trajectory(process=self)
+
+        except:
+            return None
 
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
