@@ -392,13 +392,13 @@ class Gromacs(_process.Process):
             config.append("nsteps = %d" % steps)            # Number of integration steps.
             config.append("init-step = %d"
                 % self._protocol.getFirstStep())            # First time step.
-            config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-            config.append("ns-type = grid")                 # Use a grid to search for neighbours.
             config.append("nstlog = 100")                   # Write to log file every 100 steps.
             config.append("nstenergy = 100")                # Write to energy file every 100 steps.
             config.append("nstxout = 500")                  # Write coordinates every 500 steps.
-            if not has_box or not self._has_water:
+            if has_box and self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
                 config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
                 config.append("rlist = 1.2")                # Set short-range cutoff.
                 config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
