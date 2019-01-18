@@ -218,7 +218,7 @@ class Process():
         self._stderr = []
 
         # Clean up any existing offset files.
-        offset_files = _glob("%s/*.offset" % self._work_dir)
+        offset_files = _glob.glob("%s/*.offset" % self._work_dir)
 
         for file in offset_files:
             _os.remove(files)
