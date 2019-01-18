@@ -159,6 +159,16 @@ class Trajectory():
                 # Set the topology format.
                 top_format = "PARM7"
 
+            # GROMACS.
+            elif self._process_name.upper() == "GROMACS":
+                # Path to the trajectory and topology files.
+                # Strangely, the GROMACS gro file is used for the topology.
+                traj_file = "%s/%s.trr" % (self._process._work_dir, self._process._name)
+                top_file = "%s/%s.gro" % (self._process._work_dir, self._process._name)
+
+                # Set the topology format.
+                top_format = "GRO"
+
             # NAMD.
             elif self._process_name.upper() == "NAMD":
 
