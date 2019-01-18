@@ -391,7 +391,7 @@ class Gromacs(_process.Process):
             config.append("dt = %.3f" % timestep)           # Integration time step.
             config.append("nsteps = %d" % steps)            # Number of integration steps.
             config.append("init-step = %d"
-                % self._protocol.getFirstStep()             # First time step.
+                % self._protocol.getFirstStep())            # First time step.
             config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
             config.append("ns-type = grid")                 # Use a grid to search for neighbours.
             config.append("nstlog = 100")                   # Write to log file every 100 steps.
