@@ -191,7 +191,7 @@ class Gromacs(_process.Process):
                 % self._protocol.getSteps())                # Only write the final coordinates.
             config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
             config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-            if has_box:
+            if not has_box or not self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("rlist = 1.2")                # Set short-range cutoff.
                 config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
@@ -230,7 +230,7 @@ class Gromacs(_process.Process):
             config.append("nstlog = 100")                   # Write to log file every 100 steps.
             config.append("nstenergy = 100")                # Write to energy file every 100 steps.
             config.append("nstxout = 500")                  # Write coordinates every 500 steps.
-            if has_box:
+            if not has_box or not self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
                 config.append("rlist = 1.2")                # Set short-range cutoff.
@@ -270,7 +270,7 @@ class Gromacs(_process.Process):
                        self._protocol.getEndTemperature().kelvin().magnitude()))
 
             # Pressure control.
-            if self._protocol.getEnsemble() == "NPT" and has_box:
+            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.

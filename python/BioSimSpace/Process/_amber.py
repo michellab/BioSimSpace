@@ -307,7 +307,7 @@ class Amber(_process.Process):
             self.addToConfig("  irest=0,")                  # Don't restart.
             self.addToConfig("  maxcyc=%d," % num_steps)    # Set the number of steps.
             self.addToConfig("  ncyc=%d," % num_steep)      # Set the number of steepest descent steps.
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
             else:
@@ -345,7 +345,7 @@ class Amber(_process.Process):
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
             self.addToConfig("  ntt=3,")                    # Langevin dynamics.
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
             else:
@@ -415,7 +415,7 @@ class Amber(_process.Process):
             self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
             self.addToConfig("  ntt=3,")                    # Langevin dynamics.
             self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
-            if not has_box:
+            if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
             else:

@@ -310,7 +310,7 @@ class Namd(_process.Process):
         # Non-bonded potential parameters.
 
         # Gas phase.
-        if not has_box:
+        if not has_box or not self._has_water:
             self.addToConfig("cutoff                999.")
             self.addToConfig("zeroMomentum          yes")
             self.addToConfig("switching             off")
