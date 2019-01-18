@@ -218,15 +218,10 @@ class Process():
         self._stderr = []
 
         # Clean up any existing offset files.
+        offset_files = _glob("%s/*.offset" % self._work_dir)
 
-        stdout_offset = "%s.offset" % self._stdout_file
-        stderr_offset = "%s.offset" % self._stderr_file
-
-        if _os.path.isfile(stdout_offset):
-            _os.remove(stdout_offset)
-
-        if _os.path.isfile(stderr_offset):
-            _os.remove(stderr_offset)
+        for file in offset_files:
+            _os.remove(files)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
