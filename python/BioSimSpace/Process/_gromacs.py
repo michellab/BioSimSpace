@@ -422,7 +422,7 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
 
             # Pressure control.
             if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
