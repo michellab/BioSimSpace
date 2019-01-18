@@ -132,6 +132,17 @@ class Gromacs(_process.Process):
 
         # Create the input files...
 
+        # First create a copy of the system.
+        system = _System(self._system)
+
+        # If the we are performing a free energy simulation, then check that
+        # the system contains a single perturbable molecule.
+        if type(self._protocol) is _Protocol.FreeEnergy:
+            if system.nPerturbableMolecules() != 1:
+                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
+                                 "perturbable molecule. The system has %d" \
+                                  % system.nPerturbableMolecules())
+
         # GRO87 file.
         gro = _SireIO.Gro87(self._system, self._property_map)
         gro.writeToFile(self._gro_file)
@@ -431,8 +442,79 @@ class Gromacs(_process.Process):
                 config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-        else:
-            raise NotImplementedError("Only 'minimisation' protocol is currently supported.")
+        elif type(self._protocol) is _Protocol.FreeEnergy:
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Set the random number seed.
+            if self._is_seeded:
+                seed = self._seed
+            else:
+                seed = -1
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)            # Random number seed.
+            config.append("dt = %.3f" % timestep)           # Integration time step.
+            config.append("nsteps = %d" % steps)            # Number of integration steps.
+            config.append("nstlog = 100")                   # Write to log file every 100 steps.
+            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
+            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            if has_box and self._has_water:
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
+                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+            else:
+                config.append("pbc = no")                   # No boundary conditions.
+                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                  # Zero short-range cutoff.
+                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+
+            # Temperature control.
+            # No need for "berendsen" with integrator "sd".
+            config.append("tc-grps = system")               # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
+                                                            # Set the reference temperature.
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+
+            # Pressure control.
+            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
+                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
+                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+
+            # Extract the lambda value and array.
+            lam = self._protocol.getLambda()
+            lam_vals = self._protocol.getLambdaValues()
+
+            # Determine the index of the lambda value.
+            idx = lam_vals.index(lam)
+
+            # Free energy parameters.
+            config.append("free-energy = yes")              # Free energy simulation.
+            config.append("init-lambda-state = %d" % idx)   # Index of the lambda value.
+            config.append("fep-lambdas = %s" \
+                % " ".join([str(x) for x in lam_vals]))
+            config.append("couple-lambda0 = vdw-q")         # All interactions on at lambda = 0
+            config.append("couple-lambda1 = vdw-q")         # All interactions on at lambda = 1
+            config.append("calc-lambda-neighbors = -1")     # Write all lambda values.
+            config.append("nstdhdl = 100")                  # Write gradients every 100 steps.
 
         # Set the configuration.
         self.setConfig(config)
