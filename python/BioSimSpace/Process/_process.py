@@ -133,6 +133,9 @@ class Process():
         # Flag whether the system contains water molecules.
         self._has_water = system.nWaterMolecules() > 0
 
+        # Flag whether the system contains perturbable molecules.
+        self._has_perturbable = system.nPerturbableMolecules() > 0
+
         # Flag that the process isn't queued.
         self._is_queued = False
 

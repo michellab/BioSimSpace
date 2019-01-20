@@ -665,17 +665,33 @@ class Gromacs(_process.Process):
 
             # Check that the file exists.
             if _os.path.isfile(restart):
-                # Create and return the molecular system.
-                return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
+                # Read the molecular system.
+                new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
+                # If the system contains perturbable molecules, then
+                # copy the new coordinates back into the original system.
+                if self._has_perturbable:
+                    old_system = _System(self._system)
+                    old_system._updateCoordinates(new_system)
+                    return old_system
+                else:
+                    return new_system
             else:
                 return None
 
         else:
-            # Grab the first frame from the current trajectory file.
+            # Grab the last frame from the current trajectory file.
             try:
-                return self.getTrajectory().getFrames()[0]
+                new_system = self.getTrajectory().getFrames()[0]
 
+                # If the system contains perturbable molecules, then
+                # copy the new coordinates back into the original system.
+                if self._has_perturbable:
+                    old_system = _System(self._system)
+                    old_system._updateCoordinates(new_system)
+                    return old_system
+                else:
+                    return new_system
             except:
                 return None
 

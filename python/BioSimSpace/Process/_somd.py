@@ -517,7 +517,14 @@ class Somd(_process.Process):
 
         # Try to get the latest frame from the trajectory.
         try:
-            return traj.getFrames()[-1]
+            new_system = traj.getFrames()[-1]
+
+            # Since SOMD requires specific residue and water naming we copy the
+            # coordinates back into the original system.
+            old_system = _System(self._system)
+            old_system._updateCoordinates(new_system)
+
+            return old_system
 
         except:
             return None
