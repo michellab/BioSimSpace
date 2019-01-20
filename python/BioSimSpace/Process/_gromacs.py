@@ -682,7 +682,7 @@ class Gromacs(_process.Process):
         else:
             # Grab the last frame from the current trajectory file.
             try:
-                new_system = self.getTrajectory().getFrames()[0]
+                new_system = self.getTrajectory().getFrames()[-1]
 
                 # If the system contains perturbable molecules, then
                 # copy the new coordinates back into the original system.
