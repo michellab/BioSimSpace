@@ -12,7 +12,6 @@ ADD install_sire.sh .
 RUN mv -f install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
 
 # Set environment variables for installation directory and run file.
-ENV BIOSIMSPACE_INSTALL_DIR biosimspace.app
 ENV SIRE_RUN_FILE biosimspace_devel_latest_linux.run
 
 # Create a self-extracting binary file.
