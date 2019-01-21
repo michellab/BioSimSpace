@@ -49,19 +49,19 @@ PYTHONPATH=/home/Code/BioSimSpace/python pytest
 To run tests for a specific sub-module, e.g.:
 
 ```bash
-pytest tests/Process
+pytest test/Process
 ```
 
 To only run the unit tests in a particular file, e.g.:
 
 ```bash
-pytest tests/Process/test_namd.py
+pytest test/Process/test_namd.py
 ```
 
 To run a specific unit tests in a particular file, e.g.:
 
 ```bash
-pytest tests/Process/test_namd.py::test_minimise
+pytest test/Process/test_namd.py::test_minimise
 ```
 
 To get more detailed information about each test, run pytests using the
