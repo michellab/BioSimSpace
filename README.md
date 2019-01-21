@@ -169,8 +169,7 @@ currently prohibitively expensive. Instead, we use a
 Feature branches are periodically merged into `testing` to validate the build
 process and check that all unit tests pass.
 
-For those who wish to run things locally, a test suite can be found
-[here](https://github.com/michellab/BioSimSpaceUnitTests).
+For those who wish to run things locally, see the [test](test) directory.
 
 ## Issues
 

@@ -175,9 +175,8 @@ fi
 
 echo "  --> Downloading BioSimSpace"
 
-# Download the latest zip archives from the BioSimSpace master branches (source and tests).
+# Download the latest zip archives from the BioSimSpace master branch.
 download "https://github.com/michellab/BioSimSpace/archive/$BRANCH.zip" "$INSTALL_DIR/$BRANCH.zip"
-download https://github.com/michellab/BioSimSpaceUnitTests/archive/master.zip "$INSTALL_DIR/tests.zip"
 
 # Change to the installation directory.
 cd "$INSTALL_DIR" || exit 1
@@ -187,16 +186,9 @@ if [ -d demo ]; then
     rm -r demo
 fi
 
-# Remove old tests directory.
-if [ -d tests ]; then
-    rm -r tests
-fi
-
 # Unzip the BioSimSpace archives.
 unzip -q "$BRANCH.zip"
-unzip -q tests.zip
 rm "$BRANCH.zip"
-rm tests.zip
 
 # Change to the python directory.
 cd "BioSimSpace-$BRANCH/python" || exit 1
@@ -207,9 +199,8 @@ echo "  --> Installing BioSimSpace"
 # Clean up.
 cd "$INSTALL_DIR" || exit 1
 mv "BioSimSpace-$BRANCH/demo" .
+mv "BioSimSpace-$BRANCH/tests" .
 rm -r "BioSimSpace-$BRANCH"
-mv BioSimSpaceUnitTests-master/tests .
-rm -r BioSimSpaceUnitTests-master
 
 # Switch back to original workspace.
 cd "$CURR_DIR" || exit 1
@@ -220,7 +211,7 @@ echo "# BioSimSpace aliases." > "$HOME/.biosimspacerc"
     echo "alias bss_python='$SIRE_DIR/bin/python'"
     echo "alias bss_ipython='$SIRE_DIR/bin/ipython'"
     echo "alias bss_jupyter='$SIRE_DIR/bin/jupyter'"
-    echo "alias bss_test='cd $SIRE_DIR/bin/pytest -v tests; cd -'"
+    echo "alias bss_test='cd $INSTALL_DIR; $SIRE_DIR/bin/pytest -v tests; cd -'"
     echo "export OPENMM_PLUGIN_DIR=$SIRE_DIR/lib/plugins/"
 } >> "$HOME/.biosimspacerc"
 
