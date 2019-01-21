@@ -23,7 +23,6 @@ env:
     - SIRE_DONT_PHONEHOME=1
     - SIRE_SILENT_PHONEHOME=1
     - SIRE_DIR=$HOME/sire.app
-    - TEST_DIR=$HOME/test
     - CACHE_DIR=$HOME/cache
 
 # Set the cache location and increase the timeout to help avoid network issues.
@@ -51,7 +50,6 @@ before_install:
     fi
   - chmod a+x $CACHE_DIR/sire.run
   - unset DISPLAY && echo "$SIRE_DIR" | $CACHE_DIR/sire.run
-  - git clone https://github.com/michellab/BioSimSpaceUnitTests $TEST_DIR
 
 # Install BioSimSpace into the Sire application.
 install:
@@ -60,8 +58,7 @@ install:
 
 # Run the BioSimSpace test suite.
 script:
-  - cd $TEST_DIR
-  - $SIRE_DIR/bin/pytest tests -v
+  - $SIRE_DIR/bin/pytest test -v
 
 after_success:
   - echo "Congratulations - everything worked :-)
