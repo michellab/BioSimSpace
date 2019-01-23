@@ -39,7 +39,7 @@ fi
 
 echo " "
 echo "Installing BioSimSpace to $install_dir"
-mv tmp_biosimspace.app $install_dir
+mv tmp_sire.app $install_dir
 
 if [ ! -d "$install_dir" ]; then
   echo " "
