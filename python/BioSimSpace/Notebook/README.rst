@@ -10,7 +10,7 @@ BioSimSpace.Notebook.View
 -------------------------
 
 The ``View`` class provides a wrapper around `NGLView <https://github.com/arose/nglview>`_
-to enable visualisation of molecular systems. ``View`` can directly display a ``Sire.System``\ ,
+to enable visualisation of molecular systems. ``View`` can directly display a ``BioSimSpace.System``\ ,
 or can attach to a running `Process <../Process>`_ to allow real-time visualisation
 of molecular configurations while a process is running.
 

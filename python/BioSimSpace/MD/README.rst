@@ -7,7 +7,7 @@ types of molecular dynamics simulation processes.
 
 At present, we provide support for finding molecular dynamics packages and
 automatically configuring and starting processes for the user.
-``BioSimSpace.MD`` acts as a wrapper around `\ ``BioSimSpace.Process`` <../Process>`_\ ,
+``BioSimSpace.MD`` acts as a wrapper around `BioSimSpace.Process <../Process>`_\ ,
 meaning that the user doesn't need to specify the molecular dynamics
 package that they wish to use. This will automatically be determined from
 the file format of the molecular configuration, the type of simulation

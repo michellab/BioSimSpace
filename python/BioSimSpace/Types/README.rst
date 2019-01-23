@@ -7,7 +7,7 @@ types with units, such as temperature and time. This allows for type validation,
 e.g. when passing a ``Temperature`` to a ``Protocol`` object, as well as conversion
 between units.
 
-The package is intrinsically linked with the `\ ``BioSimSpace.Units`` <../Units>`_
+The package is intrinsically linked with the `BioSimSpace.Units <../Units>`_
 package, which provides a convenient shorthand for generating objects of a
 given physical unit.
 
@@ -32,7 +32,7 @@ As an example:
    # Multiply two lengths to create an area.
    area = length * BSS.Units.Length.picometer
 
-   # Multipy by an area to create a volume.
+   # Multiply by an area to create a volume.
    volume = length * area
 
    # Get the magnitude and unit of the volume.
