@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 # Store the name of the test script.
-script_name = "tests/Gateway/node.py"
+script_name = "test/Gateway/node.py"
 
 # Store the name of the python interpreter.
 exe = sys.executable
@@ -15,8 +15,8 @@ args = ["--bool",
         "--int=42",
         "--float=3.14",
         "--string='hello'",
-        "--file=tests/io/amber/ala/ala.crd",
-        "--fileset=tests/io/amber/ala/ala.crd,tests/io/amber/ala/ala.top",
+        "--file=test/io/amber/ala/ala.crd",
+        "--fileset=test/io/amber/ala/ala.crd,test/io/amber/ala/ala.top",
         "--temperature='298 kelvin'",
         "--time='100 nanoseconds'",
         "--length='10 angstroms'",
@@ -102,7 +102,7 @@ def test_multi_args():
     assert proc.returncode == 0
 
     # Now strip one of the files from the file-set string.
-    command = command.replace(" tests/io/amber/ala/ala.top", "")
+    command = command.replace(" test/io/amber/ala/ala.top", "")
 
     # Run the command.
     proc = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
@@ -117,7 +117,7 @@ def test_missing_file():
     command = "%s %s " % (exe, script_name) + " ".join(args)
 
     # Replace with a missing file.
-    invalid_command = command.replace("file=tests/io/amber/ala/ala.crd", "file=missing.txt")
+    invalid_command = command.replace("file=test/io/amber/ala/ala.crd", "file=missing.txt")
 
     # Run the command.
     proc = subprocess.run(invalid_command, shell=True, stdout=subprocess.PIPE)
@@ -126,7 +126,7 @@ def test_missing_file():
     assert proc.returncode != 0
 
     # Replace with a missing file.
-    invalid_command = command.replace("tests/io/amber/ala/ala.top", "file=missing.txt")
+    invalid_command = command.replace("test/io/amber/ala/ala.top", "file=missing.txt")
 
     # Run the command.
     proc = subprocess.run(invalid_command, shell=True, stdout=subprocess.PIPE)
@@ -138,7 +138,7 @@ def test_missing_file():
                                    "23 k",
                                    "1.02e3 K",
                                    "45 KelVIn",
-                                   "-50C",
+                                   " -50C",
                                    "-1.6e2 c",
                                    "  1024celsius",
                                    "22 f",

@@ -31,7 +31,7 @@ def create_process(protocol):
     """Create a SOMD process for a given prototol."""
 
     # Glob the input files.
-    files = BSS.IO.glob("tests/io/amber/ala/*")
+    files = BSS.IO.glob("test/io/amber/ala/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
