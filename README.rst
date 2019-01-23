@@ -24,7 +24,7 @@ can:
 Installation
 ------------
 
-The `\ ``install.sh`` <install.sh>`_ script will automatically install and configure
+The `install.sh <install.sh>`_ script will automatically install and configure
 a clean BioSimSpace application on Linux or macOS. Following a successful
 installation, the following aliases will be set:
 
@@ -38,7 +38,7 @@ installation, the following aliases will be set:
 to take effect.)
 
 Note that this defaults to installing the latest stable version of BioSimSpace
-from the `\ ``master`` <https://github.com/michellab/BioSimSpace/tree/master>`_
+from the `master <https://github.com/michellab/BioSimSpace/tree/master>`_
 branch. To install the development version, run:
 
 .. code-block:: bash
@@ -82,7 +82,7 @@ has been added to your path. Alternatively, run:
 At present we recommend using the ``devel`` branch of `Sire <https://github.com/michellab/Sire>`_
 to ensure that you have access to the latest features and bug-fixes.
 
-If you experience problems with `\ ``matplotlib`` <https://matplotlib.org>`_ when
+If you experience problems with `matplotlib <https://matplotlib.org>`_ when
 importing BioSimSpace on macOS, e.g.
 
 .. code-block:: python
@@ -167,7 +167,7 @@ BioSimSpace.Process module:
    feature-process
 
 When you are happy with your feature, merge into the
-`\ ``testing`` <https://github.com/michellab/BioSimSpace/tree/testing>`_ branch to
+`testing <https://github.com/michellab/BioSimSpace/tree/testing>`_ branch to
 check that the continuous integration tests pass. When ready, create a pull
 request so that the feature can be merged into devel. Once the merge is
 successful, please delete the redundant feature branch.
@@ -182,7 +182,7 @@ which BioSimSpace is installed.
 
 Since the Sire binary is large, executing a fresh download for every commit is
 currently prohibitively expensive. Instead, we use a
-`\ ``testing`` <https://github.com/michellab/BioSimSpace/tree/testing>`_ branch for CI.
+`testing <https://github.com/michellab/BioSimSpace/tree/testing>`_ branch for CI.
 Feature branches are periodically merged into ``testing`` to validate the build
 process and check that all unit tests pass.
 
