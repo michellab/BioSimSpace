@@ -144,7 +144,7 @@ class Requirement():
             # Flag the the requirement is optional.
             self._is_optional = True
 
-    def setValue(self, value, name):
+    def setValue(self, value, name=None):
         """Validate and set the value.
 
 

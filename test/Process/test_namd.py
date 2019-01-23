@@ -69,7 +69,7 @@ def run_process(protocol):
     """Helper function to run various simulation protocols."""
 
     # Glob the input files.
-    files = BSS.IO.glob("tests/io/namd/alanin/*")
+    files = BSS.IO.glob("test/io/namd/alanin/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
