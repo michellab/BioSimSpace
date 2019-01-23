@@ -54,18 +54,14 @@ class Namd(_process.Process):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
 
            protocol : BioSimSpace.Protocol
                The protocol for the AMBER process.
-
-
-           Keyword arguments
-           -----------------
 
            exe : str
                The full path to the AMBER executable.
@@ -498,6 +494,7 @@ class Namd(_process.Process):
     def start(self):
         """Start the NAMD process.
 
+
            Returns
            -------
 
@@ -542,8 +539,9 @@ class Namd(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -612,6 +610,7 @@ class Namd(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
+
            Returns
            -------
 
@@ -623,8 +622,9 @@ class Namd(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -651,15 +651,11 @@ class Namd(_process.Process):
         """Get a record from the stdout dictionary.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            record : str
                The record key.
-
-
-           Keyword arguments
-           -----------------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -691,21 +687,18 @@ class Namd(_process.Process):
         """Get a current record from the stdout dictionary.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            record : str
                The record key.
-
-
-           Keyword arguments
-           -----------------
 
            time_series : bool
                Whether to return a list of time series records.
 
            unit : BioSimSpace.Types.Type
                The unit to convert the record to.
+
 
            Returns
            -------
@@ -719,9 +712,19 @@ class Namd(_process.Process):
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
 
-           Keyword arguments:
 
-           block       -- Whether to block until the process has finished running.
+           Parameters
+           ----------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           records : dict
+               The dictionary of time-series records.
         """
         # Wait for the process to finish.
         if block is True:
@@ -734,8 +737,9 @@ class Namd(_process.Process):
     def getCurrentRecords(self):
         """Return the current dictionary of stdout time-series records.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -752,8 +756,9 @@ class Namd(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -789,8 +794,9 @@ class Namd(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -810,8 +816,9 @@ class Namd(_process.Process):
     def getStep(self, time_series=False, block="AUTO"):
         """Get the number of integration steps.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -831,8 +838,9 @@ class Namd(_process.Process):
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -849,8 +857,9 @@ class Namd(_process.Process):
     def getBondEnergy(self, time_series=False, block="AUTO"):
         """Get the bond energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -870,8 +879,9 @@ class Namd(_process.Process):
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -888,8 +898,9 @@ class Namd(_process.Process):
     def getAngleEnergy(self, time_series=False, block="AUTO"):
         """Get the angle energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -909,8 +920,9 @@ class Namd(_process.Process):
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -927,8 +939,9 @@ class Namd(_process.Process):
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """Get the dihedral energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -948,8 +961,9 @@ class Namd(_process.Process):
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -966,8 +980,9 @@ class Namd(_process.Process):
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -987,8 +1002,9 @@ class Namd(_process.Process):
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1005,8 +1021,9 @@ class Namd(_process.Process):
     def getElectrostaticEnergy(self, time_series=False, block="AUTO"):
         """Get the electrostatic energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1026,8 +1043,9 @@ class Namd(_process.Process):
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current electrostatic energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1044,8 +1062,9 @@ class Namd(_process.Process):
     def getVanDerWaalsEnergy(self, time_series=False, block="AUTO"):
         """Get the Van der Vaals energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1065,8 +1084,9 @@ class Namd(_process.Process):
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Waals energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1083,8 +1103,9 @@ class Namd(_process.Process):
     def getBoundaryEnergy(self, time_series=False, block="AUTO"):
         """Get the boundary energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1104,8 +1125,9 @@ class Namd(_process.Process):
     def getCurrentBoundaryEnergy(self, time_series=False):
         """Get the current boundary energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1122,8 +1144,9 @@ class Namd(_process.Process):
     def getMiscEnergy(self, time_series=False, block="AUTO"):
         """Get the external energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1143,8 +1166,9 @@ class Namd(_process.Process):
     def getCurrentMiscEnergy(self, time_series=False):
         """Get the current external energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1161,27 +1185,50 @@ class Namd(_process.Process):
     def getKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
-           Keyword arguments:
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The kinetic energy.
         """
         return self.getRecord("KINETIC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
 
-           Keyword arguments:
 
-           time_series -- Whether to return a list of time series records.
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+
+           Returns
+           -------
+
+           energy : BioSimSpace.Types.Energy
+               The current kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
 
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
         """Get the potential energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1201,8 +1248,9 @@ class Namd(_process.Process):
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1219,8 +1267,9 @@ class Namd(_process.Process):
     def getTotalEnergy(self, time_series=False, block="AUTO"):
         """Get the total energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1240,8 +1289,9 @@ class Namd(_process.Process):
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current potential energy.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1258,8 +1308,9 @@ class Namd(_process.Process):
     def getTotal2Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Better KE conservation.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1279,8 +1330,9 @@ class Namd(_process.Process):
     def getCurrentTotal2Energy(self, time_series=False):
         """Get the current total energy. (Better KE conservation.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1297,8 +1349,9 @@ class Namd(_process.Process):
     def getTotal3Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1318,8 +1371,9 @@ class Namd(_process.Process):
     def getCurrentTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1336,8 +1390,9 @@ class Namd(_process.Process):
     def getTemperature(self, time_series=False, block="AUTO"):
         """Get the temperature.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1357,8 +1412,9 @@ class Namd(_process.Process):
     def getCurrentTemperature(self, time_series=False):
         """Get the temperature.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1375,8 +1431,9 @@ class Namd(_process.Process):
     def getTemperatureAverage(self, time_series=False, block="AUTO"):
         """Get the average temperature.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1396,8 +1453,9 @@ class Namd(_process.Process):
     def getCurrentTemperatureAverage(self, time_series=False):
         """Get the current average temperature.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1414,8 +1472,9 @@ class Namd(_process.Process):
     def getPressure(self, time_series=False, block="AUTO"):
         """Get the pressure.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1435,8 +1494,9 @@ class Namd(_process.Process):
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1453,8 +1513,9 @@ class Namd(_process.Process):
     def getPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1474,8 +1535,9 @@ class Namd(_process.Process):
     def getCurrentPressureAverage(self, time_series=False):
         """Get the current average pressure.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1492,8 +1554,9 @@ class Namd(_process.Process):
     def getGPressure(self, time_series=False, block="AUTO"):
         """Get the pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1513,8 +1576,9 @@ class Namd(_process.Process):
     def getCurrentGPressure(self, time_series=False):
         """Get the current pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1531,8 +1595,9 @@ class Namd(_process.Process):
     def getGPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1552,8 +1617,9 @@ class Namd(_process.Process):
     def getCurrentGPressureAverage(self, time_series=False):
         """Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1570,8 +1636,9 @@ class Namd(_process.Process):
     def getVolume(self, time_series=False, block="AUTO"):
         """Get the volume.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1591,8 +1658,9 @@ class Namd(_process.Process):
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -1635,8 +1703,9 @@ class Namd(_process.Process):
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            n : int
                The number of lines to print.
@@ -1687,21 +1756,18 @@ class Namd(_process.Process):
         """Helper function to get a stdout record from the dictionary.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            key : str
                The record key.
-
-
-           Keyword arguments
-           -----------------
 
            time_series : bool
                Whether to return a time series of records.
 
            unit : BioSimSpace.Types._type.Type
                The unit to convert the record to.
+
 
            Returns
            -------

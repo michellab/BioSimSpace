@@ -61,18 +61,14 @@ class Somd(_process.Process):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
 
            protocol : BioSimSpace.Protocol
                The protocol for the SOMD process.
-
-
-           Keyword arguments
-           -----------------
 
            exe : str
                The full path to the SOMD executable.
@@ -498,8 +494,9 @@ class Somd(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -532,6 +529,7 @@ class Somd(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
+
            Returns
            -------
 
@@ -543,8 +541,9 @@ class Somd(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -571,8 +570,9 @@ class Somd(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -612,11 +612,13 @@ class Somd(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
+
 
            Returns
            -------
@@ -629,8 +631,9 @@ class Somd(_process.Process):
     def getGradient(self, time_series=False, block="AUTO"):
         """Get the free energy gradient.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
@@ -667,11 +670,13 @@ class Somd(_process.Process):
     def getCurrentGradient(self, time_series=False):
         """Get the current free energy gradient.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            time_series : bool
                Whether to return a list of time series records.
+
 
            Returns
            -------

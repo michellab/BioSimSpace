@@ -69,6 +69,7 @@ class ResourceManager():
     def getNodes(self):
         """Return the number of nodes.
 
+
            Returns
            -------
 
@@ -81,8 +82,8 @@ class ResourceManager():
         """Set the number of nodes.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            nodes : int
                The number of nodes.
@@ -99,6 +100,7 @@ class ResourceManager():
     def getCores(self):
         """Return the number of cores.
 
+
            Returns
            -------
 
@@ -111,8 +113,8 @@ class ResourceManager():
         """Set the number of cores.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            cores : int
                The number of cores.
@@ -129,6 +131,7 @@ class ResourceManager():
     def getGPUs(self):
         """Return the number of GPUs.
 
+
            Returns
            -------
 
@@ -141,8 +144,8 @@ class ResourceManager():
         """Set the number of GPUs.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            gpus : int
                The number of GPUs.

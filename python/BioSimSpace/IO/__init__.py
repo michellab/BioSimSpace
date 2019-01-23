@@ -89,8 +89,8 @@ def formatInfo(format):
     """Return information for the specified file format.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        format : str
            The file format.
@@ -113,15 +113,11 @@ def readPDB(id, property_map={}):
     """Read a molecular system from a PDB ID in the RSCB PDB website.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        id : str
            The PDB ID string.
-
-
-       Keyword arguments
-       -----------------
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -165,15 +161,11 @@ def readMolecules(files, property_map={}):
     """Read a molecular system from file.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        files : str, [ str ]
            A file name, or a list of file names.
-
-
-       Keyword arguments
-       -----------------
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -231,8 +223,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     """Save a molecular system to file.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        filebase : str
            The base name of the output file.
@@ -244,14 +236,17 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
        fileformat : str, [ str ]
            The file format (or formats) to save to.
 
-
-       Keyword arguments
-       -----------------
-
        property_map : dict
            A dictionary that maps system "properties" to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       files : [ str ]
+           The list of files that were generated.
     """
 
     if _gromacs_path is None:

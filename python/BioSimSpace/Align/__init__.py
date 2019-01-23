@@ -50,18 +50,14 @@ def matchAtoms(molecule0,
        lowest value.)
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule0 : BioSimSpace._SireWrappers.Molecule
            The molecule of interest.
 
        molecule1 : BioSimSpace._SireWrappers.Molecule
            The reference molecule.
-
-
-       Keyword arguments
-       -----------------
 
        scoring_function : str
            The scoring function used to match atoms. Available options are:
@@ -230,18 +226,14 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        centroids).
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule0 : BioSimSpace._SireWrappers.Molecule
            The molecule to align.
 
        molecule1 : BioSimSpace._SireWrappers.Molecule
            The reference molecule.
-
-
-       Keyword arguments
-       -----------------
 
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
@@ -305,15 +297,15 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
 
+
+       Parameters
+       ----------
+
        molecule0 : BioSimSpace._SireWrappers.Molecule
            A molecule object.
 
        molecule1 : BioSimSpace._SireWrappers.Molecule
            A second molecule object.
-
-
-       Keyword arguments
-       -----------------
 
        mapping : dict
            The mapping between matching atom indices in the two molecules.
@@ -329,6 +321,13 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
+
+
+       Returns
+       -------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The merged molecule.
     """
 
     if type(molecule0) is not _Molecule:
@@ -371,8 +370,8 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
        scores for each mapping.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule0 : BioSimSpace._SireWrappers.Molecule
            The reference molecule.

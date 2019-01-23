@@ -62,8 +62,8 @@ def _wrap_protocol(protocol_function, process):
        protocols and catch exceptions.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        protocol_function : function
            The protocol function.
@@ -92,18 +92,14 @@ class Process():
         """Constructor
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to parameterise.
 
            protocol : BioSimSpace.Parameters.Protocol
                The parameterisation protocol.
-
-
-           Keyword arguments
-           -----------------
 
            work_dir : str
                The working directory for the process.
@@ -187,6 +183,7 @@ class Process():
         """Get the parameterised molecule. This method blocks until
            parameterisation is complete.
 
+
            Returns
            -------
 
@@ -217,13 +214,14 @@ class Process():
             raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
 
         return self._new_molecule
-    
+
     def isRunning(self):
         """Return whether the parameterising protocol is still running."""
         return not self._is_finished
 
     def isError(self):
         """Return whether there was a parameterisation error.
+
 
            Returns
            -------
@@ -236,8 +234,9 @@ class Process():
     def getOutput(self, filename=None):
         """Return the output of the parameterisation process.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            filename : str
                The name to write the output to.

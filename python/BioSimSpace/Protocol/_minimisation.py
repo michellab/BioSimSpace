@@ -36,8 +36,9 @@ class Minimisation(_Protocol):
     def __init__(self, steps=10000):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            steps : int
                The maximum number of steps to perform.
@@ -57,6 +58,7 @@ class Minimisation(_Protocol):
     def getSteps(self):
         """Return the maximum number of steps.
 
+
            Returns
            -------
 
@@ -69,8 +71,8 @@ class Minimisation(_Protocol):
         """Set the maximum number of steps.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            steps : int
                The maximum number of minimisation steps.

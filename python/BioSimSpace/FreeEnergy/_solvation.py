@@ -34,15 +34,11 @@ class Solvation(_free_energy.FreeEnergy):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
-
-
-           Keyword arguments
-           -----------------
 
            protocol : BioSimSpace.Protocol.FreeEnergy
                The simulation protocol.
@@ -80,6 +76,7 @@ class Solvation(_free_energy.FreeEnergy):
 
     def analyse(self):
         """Analyse the solvation free energy data.
+
 
            Returns
            -------

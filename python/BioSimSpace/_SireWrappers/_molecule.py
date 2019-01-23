@@ -53,8 +53,8 @@ class Molecule():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : Sire.Mol.Molecule
                A Sire Molecule object.
@@ -144,6 +144,7 @@ class Molecule():
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
 
+
            Returns
            -------
 
@@ -155,6 +156,7 @@ class Molecule():
 
     def molecule1(self):
         """Return the component of the merged molecule at lambda = 1.
+
 
            Returns
            -------
@@ -234,8 +236,8 @@ class Molecule():
         """Return the total molecular charge.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -269,15 +271,11 @@ class Molecule():
         """Translate the molecule.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            vector : list, tuple
                The translation vector (in Angstroms).
-
-
-           Keyword arguments
-           -----------------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -338,15 +336,11 @@ class Molecule():
            add all additional properties.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to match with.
-
-
-           Keyword arguments
-           -----------------
 
            property_map : dict
                A map between property names and user supplied names.
@@ -565,8 +559,8 @@ class Molecule():
         """Make the molecular charge an integer value.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps "properties" in this molecule to their
@@ -616,8 +610,8 @@ class Molecule():
         """Create a merged molecule from a perturbation file.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            filename: str
                The location of the perturbation file.
@@ -632,8 +626,8 @@ class Molecule():
         """Write the merged molecule to a perturbation file.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            filename: str
                The name of the perturbation file.
@@ -1306,8 +1300,8 @@ class Molecule():
         """Internal function to convert a merged molecule to a regular molecule.
 
 
-           Keyword arguments
-           --------------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1371,18 +1365,14 @@ class Molecule():
         """Merge this molecule with 'other'.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            other : BioSimSpace._SireWrappers.Molecule
                The molecule to merge with.
 
            mapping : dict
                The mapping between matching atom indices in the two molecules.
-
-
-           Keyword arguments
-           -----------------
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -2312,8 +2302,9 @@ class Molecule():
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecule.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined

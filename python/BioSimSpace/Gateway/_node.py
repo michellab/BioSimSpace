@@ -100,14 +100,11 @@ class Node():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            description : str
                A description of the node.
-
-           Keyword arguments
-           -----------------
 
            name : str
                The name of the node.
@@ -189,8 +186,8 @@ class Node():
         """Add an input requirement.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the input.
@@ -233,8 +230,8 @@ class Node():
         """Add an input requirement for the command-line.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the input.
@@ -295,8 +292,8 @@ class Node():
         """Add an input requirement for Knime.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the input.
@@ -310,18 +307,14 @@ class Node():
         """Add an input requirement for Jupyter.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the input.
 
            input : BioSimSpace.Gateway.Requirement
                The input requirement object.
-
-
-           Keyword arguments
-           -----------------
 
            reset : bool
                Whether to reset the widget data.
@@ -701,8 +694,8 @@ class Node():
         """Add an output requirement.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the output.
@@ -728,8 +721,8 @@ class Node():
         """Set the value of an output.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the output.
@@ -746,8 +739,8 @@ class Node():
         """Get the value of the named input.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The name of the input requirement.
@@ -778,6 +771,7 @@ class Node():
     def getInputs(self):
         """Get all of the input requirements.
 
+
            Returns
            -------
 
@@ -794,8 +788,8 @@ class Node():
         """Add an error message.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            error : str
                The error message.
@@ -809,8 +803,9 @@ class Node():
     def addAuthor(self, name=None, email=None, affiliation=None):
         """Add an author for the node.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            name : str
                The author's name.
@@ -844,6 +839,7 @@ class Node():
     def getAuthors(self):
         """Return the list of authors.
 
+
            Returns
            -------
 
@@ -856,8 +852,8 @@ class Node():
         """Set the license for the node.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            license : str
                The license type.
@@ -870,6 +866,7 @@ class Node():
     def getLicense(self):
         """Return the license.
 
+
            Returns
            -------
 
@@ -880,6 +877,7 @@ class Node():
 
     def showControls(self):
         """Show the Jupyter widget GUI to allow the user to enter input.
+
 
            Returns
            -------
@@ -1007,11 +1005,13 @@ class Node():
     def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            file_prefix : str
                The prefix of the output file name.
+
 
            Returns
            -------
@@ -1090,8 +1090,8 @@ class Node():
         """Create a nicely formatted argparse help string.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            input : BioSimSpace.Gateway.Requirement
                The input requirement.

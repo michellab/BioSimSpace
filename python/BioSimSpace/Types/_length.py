@@ -59,8 +59,8 @@ class Length(_Type):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -164,7 +164,7 @@ class Length(_Type):
         """Return the length in a different unit.
 
 
-           Positional arguments:
+           Parameters:
 
            unit -- The unit to convert to.
         """

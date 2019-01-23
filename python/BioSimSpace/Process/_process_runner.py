@@ -41,15 +41,11 @@ class ProcessRunner():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            processes : [ BioSimSpace.Process.Process ]
                A list of process objects.
-
-
-           Keyword arguments
-           -----------------
 
            name : str
                The name of the of processes.
@@ -120,6 +116,7 @@ class ProcessRunner():
     def processes(self):
         """Return the list of processes.
 
+
            Returns
            -------
 
@@ -131,6 +128,7 @@ class ProcessRunner():
     def workDir(self):
         """Return the working directory.
 
+
            Returns
            -------
 
@@ -141,6 +139,7 @@ class ProcessRunner():
 
     def getName(self):
         """Return the process runner name.
+
 
            Returns
            -------
@@ -155,8 +154,8 @@ class ProcessRunner():
         """Set the process runner name.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The process runner name.
@@ -170,8 +169,8 @@ class ProcessRunner():
         """Add a process to the runner.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            process : BioSimSpace.Process, [ BioSimSpace.Process ]
                The process/processes to add.
@@ -198,8 +197,8 @@ class ProcessRunner():
         """Remove a process from the runner.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            index : int
                The index of the process.
@@ -218,6 +217,7 @@ class ProcessRunner():
     def nProcesses(self):
         """Return the number of processes.
 
+
            Returns
            -------
 
@@ -228,6 +228,7 @@ class ProcessRunner():
 
     def nRunning(self):
         """Return the number of running processes.
+
 
            Returns
            -------
@@ -247,6 +248,7 @@ class ProcessRunner():
     def nQueued(self):
         """Return the number of queued processes.
 
+
            Returns
            -------
 
@@ -264,6 +266,7 @@ class ProcessRunner():
 
     def nError(self):
         """Return the number of errored processes.
+
 
            Returns
            -------
@@ -283,6 +286,7 @@ class ProcessRunner():
     def running(self):
         """Return the indices of the running processes.
 
+
            Returns
            -------
 
@@ -300,6 +304,7 @@ class ProcessRunner():
 
     def queued(self):
         """Return the indices of the queued processes.
+
 
            Returns
            -------
@@ -319,6 +324,7 @@ class ProcessRunner():
     def errored(self):
         """Return the indices of the errored processes.
 
+
            Returns
            -------
 
@@ -336,6 +342,7 @@ class ProcessRunner():
 
     def isRunning(self):
         """Return whether each process is running.
+
 
            Returns
            -------
@@ -357,6 +364,7 @@ class ProcessRunner():
     def isQueued(self):
         """Return whether each process is queued.
 
+
            Returns
            -------
 
@@ -376,6 +384,7 @@ class ProcessRunner():
 
     def isError(self):
         """Return whether each process is in an error state.
+
 
            Returns
            -------
@@ -399,8 +408,8 @@ class ProcessRunner():
                runner.processes()[index].start()
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            index : int
                The index of the process.
@@ -444,8 +453,8 @@ class ProcessRunner():
                runner.processes()[index].kill()
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            index : int
                The index of the process.
@@ -473,6 +482,7 @@ class ProcessRunner():
     def runTime(self):
         """Return the run time for each process.
 
+
            Returns
            -------
 
@@ -492,8 +502,8 @@ class ProcessRunner():
            directory.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            processes : [ BioSimSpace.Process ]
                A list of process objects.

@@ -62,18 +62,14 @@ class Process():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
 
            protocol : BioSimSpace.Protocol
                The protocol for the process.
-
-
-           Keyword arguments
-           -----------------
 
            name : str
                The name of the process.
@@ -229,8 +225,9 @@ class Process():
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
@@ -295,8 +292,8 @@ class Process():
         """Set the process name.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            name : str
                The process name.
@@ -315,8 +312,8 @@ class Process():
         """Set the random number seed.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            seed : int
                The random number seed.
@@ -331,8 +328,9 @@ class Process():
     def wait(self, max_time=None):
         """Wait for the process to finish.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            max_time: BioSimSpace.Types.Time, int, float
                The maximimum time to wait (in minutes).
@@ -395,8 +393,9 @@ class Process():
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            n : int
                The number of lines to print.
@@ -426,8 +425,9 @@ class Process():
     def stderr(self, n=10):
         """Print the last n lines of the stderr buffer.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            n : int
                The number of lines to print.
@@ -469,8 +469,9 @@ class Process():
     def getStdout(self, block="AUTO"):
         """Return the entire stdout for the process as a list of strings.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -498,8 +499,9 @@ class Process():
     def getStderr(self, block="AUTO"):
         """Return the entire stderr for the process as a list of strings.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            block : bool
                Whether to block until the process has finished running.
@@ -527,8 +529,9 @@ class Process():
     def getOutput(self, name=None, block="AUTO"):
         """Return a link to a zip file of the working directory.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            name : str
                The name of the zip file.
@@ -587,8 +590,8 @@ class Process():
         """Set the list of configuration file strings.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            config : str, [ str ]
                The list of configuration strings, or a path to a configuration
@@ -621,8 +624,8 @@ class Process():
         """Add a string to the configuration list.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            config : str, [ str ]
                A configuration string, a list of configuration strings, or a
@@ -696,8 +699,8 @@ class Process():
         """Set the dictionary of command-line arguments.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            args : dict, collections.OrderedDict
                A dictionary of command line arguments.
@@ -718,8 +721,8 @@ class Process():
            specify whether the flag is enabled (True) or not (False).
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            arg : str
                The argument to set.
@@ -737,8 +740,8 @@ class Process():
         """Insert a command-line argument at a specific index.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            arg : str
                The argument to set.
@@ -759,8 +762,8 @@ class Process():
         """Append additional command-line arguments.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            args : dict, collections.OrderedDict
                A dictionary of command line arguments.
@@ -775,8 +778,8 @@ class Process():
         """Delete an argument from the dictionary.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            arg : str
                The argument to delete.
@@ -827,8 +830,8 @@ def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
 
-        Positional arguments
-        --------------------
+        Parameters
+        ----------
 
         system : Sire.System.System
             A Sire molecular system.

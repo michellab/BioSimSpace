@@ -83,15 +83,11 @@ class Protocol():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            forcefield : str
                The name of the force field.
-
-
-           Keyword arguments
-           -----------------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -124,8 +120,8 @@ class Protocol():
         """Run the parameterisation protocol.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
@@ -210,8 +206,8 @@ class Protocol():
         """Run using tLEaP.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
@@ -276,8 +272,8 @@ class Protocol():
         """Run using pdb2gmx.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
@@ -342,8 +338,8 @@ def _find_force_field(forcefield):
     """Internal function to search LEaP compatible force field files.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        forcefield : str
            The name of the force field.

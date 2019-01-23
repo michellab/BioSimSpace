@@ -53,8 +53,8 @@ class Area(_Type):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -180,7 +180,7 @@ class Area(_Type):
         """Return the area in a different unit.
 
 
-           Positional arguments:
+           Parameters:
 
            unit -- The unit to convert to.
         """

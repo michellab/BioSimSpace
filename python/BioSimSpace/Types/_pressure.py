@@ -47,8 +47,8 @@ class Pressure(_Type):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -89,7 +89,7 @@ class Pressure(_Type):
         """Return the pressure in a different unit.
 
 
-           Positional arguments:
+           Parameters:
 
            unit -- The unit to convert to.
         """

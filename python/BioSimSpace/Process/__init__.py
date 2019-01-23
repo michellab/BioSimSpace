@@ -50,8 +50,8 @@ def packages():
 def createProcess(system, protocol, package):
     """Create a simulation process.
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        system : BioSimSpace._SireWrappers.System
            The molecular system.
@@ -61,6 +61,13 @@ def createProcess(system, protocol, package):
 
        package : str
            The name of the simulation package.
+
+
+       Returns
+       -------
+
+       process : BioSimSpace.Process._process.Process
+           The process object for the specific simulation package.
     """
 
     if package not in _package_dict:

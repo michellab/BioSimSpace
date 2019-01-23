@@ -50,8 +50,9 @@ def protocols():
 def createProtocol(protocol):
     """Create a default simulation protocol.
 
-       Positional arguments
-       --------------------
+
+       Parameters
+       ----------
 
        protocol : str
            The name of the protocol.

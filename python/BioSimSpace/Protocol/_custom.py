@@ -36,8 +36,9 @@ class Custom(_Protocol):
     def __init__(self, config):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            config : str, [ str ]
                The custom protocol configuration.
@@ -48,6 +49,7 @@ class Custom(_Protocol):
 
     def getConfig(self):
         """Return the custom configuration.
+
 
            Returns
            -------
@@ -61,8 +63,8 @@ class Custom(_Protocol):
         """Set the custom configuration.
         
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            config : str, [ str ]
                A config file, or list of configuration strings.

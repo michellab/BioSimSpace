@@ -47,8 +47,8 @@ class Charge(_Type):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -89,7 +89,7 @@ class Charge(_Type):
         """Return the charge in a different unit.
 
 
-           Positional arguments:
+           Parameters:
 
            unit -- The unit to convert to.
         """

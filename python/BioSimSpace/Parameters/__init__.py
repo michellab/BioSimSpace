@@ -39,8 +39,8 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
     """Parameterise using the a specified force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
@@ -48,10 +48,6 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
        forcefield : str
            The force field. Run BioSimSpace.Parameters.forceFields() to get a
            list of the supported force fields.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -84,15 +80,11 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -140,15 +132,11 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -196,15 +184,11 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -252,15 +236,11 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -307,15 +287,11 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.
@@ -362,15 +338,11 @@ def gaff2(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule
            The molecule to parameterise.
-
-
-       Keyword arguments
-       -----------------
 
        options : dict
            A dictionary of keyword options to override the protocol defaults.

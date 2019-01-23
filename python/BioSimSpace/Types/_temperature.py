@@ -50,8 +50,8 @@ class Temperature(_Type):
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -252,7 +252,7 @@ class Temperature(_Type):
         """Return the temperature in a different unit.
 
 
-           Positional arguments:
+           Parameters:
 
            unit -- The unit to convert to.
         """

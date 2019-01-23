@@ -52,14 +52,11 @@ def solvate(model, molecule=None, box=None, shell=None,
     """Add SPC solvent.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        model : str
            The name of the water model.
-
-       Keyword arguments
-       -----------------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -104,8 +101,9 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -154,8 +152,9 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
         work_dir=None, property_map={}):
     """Add SPC/E solvent.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -204,8 +203,9 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP3P solvent.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -254,8 +254,9 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP4P solvent.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -304,8 +305,9 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP5P solvent.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -354,8 +356,8 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     """Internal function to validate function arguments.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -463,8 +465,8 @@ def _solvate(molecule, box, shell, model, num_point,
     """Internal function to add solvent using 'gmx solvate'.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -487,10 +489,6 @@ def _solvate(molecule, box, shell, model, num_point,
        is_neutral : bool
            Whether to neutralise the system.
 
-
-       Keyword arguments
-       -----------------
-
        work_dir : str
            The working directory for the process.
 
@@ -498,6 +496,12 @@ def _solvate(molecule, box, shell, model, num_point,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+        Returns:
+
+        system : BioSimSpace._SireWrappers.System
+            The solvated system.
     """
 
     if molecule is not None:
@@ -836,8 +840,8 @@ def _check_box_size(molecule, box, property_map={}):
     """Internal function to check that box is big enough for the molecule.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : BioSimSpace._SireWrappers.Molecule, BioSimSpace._SireWrappers.System
            A molecule, or system of molecules.
@@ -845,14 +849,17 @@ def _check_box_size(molecule, box, property_map={}):
        box : [ BioSimSpace.Types.Length ]
            A list containing the box size in each dimension (in nm).
 
-
-       Keyword arguments
-       -----------------
-
        property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
+
+
+       Returns
+       -------
+
+       is_okay : True
+           Whether the box is large enough.
     """
 
     # Get the axis-aligned bounding box of the molecule/system.
@@ -875,8 +882,8 @@ def _rename_water_molecule(molecule):
        the naming conventions used by GROMACS.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        molecule : Sire.Mol.Molecule
            A Sire Molecule object.

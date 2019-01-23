@@ -36,8 +36,8 @@ def cd(work_dir):
     """Execute the context in the directory 'dir'
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        work_dir : str
            The working directory for the context.

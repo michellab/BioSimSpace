@@ -50,8 +50,9 @@ class FreeEnergy(_Protocol):
                 ):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            lam : float
                The perturbation parameter: [0.0, 1.0]
@@ -113,6 +114,7 @@ class FreeEnergy(_Protocol):
     def getLambda(self):
         """Get the value of the perturbation parameter.
 
+
            Returns
            -------
 
@@ -123,6 +125,7 @@ class FreeEnergy(_Protocol):
 
     def getLambdaValues(self):
         """Get the list of lambda values.
+
 
            Returns
            -------
@@ -136,14 +139,11 @@ class FreeEnergy(_Protocol):
         """Set the list of lambda values.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            lam : float
                The perturbation parameter: [0.0, 1.0]
-
-           Keyword arguments
-           -----------------
 
            lam_vals : [ float ]
                A list of lambda values.
@@ -253,6 +253,7 @@ class FreeEnergy(_Protocol):
     def getTimeStep(self):
         """Return the time step.
 
+
            Returns
            -------
 
@@ -265,8 +266,8 @@ class FreeEnergy(_Protocol):
         """Set the time step.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            timestep : BioSimSpace.Types.Time
                The integration time step.
@@ -278,6 +279,7 @@ class FreeEnergy(_Protocol):
 
     def getRunTime(self):
         """Return the running time.
+
 
            Returns
            -------
@@ -291,8 +293,8 @@ class FreeEnergy(_Protocol):
         """Set the running time.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            runtime : BioSimSpace.Types.Time
                The simulation run time.
@@ -304,6 +306,7 @@ class FreeEnergy(_Protocol):
 
     def getTemperature(self):
         """Return temperature.
+
 
            Returns
            -------
@@ -317,8 +320,8 @@ class FreeEnergy(_Protocol):
         """Set the temperature.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            temperature : BioSimSpace.Types.Time
                The simulation temperature.
@@ -330,6 +333,7 @@ class FreeEnergy(_Protocol):
 
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
+
 
            Returns
            -------
@@ -343,8 +347,8 @@ class FreeEnergy(_Protocol):
         """Set the thermodynamic ensemble.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            ensemble : str
                The thermodynamic ensemble.

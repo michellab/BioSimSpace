@@ -53,8 +53,9 @@ class Equilibration(_Protocol):
                 ):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            timestep : BioSimSpace.Types.Time
                The integration timestep (in femtoseconds).
@@ -135,6 +136,7 @@ class Equilibration(_Protocol):
     def getTimeStep(self):
         """Return the time step.
 
+
            Returns
            -------
 
@@ -147,8 +149,8 @@ class Equilibration(_Protocol):
         """Set the time step.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            time : BioSimSpace.Types.Time
                The integration time step.
@@ -160,6 +162,7 @@ class Equilibration(_Protocol):
 
     def getRunTime(self):
         """Return the running time.
+
 
            Returns
            -------
@@ -173,8 +176,8 @@ class Equilibration(_Protocol):
         """Set the running time.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            runtime : BioSimSpace.Types.Time
                The simulation run time.
@@ -186,6 +189,7 @@ class Equilibration(_Protocol):
 
     def getStartTemperature(self):
         """Return the starting temperature.
+
 
            Returns
            -------
@@ -199,8 +203,8 @@ class Equilibration(_Protocol):
         """Set the starting temperature.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            temperature : BioSimSpace.Types.Time
                The starting temperature.
@@ -216,6 +220,7 @@ class Equilibration(_Protocol):
     def getEndTemperature(self):
         """Return the final temperature.
 
+
            Returns
            -------
 
@@ -228,8 +233,8 @@ class Equilibration(_Protocol):
         """Set the final temperature.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            temperature : BioSimSpace.Types.Time
                The final temperature.
@@ -244,6 +249,7 @@ class Equilibration(_Protocol):
     def getFrames(self):
         """Return the number of frames.
 
+
            Returns
            -------
 
@@ -256,8 +262,8 @@ class Equilibration(_Protocol):
         """Set the number of frames.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            frames : int
                The number of trajectory frames.
@@ -274,6 +280,7 @@ class Equilibration(_Protocol):
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
 
+
            Returns
            -------
 
@@ -286,8 +293,8 @@ class Equilibration(_Protocol):
         """Set the thermodynamic ensemble.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            ensemble : str
                The thermodynamic ensemble.
@@ -301,6 +308,7 @@ class Equilibration(_Protocol):
     def isRestrained(self):
         """Return whether the backbone is restrained.
 
+
            Returns
            -------
 
@@ -313,8 +321,8 @@ class Equilibration(_Protocol):
         """Set the backbone restraint.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            is_restrained : bool
                Whether the backbone is restrained.
@@ -327,6 +335,7 @@ class Equilibration(_Protocol):
 
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature.
+
 
            Returns
            -------

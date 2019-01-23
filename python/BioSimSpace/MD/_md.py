@@ -57,18 +57,14 @@ def _find_md_package(system, protocol, use_gpu=True):
        a handle to it as a MDPackage object.
 
 
-       Positional arguments
-       --------------------
+       Parameters
+       ----------
 
        system : BioSimSpace._SireWrappers.System
            The molecular system.
 
        protocol : BioSimSpace.Protocol
            The simulation protocol.
-
-
-       Keyword arguments
-       -----------------
 
        use_gpu : bool
            Whether to use GPU support.
@@ -127,18 +123,14 @@ class MD():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                The molecular system.
 
            protocol : BioSimSpace.Protocol
                The simulation protocol.
-
-
-           Keyword arguments
-           -----------------
 
            autostart : bool
                Whether to start the process automatically.

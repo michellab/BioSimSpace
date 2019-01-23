@@ -49,8 +49,8 @@ class System():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : Sire.System.System, BioSimSpace._SireWrappers.System, Sire.Mol.Molecule,
                     BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
@@ -175,8 +175,8 @@ class System():
         """Return the total molecular charge.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -215,8 +215,8 @@ class System():
         """Return the file formats associated with the system.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -248,8 +248,8 @@ class System():
         """Add a molecule, or list of molecules to the system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
@@ -285,8 +285,8 @@ class System():
         """Remove a molecule, or list of molecules from the system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
@@ -327,8 +327,8 @@ class System():
         """Update a molecule, or list of molecules in the system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
               A Molecule, or list of Molecule objects.
@@ -366,8 +366,8 @@ class System():
         """Return a list containing all of the molecules in the specified group.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            group : str
                The name of the molecule group.
@@ -408,6 +408,7 @@ class System():
     def getWaterMolecules(self):
         """Return a list containing all of the water molecules in the system.
 
+
            Returns
            -------
 
@@ -425,6 +426,7 @@ class System():
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
 
+
            Returns
            -------
 
@@ -435,6 +437,7 @@ class System():
 
     def getPerturbableMolecules(self):
         """Return a list containing all of the perturbable molecules in the system.
+
 
            Returns
            -------
@@ -453,6 +456,7 @@ class System():
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
 
+
            Returns
            -------
 
@@ -465,8 +469,8 @@ class System():
         """Return the molecule containing the given residue.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            resname : str
                The name of a residue unique to the molecule.
@@ -487,15 +491,11 @@ class System():
         """Translate the system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            vector : list, tuple
                The translation vector (in Angstroms).
-
-
-           Keyword arguments
-           -----------------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -547,8 +547,8 @@ class System():
         """Get the size of the periodic box.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            system : Sire.System.System
                A Sire molecular system.
@@ -581,8 +581,8 @@ class System():
         """Get the axis-aligned bounding box for the molecular system.
 
 
-           Keyword arguments
-           -----------------
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -628,8 +628,8 @@ class System():
            system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecules : [ BioSimSpace._SireWrappers.Molecule ]
                A list of molecule objects.
@@ -706,15 +706,11 @@ class System():
         """Update the coordinates of atoms in the system.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system : BioSimSpace._SireWrappers.System
                A system containing the updated coordinates.
-
-
-           Keyword arguments
-           -----------------
 
            property_map0 : dict
                A dictionary that maps system "properties" to their user defined
@@ -788,8 +784,8 @@ class System():
         """Create a Sire system from a list of molecules.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecules : [ BioSimSpace._SireWrappers.Molecule ]
 

@@ -80,8 +80,9 @@ if _has_matplotlib:
 def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=False, logy=False):
     """A simple function to create x/y plots with matplotlib.
 
-       Keyword arguments
-       -----------------
+
+       Parameters
+       ----------
 
        x : list
            A list of x data values.

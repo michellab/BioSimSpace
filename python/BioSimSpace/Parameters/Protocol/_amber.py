@@ -48,8 +48,9 @@ class FF03(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -70,8 +71,9 @@ class FF99(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -92,7 +94,9 @@ class FF99SB(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-           Keyword arguments:
+
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -113,8 +117,9 @@ class FF14SB(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -142,8 +147,9 @@ class GAFF(_protocol.Protocol):
     def __init__(self, charge_method="BCC", property_map={}):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            charge_method : str
                The method to use when calculating atomic charges:
@@ -187,8 +193,8 @@ class GAFF(_protocol.Protocol):
         """Run the parameterisation protocol.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
@@ -400,8 +406,9 @@ class GAFF2(_protocol.Protocol):
     def __init__(self, charge_method="BCC", property_map={}):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            charge_method : str
                The method to use when calculating atomic charges:

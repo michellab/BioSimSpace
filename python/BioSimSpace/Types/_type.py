@@ -34,8 +34,8 @@ class Type():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            magnitude : float
                The magnitude.
@@ -289,7 +289,7 @@ class Type():
         """Convert a string to an object of the same type.
 
 
-           Positional arguments:
+           Parameters:
 
            string -- The string to interpret.
         """

@@ -46,8 +46,8 @@ class View():
         """Constructor.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            handle : BioSimSpace.Process, BioSimSpace._SireWrappers.System
                A handle to a process or system.
@@ -83,8 +83,9 @@ class View():
     def system(self, gui=True):
         """View the entire molecular system.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            gui : bool
                Whether to display the gui.
@@ -111,8 +112,9 @@ class View():
     def molecules(self, indices=None, gui=True):
         """View specific molecules.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            indices : [ int ], range
                A list of molecule indices.
@@ -174,8 +176,9 @@ class View():
     def molecule(self, index=0, gui=True):
         """View a specific molecule.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            index : int
                The molecule index.
@@ -221,8 +224,9 @@ class View():
     def reload(self, index=None, gui=True):
         """Reload a particular view.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            index : int
                The view index.
@@ -262,15 +266,11 @@ class View():
         """Save a specific view as a PDB file.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            file : str
                The name of the file to write to.
-
-
-           Keyword arguments
-           -----------------
 
            index : int
                The view index.
@@ -311,8 +311,9 @@ class View():
     def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            system : Sire.System.System
                A Sire molecular system.

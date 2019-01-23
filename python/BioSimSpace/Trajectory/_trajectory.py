@@ -47,8 +47,9 @@ class Trajectory():
     def __init__(self, process=None, trajectory=None, topology=None):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            process : BioSimSpace.Process
                A BioSimSpace process object.
@@ -119,8 +120,9 @@ class Trajectory():
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            format : str
                Whether to return an 'MDTraj' or 'MDAnalysis' object.
@@ -249,8 +251,9 @@ class Trajectory():
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of System objects.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            indices : [ int ], [ BioSimSpace.Types.Time ]
                A list of trajectory frame indices, or time stamps (in ns).
@@ -358,6 +361,7 @@ class Trajectory():
     def nFrames(self):
         """Return the current number of trajectory frames.
 
+
            Returns
            -------
 
@@ -378,8 +382,9 @@ class Trajectory():
     def RMSD(self, frame=None, atoms=None, molecule=None):
         """Compute the root mean squared displacement.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            frame : int
                The index of the reference frame.

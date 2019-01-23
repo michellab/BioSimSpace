@@ -54,8 +54,9 @@ class FreeEnergy():
     def __init__(self, protocol=None, work_dir=None):
         """Constructor.
 
-           Keyword arguments
-           -----------------
+
+           Parameters
+           ----------
 
            protocol : BioSimSpace.Protocol.FreeEnergy
                The simulation protocol.
@@ -98,6 +99,7 @@ class FreeEnergy():
 
     def analyse(self):
         """Analyse the solvation free energy data.
+
 
            Returns
            -------
@@ -219,8 +221,8 @@ class FreeEnergy():
         """Internral helper function to initialise the process runner.
 
 
-           Positional arguments
-           --------------------
+           Parameters
+           ----------
 
            system0 : BioSimSpace._SireWrappers.System
                The system for the first free energy leg.
