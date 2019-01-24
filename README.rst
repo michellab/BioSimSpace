@@ -3,8 +3,8 @@ BioSimSpace
 ===========
 
 
-.. image:: https://travis-ci.org/michellab/BioSimSpace.svg?branch=testing
-   :target: https://travis-ci.org/michellab/BioSimSpace
+.. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
+   :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
 
