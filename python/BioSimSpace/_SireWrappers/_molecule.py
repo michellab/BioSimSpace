@@ -123,9 +123,10 @@ class Molecule():
             system.addMolecules(self)
             return system
 
-        # A list of Molecule objects.
+        # Return a list of Molecule objects.
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
             molecules.extend(other)
+            return molecules
 
         # Unsupported.
         else:
