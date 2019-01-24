@@ -53,7 +53,6 @@ class Namd(_process.Process):
             name="namd", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -494,7 +493,6 @@ class Namd(_process.Process):
     def start(self):
         """Start the NAMD process.
 
-
            Returns
            -------
 
@@ -539,13 +537,11 @@ class Namd(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -610,7 +606,6 @@ class Namd(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
-
            Returns
            -------
 
@@ -622,13 +617,11 @@ class Namd(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -650,7 +643,6 @@ class Namd(_process.Process):
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -665,7 +657,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -686,7 +677,6 @@ class Namd(_process.Process):
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -698,7 +688,6 @@ class Namd(_process.Process):
 
            unit : BioSimSpace.Types.Type
                The unit to convert the record to.
-
 
            Returns
            -------
@@ -712,13 +701,11 @@ class Namd(_process.Process):
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -737,13 +724,11 @@ class Namd(_process.Process):
     def getCurrentRecords(self):
         """Return the current dictionary of stdout time-series records.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -756,7 +741,6 @@ class Namd(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -765,7 +749,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -794,7 +777,6 @@ class Namd(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -803,7 +785,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -816,7 +797,6 @@ class Namd(_process.Process):
     def getStep(self, time_series=False, block="AUTO"):
         """Get the number of integration steps.
 
-
            Parameters
            ----------
 
@@ -825,7 +805,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -838,13 +817,11 @@ class Namd(_process.Process):
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -857,7 +834,6 @@ class Namd(_process.Process):
     def getBondEnergy(self, time_series=False, block="AUTO"):
         """Get the bond energy.
 
-
            Parameters
            ----------
 
@@ -866,7 +842,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -879,13 +854,11 @@ class Namd(_process.Process):
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -898,7 +871,6 @@ class Namd(_process.Process):
     def getAngleEnergy(self, time_series=False, block="AUTO"):
         """Get the angle energy.
 
-
            Parameters
            ----------
 
@@ -907,7 +879,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -920,13 +891,11 @@ class Namd(_process.Process):
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -939,7 +908,6 @@ class Namd(_process.Process):
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """Get the dihedral energy.
 
-
            Parameters
            ----------
 
@@ -948,7 +916,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -961,13 +928,11 @@ class Namd(_process.Process):
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -980,7 +945,6 @@ class Namd(_process.Process):
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.
 
-
            Parameters
            ----------
 
@@ -989,7 +953,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1002,13 +965,11 @@ class Namd(_process.Process):
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1021,7 +982,6 @@ class Namd(_process.Process):
     def getElectrostaticEnergy(self, time_series=False, block="AUTO"):
         """Get the electrostatic energy.
 
-
            Parameters
            ----------
 
@@ -1030,7 +990,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1043,13 +1002,11 @@ class Namd(_process.Process):
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current electrostatic energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1062,7 +1019,6 @@ class Namd(_process.Process):
     def getVanDerWaalsEnergy(self, time_series=False, block="AUTO"):
         """Get the Van der Vaals energy.
 
-
            Parameters
            ----------
 
@@ -1071,7 +1027,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1084,13 +1039,11 @@ class Namd(_process.Process):
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Waals energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1103,7 +1056,6 @@ class Namd(_process.Process):
     def getBoundaryEnergy(self, time_series=False, block="AUTO"):
         """Get the boundary energy.
 
-
            Parameters
            ----------
 
@@ -1112,7 +1064,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1125,13 +1076,11 @@ class Namd(_process.Process):
     def getCurrentBoundaryEnergy(self, time_series=False):
         """Get the current boundary energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1144,7 +1093,6 @@ class Namd(_process.Process):
     def getMiscEnergy(self, time_series=False, block="AUTO"):
         """Get the external energy.
 
-
            Parameters
            ----------
 
@@ -1153,7 +1101,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1166,13 +1113,11 @@ class Namd(_process.Process):
     def getCurrentMiscEnergy(self, time_series=False):
         """Get the current external energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1185,7 +1130,6 @@ class Namd(_process.Process):
     def getKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
-
            Parameters
            ----------
 
@@ -1194,7 +1138,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1207,13 +1150,11 @@ class Namd(_process.Process):
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1226,7 +1167,6 @@ class Namd(_process.Process):
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
         """Get the potential energy.
 
-
            Parameters
            ----------
 
@@ -1235,7 +1175,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1248,13 +1187,11 @@ class Namd(_process.Process):
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1267,7 +1204,6 @@ class Namd(_process.Process):
     def getTotalEnergy(self, time_series=False, block="AUTO"):
         """Get the total energy.
 
-
            Parameters
            ----------
 
@@ -1276,7 +1212,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1289,13 +1224,11 @@ class Namd(_process.Process):
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current potential energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1308,7 +1241,6 @@ class Namd(_process.Process):
     def getTotal2Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Better KE conservation.)
 
-
            Parameters
            ----------
 
@@ -1317,7 +1249,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1330,13 +1261,11 @@ class Namd(_process.Process):
     def getCurrentTotal2Energy(self, time_series=False):
         """Get the current total energy. (Better KE conservation.)
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1349,7 +1278,6 @@ class Namd(_process.Process):
     def getTotal3Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-
            Parameters
            ----------
 
@@ -1358,7 +1286,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1371,13 +1298,11 @@ class Namd(_process.Process):
     def getCurrentTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1390,7 +1315,6 @@ class Namd(_process.Process):
     def getTemperature(self, time_series=False, block="AUTO"):
         """Get the temperature.
 
-
            Parameters
            ----------
 
@@ -1399,7 +1323,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1412,13 +1335,11 @@ class Namd(_process.Process):
     def getCurrentTemperature(self, time_series=False):
         """Get the temperature.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1431,7 +1352,6 @@ class Namd(_process.Process):
     def getTemperatureAverage(self, time_series=False, block="AUTO"):
         """Get the average temperature.
 
-
            Parameters
            ----------
 
@@ -1440,7 +1360,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1453,13 +1372,11 @@ class Namd(_process.Process):
     def getCurrentTemperatureAverage(self, time_series=False):
         """Get the current average temperature.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1472,7 +1389,6 @@ class Namd(_process.Process):
     def getPressure(self, time_series=False, block="AUTO"):
         """Get the pressure.
 
-
            Parameters
            ----------
 
@@ -1481,7 +1397,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1494,13 +1409,11 @@ class Namd(_process.Process):
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1513,7 +1426,6 @@ class Namd(_process.Process):
     def getPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure.
 
-
            Parameters
            ----------
 
@@ -1522,7 +1434,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1535,13 +1446,11 @@ class Namd(_process.Process):
     def getCurrentPressureAverage(self, time_series=False):
         """Get the current average pressure.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1554,7 +1463,6 @@ class Namd(_process.Process):
     def getGPressure(self, time_series=False, block="AUTO"):
         """Get the pressure. (Hydrogens incorporated into bonded atoms.)
 
-
            Parameters
            ----------
 
@@ -1563,7 +1471,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1576,13 +1483,11 @@ class Namd(_process.Process):
     def getCurrentGPressure(self, time_series=False):
         """Get the current pressure. (Hydrogens incorporated into bonded atoms.)
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1595,7 +1500,6 @@ class Namd(_process.Process):
     def getGPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure. (Hydrogens incorporated into bonded atoms.)
 
-
            Parameters
            ----------
 
@@ -1604,7 +1508,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1617,13 +1520,11 @@ class Namd(_process.Process):
     def getCurrentGPressureAverage(self, time_series=False):
         """Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1636,7 +1537,6 @@ class Namd(_process.Process):
     def getVolume(self, time_series=False, block="AUTO"):
         """Get the volume.
 
-
            Parameters
            ----------
 
@@ -1645,7 +1545,6 @@ class Namd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1658,13 +1557,11 @@ class Namd(_process.Process):
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1702,7 +1599,6 @@ class Namd(_process.Process):
 
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
-
 
            Parameters
            ----------
@@ -1755,7 +1651,6 @@ class Namd(_process.Process):
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
-
            Parameters
            ----------
 
@@ -1767,7 +1662,6 @@ class Namd(_process.Process):
 
            unit : BioSimSpace.Types._type.Type
                The unit to convert the record to.
-
 
            Returns
            -------

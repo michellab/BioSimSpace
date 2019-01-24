@@ -49,7 +49,6 @@ def matchAtoms(molecule0,
        that, depending on the scoring function the "best" score may have the
        lowest value.)
 
-
        Parameters
        ----------
 
@@ -95,7 +94,6 @@ def matchAtoms(molecule0,
 
        verbose : bool
            Whether to print status information from the matcher.
-
 
        Returns
        -------
@@ -225,7 +223,6 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        translation vector (as opposed to merely taking the difference of
        centroids).
 
-
        Parameters
        ----------
 
@@ -246,7 +243,6 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
-
 
        Returns
        -------
@@ -297,7 +293,6 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
 
-
        Parameters
        ----------
 
@@ -321,7 +316,6 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        property_map1 : dict
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
-
 
        Returns
        -------
@@ -369,7 +363,6 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
        on their score from best to worst, along with a list containing the
        scores for each mapping.
 
-
        Parameters
        ----------
 
@@ -386,7 +379,6 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
        is_align : bool
            Whether to align molecule0 to molecule1 based on the mapping
            before calculating the RMSD score.
-
 
        Returns
        -------

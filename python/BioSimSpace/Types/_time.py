@@ -63,7 +63,6 @@ class Time(_Type):
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

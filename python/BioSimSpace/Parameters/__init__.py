@@ -38,7 +38,6 @@ __all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFi
 def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
     """Parameterise using the a specified force field.
 
-
        Parameters
        ----------
 
@@ -60,7 +59,6 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
 
-
        Returns
        -------
 
@@ -79,7 +77,6 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
 def ff99(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
-
        Parameters
        ----------
 
@@ -96,7 +93,6 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -131,7 +127,6 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
 def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
-
        Parameters
        ----------
 
@@ -148,7 +143,6 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -183,7 +177,6 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
 def ff03(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
-
        Parameters
        ----------
 
@@ -200,7 +193,6 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -235,7 +227,6 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
 def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
-
        Parameters
        ----------
 
@@ -252,7 +243,6 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -286,7 +276,6 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
 def gaff(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
-
        Parameters
        ----------
 
@@ -303,7 +292,6 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -337,7 +325,6 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
 def gaff2(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
 
-
        Parameters
        ----------
 
@@ -354,7 +341,6 @@ def gaff2(molecule, options={}, work_dir=None, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------

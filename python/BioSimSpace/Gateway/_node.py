@@ -99,7 +99,6 @@ class Node():
     def __init__(self, description, name=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -185,7 +184,6 @@ class Node():
     def addInput(self, name, input):
         """Add an input requirement.
 
-
            Parameters
            ----------
 
@@ -228,7 +226,6 @@ class Node():
 
     def _addInputCommandLine(self, name, input):
         """Add an input requirement for the command-line.
-
 
            Parameters
            ----------
@@ -291,7 +288,6 @@ class Node():
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
 
-
            Parameters
            ----------
 
@@ -305,7 +301,6 @@ class Node():
 
     def _addInputJupyter(self, name, input, reset=False):
         """Add an input requirement for Jupyter.
-
 
            Parameters
            ----------
@@ -693,7 +688,6 @@ class Node():
     def addOutput(self, name, output):
         """Add an output requirement.
 
-
            Parameters
            ----------
 
@@ -720,7 +714,6 @@ class Node():
     def setOutput(self, name, value):
         """Set the value of an output.
 
-
            Parameters
            ----------
 
@@ -738,13 +731,11 @@ class Node():
     def getInput(self, name):
         """Get the value of the named input.
 
-
            Parameters
            ----------
 
            name : str
                The name of the input requirement.
-
 
            Returns
            -------
@@ -771,7 +762,6 @@ class Node():
     def getInputs(self):
         """Get all of the input requirements.
 
-
            Returns
            -------
 
@@ -787,7 +777,6 @@ class Node():
     def addError(self, error):
         """Add an error message.
 
-
            Parameters
            ----------
 
@@ -802,7 +791,6 @@ class Node():
 
     def addAuthor(self, name=None, email=None, affiliation=None):
         """Add an author for the node.
-
 
            Parameters
            ----------
@@ -839,7 +827,6 @@ class Node():
     def getAuthors(self):
         """Return the list of authors.
 
-
            Returns
            -------
 
@@ -850,7 +837,6 @@ class Node():
 
     def setLicense(self, license):
         """Set the license for the node.
-
 
            Parameters
            ----------
@@ -866,7 +852,6 @@ class Node():
     def getLicense(self):
         """Return the license.
 
-
            Returns
            -------
 
@@ -877,7 +862,6 @@ class Node():
 
     def showControls(self):
         """Show the Jupyter widget GUI to allow the user to enter input.
-
 
            Returns
            -------
@@ -1005,13 +989,11 @@ class Node():
     def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
 
-
            Parameters
            ----------
 
            file_prefix : str
                The prefix of the output file name.
-
 
            Returns
            -------
@@ -1089,13 +1071,11 @@ class Node():
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
 
-
            Parameters
            ----------
 
            input : BioSimSpace.Gateway.Requirement
                The input requirement.
-
 
            Returns
            -------
@@ -1139,7 +1119,6 @@ class Node():
 
     def _print_output(self):
         """Print the output requirements of the node.
-
            Returns
            -------
 

@@ -136,8 +136,8 @@ from . import FreeEnergy
 from . import Gateway
 from . import IO
 from . import Notebook
-from . import Process
 from . import Parameters
+from . import Process
 from . import Protocol
 from . import Solvent
 from . import Types

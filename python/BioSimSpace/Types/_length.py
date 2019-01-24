@@ -58,7 +58,6 @@ class Length(_Type):
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

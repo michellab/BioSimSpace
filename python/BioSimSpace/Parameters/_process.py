@@ -61,7 +61,6 @@ def _wrap_protocol(protocol_function, process):
     """A simple decorator function to wrap the running of parameterisation
        protocols and catch exceptions.
 
-
        Parameters
        ----------
 
@@ -90,7 +89,6 @@ class Process():
 
     def __init__(self, molecule, protocol, work_dir=None, autostart=False):
         """Constructor
-
 
            Parameters
            ----------
@@ -183,7 +181,6 @@ class Process():
         """Get the parameterised molecule. This method blocks until
            parameterisation is complete.
 
-
            Returns
            -------
 
@@ -222,7 +219,6 @@ class Process():
     def isError(self):
         """Return whether there was a parameterisation error.
 
-
            Returns
            -------
 
@@ -234,13 +230,11 @@ class Process():
     def getOutput(self, filename=None):
         """Return the output of the parameterisation process.
 
-
            Parameters
            ----------
 
            filename : str
                The name to write the output to.
-
 
            Returns
            -------

@@ -53,7 +53,6 @@ class Equilibration(_Protocol):
                 ):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -136,7 +135,6 @@ class Equilibration(_Protocol):
     def getTimeStep(self):
         """Return the time step.
 
-
            Returns
            -------
 
@@ -147,7 +145,6 @@ class Equilibration(_Protocol):
 
     def setTimeStep(self, timestep):
         """Set the time step.
-
 
            Parameters
            ----------
@@ -163,7 +160,6 @@ class Equilibration(_Protocol):
     def getRunTime(self):
         """Return the running time.
 
-
            Returns
            -------
 
@@ -174,7 +170,6 @@ class Equilibration(_Protocol):
 
     def setRunTime(self, runtime):
         """Set the running time.
-
 
            Parameters
            ----------
@@ -190,7 +185,6 @@ class Equilibration(_Protocol):
     def getStartTemperature(self):
         """Return the starting temperature.
 
-
            Returns
            -------
 
@@ -201,7 +195,6 @@ class Equilibration(_Protocol):
 
     def setStartTemperature(self, temperature):
         """Set the starting temperature.
-
 
            Parameters
            ----------
@@ -220,7 +213,6 @@ class Equilibration(_Protocol):
     def getEndTemperature(self):
         """Return the final temperature.
 
-
            Returns
            -------
 
@@ -231,7 +223,6 @@ class Equilibration(_Protocol):
 
     def setEndTemperature(self, temperature):
         """Set the final temperature.
-
 
            Parameters
            ----------
@@ -249,7 +240,6 @@ class Equilibration(_Protocol):
     def getFrames(self):
         """Return the number of frames.
 
-
            Returns
            -------
 
@@ -260,7 +250,6 @@ class Equilibration(_Protocol):
 
     def setFrames(self, frames):
         """Set the number of frames.
-
 
            Parameters
            ----------
@@ -280,7 +269,6 @@ class Equilibration(_Protocol):
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
 
-
            Returns
            -------
 
@@ -291,7 +279,6 @@ class Equilibration(_Protocol):
 
     def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble.
-
 
            Parameters
            ----------
@@ -308,7 +295,6 @@ class Equilibration(_Protocol):
     def isRestrained(self):
         """Return whether the backbone is restrained.
 
-
            Returns
            -------
 
@@ -319,7 +305,6 @@ class Equilibration(_Protocol):
 
     def setRestraint(self, restrain_backbone):
         """Set the backbone restraint.
-
 
            Parameters
            ----------
@@ -335,7 +320,6 @@ class Equilibration(_Protocol):
 
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature.
-
 
            Returns
            -------

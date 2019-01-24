@@ -49,7 +49,6 @@ def packages():
 
 def createProcess(system, protocol, package):
     """Create a simulation process.
-
        Parameters
        ----------
 
@@ -61,7 +60,6 @@ def createProcess(system, protocol, package):
 
        package : str
            The name of the simulation package.
-
 
        Returns
        -------

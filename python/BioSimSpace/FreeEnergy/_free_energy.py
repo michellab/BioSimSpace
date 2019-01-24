@@ -54,7 +54,6 @@ class FreeEnergy():
     def __init__(self, protocol=None, work_dir=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -99,7 +98,6 @@ class FreeEnergy():
 
     def analyse(self):
         """Analyse the solvation free energy data.
-
 
            Returns
            -------
@@ -219,7 +217,6 @@ class FreeEnergy():
 
     def _initialise_runner(self, system0, system1):
         """Internral helper function to initialise the process runner.
-
 
            Parameters
            ----------

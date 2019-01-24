@@ -48,7 +48,6 @@ class FF03(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -70,7 +69,6 @@ class FF99(_protocol.Protocol):
 
     def __init__(self, property_map={}):
         """Constructor.
-
 
            Parameters
            ----------
@@ -94,7 +92,6 @@ class FF99SB(_protocol.Protocol):
     def __init__(self, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -116,7 +113,6 @@ class FF14SB(_protocol.Protocol):
 
     def __init__(self, property_map={}):
         """Constructor.
-
 
            Parameters
            ----------
@@ -146,7 +142,6 @@ class GAFF(_protocol.Protocol):
 
     def __init__(self, charge_method="BCC", property_map={}):
         """Constructor.
-
 
            Parameters
            ----------
@@ -192,7 +187,6 @@ class GAFF(_protocol.Protocol):
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
-
            Parameters
            ----------
 
@@ -204,7 +198,6 @@ class GAFF(_protocol.Protocol):
 
            queue : queue.Queue
                The thread queue is which this method has been run.
-
 
            Returns
            -------
@@ -405,7 +398,6 @@ class GAFF2(_protocol.Protocol):
 
     def __init__(self, charge_method="BCC", property_map={}):
         """Constructor.
-
 
            Parameters
            ----------

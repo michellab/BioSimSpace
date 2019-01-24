@@ -33,7 +33,6 @@ class Type():
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

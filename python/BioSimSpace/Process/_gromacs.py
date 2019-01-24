@@ -54,7 +54,6 @@ class Gromacs(_process.Process):
             work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -545,7 +544,6 @@ class Gromacs(_process.Process):
     def addToConfig(self, config):
         """Add a string to the configuration list.
 
-
            Parameters
            ----------
 
@@ -569,7 +567,6 @@ class Gromacs(_process.Process):
 
     def setConfig(self, config):
         """Set the list of configuration file strings.
-
 
            Parameters
            ----------
@@ -635,13 +632,11 @@ class Gromacs(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -695,7 +690,6 @@ class Gromacs(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
-
            Returns
            -------
 
@@ -707,13 +701,11 @@ class Gromacs(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -736,7 +728,6 @@ class Gromacs(_process.Process):
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -751,7 +742,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -772,7 +762,6 @@ class Gromacs(_process.Process):
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -785,7 +774,6 @@ class Gromacs(_process.Process):
            unit : BioSimSpace.Types.Type
                The unit to convert the record to.
 
-
            Returns
            -------
 
@@ -797,7 +785,6 @@ class Gromacs(_process.Process):
 
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
-
 
            Parameters
            ----------
@@ -816,13 +803,11 @@ class Gromacs(_process.Process):
     def getCurrentRecords(self):
         """Return the current dictionary of stdout time-series records.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -835,7 +820,6 @@ class Gromacs(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -844,7 +828,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -862,7 +845,6 @@ class Gromacs(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -871,7 +853,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -884,7 +865,6 @@ class Gromacs(_process.Process):
     def getStep(self, time_series=False, block="AUTO"):
         """Get the number of integration steps.
 
-
            Parameters
            ----------
 
@@ -893,7 +873,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -906,13 +885,11 @@ class Gromacs(_process.Process):
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -925,7 +902,6 @@ class Gromacs(_process.Process):
     def getBondEnergy(self, time_series=False, block="AUTO"):
         """Get the bond energy.
 
-
            Parameters
            ----------
 
@@ -934,7 +910,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -947,13 +922,11 @@ class Gromacs(_process.Process):
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -966,7 +939,6 @@ class Gromacs(_process.Process):
     def getAngleEnergy(self, time_series=False, block="AUTO"):
         """Get the angle energy.
 
-
            Parameters
            ----------
 
@@ -975,7 +947,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -988,13 +959,11 @@ class Gromacs(_process.Process):
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1007,7 +976,6 @@ class Gromacs(_process.Process):
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """Get the dihedral energy.
 
-
            Parameters
            ----------
 
@@ -1016,7 +984,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1029,13 +996,11 @@ class Gromacs(_process.Process):
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1048,7 +1013,6 @@ class Gromacs(_process.Process):
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.
 
-
            Parameters
            ----------
 
@@ -1057,7 +1021,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1070,13 +1033,11 @@ class Gromacs(_process.Process):
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1089,7 +1050,6 @@ class Gromacs(_process.Process):
     def getLennardJones14(self, time_series=False, block="AUTO"):
         """Get the Lennard-Jones energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
@@ -1098,7 +1058,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1111,13 +1070,11 @@ class Gromacs(_process.Process):
     def getCurrentLennardJones14(self, time_series=False):
         """Get the current Lennard-Jones energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1130,7 +1087,6 @@ class Gromacs(_process.Process):
     def getLennardJonesSR(self, time_series=False, block="AUTO"):
         """Get the short-range Lennard-Jones energy.
 
-
            Parameters
            ----------
 
@@ -1139,7 +1095,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1152,13 +1107,11 @@ class Gromacs(_process.Process):
     def getCurrentLennardJonesSR(self, time_series=False):
         """Get the current short-range Lennard-Jones energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1171,7 +1124,6 @@ class Gromacs(_process.Process):
     def getCoulomb14(self, time_series=False, block="AUTO"):
         """Get the Coulomb energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
@@ -1180,7 +1132,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1193,13 +1144,11 @@ class Gromacs(_process.Process):
     def getCurrentCoulomb14(self, time_series=False):
         """Get the current Coulomb energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1212,7 +1161,6 @@ class Gromacs(_process.Process):
     def getCoulombSR(self, time_series=False, block="AUTO"):
         """Get the short-range Coulomb energy.
 
-
            Parameters
            ----------
 
@@ -1221,7 +1169,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1234,13 +1181,11 @@ class Gromacs(_process.Process):
     def getCurrentCoulombSR(self, time_series=False):
         """Get the current short-range Coulomb energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1253,7 +1198,6 @@ class Gromacs(_process.Process):
     def getCoulombReciprocal(self, time_series=False, block="AUTO"):
         """Get the reciprocal space Coulomb energy.
 
-
            Parameters
            ----------
 
@@ -1262,7 +1206,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1275,13 +1218,11 @@ class Gromacs(_process.Process):
     def getCurrentCoulombReciprocal(self, time_series=False):
         """Get the current reciprocal space Coulomb energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1294,7 +1235,6 @@ class Gromacs(_process.Process):
     def getDispersionCorrection(self, time_series=False, block="AUTO"):
         """Get the dispersion correction.
 
-
            Parameters
            ----------
 
@@ -1303,7 +1243,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1316,13 +1255,11 @@ class Gromacs(_process.Process):
     def getCurrentDispersionCorrection(self, time_series=False):
         """Get the current dispersion correction.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1335,7 +1272,6 @@ class Gromacs(_process.Process):
     def getRestraintEnergy(self, time_series=False, block="AUTO"):
         """Get the position restraint energy.
 
-
            Parameters
            ----------
 
@@ -1344,7 +1280,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1357,13 +1292,11 @@ class Gromacs(_process.Process):
     def getCurrentRestraintEnergy(self, time_series=False):
         """Get the current position restraint energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1376,7 +1309,6 @@ class Gromacs(_process.Process):
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
         """Get the potential energy.
 
-
            Parameters
            ----------
 
@@ -1385,7 +1317,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1398,13 +1329,11 @@ class Gromacs(_process.Process):
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1417,7 +1346,6 @@ class Gromacs(_process.Process):
     def getKinetecEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
-
            Parameters
            ----------
 
@@ -1426,7 +1354,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1439,13 +1366,11 @@ class Gromacs(_process.Process):
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1458,7 +1383,6 @@ class Gromacs(_process.Process):
     def getTotalEnergy(self, time_series=False, block="AUTO"):
         """Get the total energy.
 
-
            Parameters
            ----------
 
@@ -1467,7 +1391,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1480,13 +1403,11 @@ class Gromacs(_process.Process):
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current total energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1499,7 +1420,6 @@ class Gromacs(_process.Process):
     def getConservedEnergy(self, time_series=False, block="AUTO"):
         """Get the conserved energy.
 
-
            Parameters
            ----------
 
@@ -1508,7 +1428,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1521,13 +1440,11 @@ class Gromacs(_process.Process):
     def getCurrentConservedEnergy(self, time_series=False):
         """Get the current conserved energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1540,7 +1457,6 @@ class Gromacs(_process.Process):
     def getTemperature(self, time_series=False, block="AUTO"):
         """Get the temperature.
 
-
            Parameters
            ----------
 
@@ -1549,7 +1465,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1562,13 +1477,11 @@ class Gromacs(_process.Process):
     def getCurrentTemperature(self, time_series=False):
         """Get the current temperature.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1581,7 +1494,6 @@ class Gromacs(_process.Process):
     def getPressure(self, time_series=False, block="AUTO"):
         """Get the pressure.
 
-
            Parameters
            ----------
 
@@ -1590,7 +1502,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1603,13 +1514,11 @@ class Gromacs(_process.Process):
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1622,7 +1531,6 @@ class Gromacs(_process.Process):
     def getPressureDC(self, time_series=False, block="AUTO"):
         """Get the DC pressure.
 
-
            Parameters
            ----------
 
@@ -1631,7 +1539,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1644,13 +1551,11 @@ class Gromacs(_process.Process):
     def getCurrentPressureDC(self, time_series=False):
         """Get the current DC pressure.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1663,7 +1568,6 @@ class Gromacs(_process.Process):
     def getConstraintRMSD(self, time_series=False, block="AUTO"):
         """Get the RMSD of the constrained atoms.
 
-
            Parameters
            ----------
 
@@ -1672,7 +1576,6 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1685,13 +1588,11 @@ class Gromacs(_process.Process):
     def getCurrentConstraintRMSD(self, time_series=False):
         """Get the current RMSD of the constrained atoms.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1703,7 +1604,6 @@ class Gromacs(_process.Process):
 
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
-
 
            Parameters
            ----------
@@ -1867,7 +1767,6 @@ class Gromacs(_process.Process):
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
-
            Parameters
            ----------
 
@@ -1879,7 +1778,6 @@ class Gromacs(_process.Process):
 
            unit : BioSimSpace.Types._type.Type
                The unit to convert the record to.
-
 
            Returns
            -------

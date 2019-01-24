@@ -48,7 +48,6 @@ class System():
     def __init__(self, system):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -174,7 +173,6 @@ class System():
     def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
-
            Parameters
            ----------
 
@@ -214,7 +212,6 @@ class System():
     def fileFormat(self, property_map={}):
         """Return the file formats associated with the system.
 
-
            Parameters
            ----------
 
@@ -222,7 +219,6 @@ class System():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------
@@ -246,7 +242,6 @@ class System():
 
     def addMolecules(self, molecules):
         """Add a molecule, or list of molecules to the system.
-
 
            Parameters
            ----------
@@ -283,7 +278,6 @@ class System():
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
-
 
            Parameters
            ----------
@@ -326,7 +320,6 @@ class System():
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
 
-
            Parameters
            ----------
 
@@ -365,13 +358,11 @@ class System():
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
 
-
            Parameters
            ----------
 
            group : str
                The name of the molecule group.
-
 
            Returns
            -------
@@ -408,7 +399,6 @@ class System():
     def getWaterMolecules(self):
         """Return a list containing all of the water molecules in the system.
 
-
            Returns
            -------
 
@@ -426,7 +416,6 @@ class System():
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
 
-
            Returns
            -------
 
@@ -437,7 +426,6 @@ class System():
 
     def getPerturbableMolecules(self):
         """Return a list containing all of the perturbable molecules in the system.
-
 
            Returns
            -------
@@ -456,7 +444,6 @@ class System():
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
 
-
            Returns
            -------
 
@@ -468,13 +455,11 @@ class System():
     def getMolWithResName(self, resname):
         """Return the molecule containing the given residue.
 
-
            Parameters
            ----------
 
            resname : str
                The name of a residue unique to the molecule.
-
 
            Returns
            -------
@@ -489,7 +474,6 @@ class System():
 
     def translate(self, vector, property_map={}):
         """Translate the system.
-
 
            Parameters
            ----------
@@ -546,7 +530,6 @@ class System():
     def _getBoxSize(self, property_map={}):
         """Get the size of the periodic box.
 
-
            Parameters
            ----------
 
@@ -557,7 +540,6 @@ class System():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------
@@ -580,7 +562,6 @@ class System():
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
-
            Parameters
            ----------
 
@@ -588,7 +569,6 @@ class System():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------
@@ -627,13 +607,11 @@ class System():
         """Helper function to renumber the molecules to be consistent with the
            system.
 
-
            Parameters
            ----------
 
            molecules : [ BioSimSpace._SireWrappers.Molecule ]
                A list of molecule objects.
-
 
            Returns
            -------
@@ -704,7 +682,6 @@ class System():
     def _updateCoordinates(self, system, property_map0={}, property_map1={},
             is_lambda1=False):
         """Update the coordinates of atoms in the system.
-
 
            Parameters
            ----------
@@ -783,12 +760,10 @@ class System():
     def _createSireSystem(molecules):
         """Create a Sire system from a list of molecules.
 
-
            Parameters
            ----------
 
            molecules : [ BioSimSpace._SireWrappers.Molecule ]
-
 
            Returns
            -------

@@ -49,7 +49,6 @@ class Temperature(_Type):
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

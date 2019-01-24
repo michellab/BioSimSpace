@@ -58,7 +58,6 @@ class Requirement():
             maximum=None, allowed=None, optional=False):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -146,7 +145,6 @@ class Requirement():
 
     def setValue(self, value, name=None):
         """Validate and set the value.
-
 
            Parameters
            ----------
@@ -251,7 +249,6 @@ class Boolean(Requirement):
     def __init__(self, help=None, default=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -282,7 +279,6 @@ class Integer(Requirement):
     def __init__(self, help=None, default=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
-
 
            Parameters
            ----------
@@ -324,7 +320,6 @@ class Float(Requirement):
     def __init__(self, help=None, default=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
-
 
            Parameters
            ----------
@@ -368,7 +363,6 @@ class String(Requirement):
     def __init__(self, help=None, default=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -401,7 +395,6 @@ class File(Requirement):
 
     def __init__(self, help=None, optional=False):
         """Constructor.
-
 
            Parameters
            ----------
@@ -448,7 +441,6 @@ class FileSet(Requirement):
 
     def __init__(self, help=None, optional=False):
         """Constructor.
-
 
            Parameters
            ----------
@@ -528,7 +520,6 @@ class Length(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -593,7 +584,6 @@ class Area(Requirement):
     def __init__(self, help=None, default=None, unit=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
-
 
            Parameters
            ----------
@@ -660,7 +650,6 @@ class Volume(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -725,7 +714,6 @@ class Charge(Requirement):
     def __init__(self, help=None, default=None, unit=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
-
 
            Parameters
            ----------
@@ -792,7 +780,6 @@ class Energy(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -857,7 +844,6 @@ class Pressure(Requirement):
     def __init__(self, help=None, default=None, unit=None,
             minimum=None, maximum=None, allowed=None):
         """Constructor.
-
 
            Parameters
            ----------
@@ -924,7 +910,6 @@ class Temperature(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -990,7 +975,6 @@ class Time(Requirement):
             minimum=None, maximum=None, allowed=None):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -1049,7 +1033,6 @@ class Time(Requirement):
 def _validate_unit_requirement(value, unit_type):
     """Helper function to validate input requirements with units.
 
-
        Parameters
        ----------
 
@@ -1058,7 +1041,6 @@ def _validate_unit_requirement(value, unit_type):
 
        unit_type: str
            The unit type.
-
 
         Returns
         -------
@@ -1116,13 +1098,11 @@ def _validate_unit_requirement(value, unit_type):
 def _unarchive(name):
     """Decompress an archive and return a list of files.
 
-
        Parameters
        ----------
 
        name : str
            The name of the archive (full path).
-
 
        Returns
        -------

@@ -46,7 +46,6 @@ class Charge(_Type):
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

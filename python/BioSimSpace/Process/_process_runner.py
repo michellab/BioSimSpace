@@ -40,7 +40,6 @@ class ProcessRunner():
     def __init__(self, processes, name="runner", work_dir=None, nest_dirs=True):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -116,7 +115,6 @@ class ProcessRunner():
     def processes(self):
         """Return the list of processes.
 
-
            Returns
            -------
 
@@ -127,7 +125,6 @@ class ProcessRunner():
 
     def workDir(self):
         """Return the working directory.
-
 
            Returns
            -------
@@ -140,7 +137,6 @@ class ProcessRunner():
     def getName(self):
         """Return the process runner name.
 
-
            Returns
            -------
 
@@ -152,7 +148,6 @@ class ProcessRunner():
 
     def setName(self, name):
         """Set the process runner name.
-
 
            Parameters
            ----------
@@ -167,7 +162,6 @@ class ProcessRunner():
 
     def addProcess(self, process):
         """Add a process to the runner.
-
 
            Parameters
            ----------
@@ -196,7 +190,6 @@ class ProcessRunner():
     def removeProcess(self, index):
         """Remove a process from the runner.
 
-
            Parameters
            ----------
 
@@ -217,7 +210,6 @@ class ProcessRunner():
     def nProcesses(self):
         """Return the number of processes.
 
-
            Returns
            -------
 
@@ -228,7 +220,6 @@ class ProcessRunner():
 
     def nRunning(self):
         """Return the number of running processes.
-
 
            Returns
            -------
@@ -248,7 +239,6 @@ class ProcessRunner():
     def nQueued(self):
         """Return the number of queued processes.
 
-
            Returns
            -------
 
@@ -266,7 +256,6 @@ class ProcessRunner():
 
     def nError(self):
         """Return the number of errored processes.
-
 
            Returns
            -------
@@ -286,7 +275,6 @@ class ProcessRunner():
     def running(self):
         """Return the indices of the running processes.
 
-
            Returns
            -------
 
@@ -304,7 +292,6 @@ class ProcessRunner():
 
     def queued(self):
         """Return the indices of the queued processes.
-
 
            Returns
            -------
@@ -324,7 +311,6 @@ class ProcessRunner():
     def errored(self):
         """Return the indices of the errored processes.
 
-
            Returns
            -------
 
@@ -342,7 +328,6 @@ class ProcessRunner():
 
     def isRunning(self):
         """Return whether each process is running.
-
 
            Returns
            -------
@@ -364,7 +349,6 @@ class ProcessRunner():
     def isQueued(self):
         """Return whether each process is queued.
 
-
            Returns
            -------
 
@@ -384,7 +368,6 @@ class ProcessRunner():
 
     def isError(self):
         """Return whether each process is in an error state.
-
 
            Returns
            -------
@@ -406,7 +389,6 @@ class ProcessRunner():
     def start(self, index):
         """Start a specific process. The same can be achieved using:
                runner.processes()[index].start()
-
 
            Parameters
            ----------
@@ -452,7 +434,6 @@ class ProcessRunner():
         """Kill a specific process. The same can be achieved using:
                runner.processes()[index].kill()
 
-
            Parameters
            ----------
 
@@ -482,7 +463,6 @@ class ProcessRunner():
     def runTime(self):
         """Return the run time for each process.
 
-
            Returns
            -------
 
@@ -501,13 +481,11 @@ class ProcessRunner():
         """Helper function to nest processes inside the runner's working
            directory.
 
-
            Parameters
            ----------
 
            processes : [ BioSimSpace.Process ]
                A list of process objects.
-
 
            Returns
            -------

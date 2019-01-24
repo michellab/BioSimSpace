@@ -50,7 +50,6 @@ class FreeEnergy(_Protocol):
                 ):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -114,7 +113,6 @@ class FreeEnergy(_Protocol):
     def getLambda(self):
         """Get the value of the perturbation parameter.
 
-
            Returns
            -------
 
@@ -126,7 +124,6 @@ class FreeEnergy(_Protocol):
     def getLambdaValues(self):
         """Get the list of lambda values.
 
-
            Returns
            -------
 
@@ -137,7 +134,6 @@ class FreeEnergy(_Protocol):
 
     def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
         """Set the list of lambda values.
-
 
            Parameters
            ----------
@@ -253,7 +249,6 @@ class FreeEnergy(_Protocol):
     def getTimeStep(self):
         """Return the time step.
 
-
            Returns
            -------
 
@@ -264,7 +259,6 @@ class FreeEnergy(_Protocol):
 
     def setTimeStep(self, timestep):
         """Set the time step.
-
 
            Parameters
            ----------
@@ -280,7 +274,6 @@ class FreeEnergy(_Protocol):
     def getRunTime(self):
         """Return the running time.
 
-
            Returns
            -------
 
@@ -291,7 +284,6 @@ class FreeEnergy(_Protocol):
 
     def setRunTime(self, runtime):
         """Set the running time.
-
 
            Parameters
            ----------
@@ -307,7 +299,6 @@ class FreeEnergy(_Protocol):
     def getTemperature(self):
         """Return temperature.
 
-
            Returns
            -------
 
@@ -318,7 +309,6 @@ class FreeEnergy(_Protocol):
 
     def setTemperature(self, temperature):
         """Set the temperature.
-
 
            Parameters
            ----------
@@ -334,7 +324,6 @@ class FreeEnergy(_Protocol):
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
 
-
            Returns
            -------
 
@@ -345,7 +334,6 @@ class FreeEnergy(_Protocol):
 
     def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble.
-
 
            Parameters
            ----------

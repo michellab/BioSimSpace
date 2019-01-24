@@ -36,7 +36,6 @@ class Custom(_Protocol):
     def __init__(self, config):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -50,7 +49,6 @@ class Custom(_Protocol):
     def getConfig(self):
         """Return the custom configuration.
 
-
            Returns
            -------
 
@@ -62,7 +60,6 @@ class Custom(_Protocol):
     def setConfig(self, config):
         """Set the custom configuration.
         
-
            Parameters
            ----------
 

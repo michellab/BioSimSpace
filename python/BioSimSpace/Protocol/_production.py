@@ -50,7 +50,6 @@ class Production(_Protocol):
                 ):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -114,7 +113,6 @@ class Production(_Protocol):
     def getTimeStep(self):
         """Return the time step.
 
-
            Returns
            -------
 
@@ -125,7 +123,6 @@ class Production(_Protocol):
 
     def setTimeStep(self, timestep):
         """Set the time step.
-
 
            Parameters
            ----------
@@ -141,7 +138,6 @@ class Production(_Protocol):
     def getRunTime(self):
         """Return the running time.
 
-
            Returns
            -------
 
@@ -152,7 +148,6 @@ class Production(_Protocol):
 
     def setRunTime(self, runtime):
         """Set the running time.
-
 
            Parameters
            ----------
@@ -168,7 +163,6 @@ class Production(_Protocol):
     def getTemperature(self):
         """Return temperature.
 
-
            Returns
            -------
 
@@ -179,7 +173,6 @@ class Production(_Protocol):
 
     def setTemperature(self, temperature):
         """Set the temperature.
-
 
            Parameters
            ----------
@@ -195,7 +188,6 @@ class Production(_Protocol):
     def getFrames(self):
         """Return the number of frames.
 
-
            Returns
            -------
 
@@ -206,7 +198,6 @@ class Production(_Protocol):
 
     def setFrames(self, frames):
         """Set the number of frames.
-
 
            Parameters
            ----------
@@ -226,7 +217,6 @@ class Production(_Protocol):
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
 
-
            Returns
            -------
 
@@ -237,7 +227,6 @@ class Production(_Protocol):
 
     def setEnsemble(self, ensemble):
         """Set the thermodynamic ensemble.
-
 
            Parameters
            ----------
@@ -254,7 +243,6 @@ class Production(_Protocol):
     def getFirstStep(self):
         """Return the first time step.
 
-
            Returns
            -------
 
@@ -265,7 +253,6 @@ class Production(_Protocol):
 
     def setFirstStep(self, first_step):
         """Set the initial time step.
-
 
            Parameters
            ----------
@@ -285,7 +272,6 @@ class Production(_Protocol):
     def isRestart(self):
         """Return whether this restart simulation.
 
-
            Returns
            -------
 
@@ -296,7 +282,6 @@ class Production(_Protocol):
 
     def setRestart(self, restart):
         """Set the restart flag.
-
 
            Parameters
            ----------

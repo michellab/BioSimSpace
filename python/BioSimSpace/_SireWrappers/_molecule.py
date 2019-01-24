@@ -52,7 +52,6 @@ class Molecule():
     def __init__(self, molecule):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -144,7 +143,6 @@ class Molecule():
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
 
-
            Returns
            -------
 
@@ -156,7 +154,6 @@ class Molecule():
 
     def molecule1(self):
         """Return the component of the merged molecule at lambda = 1.
-
 
            Returns
            -------
@@ -235,7 +232,6 @@ class Molecule():
     def charge(self, property_map={}, is_lambda1=False):
         """Return the total molecular charge.
 
-
            Parameters
            ----------
 
@@ -269,7 +265,6 @@ class Molecule():
 
     def translate(self, vector, property_map={}):
         """Translate the molecule.
-
 
            Parameters
            ----------
@@ -334,7 +329,6 @@ class Molecule():
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
            add all additional properties.
-
 
            Parameters
            ----------
@@ -558,7 +552,6 @@ class Molecule():
     def _fixCharge(self, property_map={}):
         """Make the molecular charge an integer value.
 
-
            Parameters
            ----------
 
@@ -609,7 +602,6 @@ class Molecule():
     def _fromPertFile(self, filename):
         """Create a merged molecule from a perturbation file.
 
-
            Parameters
            ----------
 
@@ -625,7 +617,6 @@ class Molecule():
     def _toPertFile(self, filename="MORPH.pert", property_map={}):
         """Write the merged molecule to a perturbation file.
 
-
            Parameters
            ----------
 
@@ -636,7 +627,6 @@ class Molecule():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------
@@ -1299,7 +1289,6 @@ class Molecule():
     def _toRegularMolecule(self, property_map={}, is_lambda1=False):
         """Internal function to convert a merged molecule to a regular molecule.
 
-
            Parameters
            ----------
 
@@ -1311,7 +1300,6 @@ class Molecule():
            is_lambda1 : bool
                Whether to use the molecule at the lambda = 1 end state.
                By default, the state at lambda = 0 is used.
-
 
            Returns
            -------
@@ -1364,7 +1352,6 @@ class Molecule():
     def _merge(self, other, mapping, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
-
            Parameters
            ----------
 
@@ -1382,7 +1369,6 @@ class Molecule():
            property_map1 : dict
                A dictionary that maps "properties" in ther other molecule to
                their user defined values.
-
 
            Returns
            -------
@@ -2302,7 +2288,6 @@ class Molecule():
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecule.
 
-
            Parameters
            ----------
 
@@ -2310,7 +2295,6 @@ class Molecule():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------

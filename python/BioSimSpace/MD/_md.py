@@ -56,7 +56,6 @@ def _find_md_package(system, protocol, use_gpu=True):
     """Find a molecular dynamics package on the system and return
        a handle to it as a MDPackage object.
 
-
        Parameters
        ----------
 
@@ -68,7 +67,6 @@ def _find_md_package(system, protocol, use_gpu=True):
 
        use_gpu : bool
            Whether to use GPU support.
-
 
        Returns
        -------
@@ -122,7 +120,6 @@ class MD():
             name="md", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -148,7 +145,6 @@ class MD():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
 
            Returns
            -------

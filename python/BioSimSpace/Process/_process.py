@@ -61,7 +61,6 @@ class Process():
     def __init__(self, system, protocol, name=None, work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -225,7 +224,6 @@ class Process():
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
-
            Parameters
            ----------
 
@@ -240,7 +238,6 @@ class Process():
 
            restart : bool
                Whether to restart the simulation, i.e. use the original system.
-
 
            Returns
            -------
@@ -291,7 +288,6 @@ class Process():
     def setName(self, name):
         """Set the process name.
 
-
            Parameters
            ----------
 
@@ -311,7 +307,6 @@ class Process():
     def setSeed(self, seed):
         """Set the random number seed.
 
-
            Parameters
            ----------
 
@@ -327,7 +322,6 @@ class Process():
 
     def wait(self, max_time=None):
         """Wait for the process to finish.
-
 
            Parameters
            ----------
@@ -393,7 +387,6 @@ class Process():
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-
            Parameters
            ----------
 
@@ -424,7 +417,6 @@ class Process():
 
     def stderr(self, n=10):
         """Print the last n lines of the stderr buffer.
-
 
            Parameters
            ----------
@@ -469,13 +461,11 @@ class Process():
     def getStdout(self, block="AUTO"):
         """Return the entire stdout for the process as a list of strings.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -499,13 +489,11 @@ class Process():
     def getStderr(self, block="AUTO"):
         """Return the entire stderr for the process as a list of strings.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -529,7 +517,6 @@ class Process():
     def getOutput(self, name=None, block="AUTO"):
         """Return a link to a zip file of the working directory.
 
-
            Parameters
            ----------
 
@@ -538,7 +525,6 @@ class Process():
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -589,7 +575,6 @@ class Process():
     def setConfig(self, config):
         """Set the list of configuration file strings.
 
-
            Parameters
            ----------
 
@@ -622,7 +607,6 @@ class Process():
 
     def addToConfig(self, config):
         """Add a string to the configuration list.
-
 
            Parameters
            ----------
@@ -698,7 +682,6 @@ class Process():
     def setArgs(self, args):
         """Set the dictionary of command-line arguments.
 
-
            Parameters
            ----------
 
@@ -720,7 +703,6 @@ class Process():
            For command-line flags, i.e. boolean arguments, the key should
            specify whether the flag is enabled (True) or not (False).
 
-
            Parameters
            ----------
 
@@ -738,7 +720,6 @@ class Process():
 
     def insertArg(self, arg, value, index):
         """Insert a command-line argument at a specific index.
-
 
            Parameters
            ----------
@@ -761,7 +742,6 @@ class Process():
     def addArgs(self, args):
         """Append additional command-line arguments.
 
-
            Parameters
            ----------
 
@@ -776,7 +756,6 @@ class Process():
 
     def deleteArg(self, arg):
         """Delete an argument from the dictionary.
-
 
            Parameters
            ----------
@@ -828,7 +807,6 @@ class Process():
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
-
 
         Parameters
         ----------

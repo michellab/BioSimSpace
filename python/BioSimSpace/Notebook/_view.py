@@ -45,7 +45,6 @@ class View():
     def __init__(self, handle):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -83,7 +82,6 @@ class View():
     def system(self, gui=True):
         """View the entire molecular system.
 
-
            Parameters
            ----------
 
@@ -111,7 +109,6 @@ class View():
 
     def molecules(self, indices=None, gui=True):
         """View specific molecules.
-
 
            Parameters
            ----------
@@ -176,7 +173,6 @@ class View():
     def molecule(self, index=0, gui=True):
         """View a specific molecule.
 
-
            Parameters
            ----------
 
@@ -224,7 +220,6 @@ class View():
     def reload(self, index=None, gui=True):
         """Reload a particular view.
 
-
            Parameters
            ----------
 
@@ -264,7 +259,6 @@ class View():
 
     def savePDB(self, file, index=None):
         """Save a specific view as a PDB file.
-
 
            Parameters
            ----------
@@ -310,7 +304,6 @@ class View():
 
     def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
-
 
            Parameters
            ----------

@@ -88,13 +88,11 @@ def fileFormats():
 def formatInfo(format):
     """Return information for the specified file format.
 
-
        Parameters
        ----------
 
        format : str
            The file format.
-
 
        Returns
        -------
@@ -112,7 +110,6 @@ def formatInfo(format):
 def readPDB(id, property_map={}):
     """Read a molecular system from a PDB ID in the RSCB PDB website.
 
-
        Parameters
        ----------
 
@@ -123,7 +120,6 @@ def readPDB(id, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -160,7 +156,6 @@ def readPDB(id, property_map={}):
 def readMolecules(files, property_map={}):
     """Read a molecular system from file.
 
-
        Parameters
        ----------
 
@@ -171,7 +166,6 @@ def readMolecules(files, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -222,7 +216,6 @@ def readMolecules(files, property_map={}):
 def saveMolecules(filebase, system, fileformat, property_map={}):
     """Save a molecular system to file.
 
-
        Parameters
        ----------
 
@@ -240,7 +233,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
            A dictionary that maps system "properties" to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------

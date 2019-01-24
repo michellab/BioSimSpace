@@ -60,7 +60,6 @@ class Somd(_process.Process):
             platform="CPU", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -494,13 +493,11 @@ class Somd(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -529,7 +526,6 @@ class Somd(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
-
            Returns
            -------
 
@@ -541,13 +537,11 @@ class Somd(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -570,7 +564,6 @@ class Somd(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -579,7 +572,6 @@ class Somd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -612,13 +604,11 @@ class Somd(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -631,7 +621,6 @@ class Somd(_process.Process):
     def getGradient(self, time_series=False, block="AUTO"):
         """Get the free energy gradient.
 
-
            Parameters
            ----------
 
@@ -640,7 +629,6 @@ class Somd(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -670,13 +658,11 @@ class Somd(_process.Process):
     def getCurrentGradient(self, time_series=False):
         """Get the current free energy gradient.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------

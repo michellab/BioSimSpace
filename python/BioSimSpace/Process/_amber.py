@@ -59,7 +59,6 @@ class _Watcher:
     def __init__(self, proc):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -93,7 +92,6 @@ class _Handler(_PatternMatchingEventHandler):
     def __init__(self, proc):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -104,7 +102,6 @@ class _Handler(_PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified.
-
 
            Parameters
            ----------
@@ -140,7 +137,6 @@ class Amber(_process.Process):
     def __init__(self, system, protocol, exe=None, name="amber",
             work_dir=None, seed=None, property_map={}):
         """Constructor.
-
 
            Parameters
            ----------
@@ -462,7 +458,6 @@ class Amber(_process.Process):
     def start(self):
         """Start the AMBER process.
 
-
            Returns
            -------
 
@@ -514,13 +509,11 @@ class Amber(_process.Process):
     def getSystem(self, block="AUTO"):
         """Get the latest molecular system.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -552,7 +545,6 @@ class Amber(_process.Process):
     def getCurrentSystem(self):
         """Get the latest molecular system.
 
-
            Returns
            -------
 
@@ -565,13 +557,11 @@ class Amber(_process.Process):
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -594,7 +584,6 @@ class Amber(_process.Process):
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -609,7 +598,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -629,7 +617,6 @@ class Amber(_process.Process):
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
-
            Parameters
            ----------
 
@@ -642,7 +629,6 @@ class Amber(_process.Process):
            unit : BioSimSpace.Types.Type
                The unit to convert the record to.
 
-
            Returns
            -------
 
@@ -654,13 +640,11 @@ class Amber(_process.Process):
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
 
-
            Parameters
            ----------
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -680,7 +664,6 @@ class Amber(_process.Process):
     def getCurrentRecords(self):
         """Return the current dictionary of stdout time-series records.
 
-
            Returns
            -------
 
@@ -692,7 +675,6 @@ class Amber(_process.Process):
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-
            Parameters
            ----------
 
@@ -701,7 +683,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -727,13 +708,11 @@ class Amber(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -746,7 +725,6 @@ class Amber(_process.Process):
     def getStep(self, time_series=False, block="AUTO"):
         """Get the number of integration steps.
 
-
            Parameters
            ----------
 
@@ -755,7 +733,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -768,13 +745,11 @@ class Amber(_process.Process):
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -787,7 +762,6 @@ class Amber(_process.Process):
     def getBondEnergy(self, time_series=False, block="AUTO"):
         """Get the bond energy.
 
-
            Parameters
            ----------
 
@@ -796,7 +770,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -809,13 +782,11 @@ class Amber(_process.Process):
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -828,7 +799,6 @@ class Amber(_process.Process):
     def getAngleEnergy(self, time_series=False, block="AUTO"):
         """Get the angle energy.
 
-
            Parameters
            ----------
 
@@ -837,7 +807,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -850,13 +819,11 @@ class Amber(_process.Process):
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -869,7 +836,6 @@ class Amber(_process.Process):
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """Get the dihedral energy.
 
-
            Parameters
            ----------
 
@@ -878,7 +844,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -891,13 +856,11 @@ class Amber(_process.Process):
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -910,7 +873,6 @@ class Amber(_process.Process):
     def getElectrostaticEnergy(self, time_series=False, block="AUTO"):
         """Get the electrostatic energy.
 
-
            Parameters
            ----------
 
@@ -919,7 +881,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -932,13 +893,11 @@ class Amber(_process.Process):
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -951,7 +910,6 @@ class Amber(_process.Process):
     def getElectrostaticEnergy14(self, time_series=False, block="AUTO"):
         """Get the electrostatic energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
@@ -960,7 +918,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -973,13 +930,11 @@ class Amber(_process.Process):
     def getCurrentElectrostaticEnergy14(self, time_series=False):
         """Get the current electrostatic energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -992,7 +947,6 @@ class Amber(_process.Process):
     def getVanDerWaalsEnergy(self, time_series=False, block="AUTO"):
         """Get the Van der Vaals energy.
 
-
            Parameters
            ----------
 
@@ -1001,7 +955,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1014,13 +967,11 @@ class Amber(_process.Process):
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Vaals energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1033,7 +984,6 @@ class Amber(_process.Process):
     def getHydrogenBondEnergy(self, time_series=False, block="AUTO"):
         """Get the hydrogen bond energy.
 
-
            Parameters
            ----------
 
@@ -1042,7 +992,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1055,13 +1004,11 @@ class Amber(_process.Process):
     def getCurrentHydrogenBondEnergy(self, time_series=False):
         """Get the current hydrogen bond energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1074,7 +1021,6 @@ class Amber(_process.Process):
     def getRestraintEnergy(self, time_series=False, block="AUTO"):
         """Get the restraint energy.
 
-
            Parameters
            ----------
 
@@ -1083,7 +1029,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1096,7 +1041,6 @@ class Amber(_process.Process):
     def getCurrentRestraintEnergy(self, time_series=False):
         """Get the current restraint energy.
 
-
            Parameters
            ----------
 
@@ -1105,7 +1049,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1118,7 +1061,6 @@ class Amber(_process.Process):
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
         """Get the potential energy.
 
-
            Parameters
            ----------
 
@@ -1127,7 +1069,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1140,13 +1081,11 @@ class Amber(_process.Process):
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1159,7 +1098,6 @@ class Amber(_process.Process):
     def getKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
-
            Parameters
            ----------
 
@@ -1168,7 +1106,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1181,13 +1118,11 @@ class Amber(_process.Process):
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1200,7 +1135,6 @@ class Amber(_process.Process):
     def getNonBondedEnergy14(self, time_series=False, block="AUTO"):
         """Get the non-bonded energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
@@ -1209,7 +1143,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1222,13 +1155,11 @@ class Amber(_process.Process):
     def getCurrentNonBondedEnergy14(self, time_series=False):
         """Get the current non-bonded energy between atoms 1 and 4.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1241,7 +1172,6 @@ class Amber(_process.Process):
     def getTotalEnergy(self, time_series=False, block="AUTO"):
         """Get the total energy.
 
-
            Parameters
            ----------
 
@@ -1250,7 +1180,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1266,13 +1195,11 @@ class Amber(_process.Process):
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current total energy.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1285,7 +1212,6 @@ class Amber(_process.Process):
     def getCentreOfMassKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy of the centre of mass in translation.
 
-
            Parameters
            ----------
 
@@ -1294,7 +1220,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1307,13 +1232,11 @@ class Amber(_process.Process):
     def getCurrentCentreOfMassKineticEnergy(self, time_series=False):
         """Get the current kinetic energy of the centre of mass in translation.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1326,7 +1249,6 @@ class Amber(_process.Process):
     def getVirial(self, time_series=False, block="AUTO"):
         """Get the virial.
 
-
            Parameters
            ----------
 
@@ -1335,7 +1257,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1348,13 +1269,11 @@ class Amber(_process.Process):
     def getCurrentVirial(self, time_series=False):
         """Get the current virial.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1367,7 +1286,6 @@ class Amber(_process.Process):
     def getTemperature(self, time_series=False, block="AUTO"):
         """Get the temperature.
 
-
            Parameters
            ----------
 
@@ -1376,7 +1294,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1389,13 +1306,11 @@ class Amber(_process.Process):
     def getCurrentTemperature(self, time_series=False):
         """Get the current temperature.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1408,7 +1323,6 @@ class Amber(_process.Process):
     def getPressure(self, time_series=False, block="AUTO"):
         """Get the pressure.
 
-
            Parameters
            ----------
 
@@ -1417,7 +1331,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1430,13 +1343,11 @@ class Amber(_process.Process):
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1449,7 +1360,6 @@ class Amber(_process.Process):
     def getVolume(self, time_series=False, block="AUTO"):
         """Get the volume.
 
-
            Parameters
            ----------
 
@@ -1458,7 +1368,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1471,13 +1380,11 @@ class Amber(_process.Process):
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1490,7 +1397,6 @@ class Amber(_process.Process):
     def getDensity(self, time_series=False, block="AUTO"):
         """Get the density.
 
-
            Parameters
            ----------
 
@@ -1499,7 +1405,6 @@ class Amber(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
-
 
            Returns
            -------
@@ -1512,13 +1417,11 @@ class Amber(_process.Process):
     def getCurrentDensity(self, time_series=False):
         """Get the current density.
 
-
            Parameters
            ----------
 
            time_series : bool
                Whether to return a list of time series records.
-
 
            Returns
            -------
@@ -1611,7 +1514,6 @@ class Amber(_process.Process):
     def wait(self, max_time=None):
         """Wait for the process to finish.
 
-
            Parameters
            ----------
 
@@ -1660,7 +1562,6 @@ class Amber(_process.Process):
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
-
            Parameters
            ----------
 
@@ -1672,7 +1573,6 @@ class Amber(_process.Process):
 
            unit -- BioSimSpace.Types._type.Type
                The unit to convert the record to.
-
 
            Returns
            -------

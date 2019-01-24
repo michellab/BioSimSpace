@@ -51,7 +51,6 @@ def solvate(model, molecule=None, box=None, shell=None,
         ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
-
        Parameters
        ----------
 
@@ -81,7 +80,6 @@ def solvate(model, molecule=None, box=None, shell=None,
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
 
-
        Returns
        -------
 
@@ -100,7 +98,6 @@ def solvate(model, molecule=None, box=None, shell=None,
 def spc(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
-
 
        Parameters
        ----------
@@ -127,7 +124,6 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -152,7 +148,6 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
         work_dir=None, property_map={}):
     """Add SPC/E solvent.
 
-
        Parameters
        ----------
 
@@ -178,7 +173,6 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -203,7 +197,6 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP3P solvent.
 
-
        Parameters
        ----------
 
@@ -229,7 +222,6 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -254,7 +246,6 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP4P solvent.
 
-
        Parameters
        ----------
 
@@ -280,7 +271,6 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -305,7 +295,6 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
         is_neutral=True, work_dir=None, property_map={}):
     """Add TIP5P solvent.
 
-
        Parameters
        ----------
 
@@ -331,7 +320,6 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -355,7 +343,6 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
 def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map):
     """Internal function to validate function arguments.
 
-
        Parameters
        ----------
 
@@ -381,7 +368,6 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -463,7 +449,6 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
 def _solvate(molecule, box, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, property_map={}):
     """Internal function to add solvent using 'gmx solvate'.
-
 
        Parameters
        ----------
@@ -839,7 +824,6 @@ def _solvate(molecule, box, shell, model, num_point,
 def _check_box_size(molecule, box, property_map={}):
     """Internal function to check that box is big enough for the molecule.
 
-
        Parameters
        ----------
 
@@ -853,7 +837,6 @@ def _check_box_size(molecule, box, property_map={}):
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
-
 
        Returns
        -------
@@ -881,13 +864,11 @@ def _rename_water_molecule(molecule):
     """Internal function to rename residues/atoms in a water molecule to match
        the naming conventions used by GROMACS.
 
-
        Parameters
        ----------
 
        molecule : Sire.Mol.Molecule
            A Sire Molecule object.
-
 
        Returns
        -------

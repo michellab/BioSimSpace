@@ -36,7 +36,6 @@ class Binding(_free_energy.FreeEnergy):
     def __init__(self, system, protocol=None, work_dir=None, property_map={}):
         """Constructor.
 
-
            Parameters
            ----------
 
@@ -108,7 +107,6 @@ class Binding(_free_energy.FreeEnergy):
 
     def analyse(self):
         """Analyse the solvation free energy data.
-
 
            Returns
            -------

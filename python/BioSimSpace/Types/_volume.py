@@ -52,7 +52,6 @@ class Volume(_Type):
     def __init__(self, *args):
         """Constructor.
 
-
            Parameters
            ----------
 

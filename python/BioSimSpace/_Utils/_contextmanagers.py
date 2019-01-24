@@ -35,7 +35,6 @@ __all__ = ["cd"]
 def cd(work_dir):
     """Execute the context in the directory 'dir'
 
-
        Parameters
        ----------
 

@@ -50,7 +50,6 @@ def protocols():
 def createProtocol(protocol):
     """Create a default simulation protocol.
 
-
        Parameters
        ----------
 
