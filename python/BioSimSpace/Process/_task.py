@@ -142,6 +142,11 @@ class Task():
         # Start the thread.
         self._thread.start()
 
+    def workDir(self):
+        """Return the working directory for the task."""
+
+        return self._work_dir
+
     def getOutput(self):
         """Get the output of the thread. This will block until the thread finishes."""
 
