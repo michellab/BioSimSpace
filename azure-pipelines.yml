@@ -1,0 +1,23 @@
+# Pipeline to build the latest version of BioSimSpace by starting from a docker
+# image of a recent build. This avoids the (VERY) long build times if
+# we start from scratch. You should ensure that 'biosimspace-devel:latest' 
+# corresponds to the right place to start...
+
+trigger:
+- devel
+
+pool:
+  vmImage: 'Ubuntu-16.04'
+
+steps:
+- script: |
+    docker login -u $id -p $pswd
+    docker pull biosimspace/biosimspace-devel:latest
+    docker tag biosimspace/biosimspace-devel:latest biosimspace/biosimspace-devel:last
+    docker push biosimspace/biosimspace-devel:last
+    cd docker/biosimspace-pipeline-devel && docker build -f Dockerfile -t biosimspace/biosimspace-devel:latest .
+    docker push biosimspace/biosimspace-devel:latest
+  env:
+    pswd: $(dockerPassword)
+    id: $(dockerId)
+  displayName: 'BioSimSpace build'
