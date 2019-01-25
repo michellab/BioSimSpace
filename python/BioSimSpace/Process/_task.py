@@ -26,29 +26,28 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 from BioSimSpace import _is_notebook
 
-import BioSimSpace._Utils as _Utils
-
 import glob as _glob
-import multiprocessing as _multiprocessing
 import os as _os
 import tempfile as _tempfile
+import threading as _threading
 import zipfile as _zipfile
 
 __all__ = ["Task"]
 
 def _wrap_task(task):
     """A simple wrapper function to run a background tasks and catch exceptions.
+       and catch exceptions.
 
        Parameters
        ----------
 
-       task : BioSimSpace.Process.Task.
+       task : BioSimSpace.Process.Task
            A handle to the task object.
     """
 
-    # Try to run the task and grab the output.
+    # Try to run the task thread and grab the output.
     try:
-        task._queue.put(task._run_task())
+        task._output = task._run()
 
     # Catch any exception raised in the _run method.
     except Exception as e:
@@ -78,8 +77,6 @@ class Task():
         if type(self) is Task:
             raise Exception("<Task> must be subclassed.")
 
-        # Validate inputs.
-
         if name is not None and type(name) is not str:
             raise TypeError("'name' must be of type 'str'")
 
@@ -94,11 +91,11 @@ class Task():
         self._is_finished = False
         self._is_error = False
 
-        # Set the task name.
-        self._name = name
-
         # Initialise the zip file name.
         self._zipfile = None
+
+        # Set the task name.
+        self._name = name
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
@@ -136,12 +133,11 @@ class Task():
         else:
             self._is_started = True
 
-        # Create the process and queue.
-        self._queue = _multiprocessing.Queue()
-        self._process = _multiprocessing.Process(target=_wrap_task, args=(self,))
+        # Create the thread.
+        self._thread = _threading.Thread(target=_wrap_task, args=[self])
 
-        # Start the task.
-        self._process.start()
+        # Start the thread.
+        self._thread.start()
 
     def workDir(self):
         """Return the working directory for the task."""
@@ -149,21 +145,23 @@ class Task():
         return self._work_dir
 
     def getOutput(self):
-        """Get the output of the task. This will block until the task finishes."""
+        """Get the output of the task. This will block until the task
+           thread finishes.
+	"""
 
         if not self._is_started:
             return None
 
-        # Block until the task finishes.
+        # Block the thread until it finishes.
         if not self._is_finished:
-            self._process.join()
+            self._thread.join()
             self._is_finished = True
 
         # If there was a problem, return the error message.
         if self._is_error:
             raise Exception("%s" % str(self._error_message))
 
-        return self._queue.get()
+        return self._output
 
     def isStarted(self):
         """Return whether the task has been started."""
@@ -195,7 +193,7 @@ class Task():
            ----------
 
            filename : str
-               The name of the output archive.
+               The name the output archive.
 
            Returns
            -------
@@ -247,14 +245,6 @@ class Task():
             return _FileLink(zipname)
         else:
             return zipname
-
-    def _run_task(self):
-        """Wrapper function to run the user-defined '_run' method within
-           the working directory.
-        """
-
-        with _Utils.cd(self._work_dir):
-            return self._run()
 
     def _run(self):
         """User-defined method to run the specific background task."""
