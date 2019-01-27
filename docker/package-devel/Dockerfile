@@ -12,10 +12,10 @@ ADD install_sire.sh .
 RUN mv -f install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
 
 # Set environment variables for installation directory and run file.
-ENV SIRE_RUN_FILE biosimspace_devel_latest_linux.run
+ENV SIRE_RUN_FILE $HOME/biosimspace_devel_latest_linux.run
 
 # Create a self-extracting binary file.
-RUN $HOME/sire.app/bin/package_sire
-RUN chmod a+x biosimspace_devel_latest_linux.run
+RUN $HOME/sire.app/bin/package_sire > package.log 2> package.err
+RUN chmod a+x $HOME/biosimspace_devel_latest_linux.run
 
 ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
