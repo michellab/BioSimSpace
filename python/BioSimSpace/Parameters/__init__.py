@@ -36,7 +36,7 @@ from . import Protocol as _Protocol
 __all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFields"]
 
 def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
-    """Parameterise using the a specified force field.
+    """Parameterise a molecule using a specified force field.
 
        Parameters
        ----------
