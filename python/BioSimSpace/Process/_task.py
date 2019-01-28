@@ -29,9 +29,9 @@ from BioSimSpace import _is_notebook
 import BioSimSpace._Utils as _Utils
 
 import glob as _glob
-import multiprocessing as _multiprocessing
 import os as _os
 import tempfile as _tempfile
+import threading as _threading
 import zipfile as _zipfile
 
 __all__ = ["Task"]
@@ -48,11 +48,11 @@ def _wrap_task(task):
 
     # Try to run the task and grab the output.
     try:
-        task._queue.put(task._run_task())
+        task._output = task._run()
 
     # Catch any exception raised in the _run method.
     except Exception as e:
-        task._queue.put(e)
+        task._output = e
 
 class Task():
     """Base class for running a background task."""
@@ -92,6 +92,9 @@ class Task():
         self._is_started = False
         self._is_finished = False
         self._is_error = False
+
+        # Initialise the output of the task.
+        self._output = None
 
         # Initialise the error message.
         self._error_message = None
@@ -140,12 +143,11 @@ class Task():
         # Reset the error message.
         self._error_message = None
 
-        # Create the process and queue.
-        self._queue = _multiprocessing.Queue()
-        self._process = _multiprocessing.Process(target=_wrap_task, args=(self,))
+        # Create the thread.
+        self._thread = _threading.Thread(target=_wrap_task, args=[self])
 
         # Start the task.
-        self._process.start()
+        self._thread.start()
 
     def workDir(self):
         """Return the working directory for the task."""
@@ -160,21 +162,14 @@ class Task():
 
         # Block until the task finishes.
         if not self._is_finished:
-            self._process.join()
+            self._thread.join()
             self._is_finished = True
 
-        # Get the output from the task.
-        try:
-            self._output = self._queue.get()
-            self._queue.close()
-        except:
-            pass
-
         # If there was a problem, return the error message.
-        if type(self._output) is Exception:
+        if isinstance(self._output, Exception):
             self._is_error = True
             self._error_message = str(self._output)
-            raise Exception("%s" % self._error_message)
+            raise self._output
 
         return self._output
 
@@ -193,7 +188,15 @@ class Task():
 
         return self._is_finished
 
-    def getError(self):
+    def getException(self):
+        """Return the exception."""
+
+        if self._is_error:
+            return self._output
+        else:
+            return None
+
+    def getErrorMessage(self):
         """Return the error message."""
 
         if self._is_error:
@@ -260,14 +263,6 @@ class Task():
             return _FileLink(zipname)
         else:
             return zipname
-
-    def _run_task(self):
-        """Wrapper function to run the user-defined '_run' method within
-           the working directory.
-        """
-
-        with _Utils.cd(self._work_dir):
-            return self._run()
 
     def _run(self):
         """User-defined method to run the specific background task."""
