@@ -2,7 +2,7 @@
 # This image is used to build, package and test the latest version
 # of the devel branch of BioSimSpace
 
-FROM biosimspace/biosimspace-devel:latest
+FROM siremol/sire-devel:latest
 
 WORKDIR $HOME
 
