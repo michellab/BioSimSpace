@@ -175,16 +175,8 @@ successful, please delete the redundant feature branch.
 Tests
 -----
 
-We currently don't run continuous integration (CI) against all BioSimSpace branches.
-This is because BioSimSpace is built on top of `Sire <https://siremol.org>`_ meaning
-that a binary version of Sire must be downloaded and unpacked on the CI server, into
-which BioSimSpace is installed.
-
-Since the Sire binary is large, executing a fresh download for every commit is
-currently prohibitively expensive. Instead, we use a
-`testing <https://github.com/michellab/BioSimSpace/tree/testing>`_ branch for CI.
-Feature branches are periodically merged into ``testing`` to validate the build
-process and check that all unit tests pass.
+We continually build, package, test, and deploy BioSimSpace using
+`Azure Pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`_.
 
 For those who wish to run things locally, see the `test <test>`_ directory.
 
