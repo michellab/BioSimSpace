@@ -8,7 +8,8 @@ WORKDIR $HOME
 
 USER $FN_USER
 
-# Update to the latest version
+# Clone BioSimSpace and update to the latest devel.
+RUN git clone https://github.com/michellab/BioSimSpace
 RUN cd BioSimSpace && git checkout devel && git pull
  
 # Build Sire (this should take less time as it is a small update)
