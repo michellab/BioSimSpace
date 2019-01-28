@@ -472,6 +472,65 @@ class System():
         except:
             raise KeyError("System does not contain residue '%s'" % resname)
 
+    def setBox(self, size, property_map={}):
+        """Set the size of the periodic simulation box.
+
+           Parameters
+           ----------
+
+           size : [ BioSimSpace.Types.Length ]
+               The size of the box in each dimension.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+        """
+
+        # Convert tuple to list.
+        if type(size) is tuple:
+            size = list(size)
+
+        # Validate input.
+        if type(size) is not list or not all(isinstance(x, _Length) for x in size):
+            raise TypeError("'size' must be a list of 'BioSimSpace.Types.Length' objects.")
+
+        if len(size) != 3:
+            raise ValueError("'size' must contain three items.")
+
+        # Convert sizes to Anstrom.
+        vec = [x.angstroms().magnitude() for x in size]
+
+        # Create a periodic box object.
+        box = _SireVol.PeriodicBox(_SireMaths.Vector(vec))
+
+        # Set the "space" property.
+        self._sire_system.setProperty(property_map.get("space", "space"), box)
+
+    def getBox(self, property_map={}):
+        """Get the size of the periodic simulation box.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+        """
+
+        # Get the "space" property and convert to a list of BioSimSpace.Type.Length
+        # objects.
+        try:
+            box = self._sire_system.property(property_map.get("space", "space"))
+            box = [ _Length(x, "Angstrom") for x in box.dimensions() ]
+        except:
+            box = None
+
+        return box
+
     def translate(self, vector, property_map={}):
         """Translate the system.
 
