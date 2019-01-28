@@ -7,8 +7,8 @@ from pytest import approx
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("tests/io/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("tests/io/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
