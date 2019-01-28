@@ -12,7 +12,7 @@ USER $FN_USER
 RUN git clone https://github.com/michellab/BioSimSpace
 RUN cd BioSimSpace && git checkout devel && git pull
 
-# Build BioSimSpace into existing Sire.app.
+# Build BioSimSpace into existing Sire application.
 ADD build_biosimspace.sh $HOME/build_biosimspace.sh
 RUN scl enable devtoolset-6 ./build_biosimspace.sh
 

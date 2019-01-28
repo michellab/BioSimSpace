@@ -11,7 +11,7 @@ pool:
 
 steps:
 - script: |
-    # login to docker and get the last successful sire-devel build
+    # login to docker and get the last successful biosimspace-devel build
     docker login -u $id -p $pswd
     docker pull biosimspace/biosimspace-devel:latest
 
