@@ -1,6 +1,6 @@
 # Pipeline to build the latest version of BioSimSpace by starting from a docker
 # image of a recent build. This avoids the (VERY) long build times if
-# we start from scratch. You should ensure that 'biosimspace-devel:latest' 
+# we start from scratch. You should ensure that 'biosimspace-devel:latest'
 # corresponds to the right place to start...
 
 trigger:
@@ -31,10 +31,10 @@ steps:
     pswd: $(dockerPassword)
     id: $(dockerId)
   displayName: 'Build BioSimSpace'
-#- script: |
-#    # now perform the tests - do this before packaging and deploy
-#    cd docker/test-devel && docker build -f Dockerfile -t biosimspace/test-devel:latest . && cd -
-#  displayName: 'Run BioSimSpace tests'
+- script: |
+    # now perform the tests - do this before packaging and deploy
+    cd docker/test-devel && docker build -f Dockerfile -t biosimspace/test-devel:latest . && cd -
+  displayName: 'Run BioSimSpace tests'
 - script: |
     # if the test were successful then create a binary installer package
     cd docker/package-devel && docker build -f Dockerfile -t biosimspace/package-devel:latest . && cd -

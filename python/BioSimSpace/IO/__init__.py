@@ -40,9 +40,16 @@ from io import StringIO as _StringIO
 from warnings import warn as _warn
 
 import os as _os
-import pypdb as _pypdb
 import sys as _sys
 import tempfile as _tempfile
+
+# Wrap the import of PyPDB since it imports Matplotlib, which will fail if
+# we don't have a display running.
+try:
+    import pypdb as _pypdb
+    _has_pypdb = True
+except:
+    _has_pypdb = False
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -127,6 +134,10 @@ def readPDB(id, property_map={}):
        system : BioSimSpace._SireWrappers.System
            A molecular system.
     """
+
+    if not _has_pypdb:
+        _warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+        return None
 
     if type(id) is not str:
         raise TypeError("'id' must be of type 'str'")
