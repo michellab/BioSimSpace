@@ -9,7 +9,7 @@ WORKDIR $HOME
 RUN $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme
 
 # Build the html docs.
-RUN cd $HOME/BioSimSpace/doc && SPHINX_BUILD=$HOME/sire.app/bin/sphinx-build make html
+RUN cd $HOME/BioSimSpace/doc && SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
 
 # Clone the BioSimSpaceWebsite repository, copy across latest docs, commit and push.
 RUN git clone https://github.com/michellab/BioSimSpaceWebsite.git && \
