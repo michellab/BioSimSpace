@@ -30,7 +30,7 @@ def test_amber():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Glob the input files.
-    files = BSS.IO.glob("tests/io/amber/ala/*")
+    files = BSS.IO.glob("test/io/amber/ala/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
@@ -52,7 +52,7 @@ def test_namd():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Glob the input files.
-    files = BSS.IO.glob("tests/io/amber/ala/*")
+    files = BSS.IO.glob("test/io/amber/ala/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
