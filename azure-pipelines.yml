@@ -22,26 +22,3 @@ steps:
     pswd: $(dockerPassword)
     id: $(dockerId)
   displayName: 'Pull biosimspace-devel:latest'
-- script: |
-    docker login -u $id -p $pswd
-
-    # now build the latest version of devel, starting from the last point
-    cd docker/biosimspace-pipeline-devel && docker build -f Dockerfile -t biosimspace/biosimspace-devel:latest . && cd - && docker push biosimspace/biosimspace-devel:latest
-  env:
-    pswd: $(dockerPassword)
-    id: $(dockerId)
-  displayName: 'Build BioSimSpace'
-- script: |
-    # now perform the tests - do this before packaging and deploy
-    cd docker/test-devel && docker build -f Dockerfile -t biosimspace/test-devel:latest . && cd -
-  displayName: 'Run BioSimSpace tests'
-- script: |
-    # if the test were successful then create a binary installer package
-    cd docker/package-devel && docker build -f Dockerfile -t biosimspace/package-devel:latest . && cd -
-  displayName: 'Package BioSimSpace into a binary'
-- script: |
-    # finally deploy the binary to an object store bucket identified by 'par_url'
-    cd docker/deploy-devel && docker build -f Dockerfile --build-arg par_url=$par_url . && cd -
-  env:
-    par_url: $(parURL)
-  displayName: 'Deploy binary to biosimspace.org'
