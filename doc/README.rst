@@ -1,3 +1,2 @@
-Building the documentation
-==========================
-
+Documentation
+=============
