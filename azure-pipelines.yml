@@ -14,6 +14,6 @@ steps:
     # now build the documentation and update the website
     cd docker/document-devel && docker build -f Dockerfile --build-arg github_token="$github_token" --build-arg github_email="$github_email" . && cd -
   env:
-    github_token: dc311d257516b5361ac1aa51adad1d950d4a5e3f
+    github_token: $(githubToken)
     github_email: $(githubEmail)
   displayName: 'Build documentation and update website'
