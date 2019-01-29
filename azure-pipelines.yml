@@ -12,7 +12,8 @@ pool:
 steps:
 - script: |
     # now build the documentation and update the website
-    cd docker/document-devel && docker build -f Dockerfile . && cd -
+    #cd docker/document-devel && docker build -f Dockerfile . && cd -
+    if [ ! -z "$github_token" ]; then echo "Token is set"; fi
   env:
     github_token: $(githubToken)
   displayName: 'Build documentation and update website'
