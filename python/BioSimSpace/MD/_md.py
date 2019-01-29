@@ -21,7 +21,6 @@
 
 """
 Functionality for configuring and driving molecular dynamics simulations.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from Sire.Base import findExe as _findExe
@@ -36,7 +35,10 @@ import BioSimSpace.Process as _Process
 
 import os as _os
 
-__all__ = ["MD"]
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["run"]
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE           GPU
@@ -112,78 +114,74 @@ def _find_md_package(system, protocol, use_gpu=True):
     # If we get this far, then no executable was found.
     raise _MissingSoftwareError("No executable found for package: '%s'" % package) from None
 
-class MD():
-    """A simple class for driving molecular dynamics simulations."""
+def run(system, protocol, autostart=True,
+        name="md", work_dir=None, seed=None, property_map={}):
+    """Constructor.
 
-    @staticmethod
-    def run(system, protocol, autostart=True,
-            name="md", work_dir=None, seed=None, property_map={}):
-        """Constructor.
+        Parameters
+        ----------
 
-           Parameters
-           ----------
+        system : BioSimSpace._SireWrappers.System
+            The molecular system.
 
-           system : BioSimSpace._SireWrappers.System
-               The molecular system.
+        protocol : BioSimSpace.Protocol
+            The simulation protocol.
 
-           protocol : BioSimSpace.Protocol
-               The simulation protocol.
+        autostart : bool
+            Whether to start the process automatically.
 
-           autostart : bool
-               Whether to start the process automatically.
+        name : str
+            The name of the process.
 
-           name : str
-               The name of the process.
+        work_dir : str
+            The working directory for the process.
 
-           work_dir : str
-               The working directory for the process.
+        seed : int
+            A random number seed.
 
-           seed : int
-               A random number seed.
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        Returns
+        -------
 
-           Returns
-           -------
+        process : BioSimSpace.Process
+            A process to run the molecular dynamics protocol.
+    """
 
-           process : BioSimSpace.Process
-               A process to run the molecular dynamics protocol.
-        """
+    # Check that the system is valid.
+    if type(system) is not _System:
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        # Check that the system is valid.
-        if type(system) is not _System:
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        # Check that the protocol is valid.
-        if not isinstance(protocol, _Protocol):
-            if type(protocol) is str:
-                protocol = _Custom(protocol)
-            else:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
-                                "or the path to a custom configuration file.")
-
-        # Find a molecular dynamics package and executable.
-        package, exe = _find_md_package(system, protocol)
-
-        # Create the process object.
-
-        # AMBER.
-        if package == "AMBER":
-            process = _Process.Amber(system, protocol, exe, name, work_dir, seed, property_map)
-
-        # GROMACS.
-        elif package == "GROMACS":
-            process = _Process.Gromacs(system, protocol, exe, name, work_dir, seed, property_map)
-
-        # NAMD.
-        elif package == "NAMD":
-            process = _Process.Namd(system, protocol, exe, name, work_dir, seed, property_map)
-
-        # Start the process.
-        if autostart:
-            return process.start()
+    # Check that the protocol is valid.
+    if not isinstance(protocol, _Protocol):
+        if type(protocol) is str:
+            protocol = _Custom(protocol)
         else:
-            return process
+            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
+                            "or the path to a custom configuration file.")
+
+    # Find a molecular dynamics package and executable.
+    package, exe = _find_md_package(system, protocol)
+
+    # Create the process object.
+
+    # AMBER.
+    if package == "AMBER":
+        process = _Process.Amber(system, protocol, exe, name, work_dir, seed, property_map)
+
+    # GROMACS.
+    elif package == "GROMACS":
+        process = _Process.Gromacs(system, protocol, exe, name, work_dir, seed, property_map)
+
+    # NAMD.
+    elif package == "NAMD":
+        process = _Process.Namd(system, protocol, exe, name, work_dir, seed, property_map)
+
+    # Start the process.
+    if autostart:
+        return process.start()
+    else:
+        return process

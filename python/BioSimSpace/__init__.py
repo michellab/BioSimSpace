@@ -135,6 +135,7 @@ from . import Align
 from . import FreeEnergy
 from . import Gateway
 from . import IO
+from . import MD
 from . import Notebook
 from . import Parameters
 from . import Process
@@ -144,7 +145,6 @@ from . import Types
 from . import Units
 
 # Move to top-level namespace.
-from .MD import MD
 from .Trajectory import Trajectory
 
 # Top-level functions.
