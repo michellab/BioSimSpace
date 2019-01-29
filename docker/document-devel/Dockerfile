@@ -6,7 +6,9 @@ FROM biosimspace/biosimspace-devel:latest
 WORKDIR $HOME
 
 ARG github_token
+ARG github_email
 ENV GITHUB_TOKEN=$github_token
+ENV GITHUB_EMAIL=$github_email
 
 # Install additional Python dependencies.
 RUN $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme
@@ -18,6 +20,8 @@ RUN cd $HOME/BioSimSpace/doc && SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make
 RUN git clone https://github.com/michellab/BioSimSpaceWebsite.git && \
     cd $HOME/BioSimSpaceWebsite && \
     cp -a $HOME/BioSimSpace/doc/build/html/* docs && \
+    git config user.name "BioSimSpaceBot" && \
+    git config user.email "$GITHUB_EMAIL" && \
     git add docs && \
     git commit -a -m "Updating website." && \
     git push --repo https://biosimspacebot:$GITHUB_TOKEN@github.com/michellab/BioSimSpaceWebsite.git
