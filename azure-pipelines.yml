@@ -41,7 +41,7 @@ steps:
   displayName: 'Package BioSimSpace into a binary'
 - script: |
     # now build the documentation and update the website
-    cd docker/document-devel && docker build -f Dockerfile -t biosimspace/document-devel:latest . && cd -
+    cd docker/document-devel && docker build -f Dockerfile --build-arg github_token=$github_token . && cd -
   env:
     github_token: $(githubToken)
   displayName: 'Build documentation and update website'
