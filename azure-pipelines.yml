@@ -43,7 +43,7 @@ steps:
     # now build the documentation and update the website
     cd docker/document-devel && docker build -f Dockerfile -t biosimspace/document-devel:latest . && cd -
   env:
-    git_token: $(gitToken)
+    github_token: $(githubToken)
   displayName: 'Build documentation and update website'
 - script: |
     # finally deploy the binary to an object store bucket identified by 'par_url'

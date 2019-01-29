@@ -17,6 +17,6 @@ RUN git clone https://github.com/michellab/BioSimSpaceWebsite.git && \
     cp -a $HOME/BioSimSpace/doc/build/html/* docs && \
     git add docs && \
     git commit -a -m "Updating website." && \
-    git push --repo https://biosimspacebot:$git_token@github.com/michellab/BioSimSpaceWebsite.git
+    git push --repo https://biosimspacebot:$github_token@github.com/michellab/BioSimSpaceWebsite.git
 
 ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
