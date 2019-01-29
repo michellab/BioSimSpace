@@ -20,8 +20,18 @@
 #####################################################################
 
 """
-Functionality for configuring and running molecular dynamics simulation processes.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.MD
+
+User API
+========
+
+.. autosummary::
+    :toctree: generated/
+
+    run
 """
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 from ._md import *
