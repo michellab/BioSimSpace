@@ -12,7 +12,7 @@ pool:
 steps:
 - script: |
     # now build the documentation and update the website
-    cd docker/document-devel && docker build -f Dockerfile --build-arg github_token=$github_token . && cd -
+    cd docker/document-devel && docker build -f Dockerfile . && cd -
   env:
     github_token: $(githubToken)
   displayName: 'Build documentation and update website'
