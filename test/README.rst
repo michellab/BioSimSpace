@@ -89,7 +89,7 @@ additional contextual information may be lost.
 Floating point comparisons
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Make use of the `\ ``approx`` <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`_
+Make use of the `approx <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`_
 function from the ``pytest`` package for performing floating point comparisons, e.g:
 
 .. code-block:: python
