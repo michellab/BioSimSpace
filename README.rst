@@ -46,7 +46,7 @@ Alternatively, to install BioSimSpace from source:
 `CMake <https://cmake.org>`_ installations.)
 
 1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
-   molecular simulations framework. To download and install Sire:
+   molecular simulation framework. To download and install Sire:
 
 .. code-block:: bash
 
