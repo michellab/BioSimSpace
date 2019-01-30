@@ -60,8 +60,8 @@ Then try importing the BioSimSpace package:
 
    import BioSimSpace as BSS
 
-Issues
-======
+Common Issues
+=============
 
 * If you experience problems with `Matplotlib <https://matplotlib.org>`_ when
   importing BioSimSpace on macOS, e.g.
