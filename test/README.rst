@@ -69,7 +69,7 @@ To run a specific unit tests in a particular file, e.g.:
 To get more detailed information about each test, run pytests using the
 *verbose* flag, e.g.:
 
-.. code-block::
+.. code-block:: bash
 
    pytest -v
 
