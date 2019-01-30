@@ -37,9 +37,8 @@ To run the full test suite, simply type:
 
    pytest
 
-This assumes that you have installed `Sire <https://github.com/michellab/Sire>`_
+For developers, this assumes that you have installed `Sire <https://github.com/michellab/Sire>`_
 and have added its ``bin`` directory, ``$HOME/sire.app/bin``\ , to your path.
-
 We also assume that you have installed `BioSimSpace <https://github.com/michellab/BioSimSpace>`_
 into an existing `Sire <https://github.com/michellab/Sire>`_ package, making
 it is accessible to ``pytest``. If not, you can prefix the ``pytest`` commands with
