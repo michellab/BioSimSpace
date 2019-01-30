@@ -46,20 +46,16 @@ we use the package ``__init__.py`` to selectively import the required
 classes and functions.
 
 
-* 
-  Module files containing implementation details are prefixed with an underscore,
+* Module files containing implementation details are prefixed with an underscore,
   i.e. ``_process.py``
 
-* 
-  Where possible, external packages are hidden inside each module,
+* Where possible, external packages are hidden inside each module,
   e.g. ``import mdtraj as _mdtraj``
 
-* 
-  Each module file contains an ``__all__`` variable that lists the specific items
+* Each module file contains an ``__all__`` variable that lists the specific items
   that should be imported.
 
-* 
-  The package ``__init__.py`` can be used to safely expose the required
+* The package ``__init__.py`` can be used to safely expose the required
   functionality to the user with:
 
 .. code-block:: python
