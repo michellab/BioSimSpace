@@ -14,7 +14,7 @@ can be downloaded from the following link:
 
 One downloaded, the binary can be unpacked as follows:
 
-.. code::
+.. code-block:: bash
 
    chmod +x biosimspace_devel_latest_linux.run
    ./biosimspace_devel_latest_linux.run
@@ -29,7 +29,7 @@ installations.
 1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
    molecular simulations framework. To download and install Sire:
 
-.. code::
+.. code-block:: bash
 
    git clone https://github.com/michellab/Sire
    cd Sire
@@ -42,7 +42,7 @@ Assuming the default installation path, this will install Sire into ``$HOME/sire
 2. Next you will need to download BioSimSpace and install it into your Sire
    application. (The following assumes the default Sire installation path.)
 
-.. code::
+.. code-block:: bash
 
    git clone https://github.com/michellab/BioSimSpace
    cd BioSimSpace/python
@@ -50,13 +50,13 @@ Assuming the default installation path, this will install Sire into ``$HOME/sire
 
 Once finished, you can test the installation by running:
 
-.. code::
+.. code-block:: bash
 
    $HOME/sire.app/bin/ipython
 
 Then try importing the BioSimSpace package:
 
-.. code::
+.. code-block:: python
 
    import BioSimSpace as BSS
 
@@ -66,13 +66,13 @@ Issues
 * If you experience problems with `Matplotlib <https://matplotlib.org>`_ when
   importing BioSimSpace on macOS, e.g.
 
-.. code::
+.. code-block:: bash
 
    RuntimeError**: Python is not installed as a framework.
 
 simply add the following to ``~/.matplotlib/matplotlibrc``
 
-.. code::
+.. code-block:: bash
 
    backend: TkAgg
 
