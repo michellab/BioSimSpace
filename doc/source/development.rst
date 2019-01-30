@@ -390,4 +390,4 @@ Next, push your changes to the remote server, e.g.
 
 When the feature is complete, create a *pull request* on GitHub so that the
 changes can be merged back into the development branch. For information, see
-the documentation `here <https://help.github.com/articles/about-pull-requests>`_.
+the documentation `here <https://help.github.com/articles/about-pull-requests>`__.
