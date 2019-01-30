@@ -116,7 +116,7 @@ def _find_md_package(system, protocol, use_gpu=True):
 
 def run(system, protocol, autostart=True,
         name="md", work_dir=None, seed=None, property_map={}):
-    """Constructor.
+    """Auto-configure and run a molecular dynamics process.
 
         Parameters
         ----------
