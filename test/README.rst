@@ -13,7 +13,7 @@ Directory layout
 The main directory is ``test``. Inside this are subdirectories for each of the
 BioSimSpace sub-modules, which include files containing all of the unit tests.
 
-The test suite is intended to be run using `\ ``pytest`` <https://docs.pytest.org/en/latest/contents.html>`_.
+The test suite is intended to be run using `pytest <https://docs.pytest.org/en/latest/contents.html>`_.
 When run, ``pytest`` searches for tests in all directories and files below the current
 directory, collects the tests together, then runs them. Pytest uses name matching
 to locate the tests. Valid names start or end with *test*\ , e.g.:
