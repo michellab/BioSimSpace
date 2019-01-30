@@ -1,10 +1,10 @@
 .. _legal-notes-label:
 
 =============
-Legal Notices
+Legal notices
 =============
 
-Usage Tracking
+Usage tracking
 ==============
 
 BioSimSpace has in-built analytics to track usage. To disable, simply set the
@@ -21,7 +21,7 @@ message:
 
    export SIRE_SILENT_PHONEHOME=1
 
-Software License
+Software license
 ================
 
 .. literalinclude:: ../../LICENSE

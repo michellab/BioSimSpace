@@ -1,5 +1,5 @@
 =================
-Developer's Guide
+Developer's guide
 =================
 
 .. toctree::

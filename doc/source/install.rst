@@ -19,7 +19,7 @@ One downloaded, the binary can be unpacked as follows:
    chmod +x biosimspace_devel_latest_linux.run
    ./biosimspace_devel_latest_linux.run
 
-For Developers
+For developers
 ==============
 
 The following documents a full installation of BioSimSpace from source. Before
@@ -60,7 +60,7 @@ Then try importing the BioSimSpace package:
 
    import BioSimSpace as BSS
 
-Common Issues
+Common issues
 =============
 
 * If you experience problems with `Matplotlib <https://matplotlib.org>`_ when
