@@ -20,8 +20,22 @@
 #####################################################################
 
 """
-Additional data types with units.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Types
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Area
+    Charge
+    Energy
+    Length
+    Pressure
+    Temperature
+    Time
+    Volume
 """
 
 from ._area import *

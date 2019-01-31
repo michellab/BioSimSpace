@@ -21,16 +21,20 @@
 
 """
 A temperature type.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Temperature"]
 
 class Temperature(_Type):
+    """A temperature type."""
+
     # Dictionary of allowed units.
     _supported_units = { "KELVIN"     : _Units.kelvin,
                          "CELSIUS"    : _Units.celsius,
@@ -57,8 +61,6 @@ class Temperature(_Type):
 
            unit : str
                The unit.
-
-           or
 
            string : str
                A string representation of the volume.
@@ -224,23 +226,52 @@ class Temperature(_Type):
         return (self._magnitude * self._supported_units[self._unit]).value()
 
     def kelvin(self):
-        """Return the temperature in Kelvin."""
+        """Return the temperature in Kelvin.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature in Kelvin.
+        """
         return Temperature((self._magnitude * self._supported_units[self._unit]).value(), "KELVIN")
 
     def celsius(self):
-        """Return the temperature in Celsius."""
+        """Return the temperature in Celsius.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature in Celsius.
+        """
         return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.celsius), "CELSIUS")
 
     def fahrenheit(self):
-        """Return the temperature in Fahrenheit."""
+        """Return the temperature in Fahrenheit.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature in Fahrenheit.
+        """
         return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.fahrenheit), "FAHRENHEIT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+               The magnitude (optional).
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature in the default unit of Kelvin.
         """
         if mag is None:
             return self.kelvin()
@@ -250,10 +281,17 @@ class Temperature(_Type):
     def _convert_to(self, unit):
         """Return the temperature in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature in the specified unit.
         """
         if unit == "KELVIN":
             return self.kelvin()

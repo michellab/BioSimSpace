@@ -21,13 +21,15 @@
 
 """
 Time units.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ...Types import Time as _Time
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["day", "hour", "minute", "second", "millisecond",
-    "nanosecond", "picosecond", "femtosecond"]
+           "nanosecond", "picosecond", "femtosecond"]
 
 day = _Time(1, "day")
 hour = _Time(1, "hour")

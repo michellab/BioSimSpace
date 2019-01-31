@@ -21,16 +21,20 @@
 
 """
 A charge type.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Charge"]
 
 class Charge(_Type):
+    """A charge type."""
+
     # Dictionary of allowed units.
     _supported_units = { "ELECTRON CHARGE" : _Units.e_charge,
                          "COULOMB"         : _Units.coulomb }
@@ -55,8 +59,6 @@ class Charge(_Type):
            unit : str
                The unit.
 
-           or
-
            string : str
                A string representation of the charge.
         """
@@ -65,19 +67,41 @@ class Charge(_Type):
         super().__init__(*args)
 
     def electron_charge(self):
-        """Return the energy in electron charge."""
+        """Return the charge in electron charge.
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The charge in electron charge.
+        """
         return Charge((self._magnitude * self._supported_units[self._unit]).to(_Units.e_charge), "ELECTRON CHARGE")
 
     def coulomb(self):
-        """Return the energy in Coulomb."""
+        """Return the charge in Coulomb.
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The charge in Coulomb.
+        """
         return Charge((self._magnitude * self._supported_units[self._unit]).to(_Units.coulomb), "COULOMB")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+               The magnitude (optional).
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The charge in the default unit of electron charge.
         """
         if mag is None:
             return self.electron_charge()
@@ -87,10 +111,17 @@ class Charge(_Type):
     def _convert_to(self, unit):
         """Return the charge in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The charge in the specified unit.
         """
         if unit == "ELECTRON CHARGE":
             return self.electron_charge()

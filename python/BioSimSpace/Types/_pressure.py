@@ -20,17 +20,21 @@
 #####################################################################
 
 """
-An energy type.
-Author: Lester Hedges <lester.hedges@gmail.com>
+A pressure type.
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Pressure"]
 
 class Pressure(_Type):
+    """A pressure type."""
+
     # Dictionary of allowed units.
     _supported_units = { "ATMOSPHERE" : _Units.atm,
                          "BAR"        : _Units.bar }
@@ -55,8 +59,6 @@ class Pressure(_Type):
            unit : str
                The unit.
 
-           or
-
            string : str
                A string representation of the pressure.
         """
@@ -65,19 +67,41 @@ class Pressure(_Type):
         super().__init__(*args)
 
     def atm(self):
-        """Return the atmospheric pressure."""
+        """Return the atmospheric pressure.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure in atomospheres.
+        """
         return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.atm), "ATMOSPHERE")
 
     def bar(self):
-        """Return the pressure in bar."""
+        """Return the pressure in bar.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure in bar.
+        """
         return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.bar), "BAR")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+               The magnitude (optional).
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure in the default unit of atomospheres.
         """
         if mag is None:
             return self.atm()
@@ -87,10 +111,17 @@ class Pressure(_Type):
     def _convert_to(self, unit):
         """Return the pressure in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure in the specified unit.
         """
         if unit == "ATMOSPHERE":
             return self.atm()

@@ -20,11 +20,13 @@
 #####################################################################
 
 """
-Length units.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Area units.
 """
 
 from ...Types import Area as _Area
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["meter2", "angstrom2", "nanometer2", "picometer2"]
 
