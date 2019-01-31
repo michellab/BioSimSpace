@@ -21,8 +21,12 @@
 
 """
 Base class for free energy simulations.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
+import os as _os
+import subprocess as _subprocess
+import tempfile as _tempfile
 
 from Sire.Base import getBinDir as _getBinDir
 
@@ -37,10 +41,10 @@ import BioSimSpace.Process as _Process
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Units as _Units
 
-import math as _math
-import os as _os
-import subprocess as _subprocess
-import tempfile as _tempfile
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["FreeEnergy"]
 
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""
@@ -57,7 +61,7 @@ class FreeEnergy():
            Parameters
            ----------
 
-           protocol : BioSimSpace.Protocol.FreeEnergy
+           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
                The simulation protocol.
 
            work_dir : str
@@ -102,17 +106,17 @@ class FreeEnergy():
            Returns
            -------
 
-           pmf0 : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the first leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           pmf1 : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the second leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           free_energy : ( BioSimSpace.Types.Energy, BioSimSpace.Types.Energy )
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
                The free energy difference and its associated error.
         """
 
@@ -221,10 +225,10 @@ class FreeEnergy():
            Parameters
            ----------
 
-           system0 : BioSimSpace._SireWrappers.System
+           system0 : :class:`System <BioSimSpace._SireWrappers.System>`
                The system for the first free energy leg.
 
-           system1 : BioSimSpace._SireWrappers.System
+           system1 : :class:`System <BioSimSpace._SireWrappers.System>`
                The system for the second free energy leg.
         """
 
