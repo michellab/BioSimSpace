@@ -70,7 +70,7 @@ def createProtocol(protocol):
        Returns
        --------
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol._protocol.Protocol>`
+       protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The chosen simulation protocol.
     """
 

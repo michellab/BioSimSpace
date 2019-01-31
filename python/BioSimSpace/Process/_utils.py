@@ -75,7 +75,7 @@ def createProcess(system, protocol, package):
        Returns
        -------
 
-       process : :class:`Process <BioSimSpace.Process._process.Process>`
+       process : :class:`Process <BioSimSpace.Process>`
            The process object for the specific simulation package.
     """
 

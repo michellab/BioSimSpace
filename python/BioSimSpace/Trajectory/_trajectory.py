@@ -52,7 +52,7 @@ class Trajectory():
            Parameters
            ----------
 
-           process : :class:`Process <BioSimSpace.Process._process.Process>`
+           process : :class:`Process <BioSimSpace.Process>`
                A BioSimSpace process object.
 
            trajectory : str

@@ -23,6 +23,8 @@
 Functionality for configuring and driving molecular dynamics simulations.
 """
 
+import os as _os
+
 from Sire.Base import findExe as _findExe
 
 from BioSimSpace import _amber_home
@@ -32,8 +34,6 @@ from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 
 import BioSimSpace.Process as _Process
-
-import os as _os
 
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
@@ -64,7 +64,7 @@ def _find_md_package(system, protocol, use_gpu=True):
        system : :class:`System <BioSimSpace._SireWrappers.System>`
            The molecular system.
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol._protocol.Protocol>`
+       protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
 
        use_gpu : bool
@@ -124,7 +124,7 @@ def run(system, protocol, autostart=True,
        system : :class:`System <BioSimSpace._SireWrappers.System>`
            The molecular system.
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol._protocol.Protocol>`
+       protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
 
        autostart : bool
@@ -147,7 +147,7 @@ def run(system, protocol, autostart=True,
        Returns
        -------
 
-       process : :class:`Process <BioSimSpace.Process._process.Process>`
+       process : :class:`Process <BioSimSpace.Process>`
            A process to run the molecular dynamics protocol.
     """
 

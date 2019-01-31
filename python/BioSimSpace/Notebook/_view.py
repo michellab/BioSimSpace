@@ -50,7 +50,7 @@ class View():
            Parameters
            ----------
 
-           handle : :class:`Process <BioSimSpace.Process._process.Process>`, \
+           handle : :class:`Process <BioSimSpace.Process>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A handle to a process or system.
         """
