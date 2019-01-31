@@ -308,7 +308,7 @@ class Type():
            Returns
            -------
 
-           type : :class:`Type <BioSimSpace.Types.Type>`
+           type : :class:`Type <BioSimSpace.Types>`
                The type object.
         """
 
