@@ -21,8 +21,14 @@
 
 """
 Functionality for running simulations with GROMACS.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
+import os as _os
+import pygtail as _pygtail
+import subprocess as _subprocess
+import timeit as _timeit
+import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
@@ -38,12 +44,8 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
-import math as _math
-import os as _os
-import pygtail as _pygtail
-import subprocess as _subprocess
-import timeit as _timeit
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
@@ -57,10 +59,10 @@ class Gromacs(_process.Process):
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The protocol for the GROMACS process.
 
            exe : str
@@ -547,7 +549,7 @@ class Gromacs(_process.Process):
            Parameters
            ----------
 
-           config : str, [ str ]
+           config : str, [str]
                A configuration string, a list of configuration strings, or a
                path to a configuration file.
         """
@@ -571,7 +573,7 @@ class Gromacs(_process.Process):
            Parameters
            ----------
 
-           config : str, [ str ]
+           config : str, [str]
                The list of configuration strings, or a path to a configuration
                file.
         """
@@ -583,7 +585,14 @@ class Gromacs(_process.Process):
         self._generate_binary_run_file()
 
     def start(self):
-        """Start the GROMACS process."""
+        """Start the GROMACS process.
+
+           Returns
+           -------
+
+           process : :class:`Process.Gromacs <BioSimSpace.Process.Gromacs>`
+               A handle to the GROMACS process.
+        """
 
         # The process is currently queued.
         if self.isQueued():
@@ -641,7 +650,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
 
@@ -693,7 +702,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
         return self.getSystem(block=False)
@@ -710,7 +719,8 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           trajectory : BioSimSpace.Trajectory
+           trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
+               The latest trajectory object.
         """
 
         # Wait for the process to finish.
@@ -737,7 +747,7 @@ class Gromacs(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            block : bool
@@ -746,7 +756,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
 
@@ -771,13 +781,13 @@ class Gromacs(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
         self._update_stdout_dict()
@@ -791,6 +801,12 @@ class Gromacs(_process.Process):
 
            block : bool
                Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
+              The dictionary of time-series records.
         """
         # Wait for the process to finish.
         if block is True:
@@ -812,7 +828,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           records : BioSimSpace.Process._process._MultiDict
+           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
         return getRecords(block=False)
@@ -832,7 +848,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
 
@@ -857,7 +873,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)
@@ -914,7 +930,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The bond energy.
         """
         return self.getRecord("BOND", time_series, _Units.Energy.kj_per_mol, block)
@@ -931,7 +947,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The bond energy.
         """
         return self.getBondEnergy(time_series, block=False)
@@ -951,7 +967,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The angle energy.
         """
         return self.getRecord("ANGLE", time_series, _Units.Energy.kj_per_mol, block)
@@ -968,7 +984,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The angle energy.
         """
         return self.getAngleEnergy(time_series, block=False)
@@ -988,7 +1004,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dihedral energy.
         """
         return self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
@@ -1005,7 +1021,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
@@ -1025,7 +1041,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
         return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
@@ -1042,7 +1058,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
         return self.getImproperEnergy(time_series, block=False)
@@ -1062,7 +1078,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Lennard-Jones energy.
         """
         return self.getRecord("LJ14", time_series, _Units.Energy.kj_per_mol, block)
@@ -1079,7 +1095,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Lennard-Jones energy.
         """
         return self.getLennardJones14(time_series, block=False)
@@ -1099,7 +1115,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The short-range Lennard-Jones energy.
         """
         return self.getRecord("LJSR", time_series, _Units.Energy.kj_per_mol, block)
@@ -1116,7 +1132,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Lennard-Jones energy.
         """
         return self.getLennardJonesSR(time_series, block=False)
@@ -1136,7 +1152,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getRecord("COULOMB14", time_series, _Units.Energy.kj_per_mol, block)
@@ -1153,7 +1169,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getCoulomb14(time_series, block=False)
@@ -1173,7 +1189,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getRecord("COULOMBSR", time_series, _Units.Energy.kj_per_mol, block)
@@ -1190,7 +1206,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getCoulombSR(time_series, block=False)
@@ -1210,7 +1226,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getRecord("COULRECIP", time_series, _Units.Energy.kj_per_mol, block)
@@ -1227,7 +1243,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Coulomb energy.
         """
         return self.getCoulombReciprocal(time_series, block=False)
@@ -1247,7 +1263,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dispersion correction.
         """
         return self.getRecord("DISPERCORR", time_series, _Units.Energy.kj_per_mol, block)
@@ -1264,7 +1280,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dispersion correction.
         """
         return self.getDispersionCorrection(time_series, block=False)
@@ -1284,7 +1300,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dispersion correction.
         """
         return self.getRecord("POSITIONREST", time_series, _Units.Energy.kj_per_mol, block)
@@ -1301,7 +1317,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dispersion correction.
         """
         return self.getRestraintEnergy(time_series, block=False)
@@ -1321,7 +1337,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The potential energy.
         """
         return self.getRecord("POTENTIAL", time_series, _Units.Energy.kj_per_mol, block)
@@ -1338,7 +1354,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The potential energy.
         """
         return self.getPotentialEnergy(time_series, block=False)
@@ -1358,7 +1374,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The kinetic energy.
         """
         return self.getRecord("KINETICEN", time_series, _Units.Energy.kj_per_mol, block)
@@ -1375,7 +1391,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
@@ -1395,7 +1411,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getRecord("TOTALENERGY", time_series, _Units.Energy.kj_per_mol, block)
@@ -1412,7 +1428,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getTotalEnergy(time_series, block=False)
@@ -1432,7 +1448,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The conserved energy.
         """
         return self.getRecord("CONSERVEDEN", time_series, _Units.Energy.kj_per_mol, block)
@@ -1449,7 +1465,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The conserved energy.
         """
         return self.getConservedEnergy(time_series, block=False)
@@ -1469,7 +1485,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
         """
         return self.getRecord("TEMPERATURE", time_series, _Units.Temperature.kelvin, block)
@@ -1486,7 +1502,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The current temperature.
         """
         return self.getTemperature(time_series, block=False)
@@ -1506,7 +1522,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
         return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
@@ -1523,7 +1539,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The current pressure.
         """
         return self.getPressure(time_series, block=False)
@@ -1543,7 +1559,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The DC pressure.
         """
         return self.getRecord("PRESDC", time_series, _Units.Pressure.bar, block)
@@ -1560,7 +1576,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The current pressure.
         """
         return self.getPressureDC(time_series, block=False)
@@ -1580,7 +1596,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Length
+           length : :class:`Length <BioSimSpace.Types.Length>`
                The constrained RMSD.
         """
         return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
@@ -1597,7 +1613,7 @@ class Gromacs(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Length
+           length : :class:`Length <BioSimSpace.Types.Length>`
                The current constrained RMSD.
         """
         return self.getConstraintRMSD(time_series, block=False)

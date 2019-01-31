@@ -21,18 +21,7 @@
 
 """
 Functionality for running simulation processes.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
-
-import Sire.Mol as _SireMol
-
-from BioSimSpace import _is_interactive, _is_notebook
-
-from ..Protocol._protocol import Protocol as _Protocol
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
 
 import collections as _collections
 import glob as _glob
@@ -44,8 +33,21 @@ import warnings as _warnings
 import tempfile as _tempfile
 import zipfile as _zipfile
 
+import Sire.Mol as _SireMol
+
+from BioSimSpace import _is_interactive, _is_notebook
+
+from ..Protocol._protocol import Protocol as _Protocol
+from .._SireWrappers import System as _System
+
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
+
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Process"]
 
@@ -64,10 +66,10 @@ class Process():
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The protocol for the process.
 
            name : str
@@ -227,10 +229,10 @@ class Process():
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The simulation protocol.
 
            autostart : bool
@@ -242,7 +244,7 @@ class Process():
            Returns
            -------
 
-           process : BioSimSpace.Process
+           process : :class:`Procees <BioSimSpace.Process>`
                The new process object.
         """
 
@@ -278,11 +280,24 @@ class Process():
             return process
 
     def getPackageName(self):
-        """Return the package name."""
+        """Return the package name.
+
+           Returns
+           -------
+
+           name : str
+               The name of the package.
+        """
         return self._package_name
 
     def getName(self):
-        """Return the process name."""
+        """Return the process name.
+
+           Returns:
+
+           name : str
+               The name of the process.
+        """
         return self._name
 
     def setName(self, name):
@@ -301,7 +316,14 @@ class Process():
             self._name = name
 
     def getSeed(self):
-        """Return the random number seed."""
+        """Return the random number seed.
+
+           Returns
+           -------
+
+           seed : int
+               The random number seed.
+        """
         return self._seed
 
     def setSeed(self, seed):
@@ -326,7 +348,7 @@ class Process():
            Parameters
            ----------
 
-           max_time: BioSimSpace.Types.Time, int, float
+           max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
                The maximimum time to wait (in minutes).
         """
 
@@ -362,18 +384,39 @@ class Process():
             self._process.wait()
 
     def isQueued(self):
-        """Return whether the process is queued."""
+        """Return whether the process is queued.
+
+           Returns
+           -------
+
+           is_queued : bool
+               Whether the process is queued.
+        """
         return self._is_queued
 
     def isRunning(self):
-        """Return whether the process is running."""
+        """Return whether the process is running.
+
+           Returns
+           -------
+
+           is_running : bool
+               Whether the process is running.
+        """
         try:
             return self._process.isRunning()
         except AttributeError:
             return False
 
     def isError(self):
-        """Return whether the process errored."""
+        """Return whether the process errored.
+
+           Returns
+           -------
+
+           is_error : bool
+               Whether the process errored.
+        """
         try:
             return self._process.isError()
         except AttributeError:
@@ -447,15 +490,36 @@ class Process():
             print(self._stderr[x])
 
     def exe(self):
-        """Return the executable."""
+        """Return the executable.
+
+           Returns
+           -------
+
+           exe : str
+               The path to the executable.
+        """
         return self._exe
 
     def inputFiles(self):
-        """Return the list of input files."""
+        """Return the list of input files.
+
+           Returns
+           -------
+
+           input_files : [str]
+               The list of autogenerated input files.
+        """
         return self._input_files.copy()
 
     def workDir(self):
-        """Return the working directory."""
+        """Return the working directory.
+
+           Returns
+           -------
+
+           work_dir : str
+               The path of the working directory.
+        """
         return self._work_dir
 
     def getStdout(self, block="AUTO"):
@@ -470,7 +534,7 @@ class Process():
            Returns
            -------
 
-           output : [ str ]
+           output : [str]
                The list of stdout strings.
         """
 
@@ -498,7 +562,7 @@ class Process():
            Returns
            -------
 
-           error : [ str ]
+           error : [str]
                The list of stderror strings.
         """
 
@@ -565,11 +629,25 @@ class Process():
             return zipname
 
     def command(self):
-        """Return the command-line string used to run the process."""
+        """Return the command-line string used to run the process.
+
+           Returns
+           -------
+
+           command : str
+               The command string.
+        """
         return self._command
 
     def getConfig(self):
-        """Get the list of configuration file strings."""
+        """Get the list of configuration file strings.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of configuration strings.
+        """
         return self._config.copy()
 
     def setConfig(self, config):
@@ -578,7 +656,7 @@ class Process():
            Parameters
            ----------
 
-           config : str, [ str ]
+           config : str, [str]
                The list of configuration strings, or a path to a configuration
                file.
         """
@@ -648,21 +726,52 @@ class Process():
         self.writeConfig(self._config_file)
 
     def writeConfig(self, file):
-        """Write the configuration to file."""
+        """Write the configuration to file.
+
+           Parameters
+           ----------
+
+           file : str
+               The path to a file.
+        """
+        if type(file) is not str:
+            raise TypeError("'file' must be of type 'str'")
+
         with open(file, "w") as f:
             for line in self._config:
                 f.write("%s\n" % line)
 
     def getArgs(self):
-        """Get the dictionary of command-line arguments."""
+        """Get the dictionary of command-line arguments.
+
+           Returns
+           -------
+
+           args : collections.OrderedDict
+               The dictionary of command-line arguments.
+        """
         return self._args.copy()
 
     def getArgString(self):
-        """Get the command-line arguments string."""
+        """Get the command-line arguments string.
+
+           Returns
+           -------
+
+           arg_string : str
+               The command-line argument string.
+        """
         return " ".join(self.getArgStringList())
 
     def getArgStringList(self):
-        """Convert the argument dictionary into a list of strings."""
+        """Convert the argument dictionary into a list of strings.
+
+           Returns
+           -------
+
+           arg_string_list : [str]
+               The list of command-line arguments.
+        """
 
         # Create an empty list.
         args = []
@@ -709,7 +818,7 @@ class Process():
            arg : str
                The argument to set.
 
-           value :
+           value : bool, str
                The value of the argument.
         """
 
@@ -778,7 +887,14 @@ class Process():
         self._generate_args()
 
     def runTime(self):
-        """Return the running time for the process (in minutes)."""
+        """Return the running time for the process (in minutes).
+
+           Returns
+           -------
+
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
+               The runtime in minutes.
+        """
 
         # The process is still running.
         if self.isRunning():

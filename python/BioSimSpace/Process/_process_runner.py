@@ -21,15 +21,17 @@
 
 """
 Functionality for running multiple processes.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import os as _os
+import tempfile as _tempfile
 
 from ..Gateway import ResourceManager as _ResourceManager
 from ._process import Process as _Process
 from .._SireWrappers import System as _System
 
-import os as _os
-import tempfile as _tempfile
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["ProcessRunner"]
 
@@ -43,7 +45,7 @@ class ProcessRunner():
            Parameters
            ----------
 
-           processes : [ BioSimSpace.Process.Process ]
+           processes : [:class:`Process <BioSimSpace.Process>`]
                A list of process objects.
 
            name : str
@@ -118,7 +120,7 @@ class ProcessRunner():
            Returns
            -------
 
-           processes : [ BioSimSpace.Process ]
+           processes : [:class:`Process<BioSimSpace.Process>`]
                The list of processes.
         """
         return self._processes
@@ -166,7 +168,8 @@ class ProcessRunner():
            Parameters
            ----------
 
-           process : BioSimSpace.Process, [ BioSimSpace.Process ]
+           process : :class:`Process <BioSimSpace.Process>`, \
+                     [:class:`Process <BioSimSpace.Process>`]
                The process/processes to add.
         """
 
@@ -296,7 +299,7 @@ class ProcessRunner():
            Returns
            -------
 
-           idx_queued : [ int ]
+           idx_queued : [int]
                A list containing the indices of the queued processes.
         """
 
@@ -314,7 +317,7 @@ class ProcessRunner():
            Returns
            -------
 
-           idx_errored : [ int ]
+           idx_errored : [int]
                A list containing the indices of the errored processes.
         """
 
@@ -372,7 +375,7 @@ class ProcessRunner():
            Returns
            -------
 
-           is_error : [ bool ]
+           is_error : [bool]
                A list indicating whether each process is in an error state.
         """
 
@@ -484,13 +487,13 @@ class ProcessRunner():
            Parameters
            ----------
 
-           processes : [ BioSimSpace.Process ]
+           processes : [:class:`Process <BioSimSpace.Process>`]
                A list of process objects.
 
            Returns
            -------
 
-           new_processes : [ BioSimSpace.Process ]
+           new_processes : [:class:`Process <BioSimSpace.Process>`]
                A list of procesess with updated working directories.
         """
 
