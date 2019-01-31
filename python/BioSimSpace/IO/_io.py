@@ -24,7 +24,6 @@ Functionality for reading/writing molecular systems.
 """
 
 from collections import OrderedDict as _OrderedDict
-from glob import glob
 from io import StringIO as _StringIO
 from warnings import warn as _warn
 
