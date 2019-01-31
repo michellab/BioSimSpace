@@ -22,6 +22,20 @@
 """
 .. currentmodule:: BioSimSpace.Units
 
+Length units
+============
+
+.. autosummary::
+    :toctree: generated/
+
+    Length.meter
+    Length.angstrom
+    Length.nanometer
+    Length.picometer
+
+Area units
+==========
+
 .. autosummary::
     :toctree: generated/
 
@@ -30,24 +44,60 @@
     Area.nanometer2
     Area.picometer2
 
+Volume units
+============
+
+.. autosummary::
+    :toctree: generated/
+
+    Volume.meter3
+    Volume.angstrom3
+    Volume.nanometer3
+    Volume.picometer3
+
+Charge units
+============
+
+.. autosummary::
+    :toctree: generated/
+
     Charge.electron_charge
     Charge.coulomb
+
+Energy units
+============
+
+.. autosummary::
+    :toctree: generated/
 
     Energy.kcal_per_mol
     Energy.kj_per_mol
     Energy.kt
 
-    Length.meter
-    Length.angstrom
-    Length.nanometer
-    Length.picometer
+Pressure units
+==============
+
+.. autosummary::
+    :toctree: generated/
 
     Pressure.atm
     Pressure.bar
 
+Temperature units
+=================
+
+.. autosummary::
+    :toctree: generated/
+
     Temperature.kelvin
     Temperature.celsius
     Temperature.fahrenheit
+
+Time units
+==========
+
+.. autosummary::
+    :toctree: generated/
 
     Time.day
     Time.hour
@@ -57,11 +107,6 @@
     Time.nanosecond
     Time.picosecond
     Time.femtosecond
-
-    Volume.meter3
-    Volume.angstrom3
-    Volume.nanometer3
-    Volume.picometer3
 """
 
 from . import Area
