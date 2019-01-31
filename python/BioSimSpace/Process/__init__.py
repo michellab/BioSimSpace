@@ -31,8 +31,8 @@ Functions
     packages
     createProcess
 
-Classes
-========
+MD driver classes
+=================
 
 .. autosummary::
     :toctree: generated/
@@ -40,8 +40,15 @@ Classes
     Amber
     Gromacs
     Namd
-    ProcessRunner
     Somd
+
+Multi process simulation tools
+==============================
+
+.. autosummary::
+    :toctree: generated/
+
+    ProcessRunner
 """
 
 from ._amber import *
