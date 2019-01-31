@@ -269,7 +269,7 @@ of 1e-6. This can be changed by passing a keyword argument to the function, e.g:
 Skipping tests
 """"""""""""""
 
-If you are using `\ *test-driven development* <https://en.wikipedia.org/wiki/Test-driven_development>`_
+If you are using `test-driven development <https://en.wikipedia.org/wiki/Test-driven_development>`_
 it might be desirable to write your tests before implementing the functionality,
 i.e. you are asserting what the *output* of a function should be, not how it should
 be *implemented*. In this case, you can make use of the ``pytest`` *skip* decorator
