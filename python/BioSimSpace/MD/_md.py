@@ -61,10 +61,10 @@ def _find_md_package(system, protocol, use_gpu=True):
        Parameters
        ----------
 
-       system : :class:`System <BioSimSpace._SireWrappers._system.System>`
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
            The molecular system.
 
-       protocol : :class:`Protocol <BioSimSpace._protocol.Protocol>`
+       protocol : :class:`Protocol <BioSimSpace.Protocol._protocol.Protocol>`
            The simulation protocol.
 
        use_gpu : bool
@@ -121,10 +121,10 @@ def run(system, protocol, autostart=True,
        Parameters
        ----------
 
-       system : :class:`System <BioSimSpace._SireWrappers._system.System>`
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
            The molecular system.
 
-       protocol : :class:`Protocol <BioSimSpace._protocol.Protocol>`
+       protocol : :class:`Protocol <BioSimSpace.Protocol._protocol.Protocol>`
            The simulation protocol.
 
        autostart : bool

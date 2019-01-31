@@ -20,10 +20,16 @@
 #####################################################################
 
 """
-A set of thin wrappers around various Sire objects. This is an internal package
-and should not be directly exposed to the user.
+.. currentmodule:: BioSimSpace._SireWrappers
 
-Author: Lester Hedges <lester.hedges@gmail.com>
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Molecule
+    System
 """
 
 from ._molecule import *

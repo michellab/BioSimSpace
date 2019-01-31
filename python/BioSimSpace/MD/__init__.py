@@ -22,8 +22,8 @@
 """
 .. currentmodule:: BioSimSpace.MD
 
-User API
-========
+Functions
+=========
 
 .. autosummary::
     :toctree: generated/

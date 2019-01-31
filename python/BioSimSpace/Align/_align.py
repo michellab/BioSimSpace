@@ -58,10 +58,10 @@ def matchAtoms(molecule0,
        Parameters
        ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule of interest.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The reference molecule.
 
        scoring_function : str
@@ -232,10 +232,10 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        Parameters
        ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to align.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The reference molecule.
 
        mapping : dict
@@ -253,7 +253,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        Returns
        -------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The aligned molecule.
     """
 
@@ -302,10 +302,10 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        Parameters
        ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            A molecule object.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            A second molecule object.
 
        mapping : dict
@@ -326,7 +326,7 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
        Returns
        -------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The merged molecule.
     """
 
@@ -372,10 +372,10 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
        Parameters
        ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The reference molecule.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers._molecule.Molcule>`
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The target molecule.
 
        mappings : [ dict ]

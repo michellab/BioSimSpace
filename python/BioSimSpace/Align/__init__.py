@@ -22,8 +22,8 @@
 """
 .. currentmodule:: BioSimSpace.Align
 
-User API
-========
+Functions
+=========
 
 .. autosummary::
     :toctree: generated/
