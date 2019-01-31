@@ -141,11 +141,9 @@ from . import Parameters
 from . import Process
 from . import Protocol
 from . import Solvent
+from . import Trajectory
 from . import Types
 from . import Units
-
-# Move to top-level namespace.
-from .Trajectory import Trajectory
 
 # Top-level functions.
 
