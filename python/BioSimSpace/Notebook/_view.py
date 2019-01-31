@@ -21,8 +21,13 @@
 
 """
 Tools for visualising molecular systems.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import nglview as _nglview
+import os as _os
+import shutil as _shutil
+import tempfile as _tempfile
+import warnings as _warnings
 
 import Sire as _Sire
 
@@ -31,11 +36,8 @@ from BioSimSpace import _is_notebook
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
 
-import nglview as _nglview
-import os as _os
-import shutil as _shutil
-import tempfile as _tempfile
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["View"]
 
@@ -48,7 +50,8 @@ class View():
            Parameters
            ----------
 
-           handle : BioSimSpace.Process, BioSimSpace._SireWrappers.System
+           handle : :class:`Process <BioSimSpace.Process._process.Process>`, \
+                    :class:`System <BioSimSpace._SireWrappers.System>`
                A handle to a process or system.
         """
 
@@ -113,7 +116,7 @@ class View():
            Parameters
            ----------
 
-           indices : [ int ], range
+           indices : [int], range
                A list of molecule indices.
 
            gui : bool
@@ -254,7 +257,14 @@ class View():
         return self._create_view(view=index, gui=gui)
 
     def nViews(self):
-        """Return the number of views."""
+        """Return the number of views.
+
+           Return
+           ------
+
+           num_views : int
+               The number of views.
+        """
         return self._num_views
 
     def savePDB(self, file, index=None):
