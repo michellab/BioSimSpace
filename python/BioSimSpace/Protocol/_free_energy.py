@@ -21,12 +21,14 @@
 
 """
 Functionality for free energy protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ._protocol import Protocol as _Protocol
 
 import BioSimSpace.Types as _Types
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
@@ -56,7 +58,7 @@ class FreeEnergy(_Protocol):
            lam : float
                The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [ float ]
+           lam_vals : [float]
                The list of lambda parameters.
 
            min_lam : float
@@ -68,13 +70,13 @@ class FreeEnergy(_Protocol):
            num_lam : int
                The number of lambda values.
 
-           timestep : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration timestep.
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The running time.
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
 
            ensemble : str
@@ -127,7 +129,7 @@ class FreeEnergy(_Protocol):
            Returns
            -------
 
-           lam_vals : [ float ]
+           lam_vals : [float]
                The list of lambda values.
         """
         return self._lambda_vals
@@ -141,7 +143,7 @@ class FreeEnergy(_Protocol):
            lam : float
                The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [ float ]
+           lam_vals : [float]
                A list of lambda values.
 
            min_lam : float
@@ -252,7 +254,7 @@ class FreeEnergy(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         return self._timestep
@@ -263,7 +265,7 @@ class FreeEnergy(_Protocol):
            Parameters
            ----------
 
-           timestep : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         if type(timestep) is _Types.Time:
@@ -277,7 +279,7 @@ class FreeEnergy(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         return self._runtime
@@ -288,7 +290,7 @@ class FreeEnergy(_Protocol):
            Parameters
            ----------
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         if type(runtime) is _Types.Time:
@@ -302,7 +304,7 @@ class FreeEnergy(_Protocol):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
         return self._temperature
@@ -313,7 +315,7 @@ class FreeEnergy(_Protocol):
            Parameters
            ----------
 
-           temperature : BioSimSpace.Types.Time
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
         if type(temperature) is _Types.Temperature:

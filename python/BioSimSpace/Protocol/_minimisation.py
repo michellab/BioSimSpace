@@ -21,12 +21,14 @@
 
 """
 Functionality for minimisation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Minimisation"]
 

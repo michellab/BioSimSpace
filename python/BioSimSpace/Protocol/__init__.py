@@ -20,8 +20,28 @@
 #####################################################################
 
 """
-Functionality for defining simulation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Protocol
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Custom
+    Equilibration
+    FreeEnergy
+    Minimisation
+    Production
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    protocols
+    createProtocol
 """
 
 from ._custom import *
@@ -29,35 +49,4 @@ from ._equilibration import *
 from ._free_energy import *
 from ._minimisation import *
 from ._production import *
-
-# Create a list of the supported protocols.
-_protocols = []
-_protocol_dict = {}
-import sys as _sys
-_namespace = _sys.modules[__name__]
-for _var in dir():
-    if _var[0] != "_" and _var != "Custom":
-        _protocols.append(_var)
-        _protocol_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
-
-def protocols():
-    "Return a list of the supported Molecular Dynamics protocols."
-    return _protocols
-
-def createProtocol(protocol):
-    """Create a default simulation protocol.
-
-       Parameters
-       ----------
-
-       protocol : str
-           The name of the protocol.
-    """
-
-    if protocol not in _protocols:
-        raise KeyError("Unsupported protocol '%s', supported protocols are %s" % (protocol, _protocols))
-
-    return _protocol_dict[protocol]()
+from ._utils import *

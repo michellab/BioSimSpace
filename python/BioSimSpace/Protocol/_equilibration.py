@@ -21,16 +21,18 @@
 
 """
 Functionality for equilibration protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
+import pytest as _pytest
+import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
 import BioSimSpace.Types as _Types
 
-import math as _math
-import pytest as _pytest
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Equilibration"]
 
@@ -56,19 +58,19 @@ class Equilibration(_Protocol):
            Parameters
            ----------
 
-           timestep : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration timestep (in femtoseconds).
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The running time (in nanoseconds).
 
-           temperature_start : BioSimSpace.Types.Temperature
+           temperature_start : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The starting temperature (in Kelvin).
 
-           temperature_end : BioSimSpace.Types.Temperature
+           temperature_end : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The final temperature (in Kelvin).
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The equilibration temperature (in Kelvin). This takes
                precedence of over the other temperatures, i.e. to run
                at fixed temperature.
@@ -138,7 +140,7 @@ class Equilibration(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         return self._timestep
@@ -149,7 +151,7 @@ class Equilibration(_Protocol):
            Parameters
            ----------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         if type(timestep) is _Types.Time:
@@ -163,7 +165,7 @@ class Equilibration(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         return self._runtime
@@ -174,7 +176,7 @@ class Equilibration(_Protocol):
            Parameters
            ----------
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         if type(runtime) is _Types.Time:
@@ -188,7 +190,7 @@ class Equilibration(_Protocol):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The starting temperature.
         """
         return self._temperature_start
@@ -199,7 +201,7 @@ class Equilibration(_Protocol):
            Parameters
            ----------
 
-           temperature : BioSimSpace.Types.Time
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The starting temperature.
         """
 
@@ -216,7 +218,7 @@ class Equilibration(_Protocol):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The final temperature.
         """
         return self._temperature_end
@@ -227,7 +229,7 @@ class Equilibration(_Protocol):
            Parameters
            ----------
 
-           temperature : BioSimSpace.Types.Time
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The final temperature.
         """
         if type(temperature) is _Types.Temperature:
