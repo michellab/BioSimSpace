@@ -61,10 +61,10 @@ def _find_md_package(system, protocol, use_gpu=True):
        Parameters
        ----------
 
-       system : BioSimSpace._SireWrappers.System
+       system : :class:`System <BioSimSpace._SireWrappers._system.System>`
            The molecular system.
 
-       protocol : BioSimSpace.Protocol
+       protocol : :class:`Protocol <BioSimSpace._protocol.Protocol>`
            The simulation protocol.
 
        use_gpu : bool
@@ -118,37 +118,37 @@ def run(system, protocol, autostart=True,
         name="md", work_dir=None, seed=None, property_map={}):
     """Auto-configure and run a molecular dynamics process.
 
-        Parameters
-        ----------
+       Parameters
+       ----------
 
-        system : BioSimSpace._SireWrappers.System
-            The molecular system.
+       system : :class:`System <BioSimSpace._SireWrappers._system.System>`
+           The molecular system.
 
-        protocol : BioSimSpace.Protocol
-            The simulation protocol.
+       protocol : :class:`Protocol <BioSimSpace._protocol.Protocol>`
+           The simulation protocol.
 
-        autostart : bool
-            Whether to start the process automatically.
+       autostart : bool
+           Whether to start the process automatically.
 
-        name : str
-            The name of the process.
+       name : str
+           The name of the process.
 
-        work_dir : str
-            The working directory for the process.
+       work_dir : str
+           The working directory for the process.
 
-        seed : int
-            A random number seed.
+       seed : int
+           A random number seed.
 
-        property_map : dict
-            A dictionary that maps system "properties" to their user defined
-            values. This allows the user to refer to properties with their
-            own naming scheme, e.g. { "charge" : "my-charge" }
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
 
-        Returns
-        -------
+       Returns
+       -------
 
-        process : BioSimSpace.Process
-            A process to run the molecular dynamics protocol.
+       process : :class:`Process <BioSimSpace.Process._process.Process>`
+           A process to run the molecular dynamics protocol.
     """
 
     # Check that the system is valid.

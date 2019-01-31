@@ -31,7 +31,4 @@ User API
     run
 """
 
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
 from ._md import *
