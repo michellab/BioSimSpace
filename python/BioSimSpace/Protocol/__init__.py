@@ -22,6 +22,15 @@
 """
 .. currentmodule:: BioSimSpace.Protocol
 
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    protocols
+    createProtocol
+
 Classes
 =======
 
@@ -33,15 +42,6 @@ Classes
     FreeEnergy
     Minimisation
     Production
-
-Functions
-=========
-
-.. autosummary::
-    :toctree: generated/
-
-    protocols
-    createProtocol
 """
 
 from ._custom import *
