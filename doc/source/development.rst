@@ -365,6 +365,30 @@ to run or skip tests with a particular mark.
 The custom attribute can just be a label, as in this case, or could be your
 own function decorator.
 
+Documentation
+-------------
+
+BioSimSpace is fully documented using `NumPy <https://numpy.org>`_ style
+docstrings. See `here <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`__
+for details. The documentation is automatically built using
+`Sphinx <http://sphinx-doc.org>`_ whenever a commit is pushed to devel, which
+will then update this website.
+
+To build the documentation locally you will first need to install some
+additional packages.
+
+.. code-block:: bash
+
+   $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme
+
+Then move to the ``doc`` directory and run:
+
+.. code-block:: bash
+
+   SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
+
+When finished, point your browser to ``build/html/index.html``.
+
 Committing
 ----------
 
