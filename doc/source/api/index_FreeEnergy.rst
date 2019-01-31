@@ -2,9 +2,9 @@
 
 BioSimSpace.FreeEnergy
 ======================
-The *FreeEnergy* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *FreeEnergy* package contains tools automatically configure, run, and
+analyse different free energy simulations.
 
 .. automodule:: BioSimSpace.FreeEnergy
 

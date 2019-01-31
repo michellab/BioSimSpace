@@ -2,9 +2,9 @@
 
 BioSimSpace.Gateway
 ===================
-The *Gateway* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Gateway* package contains tools that allow BioSimSpace to interface with
+the outside world.
 
 .. automodule:: BioSimSpace.Gateway
 

@@ -2,9 +2,8 @@
 
 BioSimSpace._Utils
 ==================
-The *_Utils* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *_Utils* package contains a collection of internal utilities.
 
 .. automodule:: BioSimSpace._Utils
 
