@@ -26,6 +26,10 @@ Tools for plotting data.
 from warnings import warn as _warn
 from os import environ as _environ
 
+from BioSimSpace import _is_interactive, _is_notebook
+
+import BioSimSpace.Types._type as _Type
+
 # Check to see if DISPLAY is set.
 if "DISPLAY" in _environ:
     _display = _environ.get("DISPLAY")
@@ -53,10 +57,6 @@ else:
         #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del(_display)
-
-from BioSimSpace import _is_interactive, _is_notebook
-
-import BioSimSpace.Types._type as _Type
 
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
