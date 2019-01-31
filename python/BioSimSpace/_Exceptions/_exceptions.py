@@ -20,17 +20,24 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace._Exceptions
-
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-
-    IncompatibleError
-    MissingSoftwareError
-    ParameterisationError
+Custom exceptions for error handling.
 """
 
-from ._exceptions import *
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["IncompatibleError",
+           "MissingSoftwareError",
+           "ParameterisationError"]
+
+class IncompatibleError(Exception):
+    """Exception thrown when objects are incompatible with each other."""
+    pass
+
+class MissingSoftwareError(Exception):
+    """Exception thrown when external software dependencies are missing."""
+    pass
+
+class ParameterisationError(Exception):
+    """Exception thrown when molecular parameterisation fails."""
+    pass
