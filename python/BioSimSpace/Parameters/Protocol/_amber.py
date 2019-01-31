@@ -28,6 +28,10 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 # To override any protocols, just implement a custom "run" method in any
 # of the classes.
 
+import os as _os
+import queue as _queue
+import subprocess as _subprocess
+
 import Sire as _Sire
 
 from . import _protocol
@@ -35,10 +39,6 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
-
-import os as _os
-import queue as _queue
-import subprocess as _subprocess
 
 __all__ = ["FF03", "FF99", "FF99SB", "FF14SB", "GAFF", "GAFF2"]
 
