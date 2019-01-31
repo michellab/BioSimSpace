@@ -21,12 +21,14 @@
 
 """
 Custom context managers.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from contextlib import contextmanager as _contextmanager
 
 import os as _os
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["cd"]
 

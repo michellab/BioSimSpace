@@ -20,8 +20,15 @@
 #####################################################################
 
 """
-Internal utilities.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace._Utils
+
+Context managers
+================
+
+.. autosummary::
+    :toctree: generated/
+
+    cd
 """
 
 from ._contextmanagers import *
