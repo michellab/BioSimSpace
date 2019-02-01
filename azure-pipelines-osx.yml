@@ -15,7 +15,7 @@ steps:
 
     echo "Unpacking sire_devel_latest_osx.run (takes a long time)..."
     echo "$HOME/sire.app" | ./sire_devel_latest_osx.run > /dev/null 2>&1
-    $HOME/sire.app/sire
+    $HOME/sire.app/bin/sire
 
     echo "Compiling BioSimSpace..."
     cd python && $HOME/sire.app/bin/python setup.py install && cd -
