@@ -1,0 +1,40 @@
+# Pipeline to build the latest version of BioSimSpace by starting from a docker
+# image of a recent build. This avoids the (VERY) long build times if
+# we start from scratch. You should ensure that 'biosimspace-devel:latest'
+# corresponds to the right place to start...
+
+trigger:
+- devel
+
+steps:
+- script: |
+    # download and install last OSX build of Sire in $HOME/sire.app
+    echo "Downloading sire_devel_latest_osx.run..."
+    wget https://siremol.org/largefiles/sire_releases/download.php?name=sire_devel_latest_osx.run -O sire_devel_latest_osx.run > /dev/null 2>&1
+    chmod +x sire_devel_latest_osx.run
+
+    echo "Unpacking sire_devel_latest_osx.run (takes a long time)..."
+    echo "$HOME/sire.app" | ./sire_devel_latest_osx.run > /dev/null 2>&1
+    $HOME/sire.app/bin/sire
+
+    echo "Compiling BioSimSpace..."
+    cd python && $HOME/sire.app/bin/python setup.py install && cd -
+  displayName: 'Build BioSimSpace'
+- script: |
+    # now perform the tests - do this before packaging and deploy
+    $HOME/sire.app/bin/pytest -v test
+  displayName: 'Run BioSimSpace tests'
+- script: |
+    # if the test were successful then create a binary installer package
+    cp docker/package-devel/install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
+    $HOME/sire.app/bin/package_sire
+  env:
+    SIRE_RUN_FILE: $HOME/biosimspace_devel_latest_linux.run
+  displayName: 'Package BioSimSpace into a binary'
+- script: |
+    # finally deploy the binary to an object store bucket identified by 'par_url'
+    $HOME/sire.app/bin/conda install -y pycurl
+    $HOME/sire.app/bin/python docker/deploy-devel/deploy.py $HOME/biosimspace_devel_latest_osx.run
+  env:
+    PAR_URL: $(parURL)
+  displayName: 'Deploy binary to biosimspace.org'
