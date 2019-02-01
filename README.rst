@@ -1,4 +1,3 @@
-
 BioSimSpace
 ===========
 
@@ -6,14 +5,11 @@ BioSimSpace
    :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
-Code and resources for the `EPSRC <https://epsrc.ukri.org>`_
-`BioSimSpace <https://michellab.github.io/BioSimSpaceWebsite>`_ project.
+About
+-----
 
-What is it?
------------
-
-BioSimSpace is an interoperable Python framework for biomolecular simulation.
-With it you can:
+`BioSimSpace <https://biosimspace.org>`_ is an interoperable Python framework
+for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular workflow components that work on
   different hardware, with different software packages, and that can be
@@ -78,6 +74,21 @@ Then try importing the BioSimSpace package:
 .. code-block:: python
 
    import BioSimSpace as BSS
+
+
+Docker images
+-------------
+
+If you don't want to build or install, you can also run BioSimSpace via one of
+our docker images. The easy way to run the latest development image of
+BioSimSpace is via:
+
+.. code-block:: bash
+
+   docker run -it siremol/sire-devel:latest
+
+This will download the latest BioSimSpace development container, and will run
+it, giving you a bash prompt inside the container.
 
 Issues
 ------
