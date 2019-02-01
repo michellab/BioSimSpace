@@ -90,7 +90,33 @@ class _OutputAction(_argparse.Action):
         parser.exit()
 
 class Node():
-    """A class for interfacing with BioSimSpace nodes."""
+    """A class for interfacing with BioSimSpace nodes.
+
+       Nodes are used to collect and validate user input, document the
+       intentions of the workflow component, track and report errors,
+       and validate output. Once written, a node can be run from within
+       Jupyter, from the command-line, or plugged into a workflow engine,
+       such as Knime.
+
+       Example
+       -------
+
+       A generic energy minimisation node:
+
+       >>> import BioSimSpace as BSS
+       >>> node = BSS.Gateway.Node("Perform energy minimisation")
+       >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+       >>> node.setLicence("GPLv3")
+       >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
+       >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
+       >>> node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
+       >>> node.showControls()
+       >>> system = BSS.IO.readMolecules(node.getInput("files"))
+       >>> protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
+       >>> process = BSS.MD.run(system, protocol)
+       >>> node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
+       >>> node.validate()
+    """
 
     # Whether the node is run from Knime.
     _is_knime = False

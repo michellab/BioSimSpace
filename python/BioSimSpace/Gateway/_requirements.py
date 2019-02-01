@@ -1,4 +1,4 @@
-######################################################################
+#####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
 # Copyright: 2017-2019
@@ -286,7 +286,16 @@ class Requirement():
                 % (self._default, str(self._allowed)))
 
 class Boolean(Requirement):
-    """A boolean requirement."""
+    """A boolean requirement.
+
+       Example
+       -------
+
+       Create a boolean flag with a default of False.
+
+       >>> import BioSimSpace as BSS
+       >>> flag = BSS.Gateway.Boolean(help="A boolean flag", default=False)
+    """
 
     # Set the argparse argument type.
     _arg_type = bool
@@ -316,7 +325,26 @@ class Boolean(Requirement):
             raise TypeError("The value should be of type 'bool'.")
 
 class Integer(Requirement):
-    """An integer requirement."""
+    """An integer requirement.
+
+       Examples
+       --------
+
+       Create an integer requirement with an allowed range and no default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", minimum=0, maximum=10)
+
+       Create an integer requirement with a given set of allowed values.
+
+       >>> import BioSimSpace as BSS
+       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", allowed=[1,2,3,4,5])
+
+       Create an integer requirement with a maximum value of 10 and default of 3.
+
+       >>> import BioSimSpace as BSS
+       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", default=3, maximum=10)
+    """
 
     # Set the argparse argument type.
     _arg_type = int
@@ -357,7 +385,26 @@ class Integer(Requirement):
             raise TypeError("The value should be of type 'int'.")
 
 class Float(Requirement):
-    """A floating point requirement."""
+    """A floating point requirement.
+
+       Examples
+       --------
+
+       Create a float requirement with an allowed range and no default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_float = BSS.Gateway.Float(help="A float requirement.", minimum=-13.2, maximum=27.3)
+
+       Create a float requirement with a given set of allowed values.
+
+       >>> import BioSimSpace as BSS
+       >>> my_float = BSS.Gateway.Float(help="A float requirement.", allowed=[1.0,3.5,12.8])
+
+       Create a float requirement with a maximum value of 57.3 and default of 18.2.
+
+       >>> import BioSimSpace as BSS
+       >>> my_float = BSS.Gateway.Float(help="A float requirement.", default=18.2, maximum=57.3)
+    """
 
     # Set the argparse argument type.
     _arg_type = float
@@ -400,7 +447,21 @@ class Float(Requirement):
             raise TypeError("The value should be of type 'float' or 'int'.")
 
 class String(Requirement):
-    """A string requirement."""
+    """A string requirement.
+
+       Examples
+       --------
+
+       Create a string requirement with a default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_string = BSS.Gateway.String(help="A string requirement.", default="dog")
+
+       Create a string requirement with a list of allowed values and a default of "cat".
+
+       >>> import BioSimSpace as BSS
+       >>> my_string = BSS.Gateway.String(help="A string requirement.", allowed=["cat", "dog", "fish"], default="cat")
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -433,7 +494,16 @@ class String(Requirement):
             raise TypeError("The value should be of type 'str'")
 
 class File(Requirement):
-    """A file set requirement."""
+    """A file requirement.
+
+       Example
+       -------
+
+       Create an optional file requirement.
+
+       >>> import BioSimSpace as BSS
+       >>> my_file = BSS.Gateway.File(help="A file requirement.", optional=True)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -476,7 +546,16 @@ class File(Requirement):
             return file
 
 class FileSet(Requirement):
-    """A file requirement."""
+    """A file requirement.
+
+       Example
+       -------
+
+       Create a file set requirement.
+
+       >>> import BioSimSpace as BSS
+       >>> my_files = BSS.Gateway.FileSet(help="A file set requirement.")
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -563,7 +642,30 @@ class FileSet(Requirement):
             return value
 
 class Length(Requirement):
-    """A length requirement."""
+    """A length requirement.
+
+       Examples
+       --------
+
+       Create a length requirement with a default of 10 Angstrom.
+
+       >>> import BioSimSpace as BSS
+       >>> my_length = BSS.Gateway.Length(help="A length requirement", default=10, unit="angstrom")
+
+       The same, but explicitly passing a Length type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_length = BSS.Gateway.Length(help="A length requirement", ...
+       >>>                                default=10*BSS.Units.Length.angstrom)
+
+       Create a length requirement with a default of 10 Angstrom and a maximum
+       of 50 nanometers. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_length = BSS.Gateway.Length(help="A length requirement", ...
+       >>>                                default=10*BSS.Units.Length.angstrom, ...
+       >>>                                maximum=50*BSS.Units.Length.nanometer)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -600,7 +702,10 @@ class Length(Requirement):
             self._unit = length.unit()
             self._print_unit = length._print_format[length.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit, minimum=minimum,
@@ -636,7 +741,29 @@ class Length(Requirement):
                 return _Types.Length(value, unit)._convert_to(self._unit)
 
 class Area(Requirement):
-    """An area requirement."""
+    """An area requirement.
+
+       Examples
+       --------
+
+       Create an area requirement with a default of 10 square Angstrom.
+
+       >>> import BioSimSpace as BSS
+       >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10, unit="angstrom2")
+
+       The same, but explicitly passing an Area type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10*BSS.Units.Area.angstrom2)
+
+       Create an area requirement with a default of 10 square Angstrom and a maximum
+       of 50 square nanometers. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_area = BSS.Gateway.Area(help="An area requirement", ...
+       >>>                            default=100*BSS.Units.Area.angstrom2, ...
+       >>>                            maximum=50*BSS.Units.Area.nanometer2)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -673,7 +800,10 @@ class Area(Requirement):
             self._unit = area.unit()
             self._print_unit = area._print_format[area.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -709,7 +839,29 @@ class Area(Requirement):
                 return _Types.Area(value, unit)._convert_to(self._unit)
 
 class Volume(Requirement):
-    """A volume requirement."""
+    """A volume requirement.
+
+       Examples
+       --------
+
+       Create an area requirement with a default of 10 cubed Angstrom.
+
+       >>> import BioSimSpace as BSS
+       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
+
+       The same, but explicitly passing a Volume type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
+
+       Create a volume requirement with a default of 10 cubed Angstrom and a maximum
+       of 50 square nanometers. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", ...
+       >>>                                default=10*BSS.Units.Volume.angstrom3, ...
+       >>>                                maximum=50*BSS.Units.Volume.nanometer3)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -746,7 +898,10 @@ class Volume(Requirement):
             self._unit = volume.unit()
             self._print_unit = volume._print_format[volume.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -782,7 +937,29 @@ class Volume(Requirement):
                 return _Types.Volume(value, unit)._convert_to(self._unit)
 
 class Charge(Requirement):
-    """A charge requirement."""
+    """A charge requirement.
+
+       Examples
+       --------
+
+       Create a charge requirement with a default of 3 electron charge.
+
+       >>> import BioSimSpace as BSS
+       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3, unit="electron charge")
+
+       The same, but explicitly passing a Charge type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3*BSS.Units.Charge.electron_charge)
+
+       Create a charge requirement with a default of 3 electron charge and a
+       maximum of -10 Coulomb. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", ...
+       >>>                                default=3*BSS.Units.Charge.electron_charge, ...
+       >>>                                maximum=10*BSS.Units.Charge.coulomb)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -819,7 +996,10 @@ class Charge(Requirement):
             self._unit = nrg.unit()
             self._print_unit = nrg._print_format[nrg.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -855,7 +1035,29 @@ class Charge(Requirement):
                 return _Types.Charge(value, unit)._convert_to(self._unit)
 
 class Energy(Requirement):
-    """An energy requirement."""
+    """An energy requirement.
+
+       Examples
+       --------
+
+       Create an energy requirement with a default of 3 kcal per mol.
+
+       >>> import BioSimSpace as BSS
+       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3, unit="kcal per mol")
+
+       The same, but explicitly passing an Energy type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3*BSS.Units.Energy.kcal_per_mol)
+
+       Create an energy requirement with a default of 3 kcal per mol and a
+       maximum of 50 kJ per mol. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", ...
+       >>>                                default=3*BSS.Units.Energy.kcal_per_mol, ...
+       >>>                                maximum=50*BSS.Units.Energy.kj_per_mol)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -892,7 +1094,10 @@ class Energy(Requirement):
             self._unit = nrg.unit()
             self._print_unit = nrg._print_format[nrg.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -927,7 +1132,29 @@ class Energy(Requirement):
                 return _Types.Energy(value, unit)._convert_to(self._unit)
 
 class Pressure(Requirement):
-    """A pressure requirement."""
+    """A pressure requirement.
+
+       Examples
+       --------
+
+       Create a pressure requirement with a default of 1 atmosphere.
+
+       >>> import BioSimSpace as BSS
+       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=1, unit="atm")
+
+       The same, but explicitly passing a Pressure type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=BSS.Units.Pressure.atm)
+
+       Create a pressure requirement with a default of 1 atomosphere and a
+       maximum of 10 bar. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", ...
+       >>>                                    default=BSS.Units.Pressure.atm, ...
+       >>>                                    maximum=10*BSS.Units.Pressure.bar)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -964,7 +1191,10 @@ class Pressure(Requirement):
             self._unit = press.unit()
             self._print_unit = press._print_format[press.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -1000,7 +1230,29 @@ class Pressure(Requirement):
                 return _Types.Pressure(value, unit)._convert_to(self._unit)
 
 class Temperature(Requirement):
-    """A temperature requirement."""
+    """A temperature requirement.
+
+       Examples
+       --------
+
+       Create a temperature requirement with a default of 300 kelvin.
+
+       >>> import BioSimSpace as BSS
+       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300, unit="kelvin")
+
+       The same, but explicitly passing a Temperature type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300*BSS.Units.Temperature.kelvin)
+
+       Create a temperature requirement with a default of 300 Kelvin and a
+       maximum of 100 Celsius. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", ...
+       >>>                                          default=300*BSS.Units.Temperature.kelvin, ...
+       >>>                                          maximum=100*BSS.Units.Temperature.celsius)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -1037,7 +1289,10 @@ class Temperature(Requirement):
             self._unit = temp.unit()
             self._print_unit = temp._print_format[temp.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,
@@ -1073,7 +1328,29 @@ class Temperature(Requirement):
                 return _Types.Temperature(value, unit)._convert_to(self._unit)
 
 class Time(Requirement):
-    """A time requirement."""
+    """A time requirement.
+
+       Examples
+       --------
+
+       Create a time requirement with a default of 35 minutes.
+
+       >>> import BioSimSpace as BSS
+       >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35, unit="minutes")
+
+       The same, but explicitly passing a Time type for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35*BSS.Units.Time.minute)
+
+       Create a time requirement with a default of 35 minutes and a maximum
+       of 5 hours. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_time = BSS.Gateway.Time(help="A time requirement", ...
+       >>>                            default=35*BSS.Units.Time.minute, ...
+       >>>                            maximum=5*BSS.Units.Time.hour)
+    """
 
     # Set the argparse argument type.
     _arg_type = str
@@ -1110,7 +1387,10 @@ class Time(Requirement):
             self._unit = time.unit()
             self._print_unit = time._print_format[time.unit()]
         else:
-            raise ValueError("No unit has been specified!")
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
         super().__init__(help=help, default=default, unit=self._unit,

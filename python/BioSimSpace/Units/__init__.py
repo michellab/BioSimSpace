@@ -120,4 +120,4 @@ from . import Volume
 
 # Whether to allow operations between offset units, see here for details:
 # http://pint.readthedocs.io/en/latest/nonmult.html
-allow_offset = False
+allow_offset = True
