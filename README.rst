@@ -85,7 +85,7 @@ BioSimSpace is via:
 
 .. code-block:: bash
 
-   docker run -it siremol/sire-devel:latest
+   docker run -it biosimspace/biosimspace-devel:latest
 
 This will download the latest BioSimSpace development container, and will run
 it, giving you a bash prompt inside the container.
