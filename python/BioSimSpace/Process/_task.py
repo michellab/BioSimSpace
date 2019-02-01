@@ -21,18 +21,20 @@
 
 """
 Functionality for running background tasks.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
-
-from BioSimSpace import _is_notebook
-
-import BioSimSpace._Utils as _Utils
 
 import glob as _glob
 import os as _os
 import tempfile as _tempfile
 import threading as _threading
 import zipfile as _zipfile
+
+from BioSimSpace import _is_notebook
+
+import BioSimSpace._Utils as _Utils
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Task"]
 
@@ -42,7 +44,7 @@ def _wrap_task(task):
        Parameters
        ----------
 
-       task : BioSimSpace.Process.Task.
+       task : :class:`Task <BioSimSpace.Process.Task>`
            A handle to the task object.
     """
 
@@ -150,7 +152,14 @@ class Task():
         self._thread.start()
 
     def workDir(self):
-        """Return the working directory for the task."""
+        """Return the working directory for the task.
+
+           Returns
+           -------
+
+           work_dir : str
+               The path of the working directory.
+        """
 
         return self._work_dir
 
@@ -174,31 +183,61 @@ class Task():
         return self._output
 
     def isStarted(self):
-        """Return whether the task has been started."""
+        """Return whether the task has been started.
 
+           Returns
+           -------
+
+           is_started : bool
+               Whether the task has been started.
+        """
         return self._is_started
 
     def isError(self):
-        """Return whether the task errored."""
+        """Return whether the task errored.
 
+           Returns
+           -------
+
+           is_error : bool
+               Whether the task errored.
+        """
         return self._is_error
 
     def isFinished(self):
-        """Return whether the task has finished."""
+        """Return whether the task has finished.
 
+           Returns
+           -------
+
+           is_finished : bool
+               Whether the task has finished.
+        """
         return self._is_finished
 
     def getException(self):
-        """Return the exception."""
+        """Return the exception.
 
+           Returns
+           -------
+
+           exception : Exception
+               The exception.
+        """
         if self._is_error:
             return self._output
         else:
             return None
 
     def getErrorMessage(self):
-        """Return the error message."""
+        """Return the error message.
 
+           Returns
+           -------
+
+           error : str
+               The error message.
+        """
         if self._is_error:
             return self._error_message
         else:

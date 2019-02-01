@@ -2,9 +2,8 @@
 
 BioSimSpace.Types
 =================
-The *Types* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Types* package contains a collection of custom data types.
 
 .. automodule:: BioSimSpace.Types
 

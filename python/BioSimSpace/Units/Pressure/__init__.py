@@ -21,10 +21,12 @@
 
 """
 Pressure units.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ...Types import Pressure as _Pressure
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["atm", "bar"]
 

@@ -20,8 +20,36 @@
 #####################################################################
 
 """
-Functionality for interfacing BioSimSpace with the outside world.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Gateway
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Node
+
+Requirement types
+=================
+
+.. autosummary::
+    :toctree: generated/
+
+    Boolean
+    Integer
+    Float
+    String
+    File
+    FileSet
+    Length
+    Area
+    Volume
+    Charge
+    Energy
+    Pressure
+    Temperature
+    Time
 """
 
 from ._node import *

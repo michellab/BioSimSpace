@@ -22,9 +22,11 @@
 """
 A thin wrapper around Sire.Mol. This is an internal package and should
 not be directly exposed to the user.
-
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+from pytest import approx as _approx
+
+import os.path as _path
 
 import Sire.Base as _SireBase
 import Sire.CAS as _SireCAS
@@ -40,9 +42,8 @@ from ..Types import Length as _Length
 
 import BioSimSpace.Units as _Units
 
-from pytest import approx as _approx
-
-import os.path as _path
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecule"]
 
@@ -55,8 +56,8 @@ class Molecule():
            Parameters
            ----------
 
-           molecule : Sire.Mol.Molecule
-               A Sire Molecule object.
+           molecule : Sire.Mol.Molecule, Molecule :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               A Sire or BioSimSpace Molecule object.
         """
 
         # Set the force field variable. This records the force field with which
@@ -138,7 +139,11 @@ class Molecule():
         return _System(molecules)
 
     def copy(self):
-        """Create a copy of this molecule."""
+        """Create a copy of this molecule.
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               A copy of the molecule.
+        """
         return Molecule(self)
 
     def molecule0(self):
@@ -147,7 +152,7 @@ class Molecule():
            Returns
            -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule, None
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The component of the merged molecule at lambda = 0.
                Returns None if this isn't a merged molecule.
         """
@@ -159,31 +164,65 @@ class Molecule():
            Returns
            -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule, None
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The component of the merged molecule at lambda = 1.
                Returns None if this isn't a merged molecule.
         """
         return self._molecule1
 
     def nAtoms(self):
-        """Return the number of atoms in the molecule."""
+        """Return the number of atoms in the molecule.
+
+           Returns
+           -------
+
+           num_atoms : int
+               The number of atoms in the molecule.
+        """
         return self._sire_molecule.nAtoms()
 
     def nResidues(self):
-        """Return the number of residues in the molecule."""
+        """Return the number of residues in the molecule.
+
+           Returns
+           -------
+
+           num_residues : int
+               The number of residues in the molecule.
+        """
         return self._sire_molecule.nResidues()
 
     def nChains(self):
-        """Return the number of chains in the molecule."""
+        """Return the number of chains in the molecule.
+
+           Returns
+           -------
+
+           num_chains : int
+               The number of chains in the molecule.
+        """
         return self._sire_molecule.nChains()
 
     def isMerged(self):
-        """Whether this molecule has been merged with another."""
+        """Whether this molecule has been merged with another.
+
+           Returns
+           -------
+
+           is_merged : bool
+               Whether the molecule has been merged.
+        """
         return self._is_merged
 
     def isWater(self):
-        """Whether this is a water molecule."""
+        """Whether this is a water molecule.
 
+           Returns
+           -------
+
+           is_water : bool
+               Whether this is a water molecule.
+        """
         # Water models have 5 or less atoms.
         if self.nAtoms() > 5:
             return False
@@ -243,6 +282,12 @@ class Molecule():
 
            is_lambda1 : bool
               Whether to use the charge at lambda = 1 if the molecule is merged.
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The molecular charge.
         """
 
         # Copy the map.
@@ -270,8 +315,8 @@ class Molecule():
            Parameters
            ----------
 
-           vector : list, tuple
-               The translation vector (in Angstroms).
+           vector : [:class:`Length <BioSimSpace.Types.Length>`]
+               The translation vector.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -319,11 +364,23 @@ class Molecule():
             raise UserWarning("Molecule has no 'coordinates' property.") from None
 
     def toSystem(self):
-        """Convert a single Molecule to a System."""
+        """Convert a single Molecule to a System.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+        """
         return _System(self)
 
     def _getSireMolecule(self):
-        """Return the full Sire Molecule object."""
+        """Return the full Sire Molecule object.
+
+           Returns
+           -------
+
+           molecule : Sire.Mol.Molecule
+        """
         return self._sire_molecule
 
     def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
@@ -334,7 +391,7 @@ class Molecule():
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The molecule to match with.
 
            property_map : dict

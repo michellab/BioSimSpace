@@ -21,8 +21,13 @@
 
 """
 Functionality for running simulations using NAMD.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
+import os as _os
+import pygtail as _pygtail
+import timeit as _timeit
+import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
@@ -38,11 +43,8 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
-import math as _math
-import os as _os
-import pygtail as _pygtail
-import timeit as _timeit
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Namd"]
 
@@ -56,14 +58,14 @@ class Namd(_process.Process):
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
-               The protocol for the AMBER process.
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
+               The protocol for the NAMD process.
 
            exe : str
-               The full path to the AMBER executable.
+               The full path to the NAMD executable.
 
            name : str
                The name of the process.
@@ -496,7 +498,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           process : BioSimSpace.Process.Namd
+           process : :class:`Process.Namd <BioSimSpace.Process.Namd>`
                The process object.
         """
 
@@ -546,7 +548,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
 
@@ -609,7 +611,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
         return self.getSystem(block=False)
@@ -626,7 +628,8 @@ class Namd(_process.Process):
            Returns
            -------
 
-           trajectory : BioSimSpace.Trajectory
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory>`
+               The latest trajectory object.
         """
         # Wait for the process to finish.
         if block is True:
@@ -652,7 +655,7 @@ class Namd(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            block : bool
@@ -661,7 +664,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
 
@@ -686,13 +689,13 @@ class Namd(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
         self.stdout(0)
@@ -753,7 +756,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
 
@@ -789,7 +792,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)
@@ -846,7 +849,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The bond energy.
         """
         return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
@@ -863,7 +866,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The bond energy.
         """
         return self.getBondEnergy(time_series, block=False)
@@ -883,7 +886,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The angle energy.
         """
         return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
@@ -900,7 +903,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The angle energy.
         """
         return self.getAngleEnergy(time_series, block=False)
@@ -920,7 +923,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dihedral energy.
         """
         return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
@@ -937,7 +940,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
@@ -957,7 +960,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
         return self.getRecord("IMPRP", time_series, _Units.Energy.kcal_per_mol, block)
@@ -974,7 +977,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
         return self.getImproperEnergy(time_series, block=False)
@@ -994,7 +997,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The electrostatic energy.
         """
         return self.getRecord("ELECT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1011,7 +1014,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The electrostatic energy.
         """
         return self.getElectrostaticEnergy(time_series, block=False)
@@ -1031,7 +1034,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Van der Vaals energy.
         """
         return self.getRecord("VDW", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1048,7 +1051,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The Van der Vaals energy.
         """
         return self.getVanDerWaalsEnergy(time_series, block=False)
@@ -1068,7 +1071,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The boundary energy.
         """
         return self.getRecord("BOUNDARY", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1085,7 +1088,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The boundary energy.
         """
         return self.getBoundaryEnergy(time_series, block=False)
@@ -1105,7 +1108,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The external energy.
         """
         return self.getRecord("MISC", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1122,7 +1125,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The external energy.
         """
         return self.getMiscEnergy(time_series, block=False)
@@ -1142,7 +1145,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The kinetic energy.
         """
         return self.getRecord("KINETIC", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1159,7 +1162,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The current kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
@@ -1179,7 +1182,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The potential energy.
         """
         return self.getRecord("POTENTIAL", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1196,7 +1199,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The potential energy.
         """
         return self.getPotentialEnergy(time_series, block=False)
@@ -1216,7 +1219,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getRecord("TOTAL", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1233,7 +1236,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getTotalEnergy(time_series, block=False)
@@ -1253,7 +1256,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getRecord("TOTAL2", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1270,7 +1273,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getTotal2Energy(time_series, block=False)
@@ -1290,7 +1293,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getRecord("TOTAL3", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1307,7 +1310,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The total energy.
         """
         return self.getTotal3Energy(time_series, block=False)
@@ -1327,7 +1330,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
         """
         return self.getRecord("TEMP", time_series, _Units.Temperature.kelvin, block)
@@ -1344,7 +1347,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
         """
         return self.getTemperature(time_series, block=False)
@@ -1364,7 +1367,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The average temperature.
         """
         return self.getRecord("TEMPAVG", time_series, _Units.Temperature.kelvin, block)
@@ -1381,7 +1384,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The average temperature.
         """
         return self.getTemperatureAverage(time_series, block=False)
@@ -1401,7 +1404,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
         return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
@@ -1418,7 +1421,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
         return self.getPressure(time_series, block=False)
@@ -1438,7 +1441,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The average pressure.
         """
         return self.getRecord("PRESSAVG", time_series, _Units.Pressure.bar, block)
@@ -1455,7 +1458,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The average pressure.
         """
         return self.getPressureAverage(time_series, block=False)
@@ -1475,7 +1478,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
         return self.getRecord("GPRESSURE", time_series, _Units.Pressure.bar, block)
@@ -1492,7 +1495,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
         return self.getGPressure(time_series, block=False)
@@ -1512,7 +1515,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The average pressure.
         """
         return self.getRecord("GPRESSAVG", time_series, _Units.Pressure.bar, block)
@@ -1529,7 +1532,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The average pressure.
         """
         return self.getGPressureAverage(time_series, block=False)
@@ -1549,7 +1552,7 @@ class Namd(_process.Process):
            Returns
            -------
 
-           volume : BioSimSpace.Types.Volume
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume.
         """
         return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
@@ -1566,13 +1569,20 @@ class Namd(_process.Process):
            Returns
            -------
 
-           volume : BioSimSpace.Types.Volume
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume.
         """
         return self.getVolume(time_series, block=False)
 
     def eta(self):
-        """Get the estimated time for the process to finish (in minutes)."""
+        """Get the estimated time for the process to finish (in minutes).
+
+           Returns
+           -------
+
+           eta : :class:`Time <BioSimSpace.Types.Time>`
+               The estimated remaining time in minutes.
+        """
 
         # Make sure the list of stdout records is up to date.
         # Print the last zero lines, i.e. no output.

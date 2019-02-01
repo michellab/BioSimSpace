@@ -20,8 +20,15 @@
 #####################################################################
 
 """
-Functionality for reading and analysing molecular trajectories.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Trajectory
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Trajectory
 """
 
 from ._trajectory import *

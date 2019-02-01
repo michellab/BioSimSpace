@@ -24,8 +24,6 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import BioSimSpace.Types as _Types
-
 import bz2 as _bz2
 import copy as _copy
 import gzip as _gzip
@@ -35,6 +33,11 @@ import shutil as _shutil
 import sys as _sys
 import tarfile as _tarfile
 import zipfile as _zipfile
+
+import BioSimSpace.Types as _Types
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "File", "FileSet",                           # File types.
@@ -194,23 +197,58 @@ class Requirement():
         return self._default
 
     def getUnit(self):
-        """Return the unit."""
+        """Return the unit.
+
+           Returns
+           -------
+
+           unit : str
+               The unit associated with the requirement.
+        """
         return self._unit
 
     def getHelp(self):
-        """Return the documentation string."""
+        """Return the documentation string.
+
+           Returns
+           -------
+
+           help : str
+               The help string.
+        """
         return self._help
 
     def isMulti(self):
-        """Whether the requirement has multiple values."""
+        """Whether the requirement has multiple values.
+
+           Returns
+           -------
+
+           is_multi : bool
+               Whether the requirement has multiple values.
+        """
         return self._is_multi
 
     def isOptional(self):
-        """Whether the requirement is optional."""
+        """Whether the requirement is optional.
+
+           Returns
+           -------
+
+           is_optional : bool
+               Whether the requirement is optional.
+        """
         return self._is_optional
 
     def getArgType(self):
-        """The command-line argument type."""
+        """The command-line argument type.
+
+           Returns
+           -------
+
+           arg_type : bool, int, float, str
+              The command-line argument type.
+        """
         return self._arg_type
 
     def getMin(self):
@@ -222,7 +260,14 @@ class Requirement():
         return self._max
 
     def getAllowedValues(self):
-        """Return the allowed values."""
+        """Return the allowed values.
+
+           Returns
+           -------
+
+           allowed : list
+               The list of allowed values that the requirement can take.
+        """
         return self._allowed
 
     def _validate_default(self):
@@ -255,7 +300,7 @@ class Boolean(Requirement):
            help : str
                The help string.
 
-           default :
+           default : bool
                The default value.
         """
 
@@ -295,7 +340,7 @@ class Integer(Requirement):
            maximum : int
                The maximum allowed value.
 
-           allowed : [ int ]
+           allowed : [int]
                A list of allowed values.
         """
 
@@ -336,7 +381,7 @@ class Float(Requirement):
            maximum : float
                The maximum allowed value.
 
-           allowed : [ float ]
+           allowed : [float]
                A list of allowed values.
         """
 
@@ -372,7 +417,7 @@ class String(Requirement):
            default : str
                The default value.
 
-           allowed : [ str ]
+           allowed : [str]
                A list of allowed values.
         """
 
@@ -456,7 +501,14 @@ class FileSet(Requirement):
         super().__init__(help=help, optional=optional)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           --------
+
+           value : [str]
+               A list of the files associated with this requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -526,19 +578,20 @@ class Length(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Length
+           default : :class:`Length <BioSimSpace.Types.Length>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Length
+           minimum : :class:`Length <BioSimSpace.Types.Length>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Length
+           maximum : :class:`Length <BioSimSpace.Types.Length>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Length ]
+           allowed : [:class:`Length <BioSimSpace.Types.Length>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -554,7 +607,14 @@ class Length(Requirement):
             maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           --------
+
+           value : :class:`Length <BioSimSpace.Types.Length>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -591,19 +651,20 @@ class Area(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Area
+           default : :class:`Area <BioSimSpace.Types.Area>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Area
+           minimum : :class:`Area <BioSimSpace.Types.Area>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Area
+           maximum : :class:`Area <BioSimSpace.Types.Area>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Area ]
+           allowed : [:class:`Area <BioSimSpace.Types.Area>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -619,7 +680,14 @@ class Area(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Area <BioSimSpace.Types.Area>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -656,19 +724,20 @@ class Volume(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Volume
+           default : :class:`Volume <BioSimSpace.Types.Volume>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Volume
+           minimum : :class:`Volume <BioSimSpace.Types.Volume>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Volume
+           maximum : :class:`Volume <BioSimSpace.Types.Volume>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Volume ]
+           allowed : [:class:`Volume <BioSimSpace.Types.Volume>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -684,7 +753,14 @@ class Volume(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Volume <BioSimSpace.Types.Volume>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -721,19 +797,20 @@ class Charge(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Charge
+           default : :class:`Charge <BioSimSpace.Types.Charge>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Charge
+           minimum : :class:`Charge <BioSimSpace.Types.Charge>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Charge
+           maximum : :class:`Charge <BioSimSpace.Types.Charge>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Charge ]
+           allowed : [:class:`Charge <BioSimSpace.Types.Charge>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -749,7 +826,14 @@ class Charge(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Charge <BioSimSpace.Types.Charge>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -786,19 +870,20 @@ class Energy(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Energy
+           default : :class:`Energy <BioSimSpace.Types.Energy>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Energy
+           minimum : :class:`Energy <BioSimSpace.Types.Energy>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Energy
+           maximum : :class:`Energy <BioSimSpace.Types.Energy>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Energy ]
+           allowed : [:class:`Energy <BioSimSpace.Types.Energy>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -814,7 +899,13 @@ class Energy(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Energy <BioSimSpace.Types.Energy>`
+        """
         if self._value is None:
             return None
         else:
@@ -851,19 +942,20 @@ class Pressure(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Pressure
+           default : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Pressure
+           minimum : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Pressure
+           maximum : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Pressure ]
+           allowed : [:class:`Pressure <BioSimSpace.Types.Pressure>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -879,7 +971,14 @@ class Pressure(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -916,19 +1015,20 @@ class Temperature(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Temperature
+           default : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Temperature
+           minimum : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Temperature
+           maximum : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Temperature ]
+           allowed : [:class:`Temperature <BioSimSpace.Types.Temperature>`]
+               A list of allowed values.
         """
 
         # Validate the unit.
@@ -944,7 +1044,14 @@ class Temperature(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The value of the requirement.
+        """
         if self._value is None:
             return None
         else:
@@ -981,19 +1088,20 @@ class Time(Requirement):
            help : str
                The help string.
 
-           default : BioSimSpace.Types.Time
+           default : :class:`Time <BioSimSpace.Types.Time>`
                The default value.
 
            unit : str
                The unit.
 
-           minimum : BioSimSpace.Types.Time
+           minimum : :class:`Time <BioSimSpace.Types.Time>`
                The minimum allowed value.
 
-           maximum : BioSimSpace.Types.Time
+           maximum : :class:`Time <BioSimSpace.Types.Time>`
                The maximum allowed value.
 
-           allowed : [ BioSimSpace.Types.Time ]
+           allowed : [:class:`Time <BioSimSpace.Types.Time>`]
+               The list of allowed values.
         """
 
         # Validate the unit.
@@ -1009,7 +1117,13 @@ class Time(Requirement):
             minimum=minimum, maximum=maximum, allowed=allowed)
 
     def getValue(self):
-        """Return the value."""
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Time <BioSimSpace.Types.Time>`
+        """
         if self._value is None:
             return None
         else:

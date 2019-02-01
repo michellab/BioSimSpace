@@ -22,8 +22,6 @@
 """
 A thin wrapper around Sire.System. This is an internal package and should
 not be directly exposed to the user.
-
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Maths as _SireMaths
@@ -35,6 +33,9 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
 import BioSimSpace.Units as _Units
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
@@ -51,9 +52,11 @@ class System():
            Parameters
            ----------
 
-           system : Sire.System.System, BioSimSpace._SireWrappers.System, Sire.Mol.Molecule,
-                    BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
-               A Sire System object.
+           system : Sire.System.System, :class:`System <BioSimSpace._SireWrappers.System>`, \
+                    Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+               A Sire or BioSimSpace System object, a Sire or BioSimSpace Molecule object,
+               or a list of BioSimSpace molecule objects.
         """
 
         # Check that the system is valid.
@@ -133,15 +136,36 @@ class System():
         return system
 
     def copy(self):
-        """Create a copy of this system."""
+        """Return a copy of this system.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               A copy of the system.
+        """
         return System(self)
 
     def nMolecules(self):
-        """Return the number of molecules in the system."""
+        """Return the number of molecules in the system.
+
+           Returns
+           -------
+
+           num_molecules : int
+               The number of molecules in the system.
+        """
         return self._sire_system.nMolecules()
 
     def nResidues(self):
-        """Return the number of residues in the system."""
+        """Return the number of residues in the system.
+
+           Returns
+           -------
+
+           num_residues : int
+               The number of residues in the system.
+        """
 
         tally = 0
 
@@ -151,7 +175,14 @@ class System():
         return tally
 
     def nChains(self):
-        """Return the number of chains in the system."""
+        """Return the number of chains in the system.
+
+           Returns
+           -------
+
+           num_chains : int
+               The number of chains in the system.
+        """
 
         tally = 0
 
@@ -161,7 +192,14 @@ class System():
         return tally
 
     def nAtoms(self):
-        """Return the number of atoms in the system."""
+        """Return the number of atoms in the system.
+
+           Returns
+           -------
+
+           num_atoms : int
+               The number of atoms in the system.
+        """
 
         tally = 0
 
@@ -183,6 +221,12 @@ class System():
 
            is_lambda1 : bool
               Whether to use the charge at lambda = 1 if the molecule is merged.
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The molecular charge.
         """
 
         # Zero the charge.
@@ -246,7 +290,8 @@ class System():
            Parameters
            ----------
 
-           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
               A Molecule, or list of Molecule objects.
         """
 
@@ -282,7 +327,8 @@ class System():
            Parameters
            ----------
 
-           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
               A Molecule, or list of Molecule objects.
         """
 
@@ -323,7 +369,8 @@ class System():
            Parameters
            ----------
 
-           molecules : BioSimSpace._SireWrappers.Molecule, [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
               A Molecule, or list of Molecule objects.
         """
 
@@ -367,7 +414,7 @@ class System():
            Returns
            -------
 
-           molecule : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                The list of molecules in the group.
         """
 
@@ -402,7 +449,7 @@ class System():
            Returns
            -------
 
-           waters : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of water molecule objects.
         """
 
@@ -430,7 +477,7 @@ class System():
            Returns
            -------
 
-           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of perturbable molecules.
         """
 
@@ -464,7 +511,7 @@ class System():
            Returns
            -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The matching molecule.
         """
         try:
@@ -478,7 +525,7 @@ class System():
            Parameters
            ----------
 
-           size : [ BioSimSpace.Types.Length ]
+           size : [:class:`Length <BioSimSpace.Types.Length>`]
                The size of the box in each dimension.
 
            property_map : dict
@@ -519,7 +566,12 @@ class System():
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
 
-        """
+           Returns
+           -------
+
+           box_size : [:class:`Length <BioSimSpace.Types.Length>`]
+               The size of the box in each dimension.
+       """
 
         # Get the "space" property and convert to a list of BioSimSpace.Type.Length
         # objects.
@@ -537,14 +589,13 @@ class System():
            Parameters
            ----------
 
-           vector : list, tuple
-               The translation vector (in Angstroms).
+           vector : [:class:`Length <BioSimSpace.Types.Length>`]
+               The translation vector.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
-
         """
 
         # Convert tuple to a list.
@@ -583,40 +634,15 @@ class System():
             self._sire_system.update(mol)
 
     def _getSireSystem(self):
-        """Return the full Sire System object."""
-        return self._sire_system
-
-    def _getBoxSize(self, property_map={}):
-        """Get the size of the periodic box.
-
-           Parameters
-           ----------
-
-           system : Sire.System.System
-               A Sire molecular system.
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        """Return the full Sire System object.
 
            Returns
            -------
 
-           box_size : tuple
-               The size of the box in each dimension (in Angstroms).
+           system : Sire.System.System
+               The underlying Sire system object.
         """
-
-        try:
-            if "space" in property_map:
-                prop = property_map["space"]
-            else:
-                prop = "space"
-            box = self._sire_system.property(prop)
-            return box.dimensions()
-
-        except UserWarning:
-            return None
+        return self._sire_system
 
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
@@ -669,13 +695,13 @@ class System():
            Parameters
            ----------
 
-           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of molecule objects.
 
            Returns
            -------
 
-           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                The renumber list of molecule objects.
         """
 
@@ -745,7 +771,7 @@ class System():
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                A system containing the updated coordinates.
 
            property_map0 : dict
@@ -822,7 +848,7 @@ class System():
            Parameters
            ----------
 
-           molecules : [ BioSimSpace._SireWrappers.Molecule ]
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
 
            Returns
            -------

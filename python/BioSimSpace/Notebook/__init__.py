@@ -20,8 +20,23 @@
 #####################################################################
 
 """
-Tools for interactive use of BioSimSpace.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Notebook
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    plot
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    View
 """
 
 from ._plot import *

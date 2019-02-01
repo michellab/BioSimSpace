@@ -21,16 +21,20 @@
 
 """
 An area type.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Area"]
 
 class Area(_Type):
+    """An area type."""
+
     # Dictionary of allowed units.
     _supported_units = { "METER2"      : _Units.meter2,
                          "NANOMETER2"  : _Units.nanometer2,
@@ -60,8 +64,6 @@ class Area(_Type):
 
            unit : str
                The unit.
-
-           or
 
            string : str
                A string representation of the area.
@@ -148,27 +150,63 @@ class Area(_Type):
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def meters2(self):
-        """Return the area in square meters."""
+        """Return the area in square meters.
+
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in square meters.
+        """
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.meter2), "METER2")
 
     def nanometers2(self):
-        """Return the area in square nanometers."""
+        """Return the area in square nanometers.
+
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in square nanometers.
+        """
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer2), "NANOMETER2")
 
     def angstroms2(self):
-        """Return the area in square angstroms."""
+        """Return the area in square Angstrom.
+
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in square Angstrom.
+        """
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom2), "ANGSTROM2")
 
     def picometers2(self):
-        """Return the area in square picometers."""
+        """Return the area in square picometers.
+
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in square picometers.
+        """
         return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER2")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+               The magnitude (optional).
+
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in the default unit of square Angstrom.
         """
         if mag is None:
             return self.angstroms2()
@@ -178,10 +216,17 @@ class Area(_Type):
     def _convert_to(self, unit):
         """Return the area in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           area : :class:`Area <BioSimSpace.Types.Area>`
+               The area in the specified unit.
         """
         if unit == "METER2":
             return self.meters2()
@@ -195,7 +240,7 @@ class Area(_Type):
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
     def _validate_unit(self, unit):
-        """Validate that the unit are supported."""
+        """Validate that the unit is supported."""
 
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()

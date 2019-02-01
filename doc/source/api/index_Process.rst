@@ -2,9 +2,9 @@
 
 BioSimSpace.Process
 ===================
-The *Process* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Process* package contains tools for running different simulation protocols
+with a range of external molecular dynamics packages.
 
 .. automodule:: BioSimSpace.Process
 

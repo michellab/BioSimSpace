@@ -1,7 +1,7 @@
 # Pipeline to build the latest version of BioSimSpace by starting from a docker
 # image of a recent build. This avoids the (VERY) long build times if
-# we start from scratch. You should ensure that 'biosimspace-devel:latest'
-# corresponds to the right place to start...
+# we start from scratch. You should ensure that 'biosimspace-devel:latest'
+# corresponds to the right place to start...
 
 trigger:
 - devel
@@ -11,11 +11,11 @@ pool:
 
 steps:
 - script: |
-    # login to docker and get the last successful biosimspace-devel build
+    # login to docker and get the last successful biosimspace-devel build
     docker login -u $id -p $pswd
     docker pull biosimspace/biosimspace-devel:latest
 
-    # ensure the last known safe state is saved on docker
+    # ensure the last known safe state is saved on docker
     docker tag biosimspace/biosimspace-devel:latest biosimspace/biosimspace-devel:last
     docker push biosimspace/biosimspace-devel:last
   env:
@@ -32,7 +32,7 @@ steps:
     id: $(dockerId)
   displayName: 'Build BioSimSpace'
 - script: |
-    # now perform the tests - do this before packaging and deploy
+    # now perform the tests - do this before packaging and deploy
     cd docker/test-devel && docker build -f Dockerfile -t biosimspace/test-devel:latest . && cd -
   displayName: 'Run BioSimSpace tests'
 - script: |
@@ -41,7 +41,7 @@ steps:
   displayName: 'Package BioSimSpace into a binary'
 - script: |
     # now build the documentation and update the website
-    cd docker/document-devel && docker build -f Dockerfile --build-arg github_token=$github_token --build-arg github_email=$github_email . && cd -
+    cd docker/document-devel && docker build -f Dockerfile --build-arg github_token="$github_token" --build-arg github_email="$github_email" . && cd -
   env:
     github_token: $(githubToken)
     github_email: $(githubEmail)

@@ -38,12 +38,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 # the run method requires the return type of the method to be  picklable, which
 # isn't the case for our Molecule object.
 
-from BioSimSpace import _is_notebook
-
-from . import Protocol as _Protocol
-from .._Exceptions import ParameterisationError as _ParameterisationError
-from .._SireWrappers import Molecule as _Molecule
-
 import glob as _glob
 import os as _os
 import queue as _queue
@@ -51,6 +45,12 @@ import sys as _sys
 import tempfile as _tempfile
 import threading as _threading
 import zipfile as _zipfile
+
+from BioSimSpace import _is_notebook
+
+from . import Protocol as _Protocol
+from .._Exceptions import ParameterisationError as _ParameterisationError
+from .._SireWrappers import Molecule as _Molecule
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink

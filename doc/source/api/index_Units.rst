@@ -2,9 +2,9 @@
 
 BioSimSpace.Units
 =================
-The *Units* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Units* package provides a set of common physical units required by BioSimSpace.
+This provide short-hand access to BioSimSpace :ref:`ref-Types`.
 
 .. automodule:: BioSimSpace.Units
 

@@ -21,10 +21,12 @@
 
 """
 Functionality for finding and managing hardware resources.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import argparse as _argparse
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["ResourceManager"]
 

@@ -2,184 +2,82 @@
 BioSimSpace
 ===========
 
-
 .. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
    :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
-
 Code and resources for the `EPSRC <https://epsrc.ukri.org>`_
-BioSimSpace project.
+`BioSimSpace <https://michellab.github.io/BioSimSpaceWebsite>`_ project.
 
-BioSimSpace is an interoperable framework for biomolecular simulation. With it you
-can:
+What is it?
+-----------
 
+BioSimSpace is an interoperable Python framework for biomolecular simulation.
+With it you can:
 
 * Write robust and portable biomolecular workflow components that work on
-  different hardware, with different software packages, and that can be run
-  in different ways, e.g. command-line, `Jupyter <http://jupyter.org>`_.
-* Interact with running molecular simulation processes in real-time within
-  a Jupyter notebook.
-
-Installation
-------------
-
-The `install.sh <install.sh>`_ script will automatically install and configure
-a clean BioSimSpace application on Linux or macOS. Following a successful
-installation, the following aliases will be set:
-
-
-* ``bss_python`` - The BioSimSpace python interpreter.
-* ``bss_ipython`` - The BioSimSpace interactive python shell.
-* ``bss_jupyter`` - The BioSimSpace Jupyter executable.
-* ``bss_test`` - Run the BioSimSpace unit tests.
-
-(You'll need to run ``source ~/.biosimspacerc`` or restart your shell for these
-to take effect.)
-
-Note that this defaults to installing the latest stable version of BioSimSpace
-from the `master <https://github.com/michellab/BioSimSpace/tree/master>`_
-branch. To install the development version, run:
-
-.. code-block:: bash
-
-   ./install.sh --branch=devel
-
-Since the Sire binary is quite large (~700 MB), it is only re-downloaded
-whenever a new version is released. To force a clean install with a fresh
-download, run:
-
-.. code-block:: bash
-
-   ./install.sh --clean
-
-BioSimSpace runs many subprocess in temporary working directories. To control
-the directory location, set the ``TMPDIR`` environment variable.
-
-Full installation details are given below for those who wish to install
-BioSimSpace manually, or already have built their own Sire application.
-
-----
-
-BioSimSpace is built on top of the `Sire <https://siremol.org>`_ molecular
-simulations framework. At present you will need to need to install BioSimSpace
-into an existing `Sire <https://siremol.org/pages/download.html>`_ application:
-
-.. code-block:: bash
-
-   cd python
-   python setup.py install
-
-(You can safely ignore warnings regarding ``mmtf-python``\ , ``mkl-random``\ , and ``mkl-fft``.)
-
-Note that this assumes that Sire's ``bin`` directory, typically ``$HOME/sire.app/bin``\ ,
-has been added to your path. Alternatively, run:
-
-.. code-block:: bash
-
-   $HOME/sire.app/bin/python setup.py install
-
-At present we recommend using the ``devel`` branch of `Sire <https://github.com/michellab/Sire>`_
-to ensure that you have access to the latest features and bug-fixes.
-
-If you experience problems with `matplotlib <https://matplotlib.org>`_ when
-importing BioSimSpace on macOS, e.g.
-
-.. code-block:: python
-
-   RuntimeError**: Python is not installed as a framework.
-
-simply add the following to ``~/.matplotlib/matplotlibrc``
-
-.. code-block:: bash
-
-   backend: TkAgg
-
-Note that plotting functionality will be disabled if you are using BioSimSpace
-within IPython on a remote server without X forwarding.
-
-Several additional packages are required for full access to all of BioSimSpace's
-functionality. Please download and install these packages according to their
-recommended installation instructions.
-
-
-* `Amber / AmberTools <http://ambermd.org>`_\ : *Dynamics / Parameterisation / Solvation*
-* `Gromacs <http://www.gromacs.org/>`_\ : *Dynamics / Parameterisation / Solvation*
-* `Somd <https://siremol.org/tutorials/somd/>`_\ : *Dynamics / Free Energy Perturbation* (bundled)
-* `Namd <http://www.ks.uiuc.edu/Research/namd/>`_\ : *Dynamics* (optional)
-
-(Installation and use of these packages is subject to the terms of their
-respective licenses.)
-
-For Somd support you'll need to export the following (Bash style) environment
-variable:
-
-.. code-block:: bash
-
-   # Use the appropriate path for your Sire installation.
-   OPENMM_PLUGIN_DIR=$HOME/sire.app/lib/plugins/
+  different hardware, with different software packages, and that can be
+  run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`_.
+* Interact with running molecular simulation processes in real-time.
 
 Documentation
 -------------
 
-Each package has its own README page:
+Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWebsite>`_.
 
-
-* `BioSimSpace.Align <python/BioSimSpace/Align>`_
-* `BioSimSpace.FreeEnergy <python/BioSimSpace/FreeEnergy>`_
-* `BioSimSpace.Gateway <python/BioSimSpace/Gateway>`_
-* `BioSimSpace.IO <python/BioSimSpace/IO>`_
-* `BioSimSpace.MD <python/BioSimSpace/MD>`_
-* `BioSimSpace.Notebook <python/BioSimSpace/Notebook>`_
-* `BioSimSpace.Parameters <python/BioSimSpace/Parameters>`_
-* `BioSimSpace.Process <python/BioSimSpace/Process>`_
-* `BioSimSpace.Protocol <python/BioSimSpace/Protocol>`_
-* `BioSimSpace.Solvent <python/BioSimSpace/Solvent>`_
-* `BioSimSpace.Trajectory <python/BioSimSpace/Trajectory>`_
-* `BioSimSpace.Types <python/BioSimSpace/Types>`_
-* `BioSimSpace.Units <python/BioSimSpace/Units>`_
-
-Dependencies
+Installation
 ------------
 
-BioSimSpace makes use of several external python packages. These should be
-automatically installed into your Sire app by the `setup.py <python/setup.py>`_
-script.
+The latest self-extracting binary for the development version of BioSimSpace
+can be downloaded from the following link:
 
-Demos
------
+* `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`_
 
-A collection of example scripts and notebooks are included in the `demo <demo>`_
-directory.
-
-Developing
-----------
-
-BioSimSpace is written in Python but uses an object-oriented style with C++
-naming conventions. More details can be found `here <python>`_.
-
-Please create a feature branch for development work. Branches related to a
-particular feature should be prefixed with ``feature``\ , i.e. for the
-BioSimSpace.Process module:
+One downloaded, the binary can be unpacked as follows:
 
 .. code-block:: bash
 
-   feature-process
+   chmod +x biosimspace_devel_latest_linux.run
+   ./biosimspace_devel_latest_linux.run
 
-While developing, any unit tests that you create should be placed in the
-`test <test>`_ directory, creating an appropriate sub-directory as necessary.
+Alternatively, to install BioSimSpace from source:
 
-When you are happy with your feature, create a pull request so that the
-feature can be merged into devel. Once the merge is successful, please delete
-the redundant feature branch.
+(Before starting, you'll need working `Git <https://git-scm.com>`_ and
+`CMake <https://cmake.org>`_ installations.)
 
-Tests
------
+1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
+   molecular simulation framework. To download and install Sire:
 
-We continually build, package, test, and deploy BioSimSpace using
-`Azure Pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`_.
+.. code-block:: bash
 
-For those who wish to run things locally, see the `test <test>`_ directory.
+   git clone https://github.com/michellab/Sire
+   cd Sire
+   ./compile_sire.sh
+
+Assuming the default installation path, this will install Sire into ``$HOME/sire.app``.
+
+(Note that the installation is slow and can take in excess of an hour.)
+
+2. Next you will need to download BioSimSpace and install it into your Sire
+   application. (The following assumes the default Sire installation path.)
+
+.. code-block:: bash
+
+   git clone https://github.com/michellab/BioSimSpace
+   cd BioSimSpace/python
+   $HOME/sire.app/bin/python setup,py install
+
+Once finished, you can test the installation by running:
+
+.. code-block:: bash
+
+   $HOME/sire.app/bin/ipython
+
+Then try importing the BioSimSpace package:
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
 
 Issues
 ------
@@ -194,9 +92,3 @@ along with the BioSimSpace version number. This can be found by running:
 
    import BioSimSpace as BSS
    print(BSS.__version__)
-
-Versioning
-----------
-
-BioSimSpace uses the following versioning convention for releases, ``YYYY.MAJOR.MINOR``\ ,
-e.g. ``2018.1.0``. For a summary of the version history, please refer to the `CHANGELOG <CHANGELOG.md>`_.

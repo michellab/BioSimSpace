@@ -21,8 +21,10 @@
 
 """
 Functionality for handling simulation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 

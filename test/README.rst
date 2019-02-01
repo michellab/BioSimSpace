@@ -13,7 +13,7 @@ Directory layout
 The main directory is ``test``. Inside this are subdirectories for each of the
 BioSimSpace sub-modules, which include files containing all of the unit tests.
 
-The test suite is intended to be run using `\ ``pytest`` <https://docs.pytest.org/en/latest/contents.html>`_.
+The test suite is intended to be run using `pytest <https://docs.pytest.org/en/latest/contents.html>`_.
 When run, ``pytest`` searches for tests in all directories and files below the current
 directory, collects the tests together, then runs them. Pytest uses name matching
 to locate the tests. Valid names start or end with *test*\ , e.g.:
@@ -37,9 +37,8 @@ To run the full test suite, simply type:
 
    pytest
 
-This assumes that you have installed `Sire <https://github.com/michellab/Sire>`_
+For developers, this assumes that you have installed `Sire <https://github.com/michellab/Sire>`_
 and have added its ``bin`` directory, ``$HOME/sire.app/bin``\ , to your path.
-
 We also assume that you have installed `BioSimSpace <https://github.com/michellab/BioSimSpace>`_
 into an existing `Sire <https://github.com/michellab/Sire>`_ package, making
 it is accessible to ``pytest``. If not, you can prefix the ``pytest`` commands with
@@ -70,7 +69,7 @@ To run a specific unit tests in a particular file, e.g.:
 To get more detailed information about each test, run pytests using the
 *verbose* flag, e.g.:
 
-.. code-block::
+.. code-block:: bash
 
    pytest -v
 
@@ -90,7 +89,7 @@ additional contextual information may be lost.
 Floating point comparisons
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Make use of the `\ ``approx`` <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`_
+Make use of the `approx <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`_
 function from the ``pytest`` package for performing floating point comparisons, e.g:
 
 .. code-block:: python
@@ -109,7 +108,7 @@ of 1e-6. This can be changed by passing a keyword argument to the function, e.g:
 Skipping tests
 ^^^^^^^^^^^^^^
 
-If you are using `\ *test-driven development* <https://en.wikipedia.org/wiki/Test-driven_development>`_
+If you are using `test-driven development <https://en.wikipedia.org/wiki/Test-driven_development>`_
 it might be desirable to write your tests before implementing the functionality,
 i.e. you are asserting what the *output* of a function should be, not how it should
 be *implemented*. In this case, you can make use of the ``pytest`` *skip* decorator

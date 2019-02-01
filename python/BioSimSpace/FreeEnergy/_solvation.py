@@ -27,6 +27,11 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 from . import _free_energy
 from .._SireWrappers import System as _System
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Solvation"]
+
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
@@ -36,10 +41,10 @@ class Solvation(_free_energy.FreeEnergy):
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol.FreeEnergy
+           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
                The simulation protocol.
 
            work_dir : str
@@ -79,17 +84,17 @@ class Solvation(_free_energy.FreeEnergy):
            Returns
            -------
 
-           pmf_free : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+           pmf_free : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the free leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           pmf_vacuum : [ ( float, BioSimSpace.Types.Energy, BioSimSpace.Types.Energy ) ]
+           pmf_vacuum : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the vacuum leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           free_energy : ( BioSimSpace.Types.Energy, BioSimSpace.Types.Energy )
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
                The solvation free energy difference and its associated error.
         """
 

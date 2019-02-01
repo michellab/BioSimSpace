@@ -21,8 +21,14 @@
 
 """
 Functionality for running simulations with SOMD.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
+import os as _os
+import pygtail as _pygtail
+import subprocess as _subprocess
+import timeit as _timeit
+import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
@@ -39,12 +45,8 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
-import math as _math
-import os as _os
-import pygtail as _pygtail
-import subprocess as _subprocess
-import timeit as _timeit
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
@@ -63,10 +65,10 @@ class Somd(_process.Process):
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The protocol for the SOMD process.
 
            exe : str
@@ -447,7 +449,14 @@ class Somd(_process.Process):
         self.setArg("-p", self._platform)                               # Simulation platform.
 
     def start(self):
-        """Start the SOMD process."""
+        """Start the SOMD process.
+
+           Returns
+           -------
+
+           process : :class:`Process.Somd <BioSimSpace.Process.Somd>`
+               A handle to the running process.
+        """
 
         # The process is currently queued.
         if self.isQueued():
@@ -502,7 +511,7 @@ class Somd(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
 
@@ -529,7 +538,7 @@ class Somd(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
         return self.getSystem(block=False)
@@ -546,7 +555,8 @@ class Somd(_process.Process):
            Returns
            -------
 
-           trajectory : BioSimSpace.Trajectory
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory.trajectory>`
+               The latest trajectory object.
         """
 
         # Wait for the process to finish.
@@ -576,7 +586,7 @@ class Somd(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
 
@@ -613,7 +623,7 @@ class Somd(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)

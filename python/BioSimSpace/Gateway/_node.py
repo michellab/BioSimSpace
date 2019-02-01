@@ -21,10 +21,27 @@
 
 """
 Functionality for creating BioSimSpace workflow components (nodes).
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import configargparse as _argparse
+import collections as _collections
+import io as _io
+import __main__
+import os as _os
+import sys as _sys
+import textwrap as _textwrap
+import warnings as _warnings
+import yaml as _yaml
+
 from BioSimSpace import _is_notebook
+
+# Enable Jupyter widgets.
+if _is_notebook():
+    from IPython.display import FileLink as _FileLink
+
+    import fileupload as _fileupload
+    import ipywidgets as _widgets
+    import zipfile as _zipfile
 
 from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
@@ -44,23 +61,8 @@ from ._requirements import Volume as _Volume
 
 import BioSimSpace.Types._type as _Type
 
-import configargparse as _argparse
-import collections as _collections
-import io as _io
-import __main__
-import os as _os
-import sys as _sys
-import textwrap as _textwrap
-import warnings as _warnings
-import yaml as _yaml
-
-# Enable Jupyter widgets.
-if _is_notebook():
-    from IPython.display import FileLink as _FileLink
-
-    import fileupload as _fileupload
-    import ipywidgets as _widgets
-    import zipfile as _zipfile
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Node"]
 
@@ -190,7 +192,7 @@ class Node():
            name : str
                The name of the input.
 
-           input : BioSimSpace.Gateway.Requirement
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
                The input requirement object.
         """
 
@@ -233,7 +235,7 @@ class Node():
            name : str
                The name of the input.
 
-           input : BioSimSpace.Gateway.Requirement
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
                The input requirement object.
         """
 
@@ -294,7 +296,7 @@ class Node():
            name : str
                The name of the input.
 
-           input : BioSimSpace.Gateway.Requirement
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
                The input requirement object.
         """
         return None
@@ -308,7 +310,7 @@ class Node():
            name : str
                The name of the input.
 
-           input : BioSimSpace.Gateway.Requirement
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
                The input requirement object.
 
            reset : bool
@@ -694,7 +696,7 @@ class Node():
            name : str
                The name of the output.
 
-           output : BioSimSpace.Gateway.Requirement
+           output : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
                The output requirement object.
         """
 
@@ -765,7 +767,7 @@ class Node():
            Returns
            -------
 
-           inputs : { str : BioSimSpace.Gateway.Requirement }
+           inputs : { str : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>` }
                The dictionary of input requirements.
         """
 
@@ -830,7 +832,7 @@ class Node():
            Returns
            -------
 
-           authors : [ dict ]
+           authors : [dict]
               A list of author dictionaries.
         """
         return self._authors.copy()
@@ -1074,7 +1076,7 @@ class Node():
            Parameters
            ----------
 
-           input : BioSimSpace.Gateway.Requirement
+           input : :class:`Requirement <BioSimSpace.Gateway.Requirement>`
                The input requirement.
 
            Returns

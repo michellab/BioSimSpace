@@ -21,10 +21,12 @@
 
 """
 Temperature units.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ...Types import Temperature as _Temperature
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["celsius", "fahrenheit", "kelvin"]
 

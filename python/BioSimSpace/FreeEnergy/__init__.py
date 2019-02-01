@@ -20,8 +20,16 @@
 #####################################################################
 
 """
-Functionality for running free energy calculations.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.FreeEnergy
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Binding
+    Solvation
 """
 
 from ._binding import *

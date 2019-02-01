@@ -21,16 +21,20 @@
 
 """
 A length type.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Length"]
 
 class Length(_Type):
+    """A length type."""
+
     # Dictionary of allowed units.
     _supported_units = { "METER"      : _Units.meter,
                          "CENTIMETER" : _Units.centimeter,
@@ -66,8 +70,6 @@ class Length(_Type):
 
            unit : str
                The unit.
-
-           or
 
            string : str
                A string representation of the length.
@@ -124,35 +126,85 @@ class Length(_Type):
         return self.__mul__(other)
 
     def meters(self):
-        """Return the length in meters."""
+        """Return the length in meters.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in meters.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.meter), "METER")
 
     def centimeters(self):
-        """Return the length in centimeters."""
+        """Return the length in centimeters.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in centimeters.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.centimeter), "CENTIMETER")
 
     def millimeters(self):
-        """Return the length in millimeters."""
+        """Return the length in millimeters.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in millimeters.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.millimeter), "MILLIMETER")
 
     def nanometers(self):
-        """Return the length in nanometers."""
+        """Return the length in nanometers.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in nanometers.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer), "NANOMETER")
 
     def angstroms(self):
-        """Return the length in angstroms."""
+        """Return the length in angstroms.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in angstrom.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom), "ANGSTROM")
 
     def picometers(self):
-        """Return the length in picometers."""
+        """Return the length in picometers.
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in picometers.
+        """
         return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer), "PICOMETER")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+              The magnitude (optional).
+
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in the default unit of Angstrom.
         """
         if mag is None:
             return self.angstroms()
@@ -162,10 +214,17 @@ class Length(_Type):
     def _convert_to(self, unit):
         """Return the length in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           length : :class:`Length <BioSimSpace.Types.Length>`
+               The length in the specified unit.
         """
         if unit == "METER":
             return self.meters()

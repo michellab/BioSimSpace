@@ -2,9 +2,9 @@
 
 BioSimSpace.Trajectory
 ======================
-The *Trajectory* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Trajectory* package contains tools for reading and analysing molecular
+dynamics trajectories.
 
 .. automodule:: BioSimSpace.Trajectory
 

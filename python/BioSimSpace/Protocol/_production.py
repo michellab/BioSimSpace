@@ -21,14 +21,16 @@
 
 """
 Functionality for production protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import math as _math
 
 from ._protocol import Protocol as _Protocol
 
 import BioSimSpace.Types as _Types
 
-import math as _math
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Production"]
 
@@ -53,13 +55,13 @@ class Production(_Protocol):
            Parameters
            ----------
 
-           timestep : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration timestep.
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The running time.
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
 
            frames : int
@@ -116,7 +118,7 @@ class Production(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         return self._timestep
@@ -127,7 +129,7 @@ class Production(_Protocol):
            Parameters
            ----------
 
-           timestep : BioSimSpace.Types.Time
+           timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
         if type(timestep) is _Types.Time:
@@ -141,7 +143,7 @@ class Production(_Protocol):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         return self._runtime
@@ -152,7 +154,7 @@ class Production(_Protocol):
            Parameters
            ----------
 
-           runtime : BioSimSpace.Types.Time
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
         if type(runtime) is _Types.Time:
@@ -166,7 +168,7 @@ class Production(_Protocol):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
         return self._temperature
@@ -177,7 +179,7 @@ class Production(_Protocol):
            Parameters
            ----------
 
-           temperature : BioSimSpace.Types.Time
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
         if type(temperature) is _Types.Temperature:

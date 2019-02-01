@@ -20,15 +20,17 @@
 #####################################################################
 
 """
-Custom exceptions for error handling.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace._Exceptions
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    IncompatibleError
+    MissingSoftwareError
+    ParameterisationError
 """
 
-class IncompatibleError(Exception):
-    pass
-
-class MissingSoftwareError(Exception):
-    pass
-
-class ParameterisationError(Exception):
-    pass
+from ._exceptions import *

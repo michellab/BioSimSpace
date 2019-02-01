@@ -42,8 +42,6 @@ class Type():
            unit : str
                The unit.
 
-           or
-
            string : str
                A string representation of the type.
         """
@@ -277,20 +275,41 @@ class Type():
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def magnitude(self):
-        """Return the magnitude."""
+        """Return the magnitude.
+
+           Returns
+           -------
+
+           magnitude : float
+               The magnitude of the type.
+        """
         return self._magnitude
 
     def unit(self):
-        """Return the unit."""
+        """Return the unit.
+
+           Returns
+           -------
+
+           unit : str
+               The unit of the type.
+        """
         return self._unit
 
     def _from_string(self, string):
         """Convert a string to an object of the same type.
 
+           Parameters
+           ----------
 
-           Parameters:
+           string : str
+               The string to interpret.
 
-           string -- The string to interpret.
+           Returns
+           -------
+
+           type : :class:`Type <BioSimSpace.Types>`
+               The type object.
         """
 
         string_copy = string

@@ -21,10 +21,12 @@
 
 """
 Volume units.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 from ...Types import Volume as _Volume
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["meter3", "nanometer3", "angstrom3", "picometer3"]
 

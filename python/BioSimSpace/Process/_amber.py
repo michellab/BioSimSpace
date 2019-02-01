@@ -21,8 +21,18 @@
 
 """
 Functionality for running simulations using AMBER.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
+from watchdog.observers import Observer as _Observer
+
+import math as _math
+import os as _os
+import re as _re
+import shutil as _shutil
+import time as _time
+import timeit as _timeit
+import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
@@ -39,16 +49,8 @@ import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
-from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
-from watchdog.observers import Observer as _Observer
-
-import math as _math
-import os as _os
-import re as _re
-import shutil as _shutil
-import time as _time
-import timeit as _timeit
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
@@ -62,7 +64,7 @@ class _Watcher:
            Parameters
            ----------
 
-           proc : BioSimSpace.Process.Amber
+           proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
                The Amber Process object.
         """
 
@@ -95,7 +97,7 @@ class _Handler(_PatternMatchingEventHandler):
            Parameters
            ----------
 
-           proc : BioSimSpace.Process.Amber
+           proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
                The Amber Process object.
         """
         self._process = proc
@@ -141,10 +143,10 @@ class Amber(_process.Process):
            Parameters
            ----------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : BioSimSpace.Protocol
+           protocol : :class:`Protocl <BioSimSpace.Protocol>`
                The protocol for the AMBER process.
 
            exe : str
@@ -461,7 +463,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           process : BioSimSpace.Process.Namd
+           process : :class:`Process.Amber <BioSimSpace.Process.Amber>`
                The process object.
         """
 
@@ -518,7 +520,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
 
@@ -548,9 +550,8 @@ class Amber(_process.Process):
            Returns
            -------
 
-           system : BioSimSpace._SireWrappers.System
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
-
         """
         return self.getSystem(block=False)
 
@@ -566,7 +567,8 @@ class Amber(_process.Process):
            Returns
            -------
 
-           trajectory : BioSimSpace.Trajectory
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory.Trajectory>`
+               The latest trajectory object.
         """
 
         # Wait for the process to finish.
@@ -593,7 +595,7 @@ class Amber(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            block : bool
@@ -602,7 +604,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
 
@@ -626,13 +628,13 @@ class Amber(_process.Process):
            time_series : bool
                Whether to return a list of time series records.
 
-           unit : BioSimSpace.Types.Type
+           unit : :class:`Unit <BioSimSpace.Units>`
                The unit to convert the record to.
 
            Returns
            -------
 
-           record :
+           record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
         return self._get_stdout_record(record.strip().upper(), time_series, unit)
@@ -649,7 +651,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           records : BioSimSpace.Process._process._MultiDict
+           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
 
@@ -667,7 +669,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           records : BioSimSpace.Process._process._MultiDict
+           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
         return getRecords(block=False)
@@ -687,7 +689,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
 
@@ -717,7 +719,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           time : BioSimSpace.Types.Time
+           time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)
@@ -774,7 +776,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The bond energy.
         """
         return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
@@ -791,7 +793,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The bond energy.
         """
         return self.getBondEnergy(time_series, block=False)
@@ -811,7 +813,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The angle energy.
         """
         return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
@@ -828,7 +830,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The angle energy.
         """
         return self.getAngleEnergy(time_series, block=False)
@@ -848,7 +850,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The dihedral energy.
         """
         return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
@@ -865,7 +867,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
@@ -885,7 +887,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The electrostatic energy.
         """
         return self.getRecord("EELECT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -902,7 +904,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The electrostatic energy.
         """
         return self.getElectrostaticEnergy(time_series, block=False)
@@ -922,7 +924,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The electrostatic energy between atoms 1 and 4.
         """
         return self.getRecord("1-4 EEL", time_series, _Units.Energy.kcal_per_mol, block)
@@ -939,7 +941,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The electrostatic energy between atoms 1 and 4.
         """
         return self.getElectrostaticEnergy14(time_series, block=False)
@@ -959,7 +961,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The Van der Vaals energy.
         """
         return self.getRecord("VDWAALS", time_series, _Units.Energy.kcal_per_mol, block)
@@ -976,7 +978,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The Van der Vaals energy.
         """
         return self.getVanDerWaalsEnergy(time_series, block=False)
@@ -996,7 +998,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The hydrogen bond energy.
         """
         return self.getRecord("EHBOND", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1013,7 +1015,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The hydrogen bond energy.
         """
         return self.getHydrogenBondEnergy(time_series, block=False)
@@ -1033,7 +1035,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The restraint energy.
         """
         return self.getRecord("RESTRAINT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1053,7 +1055,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The restraint energy.
         """
         return self.getRestraintEnergy(time_series, block=False)
@@ -1073,7 +1075,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The potential energy.
         """
         return self.getRecord("EPTOT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1090,7 +1092,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The potential energy.
         """
         return self.getPotentialEnergy(time_series, block=False)
@@ -1110,7 +1112,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The kinetic energy.
         """
         return self.getRecord("EKTOT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1127,7 +1129,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
@@ -1147,7 +1149,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The non-bonded energy between atoms 1 and 4.
         """
         return self.getRecord("1-4 NB", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1164,7 +1166,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The non-bonded energy between atoms 1 and 4.
         """
         return self.getNonBondedEnergy14(time_series, block=False)
@@ -1184,7 +1186,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The total energy.
         """
         if type(self._protocol) is _Protocol.Minimisation:
@@ -1204,7 +1206,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The total energy.
         """
         return self.getTotalEnergy(time_series, block=False)
@@ -1224,7 +1226,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The centre of mass kinetic energy.
         """
         return self.getRecord("EKCMT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1241,7 +1243,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           energy : BioSimSpace.Types.Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The centre of mass kinetic energy.
         """
         return self.getCentreOfMassKineticEnergy(time_series, block=False)
@@ -1298,7 +1300,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
               The temperature.
         """
         return self.getRecord("TEMP(K)", time_series, _Units.Temperature.kelvin, block)
@@ -1315,7 +1317,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           temperature : BioSimSpace.Types.Temperature
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
               The temperature.
         """
         return self.getTemperature(time_series, block=False)
@@ -1335,7 +1337,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
               The pressure.
         """
         return self.getRecord("PRESS", time_series, _Units.Pressure.bar, block)
@@ -1352,7 +1354,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           pressure : BioSimSpace.Types.Pressure
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
               The pressure.
         """
         return self.getPressure(time_series, block=False)
@@ -1372,7 +1374,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           volume : BioSimSpace.Types.Volume
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
               The volume.
         """
         return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
@@ -1389,7 +1391,7 @@ class Amber(_process.Process):
            Returns
            -------
 
-           volume : BioSimSpace.Types.Volume
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
               The volume.
         """
         return self.getVolume(time_series, block=False)
@@ -1517,7 +1519,7 @@ class Amber(_process.Process):
            Parameters
            ----------
 
-           max_time: BioSimSpace.Types.Time, int, float
+           max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
                The maximimum time to wait (in minutes).
         """
 
@@ -1571,7 +1573,7 @@ class Amber(_process.Process):
            time_series : bool
                Whether to return a time series of records.
 
-           unit -- BioSimSpace.Types._type.Type
+           unit : :class:`Type <BioSimSpace.Types._type.Type>`
                The unit to convert the record to.
 
            Returns

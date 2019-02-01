@@ -21,8 +21,13 @@
 
 """
 Functionality for reading and analysing molecular trajectories.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import MDAnalysis as _mdanalysis
+import mdtraj as _mdtraj
+import os as _os
+import shutil as _shutil
+import warnings as _warnings
 
 import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
@@ -33,11 +38,8 @@ from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 from ..Types import Time as _Time
 
-import MDAnalysis as _mdanalysis
-import mdtraj as _mdtraj
-import os as _os
-import shutil as _shutil
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Trajectory"]
 
@@ -50,7 +52,7 @@ class Trajectory():
            Parameters
            ----------
 
-           process : BioSimSpace.Process
+           process : :class:`Process <BioSimSpace.Process>`
                A BioSimSpace process object.
 
            trajectory : str
@@ -251,13 +253,13 @@ class Trajectory():
            Parameters
            ----------
 
-           indices : [ int ], [ BioSimSpace.Types.Time ]
+           indices : [int], [:class:`Time <BioSimSpace.Types.Time>`]
                A list of trajectory frame indices, or time stamps (in ns).
 
            Returns
            -------
 
-           frames : [ BioSimSpace._SireWrappers.System ]
+           frames : [:class:`System <BioSimSpace._SireWrappers.System>`]
                The list of System objects.
         """
 
@@ -382,7 +384,7 @@ class Trajectory():
            frame : int
                The index of the reference frame.
 
-           atoms : [ int ]
+           atoms : [int]
                A list of reference atom indices.
 
            molecule : int
@@ -391,7 +393,7 @@ class Trajectory():
            Returns
            -------
 
-           rmsd : [ float ]
+           rmsd : [float]
                A list containing the RMSD value at each time point.
         """
 

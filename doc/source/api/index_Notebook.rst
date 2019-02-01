@@ -2,9 +2,9 @@
 
 BioSimSpace.Notebook
 ====================
-The *Notebook* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+
+The *Notebook* package contains tools that are used when BioSimSpace is run
+interactively, e.g. within a `Jupyter <https://jupyter.org>`_ notebook.
 
 .. automodule:: BioSimSpace.Notebook
 

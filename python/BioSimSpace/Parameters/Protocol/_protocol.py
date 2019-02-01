@@ -24,6 +24,11 @@ Functionality for handling parameterisation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+import os as _os
+import queue as _queue
+import subprocess as _subprocess
+import warnings as _warnings
+
 import Sire as _Sire
 
 from BioSimSpace import _amber_home, _gmx_exe
@@ -33,11 +38,6 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
-
-import os as _os
-import queue as _queue
-import subprocess as _subprocess
-import warnings as _warnings
 
 __all__ = ["Protocol"]
 

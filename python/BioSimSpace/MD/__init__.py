@@ -22,16 +22,13 @@
 """
 .. currentmodule:: BioSimSpace.MD
 
-User API
-========
+Functions
+=========
 
 .. autosummary::
     :toctree: generated/
 
     run
 """
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
 
 from ._md import *

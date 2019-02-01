@@ -21,16 +21,20 @@
 
 """
 An energy type.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 import Sire.Units as _Units
 
 from ._type import Type as _Type
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Energy"]
 
 class Energy(_Type):
+    """An energy type."""
+
     # Dictionary of allowed units.
     _supported_units = { "KILO CALORIES PER MOL" : _Units.kcal_per_mol,
                          "KILO JOULES PER MOL"   : _Units.kJ_per_mol,
@@ -58,8 +62,6 @@ class Energy(_Type):
            unit : str
                The unit.
 
-           or
-
            string : str
                A string representation of the energy.
         """
@@ -68,23 +70,52 @@ class Energy(_Type):
         super().__init__(*args)
 
     def kcal_per_mol(self):
-        """Return the energy in kcal per mol."""
+        """Return the energy in kcal per mol.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The energy in kcal per mol.
+        """
         return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kcal_per_mol), "KILO CALORIES PER MOL")
 
     def kj_per_mol(self):
-        """Return the energy in kJ per mol."""
+        """Return the energy in kJ per mol.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The energy in kJ per mol.
+        """
         return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kJ_per_mol), "KILO JOULES PER MOL")
 
     def kt(self):
-        """Return the energy in KT."""
+        """Return the energy in KT.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The energy in KT.
+        """
         return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _Units.kJ_per_mol), "KT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
-           Positional argument:
+           Parameters
+           ----------
 
-           mag -- The magnitude (optional).
+           mag : float
+               The magnitude (optional).
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The energy in the default unit of kcal per mol.
         """
         if mag is None:
             return self.kcal_per_mol()
@@ -94,10 +125,17 @@ class Energy(_Type):
     def _convert_to(self, unit):
         """Return the energy in a different unit.
 
+           Parameters
+           ----------
 
-           Parameters:
+           unit : str
+               The unit to convert to.
 
-           unit -- The unit to convert to.
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The energy in the specified unit.
         """
         if unit == "KILO CALORIES PER MOL":
             return self.kcal_per_mol()
