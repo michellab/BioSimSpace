@@ -1,19 +1,24 @@
-# This image is used to build the latest version of the devel
-# branch of BioSimSpace.
 
-# Build on top of latest Sire development build.
+# This image is used to build, package and test the latest version
+# of the devel branch of BioSimSpace
+
 FROM siremol/sire-devel:latest
 
 WORKDIR $HOME
 
 USER $FN_USER
 
-# Clone BioSimSpace and update to the latest devel.
+# Update to the latest version
 RUN git clone https://github.com/michellab/BioSimSpace
-RUN cd BioSimSpace && git checkout devel && git pull
 
-# Build BioSimSpace into existing Sire application.
-ADD build_biosimspace.sh $HOME/build_biosimspace.sh
-RUN scl enable devtoolset-6 ./build_biosimspace.sh
+WORKDIR $HOME
 
-ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
+RUN git checkout devel && git pull
+
+RUN cd BioSimSpace/python && \
+    $HOME/sire.app/bin/python setup.py install
+ 
+# Clean up so that the Docker image size is minimised
+RUN $HOME/sire.app/bin/conda clean -tipy
+
+ENTRYPOINT ["bash"]

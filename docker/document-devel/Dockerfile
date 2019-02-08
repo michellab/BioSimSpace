@@ -26,4 +26,4 @@ RUN git clone https://github.com/michellab/BioSimSpaceWebsite.git && \
     git commit -a -m "Updating website." && \
     git push --repo https://biosimspacebot:$GITHUB_TOKEN@github.com/michellab/BioSimSpaceWebsite.git > /dev/null 2>&1
 
-ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
+ENTRYPOINT ["bash"]

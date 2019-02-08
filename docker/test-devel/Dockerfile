@@ -9,4 +9,4 @@ WORKDIR $HOME
 RUN cd BioSimSpace && \
     $HOME/sire.app/bin/pytest -v test
 
-ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
+ENTRYPOINT ["bash"]

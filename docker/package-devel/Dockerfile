@@ -18,4 +18,4 @@ ENV SIRE_RUN_FILE $HOME/biosimspace_devel_latest_linux.run
 RUN $HOME/sire.app/bin/package_sire > package.log 2> package.err
 RUN chmod a+x $HOME/biosimspace_devel_latest_linux.run
 
-ENTRYPOINT ["scl", "enable", "devtoolset-6", "bash"]
+ENTRYPOINT ["bash"]
