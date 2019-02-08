@@ -11,9 +11,7 @@ USER $FN_USER
 # Update to the latest version
 RUN git clone https://github.com/michellab/BioSimSpace
 
-WORKDIR $HOME/BioSimSpace
-
-RUN git checkout devel && git pull
+RUN cd BioSimSpace && git checkout devel && git pull
 
 RUN cd BioSimSpace/python && \
     $HOME/sire.app/bin/python setup.py install
