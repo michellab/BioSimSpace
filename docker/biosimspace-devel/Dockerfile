@@ -11,7 +11,7 @@ USER $FN_USER
 # Update to the latest version
 RUN git clone https://github.com/michellab/BioSimSpace
 
-WORKDIR $HOME
+WORKDIR $HOME/BioSimSpace
 
 RUN git checkout devel && git pull
 
