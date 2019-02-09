@@ -32,7 +32,7 @@ jobs:
       cp docker/package-devel/install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
       $HOME/sire.app/bin/package_sire
     env:
-      SIRE_RUN_FILE: $HOME/biosimspace_devel_latest_linux.run
+      SIRE_RUN_FILE: $HOME/biosimspace_devel_latest_osx.run
     displayName: 'Package BioSimSpace into a binary'
   - script: |
       # finally deploy the binary to an object store bucket identified by 'par_url'
