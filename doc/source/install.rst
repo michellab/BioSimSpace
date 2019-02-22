@@ -17,7 +17,7 @@ can be downloaded from one of the following links:
 since ~2011, or any OS X >= 10.9[Mavericks, released 2013]. Note that they are compiled with AVX
 enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors)
 
-One downloaded, the binary can be unpacked as follows on Linux:
+Once downloaded, the binary can be unpacked as follows on Linux:
 
 .. code-block:: bash
 
