@@ -32,7 +32,7 @@ or on OS X:
    ./biosimspace_devel_latest_osx.run
 
 Both of these commands will let you choose where to install BioSimSpace. By default,
-this will be into $HOME/biosimspace.app.
+this will be into ``$HOME/biosimspace.app``.
 
 For developers
 ==============
