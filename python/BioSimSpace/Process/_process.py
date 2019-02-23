@@ -254,7 +254,7 @@ class Process():
 
         # Use the existing system.
         if system is None:
-            system = self._system
+            system = _System(self._system)
 
         # Check that the new system is valid.
         else:
