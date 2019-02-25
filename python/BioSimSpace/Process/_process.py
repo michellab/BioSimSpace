@@ -620,7 +620,6 @@ class Process():
             for file in output:
                 zip.write(file, arcname=_os.path.basename(file))
 
-
         # Return a link to the archive.
         if _is_notebook():
             return _FileLink(zipname)
