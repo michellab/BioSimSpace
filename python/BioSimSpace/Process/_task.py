@@ -48,13 +48,13 @@ def _wrap_task(task):
            A handle to the task object.
     """
 
-    # Try to run the task and grab the output.
+    # Try to run the task and grab the result.
     try:
-        task._output = task._run()
+        task._result = task._run()
 
     # Catch any exception raised in the _run method.
     except Exception as e:
-        task._output = e
+        task._result = e
 
 class Task():
     """Base class for running a background task."""
@@ -95,8 +95,8 @@ class Task():
         self._is_finished = False
         self._is_error = False
 
-        # Initialise the output of the task.
-        self._output = None
+        # Initialise the result of the task.
+        self._result = None
 
         # Initialise the error message.
         self._error_message = None
@@ -160,11 +160,10 @@ class Task():
            work_dir : str
                The path of the working directory.
         """
-
         return self._work_dir
 
-    def getOutput(self):
-        """Get the output of the task. This will block until the task finishes."""
+    def getResult(self):
+        """Get the result of the task. This will block until the task finishes."""
 
         if not self._is_started:
             return None
@@ -175,12 +174,12 @@ class Task():
             self._is_finished = True
 
         # If there was a problem, return the error message.
-        if isinstance(self._output, Exception):
+        if isinstance(self._result, Exception):
             self._is_error = True
-            self._error_message = str(self._output)
-            raise self._output
+            self._error_message = str(self._result)
+            raise self._result
 
-        return self._output
+        return self._result
 
     def isStarted(self):
         """Return whether the task has been started.
@@ -225,7 +224,7 @@ class Task():
                The exception.
         """
         if self._is_error:
-            return self._output
+            return self._result
         else:
             return None
 
@@ -243,14 +242,17 @@ class Task():
         else:
             return None
 
-    def getOutputDirectory(self, filename=None):
-        """Return the compressed output directory of the task.
+    def getOutput(self, filename=None, file_link=False):
+        """Return a zip file containing the output of the task.
 
            Parameters
            ----------
 
            filename : str
                The name of the output archive.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
 
            Returns
            -------
@@ -299,7 +301,10 @@ class Task():
 
         # Return a link to the archive.
         if _is_notebook():
-            return _FileLink(zipname)
+            if file_link:
+                return _FileLink(zipname)
+            else:
+                return zipname
         else:
             return zipname
 

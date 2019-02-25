@@ -227,14 +227,17 @@ class Process():
         """
         return self._is_error
 
-    def getOutput(self, filename=None):
-        """Return the output of the parameterisation process.
+    def getOutput(self, filename=None, file_link=False):
+        """Return a zip file containing the output from the parameterisation process.
 
            Parameters
            ----------
 
            filename : str
                The name to write the output to.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
 
            Returns
            -------
@@ -269,9 +272,12 @@ class Process():
 
         # Return a link to the archive.
         if _is_notebook():
-            return _FileLink(zipname)
+            if file_link:
+                return _FileLink(self._zipfile)
+            else:
+                return self._zipfile
         else:
-            return zipname
+            return self._zipfile
 
     def getHash(self):
         """Get the object hash."""

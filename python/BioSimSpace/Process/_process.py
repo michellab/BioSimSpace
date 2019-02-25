@@ -578,7 +578,7 @@ class Process():
 
         return self._stderr.copy()
 
-    def getOutput(self, name=None, block="AUTO"):
+    def getOutput(self, name=None, block="AUTO", file_link=False):
         """Return a link to a zip file of the working directory.
 
            Parameters
@@ -589,6 +589,9 @@ class Process():
 
            block : bool
                Whether to block until the process has finished running.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
 
            Returns
            -------
@@ -622,7 +625,10 @@ class Process():
 
         # Return a link to the archive.
         if _is_notebook():
-            return _FileLink(zipname)
+            if file_link:
+                return _FileLink(zipname)
+            else:
+                return zipname
         # Return the path to the archive.
         else:
             return zipname
