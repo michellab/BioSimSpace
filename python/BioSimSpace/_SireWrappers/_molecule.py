@@ -620,10 +620,7 @@ class Molecule():
         """
 
         # Get the user defined charge property.
-        if "charge" in property_map:
-            prop = property_map["charge"]
-        else:
-            prop = "charge"
+        prop = property_map.get("charge", "charge")
 
         if not self._sire_molecule.hasProperty(prop):
             raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
@@ -1329,10 +1326,7 @@ class Molecule():
         for prop in mol.propertyKeys():
             if prop[-1] == "0":
                 # See if this property exists in the user map.
-                if prop[:-1] in property_map:
-                    new_prop = property_map[prop[:-1]]
-                else:
-                    new_prop = prop[:-1]
+                new_prop = property_map.get(prop[:-1], prop[:-1])
 
                 # Copy the property using the updated name.
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
@@ -1392,10 +1386,7 @@ class Molecule():
         for prop in mol.propertyKeys():
             if prop[-1] == lam:
                 # See if this property exists in the user map.
-                if prop[:-1] in property_map:
-                    new_prop = property_map[prop[:-1]]
-                else:
-                    new_prop = prop[:-1]
+                new_prop = property_map.get(prop[:-1], prop[:-1])
 
                 # Copy the property using the updated name.
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
@@ -1482,12 +1473,8 @@ class Molecule():
         # the two force fields are compatible.
 
         # Get the user name for the "forcefield" property.
-        ff0 = "forcefield"
-        ff1 = "forcefield"
-        if "forcefield" in inv_property_map0:
-            ff0 = inv_property_map0["forcefield"]
-        if "forcefield" in inv_property_map1:
-            ff1 = inv_property_map1["forcefield"]
+        ff0 = inv_property_map0.get("forcefield", "forcefield")
+        ff1 = inv_property_map1.get("forcefield", "forcefield")
 
         # Force field information is missing.
         if not molecule0.hasProperty(ff0):
@@ -1611,10 +1598,7 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_property_map0:
-                    name = inv_property_map0[prop]
-                else:
-                    name = prop
+                name = inv_property_map0.get(prop, prop)
 
                 # This is a perturbable property. Rename to "property0", e.g. "charge0".
                 if name in shared_props:
@@ -1634,10 +1618,7 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_property_map1:
-                    name = inv_property_map1[prop]
-                else:
-                    name = prop
+                name = inv_property_map1.get(prop, prop)
 
                 # Zero the "charge" and "LJ" property for atoms that are unique to molecule1.
                 if name == "charge":
@@ -1664,13 +1645,8 @@ class Molecule():
         # 1) bonds
         if "bond" in shared_props:
             # Get the user defined property names.
-            prop0 = "bond"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["bond"]
-
-            prop1 = "bond"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["bond"]
+            prop0 = inv_property_map0.get("bond", "bond")
+            prop1 = inv_property_map1.get("bond", "bond")
 
             # Get the "bond" property from the two molecules.
             bonds0 = molecule0.property(prop0)
@@ -1710,13 +1686,8 @@ class Molecule():
         # 2) angles
         if "angle" in shared_props:
             # Get the user defined property names.
-            prop0 = "angle"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["angle"]
-
-            prop1 = "angle"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["angle"]
+            prop0 = inv_property_map0.get("angle", "angle")
+            prop1 = inv_property_map1.get("angle", "angle")
 
             # Get the "angle" property from the two molecules.
             angles0 = molecule0.property(prop0)
@@ -1759,13 +1730,8 @@ class Molecule():
         # 3) dihedrals
         if "dihedral" in shared_props:
             # Get the user defined property names.
-            prop0 = "dihedral"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["dihedral"]
-
-            prop1 = "dihedral"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["dihedral"]
+            prop0 = inv_property_map0.get("dihedral", "dihedral")
+            prop1 = inv_property_map1.get("dihedral", "dihedral")
 
             # Get the "dihedral" property from the two molecules.
             dihedrals0 = molecule0.property(prop0)
@@ -1812,13 +1778,8 @@ class Molecule():
         # 4) impropers
         if "improper" in shared_props:
             # Get the user defined property names.
-            prop0 = "improper"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["improper"]
-
-            prop1 = "improper"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["improper"]
+            prop0 = inv_property_map0.get("improper", "improper")
+            prop1 = inv_property_map1.get("improper", "improper")
 
             # Get the "improper" property from the two molecules.
             impropers0 = molecule0.property(prop0)
@@ -1877,10 +1838,7 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_property_map1:
-                    name = inv_property_map1[prop]
-                else:
-                    name = prop
+                name = inv_property_map1.get(prop, prop)
 
                 # This is a perturbable property. Rename to "property1", e.g. "charge1".
                 if name in shared_props:
@@ -1898,10 +1856,7 @@ class Molecule():
             # Loop over all atom properties.
             for prop in atom.propertyKeys():
                 # Get the actual property name.
-                if prop in inv_property_map0:
-                    name = inv_property_map0[prop]
-                else:
-                    name = prop
+                name = inv_property_map0.get(prop, prop)
 
                 # Zero the "charge" and "LJ" property for atoms that are unique to molecule0.
                 if name == "charge":
@@ -1932,13 +1887,8 @@ class Molecule():
             info1 = molecule1.info()
 
             # Get the user defined property names.
-            prop0 = "bond"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["bond"]
-
-            prop1 = "bond"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["bond"]
+            prop0 = inv_property_map0.get("bond", "bond")
+            prop1 = inv_property_map1.get("bond", "bond")
 
             # Get the "bond" property from the two molecules.
             bonds0 = molecule0.property(prop0)
@@ -1985,13 +1935,8 @@ class Molecule():
             info1 = molecule1.info()
 
             # Get the user defined property names.
-            prop0 = "angle"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["angle"]
-
-            prop1 = "angle"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["angle"]
+            prop0 = inv_property_map0.get("angle", "angle")
+            prop1 = inv_property_map1.get("angle", "angle")
 
             # Get the "angle" property from the two molecules.
             angles0 = molecule0.property(prop0)
@@ -2042,13 +1987,8 @@ class Molecule():
             info1 = molecule1.info()
 
             # Get the user defined property names.
-            prop0 = "dihedral"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["dihedral"]
-
-            prop1 = "dihedral"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["dihedral"]
+            prop0 = inv_property_map0.get("dihedral", "dihedral")
+            prop1 = inv_property_map1.get("dihedral", "dihedral")
 
             # Get the "dihedral" property from the two molecules.
             dihedrals0 = molecule0.property(prop0)
@@ -2103,13 +2043,8 @@ class Molecule():
             info1 = molecule1.info()
 
             # Get the user defined property names.
-            prop0 = "improper"
-            if prop0 in inv_property_map0:
-                prop0 = inv_property_map0["improper"]
-
-            prop1 = "improper"
-            if prop1 in inv_property_map1:
-                prop1 = inv_property_map1["improper"]
+            prop0 = inv_property_map0.get("improper", "improper")
+            prop1 = inv_property_map1.get("improper", "improper")
 
             # Get the "improper" property from the two molecules.
             impropers0 = molecule0.property(prop0)
@@ -2239,13 +2174,8 @@ class Molecule():
         clj_nb_pairs1 = clj_nb_pairs0.__deepcopy__()
 
         # Get the user defined "intrascale" property names.
-        prop0 = "intrascale"
-        if prop0 in inv_property_map0:
-            prop0 = inv_property_map0["intrascale"]
-
-        prop1 = "intrascale"
-        if prop1 in inv_property_map1:
-            prop1 = inv_property_map1["intrascale"]
+        prop0 = inv_property_map0.get("intrascale", "intrascale")
+        prop1 = inv_property_map1.get("intrascale", "intrascale")
 
         # Get the "intrascale" property from the two molecules.
         intrascale0 = molecule0.property(prop0)

@@ -86,10 +86,7 @@ class Binding(_free_energy.FreeEnergy):
 
             # Get the box size of the original system.
             try:
-                if "space" in property_map:
-                    prop = property_map["space"]
-                else:
-                    prop = "space"
+                prop = property_map.get("space", "space")
                 box = system._sire_system.property(prop).dimensions()
                 box = [_Units.Length.angstrom * x for x in box]
             except:

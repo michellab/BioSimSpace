@@ -398,10 +398,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None:
             try:
-                if "space" in property_map:
-                    prop = property_map["space"]
-                else:
-                    prop = "space"
+                prop = property_map.get("space", "space")
                 box = molecule.property(prop).dimensions()
                 # Convert to a list of Length objects.
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
@@ -650,8 +647,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Add all of the water box properties to the new system.
             for prop in water._sire_system.propertyKeys():
-                if prop in property_map:
-                    prop = property_map[prop]
+                prop = property_map.get(prop, prop)
 
                 # Add the space property from the water system.
                 system._sire_system.setProperty(prop, water._sire_system.property(prop))
@@ -818,8 +814,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
                 # Add all of the water molecules' properties to the new system.
                 for prop in water_ions._sire_system.propertyKeys():
-                    if prop in property_map:
-                        prop = property_map[prop]
+                    prop = property_map.get(prop, prop)
 
                     # Add the space property from the water system.
                     system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))

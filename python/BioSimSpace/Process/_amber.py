@@ -261,10 +261,7 @@ class Amber(_process.Process):
         # Clear the existing configuration list.
         self._config = []
 
-        if "space" in self._property_map:
-            prop = self._property_map["space"]
-        else:
-            prop = "space"
+        prop = self._property_map.get("space", "space")
 
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property

@@ -274,10 +274,7 @@ class System():
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        if "fileformat" in property_map:
-            prop = property_map["fileformat"]
-        else:
-            prop = "fileformat"
+        prop = property_map.get("fileformat", "fileformat")
 
         try:
             return self._sire_system.property(prop).value()
@@ -808,14 +805,8 @@ class System():
                                          "Expected '%d', found '%d'" % (num_atoms0, num_atoms1))
 
         # Work out the name of the "coordinates" property.
-        if "coordinates" in property_map0:
-            prop0 = property_map0["coordinates"]
-        else:
-            prop0 = "coordinates"
-        if "coordinates" in property_map1:
-            prop1 = property_map1["coordinates"]
-        else:
-            prop1 = "coordinates"
+        prop0 = property_map0.get("coordinates0", "coordinates")
+        prop1 = property_map1.get("coordinates1", "coordinates")
 
         # Loop over all molecules and update the coordinates.
         for idx in range(0, self.nMolecules()):

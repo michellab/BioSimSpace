@@ -240,10 +240,7 @@ class Namd(_process.Process):
         # Flag that the system doesn't contain a box.
         has_box = False
 
-        if "space" in self._property_map:
-            prop = self._property_map["space"]
-        else:
-            prop = "space"
+        prop = self._property_map.get("space", "space")
 
         # Check whether the system contains periodic box information.
         if prop in self._system.propertyKeys():
@@ -264,10 +261,7 @@ class Namd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        if "param_format" in self._property_map:
-            prop = self._property_map["param_format"]
-        else:
-            prop = "param_format"
+        prop = self._property_map.get("param_format", "param_format")
 
         # Check whether the system contains parameter format information.
         if prop in self._system.propertyKeys():
@@ -398,10 +392,7 @@ class Namd(_process.Process):
                 restrained = _process._restrain_backbone(self._system)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
-                if "occupancy" in self._property_map:
-                    prop = self._property_map["occupancy"]
-                else:
-                    prop = "occupancy"
+                prop = self._property_map.get("occupancy", "occupancy")
 
                 try:
                     p = _SireIO.PDB2(restrained, {prop : "restrained"})
