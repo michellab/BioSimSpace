@@ -652,7 +652,8 @@ class Length(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_length = BSS.Gateway.Length(help="A length requirement", default=10, unit="angstrom")
 
-       The same, but explicitly passing a Length type for the default.
+       The same, but explicitly passing a :class:`Length <BioSimSpace.Types.Length>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_length = BSS.Gateway.Length(help="A length requirement", ...
@@ -751,7 +752,8 @@ class Area(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10, unit="angstrom2")
 
-       The same, but explicitly passing an Area type for the default.
+       The same, but explicitly passing a :class:`Area <BioSimSpace.Types.Area>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10*BSS.Units.Area.angstrom2)
@@ -849,7 +851,8 @@ class Volume(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
 
-       The same, but explicitly passing a Volume type for the default.
+       The same, but explicitly passing a :class:`Volume <BioSimSpace.Types.Volume>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
@@ -947,7 +950,8 @@ class Charge(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3, unit="electron charge")
 
-       The same, but explicitly passing a Charge type for the default.
+       The same, but explicitly passing a :class:`Charge <BioSimSpace.Types.Charge>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3*BSS.Units.Charge.electron_charge)
@@ -1045,7 +1049,8 @@ class Energy(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3, unit="kcal per mol")
 
-       The same, but explicitly passing an Energy type for the default.
+       The same, but explicitly passing a :class:`Energy <BioSimSpace.Types.Energy>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3*BSS.Units.Energy.kcal_per_mol)
@@ -1142,7 +1147,8 @@ class Pressure(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=1, unit="atm")
 
-       The same, but explicitly passing a Pressure type for the default.
+       The same, but explicitly passing a :class:`Pressure <BioSimSpace.Types.Pressure>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=BSS.Units.Pressure.atm)
@@ -1240,7 +1246,8 @@ class Temperature(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300, unit="kelvin")
 
-       The same, but explicitly passing a Temperature type for the default.
+       The same, but explicitly passing a :class:`Temperature <BioSimSpace.Types.Temperature>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300*BSS.Units.Temperature.kelvin)
@@ -1338,7 +1345,8 @@ class Time(Requirement):
        >>> import BioSimSpace as BSS
        >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35, unit="minutes")
 
-       The same, but explicitly passing a Time type for the default.
+       The same, but explicitly passing a :class:`Time <BioSimSpace.Types.Time>`
+       for the default.
 
        >>> import BioSimSpace as BSS
        >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35*BSS.Units.Time.minute)
