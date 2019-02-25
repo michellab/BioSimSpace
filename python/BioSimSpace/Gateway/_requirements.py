@@ -1475,11 +1475,11 @@ def _validate_unit_requirement(value, unit_type):
             value = value.replace(" ", "")
 
             # Try to match scientific format.
-            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", value, _re.IGNORECASE)
+            match = _re.search(r"(\-?\d+\.?\d*e\-?\d+)(.*)", value, _re.IGNORECASE)
 
             # Try to match decimal format.
             if match is None:
-                match = _re.search("(\-?\d+\.?\d*)(.*)", value, _re.IGNORECASE)
+                match = _re.search(r"(\-?\d+\.?\d*)(.*)", value, _re.IGNORECASE)
 
                 # No matches, raise an error.
                 if match is None:

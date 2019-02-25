@@ -319,11 +319,11 @@ class Type():
             string = string.replace(" ", "")
 
             # Try to match scientific format.
-            match = _re.search("(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
+            match = _re.search(r"(\-?\d+\.?\d*e\-?\d+)(.*)", string, _re.IGNORECASE)
 
             # Try to match decimal format.
             if match is None:
-                match = _re.search("(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
+                match = _re.search(r"(\-?\d+\.?\d*)(.*)", string, _re.IGNORECASE)
 
                 # No matches, raise an error.
                 if match is None:

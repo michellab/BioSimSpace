@@ -1484,7 +1484,7 @@ class Amber(_process.Process):
                     # All other protocols have output that is formatted as RECORD = VALUE.
 
                     # Use a regex search to split the line into record names and values.
-                    records = _re.findall("(\d*\-*\d*\s*[A-Z]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)", line.upper())
+                    records = _re.findall(r"(\d*\-*\d*\s*[A-Z]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)", line.upper())
 
                     # Append each record to the dictionary.
                     for key, value in records:
