@@ -75,6 +75,27 @@ Then try importing the BioSimSpace package:
 
    import BioSimSpace as BSS
 
+When developing you may not wish to continually re-install BioSimSpace and its
+associated dependencies. To avoid this, you can either make use of ``PYTHONPATH``,
+e.g.
+
+.. code-block:: bash
+
+   PYTHONPATH=$HOME/Code/BioSimSpace/python $HOME/sire.app/bin/python script.py
+
+or use the ``develop`` argument when running the ``setup.py`` script, i.e.
+
+.. code-block:: bash
+
+   PYTHONPATH=$HOME/sire.app/bin/python setup.py develop
+
+You can also skip installation of external dependencies by setting the
+environment variable ``BSS_SKIP_INSTALL``, e.g.
+
+.. code-block:: bash
+
+   BSS_SKIP_INSTALL=1 $HOME/sire.app/bin/python setup.py install
+
 Common issues
 =============
 
