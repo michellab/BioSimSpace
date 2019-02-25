@@ -656,16 +656,16 @@ class Length(Requirement):
        for the default.
 
        >>> import BioSimSpace as BSS
-       >>> my_length = BSS.Gateway.Length(help="A length requirement", ...
-       >>>                                default=10*BSS.Units.Length.angstrom)
+       >>> my_length = BSS.Gateway.Length(help="A length requirement",
+       ...                                default=10*BSS.Units.Length.angstrom)
 
        Create a length requirement with a default of 10 Angstrom and a maximum
        of 50 nanometers. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_length = BSS.Gateway.Length(help="A length requirement", ...
-       >>>                                default=10*BSS.Units.Length.angstrom, ...
-       >>>                                maximum=50*BSS.Units.Length.nanometer)
+       >>> my_length = BSS.Gateway.Length(help="A length requirement",
+       ...                                default=10*BSS.Units.Length.angstrom,
+       ...                                maximum=50*BSS.Units.Length.nanometer)
     """
 
     # Set the argparse argument type.
@@ -762,9 +762,9 @@ class Area(Requirement):
        of 50 square nanometers. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_area = BSS.Gateway.Area(help="An area requirement", ...
-       >>>                            default=100*BSS.Units.Area.angstrom2, ...
-       >>>                            maximum=50*BSS.Units.Area.nanometer2)
+       >>> my_area = BSS.Gateway.Area(help="An area requirement",
+       ...                            default=100*BSS.Units.Area.angstrom2,
+       ...                            maximum=50*BSS.Units.Area.nanometer2)
     """
 
     # Set the argparse argument type.
@@ -861,9 +861,9 @@ class Volume(Requirement):
        of 50 square nanometers. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", ...
-       >>>                                default=10*BSS.Units.Volume.angstrom3, ...
-       >>>                                maximum=50*BSS.Units.Volume.nanometer3)
+       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement",
+       ...                                default=10*BSS.Units.Volume.angstrom3,
+       ...                                maximum=50*BSS.Units.Volume.nanometer3)
     """
 
     # Set the argparse argument type.
@@ -960,9 +960,9 @@ class Charge(Requirement):
        maximum of -10 Coulomb. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", ...
-       >>>                                default=3*BSS.Units.Charge.electron_charge, ...
-       >>>                                maximum=10*BSS.Units.Charge.coulomb)
+       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement",
+       ...                                default=3*BSS.Units.Charge.electron_charge,
+       ...                                maximum=10*BSS.Units.Charge.coulomb)
     """
 
     # Set the argparse argument type.
@@ -1059,9 +1059,9 @@ class Energy(Requirement):
        maximum of 50 kJ per mol. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", ...
-       >>>                                default=3*BSS.Units.Energy.kcal_per_mol, ...
-       >>>                                maximum=50*BSS.Units.Energy.kj_per_mol)
+       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement",
+       ...                                default=3*BSS.Units.Energy.kcal_per_mol,
+       ...                                maximum=50*BSS.Units.Energy.kj_per_mol)
     """
 
     # Set the argparse argument type.
@@ -1157,9 +1157,9 @@ class Pressure(Requirement):
        maximum of 10 bar. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", ...
-       >>>                                    default=BSS.Units.Pressure.atm, ...
-       >>>                                    maximum=10*BSS.Units.Pressure.bar)
+       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement",
+       ...                                    default=BSS.Units.Pressure.atm,
+       ...                                    maximum=10*BSS.Units.Pressure.bar)
     """
 
     # Set the argparse argument type.
@@ -1256,9 +1256,9 @@ class Temperature(Requirement):
        maximum of 100 Celsius. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", ...
-       >>>                                          default=300*BSS.Units.Temperature.kelvin, ...
-       >>>                                          maximum=100*BSS.Units.Temperature.celsius)
+       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement",
+       ...                                          default=300*BSS.Units.Temperature.kelvin,
+       ...                                          maximum=100*BSS.Units.Temperature.celsius)
     """
 
     # Set the argparse argument type.
@@ -1355,9 +1355,9 @@ class Time(Requirement):
        of 5 hours. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
-       >>> my_time = BSS.Gateway.Time(help="A time requirement", ...
-       >>>                            default=35*BSS.Units.Time.minute, ...
-       >>>                            maximum=5*BSS.Units.Time.hour)
+       >>> my_time = BSS.Gateway.Time(help="A time requirement",
+       ...                            default=35*BSS.Units.Time.minute,
+       ...                            maximum=5*BSS.Units.Time.hour)
     """
 
     # Set the argparse argument type.
