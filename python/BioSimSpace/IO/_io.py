@@ -116,6 +116,21 @@ def formatInfo(format):
 
        info : str
            A description of the named file format.
+
+       Examples
+       --------
+
+       Display information regarding the PDB format.
+
+       >>> import BioSimSpace as BSS
+       >>> BSS.formatInfo("PDB")
+
+       Print information for each of the supported file formats.
+
+       >>> import BioSimSpace as BSS
+       >>> for format in BSS.IO.fileFormats:
+       ...     BSS.IO.formatInfo(format)
+
     """
 
     try:
@@ -143,6 +158,15 @@ def readPDB(id, property_map={}):
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`
            A molecular system.
+
+       Examples
+       --------
+
+       Create a molecular system from the deoxy human haemoglobin Protein
+       Data Bank (PDB) record.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.readPDB("1a3n")
     """
 
     if not _has_pypdb:
@@ -193,6 +217,27 @@ def readMolecules(files, property_map={}):
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`
            A molecular system.
+
+       Examples
+       --------
+
+       Load a molecular system from two AMBER format files.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+
+       Load the same system, but map the "charge" property to the key "my-charge".
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+
+       Load a molecular system from all of the files contained within a directory.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(BSS.IO.glob("dir/*"))
     """
 
     if _gromacs_path is None:
@@ -261,6 +306,27 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
        files : [str]
            The list of files that were generated.
+
+       Examples
+       --------
+
+       Load a molecular system from two AMBER format files then try to save it
+       to all supported file formats.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+       >>> for format in BSS.IO.fileFormats():
+       ...     try:
+       ...         BSS.IO.saveMolecules("test", system, format)
+       ...     except:
+       ...         print("Could not convert to format: '%s'" % format)
+
+       Load a molecular system from two AMBER format files then try to save it
+       to GROMACS format, mapping and un-mapping the charge property along the way.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
+       >>> BSS.IO.saveMolecules("test", system, ["gro87", "grotop"], property_map={"charge" : "my-charge"})
     """
 
     if _gromacs_path is None:
@@ -291,7 +357,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Check that fileformat argument is of the correct type.
 
     # Convert to a list if a single string is passed.
-    # We split on ',' since the user might pass system.fileFormat() as the argument.
+    # We split on ',' since the user might pass system.fileFormats() as the argument.
     if type(fileformat) is str:
         fileformat = fileformat.split(",")
     # Lists and tuples are okay!
