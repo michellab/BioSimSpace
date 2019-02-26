@@ -4,7 +4,7 @@ BioSimSpace.Units
 =================
 
 The *Units* package provides a set of common physical units required by BioSimSpace.
-This provide short-hand access to BioSimSpace :ref:`ref-Types`.
+This provides convenient, short-hand access to :ref:`ref-Types`.
 
 Some examples:
 
