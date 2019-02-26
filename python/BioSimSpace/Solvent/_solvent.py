@@ -643,7 +643,7 @@ def _solvate(molecule, box, shell, model, num_point,
                 system = _System(non_waters + water.getMolecules())
 
             else:
-                system = _System(molecule + water.getMolecules())
+                system = molecule + water.getMolecules()
 
             # Add all of the water box properties to the new system.
             for prop in water._sire_system.propertyKeys():
@@ -810,7 +810,7 @@ def _solvate(molecule, box, shell, model, num_point,
                     # original waters.
                     system = _System(non_waters + water_ions.getMolecules())
                 else:
-                    system = _System(molecule + water_ions.getMolecules())
+                    system = molecule + water_ions.getMolecules()
 
                 # Add all of the water molecules' properties to the new system.
                 for prop in water_ions._sire_system.propertyKeys():
