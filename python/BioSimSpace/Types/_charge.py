@@ -47,6 +47,10 @@ class Charge(_Type):
     _print_format = { "ELECTRON CHARGE" : "|e|",
                       "COULOMB"         : "C" }
 
+    # Documentation strings.
+    _doc_strings = { "ELECTRON CHARGE" : "A charge in electron charge.",
+                     "COULOMB"         : "A charge in Coulomb." }
+
     def __init__(self, *args):
         """Constructor.
 

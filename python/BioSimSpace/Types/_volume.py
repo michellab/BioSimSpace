@@ -53,6 +53,12 @@ class Volume(_Type):
                       "ANGSTROM3"   : "A^3",
                       "PICOMETER3"  : "pm^3" }
 
+    # Documentation strings.
+    _doc_strings = { "METER3"      : "A volume in cube meters.",
+                     "NANOMETER3"  : "A volume in cube nanometers.",
+                     "ANGSTROM3"   : "A volume in cube Angstrom.",
+                     "PICOMETER3"  : "A volume in cube picometers." }
+
     def __init__(self, *args):
         """Constructor.
 

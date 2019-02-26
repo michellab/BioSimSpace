@@ -47,6 +47,10 @@ class Pressure(_Type):
     _print_format = { "ATMOSPHERE" : "atm",
                       "BAR"        : "bar" }
 
+    # Documentation strings.
+    _doc_strings = { "ATMOSPHERE" : "A pressure in atmosphere.",
+                     "BAR"        : "A pressure in bar." }
+
     def __init__(self, *args):
         """Constructor.
 

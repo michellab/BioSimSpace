@@ -82,6 +82,9 @@ class Type():
         else:
             raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
 
+        # Set the documentation string.
+        self.__doc__ = self._doc_strings[self._unit]
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:

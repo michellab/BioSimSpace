@@ -50,6 +50,11 @@ class Temperature(_Type):
                       "CELSIUS"    : "C",
                       "FAHRENHEIT" : "F" }
 
+    # Documentation strings.
+    _doc_strings = { "KELVIN"     : "A temperature in Kelvin.",
+                     "CELSIUS"    : "A temperature in Celsius.",
+                     "FAHRENHEIT" : "A temperature in Fahrenheit." }
+
     def __init__(self, *args):
         """Constructor.
 

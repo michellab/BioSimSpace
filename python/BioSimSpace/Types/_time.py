@@ -64,6 +64,16 @@ class Time(_Type):
                       "PICOSECOND"  : "ps",
                       "FEMTOSECOND" : "fs" }
 
+    # Documentation strings.
+    _doc_strings = { "DAY"         : "A time in days.",
+                     "HOUR"        : "A time in hours.",
+                     "MINUTE"      : "A time in minutes.",
+                     "SECOND"      : "A time in seconds.",
+                     "MILLISECOND" : "A time in milliseconds.",
+                     "NANOSECOND"  : "A time in nanoseconds.",
+                     "PICOSECOND"  : "A time in picoseconds.",
+                     "FEMTOSECOND" : "A time in femtoseconds." }
+
     def __init__(self, *args):
         """Constructor.
 

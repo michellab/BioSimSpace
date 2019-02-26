@@ -50,6 +50,11 @@ class Energy(_Type):
                       "KILO JOULES PER MOL"   : "kJ/mol",
                       "KT"                    : "KT" }
 
+    # Documentation strings.
+    _doc_strings = { "KILO CALORIES PER MOL" : "An energy in kcal per mol.",
+                     "KILO JOULES PER MOL"   : "An energy in kJ per mol.",
+                     "KT"                    : "An energy in KT." }
+
     def __init__(self, *args):
         """Constructor.
 

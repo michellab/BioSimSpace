@@ -59,6 +59,14 @@ class Length(_Type):
                       "ANGSTROM"   : "A",
                       "PICOMETER"  : "pm" }
 
+    # Documentation strings.
+    _doc_strings = { "METER"      : "A length in meters.",
+                     "CENTIMETER" : "A length in centimeters.",
+                     "MILLIMETER" : "A length in millimeters.",
+                     "NANOMETER"  : "A length in nanometers.",
+                     "ANGSTROM"   : "A length in Angstrom.",
+                     "PICOMETER"  : "A length in picometers." }
+
     def __init__(self, *args):
         """Constructor.
 

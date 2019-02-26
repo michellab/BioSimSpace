@@ -53,6 +53,12 @@ class Area(_Type):
                       "ANGSTROM2"   : "A^2",
                       "PICOMETER2"  : "pm^2" }
 
+    # Documentation strings.
+    _doc_strings = { "METER2"      : "An area in square meters.",
+                     "NANOMETER2"  : "An area in square nanometers.",
+                     "ANGSTROM2"   : "An area in square Angstrom.",
+                     "PICOMETER2"  : "An area in square picometers." }
+
     def __init__(self, *args):
         """Constructor.
 
