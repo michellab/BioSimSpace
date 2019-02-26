@@ -30,6 +30,43 @@ Functions
 
     plot
 
+Examples
+--------
+
+Generate a line graph using two lists of data.
+
+.. image:: ../../../doc/source/_static/plot_01.png
+   :width: 800px
+   :align: center
+
+If no argument is passed for the ``x`` data then each ``y`` data value is
+plotted against its list index.
+
+.. image:: ../../../doc/source/_static/plot_02.png
+   :width: 800px
+   :align: center
+
+Use the ``xlabel`` and ``ylabel`` arguments to add labels to your plots.
+
+.. image:: ../../../doc/source/_static/plot_03.png
+   :width: 800px
+   :align: center
+
+Error bars can be added using ``xerror`` and ``yerror``.
+
+.. image:: ../../../doc/source/_static/plot_04.png
+   :width: 800px
+   :align: center
+
+It is possible to generate plots from the output of a real-time simulation.
+Where functions return time series data containing :ref:`ref-Types`, then
+axis labels will be automatically generated. (The ``xlabel`` and ``ylabel``
+still take precedence.)
+
+.. image:: ../../../doc/source/_static/plot_05.png
+   :width: 800px
+   :align: center
+
 Classes
 =======
 
