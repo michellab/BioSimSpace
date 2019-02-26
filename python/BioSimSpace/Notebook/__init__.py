@@ -59,7 +59,7 @@ Error bars can be added using ``xerror`` and ``yerror``.
    :align: center
 
 It is possible to generate plots from the output of a real-time simulation.
-Where functions return time series data containing :ref:`ref-Types`, then
+Where functions return time-series data containing :ref:`ref-Types`, then
 axis labels will be automatically generated. (The ``xlabel`` and ``ylabel``
 still take precedence.)
 
