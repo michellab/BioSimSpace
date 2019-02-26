@@ -221,7 +221,7 @@ def readMolecules(files, property_map={}):
        Examples
        --------
 
-       Load a molecular system from two AMBER format files.
+       Load a molecular system from AMBER coordinate and topology files.
 
        >>> import BioSimSpace as BSS
        >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
@@ -310,8 +310,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
        Examples
        --------
 
-       Load a molecular system from two AMBER format files then try to save it
-       to all supported file formats.
+       Load a molecular system from AMBER coordinate and topology files then
+       try to save it to all supported file formats.
 
        >>> import BioSimSpace as BSS
        >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
@@ -321,8 +321,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
        ...     except:
        ...         print("Could not convert to format: '%s'" % format)
 
-       Load a molecular system from two AMBER format files then try to save it
-       to GROMACS format, mapping and un-mapping the charge property along the way.
+       Load a molecular system from AMBER coordinate and topology files then
+       try to save it to GROMACS format, mapping and un-mapping the charge
+       property along the way.
 
        >>> import BioSimSpace as BSS
        >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
