@@ -2,9 +2,8 @@
 
 BioSimSpace.Protocol
 ====================
-The *Protocol* package contains tools to select features from MD-trajectories.
-It also assigns them to a discrete state space, which will be later used in Markov
-modeling.
+The *Protocol* package contains functionality for defining generic molecular
+dynamics protocols.
 
 .. automodule:: BioSimSpace.Protocol
 
