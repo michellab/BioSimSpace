@@ -35,7 +35,7 @@ __all__ = ["cd"]
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
 def cd(work_dir):
-    """Execute the context in the directory 'dir'
+    """Execute the context in the directory "work_dir"
 
        Parameters
        ----------
