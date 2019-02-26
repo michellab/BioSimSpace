@@ -114,7 +114,7 @@ For example:
    n.append(6)
 
    # The private member data has been modified!
-   print(c.getList()
+   print(c.getList())
    [1, 2, 3, 4, 5, 6]
 
 Instead use:
@@ -138,7 +138,7 @@ Instead use:
    n.append(6)
 
    # The private member data is untouched.
-   print(c.getList()
+   print(c.getList())
    [1, 2, 3, 4, 5]
 
 Workflow
@@ -207,7 +207,7 @@ To run the full test suite, simply type:
    pytest
 
 (This assumes that you have made the ``bin`` directory of your BioSimSpace or
-Sire installation available to your ``PATH``.))
+Sire installation available to your ``PATH``.)
 
 To run tests for a specific sub-module, e.g.:
 
