@@ -163,14 +163,15 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             x = [float(xx) for xx in x]
             _type = float
 
+            try:
+                xerr = [float(xx) for xx in xerr]
+            except:
+                pass
+
         # Make sure any associated error has the same unit.
         if xerr is not None:
-            if not all(isinstance(x, _type) for x in xerr):
+            if not all(isinstance(xx, _type) for xx in xerr):
                 raise TypeError("All 'xerr' values must be of same type as x data")
-
-            # Convert int to float.
-            if _type is int:
-                xerr = [float(x) for x in xerr]
 
         # Does this type have units?
         if isinstance(x[0], _Type.Type):
@@ -191,14 +192,15 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             y = [float(yy) for yy in y]
             _type = float
 
+            try:
+                yerr = [float(yy) for yy in yerr]
+            except:
+                pass
+
         # Make sure any associated error has the same unit.
         if yerr is not None:
-            if not all(isinstance(y, _type) for y in yerr):
+            if not all(isinstance(yy, _type) for yy in yerr):
                 raise TypeError("All 'yerr' values must be of same type as y data")
-
-            # Convert int to float.
-            if _type is int:
-                yerr = [float(y) for y in yerr]
 
         # Does this type have units?
         if isinstance(y[0], _Type.Type):
