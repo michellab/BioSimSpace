@@ -100,17 +100,23 @@ class FreeEnergy(_Protocol):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
-                "timestep=%s, runtime=%s, temperature=%s, ensemble=%r>"
-               ) % (self._lambda, self._lambda_vals, self._timestep,
-                    self._runtime, self._temperature, self._ensemble)
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
+                    "timestep=%s, runtime=%s, temperature=%s, ensemble=%r>"
+                   ) % (self._lambda, self._lambda_vals, self._timestep,
+                        self._runtime, self._temperature, self._ensemble)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return ("BioSimSpace.Protocol.Production(lam=%5.4f, lam_vals=%r, "
-                "timestep=%s, runtime=%s, temperature=%s, ensemble=%r)"
-               ) % (self._lambda, self._lambda_vals, self._timestep,
-                    self._runtime, self._temperature, self._ensemble)
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
+                    "timestep=%s, runtime=%s, temperature=%s, ensemble=%r)"
+                   ) % (self._lambda, self._lambda_vals, self._timestep,
+                        self._runtime, self._temperature, self._ensemble)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.

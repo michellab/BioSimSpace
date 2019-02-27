@@ -483,6 +483,9 @@ class Namd(_process.Process):
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
+        # Flag that this isn't a custom protocol.
+        self._protocol._setCustomised(False)
+
     def start(self):
         """Start the NAMD process.
 

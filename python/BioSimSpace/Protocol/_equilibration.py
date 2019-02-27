@@ -122,17 +122,23 @@ class Equilibration(_Protocol):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r>"
-               ) % (self._timestep, self._runtime, self._temperature_start,
-                       self._temperature_end, self._frames, self._ensemble, self._is_restrained)
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
+                    "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r>"
+                   ) % (self._timestep, self._runtime, self._temperature_start,
+                        self._temperature_end, self._frames, self._ensemble, self._is_restrained)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r)"
-               ) % (self._timestep, self._runtime, self._temperature_start,
-                       self._temperature_end, self._frames, self._ensemble, self._is_restrained)
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
+                    "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r)"
+                   ) % (self._timestep, self._runtime, self._temperature_start,
+                        self._temperature_end, self._frames, self._ensemble, self._is_restrained)
 
     def getTimeStep(self):
         """Return the time step.

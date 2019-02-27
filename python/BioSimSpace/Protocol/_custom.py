@@ -46,6 +46,14 @@ class Custom(_Protocol):
         # Set the protocol configuration.
         self.setConfig(config)
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Protocol.Custom>"
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "<BioSimSpace.Protocol.Custom>"
+
     def getConfig(self):
         """Return the custom configuration.
 

@@ -516,6 +516,9 @@ class Gromacs(_process.Process):
         # Set the configuration.
         self.setConfig(config)
 
+        # Flag that this isn't a custom protocol.
+        self._protocol._setCustomised(False)
+
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
 
