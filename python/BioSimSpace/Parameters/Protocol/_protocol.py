@@ -357,13 +357,11 @@ def _find_force_field(forcefield):
     # Search the old force fields. First try a specific match.
     if len(ff) == 0:
         ff = _IO.glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
+        is_old = True
 
         # No matches, try globbing all files with matching extension.
         if len(ff) == 0:
             ff = _IO.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
-
-            if len(ff) > 0:
-                is_old = True
 
     # No force field found!
     if len(ff) == 0:
