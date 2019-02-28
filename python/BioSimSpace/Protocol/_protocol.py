@@ -37,3 +37,20 @@ class Protocol():
 	# Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
+
+        # Flag that the protocol hasn't been customised.
+        self._is_customised = False
+
+    def _setCustomised(self, is_customised):
+        """Internal function to flag whether a protocol has been customised.
+
+           Parameters
+           ----------
+
+           is_customised : bool
+               Whether the protocol has been customised.
+        """
+        if type(is_customised) is not bool:
+            raise TypeError("'is_customised' must be of type 'bool'.")
+
+        self._is_customised = is_customised

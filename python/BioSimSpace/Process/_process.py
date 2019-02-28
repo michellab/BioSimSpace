@@ -688,6 +688,9 @@ class Process():
         else:
             raise ValueError("'config' must be a list of strings, or a file path.")
 
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
     def addToConfig(self, config):
         """Add a string to the configuration list.
 
@@ -723,12 +726,18 @@ class Process():
         else:
             raise ValueError("'config' must be a string, list of strings, or a file path.")
 
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
     def resetConfig(self):
         """Reset the configuration parameters."""
         self._generate_config()
 
         # Write the new configuration file.
         self.writeConfig(self._config_file)
+
+        # Reset the customisation state of the protocol.
+        self._protocol._setCustomised(False)
 
     def writeConfig(self, file):
         """Write the configuration to file.

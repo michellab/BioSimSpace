@@ -50,11 +50,17 @@ class Minimisation(_Protocol):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
 
     def getSteps(self):
         """Return the maximum number of steps.
