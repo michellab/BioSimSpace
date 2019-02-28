@@ -140,7 +140,8 @@ def formatInfo(format):
         return None
 
 def readPDB(id, property_map={}):
-    """Read a molecular system from a PDB ID in the RSCB PDB website.
+    """Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
+       website.
 
        Parameters
        ----------
