@@ -35,7 +35,7 @@ from . import Protocol as _Protocol
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["parameterise", "ff99", "ff99SB", "ff14SB", "gaff", "gaff2", "forceFields"]
+__all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "gaff2", "forceFields"]
 
 def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
     """Parameterise a molecule using a specified force field.
@@ -171,6 +171,56 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
 
     # Create a default protocol.
     protocol = _Protocol.FF99SB(property_map=property_map)
+
+    # Run the parameterisation protocol in the background and return
+    # a handle to the thread.
+    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+
+def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
+    """Parameterise using the ff99SBildn force field.
+
+       Parameters
+       ----------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule to parameterise.
+
+       options : dict
+           A dictionary of keyword options to override the protocol defaults.
+
+       work_dir : str
+           The working directory for the process.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+       Returns
+       -------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The parameterised molecule.
+    """
+
+    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
+                                    "Please install AMBER (http://ambermd.org) "
+                                    "or GROMACS (http://www.gromacs.org).")
+
+    # Validate arguments.
+
+    if type(molecule) is not _Molecule:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(options) is not dict:
+        raise TypeError("'options' must be of type 'dict'")
+
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
+
+    # Create a default protocol.
+    protocol = _Protocol.FF99SBILDN(property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
