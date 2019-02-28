@@ -98,11 +98,13 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()
 
             # No system.
             if system is None:
                 return
+            else:
+                system = system._getSireSystem()
 
         else:
             system = self._handle
