@@ -74,6 +74,23 @@ Classes
     :toctree: generated/
 
     View
+
+Examples
+--------
+
+Load and visualise a molecular system.
+
+.. image:: ../../../doc/source/_static/view_01.png
+   :width: 800px
+   :align: center
+
+Attach a :class:`View <BioSimSpace.Notebook.View>` to a running molecular
+dynamics `Process <BioSimSpace.Process>` and visualise the first molecule in
+the system from the latest configuration in real-time.
+
+.. image:: ../../../doc/source/_static/view_02.png
+   :width: 800px
+   :align: center
 """
 
 from ._plot import *
