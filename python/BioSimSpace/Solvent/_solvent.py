@@ -396,7 +396,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
                             "or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
-        if type(molecule) is _System and box is None:
+        if type(molecule) is _System and box is None and shell is None:
             try:
                 prop = property_map.get("space", "space")
                 box = molecule.property(prop).dimensions()
@@ -406,7 +406,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
                 raise ValueError("The system has no box information. Please use "
                                  "the 'box' keyword argument.")
         else:
-            if box is None:
+            if box is None and shell is None:
                 raise ValueError("Missing 'box' keyword argument!")
     else:
         _molecule = None
@@ -429,6 +429,17 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         if type(shell) is not _Length:
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
+        if box is not None:
+            _warnings.warn("Ignoring 'box' keyword argument as 'shell' takes precendence.")
+
+        # Work out the box size based on the shell.
+        aabb_box = 2 * molecule._getAABox().halfExtents()
+
+        # Create a box that is the shell thickness larger in each dimension.
+        box = []
+        for dim in aabb_box:
+            box.append(_Length(dim, "A") + shell)
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -446,7 +457,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
     # Check that the box is large enough to hold the molecule.
-    if molecule is not None and not _check_box_size(molecule, box, property_map):
+    if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
         raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
     return (_molecule, box, shell, work_dir, property_map)
@@ -550,8 +561,8 @@ def _solvate(molecule, box, shell, model, num_point,
             # Add the box information.
             if box is not None:
                 command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                            box[1].nanometers().magnitude(),
-                                            box[2].nanometers().magnitude())
+                                               box[1].nanometers().magnitude(),
+                                               box[2].nanometers().magnitude())
 
             # Add the shell information.
             if shell is not None:
@@ -560,8 +571,8 @@ def _solvate(molecule, box, shell, model, num_point,
         # Just add box information.
         else:
             command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                        box[1].nanometers().magnitude(),
-                                        box[2].nanometers().magnitude())
+                                           box[1].nanometers().magnitude(),
+                                           box[2].nanometers().magnitude())
 
         # Add the output file.
         command += " -o output.gro"
@@ -692,134 +703,154 @@ def _solvate(molecule, box, shell, model, num_point,
             stdout.close()
             stderr.close()
 
+            # Flag whether to break out of the ion adding stage.
+            is_break = False
+
             # Check for the tpr output file.
             if not _os.path.isfile("ions.tpr"):
-                raise RuntimeError("'gmx grommp' failed to generate output! "
-                                   "Perhaps your box is too small?")
-
-            # The ion concentration is unset.
-            if ion_conc == 0:
-                # Get the current molecular charge.
-                charge = system.charge()
-
-                # Round to the nearest integer value.
-                charge = round(charge.magnitude())
-
-                # Create the genion command.
-                command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
-
-                # Add enough counter ions to neutralise the charge.
-                if charge > 0:
-                    command += " -nn %d" % abs(charge)
+                if shell is None:
+                    raise RuntimeError("'gmx grommp' failed to generate output! "
+                                       "Perhaps your box is too small?")
                 else:
-                    command += " -np %d" % abs(charge)
-            else:
-                # Create the genion command.
-                command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
-                    % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
+                    is_break = True
+                    _warnings.warn("Unable to achieve target ion concentration, try using "
+                                   "'box' option instead of 'shell'.")
 
-            with open("README.txt", "a") as file:
-                # Write the command to file.
-                file.write("\n# gmx genion was run with the following command:\n")
-                file.write("%s\n" % command)
+            # Only continue if grommp was successful. This allows us to skip the remainder
+            # of the code if the ion addition failed when the 'shell' option was chosen, i.e.
+            # because the estimated simulation box was too small.
+            if not is_break:
+                is_break = False
 
-            # Create files for stdout/stderr.
-            stdout = open("genion.out", "w")
-            stderr = open("genion.err", "w")
+                # The ion concentration is unset.
+                if ion_conc == 0:
+                    # Get the current molecular charge.
+                    charge = system.charge()
 
-            # Run genion as a subprocess.
-            proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-            stdout.close()
-            stderr.close()
+                    # Round to the nearest integer value.
+                    charge = round(charge.magnitude())
 
-            # Check for the tpr output file.
-            if not _os.path.isfile("solvated_ions.gro"):
-                raise RuntimeError("'gmx genion' failed to add ions! Perhaps your box is too small?")
+                    # Create the genion command.
+                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
 
-            # Counters for the number of SOL, NA, and CL atoms.
-            num_sol = 0
-            num_na = 0
-            num_cl = 0
-
-            # We now need to loop through the GRO file to extract the lines
-            # corresponding to water or ion atoms.
-            water_ion_lines = []
-
-            with open("solvated_ions.gro", "r") as file:
-                for line in file:
-                    # This is a Sodium atom.
-                    if _re.search("NA", line):
-                        water_ion_lines.append(line)
-                        num_na += 1
-
-                    # This is a Chlorine atom.
-                    if _re.search("CL", line):
-                        water_ion_lines.append(line)
-                        num_cl += 1
-
-                    # This is a water atom.
-                    elif _re.search("SOL", line):
-                        water_ion_lines.append(line)
-                        num_sol += 1
-
-            # Add any box information. This is the last line in the GRO file.
-            water_ion_lines.append(line)
-
-            # Write a GRO file that contains only the water and ion atoms.
-            if len(water_ion_lines) - 1 > 0:
-                with open("water_ions.gro", "w") as file:
-                    file.write("BioSimSpace %s water box\n" % model.upper())
-                    file.write("%d\n" % (len(water_ion_lines)-1))
-
-                    for line in water_ion_lines:
-                        file.write("%s" % line)
-
-            # Ions have been added. Update the TOP file fo the water model
-            # with the new atom counts.
-            if num_na > 0 or num_cl > 0:
-                with open("water_ions.top", "w") as file:
-                    file.write("#define FLEXIBLE 1\n\n")
-                    file.write("; Include AmberO3 force field\n")
-                    file.write('#include "amber03.ff/forcefield.itp"\n\n')
-                    file.write("; Include %s water topology\n" % model.upper())
-                    file.write('#include "amber03.ff/%s.itp"\n\n' % model)
-                    file.write("; Include ions\n")
-                    file.write('#include "amber03.ff/ions.itp"\n\n')
-                    file.write("[ system ] \n")
-                    file.write("BioSimSpace %s water box\n\n" % model.upper())
-                    file.write("[ molecules ] \n")
-                    file.write(";molecule name    nr.\n")
-                    file.write("SOL               %d\n" % (num_sol / num_point))
-                    if num_na > 0:
-                        file.write("NA                %d\n" % num_na)
-                    if num_cl > 0:
-                        file.write("CL                %d\n" % num_cl)
-
-            # Load the water/ion box.
-            water_ions = _IO.readMolecules(["water_ions.gro", "water_ions.top"])
-
-            # Create a new system by adding the water to the original molecule.
-            if molecule is not None:
-
-                if type(molecule) is _System:
-                    # Extract the non-water molecules from the original system.
-                    non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
-
-                    # Create a system by adding these to the water and ion
-                    # molecules from gmx solvate, which will include the
-                    # original waters.
-                    system = _System(non_waters + water_ions.getMolecules())
+                    # Add enough counter ions to neutralise the charge.
+                    if charge > 0:
+                        command += " -nn %d" % abs(charge)
+                    else:
+                        command += " -np %d" % abs(charge)
                 else:
-                    system = molecule + water_ions.getMolecules()
+                    # Create the genion command.
+                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
+                        % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
 
-                # Add all of the water molecules' properties to the new system.
-                for prop in water_ions._sire_system.propertyKeys():
-                    prop = property_map.get(prop, prop)
+                with open("README.txt", "a") as file:
+                    # Write the command to file.
+                    file.write("\n# gmx genion was run with the following command:\n")
+                    file.write("%s\n" % command)
 
-                    # Add the space property from the water system.
-                    system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
-            else:
-                system = water_ions
+                # Create files for stdout/stderr.
+                stdout = open("genion.out", "w")
+                stderr = open("genion.err", "w")
+
+                # Run genion as a subprocess.
+                proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+                stdout.close()
+                stderr.close()
+
+                # Check for the output GRO file.
+                if not _os.path.isfile("solvated_ions.gro"):
+                    if shell is None:
+                        raise RuntimeError("'gmx genion' failed to add ions! Perhaps your box is too small?")
+                    else:
+                        is_break = True
+                        _warnings.warn("Unable to achieve target ion concentration, try using "
+                                       "'box' option instead of 'shell'.")
+
+                if not is_break:
+                    # Counters for the number of SOL, NA, and CL atoms.
+                    num_sol = 0
+                    num_na = 0
+                    num_cl = 0
+
+                    # We now need to loop through the GRO file to extract the lines
+                    # corresponding to water or ion atoms.
+                    water_ion_lines = []
+
+                    with open("solvated_ions.gro", "r") as file:
+                        for line in file:
+                            # This is a Sodium atom.
+                            if _re.search("NA", line):
+                                water_ion_lines.append(line)
+                                num_na += 1
+
+                            # This is a Chlorine atom.
+                            if _re.search("CL", line):
+                                water_ion_lines.append(line)
+                                num_cl += 1
+
+                            # This is a water atom.
+                            elif _re.search("SOL", line):
+                                water_ion_lines.append(line)
+                                num_sol += 1
+
+                    # Add any box information. This is the last line in the GRO file.
+                    water_ion_lines.append(line)
+
+                    # Write a GRO file that contains only the water and ion atoms.
+                    if len(water_ion_lines) - 1 > 0:
+                        with open("water_ions.gro", "w") as file:
+                            file.write("BioSimSpace %s water box\n" % model.upper())
+                            file.write("%d\n" % (len(water_ion_lines)-1))
+
+                            for line in water_ion_lines:
+                                file.write("%s" % line)
+
+                    # Ions have been added. Update the TOP file fo the water model
+                    # with the new atom counts.
+                    if num_na > 0 or num_cl > 0:
+                        with open("water_ions.top", "w") as file:
+                            file.write("#define FLEXIBLE 1\n\n")
+                            file.write("; Include AmberO3 force field\n")
+                            file.write('#include "amber03.ff/forcefield.itp"\n\n')
+                            file.write("; Include %s water topology\n" % model.upper())
+                            file.write('#include "amber03.ff/%s.itp"\n\n' % model)
+                            file.write("; Include ions\n")
+                            file.write('#include "amber03.ff/ions.itp"\n\n')
+                            file.write("[ system ] \n")
+                            file.write("BioSimSpace %s water box\n\n" % model.upper())
+                            file.write("[ molecules ] \n")
+                            file.write(";molecule name    nr.\n")
+                            file.write("SOL               %d\n" % (num_sol / num_point))
+                            if num_na > 0:
+                                file.write("NA                %d\n" % num_na)
+                            if num_cl > 0:
+                                file.write("CL                %d\n" % num_cl)
+
+                    # Load the water/ion box.
+                    water_ions = _IO.readMolecules(["water_ions.gro", "water_ions.top"])
+
+                    # Create a new system by adding the water to the original molecule.
+                    if molecule is not None:
+
+                        if type(molecule) is _System:
+                            # Extract the non-water molecules from the original system.
+                            non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+
+                            # Create a system by adding these to the water and ion
+                            # molecules from gmx solvate, which will include the
+                            # original waters.
+                            system = _System(non_waters + water_ions.getMolecules())
+                        else:
+                            system = molecule + water_ions.getMolecules()
+
+                        # Add all of the water molecules' properties to the new system.
+                        for prop in water_ions._sire_system.propertyKeys():
+                            prop = property_map.get(prop, prop)
+
+                            # Add the space property from the water system.
+                            system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
+                    else:
+                        system = water_ions
 
         # Store the name of the water model as a system property.
         system._sire_system.setProperty("water_model", _SireBase.wrap(model))
