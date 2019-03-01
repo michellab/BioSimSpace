@@ -859,7 +859,7 @@ class Gromacs(_process.Process):
             return None
 
         else:
-            return self.getRecord("TIME", time_series, _Units.Time.nanosecond, block)
+            return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
@@ -1658,6 +1658,10 @@ class Gromacs(_process.Process):
     def _update_stdout_dict(self):
         """Update the dictonary of thermodynamic records."""
 
+        # Exit if log file hasn't been created.
+        if not _os.path.isfile(self._log_file):
+            return
+
         # A list of the new record lines.
         lines = []
 
@@ -1823,6 +1827,8 @@ class Gromacs(_process.Process):
             try:
                 if key is "STEP":
                     return [int(x) for x in self._stdout_dict[key]]
+                elif key is "TIME":
+                    return [(float(x) * unit).nanoseconds() for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
@@ -1837,6 +1843,8 @@ class Gromacs(_process.Process):
             try:
                 if key is "STEP":
                     return int(self._stdout_dict[key][-1])
+                elif key is "TIME":
+                    return (float(self._stdout_dict[key][-1]) * unit).nanoseconds()
                 else:
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
