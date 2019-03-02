@@ -720,7 +720,8 @@ class Node():
         self._outputs[name] = output
 
         # Update the parser description.
-        self._parser.description = self._generate_description()
+        if not self._is_notebook:
+            self._parser.description = self._generate_description()
 
     def setOutput(self, name, value):
         """Set the value of an output.
