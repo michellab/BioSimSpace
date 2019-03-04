@@ -99,7 +99,7 @@ box of pure SPC/E water.
 
    import BioSimSpace as BSS
 
-   water = BSS.Solvate.spce(box=3*[50*BSS.Units.Length.angstrom])
+   water = BSS.Solvent.spce(box=3*[50*BSS.Units.Length.angstrom])
 """
 
 from ._solvent import *
