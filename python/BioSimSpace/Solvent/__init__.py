@@ -64,8 +64,8 @@ periodic box of TIP3P water with an ion concentration of 0.1 mol per litre.
 
 The same as above, but instead passing "TIP3P" as an argument to the
 :class:`solvate <BioSimSpace.Solvent.solvate>` function. This function should
-be used in interoperable workflow nodes, where the water model is specified
-as an input requirement by the user.
+be used in any interoperable workflow :class:`Node <BioSimSpace.Gateway.Node>`
+where the water model is specified as an input requirement by the user.
 
 .. code-block:: python
 
