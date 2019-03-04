@@ -40,7 +40,7 @@ from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
 
-__all__ = ["FF03", "FF99", "FF99SB", "FF14SB", "GAFF", "GAFF2"]
+__all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
@@ -106,7 +106,28 @@ class FF99SB(_protocol.Protocol):
 
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = True
+
+class FF99SBILDN(_protocol.Protocol):
+    """A class for handling protocols for the FF99SBILDN force field model."""
+
+    def __init__(self, property_map={}):
+        """Constructor.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Call the base class constructor.
+        super().__init__(forcefield="ff99SBildn", property_map=property_map)
+
+        # Set the compatibility flags.
+        self._tleap = True
+        self._pdb2gmx = False
 
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""

@@ -70,25 +70,6 @@ __all__ = ["Node"]
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
 
-class _OutputAction(_argparse.Action):
-    """Helper class for printing node output requirements."""
-
-    def __init__(self,
-		 option_strings,
-		 dest=_argparse.SUPPRESS,
-		 default=_argparse.SUPPRESS,
-		 help=None):
-        super(_OutputAction, self).__init__(
-	      option_strings=option_strings,
-              dest=dest,
-              default=default,
-              nargs=0,
-              help=help)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        parser._print_output()
-        parser.exit()
-
 class Node():
     """A class for interfacing with BioSimSpace nodes.
 
@@ -185,20 +166,19 @@ class Node():
 
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
+            # Generate the node help description.
+            description = self._generate_description()
+
             # Create the parser.
-            description = "\n".join(_textwrap.wrap(self._description, 80))
             self._parser = _argparse.ArgumentParser(description=description,
                 formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
-                config_file_parser_class=_argparse.YAMLConfigFileParser)
-
-            # Bind _print_output method to parser.
-            self._parser._print_output = self._print_output
+                config_file_parser_class=_argparse.YAMLConfigFileParser,
+                add_config_file_help=False)
 
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
-            self._optional.add_argument("-o", "--output", action=_OutputAction, help="Show the output of this node.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
 
     def __del__(self):
@@ -739,6 +719,10 @@ class Node():
         # Add the output to the dictionary.
         self._outputs[name] = output
 
+        # Update the parser description.
+        if not self._is_notebook:
+            self._parser.description = self._generate_description()
+
     def setOutput(self, name, value):
         """Set the value of an output.
 
@@ -1113,7 +1097,7 @@ class Node():
         """
 
         # Initialise the help string.
-        help = "\n".join(_textwrap.wrap(input.getHelp(), 80))
+        help = "\n".join(_textwrap.wrap(input.getHelp(), 56))
 
         # Get the unit.
         units = input.getUnit()
@@ -1145,8 +1129,9 @@ class Node():
 
         return help
 
-    def _print_output(self):
-        """Print the output requirements of the node.
+    def _generate_description(self):
+        """Generate a formatted output section for the argparse help description.
+
            Returns
            -------
 
@@ -1154,15 +1139,37 @@ class Node():
                A string listing the output requirements.
         """
 
+        string = "\n".join(_textwrap.wrap(self._description, 80))
+
+        yaml_help = ("Args that start with '--' (e.g. --arg) can also be set "
+                     "in a config file (specified via -c). The config file uses "
+                     "YAML syntax and must represent a YAML 'mapping' "
+                     "(for details, see http://learn.getgrav.org/advanced/yaml). "
+                     "If an arg is specified in more than one place, then "
+                     "commandline values override config file values which "
+                     "override defaults."
+                    )
+
+        string += "\n\n" + "\n".join(_textwrap.wrap(yaml_help, 80))
+
         # Initialise the output string.
-        string = "This node outputs the following...\n"
+        string += "\n\nOutput:\n"
 
         # Add documentation for each output.
         for name, output in self._outputs.items():
-            s = "  %s: %s, '%s'" % (name, output.__class__.__name__, output.getHelp())
-            string += "\n".join(_textwrap.wrap(s, 80)) + "\n"
+            num_whitespace = 19 - len(output.__class__.__name__) - len(name)
+            s = "  %s: %s " % (name, output.__class__.__name__)
+            for i, line in enumerate(_textwrap.wrap(output.getHelp(), 56)):
+                if i == 0:
+                    for x in range(0, num_whitespace):
+                        s += " "
+                else:
+                    for x in range(0, 24):
+                        s += " "
+                s +=  line + "\n"
+            string += s
 
-        print(string, end="")
+        return string
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
