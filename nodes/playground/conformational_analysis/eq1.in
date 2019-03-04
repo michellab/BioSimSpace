@@ -1,0 +1,5 @@
+#Step 1: restrained minimisation
+ &cntrl
+  imin=1,maxcyc=1000,ncyc=100, drms=0.1, ntr=1, 
+  restraintmask="!:WAT" restraint_wt=50
+ /

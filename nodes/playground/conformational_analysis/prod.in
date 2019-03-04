@@ -1,0 +1,9 @@
+#Production run: 1 micros of NVT dynamics 
+ &cntrl
+  ig=-1, imin=0, ntpr=1000, ntwx=2500, ntwe=1000, 
+  irest=1, ntx=5, gamma_ln=0.2,
+  ntwr=100, nstlim=25000, ntb=1, 
+  ntf=2, ntc=2, ntp=0, ntt=3,
+  temp0=318, dt=0.002,ioutfm=1,iwrap=1
+ /
+
