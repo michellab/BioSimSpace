@@ -61,7 +61,7 @@ Assuming the default installation path, this will install Sire into ``$HOME/sire
 
    git clone https://github.com/michellab/BioSimSpace
    cd BioSimSpace/python
-   $HOME/sire.app/bin/python setup,py install
+   $HOME/sire.app/bin/python setup.py install
 
 Once finished, you can test the installation by running:
 
