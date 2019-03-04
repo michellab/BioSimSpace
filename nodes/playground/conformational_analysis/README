@@ -1,0 +1,4 @@
+The following will run the conformational analysis:
+ ~/sire.app/bin/python Conformational_analysis.py --file 2-cyclopentanylindole.mol2 --forcefiled gaff --water tip3p --box_size 5 --minimise eq1.in --step2 eq2.in --step3 eq3.in --step4 eq4.in --step5 eq5.in --production prod.in --cpptraj cpptraj.in --cpptraj_exec /home/ppxasjsm/Software/amber18/bin/cpptraj --exe /home/ppxasjsm/Software/amber18/bin/sander
+
+Change the paths of the executables where necessary. 

@@ -1,0 +1,5 @@
+#Equilibration step 4: MD on protein side chains 
+ &cntrl
+  ig=-1,  imin=0, ntr=1, nstlim=1000, dt=0.002, ntwe=500, ntb=2, ntp=1, ntt=3, gamma_ln=0.2, temp0 = 318, ntf=2, ntc=2, irest=1, ntx=5 restraint_wt=5, restraintmask=":LIG",ioutfm=1,
+/
+

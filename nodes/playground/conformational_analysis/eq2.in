@@ -1,0 +1,5 @@
+#Step 2: restrained minimisation
+ &cntrl
+  imin=1,maxcyc=1000,ncyc=100, cut=8.0, ntb=1, ntc=2, ntf=2, drms=0.1, ntr=0
+ /
+
