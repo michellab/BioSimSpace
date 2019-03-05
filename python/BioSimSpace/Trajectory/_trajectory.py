@@ -375,7 +375,7 @@ class Trajectory():
         else:
             return self._trajectory.n_frames
 
-    def RMSD(self, frame=None, atoms=None, molecule=None):
+    def rmsd(self, frame=None, atoms=None, molecule=None):
         """Compute the root mean squared displacement.
 
            Parameters
