@@ -31,10 +31,72 @@ Functions
     parameterise
     ff99
     ff99SB
+    ff99SBildn
     ff14SB
     gaff
     gaff2
     forceFields
+
+Examples
+--------
+
+Print the list of the supported force fields.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   print(BSS.Parameters.forceFields())
+
+Parameterise a molecule using GAFF.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/benzene.pdb")
+
+   # Initialise the parameterisation process. This will run the parameterisation
+   # in the background. This is useful when you are working interactively and
+   # wish to continue doing other things while the parameterisation runs.
+   # (Parameterisation can be slow.)
+   process = BSS.Parameters.gaff(molecule)
+
+   # Get the parameterised molecule. This will now block until the
+   # parameterisation is finished.
+   molecule = process.getMolecule()
+
+The same as above, but immediately getting the parameterised molecule from
+the process object, i.e. not saving it as an intermediate variable.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/benzene.pdb")
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.gaff(molecule).getMolecule()
+
+The same as above, but instead passing "GAFF" as an argument to the
+:class:`parameterise <BioSimSpace.Parameters.parameterise>` function. This
+function should be used in any interoperable workflow
+:class:`Node <BioSimSpace.Gateway.Node>` where the force field is specified
+as an input requirement by the user.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/benzene.pdb")
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.parameterise(molecule, "gaff").getMolecule()
 """
 
 from ._parameters import *
