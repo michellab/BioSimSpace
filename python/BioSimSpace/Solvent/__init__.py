@@ -54,7 +54,7 @@ periodic box of TIP3P water with an ion concentration of 0.1 mol per litre.
 
    import BioSimSpace as BSS
 
-   # Load a molecule from file.
+   # Load a system and extract the first molecule.
    molecule = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*")).getMolecules()[0]
 
    # Solvate the molecule.
@@ -71,7 +71,7 @@ where the water model is specified as an input requirement by the user.
 
    import BioSimSpace as BSS
 
-   # Load a molecule from file.
+   # Load a system and extract the first molecule.
    molecule = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*")).getMolecules()[0]
 
    # Solvate the molecule.
@@ -85,7 +85,7 @@ Solvate the molecule with a shell of at least 2 nanometers of SPC water.
 
    import BioSimSpace as BSS
 
-   # Load a molecule from file.
+   # Load a system and extract the first molecule.
    molecule = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*")).getMolecules()[0]
 
    # Solvate the molecule.
