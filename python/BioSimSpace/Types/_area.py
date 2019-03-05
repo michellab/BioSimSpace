@@ -62,6 +62,9 @@ class Area(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the area, e.g. "30 nm^2".
+
            Parameters
            ----------
 
@@ -252,14 +255,14 @@ class Area(_Type):
         unit = unit.replace(" ", "").upper()
 
         # Replace any occurence of squared with 2.
-        unit = unit.replace("SQUARED", "2").upper()
-        unit = unit.replace("SQUARE", "2").upper()
+        unit = unit.replace("SQUARED", "2")
+        unit = unit.replace("SQUARE", "2")
 
         # Strip "^" character.
-        unit = unit.replace("^", "").upper()
+        unit = unit.replace("^", "")
 
         # Strip any "S" characters.
-        unit = unit.replace("S", "").upper()
+        unit = unit.replace("S", "")
 
         # Fix for ANGSTROM (since it contains an "S").
         if unit[0:3] == "ANG":

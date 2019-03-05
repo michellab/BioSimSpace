@@ -70,6 +70,9 @@ class Length(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the length, e.g. "12 Angstrom".
+
            Parameters
            ----------
 
@@ -256,7 +259,7 @@ class Length(_Type):
         unit = unit.replace(" ", "").upper()
 
         # Strip any "S" characters.
-        unit = unit.replace("S", "").upper()
+        unit = unit.replace("S", "")
 
         # Fix for ANGSTROM (since it contains an "S").
         if unit[0:3] == "ANG":

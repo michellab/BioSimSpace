@@ -58,6 +58,9 @@ class Temperature(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the temperature, e.g. "298 K".
+
            Parameters
            ----------
 
