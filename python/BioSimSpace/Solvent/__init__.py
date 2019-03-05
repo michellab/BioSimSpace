@@ -39,7 +39,7 @@ Functions
 Examples
 --------
 
-Print the list of the supported water models.
+Print the list of supported water models.
 
 .. code-block:: python
 
