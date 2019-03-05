@@ -402,6 +402,12 @@ commiting. When happy, commit your changes, e.g.
 
 Remember that it is better to make small changes and commit frequently.
 
+If your edits don't change to the BioSimSpace source code, or documentation,
+e.g. fixing typos, then please add ``***NO_CI***`` to your commit message.
+This will avoid unnecessarily running the
+`Azure pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`_, e.g.
+building a new BioSimSpace binary, updating the website, etc.
+
 Next, push your changes to the remote server, e.g.
 
 .. code-block:: bash
