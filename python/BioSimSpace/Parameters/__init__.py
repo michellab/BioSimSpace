@@ -38,7 +38,7 @@ Functions
     forceFields
 
 Examples
---------
+========
 
 Print the list of supported force fields.
 

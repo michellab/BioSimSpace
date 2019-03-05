@@ -37,7 +37,7 @@ Functions
     waterModels
 
 Examples
---------
+========
 
 Print the list of supported water models.
 
