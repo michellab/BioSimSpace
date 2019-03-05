@@ -49,6 +49,43 @@ Multi process simulation tools
     :toctree: generated/
 
     ProcessRunner
+
+Examples
+========
+
+Print the list of supported molecular dynamics packages.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   print(BSS.Process.packages())
+
+Create a process to apply a minimisation protocol to a molecular system
+using the `AMBER <http://ambermd.org>`_ package. Execute the process and
+get the minimised molecular system.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecular system from file.
+   system = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*"))
+
+   # Create a minimisation protocol with 1000 steps.
+   protocol = BSS.Protocol.Minimisation(steps=1000)
+
+   # Create a process object to run the simulation with AMBER.
+   process = BSS.Process.Amber(system, protocol)
+
+   # Start the process in the background.
+   process.start()
+
+   # Wait for the process to finish.
+   process.wait()
+
+   # Get the minimised molecular system.
+   minimised = process.getSystem()
 """
 
 from ._amber import *
