@@ -223,6 +223,17 @@ class Process():
         for file in offset_files:
             _os.remove(file)
 
+    def start(self):
+        """Start the process.
+
+           Returns
+           -------
+
+           process : :class:`Process.Amber <BioSimSpace.Process.Amber>`
+               The process object.
+        """
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.start()' is not implemented!" % self.__class__.__name__)
+
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
@@ -946,7 +957,7 @@ class Process():
            system : :class:`System <BioSimSpace._SireWrappers.System>`
                The latest molecular system.
         """
-        return None
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.getSystem()' is not implemented!" % self.__class__.__name__)
 
     def getTrajectory(self, block="AUTO"):
         """Return a trajectory object.
@@ -963,7 +974,7 @@ class Process():
            trajectory : :class:`Trajectory <BioSimSpace.Trajectory.Trajectory>`
                The latest trajectory object.
         """
-        return None
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.getTrajectory()' is not implemented!" % self.__class__.__name__)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
