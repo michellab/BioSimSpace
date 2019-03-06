@@ -83,7 +83,7 @@ finally:
         command = "%s/pip install configargparse" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
-        print("Installing package: pyaml")
+        print("Installing package: pyyaml")
         command = "%s/pip install pyaml" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
