@@ -931,6 +931,40 @@ class Process():
                 else:
                     return self._runtime * _Units.Time.minute
 
+    def getSystem(self, block="AUTO"):
+        """Get the latest molecular system.
+
+           Parameters
+           ----------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The latest molecular system.
+        """
+        return None
+
+    def getTrajectory(self, block="AUTO"):
+        """Return a trajectory object.
+
+           Parameters
+           ----------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory.Trajectory>`
+               The latest trajectory object.
+        """
+        return None
+
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
         self.clearArgs()
