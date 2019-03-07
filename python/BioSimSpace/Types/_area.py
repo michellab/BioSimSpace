@@ -289,6 +289,12 @@ class Area(_Type):
         if unit[0:3] == "ANG":
             unit = "ANGS" + unit[3:]
 
+        # Make sure that the "2" character appears last. This allows the user
+        # to write, e.g. "square nm" or "nm squared".
+        index = unit.find("2")
+        if index != -1:
+            unit = unit[0:index] + unit[index+1:] + "2"
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit

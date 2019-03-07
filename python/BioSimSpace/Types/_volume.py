@@ -242,6 +242,12 @@ class Volume(_Type):
         if unit[0:3] == "ANG":
             unit = "ANGS" + unit[3:]
 
+        # Make sure that the "3" character appears last. This allows the user
+        # to write, e.g. "cube nm" or "nm cubed".
+        index = unit.find("3")
+        if index != -1:
+            unit = unit[0:index] + unit[index+1:] + "3"
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
