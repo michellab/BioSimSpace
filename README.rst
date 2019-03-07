@@ -39,11 +39,26 @@ One downloaded, the binary can be unpacked as follows:
    ./biosimspace_devel_latest_linux.run
 
 Unless a different installation path was given, BioSimSpace can be found in:
-~/biosimspace.app. Using ipython and BioSimSpace can be done by running:
+``$HOME/biosimspace.app``. BioSimSpace comes with a bundled with a Python
+interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`_.
+
+For example, to run a BioSimSpace Python script, use:
 
 .. code-block:: bash
 
-   ~/biosimspace.app/bin/ipython
+   $HOME/biosimspace.app/bin/python script.py
+
+To launch an interactive BioSimSpace session:
+
+.. code-block:: bash
+
+   $HOME/biosimspace.app/bin/ipython
+
+To run a BioSimSpace notebook:
+
+.. code-block:: bash
+
+   $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
 
 2. Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^^^^
