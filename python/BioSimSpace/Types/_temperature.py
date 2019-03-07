@@ -71,7 +71,27 @@ class Temperature(_Type):
                The unit.
 
            string : str
-               A string representation of the volume.
+               A string representation of the temperature.
+
+           Examples
+           --------
+
+           Create an object representing a temperature of 298 Kelvin then
+           print the temperature in Celsius.
+
+           >>> import BioSimSpace as BSS
+           >>> temperature = BSS.Types.Temperature(298, "K")
+           >>> print(temperature.celsius())
+
+           The same as above, except passing a string representation of the
+           temperature to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> time = BSS.Types.Temperature("298 K")
+           >>> print(temperature.celsius())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "298 K", "298 kelvin", "2.98e2 k".
         """
 
         # Call the base class constructor.

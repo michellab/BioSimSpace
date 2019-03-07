@@ -91,6 +91,26 @@ class Time(_Type):
 
            string : str
                A string representation of the time.
+
+           Examples
+           --------
+
+           Create an object representing a time of 17.3 femtoseconds then
+           print the time in nanoseconds.
+
+           >>> import BioSimSpace as BSS
+           >>> time = BSS.Types.Time(17.3, "fs")
+           >>> print(time.nanoseconds())
+
+           The same as above, except passing a string representation of the
+           time to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> time = BSS.Types.Time("17.3 fs")
+           >>> print(time.nanoseconds())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "17.3 fs", "17.3 femtoseconds", "1.73e1 fs".
         """
 
         # Call the base class constructor.

@@ -84,6 +84,26 @@ class Length(_Type):
 
            string : str
                A string representation of the length.
+
+           Examples
+           --------
+
+           Create an object representing a length of 148.6 Angstrom then
+           print the length in nanometers.
+
+           >>> import BioSimSpace as BSS
+           >>> length = BSS.Types.Length(148.6, "A")
+           >>> print(length.nanometers())
+
+           The same as above, except passing a string representation of the
+           length to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> length = BSS.Types.Length("148.6 A")
+           >>> print(length.nanometers())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "148.6 A", "148.6 angstrom", "1.48e2 Angstrom".
         """
 
         # Call the base class constructor.

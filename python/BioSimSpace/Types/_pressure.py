@@ -68,6 +68,26 @@ class Pressure(_Type):
 
            string : str
                A string representation of the pressure.
+
+           Examples
+           --------
+
+           Create an object representing a pressure of 3.1 atmosphere then
+           print the pressure in bar.
+
+           >>> import BioSimSpace as BSS
+           >>> pressure = BSS.Types.Pressure(3.1, "atm")
+           >>> print(pressure.bar())
+
+           The same as above, except passing a string representation of the
+           pressure to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> pressure = BSS.Types.Pressure("3.1 atm")
+           >>> print(pressure.nanoseconds())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "3.1 atm", "3.1 atmosphere", "0.31e1 atm".
         """
 
         # Call the base class constructor.

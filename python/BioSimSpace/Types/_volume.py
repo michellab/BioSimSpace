@@ -76,6 +76,27 @@ class Volume(_Type):
 
            string : str
                A string representation of the volume.
+
+           Examples
+           --------
+
+           Create an object representing a volume of 100 cube nanometers then
+           print the volume in cube Angstrom.
+
+           >>> import BioSimSpace as BSS
+           >>> volume = BSS.Types.Volume(100, "nm^3")
+           >>> print(volume.angstroms3())
+
+           The same as above, except passing a string representation of the
+           volume to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> volume = BSS.Types.Volume("100 nm^3")
+           >>> print(volume.angstroms3())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "100 nm^3", "100 cube nanometers",
+           "100 nanometers cubed".
         """
 
         # Call the base class constructor.

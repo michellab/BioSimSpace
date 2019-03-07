@@ -72,6 +72,27 @@ class Energy(_Type):
 
            string : str
                A string representation of the energy.
+
+           Examples
+           --------
+
+           Create an object representing an energy of -1038 kilo calories per
+           mol and print the energy in kilo joules per mol.
+
+           >>> import BioSimSpace as BSS
+           >>> energy = BSS.Types.Energy(-1038, "kcal/mol")
+           >>> print(energy.kj_per_mol())
+
+           The same as above, except passing a string representation of the
+           energy to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> energy = BSS.Types.Energy("-1038 kcal/mol")
+           >>> print(energy.kj_per_mol())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "-1038 kcal/mol", "-1.038e3 kcal/mol",
+           "-1038 kilo cal per mol".
         """
 
         # Call the base class constructor.

@@ -68,6 +68,27 @@ class Charge(_Type):
 
            string : str
                A string representation of the charge.
+
+           Examples
+           --------
+
+           Create an object representing a charge of 27.8 electron charge
+           print the charge in Coulomb.
+
+           >>> import BioSimSpace as BSS
+           >>> charge = BSS.Types.Charge(27.8, "e")
+           >>> print(charge.coulomb())
+
+           The same as above, except passing a string representation of the
+           charge to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> charge = BSS.Types.Charge("3.1 atm")
+           >>> print(charge.coulomb())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "27.8 e", "27.8 electron charge",
+           "2.78e1 e".
         """
 
         # Call the base class constructor.
