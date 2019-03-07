@@ -23,7 +23,8 @@ Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWe
 
 Installation
 ------------
-
+1. Using the prebuilt binaries (preferred way)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
@@ -37,6 +38,15 @@ One downloaded, the binary can be unpacked as follows:
    chmod +x biosimspace_devel_latest_linux.run
    ./biosimspace_devel_latest_linux.run
 
+Unless a different installation path was given, BioSimSpace can be found in:
+~/biosimspace.app. Using ipython and BioSimSpace can be done by running:
+
+.. code-block:: bash
+
+   ~/biosimspace.app/bin/ipython
+
+2. Installing from source
+^^^^^^^^^^^^^^^^^^^^^^^^^
 Alternatively, to install BioSimSpace from source:
 
 (Before starting, you'll need working `Git <https://git-scm.com>`_ and
