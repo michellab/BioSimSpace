@@ -23,8 +23,10 @@ Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWe
 
 Installation
 ------------
+
 1. Using the prebuilt binaries (preferred way)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
@@ -62,6 +64,7 @@ To run a BioSimSpace notebook:
 
 2. Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Alternatively, to install BioSimSpace from source:
 
 (Before starting, you'll need working `Git <https://git-scm.com>`_ and
@@ -114,6 +117,11 @@ BioSimSpace is via:
 
 This will download the latest BioSimSpace development container, and will run
 it, giving you a bash prompt inside the container.
+
+Developers
+----------
+
+Please follow the `developer's guide <https://biosimspace.org/development.html>`_.
 
 Issues
 ------
