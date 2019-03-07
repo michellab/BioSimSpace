@@ -76,6 +76,27 @@ class Area(_Type):
 
            string : str
                A string representation of the area.
+
+           Examples
+           --------
+
+           Create an object representing an area of 20 square nanometers then
+           print the area in square Angstrom.
+
+           >>> import BioSimSpace as BSS
+           >>> area = BSS.Types.Area(30, "nm^2")
+           >>> print(area.angstrom2())
+
+           The same as above, except passing a string representation of the
+           area to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> area = BSS.Types.Area("30 nm^2")
+           >>> print(area.angstrom2())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "30 nm^2", "30 square nanometers",
+           "30 nanometers squared".
         """
 
         # Call the base class constructor.
