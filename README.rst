@@ -24,6 +24,9 @@ Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWe
 Installation
 ------------
 
+1. Using the prebuilt binaries (preferred way)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
@@ -37,13 +40,38 @@ One downloaded, the binary can be unpacked as follows:
    chmod +x biosimspace_devel_latest_linux.run
    ./biosimspace_devel_latest_linux.run
 
+Unless a different installation path was given, BioSimSpace can be found in:
+``$HOME/biosimspace.app``. BioSimSpace comes with a bundled with a Python
+interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`_.
+
+For example, to run a BioSimSpace Python script, use:
+
+.. code-block:: bash
+
+   $HOME/biosimspace.app/bin/python script.py
+
+To launch an interactive BioSimSpace session:
+
+.. code-block:: bash
+
+   $HOME/biosimspace.app/bin/ipython
+
+To run a BioSimSpace notebook:
+
+.. code-block:: bash
+
+   $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
+
+2. Installing from source
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Alternatively, to install BioSimSpace from source:
 
 (Before starting, you'll need working `Git <https://git-scm.com>`_ and
 `CMake <https://cmake.org>`_ installations.)
 
-1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
-   molecular simulation framework. To download and install Sire:
+BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
+molecular simulation framework. To download and install Sire:
 
 .. code-block:: bash
 
@@ -55,14 +83,14 @@ Assuming the default installation path, this will install Sire into ``$HOME/sire
 
 (Note that the installation is slow and can take in excess of an hour.)
 
-2. Next you will need to download BioSimSpace and install it into your Sire
-   application. (The following assumes the default Sire installation path.)
+Next you will need to download BioSimSpace and install it into your Sire
+application. (The following assumes the default Sire installation path.)
 
 .. code-block:: bash
 
    git clone https://github.com/michellab/BioSimSpace
    cd BioSimSpace/python
-   $HOME/sire.app/bin/python setup,py install
+   $HOME/sire.app/bin/python setup.py install
 
 Once finished, you can test the installation by running:
 
@@ -75,7 +103,6 @@ Then try importing the BioSimSpace package:
 .. code-block:: python
 
    import BioSimSpace as BSS
-
 
 Docker images
 -------------
@@ -90,6 +117,11 @@ BioSimSpace is via:
 
 This will download the latest BioSimSpace development container, and will run
 it, giving you a bash prompt inside the container.
+
+Developers
+----------
+
+Please follow the `developer's guide <https://biosimspace.org/development.html>`_.
 
 Issues
 ------
