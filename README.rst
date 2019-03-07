@@ -70,8 +70,8 @@ Alternatively, to install BioSimSpace from source:
 (Before starting, you'll need working `Git <https://git-scm.com>`_ and
 `CMake <https://cmake.org>`_ installations.)
 
-1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
-   molecular simulation framework. To download and install Sire:
+BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
+molecular simulation framework. To download and install Sire:
 
 .. code-block:: bash
 
@@ -83,8 +83,8 @@ Assuming the default installation path, this will install Sire into ``$HOME/sire
 
 (Note that the installation is slow and can take in excess of an hour.)
 
-2. Next you will need to download BioSimSpace and install it into your Sire
-   application. (The following assumes the default Sire installation path.)
+Next you will need to download BioSimSpace and install it into your Sire
+application. (The following assumes the default Sire installation path.)
 
 .. code-block:: bash
 
