@@ -101,7 +101,6 @@ Then try importing the BioSimSpace package:
 
    import BioSimSpace as BSS
 
-
 Docker images
 -------------
 
