@@ -54,6 +54,9 @@ class Pressure(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the pressure, e.g. "1.38 bar".
+
            Parameters
            ----------
 

@@ -31,7 +31,7 @@ Functions
     plot
 
 Examples
---------
+========
 
 Generate a line graph using two lists of data.
 

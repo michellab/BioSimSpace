@@ -58,6 +58,9 @@ class Energy(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the energy, e.g. "78.4 kcal/mol".
+
            Parameters
            ----------
 

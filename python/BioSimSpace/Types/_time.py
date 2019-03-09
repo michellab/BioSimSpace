@@ -77,6 +77,9 @@ class Time(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the time, e.g. "0.2 fs".
+
            Parameters
            ----------
 

@@ -38,9 +38,9 @@ Functions
     forceFields
 
 Examples
---------
+========
 
-Print the list of the supported force fields.
+Print the list of supported force fields.
 
 .. code-block:: python
 

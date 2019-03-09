@@ -62,6 +62,9 @@ class Area(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the area, e.g. "30 nm^2".
+
            Parameters
            ----------
 
@@ -73,6 +76,27 @@ class Area(_Type):
 
            string : str
                A string representation of the area.
+
+           Examples
+           --------
+
+           Create an object representing an area of 20 square nanometers then
+           print the area in square Angstrom.
+
+           >>> import BioSimSpace as BSS
+           >>> area = BSS.Types.Area(30, "nm^2")
+           >>> print(area.angstrom2())
+
+           The same as above, except passing a string representation of the
+           area to the constructor.
+
+           >>> import BioSimSpace as BSS
+           >>> area = BSS.Types.Area("30 nm^2")
+           >>> print(area.angstrom2())
+
+           The string matching is extremeley flexible, so all of the following
+           would be valid arguments: "30 nm^2", "30 square nanometers",
+           "30 nanometers squared".
         """
 
         # Call the base class constructor.
@@ -252,18 +276,24 @@ class Area(_Type):
         unit = unit.replace(" ", "").upper()
 
         # Replace any occurence of squared with 2.
-        unit = unit.replace("SQUARED", "2").upper()
-        unit = unit.replace("SQUARE", "2").upper()
+        unit = unit.replace("SQUARED", "2")
+        unit = unit.replace("SQUARE", "2")
 
         # Strip "^" character.
-        unit = unit.replace("^", "").upper()
+        unit = unit.replace("^", "")
 
         # Strip any "S" characters.
-        unit = unit.replace("S", "").upper()
+        unit = unit.replace("S", "")
 
         # Fix for ANGSTROM (since it contains an "S").
         if unit[0:3] == "ANG":
             unit = "ANGS" + unit[3:]
+
+        # Make sure that the "2" character appears last. This allows the user
+        # to write, e.g. "square nm" or "nm squared".
+        index = unit.find("2")
+        if index != -1:
+            unit = unit[0:index] + unit[index+1:] + "2"
 
         # Check that the unit is supported.
         if unit in self._supported_units:

@@ -146,7 +146,7 @@ class Amber(_process.Process):
            system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : :class:`Protocl <BioSimSpace.Protocol>`
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The protocol for the AMBER process.
 
            exe : str

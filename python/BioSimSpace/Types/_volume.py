@@ -62,6 +62,9 @@ class Volume(_Type):
     def __init__(self, *args):
         """Constructor.
 
+           ``*args`` can be a magnitude and unit, or a string representation
+           of the volume, e.g. "100 pm^3".
+
            Parameters
            ----------
 
@@ -226,18 +229,24 @@ class Volume(_Type):
         unit = unit.replace(" ", "").upper()
 
         # Replace any occurence of cubed with 3.
-        unit = unit.replace("CUBED", "3").upper()
-        unit = unit.replace("CUBE", "3").upper()
+        unit = unit.replace("CUBED", "3")
+        unit = unit.replace("CUBE", "3")
 
         # Strip "^" character.
-        unit = unit.replace("^", "").upper()
+        unit = unit.replace("^", "")
 
         # Strip any "S" characters.
-        unit = unit.replace("S", "").upper()
+        unit = unit.replace("S", "")
 
         # Fix for ANGSTROM (since it contains an "S").
         if unit[0:3] == "ANG":
             unit = "ANGS" + unit[3:]
+
+        # Make sure that the "3" character appears last. This allows the user
+        # to write, e.g. "cube nm" or "nm cubed".
+        index = unit.find("3")
+        if index != -1:
+            unit = unit[0:index] + unit[index+1:] + "3"
 
         # Check that the unit is supported.
         if unit in self._supported_units:
