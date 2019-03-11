@@ -26,6 +26,7 @@ Functionality for aligning molecules.
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
+from .._Exceptions import AlignmentError as _AlignmentError
 from .._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.Units as _Units
@@ -172,6 +173,11 @@ def matchAtoms(molecule0,
         for idx0, idx1 in prematch.items():
             if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
                 raise TypeError("'prematch' dictionary key:value pairs must be of type 'Sire.Mol.AtomIdx'")
+            if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
+               idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
+                raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                                 "The molecules contain %d and %d atoms."
+                                 % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
     if type(timeout) is not _Units.Time._Time:
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
@@ -323,6 +329,11 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
             for idx0, idx1 in mapping.items():
                 if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
                     raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
+                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
+                    raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                                     "The molecules contain %d and %d atoms."
+                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
     # Get the best match atom mapping.
     else:
@@ -334,7 +345,10 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     mol1 = molecule1._getSireMolecule()
 
     # Perform the alignment, mol0 to mol1.
-    mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(mapping)).molecule()
+    try:
+        mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(mapping)).molecule()
+    except:
+        raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
 
     # Return the aligned molecule.
     return _Molecule(mol0)
@@ -412,6 +426,11 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
             for idx0, idx1 in mapping.items():
                 if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
                     raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
+                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
+                    raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                                     "The molecules contain %d and %d atoms."
+                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
@@ -461,7 +480,10 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     for mapping in mappings:
         # Align molecule0 to molecule1 based on the mapping.
         if is_align:
-            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+            try:
+                molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+            except:
+                raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
 
         # We now compute the RMSD between the coordinates of the matched atoms
         # in molecule0 and molecule1.

@@ -61,7 +61,7 @@ node.showControls()
 system = BSS.IO.readMolecules(node.getInput("input"))
 
 
-# In[ ]:
+# In[8]:
 
 
 system = BSS.Solvent.solvate(node.getInput("water"), molecule=system,
@@ -69,13 +69,13 @@ system = BSS.Solvent.solvate(node.getInput("water"), molecule=system,
                                                      ion_conc=node.getInput("ion_conc"))
 
 
-# In[ ]:
+# In[9]:
 
 
-node.setOutput("nodeoutput", BSS.IO.saveMolecules("system", system, ["prm7", "rst7"]))
+node.setOutput("nodeoutput", BSS.IO.saveMolecules(node.getInput("output"), system, ["prm7", "rst7"]))
 
 
-# In[ ]:
+# In[10]:
 
 
 node.validate()

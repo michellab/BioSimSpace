@@ -8,14 +8,15 @@
 # # PrepareFEP
 # Loads a pair of input files, perform mapping between the first molecule of each input. Write down input files for a SOMD FEP calculation.
 
-# In[15]:
+# In[8]:
 
 
 import BioSimSpace as BSS
 import os
+from Sire.Mol import AtomIdx
 
 
-# In[2]:
+# In[9]:
 
 
 def writeLog(ligA, ligB, mapping):
@@ -29,44 +30,50 @@ def writeLog(ligA, ligB, mapping):
     stream.close()
 
 
-# In[3]:
+# In[10]:
 
 
 node = BSS.Gateway.Node("A node to generate input files for a SOMD relative free energy calculation.")
 
 
-# In[4]:
+# In[11]:
 
 
 node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edinburgh")
 node.setLicense("GPLv3")
 
 
-# In[5]:
+# In[12]:
 
 
 node.addInput("input1", BSS.Gateway.FileSet(help="A topology and coordinates file"))
 node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates file"))
+node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input1 and input2. Syntax is of the format 1-3,4-8,9-11...", default=""))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
-# In[6]:
-
-
-# Optional input, dictionary of Atom indices that should be matched in the search. 
-prematch = {}
-
-
-# In[7]:
+# In[13]:
 
 
 node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="SOMD input files for a perturbation of input1->input2."))
 
 
-# In[8]:
+# In[14]:
 
 
 node.showControls()
+
+
+# In[17]:
+
+
+# Optional input, dictionary of Atom indices that should be matched in the search. 
+prematch = {}
+prematchstring = node.getInput("prematch")
+entries = prematchstring.split(",")
+for entry in entries:
+    idxA, idxB = entry.split("-")
+    prematch[ AtomIdx( int(idxA)) ] = AtomIdx( int(idxB) )
 
 
 # In[9]:
@@ -98,7 +105,6 @@ lig2 = system2.getMolecules()[0]
 mappings = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch)
 # We retain the top mapping
 mapping = mappings[0]
-
 
 # In[13]:
 
