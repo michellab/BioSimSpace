@@ -109,10 +109,10 @@ mapping = mappings[0]
 # In[13]:
 
 
-# Align lig2 to lig1 based on the best mapping. The molecule is aligned based
+# Align lig1 to lig2 based on the best mapping. The molecule is aligned based
 # on a root mean squared displacement fit to find the optimal translation vector
 # (as opposed to merely taking the difference of centroids).
-lig2 = BSS.Align.rmsdAlign(lig2, lig1, mapping)
+lig1 = BSS.Align.rmsdAlign(lig1, lig2, mapping)
 # Merge the two ligands based on the mapping.
 merged = BSS.Align.merge(lig1, lig2, mapping)
 # Create a composite system
