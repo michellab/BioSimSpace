@@ -26,9 +26,14 @@ Custom exceptions for error handling.
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["IncompatibleError",
+__all__ = ["AlignmentError",
+           "IncompatibleError",
            "MissingSoftwareError",
            "ParameterisationError"]
+
+class AlignmentError(Exception):
+    """Exception thrown when molecular alignment fails."""
+    pass
 
 class IncompatibleError(Exception):
     """Exception thrown when objects are incompatible with each other."""
