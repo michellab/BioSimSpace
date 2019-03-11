@@ -175,7 +175,7 @@ def matchAtoms(molecule0,
                 raise TypeError("'prematch' dictionary key:value pairs must be of type 'Sire.Mol.AtomIdx'")
             if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
                idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                raise ValueError("'prematch' dictionary key:value pair '%s : %s' is out of range! "
                                  "The molecules contain %d and %d atoms."
                                  % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
@@ -331,7 +331,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
                     raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
                 if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
                    idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                    raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
                                      "The molecules contain %d and %d atoms."
                                      % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
@@ -428,7 +428,7 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
                     raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
                 if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
                    idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                    raise ValueError("'prematch' dictionary key:value pair '%s : %s' are out of range! "
+                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
                                      "The molecules contain %d and %d atoms."
                                      % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
