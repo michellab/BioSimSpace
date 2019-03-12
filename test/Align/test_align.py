@@ -5,7 +5,7 @@ import BioSimSpace as BSS
 
 import pytest
 
-# Parameterise the function with a set of valid atom prematches.
+# Parameterise the function with a set of valid atom pre-matches.
 @pytest.mark.parametrize("prematch", [{AtomIdx(3) : AtomIdx(1)},
                                       {AtomIdx(5) : AtomIdx(9)},
                                       {AtomIdx(4) : AtomIdx(5)},
@@ -27,8 +27,7 @@ def test_prematch(prematch):
     for key, value in prematch.items():
         assert mapping[key] == value
 
-
-# Parameterise the function with a set of invalid atom prematches.
+# Parameterise the function with a set of invalid atom pre-matches.
 @pytest.mark.parametrize("prematch", [{AtomIdx(-1) : AtomIdx(1)},
                                       {AtomIdx(50) : AtomIdx(9)},
                                       {AtomIdx(4) : AtomIdx(48)},
