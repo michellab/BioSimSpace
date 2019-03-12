@@ -3,7 +3,49 @@ from Sire.Mol import AtomIdx, PartialMolecule
 
 import BioSimSpace as BSS
 
-from pytest import approx
+import pytest
+
+# Parameterise the function with a set of valid atom prematches.
+@pytest.mark.parametrize("prematch", [{AtomIdx(3) : AtomIdx(1)},
+                                      {AtomIdx(5) : AtomIdx(9)},
+                                      {AtomIdx(4) : AtomIdx(5)},
+                                      {AtomIdx(1) : AtomIdx(0)}])
+def test_prematch(prematch):
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Get the best mapping between the molecules that contains the prematch.
+    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
+                                   prematch=prematch)
+
+    # Check that the prematch key:value pair is in the mapping.
+    for key, value in prematch.items():
+        assert mapping[key] == value
+
+
+# Parameterise the function with a set of invalid atom prematches.
+@pytest.mark.parametrize("prematch", [{AtomIdx(-1) : AtomIdx(1)},
+                                      {AtomIdx(50) : AtomIdx(9)},
+                                      {AtomIdx(4) : AtomIdx(48)},
+                                      {AtomIdx(1) : AtomIdx(-1)}])
+def test_invalid_prematch(prematch):
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Assert that the invalid prematch raises a ValueError.
+    with pytest.raises(ValueError):
+        mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
+                                       prematch=prematch)
 
 def test_merge():
     # Load the ligands.
@@ -62,8 +104,8 @@ def test_merge():
     intraclj2.add(m2._sire_molecule, pmap0)
     intraff2.add(m2._sire_molecule, pmap0)
 
-    assert intraclj0.energy().value() == approx(intraclj2.energy().value())
-    assert intraff0.energy().value() == approx(intraff2.energy().value())
+    assert intraclj0.energy().value() == pytest.approx(intraclj2.energy().value())
+    assert intraff0.energy().value() == pytest.approx(intraff2.energy().value())
 
     intraclj2 = IntraCLJFF("intraclj")
     intraff2 = IntraFF("intraclj")
@@ -71,8 +113,8 @@ def test_merge():
     intraclj2.add(m2._sire_molecule, pmap1)
     intraff2.add(m2._sire_molecule, pmap1)
 
-    assert intraclj1.energy().value() == approx(intraclj2.energy().value())
-    assert intraff1.energy().value() == approx(intraff2.energy().value())
+    assert intraclj1.energy().value() == pytest.approx(intraclj2.energy().value())
+    assert intraff1.energy().value() == pytest.approx(intraff2.energy().value())
 
     # Test that the internal energies are consistent. This will validate that
     # bond, angle, dihedral, and improper energies are correct.
@@ -97,7 +139,7 @@ def test_merge():
     internalff2.setStrict(True)
     internalff2.add(partial_mol, pmap0)
 
-    assert internalff0.energy().value() == approx(internalff2.energy().value())
+    assert internalff0.energy().value() == pytest.approx(internalff2.energy().value())
 
     # Now extract a partial molecule using the atoms from molecule1 in
     # the merged molecule.
@@ -113,4 +155,4 @@ def test_merge():
     internalff2.setStrict(True)
     internalff2.add(partial_mol, pmap1)
 
-    assert internalff1.energy().value() == approx(internalff2.energy().value())
+    assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
