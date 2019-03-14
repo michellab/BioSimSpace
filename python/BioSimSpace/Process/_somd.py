@@ -258,9 +258,11 @@ class Somd(_process.Process):
                     #gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
                     gpu_id = 0
                 except:
-                    raise EnvironmentError("Cannot parse 'CUDA_VISIBLE_DEVICES' environment variable!")
+                    raise EnvironmentError("'CUDA' platform is selected but cannot parse "
+                                           "'CUDA_VISIBLE_DEVICES' environment variable!")
             else:
-                raise EnvironmentError("Missing 'CUDA_VISIBLE_DEVICES' environment variable!")
+                raise EnvironmentError("'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                                       "environment variable is unset.")
 
         # While the configuration parameters below share a lot of overlap,
         # we choose the keep them separate so that the user can modify options
