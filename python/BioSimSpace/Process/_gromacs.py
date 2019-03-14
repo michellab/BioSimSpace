@@ -533,10 +533,14 @@ class Gromacs(_process.Process):
     def _generate_binary_run_file(self):
         """Use grommp to generate the binary run input file."""
 
+        # Create the name of the output mdp file.
+        mdp_out = _os.path.dirname(self._config_file) + \
+                  "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
+
         # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s.out.mdp -c %s -p %s -r %s -o %s" \
-            % (self._exe, self._config_file, self._config_file.split(".")[0],
-                self._gro_file, self._top_file, self._gro_file, self._tpr_file)
+        command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+            % (self._exe, self._config_file, mdp_out, self._gro_file,
+               self._top_file, self._gro_file, self._tpr_file)
 
         # Run the command.
         proc = _subprocess.run(command, shell=True,
