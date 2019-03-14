@@ -37,7 +37,7 @@ __all__ = ["Binding"]
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, work_dir=None, engine="GROMACS", property_map={}):
+    def __init__(self, system, protocol=None, work_dir=None, engine=None, property_map={}):
         """Constructor.
 
            Parameters

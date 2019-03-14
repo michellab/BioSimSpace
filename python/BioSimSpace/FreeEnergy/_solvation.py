@@ -35,7 +35,7 @@ __all__ = ["Solvation"]
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
-    def __init__(self, system, protocol=None, work_dir=None, engine="GROMACS"):
+    def __init__(self, system, protocol=None, work_dir=None, engine=None):
         """Constructor.
 
            Parameters

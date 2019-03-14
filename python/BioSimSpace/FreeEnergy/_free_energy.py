@@ -60,7 +60,7 @@ class FreeEnergy():
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
 
-    def __init__(self, protocol=None, work_dir=None, engine="GROMACS"):
+    def __init__(self, protocol=None, work_dir=None, engine=None):
         """Constructor.
 
            Parameters
@@ -105,20 +105,28 @@ class FreeEnergy():
             if not _os.path.isdir(work_dir):
                 _os.makedirs(work_dir, exist_ok=True)
 
-        # Validate the engine.
-        if type(engine) is not str:
-            raise Types("'engine' must be of type 'str'.")
+        # Validate the user specified molecular dynamics engine.
+        if engine is not None:
+            if type(engine) is not str:
+                raise Types("'engine' must be of type 'str'.")
 
-        # Strip whitespace from engine and convert to upper case.
-        engine = engine.replace(" ", "").upper()
+            # Strip whitespace from engine and convert to upper case.
+            engine = engine.replace(" ", "").upper()
 
-        if engine not in self._engines:
-            raise ValueError("Unsupported molecular dynamics engine '%s'. "
-                             "Supported engines are: %r." % ", ".join(self._engines))
+            # Check that the engine is supported.
+            if engine not in self._engines:
+                raise ValueError("Unsupported molecular dynamics engine '%s'. "
+                                 "Supported engines are: %r." % ", ".join(self._engines))
 
-        # Make sure GROMACS is installed if GROMACS engine is selected.
-        if engine == "GROMACS" and _gmx_exe is None:
-            raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
+            # Make sure GROMACS is installed if GROMACS engine is selected.
+            if engine == "GROMACS" and _gmx_exe is None:
+                raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
+        else:
+            # Fall back on SOMD in GROMACS is not installed.
+            if _gmx_exe is None:
+                engine = "SOMD"
+            else:
+                engine = "GROMACS"
 
         # Set the engine.
         self._engine = engine
