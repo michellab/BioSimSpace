@@ -1068,17 +1068,17 @@ class Node():
             data = {}
 
             # Create the YAML file name.
-            ymlname = "%s.yml" % file_prefix
+            yamlname = "%s.yaml" % file_prefix
 
             # Populate the dictionary.
             for name, output in self._outputs.items():
                 data[name] = output.getValue()
 
             # Write the outputs to a YAML file.
-            with open(ymlname, "w") as file:
+            with open(yamlname, "w") as file:
                 _yaml.dump(data, file, default_flow_style=False)
 
-            return ymlname
+            return yamlname
 
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
