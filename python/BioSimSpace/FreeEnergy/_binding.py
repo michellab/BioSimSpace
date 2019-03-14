@@ -37,7 +37,7 @@ __all__ = ["Binding"]
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, work_dir=None, property_map={}):
+    def __init__(self, system, protocol=None, work_dir=None, engine="GROMACS", property_map={}):
         """Constructor.
 
            Parameters
@@ -52,6 +52,9 @@ class Binding(_free_energy.FreeEnergy):
            work_dir : str
                The working directory for the simulation.
 
+           engine: str
+               The molecular dynamics engine used to run the simulation.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -59,7 +62,7 @@ class Binding(_free_energy.FreeEnergy):
         """
 
         # Call the base class constructor.
-        super().__init__(protocol, work_dir)
+        super().__init__(protocol, work_dir, engine)
 
         # Validate the input.
 
@@ -129,4 +132,7 @@ class Binding(_free_energy.FreeEnergy):
         # This method is just a wrapper to provide simulation specific doc
         # strings. We just call the base class method, which is aware of
         # the simulation type.
-        return super().analyse()
+        if self._engine == "SOMD":
+            return super()._analyse_somd()
+        elif self._engine == "GROMACS":
+            return super()._analyse_gromacs()

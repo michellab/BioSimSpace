@@ -33,6 +33,8 @@ from Sire.Base import getBinDir as _getBinDir
 import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
 
+from BioSimSpace import _gmx_exe
+
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..Gateway import ResourceManager as _ResourceManager
 from .._SireWrappers import System as _System
@@ -53,9 +55,12 @@ class FreeEnergy():
     _analyse_freenrg = _getBinDir() + "/analyse_freenrg"
 
     if not _os.path.isfile(_analyse_freenrg):
-        raise _MissingSoftwareError("'Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+        raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
 
-    def __init__(self, protocol=None, work_dir=None):
+    # Create a list of supported molecular dynamics engines.
+    _engines = ["GROMACS", "SOMD"]
+
+    def __init__(self, protocol=None, work_dir=None, engine="GROMACS"):
         """Constructor.
 
            Parameters
@@ -66,6 +71,9 @@ class FreeEnergy():
 
            work_dir : str
                The working directory for the simulation.
+
+           engine: str
+               The molecular dynamics engine used to run the simulation.
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -96,12 +104,171 @@ class FreeEnergy():
             if not _os.path.isdir(work_dir):
                 _os.makedirs(work_dir, exist_ok=True)
 
+        # Validate the engine.
+        if type(engine) is not str:
+            raise Types("'engine' must be of type 'str'.")
+
+        # Strip whitespace from engine and convert to upper case.
+        engine = engine.replace(" ", "").upper()
+
+        if engine not in self._engines:
+            raise ValueError("Unsupported molecular dynamics engine '%s'. "
+                             "Supported engines are: %r." % ", ".join(self._engines))
+
+        # Make sure GROMACS is installed if GROMACS engine is selected.
+        if engine == "GROMACS" and _gmx_exe is None:
+            raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
+
+        # Set the engine.
+        self._engine = engine
+
     def run(self):
         """Run the simulation."""
         self._runner.startAll()
 
-    def analyse(self):
-        """Analyse the solvation free energy data.
+    def _analyse_gromacs(self):
+        """Analyse the GROMACS free energy data.
+
+           Returns
+           -------
+
+           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) for the first leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) for the second leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+               The free energy difference and its associated error.
+        """
+
+        # Create the commands for the two legs.
+        command0 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg0.xvg" % (_gmx_exe, self._dir0, self._work_dir)
+        command1 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg1.xvg" % (_gmx_exe, self._dir1, self._work_dir)
+
+        # Run the first command.
+        proc = _subprocess.run(command0, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        if proc.returncode != 0:
+            return None
+
+        # Run the second command.
+        proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        if proc.returncode != 0:
+            return None
+
+        # Initialise lists to hold the data from each leg.
+        leg0 = []
+        leg1 = []
+
+        # Extract the data from the output files.
+
+        # First leg.
+        with open("%s/bar_leg0.xvg" % self._work_dir) as file:
+
+            # Read all of the lines into a list.
+            lines = []
+            for line in file:
+                # Ignore comments and xmgrace directives.
+                if line[0] != "#" and line[0] != "@":
+                    lines.append(line.rstrip())
+
+            # Store the initial free energy reading.
+            leg0.append((0.0,
+                         0.0 * _Units.Energy.kcal_per_mol,
+                         0.0 * _Units.Energy.kcal_per_mol))
+
+            # Zero the accumulated error.
+            total_error = 0
+
+            # Zero the accumulated free energy difference.
+            total_freenrg = 0
+
+            # Process the BAR data.
+            for x, line in enumerate(lines):
+                # Extract the data from the line.
+                data = line.split()
+
+                # Update the total free energy difference.
+                total_freenrg += float(data[1])
+
+                # Extract the error.
+                error = float(data[2])
+
+                # Update the accumulated error.
+                total_error = _math.sqrt(total_error*total_error + error*error)
+
+                # Append the data.
+                leg0.append(((x + 1) / (len(lines)),
+                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+
+        # Second leg.
+        with open("%s/bar_leg1.xvg" % self._work_dir) as file:
+
+            # Read all of the lines into a list.
+            lines = []
+            for line in file:
+                # Ignore comments and xmgrace directives.
+                if line[0] != "#" and line[0] != "@":
+                    lines.append(line.rstrip())
+
+            # Store the initial free energy reading.
+            leg1.append((0.0,
+                         0.0 * _Units.Energy.kcal_per_mol,
+                         0.0 * _Units.Energy.kcal_per_mol))
+
+            # Zero the accumulated error.
+            total_error = 0
+
+            # Zero the accumulated free energy difference.
+            total_freenrg = 0
+
+            # Process the BAR data.
+            for x, line in enumerate(lines):
+                # Extract the data from the line.
+                data = line.split()
+
+                # Update the total free energy difference.
+                total_freenrg += float(data[1])
+
+                # Extract the error.
+                error = float(data[2])
+
+                # Update the accumulated error.
+                total_error = _math.sqrt(total_error*total_error + error*error)
+
+                # Append the data.
+                leg1.append(((x + 1) / (len(lines)),
+                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+
+        # Work out the difference in free energy.
+        free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
+
+        # Propagate the errors. (These add in quadrature.)
+
+        # First leg.
+        error0 = _math.sqrt((leg0[-1][2].magnitude() * leg0[-1][2].magnitude()) +
+                            (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
+
+        # Second leg.
+        error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
+                            (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+
+        # Free energy difference.
+        error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
+
+        # Bundle the free energy and its associated error.
+        free_energy = (free_energy, error)
+
+        return (leg0, leg1, free_energy)
+
+    def _analyse_somd(self):
+        """Analyse the SOMD free energy data.
 
            Returns
            -------
@@ -263,21 +430,22 @@ class FreeEnergy():
         except:
             water_model = "tip3p"
 
-        # Reformat all of the water molecules so that they match the expected
-        # AMBER topology template. (Required by SOMD.)
-        waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), water_model)
-        waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), water_model)
+        if self._engine == "SOMD":
+            # Reformat all of the water molecules so that they match the expected
+            # AMBER topology template. (Required by SOMD.)
+            waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), water_model)
+            waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), water_model)
 
-        # Loop over all of the renamed water molecules, delete the old one
-        # from the system, then add the renamed one back in.
-        # TODO: This is a hack since the "update" method of Sire.System
-        # doesn't work properly at present.
-        system0.removeWaterMolecules()
-        system1.removeWaterMolecules()
-        for wat in waters0:
-            system0._sire_system.add(wat, _SireMol.MGName("all"))
-        for wat in waters1:
-            system1._sire_system.add(wat, _SireMol.MGName("all"))
+            # Loop over all of the renamed water molecules, delete the old one
+            # from the system, then add the renamed one back in.
+            # TODO: This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.
+            system0.removeWaterMolecules()
+            system1.removeWaterMolecules()
+            for wat in waters0:
+                system0._sire_system.add(wat, _SireMol.MGName("all"))
+            for wat in waters1:
+                system1._sire_system.add(wat, _SireMol.MGName("all"))
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()
@@ -289,13 +457,24 @@ class FreeEnergy():
 
             # Create and append the required processes for each leg.
             # Nest the working directories inside self._work_dir.
-            # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
 
-            leg0.append(_Process.Somd(system0, self._protocol,
-                platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
+            # SOMD.
+            if self._engine == "SOMD":
+                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
+                leg0.append(_Process.Somd(system0, self._protocol,
+                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
-            leg1.append(_Process.Somd(system1, self._protocol,
-                platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                leg1.append(_Process.Somd(system1, self._protocol,
+                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+
+            # GROMACS.
+            elif self._engine == "GROMACS":
+                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
+                leg0.append(_Process.Gromacs(system0, self._protocol,
+                    work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
+
+                leg1.append(_Process.Gromacs(system1, self._protocol,
+                    work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.
