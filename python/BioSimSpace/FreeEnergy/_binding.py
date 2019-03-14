@@ -53,7 +53,8 @@ class Binding(_free_energy.FreeEnergy):
                The working directory for the simulation.
 
            engine: str
-               The molecular dynamics engine used to run the simulation.
+               The molecular dynamics engine used to run the simulation. Available
+               options are "GROMACS", or "SOMD".
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
