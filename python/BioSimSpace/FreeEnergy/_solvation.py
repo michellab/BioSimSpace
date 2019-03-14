@@ -52,7 +52,8 @@ class Solvation(_free_energy.FreeEnergy):
 
            engine: str
                The molecular dynamics engine used to run the simulation. Available
-               options are "GROMACS", or "SOMD".
+               options are "GROMACS", or "SOMD". If this argument is omitted then
+               BioSimSpace will choose an appropriate engine for you.
         """
 
         # Call the base class constructor.
