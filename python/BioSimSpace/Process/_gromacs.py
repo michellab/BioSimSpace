@@ -699,6 +699,8 @@ class Gromacs(_process.Process):
                     old_system._updateCoordinates(new_system)
                     return old_system
                 else:
+                    # Preserve the original fileformat property.
+                    new_system._sire_system.setProperty("fileformat", _SireBase.wrap("GroTop,Gro87"))
                     return new_system
             except:
                 return None
