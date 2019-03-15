@@ -1198,6 +1198,21 @@ def _on_file_upload(change):
     # Append the upload directory to the file name.
     new_filename = "uploads/%s" % filename
 
+    # Has this file already been uploaded?
+    if _os.path.isfile(new_filename):
+
+        # We'll append a number to the file name.
+        index = 1
+        new_filename_append = new_filename + ".%d" % index
+
+        # Keep trying until a unique name is found.
+        while _os.path.isfile(new_filename_append):
+            index += 1
+            new_filename_append = new_filename + ".%d" % index
+
+        # Copy back into the new_filename variable.
+        new_filename = new_filename_append
+
     # Write the file to disk.
     with open(new_filename, "wb") as file:
         file.write(change["owner"].data)
