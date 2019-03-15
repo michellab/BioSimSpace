@@ -701,8 +701,6 @@ class Molecule():
         # The pert file uses atom names for identification purposes. This means
         # that the names must be unique. As such we need to count the number of
         # atoms with a particular name, then append an index to their name.
-        # We also append the letter P, to indicate that this atom is part of a
-        # "perturbed" molecule.
 
         # A dictionary to track the atom names.
         atom_names = {}
@@ -730,8 +728,8 @@ class Molecule():
                 # Extract the original atom name.
                 name = atom.name()
 
-                # Create the new name by appending "P" to the name.
-                new_name = name.value() + "P"
+                # Create the base of the new name.
+                new_name = name.value()
 
                 # There is more than one atom with this name. Append the index
                 # and increment the tally counter for the original name.
