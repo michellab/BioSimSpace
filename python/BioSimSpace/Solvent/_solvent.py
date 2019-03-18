@@ -67,7 +67,10 @@ def solvate(model, molecule=None, box=None, shell=None,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -112,7 +115,10 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -162,7 +168,10 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -212,7 +221,10 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -262,7 +274,10 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -312,7 +327,10 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -361,7 +379,10 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
            A list containing the box size in each dimension (in nm).
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+           Thickness of the water shell around the solute. Note that the
+           base length of the resulting box must be at least twice as large
+           as the cutoff used by the chosen molecular dynamics engine. As such,
+           the shell option is often unsuitable for small molecules.
 
        ion_conc : float
            The ion concentration in (mol per litre).
@@ -436,16 +457,16 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         # We take the maximum dimension as the base length of our box.
         base_length = max(2 * molecule._getAABox().halfExtents())
 
-        # Create a box that is the shell thickness larger in each dimension.
-        # We also add a 10% buffer for safety.
-        box = 3*[_Length(base_length, "A") + 1.1*shell]
+        # Now add the shell thickness.
+        base_length = _Length(base_length, "A") + shell
 
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+        # If we need to add ions, make sure the box is at least 2.54 nanometers
+        # wide, i.e. twice the rlist cutoff used by GROMACS protocols.
+        if base_length < _Length(2.54, "nm"):
+            base_length = _Length(2.54, "nm")
 
-    # Check that the working directory is valid.
-    if work_dir is not None and type(work_dir) is not str:
-        raise TypeError("'work_dir' must be of type 'str'")
+        # Create the dimensions for a cubic box.
+        box = 3*[base_length]
 
     # Check that the ion concentration is valid.
     if type(ion_conc) is not float and type(ion_conc) is not int:
@@ -455,6 +476,14 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
 
     if type(is_neutral) is not bool:
         raise TypeError("'is_neutral' must be of type 'bool'.")
+
+    # Check that the working directory is valid.
+    if work_dir is not None and type(work_dir) is not str:
+        raise TypeError("'work_dir' must be of type 'str'")
+
+    # Check that the property map is valid.
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
 
     # Check that the box is large enough to hold the molecule.
     if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
