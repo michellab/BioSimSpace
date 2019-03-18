@@ -731,13 +731,21 @@ class Molecule():
                 # Create the base of the new name.
                 new_name = name.value()
 
-                # There is more than one atom with this name. Create a random
-                # suffix.
+                # There is more than one atom with this name.
+                # Create a random suffix.
                 if atom_names[name] > 1:
                     suffix = _random_suffix(new_name)
+                    num_attempts = 0
                     # Keep trying until we get a unique name.
                     while new_name + suffix in names:
                         suffix = _random_suffix(new_name)
+                        num_attempts += 1
+
+                        # Abort if we've tried more than 100 times.
+                        if num_attempts == 1:
+                            raise RuntimeError("Error while writing SOMD pert file. "
+                                               "Unable to generate a unique suffix for "
+                                               "atom name: '%s'" % new_name)
 
                     # Append the suffix to the name and store in the set of seen
                     # names.
