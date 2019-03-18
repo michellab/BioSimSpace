@@ -432,13 +432,13 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         if box is not None:
             _warnings.warn("Ignoring 'box' keyword argument as 'shell' takes precendence.")
 
-        # Work out the box size based on the shell.
-        aabb_box = 2 * molecule._getAABox().halfExtents()
+        # Work out the box size based on axis-aligned bounding box.
+        # We take the maximum dimension as the base length of our box.
+        base_length = max(2 * molecule._getAABox().halfExtents())
 
         # Create a box that is the shell thickness larger in each dimension.
-        box = []
-        for dim in aabb_box:
-            box.append(_Length(dim, "A") + shell)
+        # We also add a 10% buffer for safety.
+        box = 3*[_Length(base_length, "A") + 1.1*shell]
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
