@@ -27,6 +27,8 @@ not be directly exposed to the user.
 from pytest import approx as _approx
 
 import os.path as _path
+import random as _random
+import string as _string
 
 import Sire.Base as _SireBase
 import Sire.CAS as _SireCAS
@@ -712,13 +714,11 @@ class Molecule():
             else:
                 atom_names[atom.name()] = 1
 
-        # If there are duplicate names, then we need to rename the atoms.
-        if sum(atom_names.values()) > len(atom_names.keys()):
+        # Create a set from the atoms names seen so far.
+        names = set(atom_names.keys())
 
-            # Create a dictionary to tally the number of each atom name.
-            name_tally = {}
-            for name in atom_names.keys():
-                name_tally[name] = 1
+        # If there are duplicate names, then we need to rename the atoms.
+        if sum(atom_names.values()) > len(names):
 
             # Make the molecule editable.
             edit_mol = mol.edit()
@@ -731,11 +731,18 @@ class Molecule():
                 # Create the base of the new name.
                 new_name = name.value()
 
-                # There is more than one atom with this name. Append the index
-                # and increment the tally counter for the original name.
+                # There is more than one atom with this name. Create a random
+                # suffix.
                 if atom_names[name] > 1:
-                    new_name += "%d" % name_tally[name]
-                    name_tally[name] += 1
+                    suffix = _random_suffix(new_name)
+                    # Keep trying until we get a unique name.
+                    while new_name + suffix in names:
+                        suffix = _random_suffix(new_name)
+
+                    # Append the suffix to the name and store in the set of seen
+                    # names.
+                    new_name = new_name + suffix
+                    names.add(new_name)
 
                 # Convert to an AtomName and rename the atom.
                 new_name = _SireMol.AtomName(new_name)
@@ -2307,6 +2314,38 @@ class Molecule():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
+
+def _random_suffix(basename, size=4, chars=_string.ascii_uppercase + _string.digits):
+    """Internal helper function to generate a random atom name suffix to avoid
+       naming clashes.
+
+       Adapted from:
+       https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python
+
+       Parameters
+       ----------
+
+       basename : str
+           The base string to which a suffix will be appended.
+
+       size : int
+           The maximum width of the string, i.e. len(basename + suffix).
+
+       chars : str
+           The set of characters to include in the suffix.
+
+       Returns
+       -------
+
+       suffix : str
+           The randomly generated suffix.
+    """
+
+    basename_size = len(basename)
+    if basename_size >= size:
+        raise ValueError("Cannot generate suffix for basename '%s'. " % basename
+                       + "AMBER atom names can only be 4 characters wide.")
+    return "".join(_random.choice(chars) for _ in range(size-basename_size))
 
 # Import at bottom of module to avoid circular dependency.
 from ._system import System as _System
