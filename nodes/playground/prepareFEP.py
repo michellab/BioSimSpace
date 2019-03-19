@@ -70,13 +70,13 @@ node.addInput("output", BSS.Gateway.String(help="The root name for the files des
 node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="SOMD input files for a perturbation of input1->input2."))
 
 
-# In[7]:
+# In[17]:
 
 
 node.showControls()
 
 
-# In[21]:
+# In[18]:
 
 
 # Optional input, dictionary of Atom indices that should be matched in the search. 
@@ -90,21 +90,21 @@ if len(prematchstring) > 0:
 #print (prematch)
 
 
-# In[9]:
+# In[19]:
 
 
 # Load system 1
 system1 = BSS.IO.readMolecules(node.getInput("input1"))
 
 
-# In[10]:
+# In[20]:
 
 
 # Load system 2
 system2 = BSS.IO.readMolecules(node.getInput("input2"))
 
 
-# In[11]:
+# In[21]:
 
 
 # We assume the molecules to perturb are the first molecules in each system
@@ -112,18 +112,24 @@ lig1 = system1.getMolecules()[0]
 lig2 = system2.getMolecules()[0]
 
 
-# In[12]:
+# In[22]:
 
 
 # Return a maximum of 10 matches, scored by RMSD and sorted from best to worst.
-mappings = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, scoring_function="RMSD", timeout=1*BSS.Units.Time.minute)
+mappings = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, scoring_function="RMSDalign", timeout=10*BSS.Units.Time.second)
 # We retain the top mapping
 mapping = mappings[0]
 #print (len(mappings))
 #print (mappings)
 
 
-# In[13]:
+# In[23]:
+
+
+#print (mapping)
+
+
+# In[24]:
 
 
 # Align lig1 to lig2 based on the best mapping. The molecule is aligned based
@@ -137,7 +143,7 @@ system1.removeMolecules(lig1)
 system1.addMolecules(merged)
 
 
-# In[14]:
+# In[25]:
 
 
 # Log the mapping used
@@ -151,7 +157,7 @@ cmd = "unzip -o somd.zip"
 os.system(cmd)
 
 
-# In[15]:
+# In[26]:
 
 
 root = node.getInput("output")
@@ -162,7 +168,7 @@ rst7 = "%s.rst7" % root
 mapping = "%s.mapping" % root
 
 
-# In[16]:
+# In[27]:
 
 
 cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping)
@@ -170,13 +176,13 @@ cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rs
 os.system(cmd)
 
 
-# In[17]:
+# In[28]:
 
 
 node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping])
 
 
-# In[18]:
+# In[29]:
 
 
 node.validate()
