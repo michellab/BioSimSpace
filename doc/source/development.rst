@@ -406,7 +406,18 @@ If your edits don't change to the BioSimSpace source code, or documentation,
 e.g. fixing typos, then please add ``***NO_CI***`` to your commit message.
 This will avoid unnecessarily running the
 `Azure pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`_, e.g.
-building a new BioSimSpace binary, updating the website, etc.
+building a new BioSimSpace binary, updating the website, etc. To this end, we
+have provided a git hook that will append ``***NO_CI***`` if the commit only
+modifies files in a blacklist that is specified in the file ``.ciignore``
+(analagous to the ``.gitignore`` used to ignore untracked files). To enable
+the hook, simply copy it into the ``.git/hooks`` directory:
+
+.. code-block:: bash
+
+    cp git_hooks/commit-msg .git/hooks
+
+Any additional files or paths that shouldn't trigger a re-build can be added
+to the ``.ciignore`` file.
 
 Next, push your changes to the remote server, e.g.
 
