@@ -28,4 +28,4 @@ if [[ ${#changes[@]} -gt 0 ]]; then
 fi
 
 # Append "***NO_CI*** to the commit message.
-sed -i '1s/$/ ***NO_CI***/' "$1"
+sed -i.bak -e "\$s/$/ ***NO_CI***/" -- "$1" && rm -- "$1".bak
