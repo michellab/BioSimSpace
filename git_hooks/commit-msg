@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 
 if [[ ! -a .ciignore ]]; then
-	exit # If .ciignore doesn't exists, just quit this Git hook
+    # If .ciignore doesn't exists, just quit this Git hook.
+	exit
 fi
 
-# Load in every file that will be changed via this commit into an array
+# Load in every file that will be changed via this commit into an array.
 changes=( `git diff --name-only --cached` )
 
-# Load the patterns we want to skip into an array
+# Load the patterns we want to skip into an array.
 mapfile -t blacklist < .ciignore
 
 for i in "${blacklist[@]}"
 do
-	# Remove the current pattern from the list of changes
+	# Remove the current pattern from the list of changes.
 	changes=( ${changes[@]/$i/} )
 
 	if [[ ${#changes[@]} -eq 0 ]]; then
 		# If we've exhausted the list of changes before we've finished going
-		# through patterns, that's okay, just quit the loop
+		# through patterns, that's okay, just quit the loop.
 		break
 	fi
 done
