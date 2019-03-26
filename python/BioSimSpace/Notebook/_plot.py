@@ -35,7 +35,7 @@ if "DISPLAY" in _environ:
     _display = _environ.get("DISPLAY")
 else:
     _display = None
-del(_environ)
+del _environ
 
 if _display is not None:
     _has_display = True
@@ -56,7 +56,7 @@ else:
         _has_display = False
         #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
-del(_display)
+del _display
 
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"

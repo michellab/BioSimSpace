@@ -43,9 +43,9 @@ for _var in dir():
     if _var[0] != "_" and _var != "ProcessRunner":
         _packages.append(_var)
         _package_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
+del _namespace
+del _sys
+del _var
 
 def packages():
     """Return a list of the supported Molecular Dynamics packages.

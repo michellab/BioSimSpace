@@ -1538,8 +1538,8 @@ class Molecule():
         # Determine the common properties between the two molecules.
         # These are the properties that can be perturbed.
         shared_props = list(set(props0).intersection(props1))
-        del(props0)
-        del(props1)
+        del props0
+        del props1
 
         # Create a new molecule to hold the merged molecule.
         molecule = _SireMol.Molecule("Merged_Molecule")

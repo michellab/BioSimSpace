@@ -433,9 +433,9 @@ for _var in dir():
     if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
         _forcefield_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
+del _namespace
+del _sys
+del _var
 
 def forceFields():
     """Return a list of the supported force fields.
