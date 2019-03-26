@@ -26,7 +26,6 @@ Functionality for parameterising molecules.
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 
 from ._process import Process as _Process

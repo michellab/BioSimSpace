@@ -31,8 +31,6 @@ import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
 
-import BioSimSpace._Utils as _Utils
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 

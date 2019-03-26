@@ -35,7 +35,6 @@ import Sire.CAS as _SireCAS
 import Sire.Maths as _SireMaths
 import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
 import Sire.Units as _SireUnits
 import Sire.Vol as _SireVol
 
@@ -227,8 +226,6 @@ class Molecule():
         # Water models have 5 or less atoms.
         if self.nAtoms() > 5:
             return False
-
-        is_water = False
 
         # Tally counters for the number of H and O atoms.
         num_hydrogen = 0
@@ -480,6 +477,9 @@ class Molecule():
         _property_map = property_map.copy()
 
         # See if any of the new properties are in the map, add them if not.
+        for prop in props0:
+            if not prop in _property_map:
+                _property_map[prop] = prop
         for prop in props1:
             if not prop in _property_map:
                 _property_map[prop] = prop

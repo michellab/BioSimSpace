@@ -25,7 +25,6 @@ Functionality for running simulation processes.
 
 import collections as _collections
 import glob as _glob
-import operator as _operator
 import os as _os
 import pygtail as _pygtail
 import timeit as _timeit

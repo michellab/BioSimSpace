@@ -26,13 +26,11 @@ Functionality for running simulations with SOMD.
 import math as _math
 import os as _os
 import pygtail as _pygtail
-import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
 
 from . import _process
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -41,8 +39,6 @@ from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
 
 __author__ = "Lester Hedges"
@@ -651,6 +647,12 @@ class Somd(_process.Process):
            gradient : float
                The free energy gradient.
         """
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
 
         # No gradient file.
         if not _os.path.isfile(self._gradient_file):

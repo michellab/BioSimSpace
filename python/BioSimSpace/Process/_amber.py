@@ -29,7 +29,6 @@ from watchdog.observers import Observer as _Observer
 import math as _math
 import os as _os
 import re as _re
-import shutil as _shutil
 import time as _time
 import timeit as _timeit
 import warnings as _warnings
