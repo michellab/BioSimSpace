@@ -6,7 +6,7 @@ if [[ ! -a .ciignore ]]; then
 fi
 
 # Load in every file that will be changed via this commit into an array.
-changes=( `git diff --name-only --cached` )
+changes=$(git diff --name-only --cached)
 
 # Load the patterns we want to skip into an array.
 mapfile -t blacklist < .ciignore
