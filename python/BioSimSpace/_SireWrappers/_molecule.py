@@ -1333,10 +1333,44 @@ class Molecule():
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
+        # Special handling for the mass property. Perturbed atoms take the
+        # mass of the heaviest end state, not the lambda = 0 state.
+        if mol.hasProperty("mass0") and mol.hasProperty("element0"):
+            # See if the mass property exists in the user map.
+            new_prop = property_map.get("mass", "mass")
+
+            for idx in range(0, mol.nAtoms()):
+                # Convert to an AtomIdx.
+                idx = _SireMol.AtomIdx(idx)
+
+                # The end states are different elements.
+                if mol.atom(idx).property("element0") != mol.atom(idx).property("element1"):
+                    # Extract the mass of the end states.
+                    mass0 = mol.atom(idx).property("mass0")
+                    mass1 = mol.atom(idx).property("mass1")
+
+                    # Choose the heaviest mass.
+                    if mass0.value() > mass1.value():
+                        mass = mass0
+                    else:
+                        mass = mass1
+
+                    # Set the updated mass property.
+                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+
+                else:
+                    # Use the mass at lambda = 0.
+                    mass = mol.atom(idx).property("mass0")
+                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+
+            # Delete redundant properties.
+            mol = mol.removeProperty("mass0").molecule()
+            mol = mol.removeProperty("mass1").molecule()
+
         # Rename all properties in the molecule: "prop0" --> "prop".
         # Delete all properties named "prop0" and "prop1".
         for prop in mol.propertyKeys():
-            if prop[-1] == "0":
+            if prop[-1] == "0" and prop != "mass0":
                 # See if this property exists in the user map.
                 new_prop = property_map.get(prop[:-1], prop[:-1])
 
