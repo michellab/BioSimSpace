@@ -9,10 +9,9 @@ if [ ! -d $CONDA_DIR ]; then
 fi
 
 # Set the BioSimSpace source directory.
-SRC_DIR=.
-
-# Linux runs in a docker container from $HOME.
-if [ ! -d $SRC_DIR ]; then
+if [ -d python ]; then
+    SRC_DIR=.
+else
     SRC_DIR=$HOME/BioSimSpace
 fi
 
