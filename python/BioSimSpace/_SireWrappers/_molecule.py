@@ -35,7 +35,6 @@ import Sire.CAS as _SireCAS
 import Sire.Maths as _SireMaths
 import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
 import Sire.Units as _SireUnits
 import Sire.Vol as _SireVol
 
@@ -227,8 +226,6 @@ class Molecule():
         # Water models have 5 or less atoms.
         if self.nAtoms() > 5:
             return False
-
-        is_water = False
 
         # Tally counters for the number of H and O atoms.
         num_hydrogen = 0
@@ -480,6 +477,9 @@ class Molecule():
         _property_map = property_map.copy()
 
         # See if any of the new properties are in the map, add them if not.
+        for prop in props0:
+            if not prop in _property_map:
+                _property_map[prop] = prop
         for prop in props1:
             if not prop in _property_map:
                 _property_map[prop] = prop
@@ -670,14 +670,23 @@ class Molecule():
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(self, filename="MORPH.pert", property_map={}):
+    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=True,
+            zero_dummy_impropers=True, property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Parameters
            ----------
 
-           filename: str
+           filename : str
                The name of the perturbation file.
+
+           zero_dummy_dihedrals : bool
+               Whether to zero the barrier height for dihedrals involving
+               dummy atoms.
+
+           zero_dummy_impropers : bool
+               Whether to zero the barrier height for impropers involving
+               dummy atoms.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1070,6 +1079,19 @@ class Molecule():
                 idx2 = info.atomIdx(dihedral.atom2())
                 idx3 = info.atomIdx(dihedral.atom3())
 
+                # Check whether any of the atoms are dummies.
+                has_dummy = False
+                if zero_dummy_dihedrals:
+                    dummy = _SireMol.Element(0)
+                    if mol.atom(idx0).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx1).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx2).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx3).property("element0") == dummy:
+                        has_dummy = True
+
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
@@ -1083,7 +1105,10 @@ class Molecule():
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    k = term.k()
+                    if has_dummy:
+                        k = 0.0
+                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form     0.0 0.0 0.0\n")
 
@@ -1101,6 +1126,19 @@ class Molecule():
                 idx2 = info.atomIdx(dihedral.atom2())
                 idx3 = info.atomIdx(dihedral.atom3())
 
+                # Check whether any of the atoms are dummies.
+                has_dummy = False
+                if zero_dummy_dihedrals:
+                    dummy = _SireMol.Element(0)
+                    if mol.atom(idx0).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx1).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx2).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx3).property("element1") == dummy:
+                        has_dummy = True
+
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
@@ -1115,7 +1153,10 @@ class Molecule():
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    k = term.k()
+                    if has_dummy:
+                        k = 0.0
+                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End dihedral record.
@@ -1232,6 +1273,19 @@ class Molecule():
                 idx2 = info.atomIdx(improper.atom2())
                 idx3 = info.atomIdx(improper.atom3())
 
+                # Check whether any of the atoms are dummies.
+                has_dummy = False
+                dummy = _SireMol.Element(0)
+                if zero_dummy_impropers:
+                    if mol.atom(idx0).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx1).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx2).property("element0") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx3).property("element0") == dummy:
+                        has_dummy = True
+
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
 
@@ -1245,7 +1299,10 @@ class Molecule():
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    k = term.k()
+                    if has_dummy:
+                        k = 0.0
+                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form     0.0 0.0 0.0\n")
 
@@ -1263,6 +1320,19 @@ class Molecule():
                 idx2 = info.atomIdx(improper.atom2())
                 idx3 = info.atomIdx(improper.atom3())
 
+                # Check whether any of the atoms are dummies.
+                has_dummy = False
+                if zero_dummy_impropers:
+                    dummy = _SireMol.Element(0)
+                    if mol.atom(idx0).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx1).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx2).property("element1") == dummy:
+                        has_dummy = True
+                    elif mol.atom(idx3).property("element1") == dummy:
+                        has_dummy = True
+
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
 
@@ -1277,7 +1347,10 @@ class Molecule():
                 file.write("        initial_form   0.0 0.0 0.0\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    k = term.k()
+                    if has_dummy:
+                        k = 0.0
+                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End improper record.
@@ -1333,10 +1406,44 @@ class Molecule():
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
+        # Special handling for the mass property. Perturbed atoms take the
+        # mass of the heaviest end state, not the lambda = 0 state.
+        if mol.hasProperty("mass0") and mol.hasProperty("element0"):
+            # See if the mass property exists in the user map.
+            new_prop = property_map.get("mass", "mass")
+
+            for idx in range(0, mol.nAtoms()):
+                # Convert to an AtomIdx.
+                idx = _SireMol.AtomIdx(idx)
+
+                # The end states are different elements.
+                if mol.atom(idx).property("element0") != mol.atom(idx).property("element1"):
+                    # Extract the mass of the end states.
+                    mass0 = mol.atom(idx).property("mass0")
+                    mass1 = mol.atom(idx).property("mass1")
+
+                    # Choose the heaviest mass.
+                    if mass0.value() > mass1.value():
+                        mass = mass0
+                    else:
+                        mass = mass1
+
+                    # Set the updated mass property.
+                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+
+                else:
+                    # Use the mass at lambda = 0.
+                    mass = mol.atom(idx).property("mass0")
+                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+
+            # Delete redundant properties.
+            mol = mol.removeProperty("mass0").molecule()
+            mol = mol.removeProperty("mass1").molecule()
+
         # Rename all properties in the molecule: "prop0" --> "prop".
         # Delete all properties named "prop0" and "prop1".
         for prop in mol.propertyKeys():
-            if prop[-1] == "0":
+            if prop[-1] == "0" and prop != "mass0":
                 # See if this property exists in the user map.
                 new_prop = property_map.get(prop[:-1], prop[:-1])
 
@@ -1538,8 +1645,8 @@ class Molecule():
         # Determine the common properties between the two molecules.
         # These are the properties that can be perturbed.
         shared_props = list(set(props0).intersection(props1))
-        del(props0)
-        del(props1)
+        del props0
+        del props1
 
         # Create a new molecule to hold the merged molecule.
         molecule = _SireMol.Molecule("Merged_Molecule")

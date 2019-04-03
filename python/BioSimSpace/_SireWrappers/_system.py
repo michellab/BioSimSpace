@@ -294,7 +294,7 @@ class System():
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
-            system = list(molecules)
+            molecules = list(molecules)
 
         # A Molecule object.
         if type(molecules) is _Molecule:
@@ -331,7 +331,7 @@ class System():
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
-            system = list(molecules)
+            molecules = list(molecules)
 
         # A Molecule object.
         if type(molecules) is _Molecule:
@@ -373,7 +373,7 @@ class System():
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
-            system = list(molecules)
+            molecules = list(molecules)
 
         # A Molecule object.
         if type(molecules) is _Molecule:

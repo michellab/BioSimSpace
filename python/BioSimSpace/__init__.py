@@ -31,7 +31,7 @@ www.biosimspace.org
 # Make sure we're using the Sire python interpreter.
 try:
     import Sire
-    del(Sire)
+    del Sire
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire "
         + "Python interpreter: www.siremol.org")
@@ -101,8 +101,8 @@ if _gmx_exe is None:
 
 # Set the bundled GROMACS topology file directory.
 _gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
-del(_environ)
-del(_SireBase)
+del _environ
+del _SireBase
 
 if not _path.isdir(_gromacs_path):
     _gromacs_path = None
@@ -118,7 +118,7 @@ if not _path.isdir(_gromacs_path):
         # Run the command.
         _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
 
-        del(_command)
+        del _command 
 
         # Get the data prefix.
         if _proc.returncode == 0:
@@ -127,9 +127,9 @@ if not _path.isdir(_gromacs_path):
             if not _path.isdir(_gromacs_path):
                 _gromacs_path = None
 
-        del(_path)
-        del(_proc)
-        del(_subprocess)
+        del _path
+        del _proc
+        del _subprocess
 
 from . import Align
 from . import FreeEnergy

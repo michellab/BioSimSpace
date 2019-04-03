@@ -25,7 +25,6 @@ Functionality for creating BioSimSpace workflow components (nodes).
 
 import configargparse as _argparse
 import collections as _collections
-import io as _io
 import __main__
 import os as _os
 import sys as _sys
@@ -1161,10 +1160,10 @@ class Node():
             s = "  %s: %s " % (name, output.__class__.__name__)
             for i, line in enumerate(_textwrap.wrap(output.getHelp(), 56)):
                 if i == 0:
-                    for x in range(0, num_whitespace):
+                    for _ in range(0, num_whitespace):
                         s += " "
                 else:
-                    for x in range(0, 24):
+                    for _ in range(0, 24):
                         s += " "
                 s +=  line + "\n"
             string += s
@@ -1240,7 +1239,7 @@ def _on_file_upload(change):
         # This is the first time the value has been set.
         if change["owner"].value is None:
             # Whether a match has been found.
-            is_found = False
+            is_match = False
 
             # Store the name of the input requirement.
             name = change["owner"]._name

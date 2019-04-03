@@ -36,7 +36,6 @@ import Sire.Mol as _SireMol
 from BioSimSpace import _gmx_exe
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from ..Gateway import ResourceManager as _ResourceManager
 from .._SireWrappers import System as _System
 
 import BioSimSpace.Process as _Process

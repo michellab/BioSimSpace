@@ -186,7 +186,7 @@ class Namd(_process.Process):
                     has_impropers = True
 
                 # There are donor records.
-                if "!NDON" in line:
+                elif "!NDON" in line:
                     has_donors = True
 
                 # There are acceptor records.
@@ -216,7 +216,7 @@ class Namd(_process.Process):
             file.close()
 
         # Append empty non-bonded exclusion record.
-        if not has_acceptors:
+        if not has_non_bonded:
             file = open(self._psf_file, "a")
             file.write("\n%8d !NNB: excluded\n" % 0)
             file.close()
@@ -1583,7 +1583,7 @@ class Namd(_process.Process):
         self.stdout(0)
 
         # Now search backwards through the list to find the last TIMING record.
-        for x, record in reversed(list(enumerate(self._stdout))):
+        for _, record in reversed(list(enumerate(self._stdout))):
 
             # Split the record using whitespace.
             data = record.split()

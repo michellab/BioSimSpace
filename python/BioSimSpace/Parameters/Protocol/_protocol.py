@@ -27,7 +27,6 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
-import warnings as _warnings
 
 import Sire as _Sire
 
@@ -344,9 +343,6 @@ def _find_force_field(forcefield):
        file : str
            The full path of the matching force field file.
     """
-
-    # Whether the force field is found.
-    is_found = False
 
     # Whether the force field is old.
     is_old = False

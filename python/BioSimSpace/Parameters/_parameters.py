@@ -26,7 +26,6 @@ Functionality for parameterising molecules.
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
 
 from ._process import Process as _Process
@@ -433,9 +432,9 @@ for _var in dir():
     if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
         _forcefield_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
+del _namespace
+del _sys
+del _var
 
 def forceFields():
     """Return a list of the supported force fields.

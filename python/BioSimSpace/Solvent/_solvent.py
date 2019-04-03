@@ -1014,9 +1014,9 @@ for _var in dir():
     if _var[0] != "_" and _var != "solvate" and _var[0] != "M":
         _models.append(_var)
         _model_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
+del _namespace
+del _sys
+del _var
 
 def waterModels():
     """Return a list of the supported water models.

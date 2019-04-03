@@ -43,9 +43,9 @@ for _var in dir():
     if _var[0] != "_" and _var != "Custom":
         _protocols.append(_var)
         _protocol_dict[_var] = getattr(_namespace, _var)
-del(_namespace)
-del(_sys)
-del(_var)
+del _namespace
+del _sys
+del _var
 
 def protocols():
     """Return a list of the supported Molecular Dynamics protocols.

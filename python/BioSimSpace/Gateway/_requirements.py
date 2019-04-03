@@ -30,7 +30,6 @@ import gzip as _gzip
 import os as _os
 import re as _re
 import shutil as _shutil
-import sys as _sys
 import tarfile as _tarfile
 import zipfile as _zipfile
 

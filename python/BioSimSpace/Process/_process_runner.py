@@ -26,7 +26,6 @@ Functionality for running multiple processes.
 import os as _os
 import tempfile as _tempfile
 
-from ..Gateway import ResourceManager as _ResourceManager
 from ._process import Process as _Process
 from .._SireWrappers import System as _System
 
@@ -480,7 +479,7 @@ class ProcessRunner():
 
         return run_time
 
-    def _nest_directories(self, processes, preserve_dir_name=False):
+    def _nest_directories(self, processes):
         """Helper function to nest processes inside the runner's working
            directory.
 

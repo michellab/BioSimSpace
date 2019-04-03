@@ -48,6 +48,8 @@ class FreeEnergy(_Protocol):
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
+                 zero_dummy_dihedrals=True,
+                 zero_dummy_impropers=True,
                  ensemble="NPT"
                 ):
         """Constructor.
@@ -79,6 +81,14 @@ class FreeEnergy(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
 
+           zero_dummy_dihedrals : bool
+               Whether to zero the barrier height for dihedrals involving
+               dummy atoms.
+
+           zero_dummy_impropers : bool
+               Whether to zero the barrier height for impropers involving
+               dummy atoms.
+
            ensemble : str
                The thermodynamic ensemble.
         """
@@ -94,6 +104,14 @@ class FreeEnergy(_Protocol):
 
         # Set the system temperature.
         self.setTemperature(temperature)
+
+        # Set the flag for zeroing the barrier height of dihedrals involving
+        # dummy atoms.
+        self.setZeroDummyDihedrals(zero_dummy_dihedrals)
+
+        # Set the flag for zeroing the barrier height of impropers involving
+        # dummy atoms.
+        self.setZeroDummyImpropers(zero_dummy_impropers)
 
         # Set the thermodynamic ensemble.
         self.setEnsemble(ensemble)
@@ -328,6 +346,60 @@ class FreeEnergy(_Protocol):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
+
+    def getZeroDummyDihedrals(self):
+        """Return whether the barrier height is zeroed for dihedrals involving
+           dummy atoms.
+
+           Returns
+           -------
+
+           zero_dummy_dihedrals : bool
+               Whether dihedrals involving dummy atoms are zeroed.
+        """
+        return self._zero_dummy_dihedrals
+
+    def setZeroDummyDihedrals(self, zero_dummy_dihedrals):
+        """Set the flag for zeroing the barrier height for dihedrals involving
+           dummy atoms.
+
+           Parameters
+           ----------
+
+           zero_dummy_dihedrals : bool
+               Whether dihedrals involving dummy atoms are zeroed.
+        """
+        if type(zero_dummy_dihedrals) is bool:
+            self._zero_dummy_dihedrals = zero_dummy_dihedrals
+        else:
+            raise TypeError("'zero_dummy_dihedrals' must be of type 'bool'")
+
+    def getZeroDummyImpropers(self):
+        """Return whether the barrier height is zeroed for impropers involving
+           dummy atoms.
+
+           Returns
+           -------
+
+           zero_dummy_impropers : bool
+               Whether impropers involving dummy atoms are zeroed.
+        """
+        return self._zero_dummy_impropers
+
+    def setZeroDummyImpropers(self, zero_dummy_impropers):
+        """Set the flag for zeroing the barrier height for impropers involving
+           dummy atoms.
+
+           Parameters
+           ----------
+
+           zero_dummy_impropers : bool
+               Whether impropers involving dummy atoms are zeroed.
+        """
+        if type(zero_dummy_impropers) is bool:
+            self._zero_dummy_impropers = zero_dummy_impropers
+        else:
+            raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
 
     def getEnsemble(self):
         """Return the thermodynamic ensemble.
