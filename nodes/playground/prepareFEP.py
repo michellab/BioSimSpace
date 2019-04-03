@@ -45,38 +45,71 @@ def writeLog(ligA, ligB, mapping):
 # In[3]:
 
 
-node = BSS.Gateway.Node("A node to generate input files for a SOMD relative free energy calculation.")
+def loadMapping(mapping_file):
+    """Parse a text file that specifies mappings between atomic indices in input1 --> atoms in input2"""
+    stream = open(mapping_file,'r')
+    buffer = stream.readlines()
+    stream.close()
+    mapping = {}
+    for line in buffer:
+        if line.startswith("#"):
+            continue
+        elems = line.split(",")
+        idx1 = int(elems[0])
+        idx2 = int(elems[1])
+        mapping[ AtomIdx(idx1)] = AtomIdx(idx2)
+    
+    return mapping
 
 
 # In[4]:
+
+
+node = BSS.Gateway.Node("A node to generate input files for a SOMD relative free energy calculation.")
+
+
+# In[5]:
 
 
 node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edinburgh")
 node.setLicense("GPLv3")
 
 
-# In[5]:
+# In[6]:
 
 
 node.addInput("input1", BSS.Gateway.FileSet(help="A topology and coordinates file"))
 node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates file"))
-node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11...", default=""))
+node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11... Ignored if a mapping is provided", default=""))
+node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
-# In[6]:
+# In[7]:
 
 
 node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="SOMD input files for a perturbation of input1->input2."))
 
 
-# In[17]:
+# In[8]:
 
 
 node.showControls()
 
 
-# In[18]:
+# In[9]:
+
+
+do_mapping = True
+custom_mapping = node.getInput("mapping")
+print (custom_mapping)
+if custom_mapping is not None:
+    do_mapping = False
+    mapping = loadMapping(custom_mapping)
+    #print (mapping)
+
+
+# In[10]:
 
 
 # Optional input, dictionary of Atom indices that should be matched in the search. 
@@ -90,21 +123,21 @@ if len(prematchstring) > 0:
 #print (prematch)
 
 
-# In[19]:
+# In[11]:
 
 
 # Load system 1
 system1 = BSS.IO.readMolecules(node.getInput("input1"))
 
 
-# In[20]:
+# In[12]:
 
 
 # Load system 2
 system2 = BSS.IO.readMolecules(node.getInput("input2"))
 
 
-# In[21]:
+# In[13]:
 
 
 # We assume the molecules to perturb are the first molecules in each system
@@ -112,24 +145,26 @@ lig1 = system1.getMolecules()[0]
 lig2 = system2.getMolecules()[0]
 
 
-# In[22]:
+# In[14]:
 
 
-# Return a maximum of 10 matches, scored by RMSD and sorted from best to worst.
-mappings = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, scoring_function="RMSDalign", timeout=10*BSS.Units.Time.second)
-# We retain the top mapping
-mapping = mappings[0]
-#print (len(mappings))
-#print (mappings)
+if do_mapping:
+    # Return a maximum of 10 matches, scored by RMSD and sorted from best to worst.
+    mappings, scores = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, return_scores=True, scoring_function="RMSDalign", timeout=10*BSS.Units.Time.second)
+    # We retain the top mapping
+    mapping = mappings[0]
+    #print (len(mappings))
+    #print (mappings)
 
 
-# In[23]:
+# In[15]:
 
 
-#print (mapping)
+#for x in range(0,len(mappings)):
+#    print (mappings[x], scores[x])
 
 
-# In[24]:
+# In[ ]:
 
 
 # Align lig1 to lig2 based on the best mapping. The molecule is aligned based
@@ -143,7 +178,7 @@ system1.removeMolecules(lig1)
 system1.addMolecules(merged)
 
 
-# In[25]:
+# In[ ]:
 
 
 # Log the mapping used
@@ -157,7 +192,7 @@ cmd = "unzip -o somd.zip"
 os.system(cmd)
 
 
-# In[26]:
+# In[ ]:
 
 
 root = node.getInput("output")
@@ -165,24 +200,24 @@ mergedpdb = "%s.mergeat0.pdb" % root
 pert = "%s.pert" % root
 prm7 = "%s.prm7" % root
 rst7 = "%s.rst7" % root
-mapping = "%s.mapping" % root
+mapping_str = "%s.mapping" % root
 
 
-# In[27]:
+# In[ ]:
 
 
-cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping)
+cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
 #print (cmd)
 os.system(cmd)
 
 
-# In[28]:
+# In[ ]:
 
 
-node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping])
+node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping_str])
 
 
-# In[29]:
+# In[ ]:
 
 
 node.validate()
