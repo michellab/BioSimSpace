@@ -27,6 +27,6 @@ BSS_VER=$(git --git-dir=$SRC_DIR/.git describe --tags | tr - _)
 
 # Update the BioSimSpace version number.
 echo "Updating BioSimSpace version number: '$BSS_VER'"
-sed -i.bak "s/VERSION/$BSS_VER/" -- $RECIPE && rm -- $RECIPE.bak
+sed -i.bak -e "s/VERSION/$BSS_VER/" $RECIPE && rm $RECIPE.bak
 
 echo "Recipe updated!"
