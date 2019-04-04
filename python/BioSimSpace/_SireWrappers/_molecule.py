@@ -709,6 +709,13 @@ class Molecule():
         # Extract and copy the Sire molecule.
         mol = self._sire_molecule.__deepcopy__()
 
+        # First work out the indices of atoms that are changing type.
+        pert_idxs = []
+
+        for atom in mol.atoms():
+            if atom.property("ambertype0") != atom.property("ambertype1"):
+                pert_idxs.append(atom.index())
+
         # The pert file uses atom names for identification purposes. This means
         # that the names must be unique. As such we need to count the number of
         # atoms with a particular name, then append an index to their name.
@@ -716,7 +723,7 @@ class Molecule():
         # A dictionary to track the atom names.
         atom_names = {}
 
-        # Loop over all atoms in the merged molecule.
+        # Loop over all atoms in the molecule.
         for atom in mol.atoms():
             if atom.name() in atom_names:
                 atom_names[atom.name()] += 1
@@ -732,9 +739,10 @@ class Molecule():
             # Make the molecule editable.
             edit_mol = mol.edit()
 
-            # Loop over all atoms in the merged molecule.
-            for atom in self._sire_molecule.atoms():
-                # Extract the original atom name.
+            # Loop over all perturbed atoms.
+            for idx in pert_idxs:
+                # Store the atom and its original atom.
+                atom = mol.atom(idx)
                 name = atom.name()
 
                 # Create the base of the new name.
@@ -751,7 +759,7 @@ class Molecule():
                         num_attempts += 1
 
                         # Abort if we've tried more than 100 times.
-                        if num_attempts == 1:
+                        if num_attempts == 100:
                             raise RuntimeError("Error while writing SOMD pert file. "
                                                "Unable to generate a unique suffix for "
                                                "atom name: '%s'" % new_name)
@@ -781,7 +789,10 @@ class Molecule():
             file.write("molecule LIG\n")
 
             # 1) Atoms.
-            for atom in mol.atoms():
+            for idx in pert_idxs:
+                # Get the perturbed atom.
+                atom = mol.atom(idx)
+
                 # Start atom record.
                 file.write("    atom\n")
 
@@ -834,26 +845,49 @@ class Molecule():
                     except:
                         bond0 = bonds0[bonds0_idx[bond_id.mirror()]]
 
-                    # Cast the bonds as AmberBonds.
-                    amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
-                    amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+                    # Check that an atom in the bond is perturbed.
+                    if _has_pert_atom([idx0, idx1], pert_idxs):
 
-                    # Only write record if the bond parameters change.
-                    if amber_bond0 != amber_bond1:
+                        # Cast the bonds as AmberBonds.
+                        amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
+                        amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
 
-                        # Start bond record.
-                        file.write("    bond\n")
+                        # Check whether a dummy atoms are present in the lambda = 0
+                        # and lambda = 1 states.
+                        initial_dummy = _has_dummy(mol, [idx0, idx1])
+                        final_dummy = _has_dummy(mol, [idx0, idx1], True)
 
-                        # Angle data.
-                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                        file.write("        final_force    %.5f\n" % amber_bond1.k())
-                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                        # Cannot have a bond with a dummy in both states.
+                        if initial_dummy and final_dummy:
+                            raise _IncompatibleError("Dummy atoms are present in both the initial "
+                                                     "and final bond?")
 
-                        # End bond record.
-                        file.write("    endbond\n")
+                        # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                        if initial_dummy or final_dummy:
+                            has_dummy = True
+                            if initial_dummy:
+                                amber_bond0 = amber_bond1
+                            else:
+                                amber_bond1 = amber_bond0
+                        else:
+                            has_dummy = False
+
+                        # Only write record if the bond parameters change.
+                        if has_dummy or amber_bond0 != amber_bond1:
+
+                            # Start bond record.
+                            file.write("    bond\n")
+
+                            # Angle data.
+                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                            file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                            file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                            file.write("        final_force    %.5f\n" % amber_bond1.k())
+                            file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+
+                            # End bond record.
+                            file.write("    endbond\n")
 
             # 3) Angles.
 
@@ -938,8 +972,8 @@ class Molecule():
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        initial_force  %.5f\n" % amber_angle.k())
                 file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
-                file.write("        final_force    %.5f\n" % 0.0)
-                file.write("        final_equil    %.5f\n" % 0.0)
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
 
                 # End angle record.
                 file.write("    endangle\n")
@@ -964,8 +998,8 @@ class Molecule():
                 file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        initial_force  %.5f\n" % 0.0)
-                file.write("        initial_equil  %.5f\n" % 0.0)
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
                 file.write("        final_force    %.5f\n" % amber_angle.k())
                 file.write("        final_equil    %.5f\n" % amber_angle.theta0())
 
@@ -983,27 +1017,49 @@ class Molecule():
                 idx1 = info.atomIdx(angle0.atom1())
                 idx2 = info.atomIdx(angle0.atom2())
 
-                # Cast the functions as AmberAngles.
-                amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
-                amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
+                # Check that an atom in the angle is perturbed.
+                if _has_pert_atom([idx0, idx1, idx2], pert_idxs):
 
-                # Only write record if the angle parameters change.
-                if amber_angle0 != amber_angle1:
+                    # Cast the functions as AmberAngles.
+                    amber_angle0 = _SireMM.AmberAngle(angle0.function(), _SireCAS.Symbol("theta"))
+                    amber_angle1 = _SireMM.AmberAngle(angle1.function(), _SireCAS.Symbol("theta"))
 
-                    # Start angle record.
-                    file.write("    angle\n")
+                    # Check whether a dummy atoms are present in the lambda = 0
+                    # and lambda = 1 states.
+                    initial_dummy = _has_dummy(mol, [idx0, idx1, idx2])
+                    final_dummy = _has_dummy(mol, [idx0, idx1, idx2], True)
 
-                    # Angle data.
-                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                    file.write("        initial_force  %.5f\n" % amber_angle0.k())
-                    file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
-                    file.write("        final_force    %.5f\n" % amber_angle1.k())
-                    file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+                    # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                    if initial_dummy and final_dummy:
+                        has_dummy = True
+                        amber_angle0 = _SireMM.AmberAngle()
+                        amber_angle1 = _SireMM.AmberAngle()
+                    elif initial_dummy or final_dummy:
+                        has_dummy = True
+                        if initial_dummy:
+                            amber_angle0 = amber_angle1
+                        else:
+                            amber_angle1 = amber_angle0
+                    else:
+                        has_dummy = False
 
-                    # End angle record.
-                    file.write("    endangle\n")
+                    # Only write record if the angle parameters change.
+                    if has_dummy or amber_angle0 != amber_angle1:
+
+                        # Start angle record.
+                        file.write("    angle\n")
+
+                        # Angle data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_angle0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
+                        file.write("        final_force    %.5f\n" % amber_angle1.k())
+                        file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+
+                        # End angle record.
+                        file.write("    endangle\n")
 
             # 4) Dihedrals.
 
@@ -1079,107 +1135,26 @@ class Molecule():
                 idx2 = info.atomIdx(dihedral.atom2())
                 idx3 = info.atomIdx(dihedral.atom3())
 
-                # Check whether any of the atoms are dummies.
-                has_dummy = False
-                if zero_dummy_dihedrals:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element0") == dummy:
-                        has_dummy = True
-
                 # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral0 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
-                # Start dihedral record.
-                file.write("    dihedral\n")
+                # Default to keeping the potential constant.
+                amber_dihedral1 = amber_dihedral0
 
-                # Dihedral data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form  ")
-                for term in amber_dihedral.terms():
-                    k = term.k()
-                    if has_dummy:
-                        k = 0.0
-                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                file.write("\n")
-                file.write("        final_form     0.0 0.0 0.0\n")
+                # Whether to zero the barrier height of the end state dihedral.
+                zero_k = False
 
-                # End dihedral record.
-                file.write("    enddihedral\n")
+                # Check whether any atom in the lambda = 1 state are dummies.
+                if _has_dummy(mol, [idx0, idx1, idx2, idx3], True):
+                    # Check whether all atoms in the lambda = 1 state are dummies.
+                    if all(_is(mol, [idx0, idx1, idx2, idx3], True)):
+                        if zero_dummy_dihedrals:
+                            zero_k = True
+                    else:
+                        zero_k = True
 
-            # lambda = 1.
-            for idx in dihedrals1_unique_idx.values():
-                # Get the dihedral potential.
-                dihedral = dihedrals1[idx]
-
-                # Get the AtomIdx for the atoms in the dihedral.
-                idx0 = info.atomIdx(dihedral.atom0())
-                idx1 = info.atomIdx(dihedral.atom1())
-                idx2 = info.atomIdx(dihedral.atom2())
-                idx3 = info.atomIdx(dihedral.atom3())
-
-                # Check whether any of the atoms are dummies.
-                has_dummy = False
-                if zero_dummy_dihedrals:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element1") == dummy:
-                        has_dummy = True
-
-                # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
-
-                # Start dihedral record.
-                file.write("    dihedral\n")
-
-                # Dihedral data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form   0.0 0.0 0.0\n")
-                file.write("        final_form    ")
-                for term in amber_dihedral.terms():
-                    k = term.k()
-                    if has_dummy:
-                        k = 0.0
-                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                file.write("\n")
-
-                # End dihedral record.
-                file.write("    enddihedral\n")
-
-            # Now add records for the shared dihedrals.
-            for idx0, idx1 in dihedrals_shared_idx.values():
-                # Get the dihedral potentials.
-                dihedral0 = dihedrals0[idx0]
-                dihedral1 = dihedrals1[idx1]
-
-                # Get the AtomIdx for the atoms in the dihedral.
-                idx0 = info.atomIdx(dihedral0.atom0())
-                idx1 = info.atomIdx(dihedral0.atom1())
-                idx2 = info.atomIdx(dihedral0.atom2())
-                idx3 = info.atomIdx(dihedral0.atom3())
-
-                # Cast the functions as AmberDihedrals.
-                amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
-                amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
-
-                # Only write record if the dihedral parameters change.
-                if amber_dihedral0 != amber_dihedral1:
+                # Only write record if dummy is present or potential changes.
+                if zero_k:
 
                     # Start dihedral record.
                     file.write("    dihedral\n")
@@ -1193,6 +1168,66 @@ class Molecule():
                     for term in amber_dihedral0.terms():
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                     file.write("\n")
+                    file.write("        final form    ")
+                    for term in amber_dihedral1.terms():
+                        if zero_k:
+                            k = 0.0
+                        else:
+                            k = term.k()
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                    file.write("\n")
+
+                    # End dihedral record.
+                    file.write("    enddihedral\n")
+
+            # lambda = 1.
+            for idx in dihedrals1_unique_idx.values():
+                # Get the dihedral potential.
+                dihedral = dihedrals1[idx]
+
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral.atom0())
+                idx1 = info.atomIdx(dihedral.atom1())
+                idx2 = info.atomIdx(dihedral.atom2())
+                idx3 = info.atomIdx(dihedral.atom3())
+
+                # Cast the function as an AmberDihedral.
+                amber_dihedral1 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
+
+                # Default to keeping the potential constant.
+                amber_dihedral0 = amber_dihedral1
+
+                # Whether to zero the barrier height of the initial state dihedral.
+                zero_k = False
+
+                # Check whether any atom in the lambda = 0 state are dummies.
+                if _has_dummy(mol, [idx0, idx1, idx2, idx3]):
+                    # Check whether all atoms in the lambda = 0 state are dummies.
+                    if all(_is(mol, [idx0, idx1, idx2, idx3])):
+                        if zero_dummy_dihedrals:
+                            zero_k = True
+                    else:
+                        zero_k = True
+
+                # Only write record if dummy is present or potential changes.
+                if zero_k:
+
+                    # Start dihedral record.
+                    file.write("    dihedral\n")
+
+                    # Dihedral data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                    file.write("        initial_form  ")
+                    for term in amber_dihedral0.terms():
+                        if zero_k:
+                            k = 0.0
+                        else:
+                            k = term.k()
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                    file.write("\n")
                     file.write("        final_form    ")
                     for term in amber_dihedral1.terms():
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -1200,6 +1235,86 @@ class Molecule():
 
                     # End dihedral record.
                     file.write("    enddihedral\n")
+
+            # Now add records for the shared dihedrals.
+            for idx0, idx1 in dihedrals_shared_idx.values():
+                # Get the dihedral potentials.
+                dihedral0 = dihedrals0[idx0]
+                dihedral1 = dihedrals1[idx1]
+
+                # Get the AtomIdx for the atoms in the dihedral.
+                idx0 = info.atomIdx(dihedral0.atom0())
+                idx1 = info.atomIdx(dihedral0.atom1())
+                idx2 = info.atomIdx(dihedral0.atom2())
+                idx3 = info.atomIdx(dihedral0.atom3())
+
+                # Check that an atom in the dihedral is perturbed.
+                if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
+
+                    # Cast the functions as AmberDihedrals.
+                    amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
+                    amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
+
+                    # Whether to zero the barrier height of the initial state dihedral.
+                    zero_k = False
+
+                    # Whether any atom in each end state is a dummy.
+                    has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
+                    has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
+
+                    # Whether all atom sin each state are dummies.
+                    all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
+                    all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
+
+                    # Dummies are present in both end states, use null potentials.
+                    if has_dummy_initial and has_dummy_final:
+                        amber_dihedral0 = _SireMM.AmberDihedral()
+                        amber_dihedral1 = _SireMM.AmberDihedral()
+
+                    # Dummies in the initial state.
+                    elif has_dummy_initial:
+                        if all_dummy_initial and not zero_dummy_dihedrals:
+                            amber_dihedral0 = amber_dihedral1
+                        else:
+                            zero_k = True
+
+                    # Dummies in the final state.
+                    elif has_dummy_final:
+                        if all_dummy_final and not zero_dummy_dihedrals:
+                            amber_dihedral1 = amber_dihedral0
+                        else:
+                            zero_k = True
+
+                    # Only write record if the dihedral parameters change.
+                    if zero_k or amber_dihedral0 != amber_dihedral1:
+
+                        # Start dihedral record.
+                        file.write("    dihedral\n")
+
+                        # Dihedral data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                        file.write("        initial_form  ")
+                        for term in amber_dihedral0.terms():
+                            if zero_k and has_dummy_initial:
+                                k = 0.0
+                            else:
+                                k = term.k()
+                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                        file.write("\n")
+                        file.write("        final_form    ")
+                        for term in amber_dihedral1.terms():
+                            if zero_k and has_dummy_final:
+                                k = 0.0
+                            else:
+                                k = term.k()
+                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                        file.write("\n")
+
+                        # End dihedral record.
+                        file.write("    enddihedral\n")
 
             # 5) Impropers.
 
@@ -1241,24 +1356,33 @@ class Molecule():
                 impropers1_idx[improper_id] = idx
 
             # Now work out the ImproperIDs that are unique at lambda = 0 and 1
-            # as well as those that are shared.
+            # as well as those that are shared. Note that the ordering of
+            # impropers is inconsistent between molecular topology formats so
+            # we test all permutations of atom ordering to find matches. This
+            # is achieved using the ImproperID.equivalent() method.
             impropers0_unique_idx = {}
             impropers1_unique_idx = {}
             impropers_shared_idx = {}
 
             # lambda = 0.
-            for idx in impropers0_idx.keys():
-                if idx not in impropers1_idx.keys():
-                    impropers0_unique_idx[idx] = impropers0_idx[idx]
-                else:
-                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+            for idx0 in impropers0_idx.keys():
+                is_shared = False
+                for idx1 in impropers1_idx.keys():
+                    if idx0.equivalent(idx1):
+                        impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
+                        is_shared = True
+                if not is_shared:
+                    impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
             # lambda = 1.
-            for idx in impropers1_idx.keys():
-                if idx not in impropers0_idx.keys():
-                    impropers1_unique_idx[idx] = impropers1_idx[idx]
-                elif idx not in impropers_shared_idx.keys():
-                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+            for idx1 in impropers1_idx.keys():
+                is_shared = False
+                for idx0 in impropers0_idx.keys():
+                    if idx1.equivalent(idx0):
+                        impropers1_unique_idx[idx1] = impropers1_idx[idx1]
+                        is_shared = True
+                if not is_shared:
+                    impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
 
             # First create records for the impropers that are unique to lambda = 0 and 1.
 
@@ -1273,41 +1397,51 @@ class Molecule():
                 idx2 = info.atomIdx(improper.atom2())
                 idx3 = info.atomIdx(improper.atom3())
 
-                # Check whether any of the atoms are dummies.
-                has_dummy = False
-                dummy = _SireMol.Element(0)
-                if zero_dummy_impropers:
-                    if mol.atom(idx0).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element0") == dummy:
-                        has_dummy = True
-
                 # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral0 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
-                # Start improper record.
-                file.write("    improper\n")
+                # Default to keeping the potential constant.
+                amber_dihedral1 = amber_dihedral0
 
-                # Improper data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form  ")
-                for term in amber_dihedral.terms():
-                    k = term.k()
-                    if has_dummy:
-                        k = 0.0
-                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                file.write("\n")
-                file.write("        final_form     0.0 0.0 0.0\n")
+                # Whether to zero the barrier height of the end state improper.
+                zero_k = False
 
-                # End improper record.
-                file.write("    endimproper\n")
+                # Check whether any atom in the lambda = 1 state are dummies.
+                if _has_dummy(mol, [idx0, idx1, idx2, idx3], True):
+                    # Check whether all atoms in the lambda = 1 state are dummies.
+                    if all(_is(mol, [idx0, idx1, idx2, idx3], True)):
+                        # Keep the improper constant.
+                        if zero_dummy_impropers:
+                            zero_k = True
+                    else:
+                        zero_k = True
+
+                # Only write record if dummy is present or potential changes.
+                if zero_k:
+
+                    # Start improper record.
+                    file.write("    improper\n")
+
+                    # Dihedral data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                    file.write("        initial_form  ")
+                    for term in amber_dihedral.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+                    file.write("        final form    ")
+                    for term in amber_dihedral.terms():
+                        if zero_k:
+                            k = 0.0
+                        else:
+                            k = term.k()
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                    file.write("\n")
+
+                    # End improper record.
+                    file.write("    endimproper\n")
 
             # lambda = 1.
             for idx in impropers1_unique_idx.values():
@@ -1320,41 +1454,51 @@ class Molecule():
                 idx2 = info.atomIdx(improper.atom2())
                 idx3 = info.atomIdx(improper.atom3())
 
-                # Check whether any of the atoms are dummies.
-                has_dummy = False
-                if zero_dummy_impropers:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element1") == dummy:
-                        has_dummy = True
-
                 # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral1 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
-                # Start improper record.
-                file.write("    improper\n")
+                # Default to keeping the potential constant.
+                amber_dihedral1 = amber_dihedral0
 
-                # Dihedral data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                file.write("        initial_form   0.0 0.0 0.0\n")
-                file.write("        final_form    ")
-                for term in amber_dihedral.terms():
-                    k = term.k()
-                    if has_dummy:
-                        k = 0.0
-                    file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                file.write("\n")
+                # Whether to zero the barrier height of the initial state improper.
+                zero_k = False
 
-                # End improper record.
-                file.write("    endimproper\n")
+                # Check whether any atom in the lambda = 0 state are dummies.
+                if _has_dummy(mol, [idx0, idx1, idx2, idx3]):
+                    # Check whether all atoms in the lambda = 0 state are dummies.
+                    if all(_is_dummy(mol, [idx0, idx1, idx2, idx3])):
+                        # Keep the improper constant.
+                        if not zero_dummy_impropers:
+                            amber_dihedral0 = amber_dihedral1
+                    else:
+                        zero_k = True
+
+                # Only write record if dummy is present or potential changes.
+                if zero_k:
+
+                    # Start improper record.
+                    file.write("    improper\n")
+
+                    # Dihedral data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                    file.write("        initial_form  ")
+                    for term in amber_dihedral0.terms():
+                        if zero_k:
+                            k = 0.0
+                        else:
+                            k = term.k()
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                    file.write("\n")
+                    file.write("        final_form    ")
+                    for term in amber_dihedral1.terms():
+                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write("\n")
+
+                    # End improper record.
+                    file.write("    endimproper\n")
 
             # Now add records for the shared impropers.
             for idx0, idx1 in impropers_shared_idx.values():
@@ -1368,32 +1512,73 @@ class Molecule():
                 idx2 = info.atomIdx(improper0.atom2())
                 idx3 = info.atomIdx(improper0.atom3())
 
-                # Cast the functions as AmberDihedrals.
-                amber_dihedral0 = _SireMM.AmberDihedral(improper0.function(), _SireCAS.Symbol("phi"))
-                amber_dihedral1 = _SireMM.AmberDihedral(improper1.function(), _SireCAS.Symbol("phi"))
+                # Check that an atom in the improper is perturbed.
+                if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
 
-                # Only write record if the improper parameters change.
-                if amber_dihedral0 != amber_dihedral1:
+                    # Cast the functions as AmberDihedrals.
+                    amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
+                    amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
 
-                    # Start improper record.
-                    file.write("    improper\n")
+                    # Whether to zero the barrier height of the initial/final improper.
+                    zero_k = False
 
-                    # Improper data.
-                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                    file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                    file.write("        initial_form  ")
-                    for term in amber_dihedral0.terms():
-                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                    file.write("\n")
-                    file.write("        final_form    ")
-                    for term in amber_dihedral1.terms():
-                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
-                    file.write("\n")
+                    # Whether any atom in each end state is a dummy.
+                    has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
+                    has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
 
-                    # End improper record.
-                    file.write("    endimproper\n")
+                    # Whether all atom sin each state are dummies.
+                    all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
+                    all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
+
+                    # Dummies are present in both end states, use null potentials.
+                    if has_dummy_initial and has_dummy_final:
+                        amber_dihedral0 = _SireMM.AmberDihedral()
+                        amber_dihedral1 = _SireMM.AmberDihedral()
+
+                    # Dummies in the initial state.
+                    elif has_dummy_initial:
+                        if all_dummy_initial and not zero_dummy_dihedrals:
+                            amber_dihedral0 = amber_dihedral1
+                        else:
+                            zero_k = True
+
+                    # Dummies in the final state.
+                    elif has_dummy_final:
+                        if all_dummy_final and not zero_dummy_dihedrals:
+                            amber_dihedral1 = amber_dihedral0
+                        else:
+                            zero_k = True
+
+                    # Only write record if the improper parameters change.
+                    if zero_k or amber_dihedral0 != amber_dihedral1:
+
+                        # Start improper record.
+                        file.write("    improper\n")
+
+                        # Improper data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                        file.write("        initial_form  ")
+                        for term in amber_dihedral0.terms():
+                            if zero_k and has_dummy_initial:
+                                k = 0.0
+                            else:
+                                k = term.k()
+                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                        file.write("\n")
+                        file.write("        final_form    ")
+                        for term in amber_dihedral1.terms():
+                            if zero_k and has_dummy_final:
+                                k = 0.0
+                            else:
+                                k = term.k()
+                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                        file.write("\n")
+
+                        # End improper record.
+                        file.write("    endimproper\n")
 
             # End molecule record.
             file.write("endmolecule\n")
@@ -1406,18 +1591,24 @@ class Molecule():
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
-        # Special handling for the mass property. Perturbed atoms take the
-        # mass of the heaviest end state, not the lambda = 0 state.
+        # Special handling for the mass and element properties. Perturbed atoms
+        # take the mass and atomic number from the maximum of both states,
+        # not the lambda = 0 state.
         if mol.hasProperty("mass0") and mol.hasProperty("element0"):
-            # See if the mass property exists in the user map.
-            new_prop = property_map.get("mass", "mass")
+            # See if the mass or element properties exists in the user map.
+            new_mass_prop = property_map.get("mass", "mass")
+            new_element_prop = property_map.get("element", "element")
 
             for idx in range(0, mol.nAtoms()):
                 # Convert to an AtomIdx.
                 idx = _SireMol.AtomIdx(idx)
 
+                # Extract the elements of the end states.
+                element0 = mol.atom(idx).property("element0")
+                element1 = mol.atom(idx).property("element1")
+
                 # The end states are different elements.
-                if mol.atom(idx).property("element0") != mol.atom(idx).property("element1"):
+                if element0 != element1:
                     # Extract the mass of the end states.
                     mass0 = mol.atom(idx).property("mass0")
                     mass1 = mol.atom(idx).property("mass1")
@@ -1428,22 +1619,32 @@ class Molecule():
                     else:
                         mass = mass1
 
-                    # Set the updated mass property.
-                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+                    # Choose the element with the most protons.
+                    if element0.nProtons() > element1.nProtons():
+                        element = element0
+                    else:
+                        element = element1
+
+                    # Set the updated properties.
+                    mol = mol.atom(idx).setProperty(new_mass_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_element_prop, element).molecule()
 
                 else:
-                    # Use the mass at lambda = 0.
+                    # Use the properties at lambda = 0.
                     mass = mol.atom(idx).property("mass0")
-                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_mass_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_element_prop, element0).molecule()
 
             # Delete redundant properties.
             mol = mol.removeProperty("mass0").molecule()
             mol = mol.removeProperty("mass1").molecule()
+            mol = mol.removeProperty("element0").molecule()
+            mol = mol.removeProperty("element1").molecule()
 
         # Rename all properties in the molecule: "prop0" --> "prop".
         # Delete all properties named "prop0" and "prop1".
         for prop in mol.propertyKeys():
-            if prop[-1] == "0" and prop != "mass0":
+            if prop[-1] == "0" and prop != "mass0" and prop != "element0":
                 # See if this property exists in the user map.
                 new_prop = property_map.get(prop[:-1], prop[:-1])
 
@@ -2429,6 +2630,108 @@ class Molecule():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
+
+def _has_pert_atom(idxs, pert_idxs):
+    """Internal function to check whether a potential contains perturbed atoms.
+
+       Parameters
+       ----------
+
+       idxs : [AtomIdx]
+           A list of atom indices involved in the potential.
+
+       pert_idxs : [AtomIdx]
+           A list of atom indices that are perturbed.
+
+       Returns
+       -------
+
+       has_pert_atom : bool
+           Whether the potential includes a perturbed atom.
+    """
+
+    for idx in idxs:
+        if idx in pert_idxs:
+            return True
+
+    return False
+
+def _has_dummy(mol, idxs, is_lambda1=False):
+    """Internal function to check whether any atom is a dummy.
+
+       Parameters
+       ----------
+
+       mol : Sire.Mol.Molecule
+           The molecule.
+
+       idxs : [AtomIdx]
+           A list of atom indices.
+
+       is_lambda1 : bool
+           Whether to check the lambda = 1 state.
+
+       Returns
+       -------
+
+       has_dummy : bool
+           Whether a dummy atom is present.
+    """
+
+    # Set the element property associated with the end state.
+    if is_lambda1:
+        prop = "element1"
+    else:
+        prop = "element0"
+
+    dummy = _SireMol.Element(0)
+
+    # Check whether an of the atoms is a dummy.
+    for idx in idxs:
+        if mol.atom(idx).property(prop) == dummy:
+            return True
+
+    return False
+
+def _is_dummy(mol, idxs, is_lambda1=False):
+    """Internal function to return whether each atom is a dummy.
+
+       Parameters
+       ----------
+
+       mol : Sire.Mol.Molecule
+           The molecule.
+
+       idxs : [AtomIdx]
+           A list of atom indices.
+
+       is_lambda1 : bool
+           Whether to check the lambda = 1 state.
+
+       Returns
+       -------
+
+       is_dummy : [bool]
+           Whether each atom is a dummy.
+    """
+
+    # Set the element property associated with the end state.
+    if is_lambda1:
+        prop = "element1"
+    else:
+        prop = "element0"
+
+    # Store a dummy element.
+    dummy = _SireMol.Element(0)
+
+    # Initialise a list to store the state of each atom.
+    is_dummy = []
+
+    # Check whether each of the atoms is a dummy.
+    for idx in idxs:
+        is_dummy.append(mol.atom(idx).property(prop) == dummy)
+
+    return is_dummy
 
 def _random_suffix(basename, size=4, chars=_string.ascii_uppercase + _string.digits):
     """Internal helper function to generate a random atom name suffix to avoid
