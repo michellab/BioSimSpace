@@ -5,6 +5,11 @@ if [[ ! -a .ciignore ]]; then
 	exit
 fi
 
+# If the commit message already contains ***NO_CI***, the exit.
+if grep -q "***NO_CI***" $1; then
+    exit
+fi
+
 # Load in every file that will be changed via this commit into an array.
 changes=$(git diff --name-only --cached)
 
