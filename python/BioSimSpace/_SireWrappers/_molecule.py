@@ -1080,17 +1080,10 @@ class Molecule():
                 idx3 = info.atomIdx(dihedral.atom3())
 
                 # Check whether any of the atoms are dummies.
-                has_dummy = False
                 if zero_dummy_dihedrals:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element0") == dummy:
-                        has_dummy = True
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3)
+                else:
+                    has_dummy = False
 
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
@@ -1127,17 +1120,10 @@ class Molecule():
                 idx3 = info.atomIdx(dihedral.atom3())
 
                 # Check whether any of the atoms are dummies.
-                has_dummy = False
                 if zero_dummy_dihedrals:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element1") == dummy:
-                        has_dummy = True
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3, True)
+                else:
+                    has_dummy = False
 
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
@@ -1174,12 +1160,18 @@ class Molecule():
                 idx2 = info.atomIdx(dihedral0.atom2())
                 idx3 = info.atomIdx(dihedral0.atom3())
 
+                # Check whether any of the atoms in the lambda = 1 state are dummies.
+                if zero_dummy_dihedrals:
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3, True)
+                else:
+                    has_dummy = False
+
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
                 amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
 
                 # Only write record if the dihedral parameters change.
-                if amber_dihedral0 != amber_dihedral1:
+                if amber_dihedral0 != amber_dihedral1 or has_dummy:
 
                     # Start dihedral record.
                     file.write("    dihedral\n")
@@ -1195,7 +1187,10 @@ class Molecule():
                     file.write("\n")
                     file.write("        final_form    ")
                     for term in amber_dihedral1.terms():
-                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                        k = term.k()
+                        if has_dummy:
+                            k = 0.0
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                     file.write("\n")
 
                     # End dihedral record.
@@ -1241,24 +1236,33 @@ class Molecule():
                 impropers1_idx[improper_id] = idx
 
             # Now work out the ImproperIDs that are unique at lambda = 0 and 1
-            # as well as those that are shared.
+            # as well as those that are shared. Note that the ordering of
+            # impropers is inconsistent between molecular topology formats so
+            # we test all permutations of atom ordering to find matches. This
+            # is achieved using the ImproperID.equivalent() method.
             impropers0_unique_idx = {}
             impropers1_unique_idx = {}
             impropers_shared_idx = {}
 
             # lambda = 0.
-            for idx in impropers0_idx.keys():
-                if idx not in impropers1_idx.keys():
-                    impropers0_unique_idx[idx] = impropers0_idx[idx]
-                else:
-                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+            for idx0 in impropers0_idx.keys():
+                is_shared = False
+                for idx1 in impropers1_idx.keys():
+                    if idx0.equivalent(idx1):
+                        impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
+                        is_shared = True
+                if not is_shared:
+                    impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
             # lambda = 1.
-            for idx in impropers1_idx.keys():
-                if idx not in impropers0_idx.keys():
-                    impropers1_unique_idx[idx] = impropers1_idx[idx]
-                elif idx not in impropers_shared_idx.keys():
-                    impropers_shared_idx[idx] = (impropers0_idx[idx], impropers1_idx[idx])
+            for idx1 in impropers1_idx.keys():
+                is_shared = False
+                for idx0 in impropers0_idx.keys():
+                    if idx1.equivalent(idx0):
+                        impropers1_unique_idx[idx1] = impropers1_idx[idx1]
+                        is_shared = True
+                if not is_shared:
+                    impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
 
             # First create records for the impropers that are unique to lambda = 0 and 1.
 
@@ -1274,17 +1278,10 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Check whether any of the atoms are dummies.
-                has_dummy = False
-                dummy = _SireMol.Element(0)
                 if zero_dummy_impropers:
-                    if mol.atom(idx0).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element0") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element0") == dummy:
-                        has_dummy = True
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3)
+                else:
+                    has_dummy = False
 
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
@@ -1293,7 +1290,7 @@ class Molecule():
                 file.write("    improper\n")
 
                 # Improper data.
-                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom0          %s\n" % mol.atom(idx1).name().value())
                 file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
@@ -1321,17 +1318,10 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Check whether any of the atoms are dummies.
-                has_dummy = False
                 if zero_dummy_impropers:
-                    dummy = _SireMol.Element(0)
-                    if mol.atom(idx0).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx1).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx2).property("element1") == dummy:
-                        has_dummy = True
-                    elif mol.atom(idx3).property("element1") == dummy:
-                        has_dummy = True
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3, True)
+                else:
+                    has_dummy = False
 
                 # Cast the function as an AmberDihedral.
                 amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
@@ -1368,12 +1358,18 @@ class Molecule():
                 idx2 = info.atomIdx(improper0.atom2())
                 idx3 = info.atomIdx(improper0.atom3())
 
+                # Check whether any of the atoms in the lambda = 1 state are dummies.
+                if zero_dummy_dihedrals:
+                    has_dummy = _has_dummy(mol, idx0, idx1, idx2, idx3, True)
+                else:
+                    has_dummy = False
+
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(improper0.function(), _SireCAS.Symbol("phi"))
                 amber_dihedral1 = _SireMM.AmberDihedral(improper1.function(), _SireCAS.Symbol("phi"))
 
                 # Only write record if the improper parameters change.
-                if amber_dihedral0 != amber_dihedral1:
+                if amber_dihedral0 != amber_dihedral1 or has_dummy:
 
                     # Start improper record.
                     file.write("    improper\n")
@@ -1389,7 +1385,10 @@ class Molecule():
                     file.write("\n")
                     file.write("        final_form    ")
                     for term in amber_dihedral1.terms():
-                        file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                        k = term.k()
+                        if has_dummy:
+                            k = 0.0
+                        file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                     file.write("\n")
 
                     # End improper record.
@@ -1406,18 +1405,24 @@ class Molecule():
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
-        # Special handling for the mass property. Perturbed atoms take the
-        # mass of the heaviest end state, not the lambda = 0 state.
+        # Special handling for the mass and element properties. Perturbed atoms
+        # take the mass and atomic number from the maximum of both states,
+        # not the lambda = 0 state.
         if mol.hasProperty("mass0") and mol.hasProperty("element0"):
-            # See if the mass property exists in the user map.
-            new_prop = property_map.get("mass", "mass")
+            # See if the mass or element properties exists in the user map.
+            new_mass_prop = property_map.get("mass", "mass")
+            new_element_prop = property_map.get("element", "element")
 
             for idx in range(0, mol.nAtoms()):
                 # Convert to an AtomIdx.
                 idx = _SireMol.AtomIdx(idx)
 
+                # Extract the elements of the end states.
+                element0 = mol.atom(idx).property("element0")
+                element1 = mol.atom(idx).property("element1")
+
                 # The end states are different elements.
-                if mol.atom(idx).property("element0") != mol.atom(idx).property("element1"):
+                if element0 != element1:
                     # Extract the mass of the end states.
                     mass0 = mol.atom(idx).property("mass0")
                     mass1 = mol.atom(idx).property("mass1")
@@ -1428,22 +1433,32 @@ class Molecule():
                     else:
                         mass = mass1
 
-                    # Set the updated mass property.
-                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+                    # Choose the element with the most protons.
+                    if element0.nProtons() > element1.nProtons():
+                        element = element0
+                    else:
+                        element = element1
+
+                    # Set the updated properties.
+                    mol = mol.atom(idx).setProperty(new_mass_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_element_prop, element).molecule()
 
                 else:
-                    # Use the mass at lambda = 0.
+                    # Use the properties at lambda = 0.
                     mass = mol.atom(idx).property("mass0")
-                    mol = mol.atom(idx).setProperty(new_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_mass_prop, mass).molecule()
+                    mol = mol.atom(idx).setProperty(new_element_prop, element0).molecule()
 
             # Delete redundant properties.
             mol = mol.removeProperty("mass0").molecule()
             mol = mol.removeProperty("mass1").molecule()
+            mol = mol.removeProperty("element0").molecule()
+            mol = mol.removeProperty("element1").molecule()
 
         # Rename all properties in the molecule: "prop0" --> "prop".
         # Delete all properties named "prop0" and "prop1".
         for prop in mol.propertyKeys():
-            if prop[-1] == "0" and prop != "mass0":
+            if prop[-1] == "0" and prop != "mass0" and prop != "element0":
                 # See if this property exists in the user map.
                 new_prop = property_map.get(prop[:-1], prop[:-1])
 
@@ -2429,6 +2444,50 @@ class Molecule():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
+
+def _has_dummy(mol, idx0, idx1, idx2, idx3, is_lambda1=False):
+    """Internal function to check whether a dihedral/improper contains a dummy atom.
+
+       Parameters
+       ----------
+
+       mol : Sire.Mol.Molecule
+           The molecule.
+
+       idx0 : AtomIdx
+           The index of the first atom in the dihedral/improper.
+
+       idx1 : AtomIdx
+           The index of the second atom in the dihedral/improper.
+
+       idx2 : AtomIdx
+           The index of the third atom in the dihedral/improper.
+
+       idx3 : AtomIdx
+           The index of the fourth atom in the dihedral/improper.
+
+       is_lambda1 : bool
+           Whether to check the lambda = 1 state.
+    """
+
+    # Set the element property associated with the end state.
+    if is_lambda1:
+        prop = "element1"
+    else:
+        prop = "element0"
+
+    # Check whether any of the atoms are dummies.
+    dummy = _SireMol.Element(0)
+    if mol.atom(idx0).property(prop) == dummy:
+        return True
+    elif mol.atom(idx1).property(prop) == dummy:
+        return True
+    elif mol.atom(idx2).property(prop) == dummy:
+        return True
+    elif mol.atom(idx3).property(prop) == dummy:
+        return True
+    else:
+        return False
 
 def _random_suffix(basename, size=4, chars=_string.ascii_uppercase + _string.digits):
     """Internal helper function to generate a random atom name suffix to avoid
