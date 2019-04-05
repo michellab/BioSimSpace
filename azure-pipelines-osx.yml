@@ -3,7 +3,7 @@ trigger:
 - devel
 
 jobs:
-- job: 'SireOSX'
+- job: 'BioSimSpaceOSX'
   pool:
     vmImage: 'macOS-10.13'
 
@@ -29,15 +29,22 @@ jobs:
     displayName: 'Run BioSimSpace tests'
   - script: |
       # if the test were successful then create a binary installer package
-      cp docker/package-devel/install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
+      cp docker/package-devel/install_sire.sh $HOME/sire.app/share/Sire/build/
       $HOME/sire.app/bin/package_sire
     env:
       SIRE_RUN_FILE: $HOME/biosimspace_devel_latest_osx.run
     displayName: 'Package BioSimSpace into a binary'
   - script: |
-      # finally deploy the binary to an object store bucket identified by 'par_url'
-      $HOME/sire.app/bin/conda install -y pycurl
+      # next deploy the binary to an object store bucket identified by 'par_url'
+      $HOME/sire.app/bin/conda install -y pycurl conda-build anaconda-client
       $HOME/sire.app/bin/python docker/deploy-devel/deploy.py $HOME/biosimspace_devel_latest_osx.run
     env:
       PAR_URL: $(parURL)
     displayName: 'Deploy binary to biosimspace.org'
+  - script: |
+      # finally create the BioSimSpace Conda package and upload to the Anaconda Cloud.
+      bash docker/conda-devel/update_recipe.sh
+      bash docker/conda-devel/build_and_deploy.sh
+    env:
+      ANACONDA_TOKEN: $(anacondaToken)
+    displayName: 'Create Conda package and upload to the Anaconda Cloud'
