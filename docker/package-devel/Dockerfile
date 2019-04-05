@@ -9,7 +9,7 @@ WORKDIR $HOME
 ADD install_sire.sh .
 
 # Move modified installation script into Sire application.
-RUN mv -f install_sire.sh $HOME/sire.app/pkgs/sire-*/share/Sire/build/
+RUN mv -f install_sire.sh $HOME/sire.app/share/Sire/build/
 
 # Set environment variables for installation directory and run file.
 ENV SIRE_RUN_FILE $HOME/biosimspace_devel_latest_linux.run
