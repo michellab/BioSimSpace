@@ -670,8 +670,8 @@ class Molecule():
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=True,
-            zero_dummy_impropers=True, property_map={}):
+    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
+            zero_dummy_impropers=False, property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Parameters
