@@ -25,7 +25,7 @@ jobs:
     displayName: 'Build BioSimSpace'
   - script: |
       # now perform the tests - do this before packaging and deploy
-      $HOME/sire.app/bin/pytest -v test
+      $HOME/sire.app/bin/sire_python -m pytest -v test
     displayName: 'Run BioSimSpace tests'
   - script: |
       # if the test were successful then create a binary installer package
@@ -37,7 +37,7 @@ jobs:
   - script: |
       # next deploy the binary to an object store bucket identified by 'par_url'
       $HOME/sire.app/bin/conda install -y pycurl conda-build anaconda-client
-      $HOME/sire.app/bin/python docker/deploy-devel/deploy.py $HOME/biosimspace_devel_latest_osx.run
+      $HOME/sire.app/bin/sire_python docker/deploy-devel/deploy.py $HOME/biosimspace_devel_latest_osx.run
     env:
       PAR_URL: $(parURL)
     displayName: 'Deploy binary to biosimspace.org'
