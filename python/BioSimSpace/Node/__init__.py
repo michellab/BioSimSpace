@@ -43,6 +43,27 @@ Print the list of available nodes.
 
    print(BSS.Node.list())
 
+Get help on the "minimisation" node.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   BSS.Node.help("minimisation")
+
+Run the minimisation node.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Generate a dictionary of input arguments.
+   input = {"steps" : 1000,
+            "files" : ["amber/ala/ala.top", "amber/ala/ala.crd"]
+           }
+
+   # Run the node and get the output as a dictionary.
+   output = BSS.Node.run("minimisation", input)
 """
 
 from glob import glob as _glob
@@ -97,7 +118,7 @@ def help(name):
     # Run the node as a subprocess.
     proc = _subprocess.run(command, shell=True)
 
-def run(name, args):
+def run(name, args={}):
     """Run a node.
 
        Parameters
@@ -136,11 +157,16 @@ def run(name, args):
             full_name += ".py"
 
     # Write a YAML configuration file for the BioSimSpace node.
-    with open("input.yaml", "w") as file:
-        _yaml.dump(args, file, default_flow_style=False)
+    if len(args) > 0:
+        with open("input.yaml", "w") as file:
+            _yaml.dump(args, file, default_flow_style=False)
 
-    # Create the command.
-    command = "%s/python %s --config input.yaml" % (_SireBase.getBinDir(), full_name)
+        # Create the command.
+        command = "%s/python %s --config input.yaml" % (_SireBase.getBinDir(), full_name)
+
+    # No arguments.
+    else:
+        command = "%s/python %s" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
     proc = _subprocess.run(command, shell=True)
