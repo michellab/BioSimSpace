@@ -41,7 +41,7 @@ about:
   home: https://github.com/michellab/BioSimSpace
   license: GPL-2.0
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
-  summary: "An interoperable Python frameword for biomolecular simulation."
+  summary: "An interoperable Python framework for biomolecular simulation."
   dev_url: https://github.com/michellab/BioSimSpace
   doc_url: https://biosimspacebot.org
 
