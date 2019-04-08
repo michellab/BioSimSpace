@@ -266,6 +266,11 @@ def readMolecules(files, property_map={}):
     if _gromacs_path is not None and ("GROMACS_PATH" not in property_map):
         property_map["GROMACS_PATH"] = _gromacs_path
 
+    # Check that the files exist.
+    for file in files:
+        if not _os.path.isfile(file):
+            raise IOError("Missing input file: '%s'" % file)
+
     # Try to read the files and return a molecular system.
     try:
         system = _SireIO.MoleculeParser.read(files, property_map)

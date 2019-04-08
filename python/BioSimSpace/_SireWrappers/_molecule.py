@@ -670,8 +670,8 @@ class Molecule():
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=True,
-            zero_dummy_impropers=True, property_map={}):
+    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
+            zero_dummy_impropers=False, property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Parameters
@@ -961,10 +961,7 @@ class Molecule():
                 idx2 = info.atomIdx(angle.atom2())
 
                 # Cast the function as an AmberAngle.
-                amber_angle0 = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
-
-                # Create a null angle for the lambda = 1 end state.
-                amber_angle1 = _SireMM.AmberAngle()
+                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
 
                 # Start angle record.
                 file.write("    angle\n")
@@ -973,10 +970,10 @@ class Molecule():
                 file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        initial_force  %.5f\n" % amber_angle0.k())
-                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
-                file.write("        final_force    %.5f\n" % amber_angle1.k())
-                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
 
                 # End angle record.
                 file.write("    endangle\n")
@@ -992,10 +989,7 @@ class Molecule():
                 idx2 = info.atomIdx(angle.atom2())
 
                 # Cast the function as an AmberAngle.
-                amber_angle1 = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
-
-                # Create a null angle for the lambda = 0 end state.
-                amber_angle0 = _SireMM.AmberAngle()
+                amber_angle = _SireMM.AmberAngle(angle.function(), _SireCAS.Symbol("theta"))
 
                 # Start angle record.
                 file.write("    angle\n")
@@ -1004,10 +998,10 @@ class Molecule():
                 file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                 file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                file.write("        initial_force  %.5f\n" % amber_angle0.k())
-                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
-                file.write("        final_force    %.5f\n" % amber_angle1.k())
-                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
 
                 # End angle record.
                 file.write("    endangle\n")
@@ -1142,10 +1136,7 @@ class Molecule():
                 idx3 = info.atomIdx(dihedral.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral0 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
-
-                # Create a null dihedral for the lambda = 1 end state.
-                amber_dihedral1 = _SireMM.AmberDihedral()
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
                 # Start dihedral record.
                 file.write("    dihedral\n")
@@ -1156,12 +1147,12 @@ class Molecule():
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
+                for term in amber_dihedral.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final form    ")
-                for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End dihedral record.
@@ -1179,10 +1170,7 @@ class Molecule():
                 idx3 = info.atomIdx(dihedral.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral1 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
-
-                # Create a null dihedral for the lambda = 0 end state.
-                amber_dihedral0 = _SireMM.AmberDihedral()
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
                 # Start dihedral record.
                 file.write("    dihedral\n")
@@ -1193,11 +1181,11 @@ class Molecule():
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
-                for term in amber_dihedral1.terms():
+                for term in amber_dihedral.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
@@ -1230,7 +1218,7 @@ class Molecule():
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
 
-                    # Whether all atom sin each state are dummies.
+                    # Whether all atoms in each state are dummies.
                     all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
                     all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
 
@@ -1366,10 +1354,7 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral0 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
-
-                # Create a null dihedral for the lambda = 1 end state.
-                amber_dihedral1 = _SireMM.AmberDihedral()
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
                 # Start improper record.
                 file.write("    improper\n")
@@ -1380,12 +1365,12 @@ class Molecule():
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
+                for term in amber_dihedral.terms():
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final form    ")
-                for term in amber_dihedral1.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                for term in amber_dihedral.terms():
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
 
                 # End improper record.
@@ -1403,10 +1388,7 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral1 = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
-
-                # Create a null dihedral for the lambda = 0 end state.
-                amber_dihedral0 = _SireMM.AmberDihedral()
+                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
 
                 # Start improper record.
                 file.write("    improper\n")
@@ -1418,7 +1400,7 @@ class Molecule():
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
                 for term in amber_dihedral0.terms():
-                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
                 for term in amber_dihedral1.terms():
@@ -1454,7 +1436,7 @@ class Molecule():
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
 
-                    # Whether all atom sin each state are dummies.
+                    # Whether all atoms in each state are dummies.
                     all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
                     all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
 

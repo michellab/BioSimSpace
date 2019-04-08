@@ -160,17 +160,25 @@ if do_mapping:
 # In[15]:
 
 
+#print (mapping)
 #for x in range(0,len(mappings)):
 #    print (mappings[x], scores[x])
 
 
-# In[ ]:
+# In[16]:
 
 
-# Align lig1 to lig2 based on the best mapping. The molecule is aligned based
+inverted_mapping = dict([[v,k] for k,v in mapping.items()])
+#print (inverted_mapping)
+
+
+# In[17]:
+
+
+# Align lig2 to lig1 based on the best mapping (inverted). The molecule is aligned based
 # on a root mean squared displacement fit to find the optimal translation vector
 # (as opposed to merely taking the difference of centroids).
-lig1 = BSS.Align.rmsdAlign(lig1, lig2, mapping)
+lig2 = BSS.Align.rmsdAlign(lig2, lig1, inverted_mapping)
 # Merge the two ligands based on the mapping.
 merged = BSS.Align.merge(lig1, lig2, mapping)
 # Create a composite system
@@ -178,7 +186,7 @@ system1.removeMolecules(lig1)
 system1.addMolecules(merged)
 
 
-# In[ ]:
+# In[18]:
 
 
 # Log the mapping used
@@ -192,7 +200,7 @@ cmd = "unzip -o somd.zip"
 os.system(cmd)
 
 
-# In[ ]:
+# In[19]:
 
 
 root = node.getInput("output")
@@ -203,7 +211,7 @@ rst7 = "%s.rst7" % root
 mapping_str = "%s.mapping" % root
 
 
-# In[ ]:
+# In[20]:
 
 
 cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
@@ -211,13 +219,13 @@ cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rs
 os.system(cmd)
 
 
-# In[ ]:
+# In[21]:
 
 
 node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping_str])
 
 
-# In[ ]:
+# In[22]:
 
 
 node.validate()
