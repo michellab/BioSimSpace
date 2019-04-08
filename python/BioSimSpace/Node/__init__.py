@@ -58,9 +58,7 @@ Run the minimisation node.
    import BioSimSpace as BSS
 
    # Generate a dictionary of input arguments.
-   input = {"steps" : 1000,
-            "files" : ["amber/ala/ala.top", "amber/ala/ala.crd"]
-           }
+   input = {"steps" : 1000, "files" : ["amber/ala/ala.top", "amber/ala/ala.crd"]}
 
    # Run the node and get the output as a dictionary.
    output = BSS.Node.run("minimisation", input)

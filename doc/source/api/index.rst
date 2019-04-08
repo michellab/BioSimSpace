@@ -15,6 +15,7 @@ of packages.
    index_Gateway
    index_IO
    index_MD
+   index_Node
    index_Notebook
    index_Parameters
    index_Process
