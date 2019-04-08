@@ -1218,7 +1218,7 @@ class Molecule():
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
 
-                    # Whether all atom sin each state are dummies.
+                    # Whether all atoms in each state are dummies.
                     all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
                     all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
 
@@ -1436,7 +1436,7 @@ class Molecule():
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
 
-                    # Whether all atom sin each state are dummies.
+                    # Whether all atoms in each state are dummies.
                     all_dummy_initial = all(_is_dummy(mol, [idx0, idx1, idx2, idx3]))
                     all_dummy_final = all(_is_dummy(mol, [idx0, idx1, idx2, idx3], True))
 
