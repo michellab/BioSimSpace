@@ -21,7 +21,7 @@ jobs:
       $HOME/sire.app/bin/sire
 
       echo "Compiling BioSimSpace..."
-      cd python && $HOME/sire.app/bin/python setup.py install && cd -
+      cd python && $HOME/sire.app/bin/sire_python setup.py install && cd -
     displayName: 'Build BioSimSpace'
   - script: |
       # now perform the tests - do this before packaging and deploy
