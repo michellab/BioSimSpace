@@ -70,7 +70,7 @@ classes and functions.
 
 This results in a clean API and documentation, with all extraneous information,
 e.g. external modules, hidden from the user. This is important when working
-interactively, since `IPython <https://ipython.org>`_ and `Jupyter <https://jupyter.org>`_
+interactively, since `IPython <https://ipython.org>`__ and `Jupyter <https://jupyter.org>`__
 do not respect the ``__all__`` variable when auto-completing, meaning that the
 user will see a full list of the available names when hitting tab. When
 following the conventions above, the user will only be able to access the
@@ -182,7 +182,7 @@ does what is expected and doesn't break any existing functionality. Tests
 should be placed inside the ``test`` directory, creating an appropriately named
 sub-directory for any new packages.
 
-The test suite is intended to be run using `pytest <https://docs.pytest.org/en/latest/contents.html>`_.
+The test suite is intended to be run using `pytest <https://docs.pytest.org/en/latest/contents.html>`__.
 When run, ``pytest`` searches for tests in all directories and files below the current
 directory, collects the tests together, then runs them. Pytest uses name matching
 to locate the tests. Valid names start or end with *test*\ , e.g.:
@@ -250,7 +250,7 @@ additional contextual information may be lost.
 Floating point comparisons
 """"""""""""""""""""""""""
 
-Make use of the `approx <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`_
+Make use of the `approx <https://docs.pytest.org/en/latest/builtin.html#comparing-floating-point-numbers>`__
 function from the ``pytest`` package for performing floating point comparisons, e.g:
 
 .. code-block:: python
@@ -269,7 +269,7 @@ of 1e-6. This can be changed by passing a keyword argument to the function, e.g:
 Skipping tests
 """"""""""""""
 
-If you are using `test-driven development <https://en.wikipedia.org/wiki/Test-driven_development>`_
+If you are using `test-driven development <https://en.wikipedia.org/wiki/Test-driven_development>`__
 it might be desirable to write your tests before implementing the functionality,
 i.e. you are asserting what the *output* of a function should be, not how it should
 be *implemented*. In this case, you can make use of the ``pytest`` *skip* decorator
@@ -368,10 +368,10 @@ own function decorator.
 Documentation
 -------------
 
-BioSimSpace is fully documented using `NumPy <https://numpy.org>`_ style
+BioSimSpace is fully documented using `NumPy <https://numpy.org>`__ style
 docstrings. See `here <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`__
 for details. The documentation is automatically built using
-`Sphinx <http://sphinx-doc.org>`_ whenever a commit is pushed to devel, which
+`Sphinx <http://sphinx-doc.org>`__ whenever a commit is pushed to devel, which
 will then update this website.
 
 To build the documentation locally you will first need to install some
@@ -405,7 +405,7 @@ Remember that it is better to make small changes and commit frequently.
 If your edits don't change to the BioSimSpace source code, or documentation,
 e.g. fixing typos, then please add ``***NO_CI***`` to your commit message.
 This will avoid unnecessarily running the
-`Azure pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`_, e.g.
+`Azure pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`__, e.g.
 building a new BioSimSpace binary, updating the website, etc. To this end, we
 have provided a git hook that will append ``***NO_CI***`` if the commit only
 modifies files in a blacklist that is specified in the file ``.ciignore``

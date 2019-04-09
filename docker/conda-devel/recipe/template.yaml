@@ -1,0 +1,51 @@
+package:
+  name: biosimspace
+  version: VERSION
+
+source:
+  git_url: https://github.com/michellab/BioSimSpace.git
+
+build:
+  number: 0
+  skip: true  # [win]
+  script: cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  host:
+    - python 3.7
+    - sire
+    - pip
+    - sire
+    - configargparse
+    - mdtraj
+    - mdanalysis
+    - nglview
+    - pymbar
+    - pytest
+    - pyyaml
+    - watchdog
+  run:
+    -  {{ pin_compatible('python') }}
+    -  {{ pin_compatible('pip') }}
+    -  {{ pin_compatible('sire') }}
+    -  {{ pin_compatible('configargparse') }}
+    -  {{ pin_compatible('mdtraj') }}
+    -  {{ pin_compatible('mdanalysis') }}
+    -  {{ pin_compatible('nglview') }}
+    -  {{ pin_compatible('pymbar') }}
+    -  {{ pin_compatible('pytest') }}
+    -  {{ pin_compatible('pyyaml') }}
+    -  {{ pin_compatible('watchdog') }}
+
+about:
+  home: https://github.com/michellab/BioSimSpace
+  license: GPL-2.0
+  license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
+  summary: "An interoperable Python framework for biomolecular simulation."
+  dev_url: https://github.com/michellab/BioSimSpace
+  doc_url: https://biosimspacebot.org
+
+extra:
+  recipe-maintainers:
+    - lohedges
+    - chryswoods

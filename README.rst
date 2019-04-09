@@ -1,37 +1,70 @@
-BioSimSpace
-===========
+`BioSimSpace <http://biosimspace.org>`__
+========================================
 
 .. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
    :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
+.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
+   :target: https://anaconda.org/michellab/biosimspace
+   :alt: Conda Downloads
+
 About
 -----
 
-`BioSimSpace <https://biosimspace.org>`_ is an interoperable Python framework
+`BioSimSpace <https://biosimspace.org>`__ is an interoperable Python framework
 for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular workflow components that work on
   different hardware, with different software packages, and that can be
-  run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`_.
-* Interact with running molecular simulation processes in real-time.
+  run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
+* Interact with molecular-simulation processes in real time.
 
 Documentation
 -------------
 
-Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWebsite>`_.
+Full documentation can be found `here <https://biosimspace.org>`__.
 
 Installation
 ------------
 
-1. Using the prebuilt binaries (preferred way)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Conda package
+^^^^^^^^^^^^^^^^
+
+The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab biosimspace
+
+To install the latest development version you can use:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+
+Following this, you'll need to use ``pip`` to install some additional, non-conda,
+packages into your environment:
+
+.. code-block:: bash
+
+    pip install fileupload pygtail pypdb
+
+Unless you add the required channels to your Conda configuration, then you'll
+need to add them when updating, e.g., for the development package:
+
+.. code-block:: bash
+
+    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
+
+2. Using the prebuilt binaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`_
-* Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`_
+* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
+* Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
 
 One downloaded, the binary can be unpacked as follows:
 
@@ -42,7 +75,7 @@ One downloaded, the binary can be unpacked as follows:
 
 Unless a different installation path was given, BioSimSpace can be found in:
 ``$HOME/biosimspace.app``. BioSimSpace comes with a bundled with a Python
-interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`_.
+interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`__.
 
 For example, to run a BioSimSpace Python script, use:
 
@@ -67,10 +100,9 @@ To run a BioSimSpace notebook:
 
 Alternatively, to install BioSimSpace from source:
 
-(Before starting, you'll need working `Git <https://git-scm.com>`_ and
-`CMake <https://cmake.org>`_ installations.)
+(Before starting, you'll need a working `Git <https://git-scm.com>`__ installation.)
 
-BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
+BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`__
 molecular simulation framework. To download and install Sire:
 
 .. code-block:: bash
@@ -121,12 +153,12 @@ it, giving you a bash prompt inside the container.
 Developers
 ----------
 
-Please follow the `developer's guide <https://biosimspace.org/development.html>`_.
+Please follow the `developer's guide <https://biosimspace.org/development.html>`__.
 
 Issues
 ------
 
-Please report bugs and other issues using the GitHub `issue tracker <https://github.com/michellab/BioSimSpace/issues>`_.
+Please report bugs and other issues using the GitHub `issue tracker <https://github.com/michellab/BioSimSpace/issues>`__.
 When reporting issues please try to include a minimal code snippet that reproduces
 the problem. Additional files can be also be uploaded as an archive, e.g. a zip
 file. Please also report the branch on which you are experiencing the issue,

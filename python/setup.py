@@ -1,18 +1,21 @@
-# Set the minimum allowed Sire version.
-min_ver = "2019.1.0"
-min_ver_int = int(min_ver.replace(".", ""))
+import os
 
-# Make sure we're using the Sire python interpreter.
-try:
-    import Sire.Base
-    bin_dir = Sire.Base.getBinDir()
-    lib_dir = Sire.Base.getLibDir()
-except ModuleNotFoundError:
-    raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
+if not os.getenv("BSS_CONDA_INSTALL"):
+    # Set the minimum allowed Sire version.
+    min_ver = "2019.1.0"
+    min_ver_int = int(min_ver.replace(".", ""))
 
-# Check the Sire version.
-if int(Sire.__version__.replace(".", "")) < min_ver_int:
-    raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
+    # Make sure we're using the Sire python interpreter.
+    try:
+        import Sire.Base
+        bin_dir = Sire.Base.getBinDir()
+        lib_dir = Sire.Base.getLibDir()
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("BioSimSpace currently requires the Sire Python interpreter: www.siremol.org")
+
+    # Check the Sire version.
+    if int(Sire.__version__.replace(".", "")) < min_ver_int:
+        raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
 
 from setuptools import setup, find_packages
 
@@ -38,10 +41,9 @@ try:
 
 # Post setup configuration.
 finally:
-    import os
     import sys
 
-    if "install" in sys.argv and not os.getenv("BSS_SKIP_INSTALL"):
+    if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
         import subprocess
 
         # Install Python dependencies and enable Jupyter widget extensions.
@@ -69,10 +71,6 @@ finally:
 
         print("Installing package: mdanalysis")
         command = "%s/conda install -y -q mdanalysis" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: openbabel")
-        command = "%s/conda install -y -q -c openbabel openbabel" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Upgrading pip")

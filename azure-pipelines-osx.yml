@@ -41,3 +41,10 @@ jobs:
     env:
       PAR_URL: $(parURL)
     displayName: 'Deploy binary to biosimspace.org'
+  - script: |
+      # finally create the BioSimSpace Conda package and upload to the Anaconda Cloud.
+      bash docker/conda-devel/update_recipe.sh
+      bash docker/conda-devel/build_and_deploy.sh
+    env:
+      ANACONDA_TOKEN: $(anacondaToken)
+    displayName: 'Create Conda package and upload to the Anaconda Cloud'
