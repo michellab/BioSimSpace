@@ -7,7 +7,7 @@ Installation
 Conda install
 =============
 
-The easiest way to install Sire is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
 
 .. code-block:: bash
 
