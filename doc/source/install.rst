@@ -13,14 +13,14 @@ The easiest way to install BioSimSpace is using our `conda channel <https://anac
 
     conda install -c conda-forge -c omnia -c michellab biosimspace
 
-To install the latest development version you can use::
+To install the latest development version you can use:
 
 .. code-block:: bash
 
     conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
 Following this, you'll need to use ``pip`` to install some additional, non-conda,
-packages into your environment::
+packages into your environment:
 
 .. code-block:: bash
 
