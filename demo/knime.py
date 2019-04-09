@@ -11,7 +11,7 @@ bss_python = "/home/lester/sire.app/bin/python"
 script = "minimisation.py"
 
 # Set the name of the BioSimSpace output YAML file. (This is the default.)
-output = "output.yml"
+output = "output.yaml"
 
 # The KNIME Python extension assumes Pandas DataFrame objects as input/output
 # of nodes. While this works well for tabular data, it is a poor format for
@@ -31,11 +31,11 @@ input_dict = {"steps" : 1000, "files" : ["amber/ala/ala.crd", "amber/ala/ala.top
 input_table = pandas.DataFrame(data={"input" : input_dict})
 
 # Write a YAML configuration file for the BioSimSpace script.
-with open("input.yml", "w") as file:
+with open("input.yaml", "w") as file:
     yaml.dump(input_table["input"].to_dict(), file, default_flow_style=False)
 
 # Generate the shell command.
-command = "%s %s -c input.yml" % (bss_python, script)
+command = "%s %s -c input.yaml" % (bss_python, script)
 
 # Run the BioSimSpace script as a subprocess and raise any error if it fails.
 try:
