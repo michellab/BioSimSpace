@@ -93,8 +93,7 @@ To run a BioSimSpace notebook:
 
 Alternatively, to install BioSimSpace from source:
 
-(Before starting, you'll need working `Git <https://git-scm.com>`_ and
-`CMake <https://cmake.org>`_ installations.)
+(Before starting, you'll need a working `Git <https://git-scm.com>`_ installation.)
 
 BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`_
 molecular simulation framework. To download and install Sire:
