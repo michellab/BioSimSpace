@@ -5,6 +5,10 @@ BioSimSpace
    :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
+.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
+   :target: https://anaconda.org/michellab/biosimspace
+   :alt: Conda Downloads
+
 About
 -----
 
@@ -24,8 +28,30 @@ Full documentation can be found `here <https://michellab.github.io/BioSimSpaceWe
 Installation
 ------------
 
-1. Using the prebuilt binaries (preferred way)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Conda package
+^^^^^^^^^^^^^^^^
+
+The easiest way to install Sire is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab biosimspace
+
+To install the latest development version you can use:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+
+Following this, you'll need to use ``pip`` to install some additional, non-conda,
+packages into your environment:
+
+.. code-block:: bash
+
+    pip install fileupload pygtail pypdb
+
+2. Using the prebuilt binaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:

@@ -8,7 +8,7 @@ source:
 build:
   number: 0
   skip: true  # [win]
-  script: cd python && BSS_SKIP_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
+  script: cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   host:

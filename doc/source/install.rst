@@ -4,6 +4,28 @@
 Installation
 ============
 
+Conda install
+=============
+
+The easiest way to install Sire is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab biosimspace
+
+To install the latest development version you can use::
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+
+Following this, you'll need to use ``pip`` to install some additional, non-conda,
+packages into your environment::
+
+.. code-block:: bash
+
+    pip install fileupload pygtail pypdb
+
 Binary install
 ==============
 
@@ -90,11 +112,11 @@ or use the ``develop`` argument when running the ``setup.py`` script, i.e.
    PYTHONPATH=$HOME/sire.app/bin/python setup.py develop
 
 You can also skip installation of external dependencies by setting the
-environment variable ``BSS_SKIP_INSTALL``, e.g.
+environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 
 .. code-block:: bash
 
-   BSS_SKIP_INSTALL=1 $HOME/sire.app/bin/python setup.py install
+   BSS_SKIP_DEPENDENCIES=True $HOME/sire.app/bin/python setup.py install
 
 Common issues
 =============
