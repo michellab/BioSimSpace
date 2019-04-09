@@ -1327,6 +1327,7 @@ class Molecule():
                     if idx0.equivalent(idx1):
                         impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
                         is_shared = True
+                        break
                 if not is_shared:
                     impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
@@ -1335,10 +1336,11 @@ class Molecule():
                 is_shared = False
                 for idx0 in impropers0_idx.keys():
                     if idx1.equivalent(idx0):
-                        impropers1_unique_idx[idx1] = impropers1_idx[idx1]
+                        impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
                         is_shared = True
+                        break
                 if not is_shared:
-                    impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
+                    impropers1_unique_idx[idx1] = impropers1_idx[idx1]
 
             # First create records for the impropers that are unique to lambda = 0 and 1.
 
@@ -1354,7 +1356,7 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
 
                 # Start improper record.
                 file.write("    improper\n")
@@ -1388,7 +1390,7 @@ class Molecule():
                 idx3 = info.atomIdx(improper.atom3())
 
                 # Cast the function as an AmberDihedral.
-                amber_dihedral = _SireMM.AmberDihedral(dihedral.function(), _SireCAS.Symbol("phi"))
+                amber_dihedral = _SireMM.AmberDihedral(improper.function(), _SireCAS.Symbol("phi"))
 
                 # Start improper record.
                 file.write("    improper\n")
@@ -1426,8 +1428,8 @@ class Molecule():
                 if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
 
                     # Cast the functions as AmberDihedrals.
-                    amber_dihedral0 = _SireMM.AmberDihedral(dihedral0.function(), _SireCAS.Symbol("phi"))
-                    amber_dihedral1 = _SireMM.AmberDihedral(dihedral1.function(), _SireCAS.Symbol("phi"))
+                    amber_dihedral0 = _SireMM.AmberDihedral(improper0.function(), _SireCAS.Symbol("phi"))
+                    amber_dihedral1 = _SireMM.AmberDihedral(improper1.function(), _SireCAS.Symbol("phi"))
 
                     # Whether to zero the barrier height of the initial/final improper.
                     zero_k = False
@@ -1447,14 +1449,14 @@ class Molecule():
 
                     # Dummies in the initial state.
                     elif has_dummy_initial:
-                        if all_dummy_initial and not zero_dummy_dihedrals:
+                        if all_dummy_initial and not zero_dummy_impropers:
                             amber_dihedral0 = amber_dihedral1
                         else:
                             zero_k = True
 
                     # Dummies in the final state.
                     elif has_dummy_final:
-                        if all_dummy_final and not zero_dummy_dihedrals:
+                        if all_dummy_final and not zero_dummy_impropers:
                             amber_dihedral1 = amber_dihedral0
                         else:
                             zero_k = True
