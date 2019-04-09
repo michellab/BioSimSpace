@@ -5,7 +5,7 @@ BioSimSpace
    :target: https://dev.azure.com/michellab/BioSimSpace/_build
    :alt: Build Status
 
-.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
+.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg?dummy=unused
    :target: https://anaconda.org/michellab/biosimspace
    :alt: Conda Downloads
 
