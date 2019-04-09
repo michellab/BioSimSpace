@@ -102,7 +102,7 @@ node.showControls()
 
 do_mapping = True
 custom_mapping = node.getInput("mapping")
-print (custom_mapping)
+#print (custom_mapping)
 if custom_mapping is not None:
     do_mapping = False
     mapping = loadMapping(custom_mapping)
