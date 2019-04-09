@@ -51,7 +51,7 @@ packages into your environment:
     pip install fileupload pygtail pypdb
 
 Unless you add the required channels to your Conda configuration, then you'll
-need to add them when updating, e.g. for the development package:
+need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
