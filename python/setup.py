@@ -1,6 +1,6 @@
 import os
 
-if not env("BSS_CONDA_INSTALL"):
+if not os.getenv("BSS_CONDA_INSTALL"):
     # Set the minimum allowed Sire version.
     min_ver = "2019.1.0"
     min_ver_int = int(min_ver.replace(".", ""))
@@ -43,7 +43,7 @@ try:
 finally:
     import sys
 
-    if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES"))
+    if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
         import subprocess
 
         # Install Python dependencies and enable Jupyter widget extensions.
