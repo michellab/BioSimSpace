@@ -706,6 +706,15 @@ class Molecule():
         if not self._sire_molecule.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
+        if type(zero_dummy_dihedrals) is not bool:
+            raise TypeError("'zero_dummy_dihedrals' must be of type 'bool'")
+
+        if type(zero_dummy_impropers) is not bool:
+            raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
         # Extract and copy the Sire molecule.
         mol = self._sire_molecule.__deepcopy__()
 
@@ -1214,6 +1223,9 @@ class Molecule():
                     # Whether to zero the barrier height of the initial state dihedral.
                     zero_k = False
 
+                    # Whether to force writing the dihedral to the perturbation file.
+                    force_write = False
+
                     # Whether any atom in each end state is a dummy.
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
@@ -1230,19 +1242,23 @@ class Molecule():
                     # Dummies in the initial state.
                     elif has_dummy_initial:
                         if all_dummy_initial and not zero_dummy_dihedrals:
+                            # Use the potential at lambda = 1 and write to the pert file.
                             amber_dihedral0 = amber_dihedral1
+                            force_write = True
                         else:
                             zero_k = True
 
                     # Dummies in the final state.
                     elif has_dummy_final:
                         if all_dummy_final and not zero_dummy_dihedrals:
+                            # Use the potential at lambda = 0 and write to the pert file.
                             amber_dihedral1 = amber_dihedral0
+                            force_write = True
                         else:
                             zero_k = True
 
                     # Only write record if the dihedral parameters change.
-                    if zero_k or amber_dihedral0 != amber_dihedral1:
+                    if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
                         # Start dihedral record.
                         file.write("    dihedral\n")
@@ -1434,6 +1450,9 @@ class Molecule():
                     # Whether to zero the barrier height of the initial/final improper.
                     zero_k = False
 
+                    # Whether to force writing the improper to the perturbation file.
+                    force_write = False
+
                     # Whether any atom in each end state is a dummy.
                     has_dummy_initial = _has_dummy(mol, [idx0, idx1, idx2, idx3])
                     has_dummy_final = _has_dummy(mol, [idx0, idx1, idx2, idx3], True)
@@ -1450,19 +1469,23 @@ class Molecule():
                     # Dummies in the initial state.
                     elif has_dummy_initial:
                         if all_dummy_initial and not zero_dummy_impropers:
+                            # Use the potential at lambda = 1 and write to the pert file.
                             amber_dihedral0 = amber_dihedral1
+                            force_write = True
                         else:
                             zero_k = True
 
                     # Dummies in the final state.
                     elif has_dummy_final:
                         if all_dummy_final and not zero_dummy_impropers:
+                            # Use the potential at lambda = 0 and write to the pert file.
                             amber_dihedral1 = amber_dihedral0
+                            force_write = True
                         else:
                             zero_k = True
 
                     # Only write record if the improper parameters change.
-                    if zero_k or amber_dihedral0 != amber_dihedral1:
+                    if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
                         # Start improper record.
                         file.write("    improper\n")
