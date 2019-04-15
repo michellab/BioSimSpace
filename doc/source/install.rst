@@ -124,6 +124,21 @@ environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 
    BSS_SKIP_DEPENDENCIES=True $HOME/sire.app/bin/python setup.py install
 
+OpenMM compatibility
+====================
+
+Some BioSimSpace functionality requires `OpenMM <http://openmm.org>`__. Although
+a bundled version is provided as part of the installation, this may not
+be appropriate for your GPU drivers. To automatically detect and install
+a suitable version of OpenMM, simply run the following command post-install:
+
+.. code-block:: bash
+
+    optimise_openmm
+
+(Note that, depending on your installation method, ``optimise_openmm`` may
+be location in ``$HOME/sire.app/bin``.)
+
 Common issues
 =============
 

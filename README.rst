@@ -150,6 +150,19 @@ BioSimSpace is via:
 This will download the latest BioSimSpace development container, and will run
 it, giving you a bash prompt inside the container.
 
+OpenMM compatibility
+--------------------
+
+Some BioSimSpace functionality requires `OpenMM <http://openmm.org>`__. Although
+a bundled version is provided as part of the installation, this may not
+be appropriate for your GPU drivers. To automatically detect and install
+a suitable version of OpenMM, simply run the following command post-install::
+
+    optimise_openmm
+
+(Note that, depending on your installation method, ``optimise_openmm`` may
+be location in ``$HOME/sire.app/bin``.)
+
 Developers
 ----------
 
