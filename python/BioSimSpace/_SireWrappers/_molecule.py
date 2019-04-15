@@ -718,11 +718,15 @@ class Molecule():
         # Extract and copy the Sire molecule.
         mol = self._sire_molecule.__deepcopy__()
 
-        # First work out the indices of atoms that are changing type.
+        # First work out the indices of atoms that are perturbed.
         pert_idxs = []
 
+        # Perturbed atoms change one of the following properties:
+        # "ambertype", "LJ", or "charge".
         for atom in mol.atoms():
-            if atom.property("ambertype0") != atom.property("ambertype1"):
+            if atom.property("ambertype0") != atom.property("ambertype1") or \
+               atom.property("LJ0") != atom.property("LJ1")               or \
+               atom.property("charge0") != atom.property("charge1"):
                 pert_idxs.append(atom.index())
 
         # The pert file uses atom names for identification purposes. This means
