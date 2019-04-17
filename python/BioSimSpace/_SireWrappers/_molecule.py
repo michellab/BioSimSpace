@@ -1042,7 +1042,7 @@ class Molecule():
                     initial_dummy = _has_dummy(mol, [idx0, idx1, idx2])
                     final_dummy = _has_dummy(mol, [idx0, idx1, idx2], True)
 
-                    # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                    # Set the angle parameters of the dummy state to those of the non-dummy end state.
                     if initial_dummy and final_dummy:
                         has_dummy = True
                         amber_angle0 = _SireMM.AmberAngle()
