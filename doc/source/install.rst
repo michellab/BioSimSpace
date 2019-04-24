@@ -146,6 +146,11 @@ use a specific Conda label, e.g.:
 
     conda install -c omnia/label/cuda90 openmm
 
+If you have compiled Sire against a custom OpenMM installation, then you'll
+need to set the ``OPENMM_PLUGIN_DIR`` environment variable to point to the
+correct plugin location. By default this variable is set to the plugin
+directory of the bundled OpenMM package.
+
 Common issues
 =============
 
