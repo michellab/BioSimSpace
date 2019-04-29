@@ -2376,15 +2376,25 @@ class Molecule():
 
         # molecule0
         for x in range(0, molecule0.nAtoms()):
+            # Convert to an AtomIdx.
+            idx = _SireMol.AtomIdx(x)
+
             for y in range(x+1, molecule0.nAtoms()):
+                # Convert to an AtomIdx.
+                idy = _SireMol.AtomIdx(y)
+
                 # The connectivity has changed.
-                if c0.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
-                   conn.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)):
-                       # Ring opening/closing is forbidden.
-                       if not allow_ring_breaking:
-                           raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                    "If you want to open/close a ring, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
+                if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
+                    # Ring opening/closing is allowed.
+                    if allow_ring_breaking:
+                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
+                        if not ((c0.inRing(idx) & c0.inRing(idy)) ^ (conn.inRing(idx) & conn.inRing(idy))):
+                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                     "Check your atom mapping.")
+                    else:
+                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                 "If you want to open/close a ring, then set the "
+                                                 "'allow_ring_breaking' option to 'True'.")
 
         # molecule1
         for x in range(0, molecule1.nAtoms()):
@@ -2392,23 +2402,27 @@ class Molecule():
             idx = _SireMol.AtomIdx(x)
 
             # Map the index to its position in the merged molecule.
-            idx = inv_mapping[idx]
+            idx_map = inv_mapping[idx]
 
             for y in range(x+1, molecule1.nAtoms()):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
                 # Map the index to its position in the merged molecule.
-                idy = inv_mapping[idy]
+                idy_map = inv_mapping[idy]
 
                 # The connectivity has changed.
-                if c1.connectionType(_SireMol.AtomIdx(idx), _SireMol.AtomIdx(idy)) != \
-                   conn.connectionType(idx, idy):
-                       # Ring opening/closing is forbidden.
-                       if not allow_ring_breaking:
-                           raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                    "If you want to open/close a ring, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
+                if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
+                    # Ring opening/closing is forbidden.
+                    if allow_ring_breaking:
+                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
+                        if not ((c1.inRing(idx) & c1.inRing(idy)) ^ (conn.inRing(idx_map) & conn.inRing(idy_map))):
+                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                     "Check your atom mapping.")
+                    else:
+                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                 "If you want to open/close a ring, then set the "
+                                                 "'allow_ring_breaking' option to 'True'.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
