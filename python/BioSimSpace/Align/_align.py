@@ -353,7 +353,8 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Return the aligned molecule.
     return _Molecule(mol0)
 
-def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
+        property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
@@ -372,6 +373,9 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
            If no mapping is provided, then atoms in molecule0 will be mapped
            to those in molecule1 using "matchAtoms", with "rmsdAlign" then
            used to align molecule0 to molecule1 based on the resulting mapping.
+
+       allow_ring_breaking : bool
+           Whether to allow the opening/closing of rings during a merge.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -439,7 +443,8 @@ def merge(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create and return the merged molecule.
-    return molecule0._merge(molecule1, mapping, property_map0=property_map0, property_map1=property_map1)
+    return molecule0._merge(molecule1, mapping, allow_ring_breaking=allow_ring_breaking,
+            property_map0=property_map0, property_map1=property_map1)
 
 def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
     """Internal function to score atom mappings based on the root mean squared

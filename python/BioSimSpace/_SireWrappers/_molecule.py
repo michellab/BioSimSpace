@@ -1657,7 +1657,7 @@ class Molecule():
         # Return the updated molecule.
         return Molecule(mol.commit())
 
-    def _merge(self, other, mapping, property_map0={}, property_map1={}):
+    def _merge(self, other, mapping, allow_ring_breaking=False, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Parameters
@@ -1668,6 +1668,9 @@ class Molecule():
 
            mapping : dict
                The mapping between matching atom indices in the two molecules.
+
+           allow_ring_breaking : bool
+               Whether to allow the opening/closing of rings during a merge.
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -2374,10 +2377,14 @@ class Molecule():
         # molecule0
         for x in range(0, molecule0.nAtoms()):
             for y in range(x+1, molecule0.nAtoms()):
+                # The connectivity has changed.
                 if c0.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
                    conn.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)):
-                       raise _IncompatibleError("Merge has changed the molecular connectivity! "
-                                                "Check your atom mapping.")
+                       # Ring opening/closing is forbidden.
+                       if not allow_ring_breaking:
+                           raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                    "If you want to open/close a ring, then set the "
+                                                    "'allow_ring_breaking' option to 'True'.")
 
         # molecule1
         for x in range(0, molecule1.nAtoms()):
@@ -2394,10 +2401,14 @@ class Molecule():
                 # Map the index to its position in the merged molecule.
                 idy = inv_mapping[idy]
 
-                if c1.connectionType(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y)) != \
+                # The connectivity has changed.
+                if c1.connectionType(_SireMol.AtomIdx(idx), _SireMol.AtomIdx(idy)) != \
                    conn.connectionType(idx, idy):
-                       raise _IncompatibleError("Merge has changed the molecular connectivity! "
-                                                "Check your atom mapping.")
+                       # Ring opening/closing is forbidden.
+                       if not allow_ring_breaking:
+                           raise _IncompatibleError("The merge has changed the molecular connectivity! "
+                                                    "If you want to open/close a ring, then set the "
+                                                    "'allow_ring_breaking' option to 'True'.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
