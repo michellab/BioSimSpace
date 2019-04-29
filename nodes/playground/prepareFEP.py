@@ -8,7 +8,7 @@
 # # PrepareFEP
 # Loads a pair of input files, perform mapping between the first molecule of each input. Write down input files for a SOMD FEP calculation.
 
-# In[1]:
+# In[ ]:
 
 
 import BioSimSpace as BSS
@@ -16,7 +16,7 @@ import os
 from Sire.Mol import AtomIdx
 
 
-# In[2]:
+# In[ ]:
 
 
 def writeLog(ligA, ligB, mapping):
@@ -42,7 +42,7 @@ def writeLog(ligA, ligB, mapping):
     stream.close()
 
 
-# In[3]:
+# In[ ]:
 
 
 def loadMapping(mapping_file):
@@ -62,42 +62,43 @@ def loadMapping(mapping_file):
     return mapping
 
 
-# In[4]:
+# In[ ]:
 
 
 node = BSS.Gateway.Node("A node to generate input files for a SOMD relative free energy calculation.")
 
 
-# In[5]:
+# In[ ]:
 
 
 node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edinburgh")
 node.setLicense("GPLv3")
 
 
-# In[6]:
+# In[ ]:
 
 
 node.addInput("input1", BSS.Gateway.FileSet(help="A topology and coordinates file"))
 node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates file"))
 node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11... Ignored if a mapping is provided", default=""))
 node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
+node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge.", default=False))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
-# In[7]:
+# In[ ]:
 
 
 node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="SOMD input files for a perturbation of input1->input2."))
 
 
-# In[8]:
+# In[ ]:
 
 
 node.showControls()
 
 
-# In[9]:
+# In[ ]:
 
 
 do_mapping = True
@@ -109,7 +110,7 @@ if custom_mapping is not None:
     #print (mapping)
 
 
-# In[10]:
+# In[ ]:
 
 
 # Optional input, dictionary of Atom indices that should be matched in the search. 
@@ -123,21 +124,21 @@ if len(prematchstring) > 0:
 #print (prematch)
 
 
-# In[11]:
+# In[ ]:
 
 
 # Load system 1
 system1 = BSS.IO.readMolecules(node.getInput("input1"))
 
 
-# In[12]:
+# In[ ]:
 
 
 # Load system 2
 system2 = BSS.IO.readMolecules(node.getInput("input2"))
 
 
-# In[13]:
+# In[ ]:
 
 
 # We assume the molecules to perturb are the first molecules in each system
@@ -145,7 +146,7 @@ lig1 = system1.getMolecules()[0]
 lig2 = system2.getMolecules()[0]
 
 
-# In[14]:
+# In[ ]:
 
 
 if do_mapping:
@@ -157,7 +158,7 @@ if do_mapping:
     #print (mappings)
 
 
-# In[15]:
+# In[ ]:
 
 
 #print (mapping)
@@ -165,14 +166,14 @@ if do_mapping:
 #    print (mappings[x], scores[x])
 
 
-# In[16]:
+# In[ ]:
 
 
 inverted_mapping = dict([[v,k] for k,v in mapping.items()])
 #print (inverted_mapping)
 
 
-# In[17]:
+# In[ ]:
 
 
 # Align lig2 to lig1 based on the best mapping (inverted). The molecule is aligned based
@@ -180,13 +181,14 @@ inverted_mapping = dict([[v,k] for k,v in mapping.items()])
 # (as opposed to merely taking the difference of centroids).
 lig2 = BSS.Align.rmsdAlign(lig2, lig1, inverted_mapping)
 # Merge the two ligands based on the mapping.
-merged = BSS.Align.merge(lig1, lig2, mapping)
+print(node.getInput("allow_ring_breaking"))
+merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"))
 # Create a composite system
 system1.removeMolecules(lig1)
 system1.addMolecules(merged)
 
 
-# In[18]:
+# In[ ]:
 
 
 # Log the mapping used
@@ -200,7 +202,7 @@ cmd = "unzip -o somd.zip"
 os.system(cmd)
 
 
-# In[19]:
+# In[ ]:
 
 
 root = node.getInput("output")
@@ -211,7 +213,7 @@ rst7 = "%s.rst7" % root
 mapping_str = "%s.mapping" % root
 
 
-# In[20]:
+# In[ ]:
 
 
 cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
@@ -219,13 +221,13 @@ cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rs
 os.system(cmd)
 
 
-# In[21]:
+# In[ ]:
 
 
 node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping_str])
 
 
-# In[22]:
+# In[ ]:
 
 
 node.validate()
