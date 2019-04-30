@@ -181,7 +181,6 @@ inverted_mapping = dict([[v,k] for k,v in mapping.items()])
 # (as opposed to merely taking the difference of centroids).
 lig2 = BSS.Align.rmsdAlign(lig2, lig1, inverted_mapping)
 # Merge the two ligands based on the mapping.
-print(node.getInput("allow_ring_breaking"))
 merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"))
 # Create a composite system
 system1.removeMolecules(lig1)
