@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
+# Exit if we are only editing the commit message.
+if git diff --cached --quiet ; then
+    exit
+fi
+
+# If .ciignore doesn't exists, just quit this Git hook.
 if [[ ! -a .ciignore ]]; then
-    # If .ciignore doesn't exists, just quit this Git hook.
 	exit
 fi
 
@@ -12,6 +17,8 @@ fi
 
 # Load in every file that will be changed via this commit into an array.
 changes=$(git diff --name-only --cached)
+
+git diff --name-only --cached
 
 # Load the patterns we want to skip into an array.
 mapfile -t blacklist < .ciignore
