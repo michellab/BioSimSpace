@@ -72,6 +72,7 @@ node = BSS.Gateway.Node("A node to generate input files for a SOMD relative free
 
 
 node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edinburgh")
+node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
 node.setLicense("GPLv3")
 
 
@@ -82,6 +83,7 @@ node.addInput("input1", BSS.Gateway.FileSet(help="A topology and coordinates fil
 node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates file"))
 node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11... Ignored if a mapping is provided", default=""))
 node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
+node.addInput("timeout", BSS.Gateway.Time(help="The timeout for the maximum common substructure search", default=10*BSS.Units.Time.second))
 node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge.", default=False))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
@@ -151,7 +153,7 @@ lig2 = system2.getMolecules()[0]
 
 if do_mapping:
     # Return a maximum of 10 matches, scored by RMSD and sorted from best to worst.
-    mappings, scores = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, return_scores=True, scoring_function="RMSDalign", timeout=10*BSS.Units.Time.second)
+    mappings, scores = BSS.Align.matchAtoms(lig1, lig2, matches=10, prematch=prematch, return_scores=True, scoring_function="RMSDalign", timeout=node.getInput("timeout"))
     # We retain the top mapping
     mapping = mappings[0]
     #print (len(mappings))
