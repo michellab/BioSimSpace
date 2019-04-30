@@ -1492,7 +1492,7 @@ def _validate_unit_requirement(value, unit_type):
 
     # Unsupported.
     else:
-        raise TypeError("The value should be of type 'float', 'int', or 'str'")
+        raise TypeError("Unsupported value type '%s'. Options are 'float', 'int', or 'str'." % type(value))
 
     return (value, unit)
 

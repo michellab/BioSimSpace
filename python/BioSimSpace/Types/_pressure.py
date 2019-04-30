@@ -51,6 +51,9 @@ class Pressure(_Type):
     _doc_strings = { "ATMOSPHERE" : "A pressure in atmosphere.",
                      "BAR"        : "A pressure in bar." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "ATMOSPHERE"
+
     def __init__(self, *args):
         """Constructor.
 

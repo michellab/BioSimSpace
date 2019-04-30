@@ -74,6 +74,9 @@ class Time(_Type):
                      "PICOSECOND"  : "A time in picoseconds.",
                      "FEMTOSECOND" : "A time in femtoseconds." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "NANOSECOND"
+
     def __init__(self, *args):
         """Constructor.
 

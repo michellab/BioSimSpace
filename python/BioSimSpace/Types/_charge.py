@@ -51,6 +51,9 @@ class Charge(_Type):
     _doc_strings = { "ELECTRON CHARGE" : "A charge in electron charge.",
                      "COULOMB"         : "A charge in Coulomb." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "ELECTRON CHARGE"
+
     def __init__(self, *args):
         """Constructor.
 

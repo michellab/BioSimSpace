@@ -67,6 +67,9 @@ class Length(_Type):
                      "ANGSTROM"   : "A length in Angstrom.",
                      "PICOMETER"  : "A length in picometers." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "NANOMETER"
+
     def __init__(self, *args):
         """Constructor.
 

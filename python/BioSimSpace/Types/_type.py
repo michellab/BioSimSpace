@@ -318,6 +318,9 @@ class Type():
                The type object.
         """
 
+        if string == "==SUPPRESS==":
+            return type(self)(0, self._null_unit)
+
         string_copy = string
 
         if type(string) is str:

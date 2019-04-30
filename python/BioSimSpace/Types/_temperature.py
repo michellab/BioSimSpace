@@ -55,6 +55,9 @@ class Temperature(_Type):
                      "CELSIUS"    : "A temperature in Celsius.",
                      "FAHRENHEIT" : "A temperature in Fahrenheit." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "KELVIN"
+
     def __init__(self, *args):
         """Constructor.
 

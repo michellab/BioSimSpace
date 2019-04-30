@@ -59,6 +59,9 @@ class Volume(_Type):
                      "ANGSTROM3"   : "A volume in cube Angstrom.",
                      "PICOMETER3"  : "A volume in cube picometers." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "ANGSTROM3"
+
     def __init__(self, *args):
         """Constructor.
 

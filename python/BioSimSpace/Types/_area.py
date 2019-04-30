@@ -59,6 +59,9 @@ class Area(_Type):
                      "ANGSTROM2"   : "An area in square Angstrom.",
                      "PICOMETER2"  : "An area in square picometers." }
 
+    # Null type unit for avoiding issue printing configargparse help.
+    _null_unit = "ANGSTROM2"
+
     def __init__(self, *args):
         """Constructor.
 
