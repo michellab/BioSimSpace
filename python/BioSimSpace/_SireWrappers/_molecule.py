@@ -2387,14 +2387,22 @@ class Molecule():
                 if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
                     # Ring opening/closing is allowed.
                     if allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if not ((c0.inRing(idx) & c0.inRing(idy)) ^ (conn.inRing(idx) & conn.inRing(idy))):
+                        if not _is_ring_broken(c0, conn, idx, idy, idx, idy):
                             raise _IncompatibleError("The merge has changed the molecular connectivity! "
                                                      "Check your atom mapping.")
                     else:
                         raise _IncompatibleError("The merge has changed the molecular connectivity! "
                                                  "If you want to open/close a ring, then set the "
                                                  "'allow_ring_breaking' option to 'True'.")
+
+                # Check that a ring hasn't been opened/closed.
+                else:
+                    if not allow_ring_breaking:
+                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
+                        if _is_ring_broken(c0, conn, idx, idy, idx, idy):
+                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
+                                                    "If you want to allow this perturbation, then set the "
+                                                    "'allow_ring_breaking' option to 'True'.")
 
         # molecule1
         for x in range(0, molecule1.nAtoms()):
@@ -2416,13 +2424,22 @@ class Molecule():
                     # Ring opening/closing is forbidden.
                     if allow_ring_breaking:
                         # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if not ((c1.inRing(idx) & c1.inRing(idy)) ^ (conn.inRing(idx_map) & conn.inRing(idy_map))):
+                        if not _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
                             raise _IncompatibleError("The merge has changed the molecular connectivity! "
                                                      "Check your atom mapping.")
                     else:
                         raise _IncompatibleError("The merge has changed the molecular connectivity! "
                                                  "If you want to open/close a ring, then set the "
                                                  "'allow_ring_breaking' option to 'True'.")
+
+                # Check that a ring hasn't been opened/closed.
+                else:
+                    if not allow_ring_breaking:
+                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
+                        if _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
+                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
+                                                    "If you want to allow this perturbation, then set the "
+                                                    "'allow_ring_breaking' option to 'True'.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
@@ -2728,6 +2745,36 @@ def _random_suffix(basename, size=4, chars=_string.ascii_uppercase + _string.dig
         raise ValueError("Cannot generate suffix for basename '%s'. " % basename
                        + "AMBER atom names can only be 4 characters wide.")
     return "".join(_random.choice(chars) for _ in range(size-basename_size))
+
+def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
+    """Internal function to test whether a perturbation changes the connectivity
+       around two atoms such that a ring is broken.
+
+       Parameters
+       ----------
+
+       conn0 : Sire.Mol.Connectivity
+           The connectivity object for the first end state.
+
+       conn1 : Sire.Mol.Connectivity
+           The connectivity object for the second end state.
+
+       idx0 : Sire.Mol.AtomIdx
+           The index of the first atom in the first state.
+
+       idy0 : Sire.Mol.AtomIdx
+           The index of the second atom in the first state.
+
+       idx1 : Sire.Mol.AtomIdx
+           The index of the first atom in the second state.
+
+       idy1 : Sire.Mol.AtomIdx
+           The index of the second atom in the second state.
+    """
+
+    # Have we opened/closed a ring? This means that both atoms are part of a ring in
+    # one end state, whereas at least one isn't in the other end state.
+    return (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1))
 
 # Import at bottom of module to avoid circular dependency.
 from ._system import System as _System

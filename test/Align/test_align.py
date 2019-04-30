@@ -155,3 +155,58 @@ def test_merge():
     internalff2.add(partial_mol, pmap1)
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
+
+def test_ring_breaking_5():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand04*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Load the pre-defined mapping.
+    mapping = _load_mapping("test/io/maps/31_04.txt")
+
+    # Align m0 to m1 based on the mapping.
+    m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
+
+    # Try to merge the molecule without allowing ring breaking.
+    with pytest.raises(BSS._Exceptions.IncompatibleError):
+        m2 = BSS.Align.merge(m0, m1, mapping)
+
+    # Now check that we can merge if we allow ring breaking.
+    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
+
+def test_ring_breaking_6():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Load the pre-defined mapping.
+    mapping = _load_mapping("test/io/maps/31_38.txt")
+
+    # Align m0 to m1 based on the mapping.
+    m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
+
+    # Try to merge the molecule without allowing ring breaking.
+    with pytest.raises(BSS._Exceptions.IncompatibleError):
+        m2 = BSS.Align.merge(m0, m1, mapping)
+
+    # Now check that we can merge if we allow ring breaking.
+    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
+
+def _load_mapping(file_name):
+    """Internal function to load a mapping from file."""
+
+    mapping = {}
+    with open(file_name, "r") as file:
+        for line in file:
+            indices = line.split()
+            mapping[AtomIdx(int(indices[0]))] = AtomIdx(int(indices[1]))
+
+    return mapping
