@@ -318,12 +318,13 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
-            if self._protocol.getEnsemble() == "NVT":
+            if self._protocol.getPressure() is None:
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                        % self._protocol.getPressure().atm().magnitude())
                 else:
                     self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:
@@ -359,12 +360,13 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
-            if self._protocol.getEnsemble() == "NVT":
+            if self._protocol.getPressure() is None:
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                        % self._protocol.getPressure().atm().magnitude())
                 else:
                     self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:
@@ -401,12 +403,13 @@ class Somd(_process.Process):
             self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
             self.addToConfig("thermostat = True")                       # Turn on the thermostat.
             self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
-            if self._protocol.getEnsemble() == "NVT":
+            if self._protocol.getPressure() is None:
                 self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = 1 atm")                # Atmospheric pressure.
+                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                        % self._protocol.getPressure().atm().magnitude())
                 else:
                     self.addToConfig("barostat = False")                # Disable barostat (constant volume).
             if self._has_water:

@@ -376,9 +376,10 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() == "NPT":
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
-                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonTarget  %.5f"
+                    % self._protocol.getPressure().bar().magnitude())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -459,9 +460,10 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() == "NPT":
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
-                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonTarget  %.5f"
+                    % self._protocol.getPressure().bar().magnitude())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")

@@ -37,16 +37,12 @@ __all__ = ["Production"]
 class Production(_Protocol):
     """A class for storing production protocols."""
 
-    # A list of allowed thermodynamic ensembles.
-    # Update as support is added.
-    _ensembles = ["NVT", "NPT"]
-
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
+                 pressure=_Types.Pressure(1, "atmosphere"),
                  frames=20,
-                 ensemble="NPT",
                  first_step=0,
                  restart=False
                 ):
@@ -64,11 +60,11 @@ class Production(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
 
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure. Pass pressure=None to use the NVT ensemble.
+
            frames : int
                The number of trajectory frames to record.
-
-           ensemble : str
-               The thermodynamic ensemble.
 
            first_step : int
                The initial time step (for restart simulations).
@@ -76,6 +72,9 @@ class Production(_Protocol):
            restart : bool
                Whether this is a continuation of a previous simulation.
         """
+
+        # Call the base class constructor.
+        super().__init__()
 
         # Set the time step.
         self.setTimeStep(timestep)
@@ -86,11 +85,14 @@ class Production(_Protocol):
         # Set the system temperature.
         self.setTemperature(temperature)
 
+        # Set the system pressure.
+        if pressure is not None:
+            self.setPressure(pressure)
+        else:
+            self._pressure = None
+
         # Set the number of trajectory frames.
         self.setFrames(frames)
-
-        # Set the thermodynamic ensemble.
-        self.setEnsemble(ensemble)
 
         # Set the restart flag.
         self.setRestart(restart)
@@ -104,9 +106,9 @@ class Production(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.Production: timestep=%s, runtime=%s, "
-                    "temperature=%s, frames=%d, ensemble=%r, first_step=%d, restart=%r>"
-                   ) % (self._timestep, self._runtime, self._temperature, self._frames,
-                        self._ensemble, self._first_step, self._restart)
+                    "temperature=%s, pressure=%s, frames=%d, first_step=%d, restart=%r>"
+                   ) % (self._timestep, self._runtime, self._temperature, self._pressure,
+                        self._frames, self._first_step, self._restart)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -114,9 +116,9 @@ class Production(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.Production(timestep=%s, runtime=%s, "
-                    "temperature=%s, frames=%d, ensemble=%r, first_step=%d, restart=%r)"
-                   ) % (self._timestep, self._runtime, self._temperature, self._frames,
-                        self._ensemble, self._first_step, self._restart)
+                    "temperature=%s, pressure=%s, frames=%d, first_step=%d, restart=%r)"
+                   ) % (self._timestep, self._runtime, self._temperature, self._pressure,
+                        self._frames, self._first_step, self._restart)
 
     def getTimeStep(self):
         """Return the time step.
@@ -193,6 +195,31 @@ class Production(_Protocol):
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
 
+    def getPressure(self):
+        """Return the pressure.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
+        """
+        return self._pressure
+
+    def setPressure(self, pressure):
+        """Set the pressure.
+
+           Parameters
+           ----------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
+        """
+        if type(pressure) is _Types.Pressure:
+            self._pressure = pressure
+        else:
+            raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
+
     def getFrames(self):
         """Return the number of frames.
 
@@ -221,32 +248,6 @@ class Production(_Protocol):
             self._frames = 20
         else:
             self._frames = _math.ceil(frames)
-
-    def getEnsemble(self):
-        """Return the thermodynamic ensemble.
-
-           Returns
-           -------
-
-           ensemble : str
-               The thermodynamic ensemble.
-        """
-        return self._ensemble
-
-    def setEnsemble(self, ensemble):
-        """Set the thermodynamic ensemble.
-
-           Parameters
-           ----------
-
-           ensemble : str
-               The thermodynamic ensemble.
-        """
-        if ensemble.replace(" ", "").upper() not in self._ensembles:
-            warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
-            self._ensemble = "NPT"
-        else:
-            self._ensemble = ensemble.replace(" ", "").upper()
 
     def getFirstStep(self):
         """Return the first time step.

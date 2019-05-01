@@ -45,6 +45,9 @@ class Minimisation(_Protocol):
                The maximum number of steps to perform.
         """
 
+        # Call the base class constructor.
+        super().__init__()
+
         # Set the number of steps.
         self.setSteps(steps)
 

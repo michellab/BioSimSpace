@@ -342,9 +342,10 @@ class Amber(_process.Process):
                 self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() == "NPT":
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
-                self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
+                self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
 
             # Restrain the backbone.
             if self._protocol.isRestrained():
@@ -417,9 +418,10 @@ class Amber(_process.Process):
                 % self._protocol.getTemperature().kelvin().magnitude())
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() == "NPT":
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
-                self.addToConfig("  pres0=1.01325,")        # Atompspheric pressure.
+                self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
 
             self.addToConfig(" /")
 

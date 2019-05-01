@@ -32,10 +32,6 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
-# A list of allowed thermodynamic ensembles.
-# Update as support is added.
-_ensembles = ["NVT", "NPT"]
-
 class FreeEnergy(_Protocol):
     """A class for storing free energy protocols."""
 
@@ -48,7 +44,7 @@ class FreeEnergy(_Protocol):
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
-                 ensemble="NPT"
+                 pressure=_Types.Pressure(1, "atmosphere")
                 ):
         """Constructor.
 
@@ -79,9 +75,12 @@ class FreeEnergy(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature.
 
-           ensemble : str
-               The thermodynamic ensemble.
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure. Pass pressure=None to use the NVT ensemble.
         """
+
+        # Call the base class constructor.
+        super().__init__()
 
         # Validate and set the lambda values.
         self.setLambdaValues(lam, lam_vals, min_lam, max_lam, num_lam)
@@ -95,8 +94,11 @@ class FreeEnergy(_Protocol):
         # Set the system temperature.
         self.setTemperature(temperature)
 
-        # Set the thermodynamic ensemble.
-        self.setEnsemble(ensemble)
+        # Set the system pressure.
+        if pressure is not None:
+            self.setPressure(pressure)
+        else:
+            self._pressure = None
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -104,9 +106,9 @@ class FreeEnergy(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, ensemble=%r>"
+                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s>"
                    ) % (self._lambda, self._lambda_vals, self._timestep,
-                        self._runtime, self._temperature, self._ensemble)
+                        self._runtime, self._temperature, self._pressure)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -114,9 +116,9 @@ class FreeEnergy(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, ensemble=%r)"
+                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s)"
                    ) % (self._lambda, self._lambda_vals, self._timestep,
-                        self._runtime, self._temperature, self._ensemble)
+                        self._runtime, self._temperature, self._pressure)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
@@ -329,28 +331,27 @@ class FreeEnergy(_Protocol):
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
 
-    def getEnsemble(self):
-        """Return the thermodynamic ensemble.
+    def getPressure(self):
+        """Return the pressure.
 
            Returns
            -------
 
-           ensemble : str
-               The thermodynamic ensemble.
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
-        return self._ensemble
+        return self._pressure
 
-    def setEnsemble(self, ensemble):
-        """Set the thermodynamic ensemble.
+    def setPressure(self, pressure):
+        """Set the pressure.
 
            Parameters
            ----------
 
-           ensemble : str
-               The thermodynamic ensemble.
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
-        if ensemble.replace(" ", "").upper() not in _ensembles:
-            warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
-            self._ensemble = "NPT"
+        if type(pressure) is _Types.Pressure:
+            self._pressure = pressure
         else:
-            self._ensemble = ensemble.replace(" ", "").upper()
+            raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")

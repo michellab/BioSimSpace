@@ -39,18 +39,14 @@ __all__ = ["Equilibration"]
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
-    # A list of allowed thermodynamic ensembles.
-    # Update as support is added.
-    _ensembles = ["NVT", "NPT"]
-
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(0.2, "nanoseconds"),
                  temperature_start=_Types.Temperature(300, "kelvin"),
                  temperature_end=_Types.Temperature(300, "kelvin"),
                  temperature=None,
+                 pressure=None,
                  frames=20,
-                 ensemble="NVT",
                  restrain_backbone=False
                 ):
         """Constructor.
@@ -59,31 +55,34 @@ class Equilibration(_Protocol):
            ----------
 
            timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration timestep (in femtoseconds).
+               The integration timestep.
 
            runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The running time (in nanoseconds).
+               The running time.
 
            temperature_start : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The starting temperature (in Kelvin).
+               The starting temperature.
 
            temperature_end : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The final temperature (in Kelvin).
+               The final temperature.
 
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The equilibration temperature (in Kelvin). This takes
-               precedence of over the other temperatures, i.e. to run
-               at fixed temperature.
+               The equilibration temperature. This takes precedence of over
+               the other temperatures, i.e. to run at fixed temperature.
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure. If this argument is omitted then the simulation
+               is run using the NVT ensemble.
 
            frames : int
                The number of trajectory frames to record.
 
-           ensemble : str
-               The thermodynamic ensemble.
-
            restrain_backbone : bool
                Whether the atoms in the backbone are fixed.
         """
+
+        # Call the base class constructor.
+        super().__init__()
 
         # Set the time step.
         self.setTimeStep(timestep)
@@ -111,11 +110,14 @@ class Equilibration(_Protocol):
             if self._temperature_start == self._temperature_end:
                 self._is_const_temp = True
 
+        # Constant pressure simulation.
+        if pressure is not None:
+            self.setPressure(pressure)
+        else:
+            self._pressure = None
+
         # Set the number of trajectory frames.
         self.setFrames(frames)
-
-        # Set the thermodynamic ensemble.
-        self.setEnsemble(ensemble)
 
         # Set the backbone restraint.
         self.setRestraint(restrain_backbone)
@@ -126,9 +128,9 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r>"
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r>"
                    ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._frames, self._ensemble, self._is_restrained)
+                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -136,9 +138,9 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, frames=%d, ensemble=%r, restrain_backbone=%r)"
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r)"
                    ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._frames, self._ensemble, self._is_restrained)
+                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
 
     def getTimeStep(self):
         """Return the time step.
@@ -243,7 +245,32 @@ class Equilibration(_Protocol):
                 temperature._magnitude = 0.01
             self._temperature_end = temperature
         else:
-            raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
+            raise TypeError("'temperature_end' must be of type 'BioSimSpace.Types.Temperature'")
+
+    def getPressure(self):
+        """Return the pressure.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
+        """
+        return self._pressure
+
+    def setPressure(self, pressure):
+        """Set the pressure.
+
+           Parameters
+           ----------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
+        """
+        if type(pressure) is _Types.Pressure:
+            self._pressure = pressure
+        else:
+            raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
     def getFrames(self):
         """Return the number of frames.
@@ -273,32 +300,6 @@ class Equilibration(_Protocol):
             self._frames = 20
         else:
             self._frames = _math.ceil(frames)
-
-    def getEnsemble(self):
-        """Return the thermodynamic ensemble.
-
-           Returns
-           -------
-
-           ensemble : str
-               The thermodynamic ensemble.
-        """
-        return self._ensemble
-
-    def setEnsemble(self, ensemble):
-        """Set the thermodynamic ensemble.
-
-           Parameters
-           ----------
-
-           ensemble : str
-               The thermodynamic ensemble.
-        """
-        if ensemble.replace(" ", "").upper() not in self._ensembles:
-            warn("Unsupported thermodynamic ensemble. Using default ('NPT').")
-            self._ensemble = "NPT"
-        else:
-            self._ensemble = ensemble.replace(" ", "").upper()
 
     def isRestrained(self):
         """Return whether the backbone is restrained.

@@ -43,6 +43,9 @@ class Custom(_Protocol):
                The custom protocol configuration.
         """
 
+        # Call the base class constructor.
+        super().__init__()
+
         # Set the protocol configuration.
         self.setConfig(config)
 

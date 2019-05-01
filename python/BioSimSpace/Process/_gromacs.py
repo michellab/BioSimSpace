@@ -281,10 +281,11 @@ class Gromacs(_process.Process):
                        self._protocol.getEndTemperature().kelvin().magnitude()))
 
             # Pressure control.
-            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
+            if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("ref-p = %.5f"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Restrain backbone atoms in all non-water or ion molecules.
@@ -433,10 +434,11 @@ class Gromacs(_process.Process):
             config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
 
             # Pressure control.
-            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
+            if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("ref-p = %.5f"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
         elif type(self._protocol) is _Protocol.FreeEnergy:
@@ -490,10 +492,11 @@ class Gromacs(_process.Process):
             config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
 
             # Pressure control.
-            if self._protocol.getEnsemble() == "NPT" and has_box and self._has_water:
+            if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = 1.01325")            # Reference pressure of 1 atmosphere.
+                config.append("ref-p = %.5f"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Extract the lambda value and array.
