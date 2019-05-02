@@ -1,5 +1,4 @@
-# This image is used to build, package and test the latest version
-# of the devel branch of Sire
+# This image is used to deploy the latest BioSimSpace binary.
 
 FROM biosimspace/package-devel:latest
 
@@ -14,5 +13,8 @@ RUN $HOME/sire.app/bin/conda install -y pycurl
 
 ADD deploy.py .
 RUN $HOME/sire.app/bin/python deploy.py
+
+ADD deploy_release.sh .
+RUN ./deploy_release.sh
 
 ENTRYPOINT ["bash"]

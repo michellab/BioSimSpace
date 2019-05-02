@@ -38,6 +38,7 @@ jobs:
       # next deploy the binary to an object store bucket identified by 'par_url'
       $HOME/sire.app/bin/conda install -y pycurl conda-build anaconda-client
       $HOME/sire.app/bin/sire_python docker/deploy-devel/deploy.py $HOME/biosimspace_devel_latest_osx.run
+      bash docker/deploy-devel/deploy_release.sh
     env:
       PAR_URL: $(parURL)
     displayName: 'Deploy binary to biosimspace.org'

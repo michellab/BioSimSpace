@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Set the source and Conda build directories on macOS.
-SRC_DIR=.
-CONDA_DIR=./docker/conda-devel/recipe
+SRC_DIR=$(pwd)
+CONDA_DIR=$SRC_DIR/docker/conda-devel/recipe
 
 # Linux runs in a docker container from $HOME.
 if [ ! -d $CONDA_DIR ]; then
@@ -18,7 +18,7 @@ TEMPLATE=$CONDA_DIR/template.yaml
 cp $TEMPLATE $RECIPE
 
 # Get the BioSimSpace version.
-BSS_VER=$(git --git-dir=$SRC_DIR/.git describe --tags | tr - _)
+BSS_VER=$(git --git-dir=$SRC_DIR/.git --work-tree=$SRC_DIR describe --tags | tr - _)
 
 # Update the BioSimSpace version number.
 echo "Updating BioSimSpace version number: '$BSS_VER'"
