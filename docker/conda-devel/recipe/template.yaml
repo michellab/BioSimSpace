@@ -43,7 +43,7 @@ about:
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
   summary: "An interoperable Python framework for biomolecular simulation."
   dev_url: https://github.com/michellab/BioSimSpace
-  doc_url: https://biosimspacebot.org
+  doc_url: https://biosimspace.org
 
 extra:
   recipe-maintainers:
