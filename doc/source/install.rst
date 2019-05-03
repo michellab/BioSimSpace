@@ -36,32 +36,32 @@ need to add them when updating, e.g., for the development package:
 Binary install
 ==============
 
+The self-extracting binary for the 2019.1.0 release of BioSimSpace
+can be downloaded from one of the following links:
+
+* Linux: `biosimspace_2019_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/uM4T7NjDaeLBOt0cBXSEyW7p4XcPhcKewlytEheX3HA/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_linux.run>`__
+* Mac OS X: `biosimspace_2019_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/yFhNo6rPsh2QtWpjNNsx6DGr45idI3AZ_-cc6L7k51g/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_osx.run>`__
+
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
 * Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
 * Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
 
-(these are portable X86-64 binaries that should work on any Linux distribution released
-since ~2011, or any OS X >= 10.9[Mavericks, released 2013]. Note that they are compiled with AVX
-enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors)
+(These are portable X86-64 binaries that should work on any Linux distribution released
+since ~2011, or any OS X >= 10.9 [Mavericks, released 2013]. Note that they are compiled
+with AVX enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors.)
 
-Once downloaded, the binary can be unpacked as follows on Linux:
+Once downloaded, the binary can be unpacked as follows, e.g. for the Linux
+development package:
 
 .. code-block:: bash
 
    chmod +x biosimspace_devel_latest_linux.run
    ./biosimspace_devel_latest_linux.run
 
-or on OS X:
-
-.. code-block:: bash
-
-   chmod +x biosimspace_devel_latest_osx.run
-   ./biosimspace_devel_latest_osx.run
-
-Both of these commands will let you choose where to install BioSimSpace. By default,
-this will be into ``$HOME/biosimspace.app``.
+This will let you choose where to install BioSimSpace. By default, this will be
+into ``$HOME/biosimspace.app``.
 
 For developers
 ==============
