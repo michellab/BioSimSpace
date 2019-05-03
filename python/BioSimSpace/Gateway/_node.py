@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,27 +21,18 @@
 
 """
 Functionality for creating BioSimSpace workflow components (nodes).
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from BioSimSpace import _is_notebook
-
-from ._requirements import Boolean as _Boolean
-from ._requirements import File as _File
-from ._requirements import FileSet as _FileSet
-from ._requirements import Float as _Float
-from ._requirements import Integer as _Integer
-from ._requirements import Requirement as _Requirement
-from ._requirements import String as _String
-
-import argparse as _argparse
+import configargparse as _argparse
 import collections as _collections
-import io as _io
 import __main__
 import os as _os
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
+import yaml as _yaml
+
+from BioSimSpace import _is_notebook
 
 # Enable Jupyter widgets.
 if _is_notebook():
@@ -51,29 +42,61 @@ if _is_notebook():
     import ipywidgets as _widgets
     import zipfile as _zipfile
 
+from ._requirements import Area as _Area
+from ._requirements import Boolean as _Boolean
+from ._requirements import File as _File
+from ._requirements import FileSet as _FileSet
+from ._requirements import Float as _Float
+from ._requirements import Charge as _Charge
+from ._requirements import Energy as _Energy
+from ._requirements import Integer as _Integer
+from ._requirements import Length as _Length
+from ._requirements import Pressure as _Pressure
+from ._requirements import Requirement as _Requirement
+from ._requirements import String as _String
+from ._requirements import Temperature as _Temperature
+from ._requirements import Time as _Time
+from ._requirements import Volume as _Volume
+
+import BioSimSpace.Types._type as _Type
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Node"]
 
-class _OutputAction(_argparse.Action):
-    """Helper class for printing node output requirements."""
-
-    def __init__(self,
-		 option_strings,
-		 dest=_argparse.SUPPRESS,
-		 default=_argparse.SUPPRESS,
-		 help=None):
-        super(_OutputAction, self).__init__(
-	      option_strings=option_strings,
-              dest=dest,
-              default=default,
-              nargs=0,
-              help=help)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        parser._print_output()
-        parser.exit()
+# Float types (including those with units).
+_float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
+    _Temperature, _Time]
 
 class Node():
-    """A class for interfacing with BioSimSpace nodes."""
+    """A class for interfacing with BioSimSpace nodes.
+
+       Nodes are used to collect and validate user input, document the
+       intentions of the workflow component, track and report errors,
+       and validate output. Once written, a node can be run from within
+       Jupyter, from the command-line, or plugged into a workflow engine,
+       such as Knime.
+
+       Example
+       -------
+
+       A generic energy minimisation node:
+
+       >>> import BioSimSpace as BSS
+       >>> node = BSS.Gateway.Node("Perform energy minimisation")
+       >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+       >>> node.setLicence("GPLv3")
+       >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
+       >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
+       >>> node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
+       >>> node.showControls()
+       >>> system = BSS.IO.readMolecules(node.getInput("files"))
+       >>> protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
+       >>> process = BSS.MD.run(system, protocol)
+       >>> node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
+       >>> node.validate()
+    """
 
     # Whether the node is run from Knime.
     _is_knime = False
@@ -84,13 +107,14 @@ class Node():
     def __init__(self, description, name=None):
         """Constructor.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           description -- A description of the node.
+           description : str
+               A description of the node.
 
-           Keyword arguments:
-
-           name        -- The name of the node.
+           name : str
+               The name of the node.
         """
 
         if type(description) is not str:
@@ -102,6 +126,10 @@ class Node():
                 self._name = _os.path.basename(__main__.__file__)
             except:
                 self._name = None
+        else:
+            if type(name) is not str:
+                raise TypeError("The 'name' keyword must be of type 'str'.")
+            self._name = name
 
         # Set the node description string.
         self._description = description
@@ -137,23 +165,20 @@ class Node():
 
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
-            # Create the parser.
-            description = "\n".join(_textwrap.wrap(self._description, 80))
-            self._parser = _argparse.ArgumentParser(description=description,
-                formatter_class=_argparse.RawTextHelpFormatter, add_help=False)
+            # Generate the node help description.
+            description = self._generate_description()
 
-            # Bind _print_output method to parser.
-            self._parser._print_output = self._print_output
+            # Create the parser.
+            self._parser = _argparse.ArgumentParser(description=description,
+                formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
+                config_file_parser_class=_argparse.YAMLConfigFileParser,
+                add_config_file_help=False)
 
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
-            self._optional.add_argument("-o", "--output", action=_OutputAction, help="Show the output of this node.")
-
-            # TODO: Add an option to allow the user to load a configuration from file.
-            # config = File(help="path to a configuration file", optional=True)
-            # self.addInput("config", config)
+            self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
 
     def __del__(self):
         """Destructor."""
@@ -166,10 +191,14 @@ class Node():
     def addInput(self, name, input):
         """Add an input requirement.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+               The input requirement object.
         """
 
         if type(name) is not str:
@@ -205,10 +234,14 @@ class Node():
     def _addInputCommandLine(self, name, input):
         """Add an input requirement for the command-line.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+               The input requirement object.
         """
 
         # Append long-form argument name if not present.
@@ -262,21 +295,31 @@ class Node():
     def _addInputKnime(self, name, input):
         """Add an input requirement for Knime.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
+           name : str
+               The name of the input.
+
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+               The input requirement object.
         """
         return None
 
     def _addInputJupyter(self, name, input, reset=False):
         """Add an input requirement for Jupyter.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the input.
-           input -- The input requirement object.
-           reset -- Whether to reset the widget data.
+           name : str
+               The name of the input.
+
+           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+               The input requirement object.
+
+           reset : bool
+               Whether to reset the widget data.
         """
 
         # Create a widget button to indicate whether the requirement value
@@ -352,25 +395,26 @@ class Node():
 
             else:
                 # Get the range of the input.
-                min_ = input.getMin()
-                max_ = input.getMax()
+                _min = input.getMin()
+                _max = input.getMax()
 
                 # Whether the integer is unbounded.
                 is_unbounded = True
 
-                if min_ is not None:
+                if _min is not None:
                     # Set the default.
                     if default is None:
-                        default = min_
+                        default = _min
 
                     # Bounded integer.
-                    if max_ is not None:
+                    if _max is not None:
+                        step=int((_max - _min) / 100)
                         # Create an int slider widget.
                         widget = _widgets.IntSlider(
                             value=default,
-                            min=min_,
-                            max=max_,
-                            step=1,
+                            min=_min,
+                            max=_max,
+                            step=step,
                             description=name,
                             tooltip=input.getHelp(),
                             continuous_update=False,
@@ -416,18 +460,26 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-        # Float.
-        elif type(input) is _Float:
+        # Float types (including those with units).
+        elif type(input) in _float_types:
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
             # Get the default value.
             default = input.getDefault()
 
+            # Get the magnitude of types with units.
+            if isinstance(default, _Type.Type):
+                default = default.magnitude()
+
             if allowed is not None:
                 # Set the default.
                 if default is None:
                     default = allowed[0]
+
+                    # Get the magnitude of types with units.
+                    if isinstance(default, _Type.Type):
+                        default = default.magnitude()
 
                 # Create a dropdown for the list of allowed values.
                 widget = _widgets.Dropdown(
@@ -440,25 +492,32 @@ class Node():
 
             else:
                 # Get the range of the input.
-                min_ = input.getMin()
-                max_ = input.getMax()
+                _min = input.getMin()
+                _max = input.getMax()
+
+                # Get the magnitude of types with units.
+                if isinstance(_min, _Type.Type):
+                    _min = _min.magnitude()
+                if isinstance(_max, _Type.Type):
+                    _max = _max.magnitude()
 
                 # Whether the float is unbounded.
                 is_unbounded = True
 
-                if min_ is not None:
+                if _min is not None:
                     # Set the default.
                     if default is None:
-                        default = min_
+                        default = _min
 
                     # Bounded float.
-                    if max_ is not None:
+                    if _max is not None:
+                        step=(_max - _min) / 100
                         # Create a float slider widget.
                         widget = _widgets.FloatSlider(
                             value=default,
-                            min=min_,
-                            max=max_,
-                            step=0.1,
+                            min=_min,
+                            max=_max,
+                            step=step,
                             description=name,
                             tooltip=input.getHelp(),
                             continuous_update=False,
@@ -636,10 +695,14 @@ class Node():
     def addOutput(self, name, output):
         """Add an output requirement.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name   -- The name of the output.
-           output -- The output requirement object.
+           name : str
+               The name of the output.
+
+           output : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+               The output requirement object.
         """
 
         if type(name) is not str:
@@ -655,26 +718,41 @@ class Node():
         # Add the output to the dictionary.
         self._outputs[name] = output
 
+        # Update the parser description.
+        if not self._is_notebook:
+            self._parser.description = self._generate_description()
+
     def setOutput(self, name, value):
         """Set the value of an output.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the output.
-           value -- The value of the output.
+           name : str
+               The name of the output.
+
+           value :
+               The value of the output.
         """
-
         try:
-            self._outputs[name].setValue(value)
+            self._outputs[name].setValue(value, name=name)
         except KeyError:
             raise
 
     def getInput(self, name):
         """Get the value of the named input.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           name -- The name of the input requirement.
+           name : str
+               The name of the input requirement.
+
+           Returns
+           -------
+
+           input :
+               The value of the named input requirement.
         """
 
         if type(name) is not str:
@@ -693,7 +771,14 @@ class Node():
             raise
 
     def getInputs(self):
-        """Get all of the input requirements."""
+        """Get all of the input requirements.
+
+           Returns
+           -------
+
+           inputs : { str : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>` }
+               The dictionary of input requirements.
+        """
 
         # Validate the inputs.
         self._is_valid_input = self._validateInput()
@@ -701,7 +786,14 @@ class Node():
         return self._inputs.copy()
 
     def addError(self, error):
-        """Add an error message."""
+        """Add an error message.
+
+           Parameters
+           ----------
+
+           error : str
+               The error message.
+        """
 
         if type(error) is not str:
             raise TypeError("The error message must be of type 'str'")
@@ -711,11 +803,17 @@ class Node():
     def addAuthor(self, name=None, email=None, affiliation=None):
         """Add an author for the node.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           name        -- The author's name.
-           email       -- The author's email address.
-           affiliation -- The author's affiliation.
+           name : str
+               The author's name.
+
+           email : str
+               The author's email address.
+
+           affiliation : str
+               The author's affiliation.
         """
 
         if name is None:
@@ -738,23 +836,50 @@ class Node():
                 self._authors.append(author)
 
     def getAuthors(self):
-        """Return the list of authors."""
+        """Return the list of authors.
+
+           Returns
+           -------
+
+           authors : [dict]
+              A list of author dictionaries.
+        """
         return self._authors.copy()
 
     def setLicense(self, license):
-        """Set the license for the node."""
+        """Set the license for the node.
 
+           Parameters
+           ----------
+
+           license : str
+               The license type.
+        """
         if type(license) is not str:
             raise TypeError("The license must be of type 'str'")
         else:
             self._license = license
 
     def getLicense(self):
-        """Return the license."""
+        """Return the license.
+
+           Returns
+           -------
+
+           license : str
+               The license of the node.
+        """
         return self._license
 
     def showControls(self):
-        """Show the Jupyter widget GUI to allow the user to enter input."""
+        """Show the Jupyter widget GUI to allow the user to enter input.
+
+           Returns
+           -------
+
+           controls : ipywidgets.form
+              A gui control panel for setting input requirements.
+        """
 
         if not self._is_notebook:
             return
@@ -774,8 +899,17 @@ class Node():
 
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
+
+            # Credate the label string.
+            string = "%s: %s" % (name, self._inputs[name].getHelp())
+
+            # Add the unit information.
+            unit = self._inputs[name].getUnit()
+            if unit is not None:
+                string += " (%s)" % self._inputs[name]._print_unit
+
             # Create the widget label.
-            label = _widgets.Label(value="%s: %s" % (name, self._inputs[name].getHelp()))
+            label = _widgets.Label(value=string)
 
             # This is a FileSet requirement with multiple widgets.
             if type(widget) is list:
@@ -851,19 +985,38 @@ class Node():
                     else:
                         value = None
 
-                self._inputs[key].setValue(value)
+                self._inputs[key].setValue(value, name=key)
 
         # Command-line.
         else:
             # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_args())
+            args = vars(self._parser.parse_known_args()[0])
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                self._inputs[key].setValue(value)
+                if key is not "config":
+                    self._inputs[key].setValue(value, name=key)
 
-    def validate(self):
-        """Whether the output requirements are satisfied."""
+    def validate(self, file_prefix="output"):
+        """Whether the output requirements are satisfied.
+
+           Parameters
+           ----------
+
+           file_prefix : str
+               The prefix of the output file name.
+
+           Returns
+           -------
+
+           output : IPython.lib.display.FileLink, str
+               If running interatvely: A link to a zipfile containing the
+               validated output, else the name of a YAML file containing
+               the node output.
+        """
+
+        if type(file_prefix) is not str:
+            raise TypeError("The 'file_prefix' keyword must be of type 'str'.")
 
         # Flag that we have validated output.
         self._is_output_validated = True
@@ -894,10 +1047,7 @@ class Node():
             # There are files.
             if len(file_outputs) > 0:
                 # Create the archive name.
-                if self._name is None:
-                    zipname = "output.zip"
-                else:
-                    zipname = "%s.zip" % self._name
+                zipname = "%s.zip" % file_prefix
 
                 # Append the files to the archive.
                 with _zipfile.ZipFile(zipname, "w") as zip:
@@ -913,18 +1063,47 @@ class Node():
                 # Return a link to the archive.
                 return _FileLink(zipname)
         else:
-            return True
+            # Initialise an empty dictionary to store the output data.
+            data = {}
+
+            # Create the YAML file name.
+            yamlname = "%s.yaml" % file_prefix
+
+            # Populate the dictionary.
+            for name, output in self._outputs.items():
+                data[name] = output.getValue()
+
+            # Write the outputs to a YAML file.
+            with open(yamlname, "w") as file:
+                _yaml.dump(data, file, default_flow_style=False)
+
+            return yamlname
 
     def _create_help_string(self, input):
         """Create a nicely formatted argparse help string.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           input -- The input requirement.
+           input : :class:`Requirement <BioSimSpace.Gateway.Requirement>`
+               The input requirement.
+
+           Returns
+           -------
+
+           help : str
+               The formatted help string.
         """
 
         # Initialise the help string.
-        help = "\n".join(_textwrap.wrap(input.getHelp(), 80))
+        help = "\n".join(_textwrap.wrap(input.getHelp(), 56))
+
+        # Get the unit.
+        units = input.getUnit()
+
+        # Add the units to the help string.
+        if units is not None:
+            help += "\n  units=%s" % (units[0] + units[1:].lower())
 
         # Get the default value.
         default = input.getDefault()
@@ -949,18 +1128,47 @@ class Node():
 
         return help
 
-    def _print_output(self):
-        """Print the output requirements of the node."""
+    def _generate_description(self):
+        """Generate a formatted output section for the argparse help description.
+
+           Returns
+           -------
+
+           output : str
+               A string listing the output requirements.
+        """
+
+        string = "\n".join(_textwrap.wrap(self._description, 80))
+
+        yaml_help = ("Args that start with '--' (e.g. --arg) can also be set "
+                     "in a config file (specified via -c). The config file uses "
+                     "YAML syntax and must represent a YAML 'mapping' "
+                     "(for details, see http://learn.getgrav.org/advanced/yaml). "
+                     "If an arg is specified in more than one place, then "
+                     "commandline values override config file values which "
+                     "override defaults."
+                    )
+
+        string += "\n\n" + "\n".join(_textwrap.wrap(yaml_help, 80))
 
         # Initialise the output string.
-        string = "This node outputs the following...\n"
+        string += "\n\nOutput:\n"
 
         # Add documentation for each output.
         for name, output in self._outputs.items():
-            s = "  %s: %s, '%s'" % (name, output.__class__.__name__, output.getHelp())
-            string += "\n".join(_textwrap.wrap(s, 80)) + "\n"
+            num_whitespace = 19 - len(output.__class__.__name__) - len(name)
+            s = "  %s: %s " % (name, output.__class__.__name__)
+            for i, line in enumerate(_textwrap.wrap(output.getHelp(), 56)):
+                if i == 0:
+                    for _ in range(0, num_whitespace):
+                        s += " "
+                else:
+                    for _ in range(0, 24):
+                        s += " "
+                s +=  line + "\n"
+            string += s
 
-        print(string, end="")
+        return string
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
@@ -989,6 +1197,21 @@ def _on_file_upload(change):
     # Append the upload directory to the file name.
     new_filename = "uploads/%s" % filename
 
+    # Has this file already been uploaded?
+    if _os.path.isfile(new_filename):
+
+        # We'll append a number to the file name.
+        index = 1
+        new_filename_append = new_filename + ".%d" % index
+
+        # Keep trying until a unique name is found.
+        while _os.path.isfile(new_filename_append):
+            index += 1
+            new_filename_append = new_filename + ".%d" % index
+
+        # Copy back into the new_filename variable.
+        new_filename = new_filename_append
+
     # Write the file to disk.
     with open(new_filename, "wb") as file:
         file.write(change["owner"].data)
@@ -1016,7 +1239,7 @@ def _on_file_upload(change):
         # This is the first time the value has been set.
         if change["owner"].value is None:
             # Whether a match has been found.
-            is_found = False
+            is_match = False
 
             # Store the name of the input requirement.
             name = change["owner"]._name

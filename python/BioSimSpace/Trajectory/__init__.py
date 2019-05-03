@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -20,8 +20,15 @@
 #####################################################################
 
 """
-Functionality for reading and analysing molecular trajectories.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Trajectory
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Trajectory
 """
 
 from ._trajectory import *

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -36,21 +36,47 @@ class Custom(_Protocol):
     def __init__(self, config):
         """Constructor.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           config -- The custom protocol configuration.
+           config : str, [ str ]
+               The custom protocol configuration.
         """
+
+        # Call the base class constructor.
+        super().__init__()
 
         # Set the protocol configuration.
         self.setConfig(config)
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Protocol.Custom>"
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "<BioSimSpace.Protocol.Custom>"
+
     def getConfig(self):
-        """Return the custom configuration."""
+        """Return the custom configuration.
+
+           Returns
+           -------
+
+           config : [ str ]
+               Return the list of configuration strings.
+        """
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the custom configuration."""
+        """Set the custom configuration.
+        
+           Parameters
+           ----------
 
+           config : str, [ str ]
+               A config file, or list of configuration strings.
+        """
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
             self._config = config
@@ -62,8 +88,8 @@ class Custom(_Protocol):
             self._config = []
 
             # Read the contents of the file.
-            with open(config, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line.rstrip())
         else:
             raise ValueError("'config' must be a list of strings, or a file path.")

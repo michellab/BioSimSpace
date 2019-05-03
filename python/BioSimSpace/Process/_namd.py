@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,16 +21,7 @@
 
 """
 Functionality for running simulations using NAMD.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
-
-import Sire as _Sire
-
-from . import _process
-from .._System import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.Protocol as _Protocol
 
 import math as _math
 import os as _os
@@ -38,29 +29,61 @@ import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
 
+import Sire.Base as _SireBase
+import Sire.IO as _SireIO
+
+from . import _process
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from ..Trajectory import Trajectory as _Trajectory
+
+import BioSimSpace.Protocol as _Protocol
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
+import BioSimSpace._Utils as _Utils
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
 __all__ = ["Namd"]
 
 class Namd(_process.Process):
     """A class for running simulations using NAMD."""
 
-    def __init__(self, system, protocol, exe=None, name="namd", work_dir=None, seed=None):
+    def __init__(self, system, protocol, exe=None,
+            name="namd", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           system        -- The molecular system.
-           protocol      -- The protocol for the NAMD process.
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
 
-           Keyword arguments:
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
+               The protocol for the NAMD process.
 
-           exe           -- The full path to the NAMD executable.
-           name          -- The name of the process.
-           work_dir      -- The working directory for the process.
-           seed          -- A random number seed.
+           exe : str
+               The full path to the NAMD executable.
+
+           name : str
+               The name of the process.
+
+           work_dir :
+               The working directory for the process.
+
+           seed : int
+               A random number seed.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed)
+        super().__init__(system, protocol, name, work_dir, seed, property_map)
 
         # Set the package name.
         self._package_name = "NAMD"
@@ -71,8 +94,11 @@ class Namd(_process.Process):
         # If the path to the executable wasn't specified, then search
         # for it in $PATH.
         if exe is None:
-            self._exe = _Sire.Base.findExe("namd2").absoluteFilePath()
-
+            try:
+                self._exe = _SireBase.findExe("namd2").absoluteFilePath()
+            except:
+                raise _MissingSoftwareError("'BioSimSpace.Process.Namd' is not supported. "
+                                            "Please install NAMD (http://www.ks.uiuc.edu/Research/namd).") from None
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
@@ -92,7 +118,7 @@ class Namd(_process.Process):
         self._restraint_file = None
 
         # Set the path for the NAMD configuration file.
-        self._config_file = "%s/%s.namd" % (self._work_dir, name)
+        self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._psf_file, self._top_file, self._param_file]
@@ -106,12 +132,18 @@ class Namd(_process.Process):
         # Create the input files...
 
         # PSF and parameter files.
-        psf = _Sire.IO.CharmmPSF(self._system)
-        psf.writeToFile(self._psf_file)
+        try:
+            psf = _SireIO.CharmmPSF(self._system, self._property_map)
+            psf.writeToFile(self._psf_file)
+        except:
+            raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
-        pdb = _Sire.IO.PDB2(self._system)
-        pdb.writeToFile(self._top_file)
+        try:
+            pdb = _SireIO.PDB2(self._system, self._property_map)
+            pdb.writeToFile(self._top_file)
+        except:
+            raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Try to write a PDB "velocity" restart file.
         # The file will only be generated if all atoms in self._system have
@@ -144,17 +176,17 @@ class Namd(_process.Process):
         has_impropers = False
 
         # Open the PSF file for reading.
-        with open(self._psf_file) as f:
+        with open(self._psf_file) as file:
 
             # Loop over all lines.
-            for line in f:
+            for line in file:
 
                 # There are improper records.
                 if "!NIMPHI" in line:
                     has_impropers = True
 
                 # There are donor records.
-                if "!NDON" in line:
+                elif "!NDON" in line:
                     has_donors = True
 
                 # There are acceptor records.
@@ -167,27 +199,27 @@ class Namd(_process.Process):
 
         # Append empty improper record.
         if not has_impropers:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NIMPHI: impropers\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NIMPHI: impropers\n" % 0)
+            file.close()
 
         # Append empty donor record.
         if not has_donors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NDON: donors\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NDON: donors\n" % 0)
+            file.close()
 
         # Append empty acceptor record.
         if not has_acceptors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NACC: acceptors\n" % 0)
-            f.close()
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NACC: acceptors\n" % 0)
+            file.close()
 
         # Append empty non-bonded exclusion record.
-        if not has_acceptors:
-            f = open(self._psf_file, "a")
-            f.write("\n%8d !NNB: excluded\n" % 0)
-            f.close()
+        if not has_non_bonded:
+            file = open(self._psf_file, "a")
+            file.write("\n%8d !NNB: excluded\n" % 0)
+            file.close()
 
         # Generate the NAMD configuration file.
         if type(self._protocol) is _Protocol.Custom:
@@ -208,13 +240,15 @@ class Namd(_process.Process):
         # Flag that the system doesn't contain a box.
         has_box = False
 
+        prop = self._property_map.get("space", "space")
+
         # Check whether the system contains periodic box information.
-        if "space" in self._system.propertyKeys():
+        if prop in self._system.propertyKeys():
             # Flag that we have found a box.
             has_box = True
 
             # Get the box size.
-            box_size = self._system.property("space").dimensions()
+            box_size = self._system.property(prop).dimensions()
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
@@ -227,10 +261,12 @@ class Namd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        prop = self._property_map.get("param_format", "param_format")
+
         # Check whether the system contains parameter format information.
-        if "param-format" in self._system.propertyKeys():
+        if prop in self._system.propertyKeys():
             # Get the parameter format.
-            if self._system.property("param-format").toString() == "CHARMM":
+            if self._system.property(prop).toString() == "CHARMM":
                 is_charmm = True
             else:
                 is_charmm = False
@@ -265,7 +301,7 @@ class Namd(_process.Process):
         # Non-bonded potential parameters.
 
         # Gas phase.
-        if not has_box:
+        if not has_box or not self._has_water:
             self.addToConfig("cutoff                999.")
             self.addToConfig("zeroMomentum          yes")
             self.addToConfig("switching             off")
@@ -316,16 +352,19 @@ class Namd(_process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        if type(self._protocol) is _Protocol.Equilibration:
+        elif type(self._protocol) is _Protocol.Equilibration:
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
-                self.addToConfig("set temperature       %.2f" % self._protocol.getStartTemperature())
+                self.addToConfig("set temperature       %.2f"
+                    % self._protocol.getStartTemperature().kelvin().magnitude())
             else:
-                self.addToConfig("set temperature       %.2f" % self._protocol.getEndTemperature())
+                self.addToConfig("set temperature       %.2f"
+                    % self._protocol.getEndTemperature().kelvin().magnitude())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f"
+                % self._protocol.getTimeStep().femtoseconds().magnitude())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -337,9 +376,10 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if not self._protocol.isConstantTemp():
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
-                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonTarget  %.5f"
+                    % self._protocol.getPressure().bar().magnitude())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -353,13 +393,20 @@ class Namd(_process.Process):
                 restrained = _process._restrain_backbone(self._system)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
-                p = PDB2(restrained, {"occupancy" : "restrained"})
+                prop = self._property_map.get("occupancy", "occupancy")
 
-                # File name for the restraint file.
-                self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
+                try:
+                    p = _SireIO.PDB2(restrained, {prop : "restrained"})
 
-                # Write the PDB file.
-                p.writeToFile(self._restraint_file)
+                    # File name for the restraint file.
+                    self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
+
+                    # Write the PDB file.
+                    p.writeToFile(self._restraint_file)
+
+                except:
+                    _warnings.warn("Failed to add restraints to PDB file. "
+                                   "Perhaps there are no backbone atoms?")
 
                 # Update the configuration file.
                 self.addToConfig("fixedAtoms            yes")
@@ -367,19 +414,22 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
             steps = 20 * _math.ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature() - self._protocol.getStartTemperature())
+                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
+                            self._protocol.getStartTemperature().kelvin().magnitude())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
-                self.addToConfig("reassignTemp          %.2f" % self._protocol.getStartTemperature())
+                self.addToConfig("reassignTemp          %.2f"
+                    % self._protocol.getStartTemperature().kelvin().magnitude())
                 self.addToConfig("reassignIncr          1.")
-                self.addToConfig("reassignHold          %.2f" % self._protocol.getEndTemperature())
+                self.addToConfig("reassignHold          %.2f"
+                    % self._protocol.getEndTemperature().kelvin().magnitude())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
@@ -390,11 +440,13 @@ class Namd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
             # Set the Tcl temperature variable.
-            self.addToConfig("set temperature       %.2f" % self._protocol.getTemperature())
+            self.addToConfig("set temperature       %.2f"
+                % self._protocol.getTemperature().kelvin().magnitude())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
-            self.addToConfig("timestep              %.2f" % self._protocol.getTimeStep())
+            self.addToConfig("timestep              %.2f"
+                % self._protocol.getTimeStep().femtoseconds().magnitude())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -408,9 +460,10 @@ class Namd(_process.Process):
             self.addToConfig("langevinHydrogen      no")
 
             # Constant pressure control.
-            if self._protocol.getEnsemble() == "NPT":
+            if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
-                self.addToConfig("langevinPistonTarget  1.01325")
+                self.addToConfig("langevinPistonTarget  %.5f"
+                    % self._protocol.getPressure().bar().magnitude())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -420,7 +473,7 @@ class Namd(_process.Process):
 
             # Work out number of steps needed to exceed desired running time,
             # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / 2e-6)
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
             steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.
@@ -429,50 +482,70 @@ class Namd(_process.Process):
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
+        else:
+            raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
+
+        # Flag that this isn't a custom protocol.
+        self._protocol._setCustomised(False)
+
     def start(self):
-        """Start the NAMD process."""
+        """Start the NAMD process.
+
+           Returns
+           -------
+
+           process : :class:`Process.Namd <BioSimSpace.Process.Namd>`
+               The process object.
+        """
+
+        # The process is currently queued.
+        if self.isQueued():
+            return
 
         # Process is already running.
         if self._process is not None:
             if self._process.isRunning():
                 return
 
-        # Store the current working directory.
-        dir = _os.getcwd()
+        # Clear any existing output.
+        self._clear_output()
 
-        # Change to the working directory for the process.
-        # This avoid problems with relative paths.
-        _os.chdir(self._work_dir)
+        # Run the process in the working directory.
+        with _Utils.cd(self._work_dir):
 
-        # Write the command-line process to a README.txt file.
-        with open("README.txt", "w") as f:
+            # Write the command-line process to a README.txt file.
+            with open("README.txt", "w") as file:
 
-            # Set the command-line string.
-            self._command = "%s %s.namd" % (self._exe, self._name)
+                # Set the command-line string.
+                self._command = "%s %s.cfg" % (self._exe, self._name)
 
-            # Write the command to file.
-            f.write("# NAMD was run with the following command:\n")
-            f.write("%s\n" % self._command)
+                # Write the command to file.
+                file.write("# NAMD was run with the following command:\n")
+                file.write("%s\n" % self._command)
 
-        # Start the timer.
-        self._timer = _timeit.default_timer()
+            # Start the timer.
+            self._timer = _timeit.default_timer()
 
-        # Start the simulation.
-        self._process = _Sire.Base.Process.run(self._exe, "%s.namd" % self._name,
-                                                          "%s.out"  % self._name,
-                                                          "%s.err"  % self._name)
-
-        # Change back to the original working directory.
-        _os.chdir(dir)
+            # Start the simulation.
+            self._process = _SireBase.Process.run(self._exe,
+                "%s.cfg" % self._name, "%s.out" % self._name, "%s.err" % self._name)
 
         return self
 
     def getSystem(self, block="AUTO"):
-        """Get the latest molecular configuration as a Sire system.
+        """Get the latest molecular system.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The latest molecular system.
         """
 
         # Wait for the process to finish.
@@ -520,37 +593,75 @@ class Namd(_process.Process):
                 files.append(xsc_file)
 
             # Create and return the molecular system.
-            return _System(_Sire.IO.MoleculeParser.read(files))
+            try:
+                return _System(_SireIO.MoleculeParser.read(files, self._property_map))
+            except:
+                return None
 
         else:
             return None
 
     def getCurrentSystem(self):
-        """Get the latest molecular configuration as a Sire system."""
+        """Get the latest molecular system.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The latest molecular system.
+        """
         return self.getSystem(block=False)
 
     def getTrajectory(self, block="AUTO"):
-        """Return a trajectory object."""
+        """Return a trajectory object.
 
+           Parameters
+           ----------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory>`
+               The latest trajectory object.
+        """
         # Wait for the process to finish.
         if block is True:
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        return _Trajectory(process=self)
+        try:
+            return _Trajectory(process=self)
 
-    def getRecord(self, record, time_series=False, block="AUTO"):
+        except:
+            return None
+
+    def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           record      -- The record key.
+           record : str
+               The record key.
 
-           Keyword arguments:
+           time_series : bool
+               Whether to return a list of time series records.
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           unit : :class:`Unit <BioSimSpace.Units>`
+               The unit to convert the record to.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           record : :class:`Type <BioSimSpace.Types>`
+               The matching record.
         """
 
         # Wait for the process to finish.
@@ -560,28 +671,46 @@ class Namd(_process.Process):
             self.wait()
 
         self.stdout(0)
-        return self._get_stdout_record(record, time_series)
+        return self._get_stdout_record(record, time_series, unit)
 
-    def getCurrentRecord(self, record, time_series=False):
+    def getCurrentRecord(self, record, time_series=False, unit=None):
         """Get a current record from the stdout dictionary.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           record      -- The record key.
+           record : str
+               The record key.
 
-           Keyword arguments:
+           time_series : bool
+               Whether to return a list of time series records.
 
-           time_series -- Whether to return a list of time series records.
+           unit : :class:`Unit <BioSimSpace.Units>`
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record : :class:`Type <BioSimSpace.Types>`
+               The matching record.
         """
         self.stdout(0)
-        return self._get_stdout_record(record, time_series)
+        return self._get_stdout_record(record, time_series, unit)
 
     def getRecords(self, block="AUTO"):
         """Return the dictionary of stdout time-series records.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           block       -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           records : dict
+               The dictionary of time-series records.
         """
         # Wait for the process to finish.
         if block is True:
@@ -592,16 +721,39 @@ class Namd(_process.Process):
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
-        """Return the current dictionary of stdout time-series records."""
+        """Return the current dictionary of stdout time-series records.
+
+           Parameters
+           ----------
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           records : BioSimSpace.Process._process._MultiDict
+              The dictionary of time-series records.
+        """
         return getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
         """Get the time (in nanoseconds).
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The current simulation time in nanoseconds.
         """
 
         if type(self._protocol) is _Protocol.Minimisation:
@@ -609,10 +761,10 @@ class Namd(_process.Process):
 
         else:
             # Get the list of time steps.
-            time_steps = self.getRecord("TS", time_series, block)
+            time_steps = self.getRecord("TS", time_series, None, block)
 
             # Convert the time step to nanoseconds.
-            timestep = self._protocol.getTimeStep() * 1e-6
+            timestep = self._protocol.getTimeStep().nanoseconds()
 
             # Multiply by the integration time step.
             if time_steps is not None:
@@ -624,420 +776,816 @@ class Namd(_process.Process):
     def getCurrentTime(self, time_series=False):
         """Get the current time (in nanoseconds).
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)
 
     def getStep(self, time_series=False, block="AUTO"):
         """Get the number of integration steps.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           step : int
+               The current number of integration steps.
         """
-        return self.getRecord("TS", time_series, block)
+        return self.getRecord("TS", time_series, None, block)
 
     def getCurrentStep(self, time_series=False):
         """Get the current number of integration steps.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           step : int
+               The current number of integration steps.
         """
         return self.getStep(time_series, block=False)
 
     def getBondEnergy(self, time_series=False, block="AUTO"):
         """Get the bond energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The bond energy.
         """
-        return self.getRecord("BOND", time_series, block)
+        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentBondEnergy(self, time_series=False):
         """Get the current bond energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The bond energy.
         """
         return self.getBondEnergy(time_series, block=False)
 
     def getAngleEnergy(self, time_series=False, block="AUTO"):
         """Get the angle energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The angle energy.
         """
-        return self.getRecord("ANGLE", time_series, block)
+        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentAngleEnergy(self, time_series=False):
         """Get the current angle energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The angle energy.
         """
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """Get the dihedral energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The dihedral energy.
         """
-        return self.getRecord("DIHED", time_series, block)
+        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
         """Get the current dihedral energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
 
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The improper energy.
         """
-        return self.getRecord("IMPRP", time_series, block)
+        return self.getRecord("IMPRP", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The improper energy.
         """
         return self.getImproperEnergy(time_series, block=False)
 
     def getElectrostaticEnergy(self, time_series=False, block="AUTO"):
         """Get the electrostatic energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The electrostatic energy.
         """
-        return self.getRecord("ELECT", time_series, block)
+        return self.getRecord("ELECT", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """Get the current electrostatic energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The electrostatic energy.
         """
         return self.getElectrostaticEnergy(time_series, block=False)
 
     def getVanDerWaalsEnergy(self, time_series=False, block="AUTO"):
         """Get the Van der Vaals energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The Van der Vaals energy.
         """
-        return self.getRecord("VDW", time_series)
+        return self.getRecord("VDW", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """Get the current Van der Waals energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The Van der Vaals energy.
         """
         return self.getVanDerWaalsEnergy(time_series, block=False)
 
     def getBoundaryEnergy(self, time_series=False, block="AUTO"):
         """Get the boundary energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The boundary energy.
         """
-        return self.getRecord("BOUNDARY", time_series, block)
+        return self.getRecord("BOUNDARY", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentBoundaryEnergy(self, time_series=False):
         """Get the current boundary energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The boundary energy.
         """
         return self.getBoundaryEnergy(time_series, block=False)
 
     def getMiscEnergy(self, time_series=False, block="AUTO"):
         """Get the external energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The external energy.
         """
-        return self.getRecord("MISC", time_series, block)
+        return self.getRecord("MISC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentMiscEnergy(self, time_series=False):
         """Get the current external energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The external energy.
         """
         return self.getMiscEnergy(time_series, block=False)
 
     def getKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The kinetic energy.
         """
-        return self.getRecord("KINETIC", time_series, block)
+        return self.getRecord("KINETIC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
         """Get the current kinetic energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The current kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
 
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
         """Get the potential energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The potential energy.
         """
-        return self.getRecord("POTENTIAL", time_series, block)
+        return self.getRecord("POTENTIAL", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentPotentialEnergy(self, time_series=False):
         """Get the current potential energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The potential energy.
         """
         return self.getPotentialEnergy(time_series, block=False)
 
     def getTotalEnergy(self, time_series=False, block="AUTO"):
         """Get the total energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
-        return self.getRecord("TOTAL", time_series, block)
+        return self.getRecord("TOTAL", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotalEnergy(self, time_series=False):
         """Get the current potential energy.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
         return self.getTotalEnergy(time_series, block=False)
 
     def getTotal2Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Better KE conservation.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
-        return self.getRecord("TOTAL2", time_series, block)
+        return self.getRecord("TOTAL2", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotal2Energy(self, time_series=False):
         """Get the current total energy. (Better KE conservation.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
         return self.getTotal2Energy(time_series, block=False)
 
     def getTotal3Energy(self, time_series=False, block="AUTO"):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
-        return self.getRecord("TOTAL3", time_series, block)
+        return self.getRecord("TOTAL3", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentTotal3Energy(self, time_series=False):
         """Get the total energy. (Smaller short-time fluctuations.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The total energy.
         """
         return self.getTotal3Energy(time_series, block=False)
 
     def getTemperature(self, time_series=False, block="AUTO"):
         """Get the temperature.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature.
         """
-        return self.getRecord("TEMP", time_series, block)
+        return self.getRecord("TEMP", time_series, _Units.Temperature.kelvin, block)
 
     def getCurrentTemperature(self, time_series=False):
         """Get the temperature.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The temperature.
         """
         return self.getTemperature(time_series, block=False)
 
     def getTemperatureAverage(self, time_series=False, block="AUTO"):
         """Get the average temperature.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The average temperature.
         """
-        return self.getRecord("TEMPAVG", time_series, block)
+        return self.getRecord("TEMPAVG", time_series, _Units.Temperature.kelvin, block)
 
     def getCurrentTemperatureAverage(self, time_series=False):
         """Get the current average temperature.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+               The average temperature.
         """
         return self.getTemperatureAverage(time_series, block=False)
 
     def getPressure(self, time_series=False, block="AUTO"):
         """Get the pressure.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
-        return self.getRecord("PRESSURE", time_series, block)
+        return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressure(self, time_series=False):
         """Get the current pressure.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
         return self.getPressure(time_series, block=False)
 
     def getPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The average pressure.
         """
-        return self.getRecord("PRESSAVG", time_series, block)
+        return self.getRecord("PRESSAVG", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressureAverage(self, time_series=False):
         """Get the current average pressure.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The average pressure.
         """
         return self.getPressureAverage(time_series, block=False)
 
     def getGPressure(self, time_series=False, block="AUTO"):
         """Get the pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
-        return self.getRecord("GPRESSURE", time_series, block)
+        return self.getRecord("GPRESSURE", time_series, _Units.Pressure.bar, block)
 
     def getCurrentGPressure(self, time_series=False):
         """Get the current pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The pressure.
         """
         return self.getGPressure(time_series, block=False)
 
     def getGPressureAverage(self, time_series=False, block="AUTO"):
         """Get the average pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The average pressure.
         """
-        return self.getRecord("GPRESSAVG", time_series, block)
+        return self.getRecord("GPRESSAVG", time_series, _Units.Pressure.bar, block)
 
     def getCurrentGPressureAverage(self, time_series=False):
         """Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+               The average pressure.
         """
         return self.getGPressureAverage(time_series, block=False)
 
     def getVolume(self, time_series=False, block="AUTO"):
         """Get the volume.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
-           block       -- Whether to block until the process has finished running.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
+               The volume.
         """
-        return self.getRecord("VOLUME", time_series, block)
+        return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
 
     def getCurrentVolume(self, time_series=False):
         """Get the current volume.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           time_series -- Whether to return a list of time series records.
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           volume : :class:`Volume <BioSimSpace.Types.Volume>`
+               The volume.
         """
         return self.getVolume(time_series, block=False)
 
     def eta(self):
-        """Get the estimated time for the process to finish (in minutes)."""
+        """Get the estimated time for the process to finish (in minutes).
+
+           Returns
+           -------
+
+           eta : :class:`Time <BioSimSpace.Types.Time>`
+               The estimated remaining time in minutes.
+        """
 
         # Make sure the list of stdout records is up to date.
         # Print the last zero lines, i.e. no output.
         self.stdout(0)
 
         # Now search backwards through the list to find the last TIMING record.
-        for x, record in reversed(list(enumerate(self._stdout))):
+        for _, record in reversed(list(enumerate(self._stdout))):
 
             # Split the record using whitespace.
             data = record.split()
@@ -1049,7 +1597,7 @@ class Namd(_process.Process):
                     # Try to find the "hours" record.
                     # If found, return the entry preceeding it.
                     try:
-                        return float(data[data.index("hours") - 1]) * 60
+                        return (float(data[data.index("hours") - 1]) * 60) * _Units.Time.minutes
 
                     # No record found.
                     except ValueError:
@@ -1058,9 +1606,11 @@ class Namd(_process.Process):
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           n -- The number of lines to print.
+           n : int
+               The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -1104,16 +1654,26 @@ class Namd(_process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
-    def _get_stdout_record(self, key, time_series=False):
+    def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           key         -- The record key.
+           key : str
+               The record key.
 
-           Keyword arguments:
+           time_series : bool
+               Whether to return a time series of records.
 
-           time_series -- Whether to return a time series of records.
+           unit : BioSimSpace.Types._type.Type
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record :
+               The matching stdout record.
         """
 
         # No data!
@@ -1124,13 +1684,21 @@ class Namd(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
         # Return the list of dictionary values.
         if time_series:
             try:
                 if key is "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
-                    return [float(x) for x in self._stdout_dict[key]]
+                    if unit is None:
+                        return [float(x) for x in self._stdout_dict[key]]
+                    else:
+                        return [float(x) * unit for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1141,21 +1709,10 @@ class Namd(_process.Process):
                 if key is "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
-                    return float(self._stdout_dict[key][-1])
+                    if unit is None:
+                        return float(self._stdout_dict[key][-1])
+                    else:
+                        return float(self._stdout_dict[key][-1]) * unit
 
             except KeyError:
                 return None
-
-    def _get_trajectory_files(self):
-        """Get all files associated with the molecular trajectory."""
-
-        # Name of the trajectory file.
-        traj_file = "%s/%s_out.dcd" % (self._work_dir, self._name)
-
-        # Return the trajectory and topology file.
-        if _os.path.isfile("%s/%s.nc" % (self._work_dir, self._name)):
-            return (traj_file, self._top_file)
-
-        # No trajectory file.
-        else:
-            return None

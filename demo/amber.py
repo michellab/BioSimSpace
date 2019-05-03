@@ -32,11 +32,13 @@ filenames = BSS.IO.saveMolecules("minimised", minimised, system.fileFormat())
 print("\nWritten minimised molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-print("\nMinimised energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Minimisation took %.2f minutes." % process.runTime())
+print("\nMinimised energy is %s." % process.getTotalEnergy())
+print("Minimisation took %s." % process.runTime())
 
 # Create a short heating equilibration protocol.
-protocol = BSS.Protocol.Equilibration(runtime=0.01, temperature_start=0, temperature_end=300)
+protocol = BSS.Protocol.Equilibration(runtime=0.01*BSS.Units.Time.nanosecond,
+                                      temperature_start=0*BSS.Units.Temperature.kelvin,
+                                      temperature_end=300*BSS.Units.Temperature.kelvin)
 
 # Initialise the AMBER process.
 print("\nInitialising equilibration process...")
@@ -46,8 +48,8 @@ process = BSS.Process.Amber(minimised, protocol, name="equilibrate", work_dir="e
 filenames = process.inputFiles()
 print("\nCreated AMBER input files: %s" % filenames)
 
-# Start the equlibration.
-print("\nStarting equlibration...")
+# Start the equilibration.
+print("\nStarting equilibration...")
 process.start()
 
 # Get the minimised molecular structure.
@@ -58,11 +60,11 @@ filenames = BSS.IO.saveMolecules("equilibrated", equilibrated, system.fileFormat
 print("\nWritten equilibrated molecular structure to: %s" % filenames)
 
 # Print final energy and timing information.
-print("\nEquilibrated energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Equilibration took %.2f minutes." % process.runTime())
+print("\nEquilibrated energy is %s." % process.getTotalEnergy())
+print("Equilibration took %s." % process.runTime())
 
 # Create a production protocol.
-protocol = BSS.Protocol.Production(runtime=0.01, restart=True)
+protocol = BSS.Protocol.Production(runtime=0.01*BSS.Units.Time.nanosecond, restart=True)
 
 # Initialise the AMBER process.
 print("\nInitialising production process...")
@@ -90,14 +92,18 @@ filenames = BSS.IO.saveMolecules("final", final, system.fileFormat())
 print("\nWritten final molecular structure to: %s" % filenames)
 
 # Print final timing information.
-print("\nFinal energy is %.2f kcal/mol." % process.getTotalEnergy())
-print("Production run took %.2f minutes." % process.runTime())
+print("\nFinal energy is %s." % process.getTotalEnergy())
+print("Production run took %s." % process.runTime())
 
 # Get a list of the time records and the corresponding total energies.
 time = process.getTime(time_series=True)
 energy = process.getTotalEnergy(time_series=True)
 
-print("Plotting total energy vs time.")
+# Convert to lists of floats.
+time = [time.magnitude() for time in time]
+energy = [energy.magnitude() for energy in energy]
+
+print("\nPlotting total energy vs time.")
 
 # Create a plot of the total energy vs time.
 fig, ax = plt.subplots()

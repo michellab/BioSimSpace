@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -20,9 +20,42 @@
 #####################################################################
 
 """
-Functionality for interfacing BioSimSpace with the outside world.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Gateway
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Node
+
+Requirement types
+=================
+
+.. autosummary::
+    :toctree: generated/
+
+    Boolean
+    Integer
+    Float
+    String
+    File
+    FileSet
+    Length
+    Area
+    Volume
+    Charge
+    Energy
+    Pressure
+    Temperature
+    Time
 """
 
 from ._node import *
+from ._resources import *
 from ._requirements import *
+
+# Create and initialise the hardware resource manager.
+ResourceManager = ResourceManager()
+ResourceManager._initialise()

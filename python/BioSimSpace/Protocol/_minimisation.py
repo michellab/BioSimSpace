@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,12 +21,14 @@
 
 """
 Functionality for minimisation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
+
+import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
-import warnings as _warnings
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Minimisation"]
 
@@ -36,29 +38,53 @@ class Minimisation(_Protocol):
     def __init__(self, steps=10000):
         """Constructor.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           steps -- The maximum number of steps to perform.
+           steps : int
+               The maximum number of steps to perform.
         """
+
+        # Call the base class constructor.
+        super().__init__()
 
         # Set the number of steps.
         self.setSteps(steps)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
 
     def getSteps(self):
-        """Return the maximum number of steps."""
+        """Return the maximum number of steps.
+
+           Returns
+           -------
+
+           steps : int
+               The maximum number of minimisation steps.
+        """
         return self._steps
 
     def setSteps(self, steps):
-        """Set the maximum number of steps."""
+        """Set the maximum number of steps.
 
+           Parameters
+           ----------
+
+           steps : int
+               The maximum number of minimisation steps.
+        """
         if type(steps) is not int:
             raise TypeError("'steps' must be of type 'int'")
 

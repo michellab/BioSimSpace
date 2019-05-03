@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -20,11 +20,77 @@
 #####################################################################
 
 """
-Functionality for defining simulation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
+.. currentmodule:: BioSimSpace.Protocol
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    protocols
+    createProtocol
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Custom
+    Equilibration
+    FreeEnergy
+    Minimisation
+    Production
+
+Examples
+========
+
+Print the list of supported protocols.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   print(BSS.Protocol.protocols())
+
+Create a default minimisation protocol and print the number of steps.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   protocol = BSS.Protocol.Minimisation()
+   print(protocol.getSteps())
+
+The same as above, but instead passing "Minimisation" as an argument to the
+:class:`createProtocol <BioSimSpace.Protocol.createProtocol>` function. This
+function should be used in any interoperable workflow
+:class:`Node <BioSimSpace.Gateway.Node>` where the protocol is specified
+as an input requirement by the user.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   protocol = BSS.Protocol.createProtocol("minimisation")
+   print(protocol.getSteps())
+
+Create an equilibration protocol that heats the system from 0 to 300 Kelvin
+while restraining the positions of any backbone atoms.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   protocol = BSS.Protocol.Equilibration(temperature_start=0*BSS.Units.Temperature.kelvin,
+                                         temperature_end=300*BSS.Units.Temperature.kelvin,
+                                         restrain_backbone=True)
 """
 
 from ._custom import *
 from ._equilibration import *
+from ._free_energy import *
 from ._minimisation import *
 from ._production import *
+from ._utils import *

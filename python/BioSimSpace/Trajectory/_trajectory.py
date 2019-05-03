@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,19 +21,25 @@
 
 """
 Functionality for reading and analysing molecular trajectories.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
-
-import Sire as _Sire
-
-from ..Process._process import Process as _Process
-from .._System import System as _System
 
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj
 import os as _os
 import shutil as _shutil
 import warnings as _warnings
+
+import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
+
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Process._process import Process as _Process
+from .._SireWrappers import System as _System
+from .._SireWrappers import Molecule as _Molecule
+from ..Types import Time as _Time
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Trajectory"]
 
@@ -43,11 +49,17 @@ class Trajectory():
     def __init__(self, process=None, trajectory=None, topology=None):
         """Constructor.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           process    -- A BioSimSpace process object.
-           trajectory -- A trajectory file.
-           topology   -- A topology file.
+           process : :class:`Process <BioSimSpace.Process>`
+               A BioSimSpace process object.
+
+           trajectory : str
+               A trajectory file.
+
+           topology : str
+               A topology file.
         """
 
         # Set default member variables.
@@ -93,17 +105,33 @@ class Trajectory():
         # Invalid arguments.
         else:
             raise ValueError("BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
-                "or a trajectory and topology file.")
+                             "or a trajectory and topology file.")
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory()
 
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           format -- Whether to return a 'MDTraj' or 'MDAnalysis' object.
+           format : str
+               Whether to return an 'MDTraj' or 'MDAnalysis' object.
+
+           Returns
+           -------
+
+           trajectory : mdtraj.core.trajectory.Trajectory, MDAnalysis.core.universe.Universe
+               The trajectory in MDTraj or MDAnalysis format.
         """
 
         if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
@@ -113,11 +141,14 @@ class Trajectory():
         # Get the trajectory from the process.
         if self._process is not None:
 
-            # AMBER.
-            if self._process_name.upper() == "AMBER":
+            # AMBER / SOMD.
+            if self._process_name.upper() == "AMBER" or self._process_name.upper() == "SOMD":
 
                 # Path to the trajectory file.
-                traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
+                if self._process_name.upper() == "AMBER":
+                    traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
+                else:
+                    traj_file = "%s/traj000000001.dcd" % self._process._work_dir
 
                 # MDTraj currently doesn't support the .prm7 extension, so we
                 # need to copy the topology file to a temporary .parm7 file.
@@ -128,6 +159,16 @@ class Trajectory():
 
                 # Set the topology format.
                 top_format = "PARM7"
+
+            # GROMACS.
+            elif self._process_name.upper() == "GROMACS":
+                # Path to the trajectory and topology files.
+                # Strangely, the GROMACS gro file is used for the topology.
+                traj_file = "%s/%s.trr" % (self._process._work_dir, self._process._name)
+                top_file = "%s/%s.gro" % (self._process._work_dir, self._process._name)
+
+                # Set the topology format.
+                top_format = "GRO"
 
             # NAMD.
             elif self._process_name.upper() == "NAMD":
@@ -209,9 +250,17 @@ class Trajectory():
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of System objects.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           indices -- A list of trajectory frame indices, or time stamps (in ns).
+           indices : [int], [:class:`Time <BioSimSpace.Types.Time>`]
+               A list of trajectory frame indices, or time stamps (in ns).
+
+           Returns
+           -------
+
+           frames : [:class:`System <BioSimSpace._SireWrappers.System>`]
+               The list of System objects.
         """
 
         # The process is running. Grab the latest trajectory.
@@ -222,14 +271,18 @@ class Trajectory():
             if self._trajectory is None:
                 return None
 
+        # Store the number of frames.
+        n_frames = self._trajectory.n_frames
+
         # Work out the frame spacing in nanoseconds.
         # TODO:
         # How can we do this in a robust way if the trajectory is loaded from file?
         # Some formats do not store time information as part of the trajectory.
-        if self._process is not None:
-            time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
-        else:
-            time_interval = self._trajectory.timestep / 1000
+        if n_frames > 1:
+            if self._process is not None:
+                time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
+            else:
+                time_interval = self._trajectory.timestep / 1000
 
         # Create the indices array.
 
@@ -241,47 +294,45 @@ class Trajectory():
         elif type(indices) is int:
             indices = [indices]
 
+        # A single time stamp.
+        elif type(indices) is _Time:
+            if n_frames > 1:
+                # Round time stamp to nearest frame index.
+                indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
+            else:
+                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
+                                         "with only one frame!")
+
         # A list of frame indices.
         elif all(isinstance(x, int) for x in indices):
             pass
 
-        # A single time stamp.
-        elif type(indices) is float:
-            if indices < 0:
-                raise ValueError("Time stamp cannot be negative.")
-
-            # Round time stamp to nearest frame index.
-            indices = [round(indices / time_interval) - 1]
-
         # A list of time stamps.
-        elif all(isinstance(x, float) for x in indices):
-            # Make sure no time stamps are negative.
-            for x in indices:
-                if x < 0:
-                    raise ValueError("Time stamp cannot be negative.")
+        elif all(isinstance(x, _Time) for x in indices):
+            if n_frames <= 1:
+                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
+                                         "with only one frame!")
 
             # Round time stamps to nearest frame indices.
-            indices = [round(x / time_interval) - 1 for x in indices]
+            indices = [round(x.nanoseconds().magnitude() / time_interval) - 1 for x in indices]
 
         # Unsupported argument.
         else:
             raise ValueError("Unsupported argument. Indices or time stamps "
-                "must be an 'int' or 'float', or list of 'int' or 'float' types.")
+                             "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
+                             "'BioSimSpace.Types.Time' types.")
 
         # Intialise the list of frames.
         frames = []
-
-        # Store the number of frames.
-        n_frames = self._trajectory.n_frames
 
         # Loop over all indices.
         for x in indices:
 
             # Make sure the frame index is within range.
             if x > 0 and x >= n_frames:
-                raise ValueError("Frame index (%d) of of range (0 to %d)." %s (x, n_frames - 1))
+                raise ValueError("Frame index (%d) of of range (0 to %d)." % (x, n_frames - 1))
             elif x < -n_frames:
-                raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (x, n_frames))
+                raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (x, n_frames))
 
             # The name of the frame coordinate file.
             frame_file = ".frame.nc"
@@ -290,7 +341,10 @@ class Trajectory():
             self._trajectory[x].save(frame_file)
 
             # Create a Sire system.
-            system = _System(_Sire.IO.MoleculeParser.read([self._top_file, frame_file]))
+            try:
+                system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
+            except:
+                raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
 
             # Append the system to the list of frames.
             frames.append(system)
@@ -302,7 +356,14 @@ class Trajectory():
         return frames
 
     def nFrames(self):
-        """Return the current number of trajectory frames."""
+        """Return the current number of trajectory frames.
+
+           Returns
+           -------
+
+           nFrames : int
+               The number of trajectory frames.
+        """
 
         # First get the current MDTraj object.
         if self._process is not None and self._process.isRunning():
@@ -314,14 +375,26 @@ class Trajectory():
         else:
             return self._trajectory.n_frames
 
-    def RMSD(self, frame=None, atoms=None, molecule=None):
+    def rmsd(self, frame=None, atoms=None, molecule=None):
         """Compute the root mean squared displacement.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           frame    -- The index of the reference frame.
-           atoms    -- A list of reference atom indices.
-           molecule -- The index of the reference molecule.
+           frame : int
+               The index of the reference frame.
+
+           atoms : [int]
+               A list of reference atom indices.
+
+           molecule : int
+               The index of the reference molecule.
+
+           Returns
+           -------
+
+           rmsd : [float]
+               A list containing the RMSD value at each time point.
         """
 
         # Default to the first frame.
@@ -350,20 +423,25 @@ class Trajectory():
             # Integer molecule index.
             if type(molecule) is int:
                 try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[_Sire.Mol.MolIdx(molecule)]
+                    molecule = self.getFrames(frame)[0]._getSireSystem()[_SireMol.MolIdx(molecule)]
                 except:
                     raise ValueError("Missing molecule index '%d' in System" % molecule)
             # Sire.Mol.MolIdx index.
-            elif type(molecule) is _Sire.Mol.MolIdx:
+            elif type(molecule) is _SireMol.MolIdx:
                 try:
                     molecule = self.getFrames(frame)[0]._getSireSystem()[molecule]
                 except:
                     raise ValueError("Missing '%s' in System" % molecule.toString())
+
+            # A BioSimSpace Molecule object.
+            elif type(molecule) is _Molecule:
+                molecule = molecule._getSireMolecule()
             # A Sire.Mol.Molecule object.
-            elif type(molecule) is _Sire.Mol.Molecule:
+            elif type(molecule) is _SireMol.Molecule:
                 pass
             else:
-                raise TypeError("'molecule' must be of type 'int', 'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
+                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', "
+                                "'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
 
             # Initialise the list of atom indices.
             atoms = []

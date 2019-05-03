@@ -1,0 +1,6 @@
+parm prod/prod.prm7
+trajin prod/prod.nc
+strip :WAT outprefix nosolv
+rms first :1
+cluster :1 sieve 10 epsilon 0.7 out cluster_out averagelinkage gracecolor summary summary_out info Cluster_info repout centroid repfmt pdb
+go

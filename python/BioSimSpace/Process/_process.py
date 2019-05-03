@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,18 +21,10 @@
 
 """
 Functionality for running simulation processes.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import Sire as _Sire
-
-from BioSimSpace import _is_interactive, _is_notebook
-
-from ..Protocol._protocol import Protocol as _Protocol
-from .._System import System as _System
-
 import collections as _collections
-import operator as _operator
+import glob as _glob
 import os as _os
 import pygtail as _pygtail
 import timeit as _timeit
@@ -40,8 +32,21 @@ import warnings as _warnings
 import tempfile as _tempfile
 import zipfile as _zipfile
 
+import Sire.Mol as _SireMol
+
+from BioSimSpace import _is_interactive, _is_notebook
+
+from ..Protocol._protocol import Protocol as _Protocol
+from .._SireWrappers import System as _System
+
+import BioSimSpace.Types._type as _Type
+import BioSimSpace.Units as _Units
+
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Process"]
 
@@ -54,19 +59,31 @@ class _MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name=None, work_dir=None, seed=None):
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, property_map={}):
         """Constructor.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           system    -- The molecular system.
-           protocol  -- The protocol for the process.
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
 
-           Keyword arguments:
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
+               The protocol for the process.
 
-           name      -- The name of the process.
-           work_dir  -- The working directory for the process.
-           seed      -- A random number seed.
+           name : str
+               The name of the process.
+
+           work_dir : str
+               The working directory for the process.
+
+           seed : int
+               A random number seed.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
 	# Don't allow user to create an instance of this base class.
@@ -75,11 +92,23 @@ class Process():
 
         # Check that the system is valid.
         if type(system) is not _System:
-            raise TypeError("'system' must be of type 'BioSimSpace.System'")
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
+
+        # Check that the working directory is valid.
+        if work_dir is not None and type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+
+        # Check that the seed is valid.
+        if seed is not None and type(seed) is not int:
+            raise TypeError("'seed' must be of type 'int'")
+
+        # Check that the map is valid.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Set the process to None.
         self._process = None
@@ -97,6 +126,15 @@ class Process():
         self._system = system._getSireSystem()
         self._protocol = protocol
 
+        # Flag whether the system contains water molecules.
+        self._has_water = system.nWaterMolecules() > 0
+
+        # Flag whether the system contains perturbable molecules.
+        self._has_perturbable = system.nPerturbableMolecules() > 0
+
+        # Flag that the process isn't queued.
+        self._is_queued = False
+
         # Set the name
         if name is None:
             self._name = None
@@ -110,6 +148,9 @@ class Process():
         else:
             self._is_seeded = True
             self.setSeed(seed)
+
+        # Set the map.
+        self._property_map = property_map.copy()
 
         # Set the timer and running time None.
         self._timer = None
@@ -128,15 +169,43 @@ class Process():
 
         # User specified working directory.
         else:
+            # Use full path.
+            if work_dir[0] != "/":
+                work_dir = _os.getcwd() + "/" + work_dir
             self._work_dir = work_dir
 
             # Create the directory if it doesn't already exist.
             if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir)
+                _os.makedirs(work_dir, exist_ok=True)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
         self._stderr_file = "%s/%s.err" % (self._work_dir, name)
+
+        # Initialise the configuration file string list.
+        self._config = []
+
+        # Initalise the command-line argument dictionary.
+        self._args = _collections.OrderedDict()
+
+        # Clear any existing output in the current working directory
+        # and set out stdout/stderr files.
+        self._clear_output()
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s', seed=%s>" \
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
+            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+               self._exe, self._name, self._work_dir, self._seed)
+
+    def _clear_output(self):
+        """Reset stdout and stderr."""
 
         # Create the files. This makes sure that the 'stdout' and 'stderr'
         # methods can be called when the files are empty.
@@ -148,45 +217,45 @@ class Process():
         self._stderr = []
 
         # Clean up any existing offset files.
+        offset_files = _glob.glob("%s/*.offset" % self._work_dir)
 
-        stdout_offset = "%s.offset" % self._stdout_file
-        stderr_offset = "%s.offset" % self._stderr_file
+        for file in offset_files:
+            _os.remove(file)
 
-        if _os.path.isfile(stdout_offset):
-            _os.remove(stdout_offset)
+    def start(self):
+        """Start the process.
 
-        if _os.path.isfile(stderr_offset):
-            _os.remove(stderr_offset)
+           Returns
+           -------
 
-        # Initialise the configuration file string list.
-        self._config = []
-
-        # Initaliae the command-line argument dictionary.
-        self._args = _collections.OrderedDict()
-
-    def __str__(self):
-        """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s' seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._work_dir, self._seed)
-
-    def __repr__(self):
-        """Return a string showing how to instantiate the object."""
-        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._work_dir, self._seed)
+           process : :class:`Process.Amber <BioSimSpace.Process.Amber>`
+               The process object.
+        """
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.start()' is not implemented!" % self.__class__.__name__)
 
     def run(self, system=None, protocol=None, autostart=True, restart=False):
         """Create and run a new process.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           system    -- The molecular system.
-           protocol  -- The simulation protocol.
-           autostart -- Whether to start the process automatically.
-           restart   -- Whether to restart the simulation, i.e. use the original system.
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
 
-           return    -- The new process object.
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
+               The simulation protocol.
+
+           autostart : bool
+               Whether to start the process automatically.
+
+           restart : bool
+               Whether to restart the simulation, i.e. use the original system.
+
+           Returns
+           -------
+
+           process : :class:`Procees <BioSimSpace.Process>`
+               The new process object.
         """
 
         # Try to get the current system.
@@ -195,12 +264,12 @@ class Process():
 
         # Use the existing system.
         if system is None:
-            system = self._system
+            system = _System(self._system)
 
         # Check that the new system is valid.
         else:
             if type(system) is not _System:
-                raise TypeError("'system' must be of type 'BioSimSpace.System'")
+                raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Use the existing protocol.
         if protocol is None:
@@ -221,15 +290,35 @@ class Process():
             return process
 
     def getPackageName(self):
-        """Return the package name."""
+        """Return the package name.
+
+           Returns
+           -------
+
+           name : str
+               The name of the package.
+        """
         return self._package_name
 
     def getName(self):
-        """Return the process name."""
+        """Return the process name.
+
+           Returns:
+
+           name : str
+               The name of the process.
+        """
         return self._name
 
     def setName(self, name):
-        """Set the process name."""
+        """Set the process name.
+
+           Parameters
+           ----------
+
+           name : str
+               The process name.
+        """
 
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'")
@@ -237,11 +326,25 @@ class Process():
             self._name = name
 
     def getSeed(self):
-        """Return the random number seed."""
+        """Return the random number seed.
+
+           Returns
+           -------
+
+           seed : int
+               The random number seed.
+        """
         return self._seed
 
     def setSeed(self, seed):
-        """Set the random number seed."""
+        """Set the random number seed.
+
+           Parameters
+           ----------
+
+           seed : int
+               The random number seed.
+        """
 
         if type(seed) is not int:
             _warnings.warn("The seed must be an integer. Disabling seeding.")
@@ -252,22 +355,36 @@ class Process():
     def wait(self, max_time=None):
         """Wait for the process to finish.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           max_time -- The maximimum time to wait (in minutes).
+           max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
+               The maximimum time to wait (in minutes).
         """
 
         # The process isn't running.
         if not self.isRunning():
             return
 
-        if not max_time is None:
-            if max_time <= 0:
-                _warnings.warn("Maximum running time must be greater than zero. Using default (60 mins).")
-                max_time = 60
+        if max_time is not None:
+            # Convert int to float.
+            if type(max_time) is int:
+                max_time = float(max_time)
 
-            # Convert the time to milliseconds.
-            max_time = max_time * 60 * 1000
+            # BioSimSpace.Types.Time
+            if isinstance(max_time, _Type.Type):
+                max_time = int(max_time.milliseconds().magnitude())
+
+            # Float.
+            elif type(max_time) is float:
+                if max_time <= 0:
+                    raise ValueError("'max_time' cannot be negative!")
+
+                # Convert the time to milliseconds.
+                max_time = int(max_time * 60 * 1000)
+
+            else:
+                raise TypeError("'max_time' must be of type 'BioSimSpace.Types.Time' or 'float'.")
 
             # Wait for the desired amount of time.
             self._process.wait(max_time)
@@ -276,20 +393,44 @@ class Process():
             # Wait for the process to finish.
             self._process.wait()
 
+    def isQueued(self):
+        """Return whether the process is queued.
+
+           Returns
+           -------
+
+           is_queued : bool
+               Whether the process is queued.
+        """
+        return self._is_queued
+
     def isRunning(self):
-        """Return whether the process is running"""
+        """Return whether the process is running.
+
+           Returns
+           -------
+
+           is_running : bool
+               Whether the process is running.
+        """
         try:
             return self._process.isRunning()
         except AttributeError:
             return False
 
     def isError(self):
-        """Return whether the process errored."""
+        """Return whether the process errored.
+
+           Returns
+           -------
+
+           is_error : bool
+               Whether the process errored.
+        """
         try:
             return self._process.isError()
         except AttributeError:
-            print("The process hasn't been started!")
-            return None
+            return False
 
     def kill(self):
         """Kill the running process."""
@@ -299,9 +440,11 @@ class Process():
     def stdout(self, n=10):
         """Print the last n lines of the stdout buffer.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           n -- The number of lines to print.
+           n : int
+               The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -328,9 +471,11 @@ class Process():
     def stderr(self, n=10):
         """Print the last n lines of the stderr buffer.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           n -- The number of lines to print.
+           n : int
+               The number of lines to print.
         """
 
         # Ensure that the number of lines is positive.
@@ -355,23 +500,52 @@ class Process():
             print(self._stderr[x])
 
     def exe(self):
-        """Return the executable."""
+        """Return the executable.
+
+           Returns
+           -------
+
+           exe : str
+               The path to the executable.
+        """
         return self._exe
 
     def inputFiles(self):
-        """Return the list of input files."""
+        """Return the list of input files.
+
+           Returns
+           -------
+
+           input_files : [str]
+               The list of autogenerated input files.
+        """
         return self._input_files.copy()
 
     def workDir(self):
-        """Return the working directory."""
+        """Return the working directory.
+
+           Returns
+           -------
+
+           work_dir : str
+               The path of the working directory.
+        """
         return self._work_dir
 
     def getStdout(self, block="AUTO"):
         """Return the entire stdout for the process as a list of strings.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           output : [str]
+               The list of stdout strings.
         """
 
         # Wait for the process to finish.
@@ -389,9 +563,17 @@ class Process():
     def getStderr(self, block="AUTO"):
         """Return the entire stderr for the process as a list of strings.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           block -- Whether to block until the process has finished running.
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           error : [str]
+               The list of stderror strings.
         """
 
         # Wait for the process to finish.
@@ -406,13 +588,26 @@ class Process():
 
         return self._stderr.copy()
 
-    def getOutput(self, name=None, block="AUTO"):
+    def getOutput(self, name=None, block="AUTO", file_link=False):
         """Return a link to a zip file of the working directory.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           name  -- The name of the zip file.
-           block -- Whether to block until the process has finished running.
+           name : str
+               The name of the zip file.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
+
+           Returns
+           -------
+
+           ouput : str, IPython.display.FileLink
+               A path, or file link, to an archive of the process output.
         """
 
         if name is None:
@@ -438,24 +633,48 @@ class Process():
             for file in output:
                 zip.write(file, arcname=_os.path.basename(file))
 
-
         # Return a link to the archive.
         if _is_notebook():
-            return _FileLink(zipname)
+            if file_link:
+                return _FileLink(zipname)
+            else:
+                return zipname
         # Return the path to the archive.
         else:
             return zipname
 
     def command(self):
-        """Return the command-line string used to run the process."""
+        """Return the command-line string used to run the process.
+
+           Returns
+           -------
+
+           command : str
+               The command string.
+        """
         return self._command
 
     def getConfig(self):
-        """Get the list of configuration file strings."""
+        """Get the list of configuration file strings.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of configuration strings.
+        """
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the list of configuration file strings."""
+        """Set the list of configuration file strings.
+
+           Parameters
+           ----------
+
+           config : str, [str]
+               The list of configuration strings, or a path to a configuration
+               file.
+        """
 
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
@@ -469,8 +688,8 @@ class Process():
             self._config = []
 
             # Read the contents of the file.
-            with open(config, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line.rstrip())
 
             # Write the new configuration file.
@@ -479,8 +698,20 @@ class Process():
         else:
             raise ValueError("'config' must be a list of strings, or a file path.")
 
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
     def addToConfig(self, config):
-        """Add a string to the configuration list."""
+        """Add a string to the configuration list.
+
+           Parameters
+           ----------
+
+           config : str, [ str ]
+               A configuration string, a list of configuration strings, or a
+               path to a configuration file.
+        """
+
         # Append a single string.
         if type(config) is str:
             self._config.append(config)
@@ -495,8 +726,8 @@ class Process():
         elif _os.path.isfile(config):
 
             # Read the contents of the file.
-            with open(file, "r") as f:
-                for line in f:
+            with open(config, "r") as file:
+                for line in file:
                     self._config.append(line)
 
             # Write the new configuration file.
@@ -505,6 +736,9 @@ class Process():
         else:
             raise ValueError("'config' must be a string, list of strings, or a file path.")
 
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
     def resetConfig(self):
         """Reset the configuration parameters."""
         self._generate_config()
@@ -512,22 +746,56 @@ class Process():
         # Write the new configuration file.
         self.writeConfig(self._config_file)
 
+        # Reset the customisation state of the protocol.
+        self._protocol._setCustomised(False)
+
     def writeConfig(self, file):
-        """Write the configuration to file."""
+        """Write the configuration to file.
+
+           Parameters
+           ----------
+
+           file : str
+               The path to a file.
+        """
+        if type(file) is not str:
+            raise TypeError("'file' must be of type 'str'")
+
         with open(file, "w") as f:
             for line in self._config:
                 f.write("%s\n" % line)
 
     def getArgs(self):
-        """Get the dictionary of command-line arguments."""
+        """Get the dictionary of command-line arguments.
+
+           Returns
+           -------
+
+           args : collections.OrderedDict
+               The dictionary of command-line arguments.
+        """
         return self._args.copy()
 
     def getArgString(self):
-        """Get the command-line arguments string."""
+        """Get the command-line arguments string.
+
+           Returns
+           -------
+
+           arg_string : str
+               The command-line argument string.
+        """
         return " ".join(self.getArgStringList())
 
     def getArgStringList(self):
-        """Convert the argument dictionary into a list of strings."""
+        """Convert the argument dictionary into a list of strings.
+
+           Returns
+           -------
+
+           arg_string_list : [str]
+               The list of command-line arguments.
+        """
 
         # Create an empty list.
         args = []
@@ -545,50 +813,89 @@ class Process():
         return args
 
     def setArgs(self, args):
-        """Set the dictionary of command-line arguments."""
+        """Set the dictionary of command-line arguments.
+
+           Parameters
+           ----------
+
+           args : dict, collections.OrderedDict
+               A dictionary of command line arguments.
+        """
         if isinstance(args, _collections.OrderedDict):
             self._args = args
 
         elif isinstance(args, dict):
             self._args = _collections.OrderedDict(args)
 
+        else:
+            raise TypeError("'args' must be of type 'dict' or 'collections.OrderedDict'")
+
     def setArg(self, arg, value):
         """Set a specific command-line argument.
 
-           Keyword arguments:
-
-           arg   -- The argument to set.
-           value -- The value of the argument.
-
            For command-line flags, i.e. boolean arguments, the key should
            specify whether the flag is enabled (True) or not (False).
+
+           Parameters
+           ----------
+
+           arg : str
+               The argument to set.
+
+           value : bool, str
+               The value of the argument.
         """
+
+        if type(arg) is not str:
+            raise TypeError("'arg' must be of type 'str'.")
+
         self._args[arg] = value
 
     def insertArg(self, arg, value, index):
         """Insert a command-line argument at a specific index.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           arg   -- The argument to set.
-           value -- The value of the argument.
-           index -- The index in the dictionary.
+           arg : str
+               The argument to set.
+
+           value :
+               The value of the argument.
+
+           index : int
+               The index in the dictionary.
         """
+
+        if type(arg) is not str:
+            raise TypeError("'arg' must be of type 'str'.")
+
         _odict_insert(self._args, arg, value, index)
 
     def addArgs(self, args):
         """Append additional command-line arguments.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           args -- A dictionary of arguments.
+           args : dict, collections.OrderedDict
+               A dictionary of command line arguments.
         """
         if isinstance(args, dict) or isinstance(args, _collections.OrderedDict):
             for arg, value in args.items():
                 self._args[arg] = value
+        else:
+            raise TypeError("'args' must be of type 'dict' or 'collections.OrderedDict'")
 
     def deleteArg(self, arg):
-        """Delete an argument from the dictionary."""
+        """Delete an argument from the dictionary.
+
+           Parameters
+           ----------
+
+           arg : str
+               The argument to delete.
+        """
         try:
             del self._args[arg]
 
@@ -604,12 +911,19 @@ class Process():
         self._generate_args()
 
     def runTime(self):
-        """Return the running time for the process (in minutes)."""
+        """Return the running time for the process (in minutes).
+
+           Returns
+           -------
+
+           runtime : :class:`Time <BioSimSpace.Types.Time>`
+               The runtime in minutes.
+        """
 
         # The process is still running.
-        if self._process.isRunning():
+        if self.isRunning():
             self._runtime = (_timeit.default_timer() - self._timer) / 60
-            return self._runtime
+            return self._runtime * _Units.Time.minute
 
         # The process has finished.
         else:
@@ -617,52 +931,62 @@ class Process():
             if self._timer is not None:
                 self._runtime = (_timeit.default_timer() - self._timer) / 60
                 self._timer = None
-                return self._runtime
+                return self._runtime * _Units.Time.minute
 
-            # The process has finished. Return the previous run time.
             else:
-                return self._runtime
+                # The process hasn't been started.
+                if self._runtime is None:
+                    return 0 * _Units.Time.minute
+                # The process has finished, return the final runtime.
+                else:
+                    return self._runtime * _Units.Time.minute
 
-def _getAABox(system):
-    """Get the axis-aligned bounding box for the molecular system.
+    def getSystem(self, block="AUTO"):
+        """Get the latest molecular system.
 
-       Keyword arguments:
+           Parameters
+           ----------
 
-       system -- A Sire molecular system.
-    """
+           block : bool
+               Whether to block until the process has finished running.
 
-    # Initialise the coordinates vector.
-    coord = []
+           Returns
+           -------
 
-    # Loop over all of the molecules.
-    for n in system.molNums():
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The latest molecular system.
+        """
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.getSystem()' is not implemented!" % self.__class__.__name__)
 
-        # Extract the atomic coordinates and append them to the vector.
-        try:
-            coord.extend(system[n].property("coordinates").toVector())
+    def getTrajectory(self, block="AUTO"):
+        """Return a trajectory object.
 
-        except UserWarning:
-            raise
+           Parameters
+           ----------
 
-    # Return the AABox for the coordinates.
-    return _Sire.Vol.AABox(coord)
+           block : bool
+               Whether to block until the process has finished running.
 
-def _get_box_size(system):
-    """Get the size of the periodic box."""
+           Returns
+           -------
 
-    try:
-        box = system.property("space")
-        return box.dimensions()
+           trajectory : :class:`Trajectory <BioSimSpace.Trajectory.Trajectory>`
+               The latest trajectory object.
+        """
+        raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.getTrajectory()' is not implemented!" % self.__class__.__name__)
 
-    except UserWarning:
-        return None
+    def _generate_args(self):
+        """Generate the dictionary of command-line arguments."""
+        self.clearArgs()
 
 def _restrain_backbone(system):
     """Restrain protein backbone atoms.
 
-        Keyword arguments:
+        Parameters
+        ----------
 
-        system -- A Sire molecular system.
+        system : Sire.System.System
+            A Sire molecular system.
     """
 
     # Copy the original system.
@@ -682,43 +1006,41 @@ def _restrain_backbone(system):
         # Extract the molecule and make it editable.
         m = s.molecule(n).edit()
 
-        # Protein flag.
-        is_protein = False
+        # Initialise a list of protein residues.
+        protein_residues = []
 
         # Compare each residue name against the amino acid list.
         for res in m.residues():
 
             # This residue is an amino acid.
             if res.name().value().upper() in amino_acids:
-                is_protein = True
-                break
+                protein_residues.append(res.index())
 
-        # Restrain the protein backbone.
-        if is_protein:
+        # Loop over all of the protein residues.
+        for residx in protein_residues:
 
-            # Select the backbone.
-            backbone = m.atoms(_Sire.Mol.AtomName("CA", _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("N",  _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("C",  _Sire.ID.CaseInsensitive) *
-                               _Sire.Mol.AtomName("O",  _Sire.ID.CaseInsensitive))
+            # Loop over all of the atoms in the residue.
+            for atom in m.residue(residx).atoms():
 
-            # Set the restrained property for each atom in the backbone.
-            for atom in backbone:
-                m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
+                # Try to compare the atom element property against the list of
+                # backbone atoms and set the "restrained" property if a match
+                # is found.
+                try:
+                    element = atom.property("element")
+                    if element == _SireMol.Element("CA") or \
+                       element == _SireMol.Element("N")  or \
+                       element == _SireMol.Element("C")  or \
+                       element == _SireMol.Element("O"):
+                           m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
 
-            # Update the system.
-            s.update(m.commit())
+                except:
+                    pass
+
+        # Update the system.
+        s.update(m.commit())
 
     # Return the new system.
     return s
-
-    def _generate_args(self):
-        """Generate the dictionary of command-line arguments."""
-        self.clearArgs()
-
-    def _get_trajectory_files(self):
-        """Get all files associated with the molecular trajectory."""
-        return None
 
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
@@ -729,6 +1051,9 @@ def _is_list_of_strings(lst):
 
 def _odict_insert(dct, key, value, index):
     """Insert an item into an ordered dictionary."""
+
+    if type(index) is not int:
+        raise TypeError("'index' must be of type 'int'.")
 
     # Store the original size of the dictionary.
     n = len(dct)

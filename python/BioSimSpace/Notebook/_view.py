@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2018
+# Copyright: 2017-2019
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,21 +21,23 @@
 
 """
 Tools for visualising molecular systems.
-Author: Lester Hedges <lester.hedges@gmail.com>
 """
-
-import Sire as _Sire
-
-from BioSimSpace import _is_notebook
-
-from ..Process._process import Process as _Process
-from .._System import System as _System
 
 import nglview as _nglview
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
 import warnings as _warnings
+
+import Sire as _Sire
+
+from BioSimSpace import _is_notebook
+
+from ..Process._process import Process as _Process
+from .._SireWrappers import System as _System
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["View"]
 
@@ -45,9 +47,12 @@ class View():
     def __init__(self, handle):
         """Constructor.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           handle -- A handle to a BioSimSpace.System or BioSimSpace.Process object.
+           handle : :class:`Process <BioSimSpace.Process>`, \
+                    :class:`System <BioSimSpace._SireWrappers.System>`
+               A handle to a process or system.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -63,12 +68,12 @@ class View():
             self._is_process = True
 
         # BioSimSpace system.
-        elif type(handle) is System:
+        elif type(handle) is _System:
             self._handle = handle._getSireSystem()
             self._is_process = False
 
         else:
-            raise ValueError("The handle must be a BioSimSpace.System or BioSimSpace.Process object.")
+            raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -80,9 +85,11 @@ class View():
     def system(self, gui=True):
         """View the entire molecular system.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           gui -- Whether to display the gui.
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -91,11 +98,13 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()
 
             # No system.
             if system is None:
                 return
+            else:
+                system = system._getSireSystem()
 
         else:
             system = self._handle
@@ -106,10 +115,14 @@ class View():
     def molecules(self, indices=None, gui=True):
         """View specific molecules.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           indices -- A list of molecule indices.
-           gui     -- Whether to display the gui.
+           indices : [int], range
+               A list of molecule indices.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -121,7 +134,9 @@ class View():
             return self.system(gui=gui)
 
         # Convert single indices to a list.
-        if type(indices) is not list:
+        if isinstance(indices, range):
+            indices = list(indices)
+        elif type(indices) is not list:
             indices = [indices]
 
         # Check that the indices is a list of integers.
@@ -143,7 +158,7 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Loop over all of the indices.
@@ -163,10 +178,14 @@ class View():
     def molecule(self, index=0, gui=True):
         """View a specific molecule.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           index -- The molecule index.
-           gui   -- Whether to display the gui.
+           index : int
+               The molecule index.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -184,7 +203,6 @@ class View():
             # No system.
             if system is None:
                 return
-
         else:
             system = self._handle
 
@@ -196,7 +214,7 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _Sire.System.System("BioSimSpace molecule")
+        s = _Sire.System.System("BioSimSpace System")
         m = _Sire.Mol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)
@@ -207,10 +225,14 @@ class View():
     def reload(self, index=None, gui=True):
         """Reload a particular view.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           index -- The view index.
-           gui   -- Whether to display the gui.
+           index : int
+               The view index.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -237,19 +259,27 @@ class View():
         return self._create_view(view=index, gui=gui)
 
     def nViews(self):
-        """Return the number of views."""
+        """Return the number of views.
+
+           Return
+           ------
+
+           num_views : int
+               The number of views.
+        """
         return self._num_views
 
     def savePDB(self, file, index=None):
         """Save a specific view as a PDB file.
 
-           Positional arguments:
+           Parameters
+           ----------
 
-           file  -- The name of the file to write to.
+           file : str
+               The name of the file to write to.
 
-           Keyword arguments:
-
-           index -- The view index.
+           index : int
+               The view index.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -287,11 +317,17 @@ class View():
     def _create_view(self, system=None, view=None, gui=True):
         """Helper function to create the NGLview object.
 
-           Keyword arguments:
+           Parameters
+           ----------
 
-           system -- A Sire molecular system.
-           view   -- The index of an existing view.
-           gui    -- Whether to display the gui.
+           system : Sire.System.System
+               A Sire molecular system.
+
+           view : int
+               The index of an existing view.
+
+           gui : bool
+               Whether to display the gui.
         """
 
         if system is None and view is None:
@@ -319,8 +355,11 @@ class View():
 
         # Create a PDB object and write to file.
         if system is not None:
-            pdb = _Sire.IO.PDB2(system)
-            pdb.writeToFile(filename)
+            try:
+                pdb = _Sire.IO.PDB2(system)
+                pdb.writeToFile(filename)
+            except:
+                raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)

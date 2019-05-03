@@ -5,6 +5,9 @@ __pycache__/
 # C extensions.
 *.so
 
+# Pytest directories.
+.pytest_cache/
+
 # macOS folder attributes.
 .DS_Store
 
