@@ -63,6 +63,16 @@ RUN conda clean -tipsy && \
     rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
     rm -rf $HOME/.cache $HOME/.jupyter $HOME/.local/share/jupyter
 
+# Now pull in git and download the workshop
+USER root
+RUN apt-get update && \
+    apt-get -yq --no-install-recommends install git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+USER $NB_USER
+RUN git clone https://github.com/michellab/biosimspace
+
 # add our config file
 # COPY jupyter_notebook_config.py /etc/jupyter/
 
