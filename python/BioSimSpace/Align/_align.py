@@ -238,7 +238,7 @@ def matchAtoms(molecule0,
 
                 # Generate the MCS match.
                 mcs = _rdFMCS.FindMCS(mols, atomCompare=_Chem.rdFMCS.AtomCompare.CompareAny,
-                    bondCompare=_Chem.rdFMCS.BondCompare.CompareAny, matchChiralTag=True)
+                    bondCompare=_Chem.rdFMCS.BondCompare.CompareAny, completeRingsOnly=True, matchChiralTag=True)
 
                 # Get the common substructure as a SMARTS string.
                 mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
