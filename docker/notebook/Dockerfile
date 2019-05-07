@@ -46,11 +46,6 @@ RUN pip install --upgrade pip && \
     pip install matplotlib && \
     pip install jupyterhub-tmpauthenticator
 
-RUN conda config --add channels conda-forge && \
-    conda install mdanalysis
-RUN conda install -c omnia mdtraj
-RUN conda install -c omnia pymbar
-
 # Install and enable nglview (including patching some issues) and fileupload
 COPY nglview_patch.sh $HOME
 RUN pip --no-cache-dir install nglview && \
