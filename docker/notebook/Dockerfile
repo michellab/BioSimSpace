@@ -9,6 +9,7 @@ ENV AMBER_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/7ODpDh
 ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/2jeHceFVZcIMeyRm7T3TpaUY8JajKmE3QkZ1iQ7vE3I/n/chryswoods/b/downloads/o/gromacs.tar.bz2
 
 USER root
+WORKDIR /home
 
 # Configure environment
 ENV SIRE_SILENT_PHONEHOME=1 \
@@ -68,7 +69,7 @@ RUN conda clean -tipsy && \
     rm -rf $HOME/.cache $HOME/.jupyter $HOME/.local/share/jupyter
 
 # add our config file
-COPY jupyter_notebook_config.py /etc/jupyter/
+# COPY jupyter_notebook_config.py /etc/jupyter/
 
 # End as the User to make sure that we don't
 # accidentally run the container as root
