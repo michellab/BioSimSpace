@@ -23,13 +23,19 @@
 Functionality for aligning molecules.
 """
 
+import rdkit.Chem as _Chem
+import rdkit.Chem.rdFMCS as _rdFMCS
+import tempfile as _tempfile
+
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
 from .._Exceptions import AlignmentError as _AlignmentError
 from .._SireWrappers import Molecule as _Molecule
 
+import BioSimSpace.IO as _IO
 import BioSimSpace.Units as _Units
+import BioSimSpace._Utils as _Utils
 
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
@@ -212,7 +218,41 @@ def matchAtoms(molecule0,
     # match is the one that matches the greater number of atom pairs.
     # Ideally the two runs should be performed concurrently, but this
     # isn't currently possible from within Python since the underlying
-    # Sire objects aren't pickable.
+    # Sire objects aren't easily pickable.
+
+    # If the user hasn't passed a prematch, then generate one with RDKit.
+    if len(prematch) == 0:
+        # Create a temporary working directory.
+        tmp_dir = _tempfile.TemporaryDirectory()
+        work_dir = tmp_dir.name
+
+        try:
+            # Run inside a temporary directory.
+            with _Utils.cd(work_dir):
+                # Write both molecules to PDB files.
+                _IO.saveMolecules("tmp0", molecule0, "PDB")
+                _IO.saveMolecules("tmp1", molecule1, "PDB")
+
+                # Load the molecules with RDKit.
+                mols = [_Chem.MolFromPDBFile("tmp0.pdb"), _Chem.MolFromPDBFile("tmp1.pdb")]
+
+                # Generate the MCS match.
+                mcs = _rdFMCS.FindMCS(mols, atomCompare=_Chem.rdFMCS.AtomCompare.CompareAny,
+                    bondCompare=_Chem.rdFMCS.BondCompare.CompareAny, matchChiralTag=True)
+
+                # Get the common substructure as a SMARTS string.
+                mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
+
+                # Extract the substructure from the original molecules.
+                mcs0 = mols[0].GetSubstructMatch(mcs_smarts)
+                mcs1 = mols[1].GetSubstructMatch(mcs_smarts)
+
+                # Generate the prematch.
+                prematch = {_SireMol.AtomIdx(idx0) : _SireMol.AtomIdx(idx1) for idx0, idx1 in zip(mcs0, mcs1)}
+
+        # If the RDKit prematch fails, then just continue with an empty prematch.
+        except:
+            pass
 
     # Regular match. Include light atoms, but don't allow matches between heavy
     # and light atoms.

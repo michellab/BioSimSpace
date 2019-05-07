@@ -73,6 +73,10 @@ finally:
         command = "%s/conda install -y -q mdanalysis" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
+        print("Installing package: rdkit")
+        command = "%s/conda install -y -q -c rdkit rdkit" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
         print("Upgrading pip")
         command = "%s/pip install --upgrade pip" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)

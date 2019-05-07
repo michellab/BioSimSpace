@@ -23,6 +23,7 @@ requirements:
     - pymbar
     - pytest
     - pyyaml
+    - rdkit
     - watchdog
   run:
     -  {{ pin_compatible('python') }}
@@ -35,6 +36,7 @@ requirements:
     -  {{ pin_compatible('pymbar') }}
     -  {{ pin_compatible('pytest') }}
     -  {{ pin_compatible('pyyaml') }}
+    -  {{ pin_compatible('rdkit') }}
     -  {{ pin_compatible('watchdog') }}
 
 about:
