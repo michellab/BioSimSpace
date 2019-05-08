@@ -38,7 +38,7 @@ if [ ! -e $TAG ]; then
 fi
 
 # Build the Conda package.
-$BIN_DIR/conda-build -c conda-forge -c omnia -c rdkit -c michellab/label/$LABEL .
+$BIN_DIR/conda-build -c rdkit -c conda-forge -c omnia -c michellab/label/$LABEL .
 
 # Upload the package to the michellab channel on Anaconda Cloud.
 $BIN_DIR/anaconda -t $ANACONDA_TOKEN upload --user michellab $HOME/sire.app/conda-bld/$OS/biosimspace-* --label $LABEL
