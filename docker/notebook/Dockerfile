@@ -83,6 +83,10 @@ RUN rmdir work && \
 ENV PATH=$PATH:/home/gromacs/bin \
     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/lib
 
+# Add in our custom notebook config
+USER root
+COPY jupyter_notebook_config.py /etc/jupyter/
+
 # End as the User to make sure that we don't
 # accidentally run the container as root
 USER $NB_USER
