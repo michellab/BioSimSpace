@@ -19,7 +19,7 @@ CONDA_DIR=$SRC_DIR/docker/conda-devel/recipe
 
 # Linux runs in a docker container from $HOME.
 if [ ! -d $CONDA_DIR ]; then
-    SRC_DIR=$HOME/Sire
+    SRC_DIR=$HOME/BioSimSpace
     CONDA_DIR=$HOME/BioSimSpace/docker/conda-devel/recipe
 fi
 
