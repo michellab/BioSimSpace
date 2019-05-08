@@ -40,7 +40,7 @@ requirements:
     -  {{ pin_compatible('watchdog') }}
 
 about:
-  home: https://github.com/michellab/BioSimSpace
+  home: https://biosimspace.org
   license: GPL-2.0
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
   summary: "An interoperable Python framework for biomolecular simulation."
