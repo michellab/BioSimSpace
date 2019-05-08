@@ -1,5 +1,5 @@
 proxy:
-  secretToken: "SECRET"
+  secretToken: "SECRET TOKEN"
   https:
     enabled: true
     hosts:
@@ -12,7 +12,7 @@ rbac:
 singleuser:
   image:
     name: chryswoods/biosimspace-notebook
-    tag: v6
+    tag: v7
   storage:
     type: none
   memory:

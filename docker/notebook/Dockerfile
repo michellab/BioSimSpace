@@ -66,7 +66,7 @@ RUN conda clean -tipsy && \
 # Now pull in git and download the workshop
 USER root
 RUN apt-get update && \
-    apt-get -yq --no-install-recommends install git libgfortran3 && \
+    apt-get -yq --no-install-recommends install git libgfortran3 nano && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -85,8 +85,15 @@ ENV PATH=$PATH:/home/gromacs/bin \
 
 # Add in our custom notebook config
 USER root
+
+# Comment out the below line if you need to test locally. YOU MUST
+# UNCOMMENT THIS LINE FOR REMOTE DEPLOYMENT
 COPY jupyter_notebook_config.py /etc/jupyter/
+
+# Add in the 'update_biosimspace' command to make things easy
+COPY update_biosimspace /usr/bin
 
 # End as the User to make sure that we don't
 # accidentally run the container as root
 USER $NB_USER
+

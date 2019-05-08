@@ -1,0 +1,16 @@
+#!/opt/conda/bin/python
+
+import os
+
+print("Updating BioSimSpace...")
+
+print("  -- [u] BioSimSpace")
+os.chdir("/home/jovyan/biosimspace/python")
+os.system("git pull")
+
+result = os.system("BSS_SKIP_DEPENDENCIES=1 /opt/conda/bin/python setup.py install")
+
+if result == 0:
+    print("\n\nEverything updated :-)")
+else:
+    print("\n\nSomething went wrong?")

@@ -12,6 +12,9 @@ $ docker build . -t chryswoods/biosimspace-notebook:v5
 
 # Test the docker file locally
 
+(note that you can't test locally if the 'jupyter_notebook_config.py'
+ file is included - you need to comment out)
+
 ```
 $ docker run -p 8888:8888 -it chryswoods/biosimspace-notebook:latest
 ```
@@ -34,3 +37,15 @@ $ helm install jupyterhub/jupyterhub --version=0.8.0 --timeout=36000 --debug --i
 ```
 $ helm upgrade --install=notebook --namespace=notebook jupyterhub/jupyterhub --timeout=36000 --debug --version=0.8.0 --values notebook.yaml
 ```
+
+# Deleting user pods
+
+Assuming your kubectl works, then you can delete all active user notebook pods
+using
+
+```
+$ python killjupyter.py
+```
+
+This will kill all logged in pods as well - so only use it if you need to
+reset everything because the server is overloaded.
