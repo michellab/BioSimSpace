@@ -4,8 +4,8 @@ rbac:
   enabled: true
 singleuser:
   image:
-    name: chryswoods/bss-workshop
-    tag: v2
+    name: chryswoods/biosimspace-notebook
+    tag: v5
   storage:
     type: none
   memory:
@@ -20,7 +20,7 @@ cull:
 prePuller:
   continuous:
     enabled: true
-auth:
-  type: custom
-  custom:
-    className: tmpauthenticator.TmpAuthenticator
+#auth:
+#  type: custom
+#  custom:
+#    className: tmpauthenticator.TmpAuthenticator
