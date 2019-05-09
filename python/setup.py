@@ -65,6 +65,10 @@ finally:
         command = "%s/conda config --system --set auto_update_conda false" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
+        print("Installing package: rdkit")
+        command = "%s/conda install -y -q -c rdkit rdkit" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
         print("Installing package: mdtraj")
         command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
