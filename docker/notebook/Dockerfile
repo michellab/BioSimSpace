@@ -34,25 +34,17 @@ RUN echo "python 3.7.*" >> /opt/conda/conda-meta/pinned
 USER $NB_USER
 WORKDIR $HOME
 
-# Install Sire via conda
-RUN conda install -c conda-forge -c omnia -c michellab/label/dev sire
-
 # Install BioSimSpace via conda
-RUN conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+RUN conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-RUN conda install watchdog
 RUN pip install --upgrade pip && \
     pip install pygtail && \
-    pip install matplotlib && \
+    pip install pypdb && \
     pip install jupyterhub-tmpauthenticator
 
-# Install and enable nglview (including patching some issues) and fileupload
-COPY nglview_patch.sh $HOME
-RUN pip --no-cache-dir install nglview && \
-    jupyter-nbextension install nglview --py --sys-prefix && \
+# Install and enable nglview and fileupload
+RUN jupyter-nbextension install nglview --py --sys-prefix && \
     jupyter-nbextension enable nglview --py --sys-prefix && \
-    $HOME/nglview_patch.sh /opt/conda && \
-    rm $HOME/nglview_patch.sh && \
     pip install fileupload && \
     jupyter-nbextension install fileupload --py --sys-prefix && \
     jupyter-nbextension enable fileupload --py --sys-prefix
@@ -96,4 +88,3 @@ COPY update_biosimspace /usr/bin
 # End as the User to make sure that we don't
 # accidentally run the container as root
 USER $NB_USER
-

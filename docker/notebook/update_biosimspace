@@ -4,11 +4,7 @@ import os
 
 print("Updating BioSimSpace...")
 
-print("  -- [u] BioSimSpace")
-os.chdir("/home/jovyan/biosimspace/python")
-os.system("git pull")
-
-result = os.system("BSS_SKIP_DEPENDENCIES=1 /opt/conda/bin/python setup.py install")
+result = os.system("conda update -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace")
 
 if result == 0:
     print("\n\nEverything updated :-)")
