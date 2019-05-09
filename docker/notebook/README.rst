@@ -35,7 +35,7 @@ $ helm install jupyterhub/jupyterhub --version=0.8.0 --timeout=36000 --debug --i
 # Upgrading jupyterhub
 
 ```
-$ helm upgrade --install=notebook --namespace=notebook jupyterhub/jupyterhub --timeout=36000 --debug --version=0.8.0 --values notebook.yaml
+$ helm upgrade --install notebook --namespace notebook jupyterhub/jupyterhub --timeout=36000 --debug --version=0.8.0 --values notebook.yaml
 ```
 
 # Deleting user pods
