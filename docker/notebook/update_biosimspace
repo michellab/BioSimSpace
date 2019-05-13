@@ -5,6 +5,8 @@ import os
 print("Updating BioSimSpace...")
 
 print("  -- [u] BioSimSpace")
+os.chdir("/home/jovyan/biosimspace_workshop")
+os.system("git pull")
 os.chdir("/home/jovyan/biosimspace/python")
 os.system("git pull")
 

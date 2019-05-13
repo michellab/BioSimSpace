@@ -66,6 +66,8 @@ USER $NB_USER
 RUN git clone https://github.com/michellab/biosimspace && \
     git clone https://github.com/CCPBioSim/python_and_data_workshop
 
+RUN git clone https://github.com/CCPBioSim/biosimspace_workshop
+
 # Link the right directories into the right places...
 RUN rmdir work && \
     ln -s $HOME/biosimspace/demo $HOME/demo

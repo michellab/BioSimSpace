@@ -12,7 +12,7 @@ rbac:
 singleuser:
   image:
     name: chryswoods/biosimspace-notebook
-    tag: v9
+    tag: v10
   storage:
     type: none
   memory:
