@@ -14,8 +14,8 @@ Build the docker file
 Test the docker file locally
 ----------------------------
 
-(note that you can't test locally if the 'jupyter_notebook_config.py'
- file is included - you need to comment out)
+(Note that you can't test locally if the ``jupyter_notebook_config.py``
+file is included - you need to comment out.)
 
 .. code-block:: bash
 
