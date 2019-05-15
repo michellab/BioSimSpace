@@ -9,7 +9,9 @@ Build the docker file
 
 .. code-block:: bash
 
-    docker build . -t chryswoods/biosimspace-notebook:v5
+    docker build . -t biosimspace/biosimspace-notebook:v5
+
+(We tag notebook images with a version so that we can revert to a working state.)
 
 Test the docker file locally
 ----------------------------
@@ -19,14 +21,12 @@ file is included - you need to comment out.)
 
 .. code-block:: bash
 
-    docker run -p 8888:8888 -it chryswoods/biosimspace-notebook:latest
+    docker run -p 8888:8888 -it biosimspace/biosimspace-notebook:latest
 
 (and then go to the link specified)
 
 Push the docker file to dockerhub
 ---------------------------------
-
-For example,
 
 .. code-block:: bash
 
