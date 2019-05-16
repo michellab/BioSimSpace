@@ -132,6 +132,9 @@ class Somd(_process.Process):
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
+        # The name of the trajectory file.
+        self._traj_file = "%s/traj000000001.dcd" % self._work_dir
+
         # Set the path for the SOMD configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 

@@ -115,6 +115,9 @@ class Gromacs(_process.Process):
         self._gro_file = "%s/%s.gro" % (self._work_dir, name)
         self._top_file = "%s/%s.top" % (self._work_dir, name)
 
+        # The name of the trajectory file.
+        self._traj_file = "%s/%s.trr" % (self._work_dir, name)
+
         # Set the path for the GROMACS configuration file.
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 

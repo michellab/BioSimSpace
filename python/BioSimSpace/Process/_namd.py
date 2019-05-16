@@ -117,6 +117,9 @@ class Namd(_process.Process):
         self._velocity_file = None
         self._restraint_file = None
 
+        # The name of the trajectory file.
+        self._traj_file = "%s/%s_out.dcd" % (self._work_dir, name)
+
         # Set the path for the NAMD configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
