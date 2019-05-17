@@ -118,7 +118,7 @@ if not _path.isdir(_gromacs_path):
         # Run the command.
         _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
 
-        del _command 
+        del _command
 
         # Get the data prefix.
         if _proc.returncode == 0:
