@@ -588,6 +588,50 @@ class Process():
 
         return self._stderr.copy()
 
+    def getInput(self, name=None, file_link=False):
+        """Return a link to a zip file containing the input files used by
+           the process.
+
+           Parameters
+           ----------
+
+           name : str
+               The name of the zip file.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
+
+           Returns
+           -------
+
+           ouput : str, IPython.display.FileLink
+               A path, or file link, to an archive of the process input.
+        """
+
+        if name is None:
+            name = self._name + "_input"
+        else:
+            if type(name) is not str:
+                raise TypeError("'name' must be of type 'str'")
+
+        # Generate the zip file name.
+        zipname = "%s.zip" % name
+
+        with _zipfile.ZipFile(zipname, "w") as zip:
+            # Loop over all of the file outputs.
+            for file in self.inputFiles():
+                zip.write(file, arcname=_os.path.basename(file))
+
+        # Return a link to the archive.
+        if _is_notebook():
+            if file_link:
+                return _FileLink(zipname)
+            else:
+                return zipname
+        # Return the path to the archive.
+        else:
+            return zipname
+
     def getOutput(self, name=None, block="AUTO", file_link=False):
         """Return a link to a zip file of the working directory.
 
@@ -611,7 +655,7 @@ class Process():
         """
 
         if name is None:
-            name = self._name
+            name = self._name + "_output"
         else:
             if type(name) is not str:
                 raise TypeError("'name' must be of type 'str'")
