@@ -535,6 +535,8 @@ class File(Requirement):
             file = _unarchive(value)
             if file is None:
                 file = value
+            elif type(file) is list:
+                raise ValueError("The archive contains multiple files: use a FileSet instead!")
         else:
             raise TypeError("The value should be of type 'str'")
 
@@ -1520,7 +1522,7 @@ def _unarchive(name):
     if dir == "uploads":
         dir += "/"
     else:
-        dir = "uncompressed/"
+        dir = _os.path.splitext(name)[0] + "/"
 
     # List of supported tar file formats.
     tarfiles = ["tar.gz", "tar.bz2", "tar"]
@@ -1568,7 +1570,7 @@ def _unarchive(name):
                 print(file)
             zip.extractall(dir)
 
-        return files
+        return [dir + file for file in files]
 
     # This is a gzip file.
     if ext.lower() == ".gz" or ext == ".gzip":
