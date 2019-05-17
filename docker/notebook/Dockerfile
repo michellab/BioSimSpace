@@ -72,6 +72,10 @@ RUN git clone https://github.com/CCPBioSim/biosimspace_workshop
 RUN rmdir work && \
     ln -s $HOME/biosimspace/demo $HOME/demo
 
+# Copy the example nodes into the Python library.
+RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
+    cp $HOME/demo/*.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes/
+
 # Ensure that Gromacs is in our path, and /opt/conda is
 # in the library path for gmx dependency of libgomp
 ENV PATH=$PATH:/home/gromacs/bin \
