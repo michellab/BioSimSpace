@@ -6,7 +6,7 @@ source:
   git_url: https://github.com/michellab/BioSimSpace.git
 
 build:
-  number: 0
+  number: BUILD
   skip: true  # [win]
   script: cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
 
