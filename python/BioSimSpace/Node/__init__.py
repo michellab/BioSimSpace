@@ -114,7 +114,10 @@ def help(name):
     command = "%s/python %s --help" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(command, shell=True)
+    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE)
+
+    # Print the standard output, decoded as UTF-8.
+    print(proc.stdout.decode("utf-8"))
 
 def run(name, args={}):
     """Run a node.
@@ -167,7 +170,7 @@ def run(name, args={}):
         command = "%s/python %s" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(command, shell=True)
+    proc = _subprocess.run(command, shell=True, stderr=_subprocess.PIPE)
 
     if proc.returncode == 0:
         # Read the output YAML file into a dictionary.
@@ -179,3 +182,7 @@ def run(name, args={}):
         _os.remove("output.yaml")
 
         return output
+
+    else:
+        # Print the standard error, decoded as UTF-8.
+        print(proc.stderr.decode("utf-8"))
