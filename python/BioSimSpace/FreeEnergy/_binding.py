@@ -37,7 +37,7 @@ __all__ = ["Binding"]
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, work_dir=None, engine=None, property_map={}):
+    def __init__(self, system, protocol=None, box=None, work_dir=None, engine=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -48,6 +48,11 @@ class Binding(_free_energy.FreeEnergy):
 
            protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
                The simulation protocol.
+
+           box : [:class:`Length <BioSimSpace.Types.Length>`]
+               A list containing the box size in each dimension. This box will be
+               used for the "free" leg of the simulation, which typically can be
+               run with a significantly smaller box than the "bound" leg.
 
            work_dir : str
                The working directory for the simulation.
@@ -89,19 +94,28 @@ class Binding(_free_energy.FreeEnergy):
             # Extract the perturbable molecule.
             molecule = system.getPerturbableMolecules()[0]
 
-            # Get the box size of the original system.
-            try:
-                prop = property_map.get("space", "space")
-                box = system._sire_system.property(prop).dimensions()
-                box = [_Units.Length.angstrom * x for x in box]
-            except:
-                raise ValueError("The solvated protein-ligand system has no box information!")
+            # Use the box size of the original system.
+            if box is None:
+                try:
+                    prop = property_map.get("space", "space")
+                    box = system._sire_system.property(prop).dimensions()
+                    box = [_Units.Length.angstrom * x for x in box]
+                except:
+                    raise ValueError("The solvated protein-ligand system has no box information!")
+
+            # Solvate using the user specified box.
+            else:
+                if len(box) != 3:
+                    raise ValueError("The 'box' must have x, y, and z size information.")
+                else:
+                    if not all(isinstance(x, _Units.Length) for x in box):
+                        raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
             # Get the water model.
             try:
                 water_model = system._sire_system.property("water_model").toString()
             except:
-                raise ValueError("Canot deduce water model of solvated protein-ligand system!")
+                raise ValueError("Cannot deduce water model of solvated protein-ligand system!")
 
             # Solvate the perturbable molecule using the same water model as
             # the original system. (This is used for the second leg.)
