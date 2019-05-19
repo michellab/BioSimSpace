@@ -112,7 +112,7 @@ class Binding(_free_energy.FreeEnergy):
         self._initialise_runner(self._system0, self._system1)
 
     def analyse(self):
-        """Analyse the solvation free energy data.
+        """Analyse the binding free energy data.
 
            Returns
            -------
@@ -128,7 +128,7 @@ class Binding(_free_energy.FreeEnergy):
                contains the lambda value, the PMF, and the standard error.
 
            free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-               The solvation free energy difference and its associated error.
+               The binding free energy difference and its associated error.
         """
 
         # This method is just a wrapper to provide simulation specific doc

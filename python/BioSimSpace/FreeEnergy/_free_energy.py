@@ -396,7 +396,7 @@ class FreeEnergy():
         return (leg0, leg1, free_energy)
 
     def _initialise_runner(self, system0, system1):
-        """Internral helper function to initialise the process runner.
+        """Internal helper function to initialise the process runner.
 
            Parameters
            ----------
