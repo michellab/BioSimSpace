@@ -35,6 +35,7 @@ import warnings as _warnings
 
 import Sire.Base as _SireBase
 import Sire.IO as _SireIO
+import Sire.Mol as _SireMol
 
 from BioSimSpace import _amber_home
 from . import _process
@@ -228,6 +229,38 @@ class Amber(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
+
+        # If the system isn't created from AMBER format files, then we'll need
+        # to convert the water model topology.
+        if not "PRM7,RST7" in self._system.property("fileformat").toString():
+            # Convert to a BioSimSpace system.
+            system = _System(self._system)
+
+            # Get the water molecules.
+            waters = system.getWaterMolecules()
+
+            if len(waters) > 0:
+                num_point = waters[0].nAtoms()
+
+                # Convert to the appropriate AMBER topology.
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
+                    waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP3P")
+                elif num_point == 4:
+                    waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP4P")
+                elif num_point == 5:
+                    waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP5P")
+
+                # Loop over all of the renamed water molecules, delete the old one
+                # from the system, then add the renamed one back in.
+                # TODO: This is a hack since the "update" method of Sire.System
+                # doesn't work properly at present.
+                system.removeWaterMolecules()
+                for wat in waters:
+                    system._sire_system.add(wat, _SireMol.MGName("all"))
+
+                # Store the update Sire system.
+                self._system = system._getSireSystem()
 
         # RST file (coordinates).
         try:
