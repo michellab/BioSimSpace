@@ -64,7 +64,7 @@ def solvate(model, molecule=None, box=None, shell=None,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -112,7 +112,7 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
                   :class:`System <BioSimSpace._SireWrappers.System>`
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -165,7 +165,7 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -218,7 +218,7 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -271,7 +271,7 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -324,7 +324,7 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -376,7 +376,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -503,7 +503,7 @@ def _solvate(molecule, box, shell, model, num_point,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute.
@@ -897,7 +897,7 @@ def _check_box_size(molecule, box, property_map={}):
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
