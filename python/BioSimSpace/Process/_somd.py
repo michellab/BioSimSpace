@@ -203,19 +203,16 @@ class Somd(_process.Process):
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
-        # Extract the updated Sire system.
-        system = system._sire_system
-
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_system, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_system, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
