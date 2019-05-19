@@ -863,7 +863,7 @@ class Process():
            ----------
 
            args : dict, collections.OrderedDict
-               A dictionary of command line arguments.
+               A dictionary of command-line arguments.
         """
         if isinstance(args, _collections.OrderedDict):
             self._args = args
