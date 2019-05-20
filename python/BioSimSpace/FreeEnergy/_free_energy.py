@@ -488,3 +488,13 @@ class FreeEnergy():
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.
         self._runner = _Process.ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
+
+    def _update_run_args(self, argumentDictionary):
+            """Allows to update run arguments for all subprocesses
+            Parameters:
+            ----------
+             argumentDictionary : Order Dictionary
+                 order dictionary which contains the new commandline arguments for the executable
+            """
+            for p in self._runner.processes():
+                p.setArgs(argumentDictionary)

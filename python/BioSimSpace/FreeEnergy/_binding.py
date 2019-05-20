@@ -112,7 +112,7 @@ class Binding(_free_energy.FreeEnergy):
         self._initialise_runner(self._system0, self._system1)
 
     def analyse(self):
-        """Analyse the solvation free energy data.
+        """Analyse the binding free energy data.
 
            Returns
            -------
