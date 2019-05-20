@@ -230,11 +230,12 @@ class Amber(_process.Process):
 
         # Create the input files...
 
+        # Convert to a BioSimSpace system.
+        system = _System(self._system)
+
         # If the system isn't created from AMBER format files, then we'll need
         # to convert the water model topology.
         if not "PRM7,RST7" in self._system.property("fileformat").toString():
-            # Convert to a BioSimSpace system.
-            system = _System(self._system)
 
             # Get the water molecules.
             waters = system.getWaterMolecules()
