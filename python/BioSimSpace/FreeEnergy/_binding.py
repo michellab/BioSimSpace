@@ -27,6 +27,7 @@ from . import _free_energy
 from .._SireWrappers import System as _System
 
 import BioSimSpace.Solvent as _Solvent
+import BioSimSpace.Types as _Types
 import BioSimSpace.Units as _Units
 
 __author__ = "Lester Hedges"
@@ -108,7 +109,7 @@ class Binding(_free_energy.FreeEnergy):
                 if len(box) != 3:
                     raise ValueError("The 'box' must have x, y, and z size information.")
                 else:
-                    if not all(isinstance(x, _Units.Length) for x in box):
+                    if not all(isinstance(x, _Types.Length) for x in box):
                         raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
             # Get the water model.
