@@ -478,16 +478,20 @@ class FreeEnergy():
 
             # SOMD.
             if self._engine == "SOMD":
-                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
+                # Check for GPU support.
+                if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+
                 leg0.append(_Process.Somd(system0, self._protocol,
-                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
+                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
                 leg1.append(_Process.Somd(system1, self._protocol,
-                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
             # GROMACS.
             elif self._engine == "GROMACS":
-                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
                 leg0.append(_Process.Gromacs(system0, self._protocol,
                     work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
