@@ -23,6 +23,8 @@
 Base class for free energy simulations.
 """
 
+from collections import OrderedDict as _OrderedDict
+
 import math as _math
 import os as _os
 import subprocess as _subprocess
@@ -502,12 +504,19 @@ class FreeEnergy():
         # inside the working directory so no need to re-nest.
         self._runner = _Process.ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
 
-    def _update_run_args(self, argumentDictionary):
-            """Allows to update run arguments for all subprocesses
-            Parameters:
-            ----------
-             argumentDictionary : Order Dictionary
-                 order dictionary which contains the new commandline arguments for the executable
-            """
-            for p in self._runner.processes():
-                p.setArgs(argumentDictionary)
+    def _update_run_args(self, args):
+        """Internal function to update run arguments for all subprocesses.
+
+           Parameters
+           ----------
+
+           args : dict, collections.OrderedDict
+               A dictionary which contains the new command-line arguments
+               for the process executable.
+        """
+
+        if type(args) is not dict and type(args) is not _OrderedDict:
+            raise TypeError("'args' must be of type 'dict', or 'collections.OrderedDict'")
+
+        for process in self._runner.processes():
+            process.setArgs(args)
