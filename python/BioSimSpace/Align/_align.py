@@ -227,14 +227,15 @@ def matchAtoms(molecule0,
 
     # The user hasn't passed a prematch.
     if len(prematch) == 0:
-        # Create a temporary working directory.
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
 
-        try:
-            # Try generating a pre-match using RDKit. This doesn't always
-            # work well, so this is an optional argument.
-            if use_rdkit_prematch:
+        # Try generating a pre-match using RDKit. This doesn't always
+        # work well, so this is an optional argument.
+        if use_rdkit_prematch:
+            # Create a temporary working directory.
+            tmp_dir = _tempfile.TemporaryDirectory()
+            work_dir = tmp_dir.name
+
+            try:
                 # Run inside a temporary directory.
                 with _Utils.cd(work_dir):
                     # Write both molecules to PDB files.
@@ -258,9 +259,9 @@ def matchAtoms(molecule0,
                     # Generate the prematch.
                     prematch = {_SireMol.AtomIdx(idx0) : _SireMol.AtomIdx(idx1) for idx0, idx1 in zip(mcs0, mcs1)}
 
-        # If the RDKit prematch fails, then just continue with an empty prematch.
-        except:
-            pass
+            # If the RDKit prematch fails, then just continue with an empty prematch.
+            except:
+                pass
 
     # Regular match. Include light atoms, but don't allow matches between heavy
     # and light atoms.
