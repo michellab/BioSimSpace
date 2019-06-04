@@ -28,8 +28,8 @@ Full documentation can be found `here <https://biosimspace.org>`__.
 Installation
 ------------
 
-1. Conda package
-^^^^^^^^^^^^^^^^
+Conda package
+^^^^^^^^^^^^^
 
 The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
 
@@ -61,8 +61,8 @@ Note that on OS X you will need to run Python scripts with the ``sire_python``
 interpreter. This is due to an issue with the default Python interpreter that
 is installed via Conda. (This applies to all installation methods.)
 
-2. Using the prebuilt binaries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using the prebuilt binaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
@@ -99,8 +99,8 @@ To run a BioSimSpace notebook:
 
    $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
 
-2. Installing from source
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing from source
+^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, to install BioSimSpace from source:
 
