@@ -752,39 +752,77 @@ class Molecule():
             # Make the molecule editable.
             edit_mol = mol.edit()
 
-            # Loop over all perturbed atoms.
-            for idx in pert_idxs:
-                # Store the atom and its original atom.
-                atom = mol.atom(idx)
+            # Create a dictionary to flag whether we've seen each atom name.
+            is_seen = { name : False for name in names }
+
+            # Tally counter for the number of dummy atoms.
+            num_dummy = 1
+
+            # Loop over all atoms.
+            for atom in mol.atoms():
+                # Store the original atom.
                 name = atom.name()
 
-                # Create the base of the new name.
-                new_name = name.value()
+                # If this is a dummy atom, then rename it as "DU##", where ## is a
+                # two-digit number padded with a leading zero.
+                if atom.property("element0") == _SireMol.Element("X"):
+                    # Create the new atom name.
+                    new_name = "DU%02d" % num_dummy
 
-                # There is more than one atom with this name.
-                # Create a random suffix.
-                if atom_names[name] > 1:
-                    suffix = _random_suffix(new_name)
-                    num_attempts = 0
-                    # Keep trying until we get a unique name.
-                    while new_name + suffix in names:
-                        suffix = _random_suffix(new_name)
-                        num_attempts += 1
+                    # Convert to an AtomName and rename the atom.
+                    new_name = _SireMol.AtomName(new_name)
+                    edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
 
-                        # Abort if we've tried more than 100 times.
-                        if num_attempts == 100:
-                            raise RuntimeError("Error while writing SOMD pert file. "
-                                               "Unable to generate a unique suffix for "
-                                               "atom name: '%s'" % new_name)
+                    # Update the number of dummy atoms that have been named.
+                    num_dummy += 1
 
-                    # Append the suffix to the name and store in the set of seen
-                    # names.
-                    new_name = new_name + suffix
+                    # Since ligands typically have less than 100 atoms, the following
+                    # exception shouldn't be triggered. We can't support perturbations
+                    # with 100 or more dummy atoms in the lambda = 0 state because of
+                    # AMBER fixed width atom naming restrictions (4 character width).
+                    # We could give dummies a unique name in the same way that non-dummy
+                    # atoms are handled (see else) block below, but instead we'll raise
+                    # an exception.
+                    if num_dummy == 100:
+                        raise RuntimeError("Dummy atom naming limit exceeded! (100 atoms)")
+
+                    # Append to the list of seen names.
                     names.add(new_name)
 
-                # Convert to an AtomName and rename the atom.
-                new_name = _SireMol.AtomName(new_name)
-                edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+                else:
+                    # There is more than one atom with this name, and this is the second
+                    # time we've come across it.
+                    if atom_names[name] > 1 and is_seen[name]:
+                        # Create the base of the new name.
+                        new_name = name.value()
+
+                        # Create a random suffix.
+                        suffix = _random_suffix(new_name)
+
+                        # Zero the number of attempted renamings.
+                        num_attempts = 0
+
+                        # If this name already exists, keep trying until we get a unique name.
+                        while new_name + suffix in names:
+                            suffix = _random_suffix(new_name)
+                            num_attempts += 1
+
+                            # Abort if we've tried more than 100 times.
+                            if num_attempts == 100:
+                                raise RuntimeError("Error while writing SOMD pert file. "
+                                                   "Unable to generate a unique suffix for "
+                                                   "atom name: '%s'" % new_name)
+
+                        # Append the suffix to the name and store in the set of seen names.
+                        new_name = new_name + suffix
+                        names.add(new_name)
+
+                        # Convert to an AtomName and rename the atom.
+                        new_name = _SireMol.AtomName(new_name)
+                        edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+
+                    # Record that we've seen this atom name.
+                    is_seen[name] = True
 
             # Store the updated molecule.
             mol = edit_mol.commit()
