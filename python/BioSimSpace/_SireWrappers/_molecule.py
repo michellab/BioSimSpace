@@ -1394,7 +1394,9 @@ class Molecule():
                 is_shared = False
                 for idx0 in impropers0_idx.keys():
                     if idx1.equivalent(idx0):
-                        impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
+                        # Don't store duplicates.
+                        if not idx0 in impropers_shared_idx.keys():
+                            impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
                         is_shared = True
                         break
                 if not is_shared:
