@@ -1302,33 +1302,39 @@ class Molecule():
                     # Only write record if the dihedral parameters change.
                     if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
-                        # Start dihedral record.
-                        file.write("    dihedral\n")
+                        # Initialise a null dihedral.
+                        null_dihedral = _SireMM.AmberDihedral()
 
-                        # Dihedral data.
-                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                        file.write("        initial_form  ")
-                        for term in amber_dihedral0.terms():
-                            if zero_k and has_dummy_initial:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
-                        file.write("        final_form    ")
-                        for term in amber_dihedral1.terms():
-                            if zero_k and has_dummy_final:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
+                        # Don't write the dihedral record if both potentials are null.
+                        if not (amber_dihedral0 == null_dihedral and amber_dihedral1 == null_dihedral):
 
-                        # End dihedral record.
-                        file.write("    enddihedral\n")
+                            # Start dihedral record.
+                            file.write("    dihedral\n")
+
+                            # Dihedral data.
+                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                            file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                            file.write("        initial_form  ")
+                            for term in amber_dihedral0.terms():
+                                if zero_k and has_dummy_initial:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+                            file.write("        final_form    ")
+                            for term in amber_dihedral1.terms():
+                                if zero_k and has_dummy_final:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+
+                            # End dihedral record.
+                            file.write("    enddihedral\n")
 
             # 5) Impropers.
 
@@ -1531,33 +1537,39 @@ class Molecule():
                     # Only write record if the improper parameters change.
                     if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
-                        # Start improper record.
-                        file.write("    improper\n")
+                        # Initialise a null dihedral.
+                        null_dihedral = _SireMM.AmberDihedral()
 
-                        # Improper data.
-                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                        file.write("        initial_form  ")
-                        for term in amber_dihedral0.terms():
-                            if zero_k and has_dummy_initial:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
-                        file.write("        final_form    ")
-                        for term in amber_dihedral1.terms():
-                            if zero_k and has_dummy_final:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
+                        # Don't write the improper record if both potentials are null.
+                        if not (amber_dihedral0 == null_dihedral and amber_dihedral1 == null_dihedral):
 
-                        # End improper record.
-                        file.write("    endimproper\n")
+                            # Start improper record.
+                            file.write("    improper\n")
+
+                            # Improper data.
+                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                            file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                            file.write("        initial_form  ")
+                            for term in amber_dihedral0.terms():
+                                if zero_k and has_dummy_initial:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+                            file.write("        final_form    ")
+                            for term in amber_dihedral1.terms():
+                                if zero_k and has_dummy_final:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+
+                            # End improper record.
+                            file.write("    endimproper\n")
 
             # End molecule record.
             file.write("endmolecule\n")
