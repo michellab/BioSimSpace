@@ -199,7 +199,7 @@ BSS.IO.saveMolecules("merged_at_lam0.pdb", merged, "PDB", { "coordinates" : "coo
 protocol = BSS.Protocol.FreeEnergy(runtime = 2*BSS.Units.Time.femtosecond, num_lam=3)
 process = BSS.Process.Somd(system1, protocol)
 process.getOutput()
-cmd = "unzip -o somd.zip"
+cmd = "unzip -o somd_output.zip"
 os.system(cmd)
 
 
@@ -217,7 +217,7 @@ mapping_str = "%s.mapping" % root
 # In[ ]:
 
 
-cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
+cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd_output.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
 #print (cmd)
 os.system(cmd)
 
