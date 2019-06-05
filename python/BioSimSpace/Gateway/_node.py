@@ -180,6 +180,10 @@ class Node():
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
 
+            # Overload the "_check_value" method for more flexible string support.
+            # (Ignore whitespace and case insensitive.)
+            self._parser._check_value = _check_value
+
     def __del__(self):
         """Destructor."""
 
@@ -1274,6 +1278,25 @@ def _on_file_upload(change):
     # Update the widget value and label.
     change["owner"].value = new_filename
     change["owner"].label = label
+
+def _check_value(action, value):
+    """Helper function to overload argparse's choice checker."""
+    if action.choices is not None and value not in action.choices:
+        args = {"value"   : value,
+                "choices" : ", ".join(map(repr, action.choices))
+               }
+        msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
+
+        # If the value is a string, then strip whitespace and try a case insensitive search.
+        if type(value) is str:
+            new_value = value.replace(" ", "").upper()
+            choices = [x.replace(" ", "").upper() for x in action.choices]
+
+            # Check whether we now have a match.
+            if new_value not in choices:
+                raise _argparse.ArgumentError(action, msg % args)
+        else:
+            raise _argparse.ArgumentError(action, msg % args)
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""

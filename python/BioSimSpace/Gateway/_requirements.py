@@ -181,8 +181,21 @@ class Requirement():
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
-            raise ValueError("The value (%s) is not in the list of allowed values: "
-                "%s" % (value, str(self._allowed)))
+            # For String requirements, strip whitespace and ingore case.
+            if type(self) is String:
+                new_value = value.replace(" ", "").upper()
+                allowed = [x.replace(" ", "").upper() for x in self._allowed]
+
+                # If we find a match, then set to the unmodified allowed value
+                # at the matching index.
+                if new_value in allowed:
+                    value = self._allowed[allowed.index(new_value)]
+                else:
+                    raise ValueError("The value (%s) is not in the list of allowed values: "
+                        "%s" % (value, str(self._allowed)))
+            else:
+                raise ValueError("The value (%s) is not in the list of allowed values: "
+                    "%s" % (value, str(self._allowed)))
 
         # All is okay. Set the value.
         self._value = value
