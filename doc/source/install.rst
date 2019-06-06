@@ -26,6 +26,17 @@ packages into your environment:
 
     pip install fileupload pygtail pypdb
 
+If you plan on using BioSimSpace interactively via Jupyter, then you'll also
+need to install and enable the required notebook extensions within your Conda
+environment:
+
+.. code-block:: bash
+
+    jupyter-nbextension install fileupload --py --sys-prefix
+    jupyter-nbextension enable fileupload --py --sys-prefix
+    jupyter-nbextension install nglview --py --sys-prefix
+    jupyter-nbextension enable nglview --py --sys-prefix
+
 Unless you add the required channels to your Conda configuration, then you'll
 need to add them when updating, e.g., for the development package:
 
