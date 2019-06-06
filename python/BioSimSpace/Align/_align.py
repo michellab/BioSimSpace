@@ -246,8 +246,10 @@ def matchAtoms(molecule0,
                     mols = [_Chem.MolFromPDBFile("tmp0.pdb"), _Chem.MolFromPDBFile("tmp1.pdb")]
 
                     # Generate the MCS match.
-                    mcs = _rdFMCS.FindMCS(mols, atomCompare=_Chem.rdFMCS.AtomCompare.CompareAny,
-                        bondCompare=_Chem.rdFMCS.BondCompare.CompareAny, completeRingsOnly=True, matchChiralTag=True)
+                    mcs = _rdFMCS.FindMCS(mols, atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                        bondCompare=_rdFMCS.BondCompare.CompareAny, completeRingsOnly=True,
+                        ringMatchesRingOnly=True, matchChiralTag=False, matchValences=False,
+                        maximizeBonds=False)
 
                     # Get the common substructure as a SMARTS string.
                     mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
