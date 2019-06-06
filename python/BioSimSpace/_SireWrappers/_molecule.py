@@ -671,7 +671,7 @@ class Molecule():
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
     def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
-            zero_dummy_impropers=False, property_map={}):
+            zero_dummy_impropers=False, print_all_atoms=False, property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Parameters
@@ -687,6 +687,10 @@ class Molecule():
            zero_dummy_impropers : bool
                Whether to zero the barrier height for impropers involving
                dummy atoms.
+
+           print_all_atoms : bool
+               Whether to print all atom records to the pert file, not just
+               the atoms that are perturbed.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -711,6 +715,9 @@ class Molecule():
 
         if type(zero_dummy_impropers) is not bool:
             raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
+
+        if type(print_all_atoms) is not bool:
+            raise TypeError("'print_all_atoms' must be of type 'bool'")
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
@@ -840,28 +847,53 @@ class Molecule():
             file.write("molecule LIG\n")
 
             # 1) Atoms.
-            for idx in pert_idxs:
-                # Get the perturbed atom.
-                atom = mol.atom(idx)
 
-                # Start atom record.
-                file.write("    atom\n")
+            # Print all atom records.
+            if print_all_atoms:
+                for atom in mol.atoms():
+                    # Start atom record.
+                    file.write("    atom\n")
 
-                # Get the initial/final Lennard-Jones properties.
-                LJ0 = atom.property("LJ0");
-                LJ1 = atom.property("LJ1");
+                    # Get the initial/final Lennard-Jones properties.
+                    LJ0 = atom.property("LJ0");
+                    LJ1 = atom.property("LJ1");
 
-                # Atom data.
-                file.write("        name           %s\n" % atom.name().value())
-                file.write("        initial_type   %s\n" % atom.property("ambertype0"))
-                file.write("        final_type     %s\n" % atom.property("ambertype1"))
-                file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
-                file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
-                file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
-                file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+                    # Atom data.
+                    file.write("        name           %s\n" % atom.name().value())
+                    file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                    file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                    file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                    file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                    file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                    file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
 
-                # End atom record.
-                file.write("    endatom\n")
+                    # End atom record.
+                    file.write("    endatom\n")
+
+            # Only print records for the atoms that are perturbed.
+            else:
+                for idx in pert_idxs:
+                    # Get the perturbed atom.
+                    atom = mol.atom(idx)
+
+                    # Start atom record.
+                    file.write("    atom\n")
+
+                    # Get the initial/final Lennard-Jones properties.
+                    LJ0 = atom.property("LJ0");
+                    LJ1 = atom.property("LJ1");
+
+                    # Atom data.
+                    file.write("        name           %s\n" % atom.name().value())
+                    file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                    file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                    file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                    file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                    file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                    file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+
+                    # End atom record.
+                    file.write("    endatom\n")
 
             # 2) Bonds.
 
