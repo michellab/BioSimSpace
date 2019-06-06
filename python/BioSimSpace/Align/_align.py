@@ -254,12 +254,8 @@ def matchAtoms(molecule0,
                     # Get the common substructure as a SMARTS string.
                     mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
 
-                    # Extract the substructure from the original molecules.
-                    mcs0 = mols[0].GetSubstructMatch(mcs_smarts)
-                    mcs1 = mols[1].GetSubstructMatch(mcs_smarts)
-
-                    # Generate the prematch.
-                    prematch = {_SireMol.AtomIdx(idx0) : _SireMol.AtomIdx(idx1) for idx0, idx1 in zip(mcs0, mcs1)}
+                    # Get the best prematch based on a spatially closest search.
+                    prematch = _get_best_rdkit_prematch(mols[0], mols[1], mcs_smarts)
 
             # If the RDKit prematch fails, then just continue with an empty prematch.
             except:
@@ -569,3 +565,83 @@ def _score_rmsd(molecule0, molecule1, mappings, is_align=False):
 
     # Return the sorted mappings and their scores.
     return (mappings, scores)
+
+def _get_best_rdkit_prematch(mol0, mol1, mcs_smarts):
+    """Internal function to get the spatially closes RDKit prematch.
+
+       Parameters
+       ----------
+
+       mol0 : RDKit.Chem.Mol
+           The first molecule.
+
+       mol1 : RDKit.Chem.Mol
+           The second molecule.
+
+       mcs_smarts : RDKit.Chem.MolFromSmarts
+           The smarts string representing the maximum common substructure of
+           the two molecules.
+
+       Returns
+       -------
+
+       mapping : dict
+           The best MCS mapping.
+    """
+
+    # Adapted from FESetup: https://github.com/CCPBioSim/fesetup
+
+    matches0 = mol0.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=100, useChirality=False)
+    matches1 = mol1.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=100, useChirality=False)
+
+    # Swap the order of the matches.
+    if len(matches0) < len(matches1):
+        matches0, matches1 = matches1, matches0
+        conf0 = mol1.GetConformer()
+        conf1 = mol0.GetConformer()
+        is_swapped = True
+    else:
+        conf0 = mol0.GetConformer()
+        conf1 = mol1.GetConformer()
+        is_swapped = False
+
+    # initialise the minimum distance and mapping indices.
+    mind = 999999.0
+    minxy = [-1, -1]
+
+    # Loop over all matches from mol0.
+    for x in range(len(matches0)):
+        match0 = matches0[x]
+
+        # Loop over all matches from mol1.
+        for y in range(len(matches1)):
+            match1 = matches1[y]
+
+            # Initialise the sum of the distances.
+            sumd = 0.0
+
+            for i, idx0 in enumerate(match0):
+                pos0 = conf0.GetAtomPosition(idx0)
+                idx1 = match1[i]
+                pos1 = conf1.GetAtomPosition(idx1)
+
+                # Compute the squared distance.
+                d2 = (pos0.x - pos1.x)**2 \
+                   + (pos0.y - pos1.y)**2 + (pos0.z - pos1.z)**2
+
+                # Increment the sum.
+                sumd += d2
+
+            # If this is the best match yet, update the mapping indices and store
+            # the match.
+            if sumd < mind:
+                mind = sumd
+                minxy = [x, y]
+
+    # Invert the mapping.
+    if is_swapped:
+        mapping = {_SireMol.AtomIdx(idx0) : _SireMol.AtomIdx(idx1) for idx0, idx1 in zip(matches1[minxy[1]], matches0[minxy[0]])}
+    else:
+        mapping = {_SireMol.AtomIdx(idx0) : _SireMol.AtomIdx(idx1) for idx0, idx1 in zip(matches0[minxy[0]], matches1[minxy[1]])}
+
+    return mapping
