@@ -48,8 +48,8 @@ def test_invalid_prematch(prematch):
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -62,7 +62,7 @@ def test_merge():
     m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
 
     # Create the merged molecule.
-    m2 = BSS.Align.merge(m0, m1, mapping)
+    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
     # Store the number of atoms in m0.
     n0 = m0._sire_molecule.nAtoms()
