@@ -358,10 +358,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         pass
     # A Molecule object.
     elif type(system) is _Molecule:
-        system = [system]
+        system = _System(system)
     # A list of Molecule objects.
     elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
-        pass
+        system = _System(system)
     # Invalid type.
     else:
         raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
@@ -409,23 +409,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Add the GROMACS topology file path.
     if _gromacs_path is not None and ("GROMACS_PATH" not in _property_map):
         _property_map["GROMACS_PATH"] = _gromacs_path
-
-    # We have a list of molecules. Create a new system and add each molecule.
-    if type(system) is list:
-
-        # Create a Sire system and molecule group.
-        s = _SireSystem.System("BioSimSpace System")
-        m = _SireMol.MoleculeGroup("all")
-
-        # Add all of the molecules to the group.
-        for molecule in system:
-            m.add(molecule._getSireMolecule())
-
-        # Add the molecule group to the system.
-        s.add(m)
-
-        # Wrap the system.
-        system = _System(s)
 
     # Get the directory name.
     dirname = _os.path.dirname(filebase)
