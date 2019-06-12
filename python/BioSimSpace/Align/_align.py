@@ -617,6 +617,8 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
            The ranked mappings and corresponding scores.
     """
 
+    # Adapted from FESetup: https://github.com/CCPBioSim/fesetup
+
     # Make sure to re-map the coordinates property in both molecules, otherwise
     # the move and align functions from Sire will not work.
     prop0 = property_map0.get("coordinates", "coordinates")
@@ -627,10 +629,12 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
     if prop1 != "coordinates":
         molecule1 = molecule1.edit().setProperty("coordinates", molecule1.property(prop1)).commit()
 
-    # Adapted from FESetup: https://github.com/CCPBioSim/fesetup
-
-    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=True, maxMatches=100, useChirality=False)
-    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=True, maxMatches=100, useChirality=False)
+    # Get the set of matching substructures in each molecule. For some reason
+    # setting uniquify to True removes valid matches, in some cases even the
+    # best match! As such, we set uniquify to False and account ignore duplicate
+    # mappings in the code below.
+    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
+    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
 
     # Swap the order of the matches.
     if len(matches0) < len(matches1):
@@ -666,45 +670,47 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
                 else:
                     mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
 
-            # Check that the mapping contains the pre-match.
-            is_valid = True
-            for idx0, idx1 in prematch.items():
-                # Pre-match isn't found, return to top of loop.
-                if idx0 not in mapping or mapping[idx0] != idx1:
-                    is_valid = False
-                    break
+            # This is a new mapping:
+            if not mapping in mappings:
+                # Check that the mapping contains the pre-match.
+                is_valid = True
+                for idx0, idx1 in prematch.items():
+                    # Pre-match isn't found, return to top of loop.
+                    if idx0 not in mapping or mapping[idx0] != idx1:
+                        is_valid = False
+                        break
 
-            if is_valid:
-                # Rigidly align molecule0 to molecule1 based on the mapping.
-                if scoring_function == "RMSDALIGN":
-                    try:
-                        molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
-                    except:
-                        raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
-                # Flexibly align molecule0 to molecule1 based on the mapping.
-                elif scoring_function == "RMSDFLEXALIGN":
-                    molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
-                        property_map0=property_map0, property_map1=property_map1)._sire_molecule
+                if is_valid:
+                    # Rigidly align molecule0 to molecule1 based on the mapping.
+                    if scoring_function == "RMSDALIGN":
+                        try:
+                            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+                        except:
+                            raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                    # Flexibly align molecule0 to molecule1 based on the mapping.
+                    elif scoring_function == "RMSDFLEXALIGN":
+                        molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
+                            property_map0=property_map0, property_map1=property_map1)._sire_molecule
 
-                # Append the mapping to the list.
-                mappings.append(mapping)
+                    # Append the mapping to the list.
+                    mappings.append(mapping)
 
-                # We now compute the RMSD between the coordinates of the matched atoms
-                # in molecule0 and molecule1.
+                    # We now compute the RMSD between the coordinates of the matched atoms
+                    # in molecule0 and molecule1.
 
-                # Initialise lists to hold the coordinates.
-                c0 = []
-                c1 = []
+                    # Initialise lists to hold the coordinates.
+                    c0 = []
+                    c1 = []
 
-                # Loop over each atom index in the map.
-                for idx0, idx1 in mapping.items():
-                    # Append the coordinates of the matched atom in molecule0.
-                    c0.append(molecule0.atom(idx0).property("coordinates"))
-                    # Append the coordinates of atom in molecule1 to which it maps.
-                    c1.append(molecule1.atom(idx1).property("coordinates"))
+                    # Loop over each atom index in the map.
+                    for idx0, idx1 in mapping.items():
+                        # Append the coordinates of the matched atom in molecule0.
+                        c0.append(molecule0.atom(idx0).property("coordinates"))
+                        # Append the coordinates of atom in molecule1 to which it maps.
+                        c1.append(molecule1.atom(idx1).property("coordinates"))
 
-                # Compute the RMSD between the two sets of coordinates.
-                scores.append(_SireMaths.getRMSD(c0, c1))
+                    # Compute the RMSD between the two sets of coordinates.
+                    scores.append(_SireMaths.getRMSD(c0, c1))
 
     # No mappings were found.
     if len(mappings) == 0:
