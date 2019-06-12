@@ -164,7 +164,7 @@ def matchAtoms(molecule0,
         _scoring_function = _scoring_function.replace(" ", "").upper()
         if not _scoring_function in scoring_functions:
             raise ValueError("Unsupported scoring function '%s'. Options are: %s"
-                % (_scoring_function, scoring_functions))
+                % (scoring_function, scoring_functions))
 
     if _scoring_function == "RMSDFLEXALIGN" and _fkcombu_exe is None:
         raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
