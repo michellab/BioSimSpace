@@ -23,14 +23,18 @@
 Functionality for aligning molecules.
 """
 
+import os as _os
 import rdkit.Chem as _Chem
 import rdkit.Chem.rdFMCS as _rdFMCS
+import subprocess as _subprocess
 import tempfile as _tempfile
 
+import Sire.Base as _SireBase
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 
 from .._Exceptions import AlignmentError as _AlignmentError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
@@ -40,13 +44,17 @@ import BioSimSpace._Utils as _Utils
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["matchAtoms",
-           "rmsdAlign",
-           "merge"]
+__all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
+
+# Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
+try:
+    _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
+except:
+    _fkcombu_exe = None
 
 def matchAtoms(molecule0,
                molecule1,
-               scoring_function="RMSD align",
+               scoring_function="rmsd_align",
                matches=1,
                return_scores=False,
                prematch={},
@@ -71,13 +79,16 @@ def matchAtoms(molecule0,
 
        scoring_function : str
            The scoring function used to match atoms. Available options are:
-             - "RMSD"
+             - "rmsd"
                  Calculate the root mean squared distance between the
                  coordinates of atoms in molecule0 to those that they
                  map to in molecule1.
-             - "RMSD align"
+             - "rmsd_align"
                  Align molecule0 to molecule1 based on the mapping before
                  computing the above RMSD score.
+             - "rmsd_flex_align"
+                 Flexibly align molecule0 to molecule1 based on the mapping
+                 before computing the above RMSD score. (Requires 'fkcombu'.)
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
@@ -135,7 +146,7 @@ def matchAtoms(molecule0,
     """
 
     # A list of supported scoring functions.
-    scoring_functions = ["RMSD", "RMSDALIGN"]
+    scoring_functions = ["RMSD", "RMSDALIGN", "RMSDFLEXALIGN"]
 
     # Validate input.
 
@@ -148,11 +159,16 @@ def matchAtoms(molecule0,
     if type(scoring_function) is not str:
         raise TypeError("'scoring_function' must be of type 'str'")
     else:
-        # Strip whitespace and convert to upper case.
-        _scoring_function = scoring_function.replace(" ", "").upper()
+        # Strip underscores and whitespace, then convert to upper case.
+        _scoring_function = scoring_function.replace("_", "").upper()
+        _scoring_function = _scoring_function.replace(" ", "").upper()
         if not _scoring_function in scoring_functions:
             raise ValueError("Unsupported scoring function '%s'. Options are: %s"
                 % (_scoring_function, scoring_functions))
+
+    if _scoring_function == "RMSDFLEXALIGN" and _fkcombu_exe is None:
+        raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
+                                    "http://strcomp.protein.osaka-u.ac.jp/kcombu")
 
     if type(matches) is not int:
         raise TypeError("'matches' must be of type 'int'")
@@ -191,12 +207,6 @@ def matchAtoms(molecule0,
     # Convert the timeout to seconds and take the magnitude as an integer.
     timeout = int(timeout.seconds().magnitude())
 
-    # Are we performing an alignment before scoring.
-    if _scoring_function == "RMSDALIGN":
-        is_align = True
-    else:
-        is_align = False
-
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
     work_dir = tmp_dir.name
@@ -231,7 +241,7 @@ def matchAtoms(molecule0,
 
     # Score the mappings and return them in sorted order (best to worst).
     mappings, scores = _score_mappings(mol0, mol1, mols[0], mols[1],
-        mcs_smarts, prematch, is_align, property_map0, property_map1)
+        mcs_smarts, prematch, _scoring_function, property_map0, property_map1)
 
     if matches == 1:
         if return_scores:
@@ -342,6 +352,128 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Return the aligned molecule.
     return _Molecule(mol0)
 
+def flexAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+    """Flexibly align atoms in molecule0 to those in molecule1 using the
+       mapping between matched atom indices.
+
+       Parameters
+       ----------
+
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule to align.
+
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The reference molecule.
+
+       mapping : dict
+           A dictionary mapping atoms in molecule0 to those in molecule1.
+
+       property_map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       property_map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+
+       Returns
+       -------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The aligned molecule.
+
+       Examples
+       --------
+
+       Align molecule0 to molecule1 based on a precomputed mapping.
+
+       >>> import BioSimSpace as BSS
+       >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1, mapping)
+
+       Align molecule0 to molecule1. Since no mapping is passed one will be
+       autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
+       with default options.
+
+       >>> import BioSimSpace as BSS
+       >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1)
+    """
+
+    if _fkcombu_exe is None:
+        raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
+                                    "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+
+    if type(molecule0) is not _Molecule:
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(molecule1) is not _Molecule:
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(property_map0) is not dict:
+        raise TypeError("'property_map0' must be of type 'dict'")
+
+    if type(property_map1) is not dict:
+        raise TypeError("'property_map1' must be of type 'dict'")
+
+    # The user has passed an atom mapping.
+    if mapping is not None:
+        if type(mapping) is not dict:
+            raise TypeError("'mapping' must be of type 'dict'.")
+        else:
+            # Make sure all key/value pairs are of type AtomIdx.
+            for idx0, idx1 in mapping.items():
+                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
+                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
+                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
+                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
+                                     "The molecules contain %d and %d atoms."
+                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+
+    # Get the best match atom mapping.
+    else:
+        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0,
+                             property_map1=property_map1)
+
+    # Create a temporary working directory.
+    tmp_dir = _tempfile.TemporaryDirectory()
+    work_dir = tmp_dir.name
+
+    # Execute in the working directory.
+    with _Utils.cd(work_dir):
+
+        # Write the two molecules to PDB files.
+        _IO.saveMolecules("molecule0", molecule0, "PDB", property_map=property_map0)
+        _IO.saveMolecules("molecule1", molecule1, "PDB", property_map=property_map1)
+
+        # Write the mapping to text. (Increment indices by one).
+        with open("mapping.txt", "w") as file:
+            for idx0, idx1 in mapping.items():
+                file.write("%d %d\n" % (idx0.value() + 1, idx1.value() + 1))
+
+        # Create the fkcombu command string.
+        command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % _fkcombu_exe
+
+        # Run the command as a subprocess.
+        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        # Check that the output file exists.
+        if not _os.path.isfile("aligned.pdb"):
+            raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
+
+        # Load the aligned molecule.
+        aligned = _IO.readMolecules("aligned.pdb").getMolecules()[0]
+
+        # Get the "coordinates" property for molecule0.
+        prop = property_map0.get("coordinates", "coordinates")
+
+        # Copy the coordinates back into the original molecule.
+        molecule0._sire_molecule = molecule0._sire_molecule.edit() \
+            .setProperty(prop, aligned._sire_molecule.property("coordinates")).commit()
+
+    # Return the aligned molecule.
+    return _Molecule(molecule0)
+
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
         property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
@@ -436,7 +568,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             property_map0=property_map0, property_map1=property_map1)
 
 def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
-        mcs_smarts, prematch, is_align, property_map0, property_map1):
+        mcs_smarts, prematch, scoring_function, property_map0, property_map1):
     """Internal function to score atom mappings based on the root mean squared
        displacement (RMSD) between mapped atoms in two molecules. Optionally,
        molecule0 can first be aligned to molecule1 based on the mapping prior
@@ -466,8 +598,8 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
        prematch : dict
            A dictionary of atom mappings that must be included in the match.
 
-       is_align : bool
-           Whether to align the molecules before performing the RMSD score.
+       scoring_function : str
+           The RMSD scoring function.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -543,12 +675,16 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
                     break
 
             if is_valid:
-                # Align molecule0 to molecule1 based on the mapping.
-                if is_align:
+                # Rigidly align molecule0 to molecule1 based on the mapping.
+                if scoring_function == "RMSDALIGN":
                     try:
                         molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
                     except:
                         raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                # Flexibly align molecule0 to molecule1 based on the mapping.
+                elif scoring_function == "RMSDFLEXALIGN":
+                    molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
+                        property_map0=property_map0, property_map1=property_map1)._sire_molecule
 
                 # Append the mapping to the list.
                 mappings.append(mapping)
