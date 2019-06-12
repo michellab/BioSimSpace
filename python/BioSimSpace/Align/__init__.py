@@ -30,6 +30,7 @@ Functions
 
     matchAtoms
     rmsdAlign
+    flexAlign
     merge
 """
 

@@ -88,7 +88,8 @@ def matchAtoms(molecule0,
                  computing the above RMSD score.
              - "rmsd_flex_align"
                  Flexibly align molecule0 to molecule1 based on the mapping
-                 before computing the above RMSD score. (Requires 'fkcombu'.)
+                 before computing the above RMSD score. (Requires the
+                 'fkcombu'. package: http://strcomp.protein.osaka-u.ac.jp/kcombu)
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
@@ -136,6 +137,14 @@ def matchAtoms(molecule0,
 
        >>> import BioSimSpace as BSS
        >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True)
+
+       Find the 5 best mappings along with their ranking scores. Score
+       by flexibly aligning molecule0 to molecule1 based on each mapping
+       and computing the root mean squared displacement of the matched
+       atoms.
+
+       >>> import BioSimSpace as BSS
+       >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True, scoring_function="rmsd_flex_align")
 
        Find the best mapping that contains a prematch (this is a dictionary mapping
        atom indices in molecule0 to those in molecule1).
