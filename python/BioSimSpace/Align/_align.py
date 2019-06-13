@@ -268,10 +268,10 @@ def matchAtoms(molecule0,
 
 def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
     """Align atoms in molecule0 to those in molecule1 using the mapping
-       between matched atom indices. The molecule is aligned based on
-       a root mean squared displacement (RMSD) fit to find the optimal
-       translation vector (as opposed to merely taking the difference of
-       centroids).
+       between matched atom indices. The molecule is aligned using rigid-body
+       translation and rotations, with a root mean squared displacement (RMSD)
+       fit to find the optimal translation vector (as opposed to merely taking
+       the difference of centroids).
 
        Parameters
        ----------
@@ -361,7 +361,8 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Return the aligned molecule.
     return _Molecule(mol0)
 
-def flexAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
+        property_map0={}, property_map1={}):
     """Flexibly align atoms in molecule0 to those in molecule1 using the
        mapping between matched atom indices.
 
@@ -376,6 +377,10 @@ def flexAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
 
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
+
+       fkcombu_exe : str
+           Path to the fkcombu executable. If None is passed, then BioSimSpace
+           will attempt to find fkcombu by searching your PATH.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -408,9 +413,17 @@ def flexAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1)
     """
 
-    if _fkcombu_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
-                                    "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+    # Check that we found fkcombu in the PATH.
+    if fkcombu_exe is None:
+        if _fkcombu_exe is None:
+            raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
+                                        "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+        else:
+            fkcombu_exe = _fkcombu_exe
+    # Check that the user supplied executable exists.
+    else:
+        if not _os.path.isfile(fkcombu_exe):
+            raise IOError("'fkcombu' executable doesn't exist: '%s'" % fkcombu_exe)
 
     if type(molecule0) is not _Molecule:
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
@@ -461,7 +474,7 @@ def flexAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
                 file.write("%d %d\n" % (idx0.value() + 1, idx1.value() + 1))
 
         # Create the fkcombu command string.
-        command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % _fkcombu_exe
+        command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
