@@ -24,7 +24,7 @@ cd kcombu/src
 
 # Update the C compiler on Linux.
 if [ "$(uname)" == "Linux" ]; then
-    sed -i "s/gcc/$CC/g" Makefile.fkcombu
+    sed -i "s#gcc#$CC#g" Makefile.fkcombu
 fi
 
 # Build FKCOMBU.
