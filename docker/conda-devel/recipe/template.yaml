@@ -8,9 +8,11 @@ source:
 build:
   number: BUILD
   skip: true  # [win]
-  script: cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
   host:
     - python 3.7
     - sire
