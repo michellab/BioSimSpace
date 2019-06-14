@@ -16,13 +16,22 @@ jupyter-nbextension enable fileupload --py --sys-prefix
 jupyter-nbextension install nglview --py --sys-prefix
 jupyter-nbextension enable nglview --py --sys-prefix
 
-# Now download and build fkcombu. Make sure to use the Conda C compiler.
+# Now download and extract KCOMBU.
 wget --user=kcombu --password=wakame -r --accept .tar.gz --level 1 --cut-dirs 3 -nH http://strcomp.protein.osaka-u.ac.jp/kcombu/src/
 mkdir kcombu
 tar -xzf kcombu*.tar.gz -C kcombu
 cd kcombu/src
-sed -i.bak -e "s/gcc/$GCC/g" Makefile.fkcombu && rm Makefile.fkcombu.bak
+
+# Set the path to the correct Conda C Compiler.
+if [ "$(uname)" = "Darwin" ]; then
+    CC=$CLANG
+else
+    CC=$GCC
+fi
+
+# Update the compiler in the Makefile and build FKCOMBU.
+sed -i.bak -e "s/gcc/$CC/g" Makefile.fkcombu && rm Makefile.fkcombu.bak
 make -f Makefile.fkcombu
 
-# Copy the fkcombu executable to the bin directory.
+# Copy the FKCOMBU executable to the bin directory.
 cp -a ../fkcombu ${PREFIX}/bin
