@@ -28,7 +28,6 @@ requirements:
     - watchdog
   run:
     -  {{ pin_compatible('python') }}
-    -  {{ pin_compatible('pip') }}
     -  {{ pin_compatible('sire') }}
     -  {{ pin_compatible('configargparse') }}
     -  {{ pin_compatible('mdtraj') }}
