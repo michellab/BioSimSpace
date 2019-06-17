@@ -152,7 +152,7 @@ def _find_md_package(system, protocol, gpu_support=False):
     # If we get this far, then no package was found.
     raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
 
-def run(system, protocol, gpu_support=False, autostart=True,
+def run(system, protocol, gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={}):
     """Auto-configure and run a molecular dynamics process.
 
@@ -168,7 +168,7 @@ def run(system, protocol, gpu_support=False, autostart=True,
        gpu_support : bool
            Whether to choose a package with GPU support.
 
-       autostart : bool
+       auto_start : bool
            Whether to start the process automatically.
 
        name : str
@@ -209,8 +209,8 @@ def run(system, protocol, gpu_support=False, autostart=True,
     if type(gpu_support) is not bool:
         raise TypeError("'gpu_support' must be of type 'bool'")
 
-    if type(autostart) is not bool:
-        raise TypeError("'autostart' must be of type 'bool'")
+    if type(auto_start) is not bool:
+        raise TypeError("'auto_start' must be of type 'bool'")
 
     if type(name) is not str:
         raise TypeError("'name' must be of type 'str'")
@@ -256,7 +256,7 @@ def run(system, protocol, gpu_support=False, autostart=True,
             work_dir=work_dir, seed=seed, property_map=property_map)
 
     # Start the process.
-    if autostart:
+    if auto_start:
         return process.start()
     else:
         return process

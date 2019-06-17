@@ -90,7 +90,7 @@ def _wrap_protocol(protocol_function, process):
 class Process():
     """A class for running parameterisation protocols as a background process."""
 
-    def __init__(self, molecule, protocol, work_dir=None, autostart=False):
+    def __init__(self, molecule, protocol, work_dir=None, auto_start=False):
         """Constructor
 
            Parameters
@@ -105,7 +105,7 @@ class Process():
            work_dir : str
                The working directory for the process.
 
-           autostart : bool
+           auto_start : bool
                Whether to automatically start the process.
         """
 
@@ -120,8 +120,8 @@ class Process():
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(autostart) is not bool:
-            raise TypeError("'autostart' must be of type 'bool'")
+        if type(auto_start) is not bool:
+            raise TypeError("'auto_start' must be of type 'bool'")
 
         # Set attributes.
         self._molecule = molecule
@@ -159,7 +159,7 @@ class Process():
         self._thread = None
 
         # Start the process.
-        if autostart:
+        if auto_start:
             self.start()
 
     def start(self):

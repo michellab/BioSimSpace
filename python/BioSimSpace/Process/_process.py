@@ -233,7 +233,7 @@ class Process():
         """
         raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.start()' is not implemented!" % self.__class__.__name__)
 
-    def run(self, system=None, protocol=None, autostart=True, restart=False):
+    def run(self, system=None, protocol=None, auto_start=True, restart=False):
         """Create and run a new process.
 
            Parameters
@@ -245,7 +245,7 @@ class Process():
            protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The simulation protocol.
 
-           autostart : bool
+           auto_start : bool
                Whether to start the process automatically.
 
            restart : bool
@@ -284,7 +284,7 @@ class Process():
         process = type(self)(system, protocol)
 
         # Return the new process object.
-        if autostart:
+        if auto_start:
             return process.start()
         else:
             return process

@@ -123,7 +123,7 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
@@ -173,7 +173,7 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
@@ -223,7 +223,7 @@ def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff03(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
@@ -273,7 +273,7 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
@@ -322,7 +322,7 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def gaff(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
@@ -371,7 +371,7 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def gaff2(molecule, options={}, work_dir=None, property_map={}):
     """Parameterise using the gaff force field.
@@ -420,7 +420,7 @@ def gaff2(molecule, options={}, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, autostart=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
