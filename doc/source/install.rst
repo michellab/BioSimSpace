@@ -19,6 +19,14 @@ To install the latest development version you can use:
 
     conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
+If you plan on using BioSimSpace interactively via Jupyter, then you might also
+need to enable the required notebook extensions within your Conda environment:
+
+.. code-block:: bash
+
+    jupyter-nbextension enable fileupload --py --sys-prefix
+    jupyter-nbextension enable nglview --py --sys-prefix
+
 Unless you add the required channels to your Conda configuration, then you'll
 need to add them when updating, e.g., for the development package:
 
