@@ -24,9 +24,12 @@ A collection of physical unit types.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import re as _re
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Type"]
+
+import re as _re
 
 class Type():
     """A base class for custom types."""

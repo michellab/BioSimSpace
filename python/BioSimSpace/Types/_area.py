@@ -23,14 +23,14 @@
 An area type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Area"]
+
+import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 class Area(_Type):
     """An area type."""

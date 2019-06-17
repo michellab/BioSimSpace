@@ -23,14 +23,14 @@
 A volume type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Volume"]
+
+import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 class Volume(_Type):
     """A volume type."""

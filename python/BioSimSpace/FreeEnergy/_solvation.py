@@ -24,13 +24,13 @@ Functionality for running solvation free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from . import _free_energy
-from .._SireWrappers import System as _System
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Solvation"]
+
+from . import _free_energy
+from .._SireWrappers import System as _System
 
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""

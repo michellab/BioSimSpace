@@ -23,6 +23,11 @@
 Functionality for reading/writing molecular systems.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
+
 from collections import OrderedDict as _OrderedDict
 from io import StringIO as _StringIO
 from warnings import warn as _warn
@@ -51,11 +56,6 @@ from BioSimSpace import _gromacs_path
 
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
 
 # Context manager for capturing stdout.
 # Taken from:

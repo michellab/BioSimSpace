@@ -23,6 +23,11 @@
 Tools for visualising molecular systems.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["View"]
+
 import nglview as _nglview
 import os as _os
 import shutil as _shutil
@@ -35,11 +40,6 @@ from BioSimSpace import _is_notebook
 
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["View"]
 
 class View():
     """A class for handling interactive molecular visualisations."""

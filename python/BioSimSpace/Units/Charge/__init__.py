@@ -24,9 +24,12 @@ Charge units.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ...Types import Charge as _Charge
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["electron_charge", "coulomb"]
+
+from ...Types import Charge as _Charge
 
 electron_charge = _Charge(1, "ELECTRON CHARGE")
 coulomb = _Charge(1, "COULOMB")

@@ -23,6 +23,11 @@
 Tools for plotting data.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["plot"]
+
 from warnings import warn as _warn
 from os import environ as _environ
 
@@ -57,11 +62,6 @@ else:
         #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del _display
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["plot"]
 
 if _has_matplotlib:
     # Define font sizes.

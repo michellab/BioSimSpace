@@ -23,14 +23,14 @@
 Custom context managers.
 """
 
-from contextlib import contextmanager as _contextmanager
-
-import os as _os
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["cd"]
+
+from contextlib import contextmanager as _contextmanager
+
+import os as _os
 
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager

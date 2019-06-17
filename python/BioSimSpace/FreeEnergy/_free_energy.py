@@ -23,6 +23,11 @@
 Base class for free energy simulations.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["FreeEnergy"]
+
 from collections import OrderedDict as _OrderedDict
 
 import math as _math
@@ -43,11 +48,6 @@ from .._SireWrappers import System as _System
 import BioSimSpace.Process as _Process
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Units as _Units
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["FreeEnergy"]
 
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""

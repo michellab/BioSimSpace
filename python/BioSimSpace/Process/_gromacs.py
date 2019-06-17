@@ -23,6 +23,11 @@
 Functionality for running simulations with GROMACS.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Gromacs"]
+
 import math as _math
 import os as _os
 import pygtail as _pygtail
@@ -43,11 +48,6 @@ import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Gromacs"]
 
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""

@@ -23,6 +23,11 @@
 Functionality for running simulation processes.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Process"]
+
 import collections as _collections
 import glob as _glob
 import os as _os
@@ -44,11 +49,6 @@ import BioSimSpace.Units as _Units
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Process"]
 
 class _MultiDict(dict):
     """A multi-valued dictionary."""

@@ -24,11 +24,14 @@ Functionality for storing custom simulation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Custom"]
+
 from ._protocol import Protocol as _Protocol
 
 import os as _os
-
-__all__ = ["Custom"]
 
 class Custom(_Protocol):
     """A class for storing custom protocols."""

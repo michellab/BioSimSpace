@@ -23,6 +23,11 @@
 Functionality for reading and analysing molecular trajectories.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["getFrame", "Trajectory"]
+
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj
 import os as _os
@@ -39,11 +44,6 @@ from .._SireWrappers import Molecule as _Molecule
 from ..Types import Time as _Time
 
 import BioSimSpace.IO as _IO
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["getFrame", "Trajectory"]
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",

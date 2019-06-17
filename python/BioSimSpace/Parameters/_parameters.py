@@ -23,6 +23,11 @@
 Functionality for parameterising molecules.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "gaff2", "forceFields"]
+
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -30,11 +35,6 @@ from .._SireWrappers import Molecule as _Molecule
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "gaff2", "forceFields"]
 
 def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
     """Parameterise a molecule using a specified force field.

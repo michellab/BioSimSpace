@@ -23,6 +23,11 @@
 Functionality for aligning molecules.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
+
 import os as _os
 import rdkit.Chem as _Chem
 import rdkit.Chem.rdFMCS as _rdFMCS
@@ -40,11 +45,6 @@ from .._SireWrappers import Molecule as _Molecule
 import BioSimSpace.IO as _IO
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
 
 # Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
 try:

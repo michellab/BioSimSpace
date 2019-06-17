@@ -23,6 +23,11 @@
 Functionality for running simulations using NAMD.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Namd"]
+
 import math as _math
 import os as _os
 import pygtail as _pygtail
@@ -42,11 +47,6 @@ import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Namd"]
 
 class Namd(_process.Process):
     """A class for running simulations using NAMD."""

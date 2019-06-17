@@ -23,14 +23,14 @@
 Functionality for free energy protocols.
 """
 
-from ._protocol import Protocol as _Protocol
-
-import BioSimSpace.Types as _Types
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
+
+from ._protocol import Protocol as _Protocol
+
+import BioSimSpace.Types as _Types
 
 class FreeEnergy(_Protocol):
     """A class for storing free energy protocols."""

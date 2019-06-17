@@ -22,6 +22,11 @@
 Functionality for configuring and driving molecular dynamics simulations.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["run"]
+
 import os as _os
 
 import Sire.Base as _SireBase
@@ -32,11 +37,6 @@ from .._SireWrappers import System as _System
 
 import BioSimSpace.Process as _Process
 import BioSimSpace.Protocol as _Protocol
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["run"]
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE               GPU

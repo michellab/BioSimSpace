@@ -25,6 +25,11 @@ for AMBER force field models.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
+
 # To override any protocols, just implement a custom "run" method in any
 # of the classes.
 
@@ -39,8 +44,6 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
-
-__all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""

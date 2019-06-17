@@ -23,16 +23,16 @@
 Utility functions.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["packages", "createProcess"]
+
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
 from ._process_runner import *
 from ._somd import *
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["packages", "createProcess"]
 
 # Create a list of the supported molecular dynamics packages.
 _packages = []

@@ -23,16 +23,16 @@
 Utility functions.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["protocols", "createProtocol"]
+
 from ._custom import *
 from ._equilibration import *
 from ._free_energy import *
 from ._minimisation import *
 from ._production import *
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["protocols", "createProtocol"]
 
 # Create a list of the supported protocols.
 _protocols = []

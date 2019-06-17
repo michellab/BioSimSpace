@@ -23,14 +23,14 @@
 Functionality for minimisation protocols.
 """
 
-import warnings as _warnings
-
-from ._protocol import Protocol as _Protocol
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Minimisation"]
+
+import warnings as _warnings
+
+from ._protocol import Protocol as _Protocol
 
 class Minimisation(_Protocol):
     """A class for storing minimisation protocols."""

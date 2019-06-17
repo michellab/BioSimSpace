@@ -23,6 +23,11 @@
 Functionality for creating BioSimSpace workflow components (nodes).
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Node"]
+
 import configargparse as _argparse
 import collections as _collections
 import __main__
@@ -59,11 +64,6 @@ from ._requirements import Time as _Time
 from ._requirements import Volume as _Volume
 
 import BioSimSpace.Types._type as _Type
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Node"]
 
 # Float types (including those with units).
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,

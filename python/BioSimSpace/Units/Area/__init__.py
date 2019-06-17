@@ -23,12 +23,12 @@
 Area units.
 """
 
-from ...Types import Area as _Area
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["meter2", "angstrom2", "nanometer2", "picometer2"]
+
+from ...Types import Area as _Area
 
 meter2 = _Area(1, "meter2")
 nanometer2 = _Area(1, "nanometer2")

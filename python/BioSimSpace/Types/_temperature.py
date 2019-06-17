@@ -23,14 +23,14 @@
 A temperature type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
+
+import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 class Temperature(_Type):
     """A temperature type."""

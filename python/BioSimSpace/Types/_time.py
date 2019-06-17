@@ -23,14 +23,14 @@
 A time type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Time"]
+
+import Sire.Units as _Units
+
+from ._type import Type as _Type
 
 class Time(_Type):
     """A time type."""

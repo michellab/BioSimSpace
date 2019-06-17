@@ -24,6 +24,11 @@ Functionality for handling parameterisation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Protocol"]
+
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
@@ -37,8 +42,6 @@ from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
 
 import BioSimSpace.IO as _IO
-
-__all__ = ["Protocol"]
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:

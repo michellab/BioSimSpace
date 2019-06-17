@@ -24,6 +24,11 @@ A thin wrapper around Sire.System. This is an internal package and should
 not be directly exposed to the user.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["System"]
+
 import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 import Sire.System as _SireSystem
@@ -33,11 +38,6 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
 import BioSimSpace.Units as _Units
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["System"]
 
 class _MolWithResName(_SireMol.MolWithResID):
     def __init__(self, resname):

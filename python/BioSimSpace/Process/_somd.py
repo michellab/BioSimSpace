@@ -23,6 +23,11 @@
 Functionality for running simulations with SOMD.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Somd"]
+
 import math as _math
 import os as _os
 import pygtail as _pygtail
@@ -40,11 +45,6 @@ from ..Trajectory import Trajectory as _Trajectory
 
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Somd"]
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""

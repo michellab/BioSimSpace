@@ -24,17 +24,6 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import bz2 as _bz2
-import copy as _copy
-import gzip as _gzip
-import os as _os
-import re as _re
-import shutil as _shutil
-import tarfile as _tarfile
-import zipfile as _zipfile
-
-import BioSimSpace.Types as _Types
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
@@ -46,6 +35,17 @@ __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "Pressure",
            "Temperature",
            "Time"]
+
+import bz2 as _bz2
+import copy as _copy
+import gzip as _gzip
+import os as _os
+import re as _re
+import shutil as _shutil
+import tarfile as _tarfile
+import zipfile as _zipfile
+
+import BioSimSpace.Types as _Types
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""

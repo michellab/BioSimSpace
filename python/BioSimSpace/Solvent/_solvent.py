@@ -23,6 +23,11 @@
 Functionality for solvating molecular systems.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
+
 import os as _os
 import re as _re
 import subprocess as _subprocess
@@ -43,11 +48,6 @@ from ..Types import Length as _Length
 
 import BioSimSpace.IO as _IO
 import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 
 def solvate(model, molecule=None, box=None, shell=None,
         ion_conc=0, is_neutral=True, work_dir=None, property_map={}):

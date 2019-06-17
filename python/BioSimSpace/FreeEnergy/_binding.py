@@ -23,17 +23,17 @@
 Functionality for running binding free energy calculations.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Binding"]
+
 from . import _free_energy
 from .._SireWrappers import System as _System
 
 import BioSimSpace.Solvent as _Solvent
 import BioSimSpace.Types as _Types
 import BioSimSpace.Units as _Units
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Binding"]
 
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""

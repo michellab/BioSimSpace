@@ -24,6 +24,11 @@ A thin wrapper around Sire.Mol. This is an internal package and should
 not be directly exposed to the user.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Molecule"]
+
 from pytest import approx as _approx
 
 import os.path as _path
@@ -42,11 +47,6 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
 import BioSimSpace.Units as _Units
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Molecule"]
 
 class Molecule():
     """A container class for storing a molecule."""

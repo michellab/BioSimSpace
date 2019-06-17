@@ -24,6 +24,11 @@ Functionality running parameterisation protocols as a background process.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Process"]
+
 # TODO:
 # Work out a way to safely kill running processes.
 #
@@ -54,8 +59,6 @@ from .._SireWrappers import Molecule as _Molecule
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
-
-__all__ = ["Process"]
 
 def _wrap_protocol(protocol_function, process):
     """A simple decorator function to wrap the running of parameterisation

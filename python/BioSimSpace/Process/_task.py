@@ -23,6 +23,11 @@
 Functionality for running background tasks.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Task"]
+
 import glob as _glob
 import os as _os
 import tempfile as _tempfile
@@ -30,11 +35,6 @@ import threading as _threading
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Task"]
 
 def _wrap_task(task):
     """A simple wrapper function to run a background tasks and catch exceptions.

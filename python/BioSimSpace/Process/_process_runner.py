@@ -23,16 +23,16 @@
 Functionality for running multiple processes.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["ProcessRunner"]
+
 import os as _os
 import tempfile as _tempfile
 
 from ._process import Process as _Process
 from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["ProcessRunner"]
 
 class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.
