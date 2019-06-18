@@ -245,8 +245,8 @@ class Amber(_process.Process):
 
                 # Try to get the name of the water model.
                 try:
-                    water_model = system._sire_system.property("water_model").toString()
-                    waters = _SireIO.setAmberWater(system._sire_system.search("water"), water_model)
+                    water_model = system._sire_object.property("water_model").toString()
+                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
 
                 except:
                     num_point = waters[0].nAtoms()
@@ -254,11 +254,11 @@ class Amber(_process.Process):
                     # Convert to an appropriate AMBER topology.
                     if num_point == 3:
                         # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                        waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP3P")
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP3P")
                     elif num_point == 4:
-                        waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP4P")
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP4P")
                     elif num_point == 5:
-                        waters = _SireIO.setAmberWater(system._sire_system.search("water"), "TIP5P")
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP5P")
 
                 # Loop over all of the renamed water molecules, delete the old one
                 # from the system, then add the renamed one back in.
@@ -266,18 +266,18 @@ class Amber(_process.Process):
                 # doesn't work properly at present.
                 system.removeWaterMolecules()
                 for wat in waters:
-                    system._sire_system.add(wat, _SireMol.MGName("all"))
+                    system._sire_object.add(wat, _SireMol.MGName("all"))
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system._sire_system, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system._sire_system, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None

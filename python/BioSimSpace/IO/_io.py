@@ -437,7 +437,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _property_map)
+            file = _SireIO.MoleculeParser.save(system._getSireObject(), filebase, _property_map)
             files += file
         except:
             if dirname != "":

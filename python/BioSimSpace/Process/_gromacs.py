@@ -330,7 +330,7 @@ class Gromacs(_process.Process):
                 for idx, mol in enumerate(mols):
                     if not mol.isWater() and mol.nAtoms() > 1:
                         # Create a GRO file from the molecule.
-                        gro = _SireIO.Gro87(mol.toSystem()._sire_system)
+                        gro = _SireIO.Gro87(mol.toSystem()._sire_object)
 
                         # Create the name of the temporary gro file.
                         gro_file = "%s/tmp.gro" % self._work_dir
@@ -706,7 +706,7 @@ class Gromacs(_process.Process):
                     return old_system
                 else:
                     # Preserve the original fileformat property.
-                    new_system._sire_system.setProperty("fileformat", _SireBase.wrap("GroTop,Gro87"))
+                    new_system._sire_object.setProperty("fileformat", _SireBase.wrap("GroTop,Gro87"))
                     return new_system
             except:
                 return None

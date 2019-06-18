@@ -123,7 +123,7 @@ class Process():
         self._has_trajectory = False
 
 	# Copy the passed system, protocol, and process name.
-        self._system = system._getSireSystem()
+        self._system = system._getSireObject()
         self._protocol = protocol
 
         # Flag whether the system contains water molecules.

@@ -20,7 +20,7 @@
 #####################################################################
 
 """
-A thin wrapper around Sire.Mol. This is an internal package and should
+A thin wrapper around Sire.Mol.Molecule. This is an internal package and should
 not be directly exposed to the user.
 """
 
@@ -43,12 +43,11 @@ import Sire.Mol as _SireMol
 import Sire.Units as _SireUnits
 import Sire.Vol as _SireVol
 
+from ._sire_wrapper import SireWrapper as _SireWrapper
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 
-import BioSimSpace.Units as _Units
-
-class Molecule():
+class Molecule(_SireWrapper):
     """A container class for storing a molecule."""
 
     def __init__(self, molecule):
@@ -65,9 +64,6 @@ class Molecule():
         # the molecule has been parameterised, i.e. by BSS.Parameters.
         self._forcefield = None
 
-        # Set the molecule as un-merged.
-        self._is_merged = False
-
         # Set the components of the merged molecule to None.
         self._molecule0 = None
         self._molecule1 = None
@@ -76,13 +72,13 @@ class Molecule():
 
         # A Sire Molecule object.
         if type(molecule) is _SireMol.Molecule:
-            self._sire_molecule = molecule.__deepcopy__()
-            if self._sire_molecule.hasProperty("is_perturbable"):
+            super().__init__(molecule)
+            if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
 
         # Another BioSimSpace Molecule object.
         elif type(molecule) is Molecule:
-            self._sire_molecule = molecule._sire_molecule.__deepcopy__()
+            super().__init__(molecule._sire_object)
             if molecule._molecule0 is not None:
                 self._molecule0 = Molecule(molecule._molecule0)
             if molecule._molecule1 is not None:
@@ -92,8 +88,11 @@ class Molecule():
 
         # Invalid type.
         else:
-            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
+            raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule' "
                             "or 'BioSimSpace._SireWrappers.Molecule'.")
+
+        # Flag that this object holds multiple atoms.
+        self._is_multi_atom = True
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -141,10 +140,41 @@ class Molecule():
     def copy(self):
         """Create a copy of this molecule.
 
+           Returns
+           -------
+
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                A copy of the molecule.
         """
         return Molecule(self)
+
+    def getResidues(self):
+        """Return a list containing the residues in the molecule.
+
+           Returns
+           -------
+
+           residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+               The list of residues in the molecule.
+        """
+        residues = []
+        for residue in self._sire_object.residues():
+            residues.append(_Residue(residue))
+        return residues
+
+    def getAtoms(self):
+        """Return a list containing the atoms in the molecule.
+
+           Returns
+           -------
+
+           atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+               The list of atoms in the molecule.
+        """
+        atoms = []
+        for atom in self._sire_object.atoms():
+            atoms.append(_Atom(atom))
+        return atoms
 
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
@@ -179,7 +209,7 @@ class Molecule():
            num_atoms : int
                The number of atoms in the molecule.
         """
-        return self._sire_molecule.nAtoms()
+        return self._sire_object.nAtoms()
 
     def nResidues(self):
         """Return the number of residues in the molecule.
@@ -190,7 +220,7 @@ class Molecule():
            num_residues : int
                The number of residues in the molecule.
         """
-        return self._sire_molecule.nResidues()
+        return self._sire_object.nResidues()
 
     def nChains(self):
         """Return the number of chains in the molecule.
@@ -201,7 +231,7 @@ class Molecule():
            num_chains : int
                The number of chains in the molecule.
         """
-        return self._sire_molecule.nChains()
+        return self._sire_object.nChains()
 
     def isMerged(self):
         """Whether this molecule has been merged with another.
@@ -232,7 +262,7 @@ class Molecule():
         num_oxygen = 0
 
         # Loop over all atoms in the molecule.
-        for atom in self._sire_molecule.atoms():
+        for atom in self._sire_object.atoms():
 
             # First try using the "element" property of the atom.
             try:
@@ -267,100 +297,6 @@ class Molecule():
         else:
             return False
 
-    def charge(self, property_map={}, is_lambda1=False):
-        """Return the total molecular charge.
-
-           Parameters
-           ----------
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-
-           is_lambda1 : bool
-              Whether to use the charge at lambda = 1 if the molecule is merged.
-
-           Returns
-           -------
-
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The molecular charge.
-        """
-
-        # Copy the map.
-        _property_map = property_map.copy()
-
-        # This is a merged molecule.
-        if self._is_merged:
-            if is_lambda1:
-                _property_map = { "charge" : "charge1" }
-            else:
-                _property_map = { "charge" : "charge0" }
-
-        # Calculate the charge.
-        try:
-            charge = self._sire_molecule.evaluate().charge(_property_map).value()
-        except:
-            charge = 0
-
-        # Return the charge.
-        return charge * _Units.Charge.electron_charge
-
-    def translate(self, vector, property_map={}):
-        """Translate the molecule.
-
-           Parameters
-           ----------
-
-           vector : [:class:`Length <BioSimSpace.Types.Length>`]
-               The translation vector.
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-        """
-
-        # Convert tuple to a list.
-        if type(vector) is tuple:
-            vector = list(vector)
-
-        # Validate input.
-        if type(vector) is list:
-            vec = []
-            for x in vector:
-                if type(x) is int:
-                    vec.append(float(x))
-                elif type(x) is float:
-                    vec.append(x)
-                elif type(x) is _Length:
-                    vec.append(x.angstroms().magnitude())
-                else:
-                    raise TypeError("'vector' must contain 'int', 'float', or "
-                                    "'BioSimSpace.Types.Length' types only!")
-        else:
-            raise TypeError("'vector' must be of type 'list' or 'tuple'")
-
-        if type(property_map) is not dict:
-            raise TypeError("'property_map' must be of type 'dict'")
-
-        # Make a local copy of the property map.
-        _property_map = property_map.copy()
-
-        try:
-            if "coordinates" not in property_map and self._is_merged:
-                _property_map["coordinates"] = "coordinates0"
-
-            # Perform the translation.
-            self._sire_molecule = self._sire_molecule                                   \
-                                      .move()                                           \
-                                      .translate(_SireMaths.Vector(vec), _property_map) \
-                                      .commit()
-
-        except UserWarning:
-            raise UserWarning("Molecule has no 'coordinates' property.") from None
-
     def toSystem(self):
         """Convert a single Molecule to a System.
 
@@ -370,16 +306,6 @@ class Molecule():
            system : :class:`System <BioSimSpace._SireWrappers.System>`
         """
         return _System(self)
-
-    def _getSireMolecule(self):
-        """Return the full Sire Molecule object.
-
-           Returns
-           -------
-
-           molecule : Sire.Mol.Molecule
-        """
-        return self._sire_molecule
 
     def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
@@ -410,9 +336,9 @@ class Molecule():
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
         elif type(molecule) is Molecule:
-            mol1 = molecule._sire_molecule
+            mol1 = molecule._sire_object
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol._Mol.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'")
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
@@ -427,7 +353,7 @@ class Molecule():
             raise TypeError("'verbose' must be of type 'bool'")
 
         # Get the two Sire molecules.
-        mol0 = self._sire_molecule
+        mol0 = self._sire_object
 
         # Store the number of atoms to match.
         num_atoms = mol0.nAtoms()
@@ -589,15 +515,15 @@ class Molecule():
                     raise _IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
 
         # Commit the changes.
-        self._sire_molecule = edit_mol.commit()
+        self._sire_object = edit_mol.commit()
 
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""
 
         # Extract the components of the merged molecule.
         try:
-            mol0 = self._sire_molecule.property("molecule0")
-            mol1 = self._sire_molecule.property("molecule1")
+            mol0 = self._sire_object.property("molecule0")
+            mol1 = self._sire_object.property("molecule1")
         except:
             raise _IncompatibleError("The merged molecule doesn't have the required properties!")
 
@@ -623,7 +549,7 @@ class Molecule():
         # Get the user defined charge property.
         prop = property_map.get("charge", "charge")
 
-        if not self._sire_molecule.hasProperty(prop):
+        if not self._sire_object.hasProperty(prop):
             raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
 
         # Calculate the charge.
@@ -640,7 +566,7 @@ class Molecule():
         delta /= self.nAtoms()
 
         # Make the molecule editable.
-        edit_mol = self._sire_molecule.edit()
+        edit_mol = self._sire_object.edit()
 
         # Shift the charge of each atom in the molecule by delta.
         # Make sure to invert the sign of the charge since it is in
@@ -653,7 +579,7 @@ class Molecule():
                                .molecule()
 
         # Update the Sire molecule.
-        self._sire_molecule = edit_mol.commit()
+        self._sire_object = edit_mol.commit()
 
     def _fromPertFile(self, filename):
         """Create a merged molecule from a perturbation file.
@@ -707,7 +633,7 @@ class Molecule():
         if not self._is_merged:
             raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
 
-        if not self._sire_molecule.property("forcefield0").isAmberStyle():
+        if not self._sire_object.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
         if type(zero_dummy_dihedrals) is not bool:
@@ -723,7 +649,7 @@ class Molecule():
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Extract and copy the Sire molecule.
-        mol = self._sire_molecule.__deepcopy__()
+        mol = self._sire_object.__deepcopy__()
 
         # First work out the indices of atoms that are perturbed.
         pert_idxs = []
@@ -1712,10 +1638,10 @@ class Molecule():
             lam = "0"
 
         if not self._is_merged:
-            return Molecule(self._sire_molecule)
+            return Molecule(self._sire_object)
 
         # Extract and copy the Sire molecule.
-        mol = self._sire_molecule.__deepcopy__()
+        mol = self._sire_object.__deepcopy__()
 
         # Make the molecule editable.
         mol = mol.edit()
@@ -1801,8 +1727,8 @@ class Molecule():
         mol = Molecule(self)
 
         # Set the two molecule objects.
-        molecule0 = mol._sire_molecule
-        molecule1 = other._sire_molecule
+        molecule0 = mol._sire_object
+        molecule1 = other._sire_object
 
         # Get the atom indices from the mapping.
         idx0 = mapping.keys()
@@ -2646,7 +2572,7 @@ class Molecule():
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
         # Update the Sire molecule object of the new molecule.
-        mol._sire_molecule = edit_mol.commit()
+        mol._sire_object = edit_mol.commit()
 
         # Flag that the molecule has been merged.
         mol._is_merged = True
@@ -2657,44 +2583,6 @@ class Molecule():
 
         # Return the new molecule.
         return mol
-
-    def _getAABox(self, property_map={}):
-        """Get the axis-aligned bounding box for the molecule.
-
-           Parameters
-           ----------
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-
-           Returns
-           -------
-
-           aabox : Sire.Vol.AABox
-               The axis-aligned bounding box for the molecule.
-        """
-
-        # Initialise the coordinates vector.
-        coord = []
-
-        # Extract the atomic coordinates and append them to the vector.
-        try:
-            if "coordinates" in property_map:
-                prop = property_map["coordinates"]
-            else:
-                if self._is_merged:
-                    prop = "coordinates0"
-                else:
-                    prop = "coordinates"
-            coord.extend(self._sire_molecule.property(prop).toVector())
-
-        except UserWarning:
-            raise UserWarning("Molecule has no 'coordinates' property.") from None
-
-        # Return the AABox for the coordinates.
-        return _SireVol.AABox(coord)
 
 def _has_pert_atom(idxs, pert_idxs):
     """Internal function to check whether a potential contains perturbed atoms.
@@ -2861,4 +2749,6 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     return (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1))
 
 # Import at bottom of module to avoid circular dependency.
+from ._atom import Atom as _Atom
+from ._residue import Residue as _Residue
 from ._system import System as _System

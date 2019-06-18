@@ -554,7 +554,7 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
-            waters = _SireIO.setGromacsWater(molecule._sire_system.search("water"), model)
+            waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
 
             # Loop over all of the renamed water molecules, delete the old one
             # from the system, then add the renamed one back in.
@@ -562,7 +562,7 @@ def _solvate(molecule, box, shell, model, num_point,
             # doesn't work properly at present.
             molecule.removeWaterMolecules()
             for wat in waters:
-                molecule._sire_system.add(wat, _SireMol.MGName("all"))
+                molecule._sire_object.add(wat, _SireMol.MGName("all"))
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -686,11 +686,11 @@ def _solvate(molecule, box, shell, model, num_point,
                 system = molecule + water.getMolecules()
 
             # Add all of the water box properties to the new system.
-            for prop in water._sire_system.propertyKeys():
+            for prop in water._sire_object.propertyKeys():
                 prop = property_map.get(prop, prop)
 
                 # Add the space property from the water system.
-                system._sire_system.setProperty(prop, water._sire_system.property(prop))
+                system._sire_object.setProperty(prop, water._sire_object.property(prop))
         else:
             system = water
 
@@ -873,16 +873,16 @@ def _solvate(molecule, box, shell, model, num_point,
                             system = molecule + water_ions.getMolecules()
 
                         # Add all of the water molecules' properties to the new system.
-                        for prop in water_ions._sire_system.propertyKeys():
+                        for prop in water_ions._sire_object.propertyKeys():
                             prop = property_map.get(prop, prop)
 
                             # Add the space property from the water system.
-                            system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
+                            system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
                     else:
                         system = water_ions
 
         # Store the name of the water model as a system property.
-        system._sire_system.setProperty("water_model", _SireBase.wrap(model))
+        system._sire_object.setProperty("water_model", _SireBase.wrap(model))
 
     return system
 

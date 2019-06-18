@@ -69,7 +69,7 @@ class View():
 
         # BioSimSpace system.
         elif type(handle) is _System:
-            self._handle = handle._getSireSystem()
+            self._handle = handle._getSireObject()
             self._is_process = False
 
         else:
@@ -104,7 +104,7 @@ class View():
             if system is None:
                 return
             else:
-                system = system._getSireSystem()
+                system = system._getSireObject()
 
         else:
             system = self._handle
@@ -145,7 +145,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:
@@ -198,7 +198,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:

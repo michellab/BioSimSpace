@@ -156,7 +156,7 @@ class Protocol():
         prefix = work_dir + "/"
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
+        new_mol = _Molecule(molecule._getSireObject().__deepcopy__())
 
         # Choose the program to run with depending on the force field compatibility.
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
@@ -185,7 +185,7 @@ class Protocol():
 
         try:
             # Load the parameterised molecule.
-            par_mol = _Molecule(_IO.readMolecules(output)._getSireSystem()[_Sire.Mol.MolIdx(0)])
+            par_mol = _Molecule(_IO.readMolecules(output)._getSireObject()[_Sire.Mol.MolIdx(0)])
         except:
             raise IOError("Failed to read molecule from: '%s', '%s'" % (output[0], output[1])) from None
 
@@ -219,7 +219,7 @@ class Protocol():
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireMolecule())
+        m.add(molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.
@@ -294,7 +294,7 @@ class Protocol():
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireMolecule())
+        m.add(molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.

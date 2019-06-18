@@ -437,9 +437,9 @@ class FreeEnergy():
         if self._engine == "SOMD":
             # Try to get the name of the water model.
             try:
-                water_model = system0._sire_system.property("water_model").toString()
-                waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), water_model)
-                waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), water_model)
+                water_model = system0._sire_object.property("water_model").toString()
+                waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
+                waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
 
             except:
                 num_point = system0.getWaterMolecules()[0].nAtoms()
@@ -447,14 +447,14 @@ class FreeEnergy():
                 # Convert to an appropriate AMBER topology. (Required by SOMD.)
                 if num_point == 3:
                     # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                    waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), "TIP3P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), "TIP3P")
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
                 elif num_point == 4:
-                    waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), "TIP4P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), "TIP4P")
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
                 elif num_point == 5:
-                    waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), "TIP5P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), "TIP5P")
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
 
             # Loop over all of the renamed water molecules, delete the old one
             # from the system, then add the renamed one back in.
@@ -463,9 +463,9 @@ class FreeEnergy():
             system0.removeWaterMolecules()
             system1.removeWaterMolecules()
             for wat in waters0:
-                system0._sire_system.add(wat, _SireMol.MGName("all"))
+                system0._sire_object.add(wat, _SireMol.MGName("all"))
             for wat in waters1:
-                system1._sire_system.add(wat, _SireMol.MGName("all"))
+                system1._sire_object.add(wat, _SireMol.MGName("all"))
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()

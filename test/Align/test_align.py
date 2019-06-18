@@ -6,10 +6,10 @@ import BioSimSpace as BSS
 import pytest
 
 # Parameterise the function with a set of valid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{AtomIdx(3) : AtomIdx(1)},
-                                      {AtomIdx(5) : AtomIdx(9)},
-                                      {AtomIdx(4) : AtomIdx(5)},
-                                      {AtomIdx(1) : AtomIdx(0)}])
+@pytest.mark.parametrize("prematch", [{3 : 1},
+                                      {5 : 9},
+                                      {4 : 5},
+                                      {1 : 0}])
 def test_prematch(prematch):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
@@ -28,10 +28,10 @@ def test_prematch(prematch):
         assert mapping[key] == value
 
 # Parameterise the function with a set of invalid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{AtomIdx(-1) : AtomIdx(1)},
-                                      {AtomIdx(50) : AtomIdx(9)},
-                                      {AtomIdx(4) : AtomIdx(48)},
-                                      {AtomIdx(1) : AtomIdx(-1)}])
+@pytest.mark.parametrize("prematch", [{-1 :  1},
+                                      {50 :  9},
+                                      { 4 : 48},
+                                      { 1 : -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
@@ -65,7 +65,7 @@ def test_merge():
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
     # Store the number of atoms in m0.
-    n0 = m0._sire_molecule.nAtoms()
+    n0 = m0._sire_object.nAtoms()
 
     # Test that the intramolecular energies area the same.
 
@@ -77,16 +77,16 @@ def test_merge():
     #  is consistent.
 
     intraclj0 = IntraCLJFF("intraclj")
-    intraclj0.add(m0._sire_molecule)
+    intraclj0.add(m0._sire_object)
 
     intraff0 = IntraFF("intraclj")
-    intraff0.add(m0._sire_molecule)
+    intraff0.add(m0._sire_object)
 
     intraclj1 = IntraCLJFF("intraclj")
-    intraclj1.add(m1._sire_molecule)
+    intraclj1.add(m1._sire_object)
 
     intraff1 = IntraFF("intraclj")
-    intraff1.add(m1._sire_molecule)
+    intraff1.add(m1._sire_object)
 
     intraclj2 = IntraCLJFF("intraclj")
     intraff2 = IntraFF("intraclj")
@@ -94,14 +94,14 @@ def test_merge():
     # Create maps between property names: { "prop" : "prop0" }, { "prop" : "prop1" }
     pmap0 = {}
     pmap1 = {}
-    for prop in m2._sire_molecule.propertyKeys():
+    for prop in m2._sire_object.propertyKeys():
         if prop[-1] == "0":
             pmap0[prop[:-1]] = prop
         elif prop[-1] == "1":
             pmap1[prop[:-1]] = prop
 
-    intraclj2.add(m2._sire_molecule, pmap0)
-    intraff2.add(m2._sire_molecule, pmap0)
+    intraclj2.add(m2._sire_object, pmap0)
+    intraff2.add(m2._sire_object, pmap0)
 
     assert intraclj0.energy().value() == pytest.approx(intraclj2.energy().value())
     assert intraff0.energy().value() == pytest.approx(intraff2.energy().value())
@@ -109,8 +109,8 @@ def test_merge():
     intraclj2 = IntraCLJFF("intraclj")
     intraff2 = IntraFF("intraclj")
 
-    intraclj2.add(m2._sire_molecule, pmap1)
-    intraff2.add(m2._sire_molecule, pmap1)
+    intraclj2.add(m2._sire_object, pmap1)
+    intraff2.add(m2._sire_object, pmap1)
 
     assert intraclj1.energy().value() == pytest.approx(intraclj2.energy().value())
     assert intraff1.energy().value() == pytest.approx(intraff2.energy().value())
@@ -120,19 +120,19 @@ def test_merge():
 
     internalff0 = InternalFF("internal")
     internalff0.setStrict(True)
-    internalff0.add(m0._sire_molecule)
+    internalff0.add(m0._sire_object)
 
     internalff1 = InternalFF("internal")
     internalff1.setStrict(True)
-    internalff1.add(m1._sire_molecule)
+    internalff1.add(m1._sire_object)
 
     # First extract a partial molecule using the atoms from molecule0 in
     # the merged molecule.
-    selection = m2._sire_molecule.selection()
+    selection = m2._sire_object.selection()
     selection.deselectAll()
-    for atom in m0._sire_molecule.atoms():
+    for atom in m0._sire_object.atoms():
         selection.select(atom.index())
-    partial_mol = PartialMolecule(m2._sire_molecule, selection)
+    partial_mol = PartialMolecule(m2._sire_object, selection)
 
     internalff2 = InternalFF("internal")
     internalff2.setStrict(True)
@@ -142,13 +142,13 @@ def test_merge():
 
     # Now extract a partial molecule using the atoms from molecule1 in
     # the merged molecule.
-    selection = m2._sire_molecule.selection()
+    selection = m2._sire_object.selection()
     selection.deselectAll()
     for idx in mapping.keys():
-        selection.select(idx)
-    for idx in range(n0, m2._sire_molecule.nAtoms()):
         selection.select(AtomIdx(idx))
-    partial_mol = PartialMolecule(m2._sire_molecule, selection)
+    for idx in range(n0, m2._sire_object.nAtoms()):
+        selection.select(AtomIdx(idx))
+    partial_mol = PartialMolecule(m2._sire_object, selection)
 
     internalff2 = InternalFF("internal")
     internalff2.setStrict(True)
@@ -207,6 +207,6 @@ def _load_mapping(file_name):
     with open(file_name, "r") as file:
         for line in file:
             indices = line.split()
-            mapping[AtomIdx(int(indices[0]))] = AtomIdx(int(indices[1]))
+            mapping[int(indices[0])] = int(indices[1])
 
     return mapping

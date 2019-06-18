@@ -456,19 +456,19 @@ class Trajectory():
             # Integer molecule index.
             if type(molecule) is int:
                 try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[_SireMol.MolIdx(molecule)]
+                    molecule = self.getFrames(frame)[0]._getSireObject()[_SireMol.MolIdx(molecule)]
                 except:
                     raise ValueError("Missing molecule index '%d' in System" % molecule)
             # Sire.Mol.MolIdx index.
             elif type(molecule) is _SireMol.MolIdx:
                 try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[molecule]
+                    molecule = self.getFrames(frame)[0]._getSireObject()[molecule]
                 except:
                     raise ValueError("Missing '%s' in System" % molecule.toString())
 
             # A BioSimSpace Molecule object.
             elif type(molecule) is _Molecule:
-                molecule = molecule._getSireMolecule()
+                molecule = molecule._getSireObject()
             # A Sire.Mol.Molecule object.
             elif type(molecule) is _SireMol.Molecule:
                 pass

@@ -78,7 +78,7 @@ class Binding(_free_energy.FreeEnergy):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the bound system. (Used for the first leg.)
-            self._system0 = _System(system._getSireSystem().__deepcopy__())
+            self._system0 = _System(system._getSireObject().__deepcopy__())
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
@@ -99,7 +99,7 @@ class Binding(_free_energy.FreeEnergy):
             if box is None:
                 try:
                     prop = property_map.get("space", "space")
-                    box = system._sire_system.property(prop).dimensions()
+                    box = system._sire_object.property(prop).dimensions()
                     box = [_Units.Length.angstrom * x for x in box]
                 except:
                     raise ValueError("The solvated protein-ligand system has no box information!")
@@ -114,7 +114,7 @@ class Binding(_free_energy.FreeEnergy):
 
             # Get the water model.
             try:
-                water_model = system._sire_system.property("water_model").toString()
+                water_model = system._sire_object.property("water_model").toString()
             except:
                 raise ValueError("Cannot deduce water model of solvated protein-ligand system!")
 

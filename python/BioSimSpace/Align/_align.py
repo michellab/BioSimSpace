@@ -150,8 +150,7 @@ def matchAtoms(molecule0,
        atom indices in molecule0 to those in molecule1).
 
        >>> import BioSimSpace as BSS
-       >>> from Sire.Mol import AtomIdx
-       >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1, prematch={AtomIdx(0), AtomIdx(10)})
+       >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1, prematch={0 : 10, 3 : 7})
     """
 
     # A list of supported scoring functions.
@@ -191,14 +190,7 @@ def matchAtoms(molecule0,
     if type(prematch) is not dict:
         raise TypeError("'prematch' must be of type 'dict'")
     else:
-        for idx0, idx1 in prematch.items():
-            if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                raise TypeError("'prematch' dictionary key:value pairs must be of type 'Sire.Mol.AtomIdx'")
-            if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
-               idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                raise ValueError("'prematch' dictionary key:value pair '%s : %s' is out of range! "
-                                 "The molecules contain %d and %d atoms."
-                                 % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+        _validate_mapping(molecule0, molecule1, prematch, "prematch")
 
     if type(timeout) is not _Units.Time._Time:
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
@@ -210,8 +202,8 @@ def matchAtoms(molecule0,
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # Extract the Sire molecule from each BioSimSpace molecule.
-    mol0 = molecule0._getSireMolecule()
-    mol1 = molecule1._getSireMolecule()
+    mol0 = molecule0._getSireObject()
+    mol1 = molecule1._getSireObject()
 
     # Convert the timeout to seconds and take the magnitude as an integer.
     timeout = int(timeout.seconds().magnitude())
@@ -333,15 +325,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
-            # Make sure all key/value pairs are of type AtomIdx.
-            for idx0, idx1 in mapping.items():
-                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
-                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
-                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
-                                     "The molecules contain %d and %d atoms."
-                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+            _validate_mapping(molecule0, molecule1, mapping, "mapping")
 
     # Get the best match atom mapping.
     else:
@@ -349,12 +333,15 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
                              property_map1=property_map1)
 
     # Extract the Sire molecule from each BioSimSpace molecule.
-    mol0 = molecule0._getSireMolecule()
-    mol1 = molecule1._getSireMolecule()
+    mol0 = molecule0._getSireObject()
+    mol1 = molecule1._getSireObject()
+
+    # Convert the mapping to AtomIdx key:value pairs.
+    sire_mapping = _to_sire_mapping(mapping)
 
     # Perform the alignment, mol0 to mol1.
     try:
-        mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(mapping)).molecule()
+        mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
     except:
         raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
 
@@ -442,20 +429,15 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
-            # Make sure all key/value pairs are of type AtomIdx.
-            for idx0, idx1 in mapping.items():
-                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
-                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
-                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
-                                     "The molecules contain %d and %d atoms."
-                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+            _validate_mapping(molecule0, molecule1, mapping, "mapping")
 
     # Get the best match atom mapping.
     else:
         mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0,
                              property_map1=property_map1)
+
+    # Convert the mapping to AtomIdx key:value pairs.
+    sire_mapping = _to_sire_mapping(mapping)
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
@@ -470,7 +452,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
 
         # Write the mapping to text. (Increment indices by one).
         with open("mapping.txt", "w") as file:
-            for idx0, idx1 in mapping.items():
+            for idx0, idx1 in sire_mapping.items():
                 file.write("%d %d\n" % (idx0.value() + 1, idx1.value() + 1))
 
         # Create the fkcombu command string.
@@ -490,8 +472,8 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         prop = property_map0.get("coordinates", "coordinates")
 
         # Copy the coordinates back into the original molecule.
-        molecule0._sire_molecule = molecule0._sire_molecule.edit() \
-            .setProperty(prop, aligned._sire_molecule.property("coordinates")).commit()
+        molecule0._sire_object = molecule0._sire_object.edit() \
+            .setProperty(prop, aligned._sire_object.property("coordinates")).commit()
 
     # Return the aligned molecule.
     return _Molecule(molecule0)
@@ -569,15 +551,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
-            # Make sure all key/value pairs are of type AtomIdx.
-            for idx0, idx1 in mapping.items():
-                if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
-                    raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
-                if idx0.value() < 0 or idx0.value() >= molecule0.nAtoms() or \
-                   idx1.value() < 0 or idx1.value() >= molecule1.nAtoms():
-                    raise ValueError("'mapping' dictionary key:value pair '%s : %s' is out of range! "
-                                     "The molecules contain %d and %d atoms."
-                                     % (idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+            _validate_mapping(molecule0, molecule1, mapping, "mapping")
 
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
@@ -585,8 +559,11 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
         mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0, property_map1=property_map1)
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
+    # Convert the mapping to AtomIdx key:value pairs.
+    sire_mapping = _to_sire_mapping(mapping)
+
     # Create and return the merged molecule.
-    return molecule0._merge(molecule1, mapping, allow_ring_breaking=allow_ring_breaking,
+    return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
             property_map0=property_map0, property_map1=property_map1)
 
 def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
@@ -681,6 +658,7 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
 
             # Initialise the mapping for this match.
             mapping = {}
+            sire_mapping = {}
 
             # Loop over all atoms in the match.
             for i, idx0 in enumerate(match0):
@@ -688,9 +666,11 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
 
                 # Add to the mapping.
                 if is_swapped:
-                    mapping[_SireMol.AtomIdx(idx1)] = _SireMol.AtomIdx(idx0)
+                    mapping[idx1] = idx0
+                    sire_mapping[_SireMol.AtomIdx(idx1)] = _SireMol.AtomIdx(idx0)
                 else:
-                    mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
+                    mapping[idx0] = idx1
+                    sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
 
             # This is a new mapping:
             if not mapping in mappings:
@@ -706,13 +686,13 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
                     # Rigidly align molecule0 to molecule1 based on the mapping.
                     if scoring_function == "RMSDALIGN":
                         try:
-                            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+                            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
                         except:
                             raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
                         molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
-                            property_map0=property_map0, property_map1=property_map1)._sire_molecule
+                            property_map0=property_map0, property_map1=property_map1)._sire_object
 
                     # Append the mapping to the list.
                     mappings.append(mapping)
@@ -725,7 +705,7 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
                     c1 = []
 
                     # Loop over each atom index in the map.
-                    for idx0, idx1 in mapping.items():
+                    for idx0, idx1 in sire_mapping.items():
                         # Append the coordinates of the matched atom in molecule0.
                         c0.append(molecule0.atom(idx0).property("coordinates"))
                         # Append the coordinates of atom in molecule1 to which it maps.
@@ -752,3 +732,66 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
 
     # Return the sorted mappings and their scores.
     return (mappings, scores)
+
+def _validate_mapping(molecule0, molecule1, mapping, name):
+    """Internal function to validate that a mapping contains key:value pairs
+       of the correct type.
+
+       Parameters
+       ----------
+
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule of interest.
+
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The reference molecule.
+
+       mapping : dict
+           The mapping between matching atom indices in the two molecules.
+
+       name : str
+           The name of the mapping. (Used when raising exceptions.)
+    """
+
+    for idx0, idx1 in mapping.items():
+            if type(idx0) is int and type(idx1) is int:
+                pass
+            elif type(idx0) is _SireMol.AtomIdx and type(idx1) is _SireMol.AtomIdx:
+                idx0 = idx0.value()
+                idx1 = idx1.value()
+            else:
+                raise TypeError("%r dictionary key:value pairs must be of type 'int' or "
+                                "'Sire.Mol.AtomIdx'" % name)
+            if idx0 < 0 or idx0 >= molecule0.nAtoms() or \
+               idx1 < 0 or idx1 >= molecule1.nAtoms():
+                raise ValueError("%r dictionary key:value pair '%s : %s' is out of range! "
+                                 "The molecules contain %d and %d atoms."
+                                 % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+
+def _to_sire_mapping(mapping):
+    """Internal function to convert a mapping to Sire AtomIdx format.
+
+       Parameters
+       ----------
+
+       mapping : {int:int}
+           The original mapping.
+
+       Returns
+       -------
+
+       mapping : {AtomIdx:AtomIdx}
+           The converted mapping.
+    """
+
+    sire_mapping = {}
+
+    # Convert the mapping to AtomIdx key:value pairs.
+    for idx0, idx1 in mapping.items():
+        # Early exit if the mapping is already the correct format.
+        if type(idx0) is _SireMol.AtomIdx:
+            return mapping
+        else:
+            sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
+
+    return sire_mapping

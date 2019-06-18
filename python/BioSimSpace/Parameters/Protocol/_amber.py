@@ -247,7 +247,7 @@ class GAFF(_protocol.Protocol):
         prefix = work_dir + "/"
 
         # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
+        new_mol = _Molecule(molecule._getSireObject().__deepcopy__())
 
         # The user will likely have passed a bare PDB or Mol2 file.
         # Antechamber expects the molecule to be uncharged, or integer
@@ -263,7 +263,7 @@ class GAFF(_protocol.Protocol):
             prop = "charge"
 
         # The molecule has a charge property.
-        if new_mol._getSireMolecule().hasProperty(prop):
+        if new_mol._getSireObject().hasProperty(prop):
             charge = new_mol.charge(property_map=_property_map).magnitude()
 
             # Charge is non-integer, try to fix it.
@@ -289,7 +289,7 @@ class GAFF(_protocol.Protocol):
         m = _Sire.Mol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(new_mol._getSireMolecule())
+        m.add(new_mol._getSireObject())
         s.add(m)
 
         # Write the system to a PDB file.
@@ -386,7 +386,7 @@ class GAFF(_protocol.Protocol):
                     # Load the parameterised molecule.
                     try:
                         par_mol = _Molecule(_IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
-                                ._getSireSystem()[_Sire.Mol.MolIdx(0)])
+                                ._getSireObject()[_Sire.Mol.MolIdx(0)])
                     except:
                         raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
 

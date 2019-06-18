@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Julien Michel
-# 
+#
 # email: julien.michel@ed.ac.uk
 
 # # PrepareFEP
@@ -13,7 +13,6 @@
 
 import BioSimSpace as BSS
 import os
-from Sire.Mol import AtomIdx
 
 
 # In[ ]:
@@ -26,16 +25,16 @@ def writeLog(ligA, ligB, mapping):
     atAdone = []
     atBdone= []
     for atAidx in atoms_in_A:
-        atA = ligA._sire_molecule.select(atAidx)
-        atB = ligB._sire_molecule.select(mapping[atAidx])
+        atA = ligA._sire_object.select(atAidx)
+        atB = ligB._sire_object.select(mapping[atAidx])
         stream.write("%s %s --> %s %s\n" % (atA.index(), atA.name(),atB.index(), atB.name()))
         atAdone.append(atA)
         atBdone.append(atB)
-    for atom in ligA._sire_molecule.atoms():
+    for atom in ligA._sire_object.atoms():
         if atom in atAdone:
             continue
         stream.write("%s %s --> dummy\n" % (atom.index(), atom.name()))
-    for atom in ligB._sire_molecule.atoms():
+    for atom in ligB._sire_object.atoms():
         if atom in atBdone:
             continue
         stream.write("dummy --> %s %s\n" % (atom.index(), atom.name()))
@@ -57,8 +56,8 @@ def loadMapping(mapping_file):
         elems = line.split(",")
         idx1 = int(elems[0])
         idx2 = int(elems[1])
-        mapping[ AtomIdx(idx1)] = AtomIdx(idx2)
-    
+        mapping[idx1] = idx2
+
     return mapping
 
 
@@ -115,14 +114,14 @@ if custom_mapping is not None:
 # In[ ]:
 
 
-# Optional input, dictionary of Atom indices that should be matched in the search. 
+# Optional input, dictionary of Atom indices that should be matched in the search.
 prematch = {}
 prematchstring = node.getInput("prematch")
-if len(prematchstring) > 0: 
+if len(prematchstring) > 0:
     entries = prematchstring.split(",")
     for entry in entries:
         idxA, idxB = entry.split("-")
-        prematch[ AtomIdx( int(idxA)) ] = AtomIdx( int(idxB) )
+        prematch[int(idxA)] = int(idxB)
 #print (prematch)
 
 

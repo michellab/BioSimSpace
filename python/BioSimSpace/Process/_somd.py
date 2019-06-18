@@ -185,15 +185,15 @@ class Somd(_process.Process):
                 self._input_files.append(self._pert_file)
 
                 # Remove the perturbable molecule.
-                system._sire_system.remove(pert_mol.number())
+                system._sire_object.remove(pert_mol.number())
 
                 # Recreate the system, putting the perturbable molecule with
                 # renamed properties first.
                 updated_system = _System(pert_mol) + _System(system)
 
                 # Copy across all of the properties from the orginal system.
-                for prop in system._sire_system.propertyKeys():
-                    updated_system._sire_system.setProperty(prop, system._sire_system.property(prop))
+                for prop in system._sire_object.propertyKeys():
+                    updated_system._sire_object.setProperty(prop, system._sire_object.property(prop))
 
                 # Copy the updated system object across.
                 system = updated_system
@@ -205,14 +205,14 @@ class Somd(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system._sire_system, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system._sire_system, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
