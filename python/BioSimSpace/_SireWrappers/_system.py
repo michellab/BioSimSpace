@@ -150,17 +150,6 @@ class System(_SireWrapper):
         # Return the new system.
         return system
 
-    def copy(self):
-        """Return a copy of this system.
-
-           Returns
-           -------
-
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A copy of the system.
-        """
-        return System(self)
-
     def nMolecules(self):
         """Return the number of molecules in the system.
 

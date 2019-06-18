@@ -137,17 +137,6 @@ class Molecule(_SireWrapper):
         # Create and return a new system.
         return _System(molecules)
 
-    def copy(self):
-        """Create a copy of this molecule.
-
-           Returns
-           -------
-
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               A copy of the molecule.
-        """
-        return Molecule(self)
-
     def getResidues(self):
         """Return a list containing the residues in the molecule.
 

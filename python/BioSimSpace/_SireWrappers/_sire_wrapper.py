@@ -54,6 +54,19 @@ class SireWrapper():
         self._is_multi_atom = False
         self._is_merged = False
 
+    def copy(self):
+        """Return a copy of this object
+
+           Returns
+           -------
+
+           system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                    :class:`System <BioSimSpace._SireWrappers.System>`
+               A copy of the object.
+        """
+        return type(self)(self)
+
     def charge(self, property_map={}, is_lambda1=False):
         """Return the charge.
 

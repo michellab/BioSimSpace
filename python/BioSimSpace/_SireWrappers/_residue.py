@@ -79,17 +79,6 @@ class Residue(_SireWrapper):
         return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
             % (self.name(), self.moleculeNumber(), self.index(), self.nAtoms())
 
-    def copy(self):
-        """Create a copy of this atom.
-
-           Returns
-           -------
-
-           atom : :class:`Atom <BioSimSpace._SireWrappers.Atom>`
-               A copy of the atom.
-        """
-        return Atom(self)
-
     def name(self):
         """Return the name of the residue.
 

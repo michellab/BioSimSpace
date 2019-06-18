@@ -44,11 +44,18 @@ class SearchResult():
                The Sire select result object.
         """
 
-        if type(select_result) is not _SireMol.SelectResult:
-            raise TypeError("'select_result' must be of type 'Sire.Mol.SelectResult'")
+        # Check that the select_result is valid.
+
+        if type(select_result) is SearchResult:
+            select_result = select_result._sire_object
+        elif type(select_result) is _SireMol.SelectResult:
+            pass
+        else:
+            raise TypeError("'select_result' must be of type 'BioSimSpace._SireWrappers.SearchResult' "
+                            "or 'Sire.Mol.SelectResult'")
 
         # Store the Sire select result.
-        self._select_result = select_result
+        self._sire_object = select_result.__deepcopy__()
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -69,6 +76,17 @@ class SearchResult():
         """
         return self.nResults()
 
+    def copy(self):
+        """Create a copy of this object.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object.
+        """
+        return SearchResult(self)
+
     def nResults(self):
         """Return the number of results.
 
@@ -78,7 +96,7 @@ class SearchResult():
            num_results : int
                The number of search results.
         """
-        return len(self._select_result)
+        return len(self._sire_object)
 
     def getResults(self):
         """Return a list containing the results.
@@ -95,7 +113,7 @@ class SearchResult():
         results = []
 
         # Loop over each result and determine the type.
-        for x in self._select_result:
+        for x in self._sire_object:
             # Atom.
             if type(x) is _SireMol.Atom:
                 results.append(_Atom(x))
@@ -127,7 +145,7 @@ class SearchResult():
 
            object : Sire.Mol.SelectResult
         """
-        return self._select_result
+        return self._sire_object
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
