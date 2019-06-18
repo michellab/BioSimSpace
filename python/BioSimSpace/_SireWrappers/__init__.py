@@ -28,9 +28,15 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    Atom
     Molecule
+    Residue
     System
+    SearchResult
 """
 
+from ._atom import *
 from ._molecule import *
+from ._residue import *
+from ._search_result import *
 from ._system import *
