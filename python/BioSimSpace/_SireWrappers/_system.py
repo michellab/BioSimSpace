@@ -589,15 +589,16 @@ class System(_SireWrapper):
            Parameters
            ----------
 
-           item : :class:`Atom <BioSimSpace._SireWrappers.Atom>`,
-                  :class:`Atom <BioSimSpace._SireWrappers.Residue>`
-               An Atom or Residue object from the System.
+           item : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                  :class:`Residue <BioSimSpace._SireWrappers.Residue>` \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               An Atom, Residue, or Molecule object from the System.
 
            Returns
            -------
 
            index : int
-               The absolute index of the atom/residue in the system.
+               The absolute index of the atom/residue/molecule in the system.
         """
 
         # Atom.
