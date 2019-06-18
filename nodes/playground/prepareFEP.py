@@ -11,9 +11,9 @@
 # In[ ]:
 
 
-import BioSimSpace as BSS
 import os
-
+from Sire.Mol import AtomIdx
+import BioSimSpace as BSS
 
 # In[ ]:
 
@@ -25,8 +25,8 @@ def writeLog(ligA, ligB, mapping):
     atAdone = []
     atBdone= []
     for atAidx in atoms_in_A:
-        atA = ligA._sire_object.select(atAidx)
-        atB = ligB._sire_object.select(mapping[atAidx])
+        atA = ligA._sire_object.select(AtomIdx(atAidx))
+        atB = ligB._sire_object.select(AtomIdx(mapping[atAidx]))
         stream.write("%s %s --> %s %s\n" % (atA.index(), atA.name(),atB.index(), atB.name()))
         atAdone.append(atA)
         atBdone.append(atB)
