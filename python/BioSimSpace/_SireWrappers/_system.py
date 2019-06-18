@@ -109,6 +109,9 @@ class System(_SireWrapper):
         self._atom_index_tally = {}
         self._residue_index_tally = {}
 
+        # Initialise dictionary to map MolNum to MolIdx.
+        self._molecule_index = {}
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.System: nMolecules=%d>" % self.nMolecules()
@@ -316,6 +319,11 @@ class System(_SireWrapper):
             for mol in molecules:
                 self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
+        # Rebuild the MolNum to index mapping.
+        self._molecule_index = {}
+        for idx in range(0, self.nMolecules()):
+            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
 
@@ -348,6 +356,11 @@ class System(_SireWrapper):
         for mol in molecules:
             self._sire_object.remove(mol._sire_object.number())
 
+        # Rebuild the MolNum to index mapping.
+        self._molecule_index = {}
+        for idx in range(0, self.nMolecules()):
+            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
 
@@ -357,6 +370,11 @@ class System(_SireWrapper):
         # Remove the molecules in the system.
         for mol in waters:
             self._sire_object.remove(mol._sire_object.number())
+
+        # Rebuild the MolNum to index mapping.
+        self._molecule_index = {}
+        for idx in range(0, self.nMolecules()):
+            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -396,6 +414,11 @@ class System(_SireWrapper):
             except:
                 self._sire_object.remove(mol._sire_object.number())
                 self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+
+        # Rebuild the MolNum to index mapping.
+        self._molecule_index = {}
+        for idx in range(0, self.nMolecules()):
+            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
@@ -515,7 +538,9 @@ class System(_SireWrapper):
             raise KeyError("System does not contain residue '%s'" % resname)
 
     def search(self, query, index_by_molecule=False):
-        """Search the system for atoms, residues, and molecules.
+        """Search the system for atoms, residues, and molecules. Search results
+           will be reduced to their minimal representation, i.e. a molecule
+           containing a single residue will be returned as a residue.
 
            Parameters
            ----------
@@ -612,7 +637,7 @@ class System(_SireWrapper):
             mol_num = item._sire_object.molecule().number()
 
             try:
-                index += self._atom_index_tally[mol_num]
+                index = self._atom_index_tally[mol_num]
             except KeyError:
                 raise KeyError("The atom belongs to molecule '%s' that is not part of "
                                "this system!" % mol_num)
@@ -636,10 +661,30 @@ class System(_SireWrapper):
             mol_num = item._sire_object.molecule().number()
 
             try:
-                index += self._residue_index_tally[mol_num]
+                index = self._residue_index_tally[mol_num]
             except KeyError:
                 raise KeyError("The residue belongs to molecule '%s' that is not part of "
                                "this system!" % mol_num)
+
+            return index
+
+        # Residue.
+        elif type(item) is _Molecule:
+            # Only compute the molecule index mapping if it hasn't already
+            # been created.
+            if len(self._molecule_index) == 0:
+                # Loop over all molecules in the system by index and map
+                # the MolNum to index.
+                for idx in range(0, self.nMolecules()):
+                    self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+
+            # Get the MolNum from the molecule.
+            mol_num = item._sire_object.molecule().number()
+
+            try:
+                index = self._molecule_index[mol_num]
+            except KeyError:
+                raise KeyError("The molecule '%s' is not part of this system!" % mol_num)
 
             return index
 
