@@ -152,12 +152,12 @@ class Residue(_SireWrapper):
         return atoms
 
     def toMolecule(self):
-        """Convert a single Resdiue to a Molecule.
+        """Convert a single Residue to a Molecule.
 
            Returns
            -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
+           system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
         return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
 

@@ -158,7 +158,7 @@ class Atom(_SireWrapper):
            Returns
            -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
+           system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
         return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
 
