@@ -86,9 +86,9 @@ class SearchResult():
            Returns
            -------
 
-           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom`,
-                      :class:`Residue <BioSimSpace._SireWrappers.Residue`,
-                      :class:`Molecule <BioSimSpace._SireWrappers.Molecule`, ...]
+           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                      :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                      :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, ...]
                A list of objects matching the search query.
         """
 
