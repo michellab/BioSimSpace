@@ -40,10 +40,10 @@ import Sire.Mol as _SireMol
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
-from .._SireWrappers import Molecule as _Molecule
 from ..Types import Time as _Time
 
 import BioSimSpace.IO as _IO
+import BioSimSpace._SireWrappers as _SireWrappers
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",
@@ -408,7 +408,7 @@ class Trajectory():
         else:
             return self._trajectory.n_frames
 
-    def rmsd(self, frame=None, atoms=None, molecule=None):
+    def rmsd(self, frame=None, atoms=None):
         """Compute the root mean squared displacement.
 
            Parameters
@@ -419,9 +419,6 @@ class Trajectory():
 
            atoms : [int]
                A list of reference atom indices.
-
-           molecule : int
-               The index of the reference molecule.
 
            Returns
            -------
@@ -446,44 +443,6 @@ class Trajectory():
                 elif frame < -n_frames:
                     raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (frame, n_frames))
 
-        if molecule is not None and atoms is not None:
-            _warnings.warn("Cannot have a reference molecule and list of atoms. Defaulting to atoms.")
-            molecule = None
-
-        # Extract the molecule from the reference trajectory frame and generate a
-        # list of atom indices.
-        if molecule is not None:
-            # Integer molecule index.
-            if type(molecule) is int:
-                try:
-                    molecule = self.getFrames(frame)[0]._getSireObject()[_SireMol.MolIdx(molecule)]
-                except:
-                    raise ValueError("Missing molecule index '%d' in System" % molecule)
-            # Sire.Mol.MolIdx index.
-            elif type(molecule) is _SireMol.MolIdx:
-                try:
-                    molecule = self.getFrames(frame)[0]._getSireObject()[molecule]
-                except:
-                    raise ValueError("Missing '%s' in System" % molecule.toString())
-
-            # A BioSimSpace Molecule object.
-            elif type(molecule) is _Molecule:
-                molecule = molecule._getSireObject()
-            # A Sire.Mol.Molecule object.
-            elif type(molecule) is _SireMol.Molecule:
-                pass
-            else:
-                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', "
-                                "'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
-
-            # Initialise the list of atom indices.
-            atoms = []
-
-            # Loop over all of the atoms and add them to the list.
-            # Atoms are numbered from one in Sire, so subtract one to get the python index.
-            for atom in molecule.atoms():
-                atoms.append(atom.number().value() - 1)
-
         if atoms is not None:
             # Check that all of the atom indices are integers.
             if not all(isinstance(x, int) for x in atoms):
@@ -493,7 +452,7 @@ class Trajectory():
         try:
             rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
         except:
-            raise ValueError("Atom indices not found in the system.")
+            raise ValueError("Atom indices not found in the system.") from None
 
         # Convert to a list and return.
         return list(rmsd)
