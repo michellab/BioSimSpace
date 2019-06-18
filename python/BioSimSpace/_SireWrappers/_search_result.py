@@ -104,12 +104,14 @@ class SearchResult():
                 results.append(_Residue(x))
             # Molecule.
             if type(x) is _SireMol.Molecule:
-                # Sometimes residue based searches are converted to molecules.
-                # Attempt to cast as a residue. This will work if the molecule
-                # contains a single residue.
-                try:
+                # If the molecule contains a single atom, then convert to an atom.
+                if x.nAtoms() == 1:
+                    results.append(_Atom(x.atom()))
+                # If there's a single residue, the convert to a residue.
+                elif x.nResidues() == 1:
                     results.append(_Residue(x.residue()))
-                except:
+                # Otherwise, append the molecule.
+                else:
                     results.append(_Molecule(x))
             # Unsupported.
             else:
