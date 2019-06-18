@@ -119,6 +119,16 @@ class SearchResult():
 
         return results
 
+    def _getSireObject(self):
+        """Return the underlying Sire object.
+
+           Returns
+           -------
+
+           object : Sire.Mol.SelectResult
+        """
+        return self._select_result
+
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
