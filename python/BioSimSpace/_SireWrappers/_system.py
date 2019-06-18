@@ -517,26 +517,6 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def getMolWithResName(self, resname):
-        """Return the molecule containing the given residue.
-
-           Parameters
-           ----------
-
-           resname : str
-               The name of a residue unique to the molecule.
-
-           Returns
-           -------
-
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The matching molecule.
-        """
-        try:
-            return _Molecule(self._sire_object[_MolWithResName(resname)])
-        except:
-            raise KeyError("System does not contain residue '%s'" % resname)
-
     def search(self, query, index_by_molecule=False):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule
