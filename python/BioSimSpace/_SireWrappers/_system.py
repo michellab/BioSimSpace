@@ -598,7 +598,7 @@ class System(_SireWrapper):
             search_result = self._sire_object.search(query)
 
         except:
-            raise ValueError("'Invalid search query: %r" % query)
+            raise ValueError("'Invalid search query: %r" % query) from None
 
         return _SearchResult(search_result)
 
