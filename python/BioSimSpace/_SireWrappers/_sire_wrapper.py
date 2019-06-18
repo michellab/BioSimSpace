@@ -54,6 +54,24 @@ class SireWrapper():
         self._is_multi_atom = False
         self._is_merged = False
 
+    def __eq__(self, other):
+        """Equals to operator."""
+
+        # Compare to another object of the same type.
+        if type(other) is type(self):
+            return self._sire_object == other._sire_object
+        else:
+            return False
+
+    def __ne__(self, other):
+        """Not equals to operator."""
+
+        # Compare to another object of the same type.
+        if type(other) is type(self):
+            return self._sire_object != other._sire_object
+        else:
+            return False
+
     def copy(self):
         """Return a copy of this object
 
