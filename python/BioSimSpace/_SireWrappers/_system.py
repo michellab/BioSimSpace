@@ -583,7 +583,7 @@ class System(_SireWrapper):
 
            Parameters
            ----------
-           
+
            item : :class:`Atom <BioSimSpace._SireWrappers.Atom>`,
                   :class:`Atom <BioSimSpace._SireWrappers.Residue>`
                An Atom or Residue object from the System.
