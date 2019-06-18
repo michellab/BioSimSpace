@@ -637,7 +637,7 @@ class System(_SireWrapper):
             mol_num = item._sire_object.molecule().number()
 
             try:
-                index = self._atom_index_tally[mol_num]
+                index += self._atom_index_tally[mol_num]
             except KeyError:
                 raise KeyError("The atom belongs to molecule '%s' that is not part of "
                                "this system!" % mol_num)
@@ -661,7 +661,7 @@ class System(_SireWrapper):
             mol_num = item._sire_object.molecule().number()
 
             try:
-                index = self._residue_index_tally[mol_num]
+                index += self._residue_index_tally[mol_num]
             except KeyError:
                 raise KeyError("The residue belongs to molecule '%s' that is not part of "
                                "this system!" % mol_num)
