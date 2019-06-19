@@ -94,6 +94,10 @@ class SearchResult():
         else:
             return False
 
+    def __hash__(self):
+        """Hash operator."""
+        return hash(self._sire_object)
+
     def copy(self):
         """Create a copy of this object.
 
