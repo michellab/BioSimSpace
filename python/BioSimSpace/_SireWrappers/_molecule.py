@@ -296,6 +296,30 @@ class Molecule(_SireWrapper):
         """
         return _System(self)
 
+    def _getPropertyMap0(self):
+        """Generate a property map for the lambda = 0 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "0":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
+
+    def _getPropertyMap1(self):
+        """Generate a property map for the lambda = 1 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "1":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
+
     def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
