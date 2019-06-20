@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: 'bug'
 assignees: ''
 ---
 
@@ -27,13 +27,11 @@ What is the current behavior?
 
 # Failure Information
 
-Please help provide information about the failure. (Where relevant, use
-screenshots and upload files to help illustrate this.)
+Please help provide information about the failure. (Where relevant, use screenshots and upload files to help illustrate this.)
 
 ## Steps to Reproduce
 
-Please provide detailed steps for reproducing the issue. Make use of markdown
-code blocks, e.g., if BioSimSpace failed to parameterise a molecule:
+Please provide detailed steps for reproducing the issue. Make use of markdown code blocks, e.g., if BioSimSpace failed to parameterise a molecule:
 
 ```python
 import BioSimSpace as BSS
@@ -51,12 +49,9 @@ molecule = process.getMolecule()
 
 ## Failure logs
 
-BioSimSpace provides built in functionality for extracting log files
-and error messages from background processes. Please examine these
-for pertinent information.
+BioSimSpace provides built in functionality for extracting log files and error messages from background processes. Please examine these for pertinent information.
 
-For the example above, we could retrieve all of the intermediate log
-files from the parameterisation process as follows:
+For the example above, we could retrieve all of the intermediate log files from the parameterisation process as follows:
 
 ```python
 import BioSimSpace as BSS
@@ -75,9 +70,7 @@ molecule = process.getMolecule()
 process.getOutput(filename="param_eror.zip")
 ```
 
-Alternatively, the process could be run in a user directory.
-(By default, background processes are run in a temporary directory
-which is destroyed when the Python kernel exits.)
+Alternatively, the process could be run in a user directory. (By default, background processes are run in a temporary directory which is destroyed when the Python kernel exits.)
 
 ```python
 import BioSimSpace as BSS
@@ -96,8 +89,7 @@ molecule = process.getMolecule()
 
 ## Context
 
-Please provide any relevant information about your setup. This is important
-in case the issue is not reproducible except for under certain conditions.
+Please provide any relevant information about your setup. This is important in case the issue is not reproducible except for under certain conditions.
 
 * Operating System: Linux, macOS.
 * Installation method: conda, binary, source. (If installed from source, please
