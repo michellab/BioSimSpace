@@ -506,7 +506,7 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def search(self, query, index_by_molecule=False):
+    def search(self, query):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule
            containing a single residue will be returned as a residue.
@@ -516,10 +516,6 @@ class System(_SireWrapper):
 
            query : str
                The search query.
-
-           index_by_molecule : bool
-               Whether to index atoms relative to the molecule to which they
-               belong (True) or to the entire system (False).
 
            Returns
            -------
@@ -555,9 +551,6 @@ class System(_SireWrapper):
 
         if type(query) is not str:
             raise TypeError("'query' must be of type 'str'")
-
-        if type(index_by_molecule) is not bool:
-            raise TypeError("'index_by_molecule' must be of type 'bool'")
 
         # Intialise a list to hold the search results.
         results = []
