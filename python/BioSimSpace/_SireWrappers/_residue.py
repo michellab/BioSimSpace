@@ -150,6 +150,49 @@ class Residue(_SireWrapper):
         """
         return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
 
+    def search(self, query):
+        """Search the residue for atoms and residues.
+
+           Parameters
+           ----------
+
+           query : str
+               The search query.
+
+           Returns
+           -------
+
+           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+               A list of objects matching the search query.
+
+           Examples
+           --------
+
+           Search for all oxygen or hydrogen atoms.
+
+           >>> result = residue.search("element oxygen or element hydrogen")
+
+           Search for atom index 23.
+
+           >>> result = residue.search("atomidx 23")
+        """
+
+        if type(query) is not str:
+            raise TypeError("'query' must be of type 'str'")
+
+        # Intialise a list to hold the search results.
+        results = []
+
+        try:
+            # Query the Sire system.
+            search_result = self._sire_object.search(query)
+
+        except:
+            raise ValueError("'Invalid search query: %r" % query) from None
+
+        return _SearchResult(search_result)
+
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
+from ._search_result import SearchResult as _SearchResult

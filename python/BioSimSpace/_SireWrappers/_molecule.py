@@ -296,6 +296,55 @@ class Molecule(_SireWrapper):
         """
         return _System(self)
 
+    def search(self, query):
+        """Search the molecule for atoms and residues. Search results will be
+           reduced to their minimal representation, i.e. a residue containing
+           a single atom will be returned as a atom.
+
+           Parameters
+           ----------
+
+           query : str
+               The search query.
+
+           Returns
+           -------
+
+           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                      :class:`Residue <BioSimSpace._SireWrappers.Residue>`, ...]
+               A list of objects matching the search query.
+
+           Examples
+           --------
+
+           Search for all residues named ALA.
+
+           >>> result = molecule.search("resname ALA")
+
+           Search for all oxygen or hydrogen atoms.
+
+           >>> result = molecule.search("element oxygen or element hydrogen")
+
+           Search for atom index 23.
+
+           >>> result = molecule.search("atomidx 23")
+        """
+
+        if type(query) is not str:
+            raise TypeError("'query' must be of type 'str'")
+
+        # Intialise a list to hold the search results.
+        results = []
+
+        try:
+            # Query the Sire system.
+            search_result = self._sire_object.search(query)
+
+        except:
+            raise ValueError("'Invalid search query: %r" % query) from None
+
+        return _SearchResult(search_result)
+
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""
 
@@ -2764,4 +2813,5 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
 from ._residue import Residue as _Residue
+from ._search_result import SearchResult as _SearchResult
 from ._system import System as _System
