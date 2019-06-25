@@ -20,31 +20,15 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace.Types
-
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-
-    Angle
-    Area
-    Charge
-    Energy
-    Length
-    Pressure
-    Temperature
-    Time
-    Volume
+Angle units.
 """
 
-from ._angle import *
-from ._area import *
-from ._charge import *
-from ._energy import *
-from ._length import *
-from ._pressure import *
-from ._temperature import *
-from ._time import *
-from ._volume import *
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["radian", "degree"]
+
+from ...Types import Angle as _Angle
+
+radian = _Angle(1, "radian")
+degree = _Angle(1, "degree")

@@ -30,6 +30,7 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "File", "FileSet",                           # File types.
            "Length", "Area", "Volume",                  # Length types.
+           "Angle",
            "Charge",
            "Energy",
            "Pressure",
@@ -860,7 +861,7 @@ class Volume(Requirement):
        Examples
        --------
 
-       Create an area requirement with a default of 10 cubed Angstrom.
+       Create a volume requirement with a default of 10 cubed Angstrom.
 
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
@@ -872,7 +873,7 @@ class Volume(Requirement):
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
 
        Create a volume requirement with a default of 10 cubed Angstrom and a maximum
-       of 50 square nanometers. Note that the unit is taken from the default value.
+       of 50 cubed nanometers. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement",
@@ -952,6 +953,105 @@ class Volume(Requirement):
                 return _Types.Volume(value, self._unit)
             else:
                 return _Types.Volume(value, unit)._convert_to(self._unit)
+
+class Angle(Requirement):
+    """An angle requirement.
+
+       Examples
+       --------
+
+       Create an angle requirement with a default of 3.14 radians.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14, unit="radian")
+
+       The same, but explicitly passing a :class:`Angle <BioSimSpace.Types.Angle>`
+       for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14*BSS.Units.Angle.radian)
+
+       Create an angle requirement with a default of 3.14 radian and a maximum
+       of 360 degrees. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement",
+       ...                              default=3.14*BSS.Units.Angle.radian,
+       ...                              maximum=360*BSS.Units.Angle.degree)
+    """
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Parameters
+           ----------
+
+           help : str
+               The help string.
+
+           default : :class:`Angle <BioSimSpace.Types.Angle>`
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : :class:`Angle <BioSimSpace.Types.Angle>`
+               The minimum allowed value.
+
+           maximum : :class:`Angle <BioSimSpace.Types.Angle>`
+               The maximum allowed value.
+
+           allowed : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               A list of allowed values.
+        """
+
+        # Validate the unit.
+        if unit is not None:
+            angle = _Types.Angle("1 %s" % unit)
+            self._unit = angle.unit()
+            self._print_unit = angle._print_format[angle.unit()]
+        else:
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
+
+    def getValue(self):
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Angle <BioSimSpace.Types.Angle>`
+               The value of the requirement.
+        """
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        if type(value) is _Types.Angle:
+            return value._convert_to(self._unit)
+
+        else:
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "angle")
+
+            if unit is None:
+                return _Types.Angle(value, self._unit)
+            else:
+                return _Types.Angle(value, unit)._convert_to(self._unit)
 
 class Charge(Requirement):
     """A charge requirement.

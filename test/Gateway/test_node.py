@@ -22,6 +22,7 @@ args = ["--bool",
         "--length='10 angstroms'",
         "--area='256 nanometers squared'",
         "--volume='1024 picometers cubed'",
+        "--angle='3.14 radians'",
         "--charge='-1 electron charge'",
         "--energy='-1000 kcal/mol'",
         "--pressure='1 atmosphere'"]
@@ -271,6 +272,30 @@ def test_charge(value):
 
     # Modify the string.
     command = command.replace("-1 electron charge", value)
+
+    # Run the command.
+    proc = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
+    # Make sure the command completed successfully.
+    assert proc.returncode == 0
+
+@pytest.mark.parametrize("value", ["1.5 R a DI an S",
+                                   "-  3.6 degr EES",
+                                   "        -2 r",
+                                   " 0.2deG",
+                                   "-1.7e3 dE g",
+                                   "   2.7e-4 Ra DS",
+                                   " -1003 Ds",
+                                   "   15e4 RAD",
+                                   " -2.3e-2 r  ad IAN"])
+def test_angle(value):
+    """Test that different format angle strings are supported."""
+
+    # Generate the shell command.
+    command = "%s %s " % (exe, script_name) + " ".join(args)
+
+    # Modify the string.
+    command = command.replace("3.14 radians", value)
 
     # Run the command.
     proc = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
