@@ -112,10 +112,6 @@ class Length(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative lengths.
-        if self._magnitude < 0:
-            raise ValueError("The length cannot be negative!")
-
     def __mul__(self, other):
         """Multiplication operator."""
 
