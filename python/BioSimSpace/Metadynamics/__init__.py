@@ -21,13 +21,6 @@
 
 """
 .. currentmodule:: BioSimSpace.Metadynamics
-
-Functions
-=========
-
-.. autosummary::
-    :toctree: generated/
-
 """
 
 import BioSimSpace.Metadynamics.CollectiveVariable as CollectiveVariable

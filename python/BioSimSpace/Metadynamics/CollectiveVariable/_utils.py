@@ -29,6 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["list"]
 
 from ._distance import *
+from ._torsion import *
 
 # Create a list of the supported collective variables.
 _colvars = []

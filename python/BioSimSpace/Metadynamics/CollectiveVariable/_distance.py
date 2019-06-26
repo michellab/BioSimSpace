@@ -484,27 +484,43 @@ class Distance(_CollectiveVariable):
         """
         return self._is_com1
 
-    def setLowerBound(self, lower_bound=None):
-        """Set the minimum value of the collective variable. Can be called with
+    def setLowerBound(self, lower_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
+        """Set the minimum value of the collective variable along with the
+           parameters used to define the bias potential. Can be called with
            no arguments to clear the data.
+
+           The expression for the bias is:
+
+           .. math::
+
+               k ((x - a)/s)^e
 
            Parameters
            ----------
 
-           lower_bound : :class: `Length <BioSimSpace.Types.Length>`
+           lower_bound : :class:`Length <BioSimSpace.Types.Length>`
                The minimum value of the collective variable.
+
+           force_constant : float
+               The force constant (k) for the bias potential.
+
+           exponent : float
+               The exponent (e) for the bias potential.
+
+           epsilon : float
+               The rescaling factor (s) for the bias potential.
         """
+
         if type(lower_bound) is None:
             self._lower_bound = None
             return
 
-        if type(lower_bound) is not _Length:
-            raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
-
         # Store the existing value.
         old_value = self._lower_bound
 
-        self._lower_bound = lower_bound
+        # Validate and set.
+        self._lower_bound = self._setBound(lower_bound, _Length, "lower_bound",
+                                           force_constant, exponent, epsilon)
 
         # If we are modifying an existing object, then check for consistency.
         if not self._is_new_object:
@@ -520,32 +536,49 @@ class Distance(_CollectiveVariable):
            Returns
            -------
 
-           lower_bound : :class: `Length <BioSimSpace.Types.Length>`
-               The minimum value of the collective variable.
+           lower_bound : dict
+               The minimum value of the collective variable, along with the
+               parameters used to define the bias potential.
         """
         return self._lower_bound
 
-    def setUpperBound(self, upper_bound=None):
-        """Set the maximum value of the collective variable. Can be called with
+    def setUpperBound(self, upper_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
+        """Set the maximum value of the collective variable along with the
+           parameters used to define the bias potential. Can be called with
            no arguments to clear the data.
+
+           The expression for the bias is:
+
+           .. math::
+
+               k ((x - a)/s)^e
 
            Parameters
            ----------
 
-           upper_bound : :class: `Length <BioSimSpace.Types.Length>`
+           upper_bound : :class:`Length <BioSimSpace.Types.Length>`
                The maximum value of the collective variable.
+
+           force_constant : float
+               The force constant (k) for the bias potential.
+
+           exponent : float
+               The exponent (e) for the bias potential.
+
+           epsilon : float
+               The rescaling factor (s) for the bias potential.
         """
+
         if type(upper_bound) is None:
             self._upper_bound = None
             return
 
-        if type(upper_bound) is not _Length:
-            raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
-
         # Store the existing value.
-        old_value = self._lower_bound
+        old_value = self._upper_bound
 
-        self._upper_bound = upper_bound
+        # Validate and set.
+        self._upper_bound = self._setBound(upper_bound, _Length, "upper_bound",
+                                           force_constant, exponent, epsilon)
 
         # If we are modifying an existing object, then check for consistency.
         if not self._is_new_object:
@@ -561,8 +594,9 @@ class Distance(_CollectiveVariable):
            Returns
            -------
 
-           upper_bound : :class: `Length <BioSimSpace.Types.Length>`
-               The maximum value of the collective variable.
+           upper_bound : dict
+               The maximum value of the collective variable, along with the
+               parameters used to define the bias potential.
         """
         return self._upper_bound
 
@@ -639,5 +673,5 @@ class Distance(_CollectiveVariable):
                                  "Cannot compute center without atom group!")
 
         if self._lower_bound is not None and self._upper_bound is not None:
-            if self._lower_bound >= self._upper_bound:
+            if self._lower_bound["value"] >= self._upper_bound["value"]:
                 raise ValueError("'lower_bound' must be less than 'upper_bound'")

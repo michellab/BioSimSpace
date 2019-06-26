@@ -20,7 +20,7 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace.CollectiveVariable
+.. currentmodule:: BioSimSpace.Metadynamics.CollectiveVariable
 
 Functions
 =========
