@@ -130,10 +130,7 @@ class Time(_Type):
         if self._magnitude != 1:
             if abbrev[-1] != "s":
                 abbrev = abbrev + "s"
-        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
-            return "%.4e %s" % (self._magnitude, abbrev)
-        else:
-            return "%5.4f %s" % (self._magnitude, abbrev)
+        return "%s %s" % (self._magnitude, abbrev)
 
     def days(self):
         """Return the time in days.

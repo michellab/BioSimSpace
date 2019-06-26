@@ -44,8 +44,8 @@ class Angle(_Type):
                        "D" : "DEGREE" }
 
     # Print format.
-    _print_format = { "RADIAN" : "radians",
-                      "DEGREE" : "degrees" }
+    _print_format = { "RADIAN" : "radian",
+                      "DEGREE" : "degree" }
 
     # Documentation strings.
     _doc_strings = { "RADIAN" : "An angle in radians.",
@@ -95,6 +95,15 @@ class Angle(_Type):
 
         # Call the base class constructor.
         super().__init__(*args)
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+
+        abbrev = self._print_format[self._unit]
+        if self._magnitude != 1:
+            if abbrev[-1] != "s":
+                abbrev = abbrev + "s"
+        return "%s %s" % (self._magnitude, abbrev)
 
     def radians(self):
         """Return the angle in radians.

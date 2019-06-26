@@ -93,10 +93,7 @@ class Type():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
-            return "%.4e %s" % (self._magnitude, self._print_format[self._unit])
-        else:
-            return "%5.4f %s" % (self._magnitude, self._print_format[self._unit])
+        return "%s %s" % (self._magnitude, self._print_format[self._unit])
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
