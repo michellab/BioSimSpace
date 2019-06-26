@@ -36,7 +36,8 @@ class Distance(_CollectiveVariable):
     """A class for distance based collective variables."""
 
     def __init__(self, atom0, atom1, weights0=None, weights1=None, is_com0=None,
-            is_com1=None, lower_bound=None, upper_bound=None, component=None):
+            is_com1=None, lower_bound=None, upper_bound=None, component=None,
+            pbc=True):
         """Constructor.
 
            Parameters
@@ -80,10 +81,14 @@ class Distance(_CollectiveVariable):
                Whether to use the 'x', 'y', or 'z' component of the distance
                as the collective variable. If None, then the full Euclidean
                distance is used.
+
+           pbc : bool
+               Whether to use periodic boundary conditions when computing the
+               collective variable.
         """
 
         # Call the base class constructor.
-        super().__init__()
+        super().__init__(pbc)
 
         # Initialise member data.
         self._atom0 = None
@@ -143,6 +148,7 @@ class Distance(_CollectiveVariable):
             string += ", upper_bound=%s" % self._upper_bound
         if self._component is not None:
             string += ", component=%r"% self._component
+        string += ", pbc=%s"% self._pbc
         string += ">"
         return string
 
