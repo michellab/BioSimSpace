@@ -44,6 +44,7 @@ from BioSimSpace import _gmx_exe, _gromacs_path
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from .._SireWrappers import Molecule as _Molecule
+from ..Types import Coordinate as _Coordinate
 from ..Types import Length as _Length
 
 import BioSimSpace.IO as _IO
@@ -440,6 +441,15 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
             shell = None
 
     if box is not None:
+        # Convert tuple to list.
+        if type(box) is tuple:
+            box = list(box)
+
+        # Convert Coordinate to list.
+        if type(box) is _Coordinate:
+            box = [box.x(), box.y(), box.z()]
+
+        # Validate.
         if len(box) != 3:
             raise ValueError("The 'box' must have x, y, and z size information.")
         else:

@@ -37,11 +37,9 @@ import string as _string
 
 import Sire.Base as _SireBase
 import Sire.CAS as _SireCAS
-import Sire.Maths as _SireMaths
 import Sire.MM as _SireMM
 import Sire.Mol as _SireMol
 import Sire.Units as _SireUnits
-import Sire.Vol as _SireVol
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 from .._Exceptions import IncompatibleError as _IncompatibleError

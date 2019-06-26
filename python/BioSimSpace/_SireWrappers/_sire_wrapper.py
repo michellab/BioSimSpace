@@ -29,6 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
 
+import Sire.Maths as _SireMaths
 import Sire.Mol as _SireMol
 import Sire.Vol as _SireVol
 
@@ -221,14 +222,14 @@ class SireWrapper():
             if self._is_merged:
                 prop = "coordinates0"
 
-            coord = self._sire_object.property(prop)
+            c = self._sire_object.property(prop)
 
             # We have a vector of coordinates. (Multiple atoms)
             if self._is_multi_atom:
-                coord.extend(coord.toVector())
+                coord.extend(c.toVector())
             # Convert to a list.
             else:
-                coord = [coord]
+                coord = [c]
 
         except UserWarning:
             raise UserWarning("Molecule has no 'coordinates' property.") from None
