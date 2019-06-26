@@ -37,7 +37,9 @@ Classes
     :toctree: generated/
 
     Distance
+    Torsion
 """
 
 from ._distance import *
+from ._torsion import *
 from ._utils import *
