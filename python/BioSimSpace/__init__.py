@@ -135,6 +135,7 @@ from . import Align
 from . import FreeEnergy
 from . import Gateway
 from . import IO
+from . import Metadynamics
 from . import MD
 from . import Node
 from . import Notebook

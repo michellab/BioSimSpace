@@ -99,6 +99,14 @@ class Type():
         """Return a human readable string representation of the object."""
         return self.__str__()
 
+    def __pos__(self):
+        """Unary + operator."""
+        return type(self)(self.magnitude(), self.unit())
+
+    def __neg__(self):
+        """Unary - operator."""
+        return type(self)(-self.magnitude(), self.unit())
+
     def __add__(self, other):
         """Addition operator."""
 

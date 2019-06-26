@@ -77,6 +77,14 @@ class Vector():
         """Return a human readable string representation of the object."""
         return "(%s, %s, %s)" % (self.x(), self.y(), self.z())
 
+    def __pos__(self):
+        """Unary + operator."""
+        return Vector(self.x(), self.y(), self.z())
+
+    def __neg__(self):
+        """Unary - operator."""
+        return Vector(-self.x(), -self.y(), -self.z())
+
     def __add__(self, other):
         """Addition operator.
 
