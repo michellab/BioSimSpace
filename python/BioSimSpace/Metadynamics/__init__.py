@@ -23,6 +23,8 @@
 .. currentmodule:: BioSimSpace.Metadynamics
 """
 
-import BioSimSpace.Metadynamics.CollectiveVariable as CollectiveVariable
-
+from ._bound import *
+from ._grid import *
 from ._metadynamics import *
+
+from . import CollectiveVariable

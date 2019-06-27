@@ -29,6 +29,8 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Distance"]
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
+from .._bound import Bound as _Bound
+from .._grid import Grid as _Grid
 from ...Types import Coordinate as _Coordinate
 from ...Types import Length as _Length
 
@@ -36,8 +38,8 @@ class Distance(_CollectiveVariable):
     """A class for distance based collective variables."""
 
     def __init__(self, atom0, atom1, weights0=None, weights1=None, is_com0=None,
-            is_com1=None, lower_bound=None, upper_bound=None, component=None,
-            pbc=True):
+            is_com1=None, lower_bound=None, upper_bound=None, grid=None,
+            component=None, pbc=True):
         """Constructor.
 
            Parameters
@@ -71,11 +73,16 @@ class Distance(_CollectiveVariable):
                If True, this option will take precedence over any weights
                passed in via 'weights1'.
 
-           lower_bound : :class:`Length <BioSimSpace.Types.Length>`
-               The minimum value of the collective variable.
+           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+               A lower bound on the value of the collective variable.
 
-           upper_bound : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum value of the collective variable.
+           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+               An upper bound on the value of the collective variable.
+
+           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+               The grid on which the collective variable will be sampled.
+               This can help speed up long metadynamics simulations where
+               the number of Guassian kernels can become prohibitive.
 
            component : str
                Whether to use the 'x', 'y', or 'z' component of the distance
@@ -99,6 +106,7 @@ class Distance(_CollectiveVariable):
         self._is_com1 = None
         self._lower_bound = None
         self._upper_bound = None
+        self._grid = None
         self._component = None
 
         # Set the required parameters.
@@ -120,6 +128,8 @@ class Distance(_CollectiveVariable):
             self.setLowerBound(lower_bound)
         if upper_bound is not None:
             self.setUpperBound(upper_bound)
+        if grid is not None:
+            self.setGrid(grid)
         if component is not None:
             self.setComponent(component)
 
@@ -146,6 +156,8 @@ class Distance(_CollectiveVariable):
             string += ", lower_bound=%s" % self._lower_bound
         if self._upper_bound is not None:
             string += ", upper_bound=%s" % self._upper_bound
+        if self._grid is not None:
+            string += ", grid=%s" % self._grid
         if self._component is not None:
             string += ", component=%r"% self._component
         string += ", pbc=%s"% self._pbc
@@ -484,122 +496,6 @@ class Distance(_CollectiveVariable):
         """
         return self._is_com1
 
-    def setLowerBound(self, lower_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
-        """Set the minimum value of the collective variable along with the
-           parameters used to define the bias potential. Can be called with
-           no arguments to clear the data.
-
-           The expression for the bias is:
-
-           .. math::
-
-               k ((x - a)/s)^e
-
-           Parameters
-           ----------
-
-           lower_bound : :class:`Length <BioSimSpace.Types.Length>`
-               The minimum value of the collective variable.
-
-           force_constant : float
-               The force constant (k) for the bias potential.
-
-           exponent : float
-               The exponent (e) for the bias potential.
-
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
-        """
-
-        if type(lower_bound) is None:
-            self._lower_bound = None
-            return
-
-        # Store the existing value.
-        old_value = self._lower_bound
-
-        # Validate and set.
-        self._lower_bound = self._setBound(lower_bound, _Length, "lower_bound",
-                                           force_constant, exponent, epsilon)
-
-        # If we are modifying an existing object, then check for consistency.
-        if not self._is_new_object:
-            try:
-                self._validate()
-            except:
-                self._lower_bound = old_value
-                raise
-
-    def getLowerBound(self):
-        """Get the minimum value of the collective variable.
-
-           Returns
-           -------
-
-           lower_bound : dict
-               The minimum value of the collective variable, along with the
-               parameters used to define the bias potential.
-        """
-        return self._lower_bound
-
-    def setUpperBound(self, upper_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
-        """Set the maximum value of the collective variable along with the
-           parameters used to define the bias potential. Can be called with
-           no arguments to clear the data.
-
-           The expression for the bias is:
-
-           .. math::
-
-               k ((x - a)/s)^e
-
-           Parameters
-           ----------
-
-           upper_bound : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum value of the collective variable.
-
-           force_constant : float
-               The force constant (k) for the bias potential.
-
-           exponent : float
-               The exponent (e) for the bias potential.
-
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
-        """
-
-        if type(upper_bound) is None:
-            self._upper_bound = None
-            return
-
-        # Store the existing value.
-        old_value = self._upper_bound
-
-        # Validate and set.
-        self._upper_bound = self._setBound(upper_bound, _Length, "upper_bound",
-                                           force_constant, exponent, epsilon)
-
-        # If we are modifying an existing object, then check for consistency.
-        if not self._is_new_object:
-            try:
-                self._validate()
-            except:
-                self._upper_bound = old_value
-                raise
-
-    def getUpperBound(self):
-        """Get the maximum value of the collective variable.
-
-           Returns
-           -------
-
-           upper_bound : dict
-               The maximum value of the collective variable, along with the
-               parameters used to define the bias potential.
-        """
-        return self._upper_bound
-
     def setComponent(self, component=None):
         """Whether to use the 'x', 'y', or 'z' component of the distance
            as the collective variable. If unset, then the full Euclidean
@@ -672,6 +568,22 @@ class Distance(_CollectiveVariable):
                 raise ValueError("'is_com1=True but atom1 is not a list of indices. "
                                  "Cannot compute center without atom group!")
 
+        if self._lower_bound is not None:
+            if type(self._lower_bound.getValue()) is not _Length:
+                raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
+        if self._upper_bound is not None:
+            if type(self._upper_bound.getValue()) is not _Length:
+                raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
         if self._lower_bound is not None and self._upper_bound is not None:
-            if self._lower_bound["value"] >= self._upper_bound["value"]:
-                raise ValueError("'lower_bound' must be less than 'upper_bound'")
+            if type(self._lower_bound.getValue()) >= type(self._upper_bound.getValue()):
+                raise TypeError("'lower_bound' must less than 'upper_bound'")
+
+        if self._grid is not None:
+            if type(self._grid.getMinimum()) is not _Length:
+                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
+            if type(self._grid.getMaximum()) is not _Length:
+                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
+            if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
+                raise ValueError("'lower_bound' is less than 'grid' minimum.")
+            if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
+                raise ValueError("'upper_bound' is greater than 'grid' maximum.")

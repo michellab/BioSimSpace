@@ -34,7 +34,7 @@ from ...Types import Angle as _Angle
 class Torsion(_CollectiveVariable):
     """A class for torsion based collective variables."""
 
-    def __init__(self, atoms, lower_bound=None, upper_bound=None, pbc=True):
+    def __init__(self, atoms, lower_bound=None, upper_bound=None, grid=None, pbc=True):
         """Constructor.
 
            Parameters
@@ -43,11 +43,16 @@ class Torsion(_CollectiveVariable):
            atoms :  [int, int, int, int]
                The indices of the four atoms involved in the torsion.
 
-           lower_bound : :class:`Angle <BioSimSpace.Types.Angle>`
-               The minimum value of the collective variable.
+           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+               A lower bound on the value of the collective variable.
 
-           upper_bound : :class:`Angle <BioSimSpace.Types.Angle>`
-               The maximum value of the collective variable.
+           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+               An upper bound on the value of the collective variable.
+
+           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+               The grid on which the collective variable will be sampled.
+               This can help speed up long metadynamics simulations where
+               the number of Guassian kernels can become prohibitive.
 
            pbc : bool
                Whether to use periodic boundary conditions when computing the
@@ -61,6 +66,7 @@ class Torsion(_CollectiveVariable):
         self._atoms = None
         self._lower_bound = None
         self._upper_bound = None
+        self._grid = None
 
         # Set the required parameters.
 
@@ -72,6 +78,8 @@ class Torsion(_CollectiveVariable):
             self.setLowerBound(lower_bound)
         if upper_bound is not None:
             self.setUpperBound(upper_bound)
+        if grid is not None:
+            self.setGrid(grid)
 
         # Validate that the state is self-consistent.
         self._validate()
@@ -87,6 +95,8 @@ class Torsion(_CollectiveVariable):
             string += ", lower_bound=%s" % self._lower_bound
         if self._upper_bound is not None:
             string += ", upper_bound=%s" % self._upper_bound
+        if self._grid is not None:
+            string += ", grid=%s" % self._grid
         string += ", pbc=%s"% self._pbc
         string += ">"
         return string
@@ -134,125 +144,25 @@ class Torsion(_CollectiveVariable):
         """
         return self._atoms
 
-    def setLowerBound(self, lower_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
-        """Set the minimum value of the collective variable along with the
-           parameters used to define the bias potential. Can be called with
-           no arguments to clear the data.
-
-           The expression for the bias is:
-
-           .. math::
-
-               k ((x - a)/s)^e
-
-           Parameters
-           ----------
-
-           lower_bound : :class:`Angle <BioSimSpace.Types.Angle>`
-               The minimum value of the collective variable.
-
-           force_constant : float
-               The force constant (k) for the bias potential.
-
-           exponent : float
-               The exponent (e) for the bias potential.
-
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
-        """
-
-        if type(lower_bound) is None:
-            self._lower_bound = None
-            return
-
-        # Store the existing value.
-        old_value = self._upper_bound
-
-        # Validate and set.
-        self._upper_bound = self._setBound(lower_bound, _Angle, "lower_bound",
-                                           force_constant, exponent, epsilon)
-
-        # If we are modifying an existing object, then check for consistency.
-        if not self._is_new_object:
-            try:
-                self._validate()
-            except:
-                self._lower_bound = old_value
-                raise
-
-    def getLowerBound(self):
-        """Get the minimum value of the collective variable.
-
-           Returns
-           -------
-
-           lower_bound : dict
-               The minimum value of the collective variable, along with the
-               parameters used to define the bias potential.
-        """
-        return self._lower_bound
-
-    def setUpperBound(self, upper_bound=None, force_constant=100.0, exponent=2.0, epsilon=1.0):
-        """Set the maximum value of the collective variable along with the
-           parameters used to define the bias potential. Can be called with
-           no arguments to clear the data.
-
-           The expression for the bias is:
-
-           .. math::
-
-               k ((x - a)/s)^e
-
-           Parameters
-           ----------
-
-           upper_bound : :class:`Angle <BioSimSpace.Types.Angle>`
-               The minimum value of the collective variable.
-
-           force_constant : float
-               The force constant (k) for the bias potential.
-
-           exponent : float
-               The exponent (e) for the bias potential.
-
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
-        """
-
-        if type(upper_bound) is None:
-            self._upper_bound = None
-            return
-
-        # Store the existing value.
-        old_value = self._upper_bound
-
-        # Validate and set.
-        self._upper_bound = self._setBound(upper_bound, _Angle, "upper_bound",
-                                           force_constant, exponent, epsilon)
-
-        # If we are modifying an existing object, then check for consistency.
-        if not self._is_new_object:
-            try:
-                self._validate()
-            except:
-                self._upper_bound = old_value
-                raise
-
-    def getUpperBound(self):
-        """Get the maximum value of the collective variable.
-
-           Returns
-           -------
-
-           upper_bound : dict
-               The maximum value of the collective variable, along with the
-               parameters used to define the bias potential.
-        """
-        return self._upper_bound
-
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
 
+        if self._lower_bound is not None:
+            if type(self._lower_bound.getValue()) is not _Angle:
+                raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Angle'")
+        if self._upper_bound is not None:
+            if type(self._upper_bound.getValue()) is not _Angle:
+                raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
         if self._lower_bound is not None and self._upper_bound is not None:
-            if self._lower_bound >= self._upper_bound:
-                raise ValueError("'lower_bound' must be less than 'upper_bound'")
+            if type(self._lower_bound.getValue()) >= type(self._upper_bound.getValue()):
+                raise TypeError("'lower_bound' must less than 'upper_bound'")
+
+        if self._grid is not None:
+            if type(self._grid.getMinimum()) is not _Angle:
+                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Angle'")
+            if type(self._grid.getMaximum()) is not _Angle:
+                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
+            if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
+                raise ValueError("'lower_bound' is less than 'grid' minimum.")
+            if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
+                raise ValueError("'upper_bound' is greater than 'grid' maximum.")
