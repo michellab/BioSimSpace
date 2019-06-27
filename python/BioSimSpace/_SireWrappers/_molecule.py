@@ -420,7 +420,8 @@ class Molecule(_SireWrapper):
 
         # The new molecule must have at least as many atoms.
         if mol1.nAtoms() < num_atoms:
-            raise _IncompatibleError("The passed molecule does not contain enough atoms!")
+            raise _IncompatibleError("The passed molecule is incompatible with the original! "
+                                     "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms, mol1.nAtoms()))
 
         # Whether the atoms have been renamed.
         is_renamed = False
