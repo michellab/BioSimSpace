@@ -148,7 +148,7 @@ class CollectiveVariable():
                A grid for the collective variable.
         """
 
-        if type(grid) is None:
+        if grid is None:
             self._grid = None
             return
 
