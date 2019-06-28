@@ -124,11 +124,8 @@ class FreeEnergy():
             if engine == "GROMACS" and _gmx_exe is None:
                 raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
         else:
-            # Fall back on SOMD in GROMACS is not installed.
-            if _gmx_exe is None:
-                engine = "SOMD"
-            else:
-                engine = "GROMACS"
+            # Use SOMD as a default.
+            engine = "SOMD"
 
         # Set the engine.
         self._engine = engine
