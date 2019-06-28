@@ -135,6 +135,18 @@ class Molecule(_SireWrapper):
         # Create and return a new system.
         return _System(molecules)
 
+    def number(self):
+        """Return the number of the molecule. Each molecule has a unique
+           identification number.
+
+           Returns
+           -------
+
+           mol_num : int
+               The unique number of the molecule.
+        """
+        return self._sire_object.number().value()
+
     def getResidues(self):
         """Return a list containing the residues in the molecule.
 
