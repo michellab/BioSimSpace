@@ -40,6 +40,7 @@ import Sire.IO as _SireIO
 
 from BioSimSpace import _gmx_exe
 from . import _process
+from ._plumed import createPlumedConfig as _createPlumedConfig
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -518,6 +519,73 @@ class Gromacs(_process.Process):
             config.append("couple-lambda1 = vdw-q")         # All interactions on at lambda = 1
             config.append("calc-lambda-neighbors = -1")     # Write all lambda values.
             config.append("nstdhdl = 100")                  # Write gradients every 100 steps.
+
+        # Add configuration variables for a metadynamics simulation.
+        elif type(self._protocol) is _Protocol.Metadynamics:
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Set the random number seed.
+            if self._is_seeded:
+                seed = self._seed
+            else:
+                seed = -1
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)            # Random number seed.
+            config.append("dt = %.3f" % timestep)           # Integration time step.
+            config.append("nsteps = %d" % steps)            # Number of integration steps.
+            config.append("nstlog = 100")                   # Write to log file every 100 steps.
+            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
+            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            if has_box and self._has_water:
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
+                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+            else:
+                config.append("pbc = no")                   # No boundary conditions.
+                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                  # Zero short-range cutoff.
+                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+
+            # Temperature control.
+            # No need for "berendsen" with integrator "sd".
+            config.append("tc-grps = system")               # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
+                                                            # Set the reference temperature.
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+
+            # Pressure control.
+            if self._protocol.getPressure() is not None and has_box and self._has_water:
+                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
+                config.append("ref-p = %.5f"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
+                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+
+            # Create the PLUMED input file.
+            self._plumed_config = _createPlumedConfig(_System(self._system), self._protocol)
+
+            # Expose the PLUMED specific member functions.
+            setattr(self, "getPlumedConfig", self._getPlumedConfig)
+            setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
+            setattr(self, "setPlumedConfig", self._setPlumedConfig)
 
         # Set the configuration.
         self.setConfig(config)

@@ -182,6 +182,12 @@ class Process():
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
         self._stderr_file = "%s/%s.err" % (self._work_dir, name)
 
+        # Files for metadynamics simulation with PLUMED.
+        self._hills_file = "%s/HILLS" % self._work_dir
+        self._colvar_file = "%s/COLVAR" % self._work_dir
+        self._plumed_config_file = "%s/plumed.dat" % self._work_dir
+        self._plumed_config = None
+
         # Initialise the configuration file string list.
         self._config = []
 
@@ -221,6 +227,64 @@ class Process():
 
         for file in offset_files:
             _os.remove(file)
+
+    def _getPlumedConfig(self):
+        """Return the list of PLUMED configuration strings.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of PLUMED configuration strings.
+        """
+        return self._plumed_config
+
+    def _setPlumedConfig(self, config):
+        """Set the list of PLUMED configuration file strings.
+
+           Parameters
+           ----------
+
+           config : str, [str]
+               The list of PLUMED configuration strings, or a path to a configuration
+               file.
+        """
+
+        # Check that the passed configuration is a list of strings.
+        if _is_list_of_strings(config):
+            self._plumed_config = config
+            self._writePlumedConfig(self._plumed_config_file)
+
+        # The user has passed a path to a file.
+        elif _os.path.isfile(config):
+
+            # Clear the existing config.
+            self._plumed_config = []
+
+            # Read the contents of the file.
+            with open(config, "r") as file:
+                for line in file:
+                    self._plumed_config.append(line.rstrip())
+
+            # Write the new configuration file.
+            self._writePlumedConfig(self._plumed_config_file)
+
+        else:
+            raise ValueError("'config' must be a list of strings, or a file path.")
+
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
+    def _getPlumedConfigFile(self):
+        """Return path to the PLUMED config file.
+
+           Returns
+           -------
+
+           config_file : str
+               The path to the PLUMED config file.
+        """
+        return self._plumed_config_file
 
     def start(self):
         """Start the process.
@@ -807,6 +871,22 @@ class Process():
 
         with open(file, "w") as f:
             for line in self._config:
+                f.write("%s\n" % line)
+
+    def _writePlumedConfig(self, file):
+        """Write the PLUMED configuration to file.
+
+           Parameters
+           ----------
+
+           file : str
+               The path to a file.
+        """
+        if type(file) is not str:
+            raise TypeError("'file' must be of type 'str'")
+
+        with open(file, "w") as f:
+            for line in self._plumed_config:
                 f.write("%s\n" % line)
 
     def getArgs(self):
