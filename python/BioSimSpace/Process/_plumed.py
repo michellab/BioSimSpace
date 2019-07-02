@@ -29,20 +29,35 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Plumed"]
 
 import os as _os
+import subprocess as _subprocess
 
+from Sire.Base import findExe as _findExe
 from Sire.Mol import MolNum as _MolNum
 
-from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._SireWrappers import System as _System
 from ..Metadynamics import CollectiveVariable as _CollectiveVariable
 from ..Protocol import Metadynamics as _Metadynamics
 from ..Types import Coordinate as _Coordinate
 
+import BioSimSpace._Exceptions as _Exceptions
 import BioSimSpace.Units as _Units
 
 class Plumed():
     def __init__(self):
         """Constructor."""
+
+        try:
+            self._exe= _findExe("plumed").absoluteFilePath()
+        except:
+            raise _Exceptions.MissingSoftwareError("Metadynamics simulations required "
+                "that PLUMED is installed: www.plumed.org")
+
+        # Run a PLUMED as a background process to query the version number.
+        process = _subprocess.run("%s info --version" % self._exe, shell=True, stdout=_subprocess.PIPE)
+        plumed_version = float(process.stdout.decode("ascii").strip())
+
+        if plumed_version < 2.5:
+            raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
 
     @staticmethod
     def createConfig(system, protocol, is_restart=False):
@@ -121,7 +136,7 @@ class Plumed():
             for idx in atoms:
                 # The atom index is invalid.
                 if idx >= system.nAtoms():
-                    raise _IncompatibleError("The collective variable is incompatible with the "
+                    raise __Exceptions.IncompatibleError("The collective variable is incompatible with the "
                         "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
 
                 # Get the molecule numbers in this system.
