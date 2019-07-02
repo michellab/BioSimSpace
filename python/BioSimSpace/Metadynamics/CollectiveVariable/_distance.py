@@ -216,7 +216,7 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getAtom0(self):
-        """Return the atom, atoms, or coordiante, that the distance will be
+        """Return the atom, atoms, or coordinate, that the distance will be
            measured from.
 
            Returns
@@ -276,7 +276,7 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getAtom1(self):
-        """Return the atom, atoms, or coordiante, that the distance will be
+        """Return the atom, atoms, or coordinate, that the distance will be
            measured to.
 
            Returns

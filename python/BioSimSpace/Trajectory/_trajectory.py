@@ -109,7 +109,7 @@ def getFrame(trajectory, topology, index):
     # The name of the frame coordinate file.
     frame_file = ".frame.nc"
 
-    # Save the coordiantes to file.
+    # Save the coordinates to file.
     frame.save(frame_file)
 
     # Load the frame into a System object.
