@@ -165,7 +165,7 @@ class Plumed():
             num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
             # Create the entity record. Rember to one-index the atoms.
-            string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms+1)
+            string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
 
         # Append the string to the configuration list.
         config.append(string)
