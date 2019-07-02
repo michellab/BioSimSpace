@@ -77,7 +77,7 @@ class Metadynamics(_Protocol):
            hill_width : float, [float]
                The width of the Guassian hills.
 
-           hill_height : float, [float]
+           hill_height : float
                The height of the Guassian hills.
 
            hill_frequency : int
@@ -376,8 +376,8 @@ class Metadynamics(_Protocol):
            Returns
            -------
 
-           hill_height : [float]
-               The hill height for each collective variable.
+           hill_height : float
+               The hill height.
         """
         return self._hill_height
 
@@ -387,39 +387,18 @@ class Metadynamics(_Protocol):
            Parameters
            ----------
 
-           hill_height : [float]
-               The hill height for each collective variable.
+           hill_height : float
+               The hill height.
         """
 
-        # Convert tuple to list.
-        if type(hill_height) is tuple:
-            hill_height = list(hill_height)
-
-        # A single value.
         if type(hill_height) is float or type(hill_height) is int:
-            hill_height = [float(hill_height) for x in range(0, len(self._collective_variable))]
-
-        # A list of values.
-        elif type(hill_height) is list:
-            heights = []
-            for height in hill_height:
-                try:
-                    heights.append(float(height))
-                except:
-                    raise TypeError("'hill_height' must be a list of 'float' types.")
-            hill_heights = heights
-            # Must be one for each collective variable.
-            if len(hill_height) != len(self._collective_variable):
-                raise ValueError(("Number of 'hill_height' parameters (%d) doesn't "
-                                  "match the number of collective variables (%d)")
-                                  % (len(hill_height), len(self._collective_variable)))
+            hill_height = float(hill_height)
         else:
-            raise TypeError("'hill_height' must be of type 'float', or a list of 'float' types.")
+            raise TypeError("'hill_height' must be of type 'float'")
 
-        # Check that all heights are greater than zero.
-        for height in hill_height:
-            if height <= 0:
-                raise ValueError("Cannot have 'hill_height' <= 0")
+        # Check that heights is greater than zero.
+        if hill_height <= 0:
+            raise ValueError("Cannot have 'hill_height' <= 0")
 
         self._hill_height = hill_height
 

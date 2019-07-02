@@ -40,7 +40,7 @@ import Sire.IO as _SireIO
 
 from BioSimSpace import _gmx_exe
 from . import _process
-from ._plumed import createPlumedConfig as _createPlumedConfig
+from ._plumed import Plumed as _Plumed
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
@@ -580,7 +580,7 @@ class Gromacs(_process.Process):
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Create the PLUMED input file.
-            self._plumed_config = _createPlumedConfig(_System(self._system), self._protocol)
+            self._setPlumedConfig(_Plumed.createConfig(_System(self._system), self._protocol))
 
             # Expose the PLUMED specific member functions.
             setattr(self, "getPlumedConfig", self._getPlumedConfig)
