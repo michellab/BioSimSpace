@@ -94,3 +94,5 @@ Please provide any relevant information about your setup. This is important in c
 * Operating System: Linux, macOS.
 * Installation method: conda, binary, source. (If installed from source, please
 also give the [Sire](https://github.com/michellab/Sire) version number.)
+* If you're running on a cluster: What is the scheduler? What type of nodes are you using, e.g. num GPUs, CPUS, amount of RAM?
+* What molecular system are you simulating?. If possible, please attach topology and coordinate files to help us debug. If you can't, please give basic information, such as the system size, which will help us estimate the expected memory footprint.
