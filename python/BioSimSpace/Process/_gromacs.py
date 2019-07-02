@@ -581,6 +581,7 @@ class Gromacs(_process.Process):
 
             # Create the PLUMED input file.
             self._setPlumedConfig(_Plumed.createConfig(_System(self._system), self._protocol))
+            self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
             setattr(self, "getPlumedConfig", self._getPlumedConfig)
@@ -603,6 +604,10 @@ class Gromacs(_process.Process):
         self.setArg("mdrun", True)          # Use mdrun.
         self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
+
+        # Metadynamics arguments.
+        if type(self._protocol) is _Protocol.Metadynamics:
+            self.setArg("-plumed", True)    # Attach to PLUMED.
 
     def _generate_binary_run_file(self):
         """Use grommp to generate the binary run input file."""
