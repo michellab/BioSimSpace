@@ -154,7 +154,7 @@ class Torsion(_CollectiveVariable):
             if type(self._upper_bound.getValue()) is not _Angle:
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
         if self._lower_bound is not None and self._upper_bound is not None:
-            if type(self._lower_bound.getValue()) >= type(self._upper_bound.getValue()):
+            if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:

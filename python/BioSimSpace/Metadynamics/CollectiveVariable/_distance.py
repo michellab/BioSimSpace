@@ -515,10 +515,10 @@ class Distance(_CollectiveVariable):
         if type(component) is not str:
             raise TypeError("'component' must be of type 'str'")
 
-        allowed = ["X", "Y", "Z"]
+        allowed = ["x", "y", "z"]
 
-        # Strip whitespace and convert to upper case.
-        component = component.replace(" ", "").upper()
+        # Strip whitespace and convert to lower case.
+        component = component.replace(" ", "").lower()
 
         if component not in allowed:
             raise ValueError("'component' should either be 'x', 'y', or 'z'")
@@ -575,7 +575,7 @@ class Distance(_CollectiveVariable):
             if type(self._upper_bound.getValue()) is not _Length:
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
         if self._lower_bound is not None and self._upper_bound is not None:
-            if type(self._lower_bound.getValue()) >= type(self._upper_bound.getValue()):
+            if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
