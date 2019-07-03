@@ -183,8 +183,6 @@ class Process():
         self._stderr_file = "%s/%s.err" % (self._work_dir, name)
 
         # Files for metadynamics simulation with PLUMED.
-        self._hills_file = "%s/HILLS" % self._work_dir
-        self._colvar_file = "%s/COLVAR" % self._work_dir
         self._plumed_config_file = "%s/plumed.dat" % self._work_dir
         self._plumed_config = None
 
@@ -224,6 +222,14 @@ class Process():
 
         # Clean up any existing offset files.
         offset_files = _glob.glob("%s/*.offset" % self._work_dir)
+
+        # Remove any HILLS or COLVAR files from the list. These will be dealt
+        # with by the PLUMED interface.
+        try:
+            offset_files.remove("%s/COLVAR.offset" % self._work_dir)
+            offset_files.remove("%s/HILLS.offset" % self._work_dir)
+        except:
+            pass
 
         for file in offset_files:
             _os.remove(file)
