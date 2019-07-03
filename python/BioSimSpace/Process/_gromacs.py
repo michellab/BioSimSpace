@@ -125,6 +125,9 @@ class Gromacs(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._gro_file, self._top_file]
 
+        # Initialise the PLUMED interface object.
+        self._plumed = None
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -585,7 +588,8 @@ class Gromacs(_process.Process):
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Create the PLUMED input file.
-            self._setPlumedConfig(_Plumed.createConfig(_System(self._system), self._protocol))
+            self._plumed = _Plumed()
+            self._setPlumedConfig(self._plumed.createConfig(_System(self._system), self._protocol))
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.

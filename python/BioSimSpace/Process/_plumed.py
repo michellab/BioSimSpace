@@ -59,8 +59,25 @@ class Plumed():
         if plumed_version < 2.5:
             raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
 
-    @staticmethod
-    def createConfig(system, protocol, is_restart=False):
+        # The number of collective variables.
+        self._num_colvar = 0
+
+        # The number of lower/upper walls.
+        self._num_lower_walls = 0
+        self._num_upper_walls = 0
+
+        # Initialise a list of the collective variable argument names.
+        self._colvar_names = []
+
+        # Initalise a dictionary to map the collective variable names
+        # to their unit. This can be used when returning time series
+        # records from the log files.
+        self._colvar_unit = {}
+
+        # Initalise the list of configuration file strings.
+        self._config = []
+
+    def createConfig(self, system, protocol, is_restart=False):
         """Create a PLUMED configuration file.
 
            Parameters
@@ -71,6 +88,12 @@ class Plumed():
 
            protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`
                The metadynamics protocol.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of PLUMED configuration strings.
         """
 
         if type(system) is not _System:
@@ -79,14 +102,19 @@ class Plumed():
         if type(protocol) is not _Metadynamics:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
-        # Initialise a list to hold the configuration strings.
-        config = []
+        # Clear data.
+        self._num_colvar = 0
+        self._num_lower_walls = 0
+        self._num_upper_walls = 0
+        self._colvar_names = []
+        self._colvar_unit = {}
+        self._config = []
 
         # Is the simulation a restart?
         if protocol.isRestart():
-            config.append("RESTART")
+            self._config.append("RESTART")
         else:
-            config.append("RESTART NO")
+            self._config.append("RESTART NO")
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
@@ -96,7 +124,7 @@ class Plumed():
 
         # Store the collective variable(s).
         colvars = protocol.getCollectiveVariable()
-        num_colvar = len(colvars)
+        self._num_colvar = len(colvars)
 
         # Loop over each collective variable and create WHOLEMOLECULES entities
         # for any molecule that involve atoms in a collective variable. We only
@@ -168,15 +196,13 @@ class Plumed():
             string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
 
         # Append the string to the configuration list.
-        config.append(string)
+        self._config.append(string)
 
         # Intialise tally counters.
         num_distance = 0
         num_torsion = 0
         num_center = 0
         num_fixed = 0
-        num_lower_wall = 0
-        num_upper_wall = 0
 
         # Initialise a list to store the grid data for each variable.
         grid_data = []
@@ -236,7 +262,7 @@ class Plumed():
                     elif weights0 is not None:
                         center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights0])
 
-                    config.append(center_string)
+                    self._config.append(center_string)
 
                 # A coordinate of a fixed point.
                 elif type(atom0) is _Coordinate:
@@ -246,7 +272,7 @@ class Plumed():
                     z = atom0.z().nanometers().magnitude()
 
                     num_fixed += 1
-                    config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
                     colvar_string += "f%d" % num_fixed
 
                 # Process the second atom(s) or fixed coordinate.
@@ -271,7 +297,7 @@ class Plumed():
                     elif weights1 is not None:
                         center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights1])
 
-                    config.append(center_string)
+                    self._config.append(center_string)
 
                 # A coordinate of a fixed point.
                 elif type(atom1) is _Coordinate:
@@ -281,7 +307,7 @@ class Plumed():
                     z = atom1.z().nanometers().magnitude()
 
                     num_fixed += 1
-                    config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
                     colvar_string += ",f%d" % num_fixed
 
                 # Disable periodic boundaries.
@@ -294,30 +320,31 @@ class Plumed():
                     arg_name += ".%s" % colvar.getComponent()
 
                 # Append the collective variable record.
-                config.append(colvar_string)
+                self._config.append(colvar_string)
 
-                # Add the argument to the METAD record.
-                metad_string += "%s" % arg_name
+                # Store the collective variable name and its unit.
+                self._colvar_names.append(arg_name)
+                self._colvar_unit[arg_name] = _Units.Length.nanometer
 
                 # Check for lower and upper bounds on the collective variable.
                 if lower_wall is not None:
-                    num_lower_wall += 1
-                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (num_lower_wall, arg_name)
+                    self._num_lower_walls += 1
+                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._sum_lower_walls, arg_name)
                     lower_wall_string += ", AT=%s" % lower_wall.getValue().nanometers().magnitude()
                     lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
                     lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
                     lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
-                    config.append(lower_wall_string)
+                    self._config.append(lower_wall_string)
 
                 # Check for lower and upper bounds on the collective variable.
                 if upper_wall is not None:
-                    num_upper_wall += 1
-                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (num_upper_wall, arg_name)
+                    self._num_upper_walls += 1
+                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
                     upper_wall_string += ", AT=%s" % upper_wall.getValue().nanometers().magnitude()
                     upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
                     upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
                     upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
-                    config.append(upper_wall_string)
+                    self._config.append(upper_wall_string)
 
                 # Store grid data.
                 if grid is not None:
@@ -332,32 +359,36 @@ class Plumed():
                 colvar_string = "%s: TORSION ATOMS=%s" \
                     % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms()]))
 
+                # Store the collective variable name and its unit.
+                self._colvar_names.append(arg_name)
+                self._colvar_unit[arg_name] = _Units.Length.nanometer
+
                 # Disable periodic boundaries.
                 if not colvar.getPeriodicBoundaries():
                     colvar_string += " NOPBC"
 
                 # Append the collective variable record.
-                config.append(colvar_string)
+                self._config.append(colvar_string)
 
                 # Check for lower and upper bounds on the collective variable.
                 if lower_wall is not None:
-                    num_lower_wall += 1
-                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (num_lower_wall, arg_name)
+                    self._num_lower_walls += 1
+                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name)
                     lower_wall_string += ", AT=%s" % lower_wall.getValue().radians().magnitude()
                     lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
                     lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
                     lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
-                    config.append(lower_wall_string)
+                    self._config.append(lower_wall_string)
 
                 # Check for lower and upper bounds on the collective variable.
                 if upper_wall is not None:
-                    num_upper_wall += 1
-                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (num_upper_wall, arg_name)
+                    self._num_upper_walls += 1
+                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
                     upper_wall_string += ", AT=%s" % upper_wall.getValue().radians().magnitude()
                     upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
                     upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
                     upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
-                    config.append(upper_wall_string)
+                    self._config.append(upper_wall_string)
 
                 # Store grid data.
                 if grid is not None:
@@ -369,7 +400,7 @@ class Plumed():
             metad_string += "%s" % arg_name
 
             # Update the METAD record to separate the collective variable arguments.
-            if idx < num_colvar - 1:
+            if idx < self._num_colvar - 1:
                 metad_string += ","
 
         # Now complete the METAD record string.
@@ -378,7 +409,7 @@ class Plumed():
         metad_string += " SIGMA="
         for idx, width in enumerate(protocol.getHillWidth()):
             metad_string += "%s" % width
-            if idx < num_colvar - 1:
+            if idx < self._num_colvar - 1:
                 metad_string += ","
 
         # Hill height.
@@ -397,7 +428,7 @@ class Plumed():
                 grid_min_string += str(grid[0])
                 grid_max_string += str(grid[1])
                 grid_bin_string += str(grid[2])
-                if idx < num_colvar - 1:
+                if idx < self._num_colvar - 1:
                     grid_min_string += ","
                     grid_max_string += ","
                     grid_bin_string += ","
@@ -411,10 +442,10 @@ class Plumed():
             metad_string += " BIASFACTOR=%s" % protocol.getBiasFactor()
 
         # Append the METAD record to the config.
-        config.append(metad_string)
+        self._config.append(metad_string)
 
         # Print all record data to the COLVAR file.
         print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getHillFrequency()
-        config.append(print_string)
+        self._config.append(print_string)
 
-        return config
+        return self._config
