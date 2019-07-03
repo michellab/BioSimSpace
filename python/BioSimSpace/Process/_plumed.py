@@ -28,6 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Plumed"]
 
+import glob as _glob
 import os as _os
 import pygtail as _pygtail
 import subprocess as _subprocess
@@ -43,7 +44,8 @@ from ..Protocol import Metadynamics as _Metadynamics
 from ..Types import Coordinate as _Coordinate
 
 import BioSimSpace._Exceptions as _Exceptions
-import BioSimSpace.Types._type as _Type
+import BioSimSpace.Types as _Types
+import BioSimSpace._Utils as _Utils
 import BioSimSpace.Units as _Units
 
 class Plumed():
@@ -93,7 +95,7 @@ class Plumed():
         self._num_upper_walls = 0
 
         # Initialise a list of the collective variable argument names.
-        self._colvar_names = []
+        self._colvar_name = []
 
         # Initalise a dictionary to map the collective variable names
         # to their unit. This can be used when returning time series
@@ -140,7 +142,7 @@ class Plumed():
         self._num_colvar = 0
         self._num_lower_walls = 0
         self._num_upper_walls = 0
-        self._colvar_names = []
+        self._colvar_name = []
         self._colvar_unit = {}
         self._config = []
 
@@ -366,7 +368,7 @@ class Plumed():
                 self._config.append(colvar_string)
 
                 # Store the collective variable name and its unit.
-                self._colvar_names.append(arg_name)
+                self._colvar_name.append(arg_name)
                 self._colvar_unit[arg_name] = _Units.Length.nanometer
 
                 # Check for lower and upper bounds on the collective variable.
@@ -403,8 +405,8 @@ class Plumed():
                     % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms()]))
 
                 # Store the collective variable name and its unit.
-                self._colvar_names.append(arg_name)
-                self._colvar_unit[arg_name] = _Units.Length.nanometer
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = _Units.Angle.radian
 
                 # Disable periodic boundaries.
                 if not colvar.getPeriodicBoundaries():
@@ -511,6 +513,8 @@ class Plumed():
            collective_variable : :class:`Type <BioSimSpace.Types>`
                The value of the collective variable.
         """
+        if type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
         if index > self._num_colvar - 1 or index < -self._num_colvar:
             raise IndexError("'index' must be in range -%d to %d" % (self._num_colvar, self._num_colvar-1))
 
@@ -518,9 +522,134 @@ class Plumed():
         self._update_colvar_dict()
 
         # Get the corresponding data from the dictionary and return.
-        return self._get_colvar_record(key=self._colvar_names[index],
+        return self._get_colvar_record(key=self._colvar_name[index],
                                        time_series=time_series,
-                                       unit=self._colvar_unit[self._colvar_names[index]])
+                                       unit=self._colvar_unit[self._colvar_name[index]])
+
+    def getFreeEnergy(self, index=None, stride=None, kt=None):
+        """Get the current free energy estimate.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable. If None, then all variables
+               will be considered.
+
+           stride : int
+               The stride for integrating the free energy. This can be used to
+               check for convergence.
+
+           kt : BioSimSpace.Types.Energy
+               The temperature in energy units for intergrating out variables.
+
+           free_energies : [BSS.Types._type.Type, ...], \
+                           [[BSS.Types._type.Type, ...], ...]
+               The free energy estimate for the chosen collective variables.
+        """
+        if index is not None:
+            if type(index) is not int:
+                raise TypeError("'index' must be of type 'int'")
+            if index > self._num_colvar - 1 or index < -self._num_colvar:
+                raise IndexError("'index' must be in range -%d to %d" % (self._num_colvar, self._num_colvar-1))
+
+        if stride is not None:
+            if type(stride) is not int:
+                raise TypeError("'stride' must be of type 'int'")
+            if stride < 0:
+                raise ValueError("'stride' must be >= 0")
+
+        if kt is not None:
+            if type(kt) is not _Types.Energy:
+                raise TypeError("'kt' must be of type 'BioSimSpace.Type.Energy'")
+
+            # Convert to kt and get the magnitude.
+            kt = kt.kt().magnitude()
+
+            if kt <= 0:
+                raise ValueError("'kt' must have magnitude > 0")
+        else:
+            if index is not None:
+                raise ValueError("You must specify 'kt' when making a dimensionality reduction.")
+
+        # Create the command string.
+        command = "%s sum_hills --hills HILLS --mintozero" % self._exe
+
+        # Append additional arguments.
+        if index is not None:
+            command += " --idw %s" % self._colvar_name[index]
+            command += " --kt %s" % kt
+        if stride is not None:
+            command += " --stride %s" % stride
+
+        # Initialise a list to hold the free energy estimates.
+        free_energies = []
+
+        # Move to the working directory.
+        with _Utils.cd(self._work_dir):
+
+            # Run the sum_hills command as a background process.
+            proc = _subprocess.run(command, shell=True,
+                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+            if proc.returncode != 0:
+                raise RuntimeError("Failed to generate free energy estimate.\n"
+                                   "Error: %s" % proc.stderr.decode("utf-8"))
+
+            # Get a sorted list of all the fes*.dat files.
+            fes_files = _glob.glob("fes*.dat")
+            fes_files.sort()
+
+            # Process each of the files.
+            for fes in fes_files:
+                # Create a list to store the free energy estimate for this file.
+                free_energy = []
+
+                if index is None:
+                    # Create lists for each the collective variable data point.
+                    for x in range(0, self._num_colvar):
+                        free_energy.append([])
+                else:
+                    free_energy.append([])
+                # Create a list to store the free energy.
+                free_energy.append([])
+
+                # Read the file.
+                with open(fes, "r") as file:
+
+                    # Loop over all lines in the file.
+                    for line in file:
+
+                        # Ignore comments and blank lines.
+                        if line[0] != "#":
+
+                            # Extract the data.
+                            # This is: colvar1, colvar2, ..., fes
+                            data = [float(x) for x in line.split()]
+
+                            # The line contains data.
+                            if len(data) > 0:
+
+                                # Store data for each of the collective variables.
+                                if index is None:
+                                    for x in range(0, self._num_colvar):
+                                        name = self._colvar_name[x]
+                                        free_energy[x].append(data[x] * self._colvar_unit[name])
+                                    free_energy[self._num_colvar].append(data[self._num_colvar] * _Units.Energy.kj_per_mol)
+                                else:
+                                    name = self._colvar_name[0]
+                                    free_energy[0].append(data[0] * self._colvar_unit[name])
+                                    free_energy[1].append(data[1] * _Units.Energy.kj_per_mol)
+
+                if len(fes_files) == 1:
+                    free_energies = free_energy
+                else:
+                    free_energies.append(tuple(free_energy))
+
+                # Remove the file.
+                _os.remove(fes)
+
+        return tuple(free_energies)
 
     def _update_colvar_dict(self):
         """Read the COLVAR file and update any records."""
@@ -594,7 +723,7 @@ class Plumed():
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Types._type.Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.
@@ -651,7 +780,7 @@ class Plumed():
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Types._type.Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.

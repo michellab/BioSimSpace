@@ -597,6 +597,7 @@ class Gromacs(_process.Process):
             setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
             setattr(self, "setPlumedConfig", self._setPlumedConfig)
             setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "getFreeEnergy", self._getFreeEnergy)
 
         # Set the configuration.
         self.setConfig(config)

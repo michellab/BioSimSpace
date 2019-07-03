@@ -328,6 +328,47 @@ class Process():
         # Use the PLUMED interface to get the required data.
         return self._plumed.getCollectiveVariable(index, time_series)
 
+    def _getFreeEnergy(self, index=None, stride=None, kt=None, block="AUTO"):
+        """Get the current free energy estimate.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable. If None, then all variables
+               will be considered.
+
+           stride : int
+               The stride for integrating the free energy. This can be used to
+               check for convergence.
+
+           kt : BioSimSpace.Types.Energy
+               The temperature in energy units for intergrating out variables.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           free_energies : [BSS.Types._type.Type, ...], \
+                           [[BSS.Types._type.Type, ...], ...]
+               The free energy estimate for the chosen collective variables.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getFreeEnergy(index, stride, kt)
+
     def start(self):
         """Start the process.
 
