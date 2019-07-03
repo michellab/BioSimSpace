@@ -413,8 +413,8 @@ class Plumed():
         # Append the METAD record to the config.
         config.append(metad_string)
 
-        # Print all record data.
-        print_string = "PRINT STRIDE=%s ARG=*" % protocol.getHillFrequency()
+        # Print all record data to the COLVAR file.
+        print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getHillFrequency()
         config.append(print_string)
 
         return config
