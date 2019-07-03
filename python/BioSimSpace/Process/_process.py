@@ -41,6 +41,7 @@ import Sire.Mol as _SireMol
 
 from BioSimSpace import _is_interactive, _is_notebook
 
+from ..Protocol import Metadynamics as _Metadynamics
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 
@@ -291,6 +292,41 @@ class Process():
                The path to the PLUMED config file.
         """
         return self._plumed_config_file
+
+    def _getCollectiveVariable(self, index, time_series=False, block="AUTO"):
+        """Get the value of a collective variable.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable.
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           collective_variable : :class:`Type <BioSimSpace.Types>`
+               The value of the collective variable.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getCollectiveVariable(index, time_series)
 
     def start(self):
         """Start the process.

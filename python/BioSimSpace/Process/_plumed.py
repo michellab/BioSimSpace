@@ -31,6 +31,7 @@ __all__ = ["Plumed"]
 import os as _os
 import pygtail as _pygtail
 import subprocess as _subprocess
+import warnings as _warnings
 
 from Sire.Base import findExe as _findExe
 from Sire.Mol import MolNum as _MolNum
@@ -42,6 +43,7 @@ from ..Protocol import Metadynamics as _Metadynamics
 from ..Types import Coordinate as _Coordinate
 
 import BioSimSpace._Exceptions as _Exceptions
+import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
 
 class Plumed():
@@ -54,7 +56,6 @@ class Plumed():
            work_dir : str
                The working directory of the process that is interfacing
                with PLUMED.
-
         """
 
         # Check that the working directory is valid.
@@ -492,6 +493,35 @@ class Plumed():
 
         return self._config
 
+    def getCollectiveVariable(self, index, time_series=False):
+        """Get the value of a collective variable.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable.
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           collective_variable : :class:`Type <BioSimSpace.Types>`
+               The value of the collective variable.
+        """
+        if index > self._num_colvar - 1 or index < -self._num_colvar:
+            raise IndexError("'index' must be in range -%d to %d" % (self._num_colvar, self._num_colvar-1))
+
+        # Get the latest records.
+        self._update_colvar_dict()
+
+        # Get the corresponding data from the dictionary and return.
+        return self._get_colvar_record(key=self._colvar_names[index],
+                                       time_series=time_series,
+                                       unit=self._colvar_unit[self._colvar_names[index]])
+
     def _update_colvar_dict(self):
         """Read the COLVAR file and update any records."""
 
@@ -531,3 +561,117 @@ class Plumed():
                 data = [float(x) for x in line.split()]
                 for key, value in zip(self._hills_keys, data):
                     self._hills_dict[key] = value
+
+    def _get_colvar_record(self, key, time_series=False, unit=None):
+        """Helper function to get a COLVAR record from the dictionary.
+
+           Parameters
+           ----------
+
+           key : str
+               The record key.
+
+           time_series : bool
+               Whether to return a time series of records.
+
+           unit : BioSimSpace.Types._type.Type
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record :
+               The matching stdout record.
+        """
+
+        # No data!
+        if len(self._colvar_dict) is 0:
+            return None
+
+        if type(time_series) is not bool:
+            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
+            time_series = False
+
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
+        # Return the list of dictionary values.
+        if time_series:
+            try:
+                if unit is None:
+                    return self._colvar_dict[key]
+                else:
+                    return [x * unit for x in self._colvar_dict[key]]
+
+            except KeyError:
+                return None
+
+        # Return the most recent dictionary value.
+        else:
+            try:
+                if unit is None:
+                    return self._colvar_dict[key][-1]
+                else:
+                    return self._colvar_dict[key][-1] * unit
+
+            except KeyError:
+                return None
+
+    def _get_hills_record(self, key, time_series=False, unit=None):
+        """Helper function to get a HILLS record from the dictionary.
+
+           Parameters
+           ----------
+
+           key : str
+               The record key.
+
+           time_series : bool
+               Whether to return a time series of records.
+
+           unit : BioSimSpace.Types._type.Type
+               The unit to convert the record to.
+
+           Returns
+           -------
+
+           record :
+               The matching stdout record.
+        """
+
+        # No data!
+        if len(self._hills_dict) is 0:
+            return None
+
+        if type(time_series) is not bool:
+            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
+            time_series = False
+
+        # Valdate the unit.
+        if unit is not None:
+            if not isinstance(unit, _Type.Type):
+                raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
+
+        # Return the list of dictionary values.
+        if time_series:
+            try:
+                if unit is None:
+                    return self._hills_dict[key]
+                else:
+                    return [x * unit for x in self._hills_dict[key]]
+
+            except KeyError:
+                return None
+
+        # Return the most recent dictionary value.
+        else:
+            try:
+                if unit is None:
+                    return self._hills_dict[key][-1]
+                else:
+                    return self._hills_dict[key][-1] * unit
+
+            except KeyError:
+                return None

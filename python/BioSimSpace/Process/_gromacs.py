@@ -588,7 +588,7 @@ class Gromacs(_process.Process):
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Create the PLUMED input file.
-            self._plumed = _Plumed()
+            self._plumed = _Plumed(self._work_dir)
             self._setPlumedConfig(self._plumed.createConfig(_System(self._system), self._protocol))
             self._input_files.append(self._plumed_config_file)
 
@@ -596,6 +596,7 @@ class Gromacs(_process.Process):
             setattr(self, "getPlumedConfig", self._getPlumedConfig)
             setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
             setattr(self, "setPlumedConfig", self._setPlumedConfig)
+            setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
 
         # Set the configuration.
         self.setConfig(config)
