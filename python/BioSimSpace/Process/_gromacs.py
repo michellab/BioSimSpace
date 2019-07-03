@@ -535,13 +535,18 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
+            # Get the metadynamics hill deposition frequency. We write GROMACS
+            # records at the same frequency so that the PLUMED data can be
+            # cross-referenced.
+            hill_freq = self._protocol.getHillFrequency()
+
             config.append("integrator = sd")                # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)            # Random number seed.
             config.append("dt = %.3f" % timestep)           # Integration time step.
             config.append("nsteps = %d" % steps)            # Number of integration steps.
-            config.append("nstlog = 100")                   # Write to log file every 100 steps.
-            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
-            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            config.append("nstlog = %d" % hill_freq)        # Write to log file at the metadynamics hill deposition frequency.
+            config.append("nstenergy = %d" % hill_freq)     # Write to energy file at the metadynamics hill deposition frequency.
+            config.append("nstxout = %d" % hill_freq)       # Write to energy file at the metadynamics hill deposition frequency.
             if has_box and self._has_water:
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
