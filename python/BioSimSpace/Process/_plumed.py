@@ -29,11 +29,13 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Plumed"]
 
 import os as _os
+import pygtail as _pygtail
 import subprocess as _subprocess
 
 from Sire.Base import findExe as _findExe
 from Sire.Mol import MolNum as _MolNum
 
+from ._process import _MultiDict
 from .._SireWrappers import System as _System
 from ..Metadynamics import CollectiveVariable as _CollectiveVariable
 from ..Protocol import Metadynamics as _Metadynamics
@@ -43,8 +45,24 @@ import BioSimSpace._Exceptions as _Exceptions
 import BioSimSpace.Units as _Units
 
 class Plumed():
-    def __init__(self):
-        """Constructor."""
+    def __init__(self, work_dir):
+        """Constructor.
+
+           Parameters
+           ----------
+
+           work_dir : str
+               The working directory of the process that is interfacing
+               with PLUMED.
+
+        """
+
+        # Check that the working directory is valid.
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'")
+        else:
+            if not _os.path.isdir(work_dir):
+                raise ValueError("'work_dir' doesn't exist: %s" % work_dir)
 
         try:
             self._exe= _findExe("plumed").absoluteFilePath()
@@ -58,6 +76,13 @@ class Plumed():
 
         if plumed_version < 2.5:
             raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+
+        # Set the working directory of the process.
+        self._work_dir = work_dir
+
+        # Set the location of the HILLS and COLVAR files.
+        self._hills_file = "%s/HILLS" % self._work_dir
+        self._colvar_file = "%s/COLVAR" % self._work_dir
 
         # The number of collective variables.
         self._num_colvar = 0
@@ -76,6 +101,14 @@ class Plumed():
 
         # Initalise the list of configuration file strings.
         self._config = []
+
+        # Initialise dictionaries to hold COLVAR and HILLS time-series records.
+        self._colvar_dict = _MultiDict()
+        self._hills_dict = _MultiDict()
+
+        # Initalise lists to store the keys used to index the above dictionary.
+        self._colvar_keys = []
+        self._hills_keys = []
 
     def createConfig(self, system, protocol, is_restart=False):
         """Create a PLUMED configuration file.
@@ -115,6 +148,15 @@ class Plumed():
             self._config.append("RESTART")
         else:
             self._config.append("RESTART NO")
+
+            # Delete any existing COLVAR and HILLS files.
+            try:
+                _os.remove("%s/COLVAR" % self._work_dir)
+                _os.remove("%s/COLVAR.offset" % self._work_dir)
+                _os.remove("%s/HILLS" % self._work_dir)
+                _os.remove("%s/HILLS.offset" % self._work_dir)
+            except:
+                pass
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
@@ -449,3 +491,43 @@ class Plumed():
         self._config.append(print_string)
 
         return self._config
+
+    def _update_colvar_dict(self):
+        """Read the COLVAR file and update any records."""
+
+        # Exit if the COLVAR file hasn't been created.
+        if not _os.path.isfile(self._colvar_file):
+            return
+
+        # Loop over all new lines in the file.
+        for line in _pygtail.Pygtail(self._colvar_file):
+
+            # Is this a header line. If so, store the keys.
+            if line[3:9] == "FIELDS":
+                self._colvar_keys = line[10:].split()
+
+            # This is an actual data record. Update the multi-dictionary.
+            elif line[0] != "#":
+                data = [float(x) for x in line.split()]
+                for key, value in zip(self._colvar_keys, data):
+                    self._colvar_dict[key] = value
+
+    def _update_hills_dict(self):
+        """Read the HILLS file and update any records."""
+
+        # Exit if the HILLS file hasn't been created.
+        if not _os.path.isfile(self._hills_file):
+            return
+
+        # Loop over all new lines in the file.
+        for line in _pygtail.Pygtail(self._hills_file):
+
+            # Is this a header line. If so, store the keys.
+            if line[3:9] == "FIELDS":
+                self._hills_keys = line[10:].split()
+
+            # This is an actual data record. Update the multi-dictionary.
+            elif line[0] != "#":
+                data = [float(x) for x in line.split()]
+                for key, value in zip(self._hills_keys, data):
+                    self._hills_dict[key] = value
