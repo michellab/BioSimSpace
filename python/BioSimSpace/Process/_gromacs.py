@@ -618,7 +618,7 @@ class Gromacs(_process.Process):
 
         # Metadynamics arguments.
         if type(self._protocol) is _Protocol.Metadynamics:
-            self.setArg("-plumed", True)    # Attach to PLUMED.
+            self.setArg("-plumed", "plumed.dat")
 
     def _generate_binary_run_file(self):
         """Use grommp to generate the binary run input file."""
