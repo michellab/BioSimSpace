@@ -25,8 +25,8 @@ At present we only support metadynamics simulations using
 
 .. automodule:: BioSimSpace.Metadynamics
 
-Modules
--------
+Packages
+--------
 
 .. toctree::
    :maxdepth: 1
