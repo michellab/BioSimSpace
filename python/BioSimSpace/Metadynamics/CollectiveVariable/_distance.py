@@ -604,9 +604,13 @@ class Distance(_CollectiveVariable):
         if self._lower_bound is not None:
             if type(self._lower_bound.getValue()) is not _Length:
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
+            # Convert to default unit.
+            self._lower_bound.setValue(self._lower_bound.getValue().nanometers())
         if self._upper_bound is not None:
             if type(self._upper_bound.getValue()) is not _Length:
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
+            # Convert to default unit.
+            self._upper_bound.setValue(self._upper_bound.getValue().nanometers())
         if self._lower_bound is not None and self._upper_bound is not None:
             if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
@@ -614,8 +618,12 @@ class Distance(_CollectiveVariable):
         if self._grid is not None:
             if type(self._grid.getMinimum()) is not _Length:
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
+            # Convert to default unit.
+            self._grid.setMinimum(self._grid.getMinimum().nanometers())
             if type(self._grid.getMaximum()) is not _Length:
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
+            # Convert to default unit.
+            self._grid.setMaximum(self._grid.getMaximum().nanometers())
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
             if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():

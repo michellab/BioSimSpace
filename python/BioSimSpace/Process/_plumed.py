@@ -371,32 +371,6 @@ class Plumed():
                 self._colvar_name.append(arg_name)
                 self._colvar_unit[arg_name] = _Units.Length.nanometer
 
-                # Check for lower and upper bounds on the collective variable.
-                if lower_wall is not None:
-                    self._num_lower_walls += 1
-                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._sum_lower_walls, arg_name)
-                    lower_wall_string += ", AT=%s" % lower_wall.getValue().nanometers().magnitude()
-                    lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
-                    lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
-                    lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
-                    self._config.append(lower_wall_string)
-
-                # Check for lower and upper bounds on the collective variable.
-                if upper_wall is not None:
-                    self._num_upper_walls += 1
-                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
-                    upper_wall_string += ", AT=%s" % upper_wall.getValue().nanometers().magnitude()
-                    upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
-                    upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
-                    upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
-                    self._config.append(upper_wall_string)
-
-                # Store grid data.
-                if grid is not None:
-                    grid_data.append((grid.getMinimum().nanometers().magnitude(),
-                                      grid.getMaximum().nanometers().magnitude(),
-                                      grid.getBins()))
-
             # Torsion.
             elif type(colvar) is _CollectiveVariable.Torsion:
                 num_torsion += 1
@@ -415,30 +389,47 @@ class Plumed():
                 # Append the collective variable record.
                 self._config.append(colvar_string)
 
-                # Check for lower and upper bounds on the collective variable.
-                if lower_wall is not None:
-                    self._num_lower_walls += 1
-                    lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name)
-                    lower_wall_string += ", AT=%s" % lower_wall.getValue().radians().magnitude()
-                    lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
-                    lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
-                    lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
-                    self._config.append(lower_wall_string)
+            # Check for lower and upper bounds on the collective variable.
+            if lower_wall is not None:
+                self._num_lower_walls += 1
+                lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name)
+                try:
+                    # Unit based.
+                    lower_wall_string += ", AT=%s" % lower_wall.getValue().magnitude()
+                except:
+                    # Dimensionless.
+                    lower_wall_string += ", AT=%s" % lower_wall.getValue()
+                lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
+                lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
+                lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
+                self._config.append(lower_wall_string)
 
-                # Check for lower and upper bounds on the collective variable.
-                if upper_wall is not None:
-                    self._num_upper_walls += 1
-                    upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
-                    upper_wall_string += ", AT=%s" % upper_wall.getValue().radians().magnitude()
-                    upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
-                    upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
-                    upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
-                    self._config.append(upper_wall_string)
+            # Check for lower and upper bounds on the collective variable.
+            if upper_wall is not None:
+                self._num_upper_walls += 1
+                upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
+                try:
+                    # Unit based.
+                    upper_wall_string += ", AT=%s" % upper_wall.getValue().magnitude()
+                except:
+                    # Dimensionless.
+                    upper_wall_string += ", AT=%s" % upper_wall.getValue()
+                upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
+                upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
+                upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
+                self._config.append(upper_wall_string)
 
-                # Store grid data.
-                if grid is not None:
-                    grid_data.append((grid.getMinimum().radians().magnitude(),
-                                      grid.getMaximum().radians().magnitude(),
+            # Store grid data.
+            if grid is not None:
+                try:
+                    # Unit based.
+                    grid_data.append((grid.getMinimum().magnitude(),
+                                      grid.getMaximum().magnitude(),
+                                      grid.getBins()))
+                except:
+                    # Dimensionless.
+                    grid_data.append((grid.getMinimum(),
+                                      grid.getMaximum(),
                                       grid.getBins()))
 
             # Add the argument to the METAD record.

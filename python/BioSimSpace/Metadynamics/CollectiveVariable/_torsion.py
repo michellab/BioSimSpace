@@ -183,9 +183,13 @@ class Torsion(_CollectiveVariable):
         if self._lower_bound is not None:
             if type(self._lower_bound.getValue()) is not _Angle:
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Angle'")
+            # Convert to default unit.
+            self._lower_bound.setValue(self._lower_bound.getValue().radians())
         if self._upper_bound is not None:
             if type(self._upper_bound.getValue()) is not _Angle:
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
+            # Convert to default unit.
+            self._upper_bound.setValue(self._upper_bound.getValue().radians())
         if self._lower_bound is not None and self._upper_bound is not None:
             if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
@@ -193,8 +197,12 @@ class Torsion(_CollectiveVariable):
         if self._grid is not None:
             if type(self._grid.getMinimum()) is not _Angle:
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Angle'")
+            # Convert to default unit.
+            self._grid.setMinimum(self._grid.getMinimum().radians())
             if type(self._grid.getMaximum()) is not _Angle:
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
+            # Convert to default unit.
+            self._grid.setMaximum(self._grid.getMaximum().radians())
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
             if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
