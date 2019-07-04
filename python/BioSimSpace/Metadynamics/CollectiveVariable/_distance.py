@@ -28,6 +28,8 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Distance"]
 
+from math import ceil as _ceil
+
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
@@ -628,3 +630,9 @@ class Distance(_CollectiveVariable):
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
             if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
                 raise ValueError("'upper_bound' is greater than 'grid' maximum.")
+
+            # If the number of bins isn't specified, estimate it out from the hill width.
+            if self._grid.getBins() is None:
+                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).magnitude()
+                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                self._grid.setBins(num_bins)
