@@ -21,6 +21,23 @@
 
 """
 .. currentmodule:: BioSimSpace.Metadynamics
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    run
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    Bound
+    Grid
 """
 
 from ._bound import *
