@@ -140,7 +140,7 @@ class Metadynamics(_Protocol):
             string += "collective_variable=%s" % self._collective_variable
             string += ", timestep=%s" % self._timestep
             string += ", runtime=%s" % self._runtime
-            string += ", temperature=%s" % self._runtime
+            string += ", temperature=%s" % self._temperature
             if self._pressure is not None:
                 string += ", pressure=%s" % self._pressure
             string += ", hill_width=%s" % self._hill_width
