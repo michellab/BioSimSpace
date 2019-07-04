@@ -436,8 +436,8 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     # Convert to two-dimensional arrays. We don't assume the data is on a grid,
     # so we interpolate the z values.
     try:
-        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(y), len(x)),
-                            _np.linspace(_np.min(y), _np.max(y), len(y)))
+        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(y), 100),
+                             _np.linspace(_np.min(y), _np.max(y), 100))
         Z = _interp.griddata((x, y), z, (X, Y), method="linear")
     except:
         raise ValueError("Unable to interpolate x, y, and z data to a grid.")
