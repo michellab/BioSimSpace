@@ -38,10 +38,10 @@ class Grid():
            Parameters
            ----------
 
-           mimumum : :class:`Type <BioSimSpace.Types._type.Type>`
+           mimumum : :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
 
-           maximum : :class:`Type <BioSimSpace.Types._type.Type>`
+           maximum : :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
 
            num_bins : int
@@ -80,7 +80,7 @@ class Grid():
            Parameters
            ----------
 
-           minimum : :class:`Type <BioSimSpace.Types._type.Type>`
+           minimum : :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
         if not isinstance(minimum, _Type):
@@ -99,7 +99,7 @@ class Grid():
            Returns
            -------
 
-           minimum : :class:`Type <BioSimSpace.Types._type.Type>`
+           minimum : :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
         return self._minimum
@@ -110,7 +110,7 @@ class Grid():
            Parameters
            ----------
 
-           maximum : :class:`Type <BioSimSpace.Types._type.Type>`
+           maximum : :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
         if not isinstance(maximum, _Type):
@@ -129,7 +129,7 @@ class Grid():
            Returns
            -------
 
-           maximum : :class:`Type <BioSimSpace.Types._type.Type>`
+           maximum : :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
         return self._maximum

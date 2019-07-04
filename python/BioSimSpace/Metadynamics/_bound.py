@@ -45,7 +45,7 @@ class Bound():
            Parameters
            ----------
 
-           value : :class:`Type <BioSimSpace.Types._type.Type>`
+           value : :class:`Type <BioSimSpace.Types>`
                The value of the bound.
 
            force_constant : float
@@ -78,7 +78,7 @@ class Bound():
            Parameters
            ----------
 
-           value : :class:`Type <BioSimSpace.Types._type.Type>`
+           value : :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         if not isinstance(value, _Type):
@@ -91,7 +91,7 @@ class Bound():
            Returns
            -------
 
-           value : :class:`Type <BioSimSpace.Types._type.Type>`
+           value : :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         return self._value

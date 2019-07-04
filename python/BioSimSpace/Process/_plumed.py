@@ -534,8 +534,8 @@ class Plumed():
            kt : BioSimSpace.Types.Energy
                The temperature in energy units for intergrating out variables.
 
-           free_energies : [BSS.Types._type.Type, ...], \
-                           [[BSS.Types._type.Type, ...], ...]
+           free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
+                           [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
                The free energy estimate for the chosen collective variables.
         """
         if index is not None:
