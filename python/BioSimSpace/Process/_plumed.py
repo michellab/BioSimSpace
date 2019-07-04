@@ -452,13 +452,13 @@ class Plumed():
 
         # Hill width.
         metad_string += " SIGMA="
-        for idx, width in enumerate(protocol.getHillWidth()):
-            metad_string += "%s" % width
+        for idx, colvar in enumerate(colvars):
+            metad_string += "%s" % colvar.getHillWidth().magnitude()
             if idx < self._num_colvar - 1:
                 metad_string += ","
 
         # Hill height.
-        metad_string += " HEIGHT=%s" % protocol.getHillHeight()
+        metad_string += " HEIGHT=%s" % protocol.getHillHeight().magnitude()
 
         # Hill frequency.
         metad_string += " PACE=%s" % protocol.getHillFrequency()

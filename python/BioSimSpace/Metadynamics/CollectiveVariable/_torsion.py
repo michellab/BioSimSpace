@@ -34,7 +34,8 @@ from ...Types import Angle as _Angle
 class Torsion(_CollectiveVariable):
     """A class for torsion based collective variables."""
 
-    def __init__(self, atoms, lower_bound=None, upper_bound=None, grid=None, pbc=True):
+    def __init__(self, atoms, hill_width=_Angle(0.35, "radian"),
+            lower_bound=None, upper_bound=None, grid=None, pbc=True):
         """Constructor.
 
            Parameters
@@ -42,6 +43,9 @@ class Torsion(_CollectiveVariable):
 
            atoms :  [int, int, int, int]
                The indices of the four atoms involved in the torsion.
+
+           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+               The width of the Gaussian hill used to sample this variable.
 
            lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
                A lower bound on the value of the collective variable.
@@ -52,7 +56,7 @@ class Torsion(_CollectiveVariable):
            grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
                The grid on which the collective variable will be sampled.
                This can help speed up long metadynamics simulations where
-               the number of Guassian kernels can become prohibitive.
+               the number of Gaussian kernels can become prohibitive.
 
            pbc : bool
                Whether to use periodic boundary conditions when computing the
@@ -62,8 +66,7 @@ class Torsion(_CollectiveVariable):
         # Call the base class constructor.
         super().__init__(pbc)
 
-        # Initialise member data.
-        self._atoms = None
+        # Initialise optional member data.
         self._lower_bound = None
         self._upper_bound = None
         self._grid = None
@@ -71,6 +74,7 @@ class Torsion(_CollectiveVariable):
         # Set the required parameters.
 
         self.setAtoms(atoms)
+        self.setHillWidth(hill_width)
 
         # Set the optional parameters.
 
@@ -91,6 +95,7 @@ class Torsion(_CollectiveVariable):
         """Return a human readable string representation of the object."""
         string = "<BioSimSpace.Metadynamics.CollectiveVariable.Distance: "
         string += "atoms=%s" % self._atoms
+        string += ", hill_width=%s" % self._hill_width
         if self._lower_bound is not None:
             string += ", lower_bound=%s" % self._lower_bound
         if self._upper_bound is not None:
@@ -143,6 +148,34 @@ class Torsion(_CollectiveVariable):
                The atom indices involved in the torsion.
         """
         return self._atoms
+
+    def setHillWidth(self, hill_width):
+        """Set the width of the Gaussian hills used to bias this collective
+           variable.
+
+           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+               The width of the Gaussian hill.
+        """
+        if type(hill_width) is not _Angle:
+            raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Angle'")
+
+        if hill_width.magnitude() < 0:
+            raise ValueError("'hill_width' must have a magnitude of > 0")
+
+        # Convert to the internal unit.
+        self._hill_width = hill_width.radians()
+
+    def getHillWidth(self):
+        """Return the width of the Gaussian hill used to bias this collective
+           variable.
+
+           Returns
+           -------
+
+           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+               The width of the Gaussian hill.
+        """
+        return self._hill_width
 
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""

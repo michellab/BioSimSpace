@@ -47,8 +47,7 @@ class Metadynamics(_Protocol):
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 hill_width=0.1,
-                 hill_height=1,
+                 hill_height=_Types.Energy(1, "kj per mol"),
                  hill_frequency=1000,
                  bias_factor=None,
                  restart=False
@@ -74,11 +73,8 @@ class Metadynamics(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure. Pass pressure=None to use the NVT ensemble.
 
-           hill_width : float, [float]
-               The width of the Guassian hills.
-
-           hill_height : float
-               The height of the Guassian hills.
+           hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
+               The height of the Gaussian hills.
 
            hill_frequency : int
                The frequency at which hills are deposited.
@@ -114,8 +110,7 @@ class Metadynamics(_Protocol):
         else:
             self._pressure = None
 
-        # Set the hill parameters: width, height, frequency.
-        self.setHillWidth(hill_width)
+        # Set the hill parameters: height, frequency.
         self.setHillHeight(hill_height)
         self.setHillFrequency(hill_frequency)
 
@@ -143,7 +138,6 @@ class Metadynamics(_Protocol):
             string += ", temperature=%s" % self._temperature
             if self._pressure is not None:
                 string += ", pressure=%s" % self._pressure
-            string += ", hill_width=%s" % self._hill_width
             string += ", hill_height=%s" % self._hill_height
             string += ", hill_frequency=%s" % self._hill_frequency
             if self._bias_factor is not None:
@@ -214,7 +208,6 @@ class Metadynamics(_Protocol):
         # If the object has already been created, then check that other member
         # data is consistent.
         if not self._is_new_object:
-            self.setHillWidth(self._hill_width)
             self.setHillHeight(self._hill_height)
 
     def getTimeStep(self):
@@ -317,93 +310,38 @@ class Metadynamics(_Protocol):
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
-    def getHillWidth(self):
-        """Return the width of the Guassian hills.
-
-           Returns
-           -------
-
-           hill_width : [float]
-               The hill width for each collective variable.
-        """
-        return self._hill_width
-
-    def setHillWidth(self, hill_width):
-        """Set the width of the Guassian hills.
-
-           Parameters
-           ----------
-
-           hill_width : [float]
-               The hill width for each collective variable.
-        """
-
-        # Convert tuple to list.
-        if type(hill_width) is tuple:
-            hill_width = list(hill_width)
-
-        # A single value.
-        if type(hill_width) is float or type(hill_width) is int:
-            hill_width = [float(hill_width) for x in range(0, len(self._collective_variable))]
-
-        # A list of values.
-        elif type(hill_width) is list:
-            widths = []
-            for width in hill_width:
-                try:
-                    widths.append(float(width))
-                except:
-                    raise TypeError("'hill_width' must be a list of 'float' types.")
-            hill_width = widths
-            # Must be one for each collective variable.
-            if len(hill_width) != len(self._collective_variable):
-                raise ValueError(("Number of 'hill_width' parameters (%d) doesn't "
-                                  "match the number of collective variables (%d)")
-                                  % (len(hill_width), len(self._collective_variable)))
-        else:
-            raise TypeError("'hill_width' must be of type 'float', or a list of 'float' types.")
-
-        # Check that all widths are greater than zero.
-        for width in hill_width:
-            if width <= 0:
-                raise ValueError("Cannot have 'hill_width' <= 0")
-
-        self._hill_width = hill_width
-
     def getHillHeight(self):
-        """Return the height of the Guassian hills.
+        """Return the height of the Gaussian hills.
 
            Returns
            -------
 
-           hill_height : float
-               The hill height.
+           hill_width : :class:`Energy <BioSimSpace.Types.Energy>`
+               The height of the Gaussian hills.
         """
         return self._hill_height
 
     def setHillHeight(self, hill_height):
-        """Set the height of the Guassian hills.
+        """Set the height of the Gaussian hills.
 
            Parameters
            ----------
 
-           hill_height : float
+           hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
                The hill height.
         """
 
-        if type(hill_height) is float or type(hill_height) is int:
-            hill_height = float(hill_height)
-        else:
-            raise TypeError("'hill_height' must be of type 'float'")
+        if type(hill_height) is not _Types.Energy:
+            raise TypeError("'hill_height' must be of type 'BioSimSpace.Types.Energy'")
 
         # Check that heights is greater than zero.
-        if hill_height <= 0:
-            raise ValueError("Cannot have 'hill_height' <= 0")
+        if hill_height.magnitude() <= 0:
+            raise ValueError("Cannot have 'hill_height' with magnitude <= 0")
 
-        self._hill_height = hill_height
+        self._hill_height = hill_height.kj_per_mol()
 
     def getHillFrequency(self):
-        """Return the frequency at which Guassian hills are deposited.
+        """Return the frequency at which Gaussian hills are deposited.
 
            Returns
            -------
@@ -414,7 +352,7 @@ class Metadynamics(_Protocol):
         return self._hill_frequency
 
     def setHillFrequency(self, hill_frequency):
-        """Set the frequency at which Guassian hills are deposited.
+        """Set the frequency at which Gaussian hills are deposited.
 
            Parameters
            ----------

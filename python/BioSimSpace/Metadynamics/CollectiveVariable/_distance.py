@@ -37,8 +37,9 @@ from ...Types import Length as _Length
 class Distance(_CollectiveVariable):
     """A class for distance based collective variables."""
 
-    def __init__(self, atom0, atom1, weights0=None, weights1=None, is_com0=None,
-            is_com1=None, lower_bound=None, upper_bound=None, grid=None,
+    def __init__(self, atom0, atom1, hill_width=_Length(0.1, "nanometer"),
+            weights0=None, weights1=None, is_com0=None, is_com1=None,
+            lower_bound=None, upper_bound=None, grid=None,
             component=None, pbc=True):
         """Constructor.
 
@@ -52,6 +53,9 @@ class Distance(_CollectiveVariable):
            atom1 : int, [int, int, ...], [:class:`Coordinate <BioSimSpace.Types.Coordinate>`]
                The atom, group of atoms, or coordinate, that the distance
                will be measured to.
+
+           hill_width : :class:`Length <BioSimSpace.Types.Length>`
+               The width of the Gaussian hill used to sample this variable.
 
            weights0 : [float]
                A list of weights to be used when computing the center of the
@@ -82,7 +86,7 @@ class Distance(_CollectiveVariable):
            grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
                The grid on which the collective variable will be sampled.
                This can help speed up long metadynamics simulations where
-               the number of Guassian kernels can become prohibitive.
+               the number of Gaussian kernels can become prohibitive.
 
            component : str
                Whether to use the 'x', 'y', or 'z' component of the distance
@@ -144,6 +148,7 @@ class Distance(_CollectiveVariable):
         string = "<BioSimSpace.Metadynamics.CollectiveVariable.Distance: "
         string += "atom0=%s" % self._atom0
         string += ", atom1=%s" % self._atom1
+        string += ", hill_width=%s" % self._hill_width
         if self._weights0 is not None:
             string += ", weights0=%s" % self._weights0
         if self._weights1 is not None:
@@ -287,6 +292,34 @@ class Distance(_CollectiveVariable):
                will be measured to.
         """
         return self._atom1
+
+    def setHillWidth(self, hill_width):
+        """Set the width of the Gaussian hills used to bias this collective
+           variable.
+
+           hill_width : :class:`Length <BioSimSpace.Types.Length>`
+               The width of the Gaussian hill.
+        """
+        if type(hill_width) is not _Length:
+            raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
+
+        if hill_width.magnitude() < 0:
+            raise ValueError("'hill_width' must have a magnitude of > 0")
+
+        # Convert to the internal unit.
+        self._hill_width = hill_width.nanometers()
+
+    def getHillWidth(self):
+        """Return the width of the Gaussian hill used to bias this collective
+           variable.
+
+           Returns
+           -------
+
+           hill_width : :class:`Length <BioSimSpace.Types.Length>`
+               The width of the Gaussian hill.
+        """
+        return self._hill_width
 
     def setWeights0(self, weights0=None):
         """Set the weights to be used when computing the center of the first
