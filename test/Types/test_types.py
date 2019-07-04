@@ -9,7 +9,9 @@ for var in dir(Types):
     if var[0] == "_":
         continue
     elif var[0].upper() == var[0]:
-        types.append(getattr(Types, var))
+        # Exclude non unit based types.
+        if var != "Vector" and var != "Coordinate":
+            types.append(getattr(Types, var))
 
 def insert_space(string, index):
     return string[:index] + " " + string[index:]
