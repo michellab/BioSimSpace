@@ -62,6 +62,8 @@ class Grid():
         self.setMaximum(maximum)
         if num_bins is not None:
             self.setBins(num_bins)
+        else:
+            self._num_bins = None
 
     def __str__(self):
         """Return a human readable string representation of the object."""
