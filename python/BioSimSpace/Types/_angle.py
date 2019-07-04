@@ -182,6 +182,18 @@ class Angle(_Type):
         # Strip any "S" characters.
         unit = unit.replace("S", "")
 
+        # Strip "EGREE".
+        unit = unit.replace("EGREE", "")
+
+        # Strip "EG".
+        unit = unit.replace("EG", "")
+
+        # Strip "ADIAN".
+        unit = unit.replace("ADIAN", "")
+
+        # Strip "AD".
+        unit = unit.replace("AD", "")
+
         # Check that the unit is supported.
         if unit in self._supported_units:
             return unit
