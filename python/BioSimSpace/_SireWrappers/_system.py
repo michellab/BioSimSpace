@@ -310,6 +310,8 @@ class System(_SireWrapper):
 
         # Rebuild the MolNum to index mapping.
         self._molecule_index = {}
+        self._atom_index_tally = {}
+        self._residue_index_tally = {}
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
@@ -347,6 +349,8 @@ class System(_SireWrapper):
 
         # Rebuild the MolNum to index mapping.
         self._molecule_index = {}
+        self._atom_index_tally = {}
+        self._residue_index_tally = {}
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
@@ -362,6 +366,8 @@ class System(_SireWrapper):
 
         # Rebuild the MolNum to index mapping.
         self._molecule_index = {}
+        self._atom_index_tally = {}
+        self._residue_index_tally = {}
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
@@ -406,6 +412,8 @@ class System(_SireWrapper):
 
         # Rebuild the MolNum to index mapping.
         self._molecule_index = {}
+        self._atom_index_tally = {}
+        self._residue_index_tally = {}
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
