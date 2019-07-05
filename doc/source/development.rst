@@ -5,6 +5,8 @@ Developer's guide
 .. toctree::
    :maxdepth: 2
 
+The source code for BioSimSpace is available on `GitHub <https://github.com/michellab/BioSimSpace>`__.
+
 Python
 ======
 
