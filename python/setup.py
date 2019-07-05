@@ -53,10 +53,6 @@ finally:
         stdout = open("setup.out", "w")
         stderr = open("setup.err", "w")
 
-        print("Updating conda")
-        command = "%s/conda update -y -q -n base conda" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
