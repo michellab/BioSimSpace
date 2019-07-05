@@ -486,6 +486,29 @@ class Plumed():
 
         return self._config
 
+    def getTime(self, time_series=False):
+        """Get the simulation run time.
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The simulation run time.
+        """
+        # Get the latest records.
+        self._update_colvar_dict()
+
+        # Get the corresponding data from the dictionary and return.
+        return self._get_colvar_record(key="time",
+                                       time_series=time_series,
+                                       unit=_Units.Time.picosecond)
+
     def getCollectiveVariable(self, index, time_series=False):
         """Get the value of a collective variable.
 
@@ -723,7 +746,10 @@ class Plumed():
                 if unit is None:
                     return self._colvar_dict[key]
                 else:
-                    return [x * unit for x in self._colvar_dict[key]]
+                    if key == "time":
+                        return [(x * unit).nanoseconds() for x in self._colvar_dict[key]]
+                    else:
+                        return [x * unit for x in self._colvar_dict[key]]
 
             except KeyError:
                 return None
@@ -734,7 +760,10 @@ class Plumed():
                 if unit is None:
                     return self._colvar_dict[key][-1]
                 else:
-                    return self._colvar_dict[key][-1] * unit
+                    if key == "time":
+                        return (self._colvar_dict[key][-1] * unit).nanoseconds()
+                    else:
+                        return self._colvar_dict[key][-1] * unit
 
             except KeyError:
                 return None

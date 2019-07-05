@@ -293,6 +293,38 @@ class Process():
         """
         return self._plumed_config_file
 
+    def _getTime(self, time_series=False, block="AUTO"):
+        """Get the time (in nanoseconds).
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The current simulation time in nanoseconds.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getTime(time_series)
+
     def _getCollectiveVariable(self, index, time_series=False, block="AUTO"):
         """Get the value of a collective variable.
 
