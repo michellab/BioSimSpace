@@ -308,12 +308,8 @@ class System(_SireWrapper):
             for mol in molecules:
                 self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
-        # Rebuild the MolNum to index mapping.
-        self._molecule_index = {}
-        self._atom_index_tally = {}
-        self._residue_index_tally = {}
-        for idx in range(0, self.nMolecules()):
-            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+        # Reset the index mappings.
+        self._reset_mappings()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -347,12 +343,8 @@ class System(_SireWrapper):
         for mol in molecules:
             self._sire_object.remove(mol._sire_object.number())
 
-        # Rebuild the MolNum to index mapping.
-        self._molecule_index = {}
-        self._atom_index_tally = {}
-        self._residue_index_tally = {}
-        for idx in range(0, self.nMolecules()):
-            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+        # Reset the index mappings.
+        self._reset_mappings()
 
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
@@ -364,12 +356,8 @@ class System(_SireWrapper):
         for mol in waters:
             self._sire_object.remove(mol._sire_object.number())
 
-        # Rebuild the MolNum to index mapping.
-        self._molecule_index = {}
-        self._atom_index_tally = {}
-        self._residue_index_tally = {}
-        for idx in range(0, self.nMolecules()):
-            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+        # Reset the index mappings.
+        self._reset_mappings()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -410,12 +398,8 @@ class System(_SireWrapper):
                 self._sire_object.remove(mol._sire_object.number())
                 self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
-        # Rebuild the MolNum to index mapping.
-        self._molecule_index = {}
-        self._atom_index_tally = {}
-        self._residue_index_tally = {}
-        for idx in range(0, self.nMolecules()):
-            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+        # Reset the index mappings.
+        self._reset_mappings()
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
@@ -999,6 +983,18 @@ class System(_SireWrapper):
         system.add(molgrp)
 
         return system
+
+    def _reset_mappings(self):
+        """Internal function to reset index mapping dictionaries."""
+
+        # Clear dictionaries.
+        self._molecule_index = {}
+        self._atom_index_tally = {}
+        self._residue_index_tally = {}
+
+        # Rebuild the MolNum to index mapping.
+        for idx in range(0, self.nMolecules()):
+            self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
