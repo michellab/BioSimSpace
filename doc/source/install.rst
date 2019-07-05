@@ -34,9 +34,9 @@ need to add them when updating, e.g., for the development package:
 
     conda update -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Note that because of Conda's peculiar scoring metrics that you might not end
-up with the latest version of BioSimSpace when performing a fresh install or
-update. (It tries to minimise various things, such as the number of dependencies
+Note that because of Conda's peculiar scoring metrics you might not end up with
+the latest version of BioSimSpace when performing a fresh install or update.
+(It tries to minimise various things, such as the number of dependencies
 installed, which is difficult when your package depends on many other packages.)
 To see what packages are available, run:
 
