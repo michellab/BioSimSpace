@@ -47,6 +47,7 @@ RUN echo "python 3.7.*" >> /opt/conda/conda-meta/pinned
 
 # Do all conda work as $NB_USER.
 USER $NB_USER
+WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
 RUN conda install -y -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
