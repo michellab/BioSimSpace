@@ -48,8 +48,9 @@ RUN echo "python 3.7.*" >> /opt/conda/conda-meta/pinned
 # Do all conda work as $NB_USER.
 USER $NB_USER
 
-# Install BioSimSpace via conda.
-RUN conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+# Install BioSimSpace via Conda and dependencies for PLUMED.
+RUN conda install -y -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
+    conda install -y -c conda-forge openmpi-mpicc openssh
 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator
