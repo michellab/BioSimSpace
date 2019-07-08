@@ -37,7 +37,7 @@ RUN wget $GROMACS_DOWNLOAD -O gromacs.tar.bz2 && \
     rm gromacs.tar.bz2
 
 # Download and install PLUMED into /home using wget.
-RUN wget $PLUMED_DOWNLOAD -O gromacs.tar.bz2 && \
+RUN wget $PLUMED_DOWNLOAD -O plumed.tar.bz2 && \
     tar -jxvf plumed.tar.bz2 && \
     rm plumed.tar.bz2
 
