@@ -10,8 +10,13 @@ ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/L_wx
 ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/em4QTi3Q3cH3lDhrksODgX7oZ9CCn-k1J44GzI98G4w/n/chryswoods/b/downloads/o/plumed.tar.bz2
 
 USER root
-USER root
-WORKDIR /home
+WORKDIR $HOME
+
+# Pull in the required packages.
+RUN apt-get update && \
+    apt-get -yq --no-install-recommends install git libgfortran3 nano vim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Configure environment.
 ENV SIRE_SILENT_PHONEHOME=1 \
@@ -42,14 +47,6 @@ RUN echo "python 3.7.*" >> /opt/conda/conda-meta/pinned
 
 # Do all conda work as $NB_USER.
 USER $NB_USER
-WORKDIR $HOME
-
-# Pull in the required packages.
-USER root
-RUN apt-get update && \
-    apt-get -yq --no-install-recommends install git libgfortran3 nano vim && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Install BioSimSpace via conda.
 RUN conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
@@ -70,7 +67,7 @@ RUN conda clean -tipsy && \
     rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
     rm -rf $HOME/.cache $HOME/.jupyter $HOME/.local/share/jupyter
 
-USER $NB_USER
+# Clone source and workshop repositories.
 RUN git clone https://github.com/michellab/biosimspace && \
     git clone https://github.com/CCPBioSim/python_and_data_workshop && \
     git clone https://github.com/CCPBioSim/biosimspace_workshop
