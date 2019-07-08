@@ -10,7 +10,7 @@ ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/L_wx
 ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/em4QTi3Q3cH3lDhrksODgX7oZ9CCn-k1J44GzI98G4w/n/chryswoods/b/downloads/o/plumed.tar.bz2
 
 USER root
-WORKDIR $HOME
+WORKDIR /home
 
 # Pull in the required packages.
 RUN apt-get update && \
