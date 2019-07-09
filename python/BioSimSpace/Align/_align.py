@@ -29,10 +29,19 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
 
 import os as _os
-import rdkit.Chem as _Chem
-import rdkit.Chem.rdFMCS as _rdFMCS
 import subprocess as _subprocess
 import tempfile as _tempfile
+
+import warnings as _warnings
+# Suppress numpy warnings from RDKit import.
+_warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+_warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+# Suppress duplicate to-Python converted warnings.
+# Both Sire and RDKit register the same converter.
+with _warnings.catch_warnings():
+    _warnings.filterwarnings("ignore")
+    import rdkit.Chem as _Chem
+    import rdkit.Chem.rdFMCS as _rdFMCS
 
 import Sire.Base as _SireBase
 import Sire.Maths as _SireMaths
