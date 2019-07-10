@@ -10,6 +10,7 @@ os.system("git pull")
 os.chdir("/home/jovyan/biosimspace/python")
 os.system("git pull")
 
+result = os.system("rm -r /opt/conda/lib/python3.7/site-packages/BioSimSpace*")
 result = os.system("BSS_SKIP_DEPENDENCIES=1 /opt/conda/bin/python setup.py install")
 
 if result == 0:
