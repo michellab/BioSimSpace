@@ -59,7 +59,6 @@ RUN pip install --upgrade pip && \
 # Install and enable nglview and fileupload.
 RUN jupyter-nbextension install nglview --py --sys-prefix && \
     jupyter-nbextension enable nglview --py --sys-prefix && \
-    pip install fileupload && \
     jupyter-nbextension install fileupload --py --sys-prefix && \
     jupyter-nbextension enable fileupload --py --sys-prefix
 
