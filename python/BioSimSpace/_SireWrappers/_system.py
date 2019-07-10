@@ -566,87 +566,104 @@ class System(_SireWrapper):
            item : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                   :class:`Residue <BioSimSpace._SireWrappers.Residue>` \
                   :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               An Atom, Residue, or Molecule object from the System.
+               An Atom, Residue, or Molecule object from the System, or a
+               list containing objects of these types.
 
            Returns
            -------
 
-           index : int
+           index : int, [int]
                The absolute index of the atom/residue/molecule in the system.
         """
 
-        # Atom.
-        if type(item) is _Atom:
-            # Only compute the atom index mapping if it hasn't already
-            # been created.
-            if len(self._atom_index_tally) == 0:
-                # Loop over all molecules in the system and keep track
-                # of the cumulative number of atoms.
-                num_atoms = 0
-                for num in self._sire_object.molNums():
-                    self._atom_index_tally[num] = num_atoms
-                    num_atoms += self._sire_object.molecule(num).nAtoms()
+        # Convert single object to list.
+        if type(item) is not tuple and type(item) is not list:
+            item = [item]
 
-            # Get the AtomIdx and MolNum from the Atom.
-            index = item.index()
-            mol_num = item._sire_object.molecule().number()
+        # Create a list to hold the indices.
+        indices = []
 
-            try:
-                index += self._atom_index_tally[mol_num]
-            except KeyError:
-                raise KeyError("The atom belongs to molecule '%s' that is not part of "
-                               "this system!" % mol_num)
+        # Loop over all of the items.
+        for x in item:
+            # Atom.
+            if type(x) is _Atom:
+                # Only compute the atom index mapping if it hasn't already
+                # been created.
+                if len(self._atom_index_tally) == 0:
+                    # Loop over all molecules in the system and keep track
+                    # of the cumulative number of atoms.
+                    num_atoms = 0
+                    for num in self._sire_object.molNums():
+                        self._atom_index_tally[num] = num_atoms
+                        num_atoms += self._sire_object.molecule(num).nAtoms()
 
-            return index
+                # Get the AtomIdx and MolNum from the Atom.
+                index = x.index()
+                mol_num = x._sire_object.molecule().number()
 
-        # Residue.
-        elif type(item) is _Residue:
-            # Only compute the residue index mapping if it hasn't already
-            # been created.
-            if len(self._residue_index_tally) == 0:
-                # Loop over all molecules in the system and keep track
-                # of the cumulative number of residues.
-                num_residues = 0
-                for num in self._sire_object.molNums():
-                    self._residue_index_tally[num] = num_residues
-                    num_residues += self._sire_object.molecule(num).nResidues()
+                try:
+                    index += self._atom_index_tally[mol_num]
+                except KeyError:
+                    raise KeyError("The atom belongs to molecule '%s' that is not part of "
+                                "this system!" % mol_num)
 
-            # Get the ResIdx and MolNum from the Residue.
-            index = item.index()
-            mol_num = item._sire_object.molecule().number()
+                indices.append(index)
 
-            try:
-                index += self._residue_index_tally[mol_num]
-            except KeyError:
-                raise KeyError("The residue belongs to molecule '%s' that is not part of "
-                               "this system!" % mol_num)
+            # Residue.
+            elif type(x) is _Residue:
+                # Only compute the residue index mapping if it hasn't already
+                # been created.
+                if len(self._residue_index_tally) == 0:
+                    # Loop over all molecules in the system and keep track
+                    # of the cumulative number of residues.
+                    num_residues = 0
+                    for num in self._sire_object.molNums():
+                        self._residue_index_tally[num] = num_residues
+                        num_residues += self._sire_object.molecule(num).nResidues()
 
-            return index
+                # Get the ResIdx and MolNum from the Residue.
+                index = x.index()
+                mol_num = x._sire_object.molecule().number()
 
-        # Residue.
-        elif type(item) is _Molecule:
-            # Only compute the molecule index mapping if it hasn't already
-            # been created.
-            if len(self._molecule_index) == 0:
-                # Loop over all molecules in the system by index and map
-                # the MolNum to index.
-                for idx in range(0, self.nMolecules()):
-                    self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+                try:
+                    index += self._residue_index_tally[mol_num]
+                except KeyError:
+                    raise KeyError("The residue belongs to molecule '%s' that is not part of "
+                                "this system!" % mol_num)
 
-            # Get the MolNum from the molecule.
-            mol_num = item._sire_object.molecule().number()
+                indices.append(index)
 
-            try:
-                index = self._molecule_index[mol_num]
-            except KeyError:
-                raise KeyError("The molecule '%s' is not part of this system!" % mol_num)
+            # Residue.
+            elif type(x) is _Molecule:
+                # Only compute the molecule index mapping if it hasn't already
+                # been created.
+                if len(self._molecule_index) == 0:
+                    # Loop over all molecules in the system by index and map
+                    # the MolNum to index.
+                    for idx in range(0, self.nMolecules()):
+                        self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
-            return index
+                # Get the MolNum from the molecule.
+                mol_num = x._sire_object.molecule().number()
 
-        # Unsupported.
+                try:
+                    index = self._molecule_index[mol_num]
+                except KeyError:
+                    raise KeyError("The molecule '%s' is not part of this system!" % mol_num)
+
+                indices.append(index)
+
+            # Unsupported.
+            else:
+                raise TypeError("'item' must be of type 'BioSimSpace._SireWrappers.Atom' "
+                                "or 'BioSimSpace._SireWrappers.Residue'")
+
+        # If this was a single object, then return a single index.
+        if len(indices) == 1:
+            return indices[0]
+        # Return the list of indices.
         else:
-            raise TypeError("'item' must be of type 'BioSimSpace._SireWrappers.Atom' "
-                            "or 'BioSimSpace._SireWrappers.Residue'")
+            return indices
 
     def setBox(self, size, property_map={}):
         """Set the size of the periodic simulation box.
