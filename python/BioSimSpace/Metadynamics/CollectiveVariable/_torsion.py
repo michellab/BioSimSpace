@@ -95,7 +95,7 @@ class Torsion(_CollectiveVariable):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        string = "<BioSimSpace.Metadynamics.CollectiveVariable.Distance: "
+        string = "<BioSimSpace.Metadynamics.CollectiveVariable.Torsion: "
         string += "atoms=%s" % self._atoms
         string += ", hill_width=%s" % self._hill_width
         if self._lower_bound is not None:
