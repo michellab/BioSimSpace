@@ -20,6 +20,7 @@ requirements:
     - mdtraj
     - mdanalysis
     - nglview
+    - openbabel
     - pymbar
     - pytest
     - pyyaml
@@ -32,6 +33,7 @@ requirements:
     -  {{ pin_compatible('mdtraj') }}
     -  {{ pin_compatible('mdanalysis') }}
     -  {{ pin_compatible('nglview') }}
+    -  {{ pin_compatible('openbabel') }}
     -  {{ pin_compatible('pymbar') }}
     -  {{ pin_compatible('pytest') }}
     -  {{ pin_compatible('pyyaml') }}
