@@ -36,12 +36,15 @@ __all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
+import warnings as _warnings
 
 import Sire as _Sire
 
 from . import _protocol
+from .._utils import formalCharge as _formalCharge
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._SireWrappers import Molecule as _Molecule
+from ...Types import Charge as _Charge
 
 import BioSimSpace.IO as _IO
 
@@ -164,7 +167,7 @@ class GAFF(_protocol.Protocol):
                         "ESP",
                         "GAS" ]
 
-    def __init__(self, charge_method="BCC", property_map={}):
+    def __init__(self, charge_method="BCC", net_charge=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -173,6 +176,9 @@ class GAFF(_protocol.Protocol):
            charge_method : str
                The method to use when calculating atomic charges:
                "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+           net_charge: int
+               The net charge on the molecule.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -191,6 +197,25 @@ class GAFF(_protocol.Protocol):
             raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
                 % (charge_method, self.charge_methods))
 
+        if net_charge is not None:
+            # Get the magnitude of the charge.
+            if type(net_charge) is _Charge:
+                net_charge = net_charge.magnitude()
+
+            if type(net_charge) is float:
+                if net_charge % 1 != 0:
+                    raise ValueError("'net_charge' must be integer valued.")
+
+            # Try to convert to int.
+            try:
+                net_charge = int(net_charge)
+            except:
+                raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
+
+
+        # Set the net molecular charge.
+        self._net_charge = net_charge
+
         # Set the charge method.
         self._charge_method = charge_method
 
@@ -201,12 +226,37 @@ class GAFF(_protocol.Protocol):
 
     @classmethod
     def chargeMethods(cls):
-        """Return a list of the supported charge methods."""
+        """Return a list of the supported charge methods.
+
+           Returns
+           -------
+
+           charge_methods : [str]
+               A list of supported charge methods.
+        """
         return cls._charge_methods
 
     def chargeMethod(self):
-        """Return the chosen charge method."""
+        """Return the chosen charge method.
+
+           Returns
+           -------
+
+           charge_method : str
+               The chosen charge method.
+        """
         return self._charge_method
+
+    def netCharge(self):
+        """Return the net molecular charge.
+
+           Returns
+           -------
+
+           net_charge : int
+               The net molecular charge.
+        """
+        return self._net_charge
 
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
@@ -246,43 +296,64 @@ class GAFF(_protocol.Protocol):
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireObject().__deepcopy__())
+        # Create a copy of the molecule.
+        new_mol = molecule.copy()
 
-        # The user will likely have passed a bare PDB or Mol2 file.
-        # Antechamber expects the molecule to be uncharged, or integer
-        # charged (where the charge, or number of electrons, is passed with
-        # the -nc flag).
-
-        # Get the total charge on the molecule.
-        if "charge" in self._property_map:
-            _property_map = { "charge": self._property_map["charge"] }
-            prop = self._property_map["charge"]
+        # Use the net molecular charge passed as an option.
+        if self._net_charge is not None:
+            charge = self._net_charge
         else:
-            _property_map = { "charge": "charge" }
-            prop = "charge"
+            # The user will likely have passed a bare PDB or Mol2 file.
+            # Antechamber expects the molecule to be uncharged, or integer
+            # charged (where the charge, or number of electrons, is passed with
+            # the -nc flag).
 
-        # The molecule has a charge property.
-        if new_mol._getSireObject().hasProperty(prop):
-            charge = new_mol.charge(property_map=_property_map).magnitude()
-
-            # Charge is non-integer, try to fix it.
-            if abs(round(charge) - charge) > 0:
-                new_mol._fixCharge(property_map=_property_map)
-                charge = round(charge)
-        else:
-            charge = None
-
-        # Only try "formal_charge" when "charge" is missing. Unlikely to have
-        # both if this is a bare molecule, but the user could be re-parameterising
-        # an existing molecule.
-        if charge is None:
-            # Get the total formal charge on the molecule.
-            if "formal_charge" in self._property_map:
-                _property_map = { "charge": self._property_map["formal_charge"] }
+            # Get the total charge on the molecule.
+            if "charge" in self._property_map:
+                _property_map = { "charge": self._property_map["charge"] }
+                prop = self._property_map["charge"]
             else:
-                _property_map = { "charge": "formal_charge" }
-            charge = new_mol.charge(property_map=_property_map).magnitude()
+                _property_map = { "charge": "charge" }
+                prop = "charge"
+
+            # The molecule has a charge property.
+            if new_mol._getSireObject().hasProperty(prop):
+                charge = new_mol.charge(property_map=_property_map).magnitude()
+
+                # Charge is non-integer, try to fix it.
+                if abs(round(charge) - charge) > 0:
+                    new_mol._fixCharge(property_map=_property_map)
+                    charge = round(charge)
+            else:
+                charge = None
+
+            # Only try "formal_charge" when "charge" is missing. Unlikely to have
+            # both if this is a bare molecule, but the user could be re-parameterising
+            # an existing molecule.
+            if charge is None:
+                # Get the total formal charge on the molecule.
+                if "formal_charge" in self._property_map:
+                    _property_map = { "charge": self._property_map["formal_charge"] }
+                    prop = self._property_map["charge"]
+                else:
+                    _property_map = { "charge": "formal_charge" }
+                    prop = "formal_charge"
+
+                if new_mol._getSireObject().hasProperty(prop):
+                    charge = new_mol.charge(property_map=_property_map).magnitude()
+
+                    # Compute the formal charge ourselves to check that it is consistent.
+                    formal_charge = _formalCharge(molecule).magnitude()
+
+                    if charge != formal_charge:
+                        _warnings.warn("The formal charge on the molecule is %d "
+                                       "but we estimate it to be %d" % (charge, formal_charge))
+                else:
+                    msg = ("The molecule has no 'charge' or 'formal_charge' information, and "
+                           "no 'net_charge' option has been passed. You can use the "
+                           "'BioSimSpace.Parameters.formalCharge' function to compute the "
+                           "formal charge")
+                    raise _ParameterisationError(msg)
 
         # Create a new system and molecule group.
         s = _Sire.System.System("BioSimSpace System")

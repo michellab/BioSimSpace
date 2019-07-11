@@ -155,8 +155,8 @@ class Protocol():
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireObject().__deepcopy__())
+        # Create a copy of the molecule.
+        new_mol = molecule.copy()
 
         # Choose the program to run with depending on the force field compatibility.
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if

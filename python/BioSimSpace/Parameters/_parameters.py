@@ -32,11 +32,12 @@ from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
+from ..Types import Charge as _Charge
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
 
-def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={}):
+def parameterise(molecule, forcefield, work_dir=None, property_map={}):
     """Parameterise a molecule using a specified force field.
 
        Parameters
@@ -48,9 +49,6 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
        forcefield : str
            The force field. Run BioSimSpace.Parameters.forceFields() to get a
            list of the supported force fields.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -73,9 +71,9 @@ def parameterise(molecule, forcefield, options={}, work_dir=None, property_map={
         if forcefield not in forceFields():
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, options=options, work_dir=work_dir, property_map=property_map)
+    return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
 
-def ff99(molecule, options={}, work_dir=None, property_map={}):
+def ff99(molecule, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Parameters
@@ -83,9 +81,6 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -112,9 +107,6 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
-
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -125,7 +117,7 @@ def ff99(molecule, options={}, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SB(molecule, options={}, work_dir=None, property_map={}):
+def ff99SB(molecule, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Parameters
@@ -133,9 +125,6 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -162,9 +151,6 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
-
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -175,7 +161,7 @@ def ff99SB(molecule, options={}, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
+def ff99SBildn(molecule, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
 
        Parameters
@@ -183,9 +169,6 @@ def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -212,9 +195,6 @@ def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
-
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -225,7 +205,7 @@ def ff99SBildn(molecule, options={}, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff03(molecule, options={}, work_dir=None, property_map={}):
+def ff03(molecule, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Parameters
@@ -233,9 +213,6 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -262,9 +239,6 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
-
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -275,7 +249,7 @@ def ff03(molecule, options={}, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff14SB(molecule, options={}, work_dir=None, property_map={}):
+def ff14SB(molecule, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Parameters
@@ -283,9 +257,6 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
 
        work_dir : str
            The working directory for the process.
@@ -311,9 +282,6 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
-
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -324,7 +292,7 @@ def ff14SB(molecule, options={}, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff(molecule, options={}, work_dir=None, property_map={}):
+def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -333,8 +301,8 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
 
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
+       net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
+           The net charge on the molecule.
 
        work_dir : str
            The working directory for the process.
@@ -360,20 +328,32 @@ def gaff(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
+    if net_charge is not None:
+        # Get the magnitude of the charge.
+        if type(net_charge) is _Charge:
+            net_charge = net_charge.magnitude()
+
+        if type(net_charge) is float:
+            if net_charge % 1 != 0:
+                raise ValueError("'net_charge' must be integer valued.")
+
+        # Try to convert to int.
+        try:
+            net_charge = int(net_charge)
+        except:
+            raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF(property_map=property_map)
+    protocol = _Protocol.GAFF(net_charge=net_charge, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff2(molecule, options={}, work_dir=None, property_map={}):
+def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -382,8 +362,8 @@ def gaff2(molecule, options={}, work_dir=None, property_map={}):
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
 
-       options : dict
-           A dictionary of keyword options to override the protocol defaults.
+       net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
+           The net charge on the molecule.
 
        work_dir : str
            The working directory for the process.
@@ -409,14 +389,29 @@ def gaff2(molecule, options={}, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(options) is not dict:
-        raise TypeError("'options' must be of type 'dict'")
+    if net_charge is not None:
+        # Get the magnitude of the charge.
+        if type(net_charge) is _Charge:
+            net_charge = net_charge.magnitude()
+
+        if type(net_charge) is float:
+            if net_charge % 1 != 0:
+                raise ValueError("'net_charge' must be integer valued.")
+
+        # Try to convert to int.
+        try:
+            net_charge = int(net_charge)
+        except:
+            raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
+
+        if net_charge % 1 != 0:
+            raise ValueError("'net_charge' must be integer valued.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF2(property_map=property_map)
+    protocol = _Protocol.GAFF2(net_charge=net_charge, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
