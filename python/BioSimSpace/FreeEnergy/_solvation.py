@@ -65,7 +65,7 @@ class Solvation(_free_energy.FreeEnergy):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the solvated system. (Used for the first leg.)
-            self._system0 = _System(system._getSireObject().__deepcopy__())
+            self._system0 = system.copy()
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
@@ -76,7 +76,7 @@ class Solvation(_free_energy.FreeEnergy):
                 raise ValueError("The system must be solvated!")
 
             # Create the vacuum system. (Used for the second leg.)
-            self._system1 = _System(system._getSireObject().__deepcopy__())
+            self._system1 = system.copy()
             self._system1.removeWaterMolecules()
 
         # Initialise the process runner with all of the simulations required

@@ -78,7 +78,7 @@ class Binding(_free_energy.FreeEnergy):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the bound system. (Used for the first leg.)
-            self._system0 = _System(system._getSireObject().__deepcopy__())
+            self._system0 = system.copy()
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
