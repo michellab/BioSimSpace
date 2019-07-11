@@ -6,13 +6,13 @@ proxy:
       - notebook.biosimspace.org
     type: letsencrypt
     letsencrypt:
-      contactEmail: chryswoods@gmail.com
+      contactEmail: lester.hedges@gmail.com
 rbac:
   enabled: true
 singleuser:
   image:
-    name: chryswoods/biosimspace-notebook
-    tag: v10
+    name: biosimspace/biosimspace-notebook
+    tag: TAG
   storage:
     type: none
   memory:
