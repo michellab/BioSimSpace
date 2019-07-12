@@ -31,6 +31,7 @@ __all__ = ["Plumed"]
 import glob as _glob
 import os as _os
 import pygtail as _pygtail
+import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings
 
@@ -147,18 +148,31 @@ class Plumed():
         self._colvar_unit = {}
         self._config = []
 
+        # Check for restart files.
+        is_restart = False
+        if protocol.getHillsFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getHillsFile(), "%s/HILLS" % self._work_dir)
+        if protocol.getGridFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getGridFile(), "%s/GRID" % self._work_dir)
+        if protocol.getColvarFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
+
         # Is the simulation a restart?
-        if protocol.isRestart():
+        if is_restart:
             self._config.append("RESTART")
         else:
             self._config.append("RESTART NO")
 
-            # Delete any existing COLVAR and HILLS files.
+            # Delete any existing COLVAR, HILLS, and GRID files.
             try:
                 _os.remove("%s/COLVAR" % self._work_dir)
                 _os.remove("%s/COLVAR.offset" % self._work_dir)
                 _os.remove("%s/HILLS" % self._work_dir)
                 _os.remove("%s/HILLS.offset" % self._work_dir)
+                _os.remove("%s/GRID" % self._work_dir)
             except:
                 pass
 
@@ -478,6 +492,9 @@ class Plumed():
                     grid_bin_string += ","
 
             metad_string += grid_min_string + grid_max_string + grid_bin_string
+            metad_string += " GRID_WFILE=GRID GRID_WSTRIDE=%s" % protocol.getHillFrequency()
+            if protocol.getGridFile() is not None:
+                metad_string += " GRID_RFILE=GRID"
             metad_string += " CALC_RCT"
 
         # Temperature and bias parameters.
