@@ -263,6 +263,9 @@ class Plumed():
             upper_wall = colvar.getUpperBound()
             grid = colvar.getGrid()
 
+            # Whether the collective variable is a torsion.
+            is_torsion = False
+
             # Distance.
             if type(colvar) is _CollectiveVariable.Distance:
                 num_distance += 1
@@ -374,6 +377,7 @@ class Plumed():
 
             # Torsion.
             elif type(colvar) is _CollectiveVariable.Torsion:
+                is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
                 colvar_string = "%s: TORSION ATOMS=%s" \
@@ -422,16 +426,19 @@ class Plumed():
 
             # Store grid data.
             if grid is not None:
-                try:
-                    # Unit based.
-                    grid_data.append((grid.getMinimum().magnitude(),
-                                      grid.getMaximum().magnitude(),
-                                      grid.getBins()))
-                except:
-                    # Dimensionless.
-                    grid_data.append((grid.getMinimum(),
-                                      grid.getMaximum(),
-                                      grid.getBins()))
+                if is_torsion:
+                        grid_data.append(("-pi", "pi", grid.getBins()))
+                else:
+                    try:
+                        # Unit based.
+                        grid_data.append((grid.getMinimum().magnitude(),
+                                          grid.getMaximum().magnitude(),
+                                          grid.getBins()))
+                    except:
+                        # Dimensionless.
+                        grid_data.append((grid.getMinimum(),
+                                          grid.getMaximum(),
+                                          grid.getBins()))
 
             # Add the argument to the METAD record.
             metad_string += "%s" % arg_name
