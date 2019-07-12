@@ -39,19 +39,18 @@ class Grid():
            Parameters
            ----------
 
-           mimumum : :class:`Type <BioSimSpace.Types>`
-               The minimum value of the grid.
+           mimumum : int, float, :class:`Type <BioSimSpace.Types>`
+               The minimum value of the grid. Use 'int' or 'float' for
+               dimensionless collective variables.
 
-           maximum : :class:`Type <BioSimSpace.Types>`
-               The maximum value of the grid.
+           maximum : int, float, :class:`Type <BioSimSpace.Types>`
+               The maximum value of the grid. Use 'int' or 'float' for
+               dimensionless collective variables.
 
            num_bins : int
                The number of bins in the grid. If None, then the number will
                be automatically generated from the metadynamics hill width.
         """
-
-        if not isinstance(maximum, _Type):
-            raise TypeError("'maximum' must be of type 'BioSimSpace.Types._type.Type'")
 
         if num_bins is not None:
             try:
@@ -84,8 +83,10 @@ class Grid():
            minimum : :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
-        if not isinstance(minimum, _Type):
-            raise TypeError("'minimum' must be of type 'BioSimSpace.Types._type.Type'")
+        if not type(minimum) is int and   \
+           not type(minimum) is float and \
+           not isinstance(minimum, _Type):
+            raise TypeError("'minimum' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._minimum = minimum
 
         if hasattr(self, "_maximum"):
@@ -114,8 +115,10 @@ class Grid():
            maximum : :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
-        if not isinstance(maximum, _Type):
-            raise TypeError("'maximum' must be of type 'BioSimSpace.Types._type.Type'")
+        if not type(maximum) is int and   \
+           not type(maximum) is float and \
+           not isinstance(maximum, _Type):
+            raise TypeError("'maximum' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._maximum = maximum
 
         if hasattr(self, "_minimum"):

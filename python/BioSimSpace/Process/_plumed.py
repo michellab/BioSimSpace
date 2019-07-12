@@ -67,6 +67,7 @@ class Plumed():
             if not _os.path.isdir(work_dir):
                 raise ValueError("'work_dir' doesn't exist: %s" % work_dir)
 
+        # Try to locate the PLUMED executable.
         try:
             self._exe= _findExe("plumed").absoluteFilePath()
         except:

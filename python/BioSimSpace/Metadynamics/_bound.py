@@ -46,8 +46,9 @@ class Bound():
            Parameters
            ----------
 
-           value : :class:`Type <BioSimSpace.Types>`
-               The value of the bound.
+           value : int, float, :class:`Type <BioSimSpace.Types>`
+               The value of the bound. Use 'int' or 'float' for dimensionless
+               collective variables.
 
            force_constant : float
                The force constant (k) for the bias potential.
@@ -82,8 +83,10 @@ class Bound():
            value : :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
-        if not isinstance(value, _Type):
-            raise TypeError("'value' must be of type 'BioSimSpace.Types._type.Type'")
+        if not type(value) is int and   \
+           not type(value) is float and \
+           not isinstance(value, _Type):
+            raise TypeError("'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._value = value
 
     def getValue(self):
