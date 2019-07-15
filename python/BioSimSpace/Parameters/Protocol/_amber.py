@@ -491,7 +491,7 @@ class GAFF2(_protocol.Protocol):
     chargeMethods = GAFF.chargeMethods
     chargeMethod = GAFF.chargeMethod
 
-    def __init__(self, charge_method="BCC", property_map={}):
+    def __init__(self, charge_method="BCC", net_charge=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -500,6 +500,9 @@ class GAFF2(_protocol.Protocol):
            charge_method : str
                The method to use when calculating atomic charges:
                "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+           net_charge: int
+               The net charge on the molecule.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
