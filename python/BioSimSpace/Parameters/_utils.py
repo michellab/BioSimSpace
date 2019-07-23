@@ -66,7 +66,7 @@ def formalCharge(molecule):
     formal_charge = 0
 
     # Run in the working directory.
-    with _Utils.cd(work_dir):
+    with _Utils.cd(work_dir), _Utils.stderr_redirected():
 
         # Save the molecule to a PDB file.
         _IO.saveMolecules("tmp", molecule, "PDB")
