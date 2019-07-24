@@ -214,7 +214,7 @@ class Somd(_process.Process):
                                    "this isn't a 'FreeEnergy' protocol. We will assume "
                                    "that you intend to simulate the lambda = 0 state. "
                                    "If you want to simulate the lambda = 1 state, then "
-                                   "pass 'is_lambda1' : True in the 'property_map' "
+                                   "pass {'is_lambda1' : True} in the 'property_map' "
                                    "argument.")
                 else:
                     is_lambda1 = self._property_map["is_lambda1"]
