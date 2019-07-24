@@ -78,7 +78,7 @@ class SireWrapper():
         return hash(self._sire_object)
 
     def copy(self):
-        """Return a copy of this object
+        """Return a copy of this object.
 
            Returns
            -------
