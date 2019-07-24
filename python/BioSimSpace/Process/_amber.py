@@ -230,12 +230,12 @@ class Amber(_process.Process):
 
         # Create the input files...
 
-        # Convert to a BioSimSpace system.
-        system = _System(self._system)
+        # Create a copy of the system.
+        system = self._system.copy()
 
         # If the system isn't created from AMBER format files, then we'll need
         # to convert the water model topology.
-        if not "PRM7,RST7" in self._system.property("fileformat").toString():
+        if not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
 
             # Get the water molecules.
             waters = system.getWaterMolecules()
@@ -307,7 +307,7 @@ class Amber(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if prop in self._system.propertyKeys():
+        if prop in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")

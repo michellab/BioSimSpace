@@ -136,23 +136,20 @@ class Gromacs(_process.Process):
 
         # Create the input files...
 
-        # First create a copy of the system.
-        system = _System(self._system)
-
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule.
         if type(self._protocol) is _Protocol.FreeEnergy:
-            if system.nPerturbableMolecules() != 1:
+            if self._system.nPerturbableMolecules() != 1:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
         # GRO87 file.
-        gro = _SireIO.Gro87(self._system, self._property_map)
+        gro = _SireIO.Gro87(self._system._sire_object, self._property_map)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _SireIO.GroTop(self._system, self._property_map)
+        top = _SireIO.GroTop(self._system._sire_object, self._property_map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
@@ -182,7 +179,7 @@ class Gromacs(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system.propertyKeys():
+        if "space" in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -310,7 +307,7 @@ class Gromacs(_process.Process):
                 property_map["sort"] = _SireBase.wrap(False)
 
                 # Create a GROMACS topology object.
-                top = _SireIO.GroTop(self._system, property_map)
+                top = _SireIO.GroTop(self._system._sire_object, property_map)
 
                 # Get the top file as a list of lines.
                 top_lines = top.lines()
@@ -324,7 +321,7 @@ class Gromacs(_process.Process):
                         moleculetypes_idx.append(idx)
 
                 # Extract all of the molecules from the system.
-                mols = _System(self._system).getMolecules()
+                mols = self._system.getMolecules()
 
                 # The number of restraint files.
                 num_restraint = 1
@@ -589,7 +586,7 @@ class Gromacs(_process.Process):
 
             # Create the PLUMED input file.
             self._plumed = _Plumed(self._work_dir)
-            self._setPlumedConfig(self._plumed.createConfig(_System(self._system), self._protocol))
+            self._setPlumedConfig(self._plumed.createConfig(self._system, self._protocol))
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
@@ -770,7 +767,7 @@ class Gromacs(_process.Process):
                 # If the system contains perturbable molecules, then
                 # copy the new coordinates back into the original system.
                 if self._has_perturbable:
-                    old_system = _System(self._system)
+                    old_system = self._system.copy()
                     old_system._updateCoordinates(new_system)
                     return old_system
                 else:
@@ -786,7 +783,7 @@ class Gromacs(_process.Process):
                 # If the system contains perturbable molecules, then
                 # copy the new coordinates back into the original system.
                 if self._has_perturbable:
-                    old_system = _System(self._system)
+                    old_system = self._system.copy()
                     old_system._updateCoordinates(new_system)
                     return old_system
                 else:

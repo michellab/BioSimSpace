@@ -136,20 +136,20 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _SireIO.CharmmPSF(self._system, self._property_map)
+            psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)
             psf.writeToFile(self._psf_file)
         except:
             raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
 
         # PDB file.
         try:
-            pdb = _SireIO.PDB2(self._system, self._property_map)
+            pdb = _SireIO.PDB2(self._system._sire_object, self._property_map)
             pdb.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
 
         # Try to write a PDB "velocity" restart file.
-        # The file will only be generated if all atoms in self._system have
+        # The file will only be generated if all atoms in the system have
         # a "velocity" property.
 
         # First generate a name for the velocity file.
@@ -246,18 +246,18 @@ class Namd(_process.Process):
         prop = self._property_map.get("space", "space")
 
         # Check whether the system contains periodic box information.
-        if prop in self._system.propertyKeys():
+        if prop in self._system._sire_object.propertyKeys():
             # Flag that we have found a box.
             has_box = True
 
             # Get the box size.
-            box_size = self._system.property(prop).dimensions()
+            box_size = self._system._sire_object.property(prop).dimensions()
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
             # ensures a consistent wrapping for coordinates in the  NAMD
             # output files.
-            origin = tuple(_process._getAABox(self._system).center())
+            origin = tuple(_process._getAABox(self._system._sire_object).center())
 
         # No box information. Assume this is a gas phase simulation.
         else:
@@ -267,9 +267,9 @@ class Namd(_process.Process):
         prop = self._property_map.get("param_format", "param_format")
 
         # Check whether the system contains parameter format information.
-        if prop in self._system.propertyKeys():
+        if prop in self._system._sire_object.propertyKeys():
             # Get the parameter format.
-            if self._system.property(prop).toString() == "CHARMM":
+            if self._system._sire_object.property(prop).toString() == "CHARMM":
                 is_charmm = True
             else:
                 is_charmm = False
@@ -393,7 +393,7 @@ class Namd(_process.Process):
             # Restrain the backbone.
             if self._protocol.isRestrained():
                 # Create a restrained system.
-                restrained = _process._restrain_backbone(self._system)
+                restrained = _process._restrain_backbone(self._system._sire_object)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
                 prop = self._property_map.get("occupancy", "occupancy")
