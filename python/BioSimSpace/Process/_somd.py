@@ -154,13 +154,13 @@ class Somd(_process.Process):
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', platform='%s', work_dir='%s' seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._platform, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', platform='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._platform, self._work_dir, self._seed)
 
     def _setup(self):
@@ -169,7 +169,7 @@ class Somd(_process.Process):
         # Create the input files...
 
         # First create a copy of the system.
-        system = _System(self._system)
+        system = self._system.copy()
 
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
@@ -202,6 +202,39 @@ class Somd(_process.Process):
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
+
+        # If this is a different protocol and the system still contains a
+        # perturbable molecule, then we'll warn the user and simulate the
+        # lambda = 0 state.
+        else:
+            if system.nPerturbableMolecules() > 0:
+                if not "is_lambda1" in self._property_map:
+                    is_lambda1 = False
+                    _warnings.warn("The system contains a perturbable molecule but "
+                                   "this isn't a 'FreeEnergyProtocol'. We will assume "
+                                   "that you intend to simulate the lambda = 0 state. "
+                                   "If you want to simulate the lambda = 1 state, then "
+                                   "pass 'is_lambda1' : True in the 'property_map' "
+                                   "argument.")
+                else:
+                    is_lambda1 = self._property_map["is_lambda1"]
+                    self._property_map.pop("is_lambda1")
+
+                # Get the molecules from the system.
+                molecules = system.getMolecules()
+
+                # Loop over all the molecules and.
+                for idx, mol in enumerate(molecules):
+                    if mol.isMerged():
+                        molecules[idx] = mol._toRegularMolecule(property_map=self._property_map,
+                                                                is_lambda1=is_lambda1)
+
+                # Create a new system using the updated molecules.
+                system = _System(molecules)
+
+                # Copy across the properties from the original system.
+                for prop in self._system._sire_object.propertyKeys():
+                    system._sire_object.setProperty(prop, self._system._sire_object.property(prop))
 
         # RST file (coordinates).
         try:
@@ -240,7 +273,7 @@ class Somd(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system.propertyKeys():
+        if "space" in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -528,7 +561,7 @@ class Somd(_process.Process):
 
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
-            old_system = _System(self._system)
+            old_system = self._system.copy()
             old_system._updateCoordinates(new_system)
 
             return old_system
