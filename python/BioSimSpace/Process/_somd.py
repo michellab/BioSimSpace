@@ -211,7 +211,7 @@ class Somd(_process.Process):
                 if not "is_lambda1" in self._property_map:
                     is_lambda1 = False
                     _warnings.warn("The system contains a perturbable molecule but "
-                                   "this isn't a 'FreeEnergyProtocol'. We will assume "
+                                   "this isn't a 'FreeEnergy' protocol. We will assume "
                                    "that you intend to simulate the lambda = 0 state. "
                                    "If you want to simulate the lambda = 1 state, then "
                                    "pass 'is_lambda1' : True in the 'property_map' "
