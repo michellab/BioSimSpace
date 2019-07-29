@@ -931,7 +931,7 @@ class System(_SireWrapper):
         if self.nMolecules() != system.nMolecules():
             raise _IncompatibleError("The passed 'system' contains a different number of "
                                      "molecules. Expected '%d', found '%d'"
-                                     % (self.nMolecules, system.nMolecules()))
+                                     % (self.nMolecules(), system.nMolecules()))
 
         # Check that each molecule in the system contains the same number of atoms.
         for idx in range(0, self.nMolecules()):
