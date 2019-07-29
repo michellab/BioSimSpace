@@ -45,6 +45,7 @@ from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Trajectory import Trajectory as _Trajectory
 
+import BioSimSpace.IO as _IO
 import BioSimSpace.Protocol as _Protocol
 import BioSimSpace.Types._type as _Type
 import BioSimSpace.Units as _Units
@@ -778,18 +779,31 @@ class Gromacs(_process.Process):
         else:
             # Grab the last frame from the current trajectory file.
             try:
-                new_system = self.getTrajectory().getFrames()[-1]
+                with _Utils.cd(self._work_dir):
 
-                # If the system contains perturbable molecules, then
-                # copy the new coordinates back into the original system.
-                if self._has_perturbable:
+                    # Use tjrconv to get the frame closest to the current simulation time.
+                    command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
+                        % (self._exe, self._traj_file, self._gro_file, self.getTime().picoseconds().magnitude())
+
+                    # Run the command.
+                    proc = _subprocess.run(command, shell=True,
+                        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+                    # Check that grompp ran successfully.
+                    if proc.returncode != 0:
+                        return None
+
+                    # Read the frame file.
+                    new_system = _IO.readMolecules(["frame.gro", self._top_file])
+
+                    # Delete the frame file.
+                    _os.remove("frame.gro")
+
+                    # Copy the old system and update the coordinates.
                     old_system = self._system.copy()
                     old_system._updateCoordinates(new_system)
+
                     return old_system
-                else:
-                    # Preserve the original fileformat property.
-                    new_system._sire_object.setProperty("fileformat", _SireBase.wrap("GroTop,Gro87"))
-                    return new_system
             except:
                 return None
 
