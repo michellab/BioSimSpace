@@ -789,10 +789,6 @@ class Gromacs(_process.Process):
                     proc = _subprocess.run(command, shell=True,
                         stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
-                    # Check that grompp ran successfully.
-                    if proc.returncode != 0:
-                        return None
-
                     # Read the frame file.
                     new_system = _IO.readMolecules(["frame.gro", self._top_file])
 
@@ -804,7 +800,11 @@ class Gromacs(_process.Process):
                     old_system._updateCoordinates(new_system)
 
                     return old_system
+
             except:
+                _warnings.warn("Failed to extract trajectory frame with trjconv. "
+                               "Try running 'getSystem' again.")
+                _os.remove("%s/frame.gro" % self._work_dir)
                 return None
 
     def getCurrentSystem(self):
