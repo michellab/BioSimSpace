@@ -11,6 +11,9 @@ USER $FN_USER
 ENV SIRE_DONT_PHONEHOME=1
 ENV SIRE_SILENT_PHONEHOME=1
 
+# Downgrade Conda due to broken RDKit install with Conda 4.7.
+RUN $HOME/sire.app/bin/conda install -y conda=4.6.14
+
 # Update to the latest version
 RUN git clone https://github.com/michellab/BioSimSpace
 
