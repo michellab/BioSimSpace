@@ -609,6 +609,12 @@ class Somd(_process.Process):
                The latest molecular system.
         """
 
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
         # Try to grab the latest coordinates from the binary restart file.
         try:
             new_system = _IO.readMolecules([self._restart_file, self._top_file])
