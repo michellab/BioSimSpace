@@ -152,6 +152,12 @@ class Somd(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
+        # Initalise the number of moves per cycle.
+        self._num_moves = 10000
+
+        # Initialise the buffering frequency.
+        self._buffer_freq = 0
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -332,8 +338,13 @@ class Somd(_process.Process):
             if self._protocol.isRestrained():
                 raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
 
             # Work out the number of cycles per frame.
             cycles_per_frame = ncycles / self._protocol.getFrames()
@@ -341,8 +352,9 @@ class Somd(_process.Process):
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * 10000
+                buffer_freq = cycles_per_frame * self._num_moves
                 cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
@@ -355,7 +367,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                                      # Perform 10000 MD moves per cycle.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
@@ -386,8 +398,13 @@ class Somd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
 
             # Work out the number of cycles per frame.
             cycles_per_frame = ncycles / self._protocol.getFrames()
@@ -395,7 +412,7 @@ class Somd(_process.Process):
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * 10000
+                buffer_freq = cycles_per_frame * self._num_moves
                 cycles_per_frame = 1
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
@@ -409,7 +426,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                                      # Perform 10000 MD moves per cycle.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
@@ -440,8 +457,13 @@ class Somd(_process.Process):
         # Add configuration variables for a free energy simulation.
         elif type(self._protocol) is _Protocol.FreeEnergy:
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
 
             # Work out the number of cycles per frame.
             cycles_per_frame = ncycles / self._protocol.getFrames()
@@ -449,7 +471,7 @@ class Somd(_process.Process):
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * 10000
+                buffer_freq = cycles_per_frame * self._num_moves
                 cycles_per_frame = 1
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
@@ -463,7 +485,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                                      # Perform 10000 MD moves per cycle.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
             self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
@@ -669,9 +691,13 @@ class Somd(_process.Process):
         if num_frames == 0:
             return None
 
-        # Create the list of time records. (Frames are saved every 10000 MD steps.)
+        # Create the list of time records.
         try:
-            times = [(10000 * self._protocol.getTimeStep().nanoseconds()) * x for x in range(1, num_frames + 1)]
+            if self._buffer_freq == 0:
+                interval = self._num_moves
+            else:
+                interval = self._buffer_freq
+            times = [(interval * self._protocol.getTimeStep().nanoseconds()) * x for x in range(1, num_frames + 1)]
         except:
             return None
 
