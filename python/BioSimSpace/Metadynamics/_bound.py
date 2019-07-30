@@ -80,7 +80,7 @@ class Bound():
            Parameters
            ----------
 
-           value : :class:`Type <BioSimSpace.Types>`
+           value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         if not type(value) is int and   \
@@ -95,7 +95,7 @@ class Bound():
            Returns
            -------
 
-           value : :class:`Type <BioSimSpace.Types>`
+           value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         return self._value
