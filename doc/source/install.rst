@@ -7,6 +7,10 @@ Installation
 Conda install
 =============
 
+(Please don't use Conda 4.7 until further notice. This currently generates an
+invalid package plan that will install an incompatible version of RDKit. Versions
+up to 4.6.14 work fine.)
+
 The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
 
 .. code-block:: bash
