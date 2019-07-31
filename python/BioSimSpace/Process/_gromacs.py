@@ -765,14 +765,12 @@ class Gromacs(_process.Process):
                 # Read the molecular system.
                 new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
-                # If the system contains perturbable molecules, then
-                # copy the new coordinates back into the original system.
-                if self._has_perturbable:
-                    old_system = self._system.copy()
-                    old_system._updateCoordinates(new_system)
-                    return old_system
-                else:
-                    return new_system
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system)
+
+                return old_system
+
             else:
                 return None
 
