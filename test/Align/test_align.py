@@ -156,6 +156,28 @@ def test_merge():
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
 
+def test_ring_breaking_three_membered():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-13a*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-17g*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Generate the mapping.
+    mapping = BSS.Align.matchAtoms(m0, m1)
+
+    # Align m0 to m1 based on the mapping.
+    m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
+
+    # Try to merge the molecule without allowing ring breaking.
+    with pytest.raises(BSS._Exceptions.IncompatibleError):
+        m2 = BSS.Align.merge(m0, m1, mapping)
+
+    # Now check that we can merge if we allow ring breaking.
+    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
+
 def test_ring_breaking_five_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))

@@ -2439,8 +2439,9 @@ class Molecule(_SireWrapper):
 
         # The number of potentials should be consistent for the "bond0"
         # and "bond1" properties.
-        if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-            raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
+        if not allow_ring_breaking:
+            if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
+                raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
 
         # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
@@ -2817,9 +2818,51 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
            The index of the second atom in the second state.
     """
 
-    # Have we opened/closed a ring? This means that both atoms are part of a ring in
-    # one end state, whereas at least one isn't in the other end state.
-    return (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1))
+    # Have we opened/closed a ring? This means that both atoms are part of a
+    # ring in one end state (either in it, or on it), whereas at least one
+    # isn't in the other end state.
+
+    # First check to see whether both atoms are in a ring in one state, and at
+    # least one isn't in the other. (This catches 5/6 membered ring openings.)
+    if (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1)):
+        return True
+    # Otherwise check that both atoms are in or on a ring in one state, and at least
+    # one isn't in the other. (This catches 3 membered ring openenings.)
+    else:
+        return (_in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0)) \
+             ^ (_in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1))
+
+def _in_or_on_ring(idx, conn):
+    """Internal function to test whether an atom is in or on a ring.
+
+       Parameters
+       ----------
+
+       idx : Sire.Mol.AtomIdx
+           The index of the atom
+
+       conn : Sire.Mol.Connectivity
+           The connectivity object.
+
+       Returns
+       -------
+
+       is_in_or_on_ring : bool
+           Whether the atom is in, or on, a ring.
+    """
+
+    # The atom is in a ring.
+    if conn.inRing(idx):
+        return True
+
+    # Loop over all atoms connected to this atom.
+    for x in conn.connectionsTo(idx):
+        # The neighbour is in a ring.
+        if conn.inRing(x):
+            return True
+
+    # If we get this far, then the atom is neither in, nor on a ring.
+    return False
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
