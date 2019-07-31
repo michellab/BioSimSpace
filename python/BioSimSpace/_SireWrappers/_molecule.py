@@ -2820,17 +2820,42 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
 
     # Have we opened/closed a ring? This means that both atoms are part of a
     # ring in one end state (either in it, or on it), whereas at least one
-    # isn't in the other end state.
+    # isn't in the other end state. We also handle connectivity changes that
+    # are the result of changes in ring size, where atoms remain in or on a
+    # ring in both end states.
 
     # First check to see whether both atoms are in a ring in one state, and at
     # least one isn't in the other. (This catches 5/6 membered ring openings.)
     if (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1)):
         return True
-    # Otherwise check that both atoms are in or on a ring in one state, and at least
-    # one isn't in the other. (This catches 3 membered ring openenings.)
     else:
-        return (_in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0)) \
-             ^ (_in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1))
+        # Otherwise check that both atoms are in or on a ring in one state,
+        # and at least # one isn't in the other. (This catches 3 membered
+        # ring openenings.)
+        if (_in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0)) ^ \
+           (_in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1)):
+             return True
+        else:
+            # All atoms remain in a ring. (This catches transitons between
+            # different sized rings.)
+            if conn0.inRing(idx0) & conn0.inRing(idy0) & conn1.inRing(idx1) & conn1.inRing(idy1):
+                return True
+            else:
+                # All atoms remain on a ring. (This catches transitons between
+                # different sized rings.)
+                if _in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0) & \
+                   _in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1):
+                    return True
+                else:
+                    # The same atom remains in or on a ring in both states. (This
+                    # catches transitions between different sized rings.)
+                    if (conn0.inRing(idx0) & (not conn0.inRing(idy0))) & (conn1.inRing(idx1) & (not conn1.inRing(idy1))) or \
+                       ((not conn0.inRing(idx0)) & conn0.inRing(idy0)) & ((not conn1.inRing(idx1)) & conn1.inRing(idy1)) or \
+                       (_in_or_on_ring(idx0, conn0) & (not _in_or_on_ring(idy0, conn0))) & (_in_or_on_ring(idx1, conn1) & (not _in_or_on_ring(idy1, conn1))) or \
+                       ((not _in_or_on_ring(idx0, conn0)) & _in_or_on_ring(idy0, conn0)) & ((not _in_or_on_ring(idx1, conn1)) & _in_or_on_ring(idy1, conn1)):
+                        return True
+                    else:
+                        return False
 
 def _in_or_on_ring(idx, conn):
     """Internal function to test whether an atom is in or on a ring.
