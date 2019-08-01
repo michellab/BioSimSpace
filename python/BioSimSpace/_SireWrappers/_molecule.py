@@ -900,76 +900,160 @@ class Molecule(_SireWrapper):
             bonds0 = mol.property("bond0").potentials()
             bonds1 = mol.property("bond1").potentials()
 
-            # There are bond potentials.
-            if len(bonds0) > 0:
+            # Dictionaries to store the BondIDs at lambda = 0 and 1.
+            bonds0_idx = {}
+            bonds1_idx = {}
 
-                # Create a dictionary to store the BondIDs at lambda = 0.
-                bonds0_idx = {}
-                for idx, bond in enumerate(bonds0):
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond.atom0())
-                    idx1 = info.atomIdx(bond.atom1())
-                    bonds0_idx[_SireMol.BondID(idx0, idx1)] = idx
+            # Loop over all bonds at lambda = 0.
+            for idx, bond in enumerate(bonds0):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                # Now loop over all of the bonds at lambda = 1 and match to
-                # those at lambda = 0.
-                for bond1 in bonds1:
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond1.atom0())
-                    idx1 = info.atomIdx(bond1.atom1())
+                # Create the BondID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                    # Create the BondID.
-                    bond_id = _SireMol.BondID(idx0, idx1)
+                # Add to the list of ids.
+                bonds0_idx[bond_id] = idx
 
-                    # Get the matching bond at lambda = 0.
-                    try:
-                        bond0 = bonds0[bonds0_idx[bond_id]]
-                    except:
-                        bond0 = bonds0[bonds0_idx[bond_id.mirror()]]
+            # Loop over all bonds at lambda = 1.
+            for idx, bond in enumerate(bonds1):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                    # Check that an atom in the bond is perturbed.
-                    if _has_pert_atom([idx0, idx1], pert_idxs):
+                # Create the AngleID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                        # Cast the bonds as AmberBonds.
-                        amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
-                        amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+                # Add to the list of ids.
+                if bond_id.mirror() in bonds0_idx:
+                    bonds1_idx[bond_id.mirror()] = idx
+                else:
+                    bonds1_idx[bond_id] = idx
 
-                        # Check whether a dummy atoms are present in the lambda = 0
-                        # and lambda = 1 states.
-                        initial_dummy = _has_dummy(mol, [idx0, idx1])
-                        final_dummy = _has_dummy(mol, [idx0, idx1], True)
+            # Now work out the BondIDs that are unique at lambda = 0 and 1
+            # as well as those that are shared.
+            bonds0_unique_idx = {}
+            bonds1_unique_idx = {}
+            bonds_shared_idx = {}
 
-                        # Cannot have a bond with a dummy in both states.
-                        if initial_dummy and final_dummy:
-                            raise _IncompatibleError("Dummy atoms are present in both the initial "
-                                                     "and final bond?")
+            # lambda = 0.
+            for idx in bonds0_idx.keys():
+                if idx not in bonds1_idx.keys():
+                    bonds0_unique_idx[idx] = bonds0_idx[idx]
+                else:
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], bonds1_idx[idx])
 
-                        # Set the bond parameters of the dummy state to those of the non-dummy end state.
-                        if initial_dummy or final_dummy:
-                            has_dummy = True
-                            if initial_dummy:
-                                amber_bond0 = amber_bond1
-                            else:
-                                amber_bond1 = amber_bond0
+            # lambda = 1.
+            for idx in bonds1_idx.keys():
+                if idx not in bonds0_idx.keys():
+                    bonds1_unique_idx[idx] = bonds1_idx[idx]
+                elif idx not in bonds_shared_idx.keys():
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], angles1_idx[idx])
+
+            # First create records for the bonds that are unique to lambda = 0 and 1.
+
+            # lambda = 0.
+            for idx in bonds0_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds0[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        initial_force  %.5f\n" % amber_bond.k())
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # lambda = 1.
+            for idx in bonds1_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds1[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % amber_bond.k())
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # Now add records for the shared bonds.
+            for idx0, idx1 in bonds_shared_idx.values():
+                # Get the bond potentials.
+                bond0 = bonds0[idx0]
+                bond1 = bonds1[idx1]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond0.atom0())
+                idx1 = info.atomIdx(bond0.atom1())
+
+                # Check that an atom in the bond is perturbed.
+                if _has_pert_atom([idx0, idx1], pert_idxs):
+
+                    # Cast the bonds as AmberBonds.
+                    amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
+                    amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+
+                    # Check whether a dummy atoms are present in the lambda = 0
+                    # and lambda = 1 states.
+                    initial_dummy = _has_dummy(mol, [idx0, idx1])
+                    final_dummy = _has_dummy(mol, [idx0, idx1], True)
+
+                    # Cannot have a bond with a dummy in both states.
+                    if initial_dummy and final_dummy:
+                        raise _IncompatibleError("Dummy atoms are present in both the initial "
+                                                 "and final bond?")
+
+                    # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                    if initial_dummy or final_dummy:
+                        has_dummy = True
+                        if initial_dummy:
+                            amber_bond0 = amber_bond1
                         else:
-                            has_dummy = False
+                            amber_bond1 = amber_bond0
+                    else:
+                        has_dummy = False
 
-                        # Only write record if the bond parameters change.
-                        if has_dummy or amber_bond0 != amber_bond1:
+                    # Only write record if the bond parameters change.
+                    if has_dummy or amber_bond0 != amber_bond1:
 
-                            # Start bond record.
-                            file.write("    bond\n")
+                        # Start bond record.
+                        file.write("    bond\n")
 
-                            # Angle data.
-                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                            file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                            file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                            file.write("        final_force    %.5f\n" % amber_bond1.k())
-                            file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                        # Angle data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
 
-                            # End bond record.
-                            file.write("    endbond\n")
+                        # End bond record.
+                        file.write("    endbond\n")
 
             # 3) Angles.
 
