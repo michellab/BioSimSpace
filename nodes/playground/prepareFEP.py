@@ -84,6 +84,7 @@ node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are
 node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
 node.addInput("timeout", BSS.Gateway.Time(help="The timeout for the maximum common substructure search", default=10*BSS.Units.Time.second))
 node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge.", default=False))
+node.addInput("allow_ring_size_change", BSS.Gateway.Boolean(help="Whether to allow ring size changes during merge.", default=False))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
@@ -182,7 +183,7 @@ inverted_mapping = dict([[v,k] for k,v in mapping.items()])
 # (as opposed to merely taking the difference of centroids).
 lig2 = BSS.Align.rmsdAlign(lig2, lig1, inverted_mapping)
 # Merge the two ligands based on the mapping.
-merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"))
+merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"), allow_ring_size_change=node.getInput("allow_ring_size_change")
 # Create a composite system
 system1.removeMolecules(lig1)
 system1.addMolecules(merged)
