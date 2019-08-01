@@ -223,7 +223,7 @@ def test_ring_breaking_six_membered():
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
 @pytest.mark.parametrize("ligands", [["CAT-13c", "CAT-17i"],
-                                     ["CAT-13e", "CAT-17i"]])
+                                     ["CAT-13e", "CAT-17g"]])
 def test_ring_size_change(ligands):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/%s.*" % ligands[0]))
