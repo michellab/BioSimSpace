@@ -1740,7 +1740,8 @@ class Molecule(_SireWrapper):
         # Return the updated molecule.
         return Molecule(mol.commit())
 
-    def _merge(self, other, mapping, allow_ring_breaking=False, property_map0={}, property_map1={}):
+    def _merge(self, other, mapping, allow_ring_breaking=False,
+            allow_ring_size_change=False, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Parameters
@@ -1754,6 +1755,9 @@ class Molecule(_SireWrapper):
 
            allow_ring_breaking : bool
                Whether to allow the opening/closing of rings during a merge.
+
+           allow_ring_size_change : bool
+               Whether to allow changes in ring size.
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -1787,6 +1791,12 @@ class Molecule(_SireWrapper):
 
         if type(property_map1) is not dict:
             raise TypeError("'property_map1' must be of type 'dict'")
+
+        if type(allow_ring_breaking) is not bool:
+            raise TypeError("'allow_ring_breaking' must be of type 'bool'")
+
+        if type(allow_ring_size_change) is not bool:
+            raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
@@ -2438,10 +2448,13 @@ class Molecule(_SireWrapper):
             edit_mol.setProperty("improper1", impropers)
 
         # The number of potentials should be consistent for the "bond0"
-        # and "bond1" properties.
-        if not allow_ring_breaking:
+        # and "bond1" properties, unless a ring is broken or changes size.
+        if not (allow_ring_breaking or allow_ring_size_change):
             if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-                raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
+                raise _IncompatibleError("Inconsistent number of bonds in merged molecule!"
+                                         "A ring may have broken, or changed size. If you want to "
+                                         "allow this perturbation, try using the 'allow_ring_breaking' "
+                                         "or 'allow_ring_size_change' options.")
 
         # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
@@ -2467,27 +2480,34 @@ class Molecule(_SireWrapper):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c0, conn, idx, idy, idx, idy)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c0, conn, idx, idy, idx, idy)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
-                    # Ring opening/closing is allowed.
-                    if allow_ring_breaking:
-                        if not _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
-
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
         # molecule1
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
@@ -2503,27 +2523,34 @@ class Molecule(_SireWrapper):
                 # Map the index to its position in the merged molecule.
                 idy_map = inv_mapping[idy]
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
-                    # Ring opening/closing is forbidden.
-                    if allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if not _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
@@ -2820,45 +2847,99 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
 
     # Have we opened/closed a ring? This means that both atoms are part of a
     # ring in one end state (either in it, or on it), whereas at least one
-    # isn't in the other end state. We also handle connectivity changes that
     # are the result of changes in ring size, where atoms remain in or on a
     # ring in both end states.
 
-    # First check to see whether both atoms are in a ring in one state, and at
-    # least one isn't in the other. (This catches 5/6 membered ring openings.)
-    if (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1)):
-        return True
-    else:
-        # Otherwise check that both atoms are in or on a ring in one state,
-        # and at least # one isn't in the other. (This catches 3 membered
-        # ring openenings.)
-        if (_in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0)) ^ \
-           (_in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1)):
-             return True
-        else:
-            # All atoms remain in a ring. (This catches transitons between
-            # different sized rings.)
-            if conn0.inRing(idx0) & conn0.inRing(idy0) & conn1.inRing(idx1) & conn1.inRing(idy1):
-                return True
-            else:
-                # All atoms remain on a ring. (This catches transitons between
-                # different sized rings.)
-                if _in_or_on_ring(idx0, conn0) & _in_or_on_ring(idy0, conn0) & \
-                   _in_or_on_ring(idx1, conn1) & _in_or_on_ring(idy1, conn1):
-                    return True
-                else:
-                    # The same atom remains in or on a ring in both states. (This
-                    # catches transitions between different sized rings.)
-                    if (conn0.inRing(idx0) & (not conn0.inRing(idy0))) & (conn1.inRing(idx1) & (not conn1.inRing(idy1))) or \
-                       ((not conn0.inRing(idx0)) & conn0.inRing(idy0)) & ((not conn1.inRing(idx1)) & conn1.inRing(idy1)) or \
-                       (_in_or_on_ring(idx0, conn0) & (not _in_or_on_ring(idy0, conn0))) & (_in_or_on_ring(idx1, conn1) & (not _in_or_on_ring(idy1, conn1))) or \
-                       ((not _in_or_on_ring(idx0, conn0)) & _in_or_on_ring(idy0, conn0)) & ((not _in_or_on_ring(idx1, conn1)) & _in_or_on_ring(idy1, conn1)):
-                        return True
-                    else:
-                        return False
+    # Whether each atom is in a ring in both end states.
+    in_ring_idx0 = conn0.inRing(idx0)
+    in_ring_idy0 = conn0.inRing(idy0)
+    in_ring_idx1 = conn1.inRing(idx1)
+    in_ring_idy1 = conn1.inRing(idy1)
 
-def _in_or_on_ring(idx, conn):
-    """Internal function to test whether an atom is in or on a ring.
+    # Whether each atom is on a ring in both end states.
+    on_ring_idx0 = _onRing(idx0, conn0)
+    on_ring_idy0 = _onRing(idy0, conn0)
+    on_ring_idx1 = _onRing(idx1, conn1)
+    on_ring_idy1 = _onRing(idy1, conn1)
+
+    # Both atoms are in a ring in one end state and at least one isn't in the other.
+    if (in_ring_idx0 & in_ring_idy0 ) ^ (in_ring_idx1 & in_ring_idy1):
+        return True
+
+    # Both atoms are on a ring in one end state and at least one isn't in the other.
+    if (on_ring_idx0 & on_ring_idy0 ) ^ (on_ring_idx1 & on_ring_idy1):
+        return True
+
+    # Both atoms are in or on a ring in one state and at least one isn't in the other.
+    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0)) ^
+        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1))):
+        return True
+
+    # If we get this far, then a ring wasn't broken.
+    return False
+
+def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
+    """Internal function to test whether a perturbation changes the connectivity
+       around two atoms such that a ring changes size.
+
+       Parameters
+       ----------
+
+       conn0 : Sire.Mol.Connectivity
+           The connectivity object for the first end state.
+
+       conn1 : Sire.Mol.Connectivity
+           The connectivity object for the second end state.
+
+       idx0 : Sire.Mol.AtomIdx
+           The index of the first atom in the first state.
+
+       idy0 : Sire.Mol.AtomIdx
+           The index of the second atom in the first state.
+
+       idx1 : Sire.Mol.AtomIdx
+           The index of the first atom in the second state.
+
+       idy1 : Sire.Mol.AtomIdx
+           The index of the second atom in the second state.
+    """
+
+    # Have a ring changed size? If so, then the minimum path size between
+    # two atoms will have changed.
+
+    # Work out the paths connecting the atoms in the two end states.
+    paths0 = conn0.findPaths(idx0, idy0)
+    paths1 = conn1.findPaths(idx1, idy1)
+
+    # Initalise the ring size in each end state.
+    ring0 = None
+    ring1 = None
+
+    # Determine the minimum path in the lambda = 0 state.
+    if len(paths0) > 1:
+        path_lengths0 = []
+        for path in paths0:
+            path_lengths0.append(len(path))
+        ring0 = min(path_lengths0)
+
+    if ring0 is None:
+        return False
+
+    # Determine the minimum path in the lambda = 1 state.
+    if len(paths1) > 1:
+        path_lengths1 = []
+        for path in paths1:
+            path_lengths1.append(len(path))
+        ring1 = min(path_lengths1)
+
+    # Return whether the ring has changed size.
+    if ring1:
+        return ring0 != ring1
+    else:
+        return False
+
+def _onRing(idx, conn):
+    """Internal function to test whether an atom is adjacent to a ring.
 
        Parameters
        ----------
@@ -2872,13 +2953,13 @@ def _in_or_on_ring(idx, conn):
        Returns
        -------
 
-       is_in_or_on_ring : bool
-           Whether the atom is in, or on, a ring.
+       is_on_ring : bool
+           Whether the atom is adjacent to a ring.
     """
 
     # The atom is in a ring.
     if conn.inRing(idx):
-        return True
+        return False
 
     # Loop over all atoms connected to this atom.
     for x in conn.connectionsTo(idx):
@@ -2886,7 +2967,7 @@ def _in_or_on_ring(idx, conn):
         if conn.inRing(x):
             return True
 
-    # If we get this far, then the atom is neither in, nor on a ring.
+    # If we get this far, then the atom is not adjacent to a ring.
     return False
 
 # Import at bottom of module to avoid circular dependency.
