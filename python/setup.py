@@ -88,7 +88,7 @@ finally:
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Installing pip dependencies: %s" % ", ".join(pip_deps))
-        command = "%s/conda install -y -q %s" % (bin_dir, " ".join(pip_deps))
+        command = "%s/pip install %s" % (bin_dir, " ".join(pip_deps))
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Activating notebook extension: fileupload")
