@@ -28,7 +28,6 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["View"]
 
-import nglview as _nglview
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
@@ -360,6 +359,9 @@ class View():
                 pdb.writeToFile(filename)
             except:
                 raise IOError("Failed to write system to 'PDB' format.") from None
+
+        # Import NGLView when it is used for the first time.
+        import nglview as _nglview
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)
