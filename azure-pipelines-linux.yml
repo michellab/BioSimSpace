@@ -35,7 +35,7 @@ jobs:
       id: $(dockerId)
     displayName: 'Deploy to biosimspace.org and dockerhub'
   - script: |
-      cd docker/conda-devel && docker build -f Dockerfile --build-arg anaconda_token=$anaconda_token . && cd -
+      cd docker/conda && docker build -f Dockerfile --build-arg anaconda_token=$anaconda_token . && cd -
     env:
       anaconda_token: $(anacondaToken)
     displayName: 'Create Conda package and upload to the Anaconda Cloud'

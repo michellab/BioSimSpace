@@ -68,6 +68,9 @@ class Residue(_SireWrapper):
         # Call the base class constructor.
         super().__init__(sire_object)
 
+        # Flag that this object holds multiple atoms.
+        self._is_multi_atom = True
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \

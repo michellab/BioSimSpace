@@ -818,7 +818,8 @@ class System(_SireWrapper):
                 coord.extend(mol._sire_object.property(prop).toVector())
 
             except UserWarning:
-                raise UserWarning("Molecule %d has no 'coordinates' property." % idx) from None
+                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
+                                         "box since a molecule has no 'coordinates' property.") from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
@@ -930,7 +931,7 @@ class System(_SireWrapper):
         if self.nMolecules() != system.nMolecules():
             raise _IncompatibleError("The passed 'system' contains a different number of "
                                      "molecules. Expected '%d', found '%d'"
-                                     % (self.nMolecules, system.nMolecules()))
+                                     % (self.nMolecules(), system.nMolecules()))
 
         # Check that each molecule in the system contains the same number of atoms.
         for idx in range(0, self.nMolecules()):

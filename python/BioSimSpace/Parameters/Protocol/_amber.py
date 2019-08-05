@@ -212,7 +212,6 @@ class GAFF(_protocol.Protocol):
             except:
                 raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
 
-
         # Set the net molecular charge.
         self._net_charge = net_charge
 
@@ -491,7 +490,7 @@ class GAFF2(_protocol.Protocol):
     chargeMethods = GAFF.chargeMethods
     chargeMethod = GAFF.chargeMethod
 
-    def __init__(self, charge_method="BCC", property_map={}):
+    def __init__(self, charge_method="BCC", net_charge=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -500,6 +499,9 @@ class GAFF2(_protocol.Protocol):
            charge_method : str
                The method to use when calculating atomic charges:
                "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+           net_charge: int
+               The net charge on the molecule.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -514,6 +516,24 @@ class GAFF2(_protocol.Protocol):
         if not charge_method in self._charge_methods:
             raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
                 % (charge_method, self._charge_methods))
+
+        if net_charge is not None:
+            # Get the magnitude of the charge.
+            if type(net_charge) is _Charge:
+                net_charge = net_charge.magnitude()
+
+            if type(net_charge) is float:
+                if net_charge % 1 != 0:
+                    raise ValueError("'net_charge' must be integer valued.")
+
+            # Try to convert to int.
+            try:
+                net_charge = int(net_charge)
+            except:
+                raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
+
+        # Set the net molecular charge.
+        self._net_charge = net_charge
 
         # Set the charge method.
         self._charge_method = charge_method

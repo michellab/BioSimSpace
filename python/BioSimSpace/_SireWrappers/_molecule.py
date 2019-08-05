@@ -900,76 +900,160 @@ class Molecule(_SireWrapper):
             bonds0 = mol.property("bond0").potentials()
             bonds1 = mol.property("bond1").potentials()
 
-            # There are bond potentials.
-            if len(bonds0) > 0:
+            # Dictionaries to store the BondIDs at lambda = 0 and 1.
+            bonds0_idx = {}
+            bonds1_idx = {}
 
-                # Create a dictionary to store the BondIDs at lambda = 0.
-                bonds0_idx = {}
-                for idx, bond in enumerate(bonds0):
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond.atom0())
-                    idx1 = info.atomIdx(bond.atom1())
-                    bonds0_idx[_SireMol.BondID(idx0, idx1)] = idx
+            # Loop over all bonds at lambda = 0.
+            for idx, bond in enumerate(bonds0):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                # Now loop over all of the bonds at lambda = 1 and match to
-                # those at lambda = 0.
-                for bond1 in bonds1:
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond1.atom0())
-                    idx1 = info.atomIdx(bond1.atom1())
+                # Create the BondID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                    # Create the BondID.
-                    bond_id = _SireMol.BondID(idx0, idx1)
+                # Add to the list of ids.
+                bonds0_idx[bond_id] = idx
 
-                    # Get the matching bond at lambda = 0.
-                    try:
-                        bond0 = bonds0[bonds0_idx[bond_id]]
-                    except:
-                        bond0 = bonds0[bonds0_idx[bond_id.mirror()]]
+            # Loop over all bonds at lambda = 1.
+            for idx, bond in enumerate(bonds1):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                    # Check that an atom in the bond is perturbed.
-                    if _has_pert_atom([idx0, idx1], pert_idxs):
+                # Create the AngleID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                        # Cast the bonds as AmberBonds.
-                        amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
-                        amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+                # Add to the list of ids.
+                if bond_id.mirror() in bonds0_idx:
+                    bonds1_idx[bond_id.mirror()] = idx
+                else:
+                    bonds1_idx[bond_id] = idx
 
-                        # Check whether a dummy atoms are present in the lambda = 0
-                        # and lambda = 1 states.
-                        initial_dummy = _has_dummy(mol, [idx0, idx1])
-                        final_dummy = _has_dummy(mol, [idx0, idx1], True)
+            # Now work out the BondIDs that are unique at lambda = 0 and 1
+            # as well as those that are shared.
+            bonds0_unique_idx = {}
+            bonds1_unique_idx = {}
+            bonds_shared_idx = {}
 
-                        # Cannot have a bond with a dummy in both states.
-                        if initial_dummy and final_dummy:
-                            raise _IncompatibleError("Dummy atoms are present in both the initial "
-                                                     "and final bond?")
+            # lambda = 0.
+            for idx in bonds0_idx.keys():
+                if idx not in bonds1_idx.keys():
+                    bonds0_unique_idx[idx] = bonds0_idx[idx]
+                else:
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], bonds1_idx[idx])
 
-                        # Set the bond parameters of the dummy state to those of the non-dummy end state.
-                        if initial_dummy or final_dummy:
-                            has_dummy = True
-                            if initial_dummy:
-                                amber_bond0 = amber_bond1
-                            else:
-                                amber_bond1 = amber_bond0
+            # lambda = 1.
+            for idx in bonds1_idx.keys():
+                if idx not in bonds0_idx.keys():
+                    bonds1_unique_idx[idx] = bonds1_idx[idx]
+                elif idx not in bonds_shared_idx.keys():
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], angles1_idx[idx])
+
+            # First create records for the bonds that are unique to lambda = 0 and 1.
+
+            # lambda = 0.
+            for idx in bonds0_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds0[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        initial_force  %.5f\n" % amber_bond.k())
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # lambda = 1.
+            for idx in bonds1_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds1[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % amber_bond.k())
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # Now add records for the shared bonds.
+            for idx0, idx1 in bonds_shared_idx.values():
+                # Get the bond potentials.
+                bond0 = bonds0[idx0]
+                bond1 = bonds1[idx1]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond0.atom0())
+                idx1 = info.atomIdx(bond0.atom1())
+
+                # Check that an atom in the bond is perturbed.
+                if _has_pert_atom([idx0, idx1], pert_idxs):
+
+                    # Cast the bonds as AmberBonds.
+                    amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
+                    amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+
+                    # Check whether a dummy atoms are present in the lambda = 0
+                    # and lambda = 1 states.
+                    initial_dummy = _has_dummy(mol, [idx0, idx1])
+                    final_dummy = _has_dummy(mol, [idx0, idx1], True)
+
+                    # Cannot have a bond with a dummy in both states.
+                    if initial_dummy and final_dummy:
+                        raise _IncompatibleError("Dummy atoms are present in both the initial "
+                                                 "and final bond?")
+
+                    # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                    if initial_dummy or final_dummy:
+                        has_dummy = True
+                        if initial_dummy:
+                            amber_bond0 = amber_bond1
                         else:
-                            has_dummy = False
+                            amber_bond1 = amber_bond0
+                    else:
+                        has_dummy = False
 
-                        # Only write record if the bond parameters change.
-                        if has_dummy or amber_bond0 != amber_bond1:
+                    # Only write record if the bond parameters change.
+                    if has_dummy or amber_bond0 != amber_bond1:
 
-                            # Start bond record.
-                            file.write("    bond\n")
+                        # Start bond record.
+                        file.write("    bond\n")
 
-                            # Angle data.
-                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                            file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                            file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                            file.write("        final_force    %.5f\n" % amber_bond1.k())
-                            file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                        # Angle data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
 
-                            # End bond record.
-                            file.write("    endbond\n")
+                        # End bond record.
+                        file.write("    endbond\n")
 
             # 3) Angles.
 
@@ -1740,7 +1824,8 @@ class Molecule(_SireWrapper):
         # Return the updated molecule.
         return Molecule(mol.commit())
 
-    def _merge(self, other, mapping, allow_ring_breaking=False, property_map0={}, property_map1={}):
+    def _merge(self, other, mapping, allow_ring_breaking=False,
+            allow_ring_size_change=False, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Parameters
@@ -1754,6 +1839,9 @@ class Molecule(_SireWrapper):
 
            allow_ring_breaking : bool
                Whether to allow the opening/closing of rings during a merge.
+
+           allow_ring_size_change : bool
+               Whether to allow changes in ring size.
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -1787,6 +1875,12 @@ class Molecule(_SireWrapper):
 
         if type(property_map1) is not dict:
             raise TypeError("'property_map1' must be of type 'dict'")
+
+        if type(allow_ring_breaking) is not bool:
+            raise TypeError("'allow_ring_breaking' must be of type 'bool'")
+
+        if type(allow_ring_size_change) is not bool:
+            raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
@@ -2438,9 +2532,13 @@ class Molecule(_SireWrapper):
             edit_mol.setProperty("improper1", impropers)
 
         # The number of potentials should be consistent for the "bond0"
-        # and "bond1" properties.
-        if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-            raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
+        # and "bond1" properties, unless a ring is broken or changes size.
+        if not (allow_ring_breaking or allow_ring_size_change):
+            if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
+                raise _IncompatibleError("Inconsistent number of bonds in merged molecule!"
+                                         "A ring may have broken, or changed size. If you want to "
+                                         "allow this perturbation, try using the 'allow_ring_breaking' "
+                                         "or 'allow_ring_size_change' options.")
 
         # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
@@ -2466,27 +2564,34 @@ class Molecule(_SireWrapper):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c0, conn, idx, idy, idx, idy)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c0, conn, idx, idy, idx, idy)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
-                    # Ring opening/closing is allowed.
-                    if allow_ring_breaking:
-                        if not _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
-
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
         # molecule1
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
@@ -2502,27 +2607,34 @@ class Molecule(_SireWrapper):
                 # Map the index to its position in the merged molecule.
                 idy_map = inv_mapping[idy]
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
-                    # Ring opening/closing is forbidden.
-                    if allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if not _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
@@ -2817,9 +2929,130 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
            The index of the second atom in the second state.
     """
 
-    # Have we opened/closed a ring? This means that both atoms are part of a ring in
-    # one end state, whereas at least one isn't in the other end state.
-    return (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1))
+    # Have we opened/closed a ring? This means that both atoms are part of a
+    # ring in one end state (either in it, or on it), whereas at least one
+    # are the result of changes in ring size, where atoms remain in or on a
+    # ring in both end states.
+
+    # Whether each atom is in a ring in both end states.
+    in_ring_idx0 = conn0.inRing(idx0)
+    in_ring_idy0 = conn0.inRing(idy0)
+    in_ring_idx1 = conn1.inRing(idx1)
+    in_ring_idy1 = conn1.inRing(idy1)
+
+    # Whether each atom is on a ring in both end states.
+    on_ring_idx0 = _onRing(idx0, conn0)
+    on_ring_idy0 = _onRing(idy0, conn0)
+    on_ring_idx1 = _onRing(idx1, conn1)
+    on_ring_idy1 = _onRing(idy1, conn1)
+
+    # Both atoms are in a ring in one end state and at least one isn't in the other.
+    if (in_ring_idx0 & in_ring_idy0 ) ^ (in_ring_idx1 & in_ring_idy1):
+        return True
+
+    # Both atoms are on a ring in one end state and at least one isn't in the other.
+    if (on_ring_idx0 & on_ring_idy0 ) ^ (on_ring_idx1 & on_ring_idy1):
+        return True
+
+    # Both atoms are in or on a ring in one state and at least one isn't in the other.
+    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0)) ^
+        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1))):
+        return True
+
+    # If we get this far, then a ring wasn't broken.
+    return False
+
+def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
+    """Internal function to test whether a perturbation changes the connectivity
+       around two atoms such that a ring changes size.
+
+       Parameters
+       ----------
+
+       conn0 : Sire.Mol.Connectivity
+           The connectivity object for the first end state.
+
+       conn1 : Sire.Mol.Connectivity
+           The connectivity object for the second end state.
+
+       idx0 : Sire.Mol.AtomIdx
+           The index of the first atom in the first state.
+
+       idy0 : Sire.Mol.AtomIdx
+           The index of the second atom in the first state.
+
+       idx1 : Sire.Mol.AtomIdx
+           The index of the first atom in the second state.
+
+       idy1 : Sire.Mol.AtomIdx
+           The index of the second atom in the second state.
+    """
+
+    # Have a ring changed size? If so, then the minimum path size between
+    # two atoms will have changed.
+
+    # Work out the paths connecting the atoms in the two end states.
+    paths0 = conn0.findPaths(idx0, idy0)
+    paths1 = conn1.findPaths(idx1, idy1)
+
+    # Initalise the ring size in each end state.
+    ring0 = None
+    ring1 = None
+
+    # Determine the minimum path in the lambda = 0 state.
+    if len(paths0) > 1:
+        path_lengths0 = []
+        for path in paths0:
+            path_lengths0.append(len(path))
+        ring0 = min(path_lengths0)
+
+    if ring0 is None:
+        return False
+
+    # Determine the minimum path in the lambda = 1 state.
+    if len(paths1) > 1:
+        path_lengths1 = []
+        for path in paths1:
+            path_lengths1.append(len(path))
+        ring1 = min(path_lengths1)
+
+    # Return whether the ring has changed size.
+    if ring1:
+        return ring0 != ring1
+    else:
+        return False
+
+def _onRing(idx, conn):
+    """Internal function to test whether an atom is adjacent to a ring.
+
+       Parameters
+       ----------
+
+       idx : Sire.Mol.AtomIdx
+           The index of the atom
+
+       conn : Sire.Mol.Connectivity
+           The connectivity object.
+
+       Returns
+       -------
+
+       is_on_ring : bool
+           Whether the atom is adjacent to a ring.
+    """
+
+    # The atom is in a ring.
+    if conn.inRing(idx):
+        return False
+
+    # Loop over all atoms connected to this atom.
+    for x in conn.connectionsTo(idx):
+        # The neighbour is in a ring.
+        if conn.inRing(x):
+            return True
+
+    # If we get this far, then the atom is not adjacent to a ring.
+    return False
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

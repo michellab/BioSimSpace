@@ -29,6 +29,8 @@ Context managers
     :toctree: generated/
 
     cd
+    stdout_redirected
+    stderr_redirected
 """
 
 from ._contextmanagers import *

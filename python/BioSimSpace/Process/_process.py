@@ -124,7 +124,7 @@ class Process():
         self._has_trajectory = False
 
 	# Copy the passed system, protocol, and process name.
-        self._system = system._getSireObject()
+        self._system = system.copy()
         self._protocol = protocol
 
         # Flag whether the system contains water molecules.
@@ -200,13 +200,13 @@ class Process():
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s', seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def _clear_output(self):
@@ -443,7 +443,7 @@ class Process():
 
         # Use the existing system.
         if system is None:
-            system = _System(self._system)
+            system = self._system
 
         # Check that the new system is valid.
         else:

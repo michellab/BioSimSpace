@@ -1,5 +1,5 @@
-# This image is used to build, package and test the latest version
-# of the devel branch of BioSimSpace
+# This image is used to build the latest version of the devel
+# branch of BioSimSpace.
 
 FROM siremol/sire-devel:latest
 
@@ -8,8 +8,8 @@ WORKDIR $HOME
 USER $FN_USER
 
 # Disable Sire analytics.
-ENV SIRE_DONT_PHONEHOME=1
-ENV SIRE_SILENT_PHONEHOME=1
+ENV SIRE_DONT_PHONEHOME=1 \
+    SIRE_SILENT_PHONEHOME=1
 
 # Update to the latest version
 RUN git clone https://github.com/michellab/BioSimSpace

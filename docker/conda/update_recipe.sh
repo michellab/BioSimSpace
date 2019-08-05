@@ -2,12 +2,12 @@
 
 # Set the source and Conda build directories on macOS.
 SRC_DIR=$(pwd)
-CONDA_DIR=$SRC_DIR/docker/conda-devel/recipe
+CONDA_DIR=$SRC_DIR/docker/conda/recipe
 
 # Linux runs in a docker container from $HOME.
 if [ ! -d $CONDA_DIR ]; then
     SRC_DIR=$HOME/BioSimSpace
-    CONDA_DIR=$HOME/BioSimSpace/docker/conda-devel/recipe
+    CONDA_DIR=$HOME/BioSimSpace/docker/conda/recipe
 fi
 
 # Store the name of the recipe and template YAML files.

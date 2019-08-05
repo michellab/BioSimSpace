@@ -15,12 +15,12 @@ BIN_DIR=$HOME/sire.app/bin
 
 # Set the source and Conda build directory on macOS.
 SRC_DIR=$(pwd)
-CONDA_DIR=$SRC_DIR/docker/conda-devel/recipe
+CONDA_DIR=$SRC_DIR/docker/conda/recipe
 
 # Linux runs in a docker container from $HOME.
 if [ ! -d $CONDA_DIR ]; then
     SRC_DIR=$HOME/BioSimSpace
-    CONDA_DIR=$HOME/BioSimSpace/docker/conda-devel/recipe
+    CONDA_DIR=$HOME/BioSimSpace/docker/conda/recipe
 fi
 
 # Move the to build directory.
@@ -38,7 +38,7 @@ if [ ! -e $TAG ]; then
 fi
 
 # Build the Conda package.
-$BIN_DIR/conda-build -c rdkit -c conda-forge -c omnia -c michellab/label/$LABEL .
+$BIN_DIR/conda-build -c conda-forge -c omnia -c michellab/label/$LABEL .
 
 # Upload the package to the michellab channel on Anaconda Cloud.
 $BIN_DIR/anaconda -t $ANACONDA_TOKEN upload --user michellab $HOME/sire.app/conda-bld/$OS/biosimspace-* --label $LABEL
