@@ -30,8 +30,8 @@ __all__ = ["run"]
 
 from .._SireWrappers import System as _System
 
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
+from .. import Process as _Process
+from .. import Protocol as _Protocol
 
 def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
      seed=None, property_map={}):
