@@ -36,8 +36,8 @@ from BioSimSpace import _amber_home, _gmx_exe
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
+from .. import Process as _Process
+from .. import Protocol as _Protocol
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE               GPU
