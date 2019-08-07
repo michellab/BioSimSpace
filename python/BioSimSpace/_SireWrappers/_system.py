@@ -127,10 +127,7 @@ class System(_SireWrapper):
         system = System(self._sire_object.__deepcopy__())
 
         # Add the new molecules.
-        if type(other) is System:
-            system.addMolecules(other.getMolecules())
-        else:
-            system.addMolecules(other)
+        system.addMolecules(other)
 
         # Return the combined system.
         return system
@@ -278,9 +275,13 @@ class System(_SireWrapper):
            ----------
 
            molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-              A Molecule, or list of Molecule objects.
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`], \
+                       :class:`System <BioSimSpace._SireWrappers.System>`
+              A Molecule, or list of Molecule objects, or a System containing molecules.
         """
+
+        # Whether the passed molecules are a System object.
+        is_system = False
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
@@ -290,14 +291,20 @@ class System(_SireWrapper):
         if type(molecules) is _Molecule:
             molecules = [molecules]
 
+        # A System object.
+        elif type(molecules) is System:
+            is_system = True
+            molecules = molecules._sire_object.molecules()
+
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule', "
+                            ", 'BioSimSpace._SireWrappers.System', or a list of "
+                            "'BioSimSpace._SireWrappers.Molecule' types.")
 
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_object.nMolecules() == 0:
@@ -305,8 +312,11 @@ class System(_SireWrapper):
 
         # Otherwise, add the molecules to the existing "all" group.
         else:
-            for mol in molecules:
-                self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            if is_system:
+                self._sire_object.add(molecules, _SireMol.MGName("all"))
+            else:
+                for mol in molecules:
+                    self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
         # Reset the index mappings.
         self._reset_mappings()
