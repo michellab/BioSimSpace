@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["atm", "bar"]
 
-from ...Types import Pressure as _Pressure
+from BioSimSpace.Types import Pressure as _Pressure
 
 atm = _Pressure(1, "ATMOSPHERE")
 bar = _Pressure(1, "BAR")

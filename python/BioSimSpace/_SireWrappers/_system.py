@@ -29,16 +29,16 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
-import Sire.Vol as _SireVol
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
+from Sire import Vol as _SireVol
+
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Length as _Length
+from BioSimSpace import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Types import Length as _Length
-
-import BioSimSpace.Units as _Units
 
 class _MolWithResName(_SireMol.MolWithResID):
     def __init__(self, resname):

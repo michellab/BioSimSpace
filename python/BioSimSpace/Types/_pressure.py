@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Pressure"]
 
-import Sire.Units as _Units
+from Sire import Units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -36,8 +36,8 @@ class Pressure(_Type):
     """A pressure type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "ATMOSPHERE" : _Units.atm,
-                         "BAR"        : _Units.bar }
+    _supported_units = { "ATMOSPHERE" : _SireUnits.atm,
+                         "BAR"        : _SireUnits.bar }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "ATM" : "ATMOSPHERE",
@@ -105,7 +105,7 @@ class Pressure(_Type):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure in atomospheres.
         """
-        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.atm), "ATMOSPHERE")
+        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.atm), "ATMOSPHERE")
 
     def bar(self):
         """Return the pressure in bar.
@@ -116,7 +116,7 @@ class Pressure(_Type):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure in bar.
         """
-        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_Units.bar), "BAR")
+        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.bar), "BAR")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

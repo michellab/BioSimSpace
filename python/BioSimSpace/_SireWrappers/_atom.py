@@ -33,7 +33,7 @@ import os.path as _path
 import random as _random
 import string as _string
 
-import Sire.Mol as _SireMol
+from Sire import Mol as _SireMol
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 

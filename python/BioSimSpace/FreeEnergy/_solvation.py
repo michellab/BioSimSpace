@@ -29,8 +29,9 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Solvation"]
 
+from BioSimSpace._SireWrappers import System as _System
+
 from . import _free_energy
-from .._SireWrappers import System as _System
 
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""

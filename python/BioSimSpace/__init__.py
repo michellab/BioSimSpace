@@ -28,6 +28,25 @@ molecular workflow components.
 www.biosimspace.org
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Align",
+           "FreeEnergy",
+           "Gateway",
+           "IO",
+           "Metadynamics",
+           "MD",
+           "Node",
+           "Notebook",
+           "Parameters",
+           "Processs",
+           "Protocol",
+           "Solvent",
+           "Trajectory",
+           "Types",
+           "Units"]
+
 # Make sure we're using the Sire python interpreter.
 try:
     import Sire
@@ -72,7 +91,7 @@ else:
     _amber_home = None
 
 # Check to see if GROMACS is installed.
-import Sire.Base as _SireBase
+from Sire import Base as _SireBase
 from os import path as _path
 
 # First, let the user tell us where to find GROMACS. This
@@ -130,6 +149,8 @@ if not _path.isdir(_gromacs_path):
         del _path
         del _proc
         del _subprocess
+
+from lazy_import import lazy_module as _lazy_module
 
 from . import Align
 from . import FreeEnergy

@@ -31,10 +31,10 @@ __all__ = ["Metadynamics"]
 import math as _math
 import os as _os
 
-from ._protocol import Protocol as _Protocol
+from BioSimSpace import Types as _Types
+from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
 
-import BioSimSpace.Types as _Types
-import BioSimSpace.Metadynamics.CollectiveVariable as _CollectiveVariable
+from ._protocol import Protocol as _Protocol
 
 # Store the collective variable base type.
 _colvar_type = _CollectiveVariable._collective_variable.CollectiveVariable

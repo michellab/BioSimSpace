@@ -29,7 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
-import Sire.Mol as _SireMol
+from Sire import Mol as _SireMol
 
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""

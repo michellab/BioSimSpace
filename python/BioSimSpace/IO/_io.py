@@ -47,15 +47,14 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
 from BioSimSpace import _gromacs_path
-
-from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
 # Taken from:

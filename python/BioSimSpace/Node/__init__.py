@@ -70,7 +70,7 @@ import os as _os
 import subprocess as _subprocess
 import yaml as _yaml
 
-import Sire.Base as _SireBase
+from Sire import Base as _SireBase
 
 # Set the node directory.
 _node_dir = _os.path.dirname(__file__) + "/_nodes"

@@ -36,18 +36,15 @@ import subprocess as _subprocess
 import tempfile as _tempfile
 
 from Sire.Base import getBinDir as _getBinDir
-
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
-
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Units as _Units
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
 
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""

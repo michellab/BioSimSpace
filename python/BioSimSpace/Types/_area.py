@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Area"]
 
-import Sire.Units as _Units
+from Sire import Units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -36,10 +36,10 @@ class Area(_Type):
     """An area type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "METER2"      : _Units.meter2,
-                         "NANOMETER2"  : _Units.nanometer2,
-                         "ANGSTROM2"   : _Units.angstrom2,
-                         "PICOMETER2"  : _Units.picometer2 }
+    _supported_units = { "METER2"      : _SireUnits.meter2,
+                         "NANOMETER2"  : _SireUnits.nanometer2,
+                         "ANGSTROM2"   : _SireUnits.angstrom2,
+                         "PICOMETER2"  : _SireUnits.picometer2 }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "M2"  : "METER2",
@@ -191,7 +191,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square meters.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.meter2), "METER2")
+        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
 
     def nanometers2(self):
         """Return the area in square nanometers.
@@ -202,7 +202,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square nanometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer2), "NANOMETER2")
+        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
 
     def angstroms2(self):
         """Return the area in square Angstrom.
@@ -213,7 +213,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square Angstrom.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom2), "ANGSTROM2")
+        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
 
     def picometers2(self):
         """Return the area in square picometers.
@@ -224,7 +224,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square picometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer2), "PICOMETER2")
+        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

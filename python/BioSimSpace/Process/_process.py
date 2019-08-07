@@ -37,16 +37,14 @@ import warnings as _warnings
 import tempfile as _tempfile
 import zipfile as _zipfile
 
-import Sire.Mol as _SireMol
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _is_interactive, _is_notebook
-
-from ..Protocol import Metadynamics as _Metadynamics
-from ..Protocol._protocol import Protocol as _Protocol
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
+from BioSimSpace.Protocol import Metadynamics as _Metadynamics
+from BioSimSpace.Protocol._protocol import Protocol as _Protocol
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Types._type import Type as _Type
+from BioSimSpace import Units as _Units
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
@@ -551,7 +549,7 @@ class Process():
                 max_time = float(max_time)
 
             # BioSimSpace.Types.Time
-            if isinstance(max_time, _Type.Type):
+            if isinstance(max_time, _Type):
                 max_time = int(max_time.milliseconds().magnitude())
 
             # Float.

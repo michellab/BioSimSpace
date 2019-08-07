@@ -30,9 +30,9 @@ __all__ = ["Production"]
 
 import math as _math
 
-from ._protocol import Protocol as _Protocol
+from BioSimSpace import Types as _Types
 
-import BioSimSpace.Types as _Types
+from ._protocol import Protocol as _Protocol
 
 class Production(_Protocol):
     """A class for storing production protocols."""

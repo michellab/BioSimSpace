@@ -34,19 +34,20 @@ import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+from BioSimSpace.Types._type import Type as _Type
+
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
 
 from . import _process
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
 
 class Namd(_process.Process):
     """A class for running simulations using NAMD."""
@@ -1689,7 +1690,7 @@ class Namd(_process.Process):
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.

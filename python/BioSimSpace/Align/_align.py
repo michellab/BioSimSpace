@@ -40,21 +40,21 @@ _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
-    import rdkit.Chem as _Chem
-    import rdkit.Chem.rdFMCS as _rdFMCS
+    from rdkit import Chem as _Chem
+    from rdkit.Chem import rdFMCS as _rdFMCS
 
-import Sire.Base as _SireBase
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
-import Sire.Units as _SireUnits
+from Sire import Base as _SireBase
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import Units as _SireUnits
 
-from .._Exceptions import AlignmentError as _AlignmentError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
+from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 
-import BioSimSpace.IO as _IO
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
+from BioSimSpace import IO as _IO
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
 
 # Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
 try:

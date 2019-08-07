@@ -34,18 +34,19 @@ import pygtail as _pygtail
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+
+from BioSimSpace import IO as _IO
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import _Utils as _Utils
 
 from . import _process
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.IO as _IO
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace._Utils as _Utils
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""

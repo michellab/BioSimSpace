@@ -35,20 +35,20 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe, _gromacs_path
 
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from .._SireWrappers import Molecule as _Molecule
-from ..Types import Coordinate as _Coordinate
-from ..Types import Length as _Length
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace.Types import Coordinate as _Coordinate
+from BioSimSpace.Types import Length as _Length
 
-import BioSimSpace.IO as _IO
-import BioSimSpace._Utils as _Utils
+from BioSimSpace import IO as _IO
+from BioSimSpace import _Utils as _Utils
 
 def solvate(model, molecule=None, box=None, shell=None,
         ion_conc=0, is_neutral=True, work_dir=None, property_map={}):

@@ -38,15 +38,17 @@ import queue as _queue
 import subprocess as _subprocess
 import warnings as _warnings
 
-import Sire as _Sire
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
+
+from BioSimSpace import IO as _IO
+from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
+from BioSimSpace.Types import Charge as _Charge
 
 from . import _protocol
-from .._utils import formalCharge as _formalCharge
-from ..._Exceptions import ParameterisationError as _ParameterisationError
-from ..._SireWrappers import Molecule as _Molecule
-from ...Types import Charge as _Charge
-
-import BioSimSpace.IO as _IO
 
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
@@ -355,8 +357,8 @@ class GAFF(_protocol.Protocol):
                     raise _ParameterisationError(msg)
 
         # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
 
         # Add the molecule.
         m.add(new_mol._getSireObject())
@@ -364,7 +366,7 @@ class GAFF(_protocol.Protocol):
 
         # Write the system to a PDB file.
         try:
-            pdb = _Sire.IO.PDB2(s)
+            pdb = _SireIO.PDB2(s)
             pdb.writeToFile(prefix + "antechamber.pdb")
         except:
             raise IOError("Failed to write system to 'PDB' format.") from None
@@ -456,7 +458,7 @@ class GAFF(_protocol.Protocol):
                     # Load the parameterised molecule.
                     try:
                         par_mol = _Molecule(_IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
-                                ._getSireObject()[_Sire.Mol.MolIdx(0)])
+                                ._getSireObject()[_SireMol.MolIdx(0)])
                     except:
                         raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
 
