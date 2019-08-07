@@ -150,8 +150,6 @@ if not _path.isdir(_gromacs_path):
         del _proc
         del _subprocess
 
-from lazy_import import lazy_module as _lazy_module
-
 from . import Align
 from . import FreeEnergy
 from . import Gateway
