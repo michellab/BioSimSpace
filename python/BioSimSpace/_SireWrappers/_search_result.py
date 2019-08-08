@@ -57,6 +57,12 @@ class SearchResult():
         # Store the Sire select result.
         self._sire_object = select_result.__deepcopy__()
 
+        # Store the number of results.
+        self._num_results = len(self._sire_object)
+
+        # Intialise the iterator count.
+        self._iter_count = 0
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.SearchResult: nResults=%d>" % self.nResults()
@@ -74,7 +80,7 @@ class SearchResult():
            num_results : int
                The number of search results.
         """
-        return self.nResults()
+        return self._num_results
 
     def __eq__(self, other):
         """Equals to operator."""
@@ -98,6 +104,85 @@ class SearchResult():
         """Hash operator."""
         return hash(self._sire_object)
 
+    def __getitem__(self, key):
+        """Get a search result from the container."""
+
+        # Slice.
+        if type(key) is slice:
+
+            # Create a list to hold the results.
+            results = []
+
+            # Iterate over the slice.
+            for x in range(*key.indices(self._num_results)):
+                results.append(self[x])
+
+            # Return the results.
+            return results
+
+        # Index.
+        else:
+            try:
+                key = int(key)
+            except:
+                raise TypeError("'key' must be of type 'int'")
+
+            if key < -self._num_results or key > self._num_results -1:
+                raise IndexError("SearchResult index is out of range.")
+
+            if key < 0:
+                key = key + self._num_results
+
+            # Extract the result from the Sire object.
+            result = self._sire_object[key]
+
+            # Atom.
+            if type(result) is _SireMol.Atom:
+                return _Atom(result)
+            # Residue.
+            if type(result) is _SireMol.Residue:
+                return _Residue(result)
+            # Molecule.
+            if type(result) is _SireMol.Molecule:
+                # If the molecule contains a single atom, then convert to an atom.
+                if result.nAtoms() == 1:
+                    return _Atom(result.atom())
+                # If there's a single residue, the convert to a residue.
+                elif result.nResidues() == 1:
+                    return _Residue(result.residue())
+                # Otherwise, append the molecule.
+                else:
+                    return _Molecule(result)
+            # Unsupported.
+            else:
+                return None
+
+    def __setitem__(self, key):
+        """Set a molecule in the container."""
+        raise TypeError("'SearchResult' object does not support assignment.")
+
+    def __iter__(self):
+        """An iterator for the object."""
+        # Reset the iterator counter and return the object.
+        self._iter_count = 0
+        return self
+
+    def __next__(self):
+        """An iterator for the object."""
+
+        # Stop if we've reached the end of the container.
+        if self._iter_count == self._num_results:
+            raise StopIteration
+
+        # Extract the next result in the container.
+        result = self[self._iter_count]
+
+        # Update the iterator counter.
+        self._iter_count += 1
+
+        # Return the result.
+        return result
+
     def copy(self):
         """Create a copy of this object.
 
@@ -118,46 +203,28 @@ class SearchResult():
            num_results : int
                The number of search results.
         """
-        return len(self._sire_object)
+        return self._num_results
 
-    def getResults(self):
-        """Return a list containing the results.
+    def getResult(self, index):
+        """Return the result at the given index.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the result.
 
            Returns
            -------
 
-           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
-                      :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                      :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, ...]
-               A list of objects matching the search query.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The requested molecule.
+
+           result : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
-
-        results = []
-
-        # Loop over each result and determine the type.
-        for x in self._sire_object:
-            # Atom.
-            if type(x) is _SireMol.Atom:
-                results.append(_Atom(x))
-            # Residue.
-            if type(x) is _SireMol.Residue:
-                results.append(_Residue(x))
-            # Molecule.
-            if type(x) is _SireMol.Molecule:
-                # If the molecule contains a single atom, then convert to an atom.
-                if x.nAtoms() == 1:
-                    results.append(_Atom(x.atom()))
-                # If there's a single residue, the convert to a residue.
-                elif x.nResidues() == 1:
-                    results.append(_Residue(x.residue()))
-                # Otherwise, append the molecule.
-                else:
-                    results.append(_Molecule(x))
-            # Unsupported.
-            else:
-                pass
-
-        return results
+        return self[index]
 
     def _getSireObject(self):
         """Return the underlying Sire object.
