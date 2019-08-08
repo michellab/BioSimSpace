@@ -29,9 +29,11 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecules"]
 
+from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
@@ -271,6 +273,56 @@ class Molecules(_SireWrapper):
 
         # Return the total charge.
         return charge
+
+    def translate(self, vector, property_map={}):
+        """Translate each molecule in the container.
+
+           Parameters
+           ----------
+
+           vector : [:class:`Length <BioSimSpace.Types.Length>`]
+               The translation vector in Angstroms.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Convert tuple to a list.
+        if type(vector) is tuple:
+            vector = list(vector)
+
+        # Validate input.
+        if type(vector) is list:
+            vec = []
+            for x in vector:
+                if type(x) is int:
+                    vec.append(float(x))
+                elif type(x) is float:
+                    vec.append(x)
+                elif type(x) is _Length:
+                    vec.append(x.angstroms().magnitude())
+                else:
+                    raise TypeError("'vector' must contain 'int', 'float', or "
+                                    "'BioSimSpace.Types.Length' types only!")
+        else:
+            raise TypeError("'vector' must be of type 'list' or 'tuple'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        # Translate each of the molecules in the container.
+        for n in self._sire_object.molNums():
+            # Copy the property map.
+            _property_map = property_map.copy()
+
+            # If this is a perturbable molecule, use the coordinates at lambda = 0.
+            if self._sire_object.molecule(n).hasProperty("is_perturbable"):
+                _property_map["coordinates"] = "coordinates0"
+
+            mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
+            self._sire_object.update(mol)
 
     def search(self, query):
         """Search the molecules for atoms and residues. Search results will be
