@@ -157,7 +157,7 @@ class SearchResult():
             else:
                 return None
 
-    def __setitem__(self, key):
+    def __setitem__(self, key, value):
         """Set a molecule in the container."""
         raise TypeError("'SearchResult' object does not support assignment.")
 

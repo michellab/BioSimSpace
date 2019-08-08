@@ -175,7 +175,7 @@ class Molecules(_SireWrapper):
             # Extract and return the corresponding molecule.
             return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
 
-    def __setitem__(self, key):
+    def __setitem__(self, key, value):
         """Set a molecule in the container."""
         raise TypeError("'Molecules' object does not support assignment.")
 
