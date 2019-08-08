@@ -285,7 +285,10 @@ def readMolecules(files, property_map={}):
                   ) % files
             raise IOError(msg) from None
         else:
-            raise IOError("Failed to read molecules from: %s" % files) from None
+            if "Incompatibility" in str(e):
+                raise IOError("Incompatibility between molecular information in files: %s" % files) from None
+            else:
+                raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
 
