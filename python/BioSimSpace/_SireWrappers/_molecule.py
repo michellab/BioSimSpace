@@ -55,7 +55,7 @@ class Molecule(_SireWrapper):
            Parameters
            ----------
 
-           molecule : Sire.Mol.Molecule, Molecule :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                A Sire or BioSimSpace Molecule object.
         """
 

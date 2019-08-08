@@ -46,7 +46,7 @@ class Residue(_SireWrapper):
            Parameters
            ----------
 
-           atom : Sire.Mol.Residue, Atom :class:`Atom <BioSimSpace._SireWrappers.Atom>`
+           residue : Sire.Mol.Residue, :class:`Residue <BioSimSpace._SireWrappers.Residue>`
                A Sire or BioSimSpace Residue object.
         """
 

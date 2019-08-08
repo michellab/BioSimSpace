@@ -46,7 +46,7 @@ class Atom(_SireWrapper):
            Parameters
            ----------
 
-           atom : Sire.Mol.Atom, Atom :class:`Atom <BioSimSpace._SireWrappers.Atom>`
+           atom : Sire.Mol.Atom, :class:`Atom <BioSimSpace._SireWrappers.Atom>`
                A Sire or BioSimSpace Atom object.
         """
 
