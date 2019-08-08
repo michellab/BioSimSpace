@@ -33,7 +33,7 @@ import os.path as _path
 import random as _random
 import string as _string
 
-import Sire.Mol as _SireMol
+from Sire import Mol as _SireMol
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
@@ -46,7 +46,7 @@ class Residue(_SireWrapper):
            Parameters
            ----------
 
-           atom : Sire.Mol.Residue, Atom :class:`Atom <BioSimSpace._SireWrappers.Atom>`
+           residue : Sire.Mol.Residue, :class:`Residue <BioSimSpace._SireWrappers.Residue>`
                A Sire or BioSimSpace Residue object.
         """
 

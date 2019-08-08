@@ -38,16 +38,17 @@ import warnings as _warnings
 from Sire.Base import findExe as _findExe
 from Sire.Mol import MolNum as _MolNum
 
-from ._process import _MultiDict
-from .._SireWrappers import System as _System
-from ..Metadynamics import CollectiveVariable as _CollectiveVariable
-from ..Protocol import Metadynamics as _Metadynamics
-from ..Types import Coordinate as _Coordinate
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
+from BioSimSpace.Protocol import Metadynamics as _Metadynamics
+from BioSimSpace.Types import Coordinate as _Coordinate
 
-import BioSimSpace._Exceptions as _Exceptions
-import BioSimSpace.Types as _Types
-import BioSimSpace._Utils as _Utils
-import BioSimSpace.Units as _Units
+from BioSimSpace import _Exceptions as _Exceptions
+from BioSimSpace import Types as _Types
+from BioSimSpace import _Utils as _Utils
+from BioSimSpace import Units as _Units
+
+from ._process import _MultiDict
 
 class Plumed():
     def __init__(self, work_dir):
@@ -178,7 +179,7 @@ class Plumed():
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
-            system.getIndex(system.getMolecules()[0].getAtoms()[0])
+            system.getIndex(system[0].getAtoms()[0])
         except:
             raise ValueError("The system contains no molecules?")
 

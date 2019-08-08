@@ -29,16 +29,16 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
-import Sire.Vol as _SireVol
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
+from Sire import Vol as _SireVol
+
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Length as _Length
+from BioSimSpace import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Types import Length as _Length
-
-import BioSimSpace.Units as _Units
 
 class _MolWithResName(_SireMol.MolWithResID):
     def __init__(self, resname):
@@ -55,9 +55,10 @@ class System(_SireWrapper):
 
            system : Sire.System.System, :class:`System <BioSimSpace._SireWrappers.System>`, \
                     Sire.Mol._Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Molecules <BioSimSpace._SireWrappers.Molecules>` \
                     [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A Sire or BioSimSpace System object, a Sire or BioSimSpace Molecule object,
-               or a list of BioSimSpace molecule objects.
+               a BioSimSpace Molecules object, or a list of BioSimSpace molecule objects.
         """
 
         # Check that the system is valid.
@@ -82,6 +83,12 @@ class System(_SireWrapper):
 
         # A BioSimSpace Molecule object.
         elif type(system) is _Molecule:
+            sire_object = _SireSystem.System("BioSimSpace System.")
+            super().__init__(sire_object)
+            self.addMolecules(system)
+
+        # A BioSimSpace Molecules object.
+        elif type(system) is _Molecules:
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(system)
@@ -112,6 +119,12 @@ class System(_SireWrapper):
         # Initialise dictionary to map MolNum to MolIdx.
         self._molecule_index = {}
 
+        # Store the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+
+        # Intialise the iterator counter.
+        self._iter_count = 0
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.System: nMolecules=%d>" % self.nMolecules()
@@ -127,10 +140,7 @@ class System(_SireWrapper):
         system = System(self._sire_object.__deepcopy__())
 
         # Add the new molecules.
-        if type(other) is System:
-            system.addMolecules(other.getMolecules())
-        else:
-            system.addMolecules(other)
+        system.addMolecules(other)
 
         # Return the combined system.
         return system
@@ -149,6 +159,68 @@ class System(_SireWrapper):
 
         # Return the new system.
         return system
+
+    def __getitem__(self, key):
+        """Get a molecule from the system."""
+
+        # Slice.
+        if type(key) is slice:
+
+            # Create a list to hold the molecules.
+            molecules = []
+
+            # Iterate over the slice.
+            for x in range(*key.indices(self.nMolecules())):
+                molecules.append(self[x])
+
+            # Convert to a Molecules container and return.
+            return _Molecules(molecules)
+
+        # Index.
+        else:
+            try:
+                key = int(key)
+            except:
+                raise TypeError("'key' must be of type 'int'")
+
+            if key < -self.nMolecules() or key > self.nMolecules() -1:
+                raise IndexError("Molecules index is out of range.")
+
+            if key < 0:
+                key = key + self.nMolecules()
+
+            # Extract and return the corresponding molecule.
+            return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
+
+    def __setitem__(self, key, value):
+        """Set a molecule in the container."""
+        raise TypeError("'System' object does not support assignment.")
+
+    def __iter__(self):
+        """An iterator for the object."""
+        # Reset the iterator counter and return the object.
+        self._iter_count = 0
+        return self
+
+    def __next__(self):
+        """An iterator for the object."""
+
+        # Stop if we've reached the end of the container.
+        if self._iter_count == self.nMolecules():
+            raise StopIteration
+
+        # Extract the next molecule in the container.
+        molecule = self[self._iter_count]
+
+        # Update the iterator counter.
+        self._iter_count += 1
+
+        # Return the molecule.
+        return molecule
+
+    def __len__(self):
+        """Return the number of molecules in the system."""
+        return self.nMolecules()
 
     def nMolecules(self):
         """Return the number of molecules in the system.
@@ -278,9 +350,14 @@ class System(_SireWrapper):
            ----------
 
            molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-              A Molecule, or list of Molecule objects.
+                       :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`], \
+                       :class:`System <BioSimSpace._SireWrappers.System>`
+              A Molecule, Molecules object, a list of Molecule objects, or a System containing molecules.
         """
+
+        # Whether the molecules are in a Sire container.
+        is_sire_container = False
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
@@ -290,14 +367,23 @@ class System(_SireWrapper):
         if type(molecules) is _Molecule:
             molecules = [molecules]
 
+        # A Molecules object.
+        if type(molecules) is _Molecules:
+            is_sire_container = True
+
+        # A System object.
+        elif type(molecules) is System:
+            is_sire_container = True
+
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
         else:
-            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+            raise TypeError("'molecules' must be of type 'BioSimSpace._SireWrappers.Molecule', "
+                            ", 'BioSimSpace._SireWrappers.System', or a list of "
+                            "'BioSimSpace._SireWrappers.Molecule' types.")
 
         # The system is empty: create a new Sire system from the molecules.
         if self._sire_object.nMolecules() == 0:
@@ -305,11 +391,21 @@ class System(_SireWrapper):
 
         # Otherwise, add the molecules to the existing "all" group.
         else:
-            for mol in molecules:
-                self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            if is_sire_container:
+                try:
+                    molecules = molecules._sire_object.molecules()
+                except:
+                    molecules = molecules._sire_object
+                self._sire_object.add(molecules, _SireMol.MGName("all"))
+            else:
+                for mol in molecules:
+                    self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
         # Reset the index mappings.
         self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -318,9 +414,13 @@ class System(_SireWrapper):
            ----------
 
            molecules : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                       :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
                        [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-              A Molecule, or list of Molecule objects.
+              A Molecule, Molecules object, or list of Molecule objects.
         """
+
+        # Whether the molecules are in a Sire container.
+        is_sire_container = False
 
         # Convert tuple to a list.
         if type(molecules) is tuple:
@@ -329,6 +429,10 @@ class System(_SireWrapper):
         # A Molecule object.
         if type(molecules) is _Molecule:
             molecules = [molecules]
+
+        # A Molecules object.
+        if type(molecules) is _Molecules:
+            is_sire_container = True
 
         # A list of Molecule objects.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
@@ -340,11 +444,17 @@ class System(_SireWrapper):
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
 
         # Remove the molecules in the system.
-        for mol in molecules:
-            self._sire_object.remove(mol._sire_object.number())
+        if is_sire_container:
+            self._sire_object.remove(molecules._sire_object, _SireMol.MGName("all"))
+        else:
+            for mol in molecules:
+                self._sire_object.remove(mol._sire_object.number())
 
         # Reset the index mappings.
         self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
 
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
@@ -353,11 +463,13 @@ class System(_SireWrapper):
         waters = self.getWaterMolecules()
 
         # Remove the molecules in the system.
-        for mol in waters:
-            self._sire_object.remove(mol._sire_object.number())
+        self._sire_object.remove(waters._sire_object, _SireMol.MGName("all"))
 
         # Reset the index mappings.
         self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -401,6 +513,26 @@ class System(_SireWrapper):
         # Reset the index mappings.
         self._reset_mappings()
 
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+
+    def getMolecule(self, index):
+        """Return the molecule at the given index.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the molecule.
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The requested molecule.
+        """
+        return self[index]
+
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
 
@@ -426,21 +558,8 @@ class System(_SireWrapper):
         except:
             raise ValueError("No molecules in group '%s'" % group)
 
-        # Create a list to store the molecules.
-        mols = []
-
-        # Get a list of the MolNums in the group and sort them.
-        nums = molgrp.molNums()
-
-        # Loop over all of the molecules in the group and append to the list.
-        for num in nums:
-            mols.append(_Molecule(molgrp.molecule(num)))
-
-            # This is a merged molecule.
-            if mols[-1]._sire_object.hasProperty("is_perturbable"):
-                mols[-1]._is_merged = True
-
-        return mols
+        # Return a molecules container.
+        return _Molecules(molgrp.molecules())
 
     def getWaterMolecules(self):
         """Return a list containing all of the water molecules in the system.
@@ -448,16 +567,11 @@ class System(_SireWrapper):
            Returns
            -------
 
-           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-               A list of water molecule objects.
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>
+               A container of water molecule objects.
         """
 
-        waters = []
-
-        for mol in self._sire_object.search("water"):
-            waters.append(_Molecule(mol))
-
-        return waters
+        return _Molecules(self._sire_object.search("water").toMolecules())
 
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
@@ -973,12 +1087,14 @@ class System(_SireWrapper):
 
     @staticmethod
     def _createSireSystem(molecules):
-        """Create a Sire system from a list of molecules.
+        """Create a Sire system from a Molecules object or a list of Molecule
+           objects.
 
            Parameters
            ----------
 
-           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>` \
+                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
 
            Returns
            -------
@@ -994,8 +1110,11 @@ class System(_SireWrapper):
         molgrp = _SireMol.MoleculeGroup("all")
 
         # Add the molecules to the group.
-        for mol in molecules:
-            molgrp.add(mol._sire_object)
+        if type(molecules) is _Molecules:
+            molgrp.add(molecules._sire_object)
+        else:
+            for mol in molecules:
+                molgrp.add(mol._sire_object)
 
         # Add the molecule group to the system.
         system.add(molgrp)
@@ -1017,5 +1136,6 @@ class System(_SireWrapper):
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
+from ._molecules import Molecules as _Molecules
 from ._residue import Residue as _Residue
 from ._search_result import SearchResult as _SearchResult

@@ -35,21 +35,22 @@ import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
 
 from BioSimSpace import _gmx_exe
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+from BioSimSpace.Types._type import Type as _Type
+
+from BioSimSpace import IO as _IO
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
+
 from . import _process
 from ._plumed import Plumed as _Plumed
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.IO as _IO
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
 
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
@@ -321,15 +322,12 @@ class Gromacs(_process.Process):
                     if "[ moleculetype ]" in line:
                         moleculetypes_idx.append(idx)
 
-                # Extract all of the molecules from the system.
-                mols = self._system.getMolecules()
-
                 # The number of restraint files.
                 num_restraint = 1
 
                 # Loop over all of the molecules and create a constraint file for
                 # each, excluding any water molecules or ions.
-                for idx, mol in enumerate(mols):
+                for idx, mol in enumerate(self._system):
                     if not mol.isWater() and mol.nAtoms() > 1:
                         # Create a GRO file from the molecule.
                         gro = _SireIO.Gro87(mol.toSystem()._sire_object)
@@ -1929,7 +1927,7 @@ class Gromacs(_process.Process):
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.

@@ -46,7 +46,7 @@ import shutil as _shutil
 import tarfile as _tarfile
 import zipfile as _zipfile
 
-import BioSimSpace.Types as _Types
+from BioSimSpace import Types as _Types
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""

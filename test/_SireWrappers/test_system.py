@@ -10,7 +10,7 @@ system = BSS.IO.readMolecules(files)
 def test_atom_reindexing():
     # Search for all oxygen atoms in water molecules water molecules within
     # the system.
-    result = system.search("waters and element oxygen")
+    results = system.search("waters and element oxygen")
 
     # There are 22 atoms in the alanine-dipeptide, then three in each water
     # molecule. The oxygen atoms come first in each water molecule, so
@@ -19,7 +19,7 @@ def test_atom_reindexing():
     # Starting index.
     index = 22
 
-    for atom in result.getResults():
+    for atom in results:
         # Ensure the absolute index matches.
         assert system.getIndex(atom) == index
 
@@ -28,7 +28,7 @@ def test_atom_reindexing():
 
 def test_residue_reindexing():
     # Search for all waters by residue name.
-    result = system.search("resname WAT")
+    results = system.search("resname WAT")
 
     # There are 3 residues in the alanine-dipeptide, then one in each water
     # molecule. This means that residue indexing should start at 3 and
@@ -37,7 +37,7 @@ def test_residue_reindexing():
     # Starting index.
     index = 3
 
-    for residue in result.getResults():
+    for residue in results:
         # Ensure the absolute index matches.
         assert system.getIndex(residue) == index
 
@@ -45,7 +45,7 @@ def test_residue_reindexing():
 
 def test_molecule_reindexing():
     # Search for all waters by residue name.
-    result = system.search("resname WAT")
+    results = system.search("resname WAT")
 
     # There are 631 molecules in the system: an alanine-dipeptide, followed by
     # 630 water molecules. This means that molecule indexing should start at 1
@@ -57,7 +57,7 @@ def test_molecule_reindexing():
     # Note that the waters will be returned as residue objects, since this
     # is the minimal representation, i.e. a water contains a single residue.
     # As such, we convert each result to a molecule.
-    for residue in result.getResults():
+    for residue in results:
         # Ensure the absolute index matches.
         assert system.getIndex(residue.toMolecule()) == index
 

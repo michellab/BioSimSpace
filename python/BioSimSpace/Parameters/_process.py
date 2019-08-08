@@ -40,7 +40,7 @@ __all__ = ["Process"]
 
 # Alternatively, one could use a multiprocessing.Process instead of a thread,
 # which has a terminate method. However, communication between the Process and
-# the run method requires the return type of the method to be  picklable, which
+# the run method requires the return type of the method to be picklable, which
 # isn't the case for our Molecule object.
 
 import glob as _glob
@@ -52,10 +52,10 @@ import threading as _threading
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
+from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import Protocol as _Protocol
-from .._Exceptions import ParameterisationError as _ParameterisationError
-from .._SireWrappers import Molecule as _Molecule
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink

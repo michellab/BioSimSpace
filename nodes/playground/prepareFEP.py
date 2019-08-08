@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Julien Michel
-#
+# 
 # email: julien.michel@ed.ac.uk
 
 # # PrepareFEP
@@ -15,6 +15,7 @@ import os
 import zipfile
 from Sire.Mol import AtomIdx
 import BioSimSpace as BSS
+
 
 # In[ ]:
 
@@ -58,7 +59,7 @@ def loadMapping(mapping_file):
         idx1 = int(elems[0])
         idx2 = int(elems[1])
         mapping[idx1] = idx2
-
+    
     return mapping
 
 
@@ -84,8 +85,8 @@ node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates fil
 node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11... Ignored if a mapping is provided", default=""))
 node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
 node.addInput("timeout", BSS.Gateway.Time(help="The timeout for the maximum common substructure search", default=10*BSS.Units.Time.second))
-node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge.", default=False))
-node.addInput("allow_ring_size_change", BSS.Gateway.Boolean(help="Whether to allow ring size changes during merge.", default=False))
+node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge", default=False))
+node.addInput("allow_ring_size_change", BSS.Gateway.Boolean(help="Whether to allow ring size changes during merge", default=False))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
@@ -116,10 +117,10 @@ if custom_mapping is not None:
 # In[ ]:
 
 
-# Optional input, dictionary of Atom indices that should be matched in the search.
+# Optional input, dictionary of Atom indices that should be matched in the search. 
 prematch = {}
 prematchstring = node.getInput("prematch")
-if len(prematchstring) > 0:
+if len(prematchstring) > 0: 
     entries = prematchstring.split(",")
     for entry in entries:
         idxA, idxB = entry.split("-")
@@ -145,8 +146,8 @@ system2 = BSS.IO.readMolecules(node.getInput("input2"))
 
 
 # We assume the molecules to perturb are the first molecules in each system
-lig1 = system1.getMolecules()[0]
-lig2 = system2.getMolecules()[0]
+lig1 = system1[0]
+lig2 = system2[0]
 
 
 # In[ ]:
@@ -242,10 +243,4 @@ node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping_str])
 
 
 node.validate()
-
-
-# In[ ]:
-
-
-
 

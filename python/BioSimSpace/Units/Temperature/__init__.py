@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["celsius", "fahrenheit", "kelvin"]
 
-from ...Types import Temperature as _Temperature
+from BioSimSpace.Types import Temperature as _Temperature
 
 celsius = _Temperature(1, "celsius")
 fahrenheit = _Temperature(1, "fahrenheit")

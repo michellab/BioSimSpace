@@ -30,9 +30,9 @@ __all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "ga
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
-from ..Types import Charge as _Charge
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace.Types import Charge as _Charge
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol

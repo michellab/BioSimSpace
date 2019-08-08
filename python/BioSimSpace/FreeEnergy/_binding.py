@@ -28,12 +28,12 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Binding"]
 
-from . import _free_energy
-from .._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Solvent as _Solvent
+from BioSimSpace import Types as _Types
+from BioSimSpace import Units as _Units
 
-import BioSimSpace.Solvent as _Solvent
-import BioSimSpace.Types as _Types
-import BioSimSpace.Units as _Units
+from . import _free_energy
 
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""

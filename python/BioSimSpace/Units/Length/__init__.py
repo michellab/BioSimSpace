@@ -29,7 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["meter", "centimeter", "millimeter",
            "nanometer", "angstrom", "picometer"]
 
-from ...Types import Length as _Length
+from BioSimSpace.Types import Length as _Length
 
 meter = _Length(1, "meter")
 centimeter = _Length(1, "centimeter")

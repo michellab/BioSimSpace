@@ -30,9 +30,8 @@ __all__ = ["formalCharge"]
 
 import tempfile as _tempfile
 
-import BioSimSpace.IO as _IO
-import BioSimSpace._Utils as _Utils
-
+from BioSimSpace import IO as _IO
+from BioSimSpace import _Utils as _Utils
 from BioSimSpace.Units.Charge import electron_charge as _electron_charge
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 

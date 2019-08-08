@@ -29,9 +29,9 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Custom"]
 
-from ._protocol import Protocol as _Protocol
-
 import os as _os
+
+from ._protocol import Protocol as _Protocol
 
 class Custom(_Protocol):
     """A class for storing custom protocols."""

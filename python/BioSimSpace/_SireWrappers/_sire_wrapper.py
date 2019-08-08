@@ -29,13 +29,12 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
 
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
-import Sire.Vol as _SireVol
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import Vol as _SireVol
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-
-import BioSimSpace.Units as _Units
+from BioSimSpace import Units as _Units
 
 class SireWrapper():
     """A base class for wrapping Sire objects."""
@@ -87,6 +86,8 @@ class SireWrapper():
 
            system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Molecules>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A copy of the object.
         """

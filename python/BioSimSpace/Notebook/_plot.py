@@ -32,8 +32,7 @@ from warnings import warn as _warn
 from os import environ as _environ
 
 from BioSimSpace import _is_interactive, _is_notebook
-
-import BioSimSpace.Types._type as _Type
+from BioSimSpace.Types._type import Type as _Type
 
 # Check to see if DISPLAY is set.
 if "DISPLAY" in _environ:
@@ -174,7 +173,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
                 raise TypeError("All 'xerr' values must be of same type as x data")
 
         # Does this type have units?
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             is_unit_x = True
 
     # The y argument must be a list of data records.
@@ -203,7 +202,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
                 raise TypeError("All 'yerr' values must be of same type as y data")
 
         # Does this type have units?
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             is_unit_y = True
 
     # Lists must contain the same number of records.
@@ -229,14 +228,14 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
         if type(xlabel) is not str:
             raise TypeError("'xlabel' must be of type 'str'")
     else:
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
         if type(ylabel) is not str:
             raise TypeError("'ylabel' must be of type 'str'")
     else:
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
 
     # Convert the x and y values to floats.
@@ -349,7 +348,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
             _type = float
 
         # Does this type have units?
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             is_unit_x = True
 
     # The y argument must be a list of data records.
@@ -368,7 +367,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
             _type = float
 
         # Does this type have units?
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             is_unit_y = True
 
     if type(z) is not list:
@@ -386,7 +385,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
             _type = float
 
         # Does this type have units?
-        if isinstance(z[0], _Type.Type):
+        if isinstance(z[0], _Type):
             is_unit_z = True
 
     # Lists must contain the same number of records.
@@ -408,21 +407,21 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         if type(xlabel) is not str:
             raise TypeError("'xlabel' must be of type 'str'")
     else:
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
         if type(ylabel) is not str:
             raise TypeError("'ylabel' must be of type 'str'")
     else:
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
 
     if zlabel is not None:
         if type(zlabel) is not str:
             raise TypeError("'zlabel' must be of type 'str'")
     else:
-        if isinstance(z[0], _Type.Type):
+        if isinstance(z[0], _Type):
             zlabel = z[0].__class__.__qualname__ + " (" + z[0]._print_format[z[0].unit()] + ")"
 
     # Convert the x and y values to floats.
