@@ -119,6 +119,13 @@ class System(_SireWrapper):
         # Initialise dictionary to map MolNum to MolIdx.
         self._molecule_index = {}
 
+        # Store the sorted molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
+
+        # Intialise the iterator counter.
+        self._iter_count = 0
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.System: nMolecules=%d>" % self.nMolecules()
@@ -153,6 +160,68 @@ class System(_SireWrapper):
 
         # Return the new system.
         return system
+
+    def __getitem__(self, key):
+        """Get a molecule from the system."""
+
+        # Slice.
+        if type(key) is slice:
+
+            # Create a list to hold the molecules.
+            molecules = []
+
+            # Iterate over the slice.
+            for x in range(*key.indices(self.nMolecules())):
+                molecules.append(self[x])
+
+            # Convert to a Molecules container and return.
+            return _Molecules(molecules)
+
+        # Index.
+        else:
+            try:
+                key = int(key)
+            except:
+                raise TypeError("'key' must be of type 'int'")
+
+            if key < -self.nMolecules() or key > self.nMolecules() -1:
+                raise IndexError("Molecules index is out of range.")
+
+            if key < 0:
+                key = key + self.nMolecules()
+
+            # Extract and return the corresponding molecule.
+            return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
+
+    def __setitem__(self, key, value):
+        """Set a molecule in the container."""
+        raise TypeError("'System' object does not support assignment.")
+
+    def __iter__(self):
+        """An iterator for the object."""
+        # Reset the iterator counter and return the object.
+        self._iter_count = 0
+        return self
+
+    def __next__(self):
+        """An iterator for the object."""
+
+        # Stop if we've reached the end of the container.
+        if self._iter_count == self.nMolecules():
+            raise StopIteration
+
+        # Extract the next molecule in the container.
+        molecule = self[self._iter_count]
+
+        # Update the iterator counter.
+        self._iter_count += 1
+
+        # Return the molecule.
+        return molecule
+
+    def __len__(self):
+        """Return the number of molecules in the system."""
+        return self.nMolecules()
 
     def nMolecules(self):
         """Return the number of molecules in the system.
@@ -336,6 +405,10 @@ class System(_SireWrapper):
         # Reset the index mappings.
         self._reset_mappings()
 
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
+
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
 
@@ -382,6 +455,10 @@ class System(_SireWrapper):
         # Reset the index mappings.
         self._reset_mappings()
 
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
+
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
 
@@ -393,6 +470,10 @@ class System(_SireWrapper):
 
         # Reset the index mappings.
         self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -435,6 +516,10 @@ class System(_SireWrapper):
 
         # Reset the index mappings.
         self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
