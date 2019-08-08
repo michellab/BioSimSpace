@@ -521,6 +521,23 @@ class System(_SireWrapper):
         self._mol_nums = self._sire_object.molNums()
         self._mol_nums.sort()
 
+    def getMolecule(self, index):
+        """Return the molecule at the given index.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the molecule.
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The requested molecule.
+        """
+        return self[index]
+
     def getMolecules(self, group="all"):
         """Return a list containing all of the molecules in the specified group.
 
