@@ -79,15 +79,16 @@ class SireWrapper():
         return hash(self._sire_object)
 
     def copy(self):
-        """Return a copy of this object.
+        """Return a copy of this object. The type that is returned is same as
+           the object on which copy is called.
 
            Returns
            -------
 
            system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                    :class:`Residue <BioSimSpace._SireWrappers.Molecule>`, \
-                    :class:`Residue <BioSimSpace._SireWrappers.Molecules>`, \
+                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A copy of the object.
         """
