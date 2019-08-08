@@ -568,7 +568,7 @@ def _solvate(molecule, box, shell, model, num_point,
             waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
 
             # Convert to a BioSimSpace molecules container.
-            waters = _Molecule(waters.toMolecules())
+            waters = _Molecules(waters.toMolecules())
 
             # Remove the old water molecules then add those with the updated topology.
             molecule.removeWaterMolecules()
@@ -686,11 +686,11 @@ def _solvate(molecule, box, shell, model, num_point,
 
             if type(molecule) is _System:
                 # Extract the non-water molecules from the original system.
-                non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+                non_waters = [mol for mol in molecule if not mol.isWater()]
 
                 # Create a system by adding these to the water molecules from
                 # gmx solvate, which will include the original waters.
-                system = _System(non_waters + water.getMolecules())
+                system = _System(non_waters) + water
 
             else:
                 system = (molecule + water.getMolecules()).toSystem()
@@ -873,12 +873,12 @@ def _solvate(molecule, box, shell, model, num_point,
 
                         if type(molecule) is _System:
                             # Extract the non-water molecules from the original system.
-                            non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+                            non_waters = [mol for mol in molecule if not mol.isWater()]
 
                             # Create a system by adding these to the water and ion
                             # molecules from gmx solvate, which will include the
                             # original waters.
-                            system = _System(non_waters + water_ions.getMolecules())
+                            system = _System(non_waters) + water_ions
                         else:
                             system = (molecule + water_ions.getMolecules()).toSystem()
 
