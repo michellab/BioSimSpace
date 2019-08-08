@@ -322,15 +322,12 @@ class Gromacs(_process.Process):
                     if "[ moleculetype ]" in line:
                         moleculetypes_idx.append(idx)
 
-                # Extract all of the molecules from the system.
-                mols = self._system.getMolecules()
-
                 # The number of restraint files.
                 num_restraint = 1
 
                 # Loop over all of the molecules and create a constraint file for
                 # each, excluding any water molecules or ions.
-                for idx, mol in enumerate(mols):
+                for idx, mol in enumerate(self._system):
                     if not mol.isWater() and mol.nAtoms() > 1:
                         # Create a GRO file from the molecule.
                         gro = _SireIO.Gro87(mol.toSystem()._sire_object)

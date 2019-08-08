@@ -509,7 +509,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
             raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
 
         # Load the aligned molecule.
-        aligned = _IO.readMolecules("aligned.pdb").getMolecules()[0]
+        aligned = _IO.readMolecules("aligned.pdb")[0]
 
         # Get the "coordinates" property for molecule0.
         prop = property_map0.get("coordinates", "coordinates")

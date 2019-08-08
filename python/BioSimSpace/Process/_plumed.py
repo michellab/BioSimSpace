@@ -179,7 +179,7 @@ class Plumed():
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
-            system.getIndex(system.getMolecules()[0].getAtoms()[0])
+            system.getIndex(system[0].getAtoms()[0])
         except:
             raise ValueError("The system contains no molecules?")
 

@@ -231,17 +231,11 @@ class Somd(_process.Process):
                     is_lambda1 = self._property_map["is_lambda1"]
                     self._property_map.pop("is_lambda1")
 
-                # Get the molecules from the system.
-                molecules = system.getMolecules()
-
-                # Loop over all the molecules and.
-                for idx, mol in enumerate(molecules):
-                    if mol.isMerged():
-                        molecules[idx] = mol._toRegularMolecule(property_map=self._property_map,
-                                                                is_lambda1=is_lambda1)
-
-                # Create a new system using the updated molecules.
-                system = _System(molecules)
+                # Loop over all perturbable molecules in the system and replace them
+                # with a regular molecule and the chosen end state.
+                for mol in system.getPerturbableMolecules():
+                    system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
+                                                                  is_lambda1=is_lambda1))
 
                 # Copy across the properties from the original system.
                 for prop in self._system._sire_object.propertyKeys():
