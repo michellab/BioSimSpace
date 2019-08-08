@@ -108,20 +108,26 @@ class Molecule(_SireWrapper):
         if type(other) is tuple:
             other = list(other)
 
-        # Create a list of molecules.
-        molecules = [self]
+        # Whether other is a container of molecules.
+        is_sire_container = False
 
         # Validate the input.
 
-        # A single Molecule object.
-        if type(other) is Molecule:
-            molecules.append(other)
+        molecules = [self]
 
         # A System object.
-        elif type(other) is _System:
+        if type(other) is _System:
             system = _System(other)
             system.addMolecules(self)
             return system
+
+        # A single Molecule object.
+        elif type(other) is Molecule:
+            molecules.append(other)
+
+        # A Molecules object.
+        elif type(other) is _Molecules:
+            is_sire_container = True
 
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
@@ -130,11 +136,22 @@ class Molecule(_SireWrapper):
         # Unsupported.
         else:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
-                            "'BioSimSpace._SireWrappers.Molecule', or a list "
-                            "of 'BioSimSpace._SireWrappers.Molecule' types")
+                            "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
 
-        # Create and return a new system.
-        return _System(molecules)
+        # Add this molecule to the container and return.
+        if is_sire_container:
+            return other + self
+
+        # Create a new molecule group to store the molecules, then create a
+        # container and return.
+        else:
+            molgrp = _SireMol.MoleculeGroup("all")
+
+            for molecule in molecules:
+                molgrp.add(molecule._sire_object)
+
+            return _Molecules(molgrp.molecules())
 
     def number(self):
         """Return the number of the molecule. Each molecule has a unique
@@ -3057,6 +3074,7 @@ def _onRing(idx, conn):
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
+from ._molecules import Molecules as _Molecules
 from ._residue import Residue as _Residue
 from ._search_result import SearchResult as _SearchResult
 from ._system import System as _System

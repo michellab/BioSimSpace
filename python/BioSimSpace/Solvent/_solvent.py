@@ -44,6 +44,7 @@ from BioSimSpace import _gmx_exe, _gromacs_path
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace.Types import Coordinate as _Coordinate
 from BioSimSpace.Types import Length as _Length
 
@@ -566,13 +567,12 @@ def _solvate(molecule, box, shell, model, num_point,
             # expected GROMACS topology template.
             waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
+            # Convert to a BioSimSpace molecules container.
+            waters = _Molecule(waters.toMolecules())
+
+            # Remove the old water molecules then add those with the updated topology.
             molecule.removeWaterMolecules()
-            for wat in waters:
-                molecule._sire_object.add(wat, _SireMol.MGName("all"))
+            molecule.addMolecules(waters)
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -693,7 +693,7 @@ def _solvate(molecule, box, shell, model, num_point,
                 system = _System(non_waters + water.getMolecules())
 
             else:
-                system = molecule + water.getMolecules()
+                system = (molecule + water.getMolecules()).toSystem()
 
             # Add all of the water box properties to the new system.
             for prop in water._sire_object.propertyKeys():
@@ -880,7 +880,7 @@ def _solvate(molecule, box, shell, model, num_point,
                             # original waters.
                             system = _System(non_waters + water_ions.getMolecules())
                         else:
-                            system = molecule + water_ions.getMolecules()
+                            system = (molecule + water_ions.getMolecules()).toSystem()
 
                         # Add all of the water molecules' properties to the new system.
                         for prop in water_ions._sire_object.propertyKeys():

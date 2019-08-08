@@ -41,6 +41,7 @@ from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
@@ -450,16 +451,17 @@ class FreeEnergy():
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
+            # Remove the existing water molecules from the systems.
             system0.removeWaterMolecules()
             system1.removeWaterMolecules()
-            for wat in waters0:
-                system0._sire_object.add(wat, _SireMol.MGName("all"))
-            for wat in waters1:
-                system1._sire_object.add(wat, _SireMol.MGName("all"))
+
+            # Convert the waters to BioSimSpace molecule containers.
+            waters0 = _Molecules(waters0.toMolecules())
+            waters1 = _Molecules(waters1.toMolecules())
+
+            # Add the updated water topology back into the systems.
+            system0.addMolecules(waters0)
+            system1.addMolecules(waters1)
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()
