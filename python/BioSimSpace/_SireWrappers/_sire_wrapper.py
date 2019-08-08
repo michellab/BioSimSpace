@@ -86,6 +86,8 @@ class SireWrapper():
 
            system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Residue <BioSimSpace._SireWrappers.Molecules>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A copy of the object.
         """
