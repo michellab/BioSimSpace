@@ -29,9 +29,9 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Somd"]
 
 import math as _math
-import sys as _sys
 import os as _os
 import pygtail as _pygtail
+import sys as _sys
 import timeit as _timeit
 import warnings as _warnings
 
