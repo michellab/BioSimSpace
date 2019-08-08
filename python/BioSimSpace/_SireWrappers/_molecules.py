@@ -32,6 +32,8 @@ __all__ = ["Molecules"]
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace import Units as _Units
+
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 class Molecules(_SireWrapper):
@@ -238,6 +240,37 @@ class Molecules(_SireWrapper):
            system : :class:`System <BioSimSpace._SireWrappers.System>`
         """
         return _System(self)
+
+    def charge(self, property_map={}, is_lambda1=False):
+        """Return the total molecular charge.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+              Whether to use the charge at lambda = 1 a molecule is merged.
+
+           Returns
+           -------
+
+           charge : :class:`Charge <BioSimSpace.Types.Charge>`
+               The molecular charge.
+        """
+
+        # Zero the charge.
+        charge = 0 * _Units.Charge.electron_charge
+
+        # Loop over all molecules and add the charge.
+        for mol in self:
+            charge += mol.charge(property_map, is_lambda1)
+
+        # Return the total charge.
+        return charge
 
     def search(self, query):
         """Search the molecules for atoms and residues. Search results will be
