@@ -373,6 +373,25 @@ class Molecules(_SireWrapper):
 
         return _SearchResult(search_result)
 
+    def _getAABox(self, property_map={}):
+        """Get the axis-aligned bounding box for the molecular system.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           aabox : Sire.Vol.AABox
+               The axis-aligned bounding box for the molecule.
+        """
+        return self.toSystem()._getAABox()
+
 # Import at bottom of module to avoid circular dependency.
 from ._molecule import Molecule as _Molecule
 from ._search_result import SearchResult as _SearchResult
