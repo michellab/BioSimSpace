@@ -114,6 +114,9 @@ class Process():
         # Set the process to None.
         self._process = None
 
+        # Set the script to None (used on Windows as it does not support symlinks).
+        self._script = None
+
         # Is the process running interactively? If so, don't block
         # when a get method is called.
         self._is_blocked = not _is_interactive()
@@ -1038,6 +1041,8 @@ class Process():
 
         # Create an empty list.
         args = []
+        if self._script:
+            args.append(self._script)
 
         # Add the arguments to the list.
         for key, value in self._args.items():

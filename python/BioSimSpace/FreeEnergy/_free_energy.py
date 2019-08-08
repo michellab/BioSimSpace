@@ -31,11 +31,13 @@ __all__ = ["FreeEnergy"]
 from collections import OrderedDict as _OrderedDict
 
 import math as _math
+import sys as _sys
 import os as _os
 import subprocess as _subprocess
 import tempfile as _tempfile
 
 from Sire.Base import getBinDir as _getBinDir
+from Sire.Base import getShareDir as _getShareDir
 
 import Sire.IO as _SireIO
 import Sire.Mol as _SireMol
@@ -53,10 +55,14 @@ class FreeEnergy():
     """Base class for configuring and running free energy simulations."""
 
     # Check that the analyse_freenrg script exists.
-    _analyse_freenrg = _getBinDir() + "/analyse_freenrg"
-
+    if _sys.platform != "win32":
+        _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
+    else:
+        _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
     if not _os.path.isfile(_analyse_freenrg):
         raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+    if _sys.platform == "win32":
+        _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]

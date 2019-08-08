@@ -29,6 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Somd"]
 
 import math as _math
+import sys as _sys
 import os as _os
 import pygtail as _pygtail
 import timeit as _timeit
@@ -114,14 +115,25 @@ class Somd(_process.Process):
         # executable.
         if exe is None:
             # Generate the name of the SOMD exe.
-            if type(self._protocol) is _Protocol.FreeEnergy:
-                somd_exe = _SireBase.getBinDir() + "/somd-freenrg"
+            if _sys.platform != "win32":
+                somd_path = _SireBase.getBinDir()
+                somd_suffix = ""
             else:
-                somd_exe = _SireBase.getBinDir() + "/somd"
+                somd_path = _os.path.join(_os.path.normpath(_SireBase.getShareDir()), "scripts")
+                somd_interpreter = _os.path.join(_os.path.normpath(_SireBase.getBinDir()), "sire_python.exe")
+                somd_suffix = ".py"
+            if type(self._protocol) is _Protocol.FreeEnergy:
+                somd_exe = "somd-freenrg"
+            else:
+                somd_exe = "somd"
+            somd_exe = _os.path.join(somd_path, somd_exe) + somd_suffix
             if not _os.path.isfile(somd_exe):
                 raise _MissingSoftwareError("'Cannot find SOMD executable in expected location: '%s'" % somd_exe)
-            else:
+            if _sys.platform != "win32":
                 self._exe = somd_exe
+            else:
+                self._exe = somd_interpreter
+                self._script = somd_exe
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
@@ -165,13 +177,15 @@ class Somd(_process.Process):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', platform='%s', work_dir='%s' seed=%s>" \
             % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
-               self._exe, self._name, self._platform, self._work_dir, self._seed)
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', platform='%s', work_dir='%s', seed=%s)" \
             % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
-               self._exe, self._name, self._platform, self._work_dir, self._seed)
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
 
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
