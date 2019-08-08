@@ -119,9 +119,8 @@ class System(_SireWrapper):
         # Initialise dictionary to map MolNum to MolIdx.
         self._molecule_index = {}
 
-        # Store the sorted molecule numbers.
+        # Store the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
         # Intialise the iterator counter.
         self._iter_count = 0
@@ -407,7 +406,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -457,7 +455,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
@@ -473,7 +470,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -519,7 +515,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def getMolecule(self, index):
         """Return the molecule at the given index.
