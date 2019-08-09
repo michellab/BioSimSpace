@@ -987,6 +987,8 @@ class Molecule(_SireWrapper):
                 file.write("    bond\n")
 
                 # Bond data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        initial_force  %.5f\n" % amber_bond.k())
                 file.write("        initial_equil  %.5f\n" % amber_bond.r0())
                 file.write("        final_force    %.5f\n" % 0.0)
@@ -1011,6 +1013,8 @@ class Molecule(_SireWrapper):
                 file.write("    bond\n")
 
                 # Bond data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
                 file.write("        initial_force  %.5f\n" % 0.0)
                 file.write("        initial_equil  %.5f\n" % amber_bond.r0())
                 file.write("        final_force    %.5f\n" % amber_bond.k())
