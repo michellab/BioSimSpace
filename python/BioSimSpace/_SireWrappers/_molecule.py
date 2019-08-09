@@ -2965,17 +2965,29 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     on_ring_idy1 = _onRing(idy1, conn1)
 
     # Both atoms are in a ring in one end state and at least one isn't in the other.
-    if (in_ring_idx0 & in_ring_idy0 ) ^ (in_ring_idx1 & in_ring_idy1):
+    if (in_ring_idx0 & in_ring_idy0) ^ (in_ring_idx1 & in_ring_idy1):
         return True
 
     # Both atoms are on a ring in one end state and at least one isn't in the other.
-    if (on_ring_idx0 & on_ring_idy0 ) ^ (on_ring_idx1 & on_ring_idy1):
+    if ((on_ring_idx0 & on_ring_idy0 & (conn0.connectionType(idx0, idy0) == 4))
+        ^ (on_ring_idx1 & on_ring_idy1 & (conn1.connectionType(idx1, idy1) == 4))):
         return True
 
     # Both atoms are in or on a ring in one state and at least one isn't in the other.
-    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0)) ^
-        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1))):
-        return True
+    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0) & (conn0.connectionType(idx0, idy0) == 3)) ^
+        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1) & (conn1.connectionType(idx1, idy1) == 3))):
+        iscn0 = set(conn0.connectionsTo(idx0)).intersection(set(conn0.connectionsTo(idy0)))
+        if (len(iscn0) != 1):
+            return True
+        common_idx = iscn0.pop()
+        in_ring_bond0 = (conn0.inRing(idx0, common_idx) | conn0.inRing(idy0, common_idx))
+        iscn1 = set(conn1.connectionsTo(idx1)).intersection(set(conn1.connectionsTo(idy1)))
+        if (len(iscn1) != 1):
+            return True
+        common_idx = iscn1.pop()
+        in_ring_bond1 = (conn1.inRing(idx1, common_idx) | conn1.inRing(idy1, common_idx))
+        if (in_ring_bond0 ^ in_ring_bond1):
+            return True
 
     # If we get this far, then a ring wasn't broken.
     return False
@@ -3059,14 +3071,10 @@ def _onRing(idx, conn):
            Whether the atom is adjacent to a ring.
     """
 
-    # The atom is in a ring.
-    if conn.inRing(idx):
-        return False
-
     # Loop over all atoms connected to this atom.
     for x in conn.connectionsTo(idx):
         # The neighbour is in a ring.
-        if conn.inRing(x):
+        if conn.inRing(x) and (not conn.inRing(x, idx)):
             return True
 
     # If we get this far, then the atom is not adjacent to a ring.
