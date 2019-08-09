@@ -16,6 +16,32 @@ def test_molecule_equivalence(index):
     # the system.
     assert system[index] == system.getMolecules()[index] == system.getMolecule(index)
 
+def test_iterators():
+    # Iterate over all molecules in the system, either directly,
+    # or after calling getMolecules() and make sure they are equivalent.
+
+    # Get the molecules from the system.
+    molecules = system.getMolecules()
+
+    # First iterate over the system object directly.
+    for idx, mol in enumerate(system):
+        assert mol == molecules[idx] == system.getMolecule(idx)
+
+    # Now iterate over the molecules instead.
+    for idx, mol in enumerate(molecules):
+        assert mol == system[idx] == system.getMolecule(idx)
+
+    # Now search for all molecules in the system.
+    search_result = system.search("all")
+
+    # Iterate over the search result and make sure we match all molecules.
+    for idx, mol in enumerate(search_result):
+        # Single residue molecules will have been converted to a Residue object.
+        if type(mol) is BSS._SireWrappers.Residue:
+            assert mol.toMolecule() == system[idx] == molecules[idx] == system.getMolecule(idx)
+        else:
+            assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
+
 def test_atom_reindexing():
     # Search for all oxygen atoms in water molecules water molecules within
     # the system.
