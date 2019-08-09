@@ -30,6 +30,7 @@ __all__ = ["formalCharge"]
 
 import tempfile as _tempfile
 
+from BioSimSpace import _is_notebook
 from BioSimSpace import IO as _IO
 from BioSimSpace import _Utils as _Utils
 from BioSimSpace.Units.Charge import electron_charge as _electron_charge
@@ -64,16 +65,31 @@ def formalCharge(molecule):
     # Zero the total formal charge.
     formal_charge = 0
 
-    # Run in the working directory.
-    with _Utils.cd(work_dir), _Utils.stderr_redirected():
+    # Stdout/stderr redirection doesn't work from within Jupyter.
+    if _is_notebook():
+        # Run in the working directory.
+        with _Utils.cd(work_dir):
 
-        # Save the molecule to a PDB file.
-        _IO.saveMolecules("tmp", molecule, "PDB")
+            # Save the molecule to a PDB file.
+            _IO.saveMolecules("tmp", molecule, "PDB")
 
-        # Read the ligand PDB into an RDKit molecule.
-        mol = _Chem.MolFromPDBFile("tmp.pdb")
+            # Read the ligand PDB into an RDKit molecule.
+            mol = _Chem.MolFromPDBFile("tmp.pdb")
 
-        # Compute the formal charge.
-        formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
+            # Compute the formal charge.
+            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
+
+    else:
+        # Run in the working directory and redirect stderr from RDKit.
+        with _Utils.cd(work_dir), _Utils.stderr_redirected():
+
+            # Save the molecule to a PDB file.
+            _IO.saveMolecules("tmp", molecule, "PDB")
+
+            # Read the ligand PDB into an RDKit molecule.
+            mol = _Chem.MolFromPDBFile("tmp.pdb")
+
+            # Compute the formal charge.
+            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
 
     return formal_charge * _electron_charge
