@@ -79,8 +79,8 @@ class SireWrapper():
         return hash(self._sire_object)
 
     def copy(self):
-        """Return a copy of this object. The type that is returned is same as
-           the object on which copy is called.
+        """Return a copy of this object. The return type is same as the object
+           on which copy is called.
 
            Returns
            -------
