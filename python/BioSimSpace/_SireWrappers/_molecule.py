@@ -2947,7 +2947,10 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
            The index of the second atom in the second state.
     """
 
-    # Have we opened/closed a ring?
+    # Have we opened/closed a ring? This means that both atoms are part of a
+    # ring in one end state (either in it, or on it), whereas at least one
+    # are the result of changes in ring size, where atoms remain in or on a
+    # ring in both end states.
 
     # Whether each atom is in a ring in both end states.
     in_ring_idx0 = conn0.inRing(idx0)
@@ -2955,9 +2958,36 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     in_ring_idx1 = conn1.inRing(idx1)
     in_ring_idy1 = conn1.inRing(idy1)
 
+    # Whether each atom is on a ring in both end states.
+    on_ring_idx0 = _onRing(idx0, conn0)
+    on_ring_idy0 = _onRing(idy0, conn0)
+    on_ring_idx1 = _onRing(idx1, conn1)
+    on_ring_idy1 = _onRing(idy1, conn1)
+
     # Both atoms are in a ring in one end state and at least one isn't in the other.
-    if (in_ring_idx0 & in_ring_idy0 ) ^ (in_ring_idx1 & in_ring_idy1):
+    if (in_ring_idx0 & in_ring_idy0) ^ (in_ring_idx1 & in_ring_idy1):
         return True
+
+    # Both atoms are on a ring in one end state and at least one isn't in the other.
+    if ((on_ring_idx0 & on_ring_idy0 & (conn0.connectionType(idx0, idy0) == 4))
+        ^ (on_ring_idx1 & on_ring_idy1 & (conn1.connectionType(idx1, idy1) == 4))):
+        return True
+
+    # Both atoms are in or on a ring in one state and at least one isn't in the other.
+    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0) & (conn0.connectionType(idx0, idy0) == 3)) ^
+        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1) & (conn1.connectionType(idx1, idy1) == 3))):
+        iscn0 = set(conn0.connectionsTo(idx0)).intersection(set(conn0.connectionsTo(idy0)))
+        if (len(iscn0) != 1):
+            return True
+        common_idx = iscn0.pop()
+        in_ring_bond0 = (conn0.inRing(idx0, common_idx) | conn0.inRing(idy0, common_idx))
+        iscn1 = set(conn1.connectionsTo(idx1)).intersection(set(conn1.connectionsTo(idy1)))
+        if (len(iscn1) != 1):
+            return True
+        common_idx = iscn1.pop()
+        in_ring_bond1 = (conn1.inRing(idx1, common_idx) | conn1.inRing(idy1, common_idx))
+        if (in_ring_bond0 ^ in_ring_bond1):
+            return True
 
     # If we get this far, then a ring wasn't broken.
     return False
@@ -3021,6 +3051,34 @@ def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
         return ring0 != ring1
     else:
         return False
+
+def _onRing(idx, conn):
+    """Internal function to test whether an atom is adjacent to a ring.
+
+       Parameters
+       ----------
+
+       idx : Sire.Mol.AtomIdx
+           The index of the atom
+
+       conn : Sire.Mol.Connectivity
+           The connectivity object.
+
+       Returns
+       -------
+
+       is_on_ring : bool
+           Whether the atom is adjacent to a ring.
+    """
+
+    # Loop over all atoms connected to this atom.
+    for x in conn.connectionsTo(idx):
+        # The neighbour is in a ring.
+        if conn.inRing(x) and (not conn.inRing(x, idx)):
+            return True
+
+    # If we get this far, then the atom is not adjacent to a ring.
+    return False
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
