@@ -2947,10 +2947,7 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
            The index of the second atom in the second state.
     """
 
-    # Have we opened/closed a ring? This means that both atoms are part of a
-    # ring in one end state (either in it, or on it), whereas at least one
-    # are the result of changes in ring size, where atoms remain in or on a
-    # ring in both end states.
+    # Have we opened/closed a ring?
 
     # Whether each atom is in a ring in both end states.
     in_ring_idx0 = conn0.inRing(idx0)
@@ -2958,23 +2955,8 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     in_ring_idx1 = conn1.inRing(idx1)
     in_ring_idy1 = conn1.inRing(idy1)
 
-    # Whether each atom is on a ring in both end states.
-    on_ring_idx0 = _onRing(idx0, conn0)
-    on_ring_idy0 = _onRing(idy0, conn0)
-    on_ring_idx1 = _onRing(idx1, conn1)
-    on_ring_idy1 = _onRing(idy1, conn1)
-
     # Both atoms are in a ring in one end state and at least one isn't in the other.
     if (in_ring_idx0 & in_ring_idy0 ) ^ (in_ring_idx1 & in_ring_idy1):
-        return True
-
-    # Both atoms are on a ring in one end state and at least one isn't in the other.
-    if (on_ring_idx0 & on_ring_idy0 ) ^ (on_ring_idx1 & on_ring_idy1):
-        return True
-
-    # Both atoms are in or on a ring in one state and at least one isn't in the other.
-    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0)) ^
-        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1))):
         return True
 
     # If we get this far, then a ring wasn't broken.
@@ -3039,38 +3021,6 @@ def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
         return ring0 != ring1
     else:
         return False
-
-def _onRing(idx, conn):
-    """Internal function to test whether an atom is adjacent to a ring.
-
-       Parameters
-       ----------
-
-       idx : Sire.Mol.AtomIdx
-           The index of the atom
-
-       conn : Sire.Mol.Connectivity
-           The connectivity object.
-
-       Returns
-       -------
-
-       is_on_ring : bool
-           Whether the atom is adjacent to a ring.
-    """
-
-    # The atom is in a ring.
-    if conn.inRing(idx):
-        return False
-
-    # Loop over all atoms connected to this atom.
-    for x in conn.connectionsTo(idx):
-        # The neighbour is in a ring.
-        if conn.inRing(x):
-            return True
-
-    # If we get this far, then the atom is not adjacent to a ring.
-    return False
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
