@@ -276,7 +276,6 @@ def test_ring_size_change(ligands):
     21 : 10,
     17 : 7,
     25 : 4}])
-
 def test_grow_whole_ring(mapping):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/grow1*"))
