@@ -1,11 +1,20 @@
 import BioSimSpace as BSS
 
+import pytest
+
 # Glob the input files.
 files = BSS.IO.glob("test/io/amber/ala/*")
 
 # Load the molecular system.
 # This contains an alanin-dipeptide and 630 water molecules.
 system = BSS.IO.readMolecules(files)
+
+# Parameterise the function with a set of molecule indices.
+@pytest.mark.parametrize("index", [0, -1])
+def test_molecule_equivalence(index):
+    # Make sure that we get the same molecule, however we extract it from
+    # the system.
+    assert system[index] == system.getMolecules()[index] == system.getMolecule(index)
 
 def test_atom_reindexing():
     # Search for all oxygen atoms in water molecules water molecules within
