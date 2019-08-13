@@ -98,6 +98,10 @@ def solvate(model, molecule=None, box=None, shell=None,
     if type(model) is not str:
         raise TypeError("'model' must be of type 'str'")
     else:
+        # Strip whitespace and convert to lower case.
+        model = model.replace(" ", "").lower()
+
+        # Check that this water model is supported.
         if model not in waterModels():
             raise ValueError("Supported water models are: %s" % waterModels())
 
