@@ -114,7 +114,7 @@ class Binding(_free_energy.FreeEnergy):
                     if not all(isinstance(x, _Types.Length) for x in box):
                         raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
-            # Get the water model used to solvate the system.
+            # Try to get the water model used to solvate the system.
             try:
                 water_model = system._sire_object.property("water_model").toString()
             # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
