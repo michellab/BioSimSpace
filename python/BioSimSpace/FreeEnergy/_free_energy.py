@@ -35,6 +35,7 @@ import sys as _sys
 import os as _os
 import subprocess as _subprocess
 import tempfile as _tempfile
+import warnings as _warnings
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -436,27 +437,37 @@ class FreeEnergy():
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
+        # Convert to an appropriate AMBER topology. (Required by SOMD.)
         if self._engine == "SOMD":
-            # Try to get the name of the water model.
+            # Try to get the water model used to solvate the system.
             try:
                 water_model = system0._sire_object.property("water_model").toString()
                 waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
                 waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
 
+            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
+            # to guess the water model from the topology.
             except:
                 num_point = system0.getWaterMolecules()[0].nAtoms()
 
-                # Convert to an appropriate AMBER topology. (Required by SOMD.)
                 if num_point == 3:
                     # TODO: Assume TIP3P. Not sure how to detect SPC/E.
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
+                    water_model = "tip3p"
                 elif num_point == 4:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
+                    water_model = "tip4p"
                 elif num_point == 5:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
+                    water_model = "tip5p"
+                else:
+                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
+
+                # Warn the user that we've guessed the water topology.
+                _warnings.warn("Guessed water topology: %r" % water_model)
 
             # Remove the existing water molecules from the systems.
             system0.removeWaterMolecules()
