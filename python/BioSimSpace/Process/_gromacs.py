@@ -46,6 +46,7 @@ from BioSimSpace.Types._type import Type as _Type
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Types as _Types
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
@@ -594,6 +595,7 @@ class Gromacs(_process.Process):
             setattr(self, "setPlumedConfig", self._setPlumedConfig)
             setattr(self, "getFreeEnergy", self._getFreeEnergy)
             setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "sampleConfigurations", self._sampleConfigurations)
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
@@ -767,45 +769,21 @@ class Gromacs(_process.Process):
                 old_system = self._system.copy()
                 old_system._updateCoordinates(new_system)
 
+                # Update the periodic box information in the original system.
+                try:
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                except:
+                    pass
+
                 return old_system
 
             else:
                 return None
 
         else:
-            # Grab the last frame from the current trajectory file.
-            try:
-                with _Utils.cd(self._work_dir):
-
-                    # Use tjrconv to get the frame closest to the current simulation time.
-                    command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
-                        % (self._exe, self._traj_file, self._gro_file, self.getTime().picoseconds().magnitude())
-
-                    # Run the command.
-                    proc = _subprocess.run(command, shell=True,
-                        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-
-                    # Read the frame file.
-                    new_system = _IO.readMolecules(["frame.gro", self._top_file])
-
-                    # Delete the frame file.
-                    _os.remove("frame.gro")
-
-                    # Copy the old system and update the coordinates.
-                    old_system = self._system.copy()
-                    old_system._updateCoordinates(new_system)
-
-                    # Update the periodic box information in the original system.
-                    box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-
-                    return old_system
-
-            except:
-                _warnings.warn("Failed to extract trajectory frame with trjconv. "
-                               "Try running 'getSystem' again.")
-                _os.remove("%s/frame.gro" % self._work_dir)
-                return None
+            # Grab the most recent frame from the trajectory file.
+            return self._getFrame(self.getTime())
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -1961,3 +1939,59 @@ class Gromacs(_process.Process):
 
             except KeyError:
                 return None
+
+    def _getFrame(self, time):
+        """Get the trajectory frame closest to a specific time value.
+
+           Parameters
+           ----------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The time value.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system from the closest trajectory frame.
+        """
+
+        if type(time) is not _Types.Time:
+            raise TypeError("'time' must be of type 'BioSimSpace.Types.Time'")
+
+        # Grab the last frame from the current trajectory file.
+        try:
+            with _Utils.cd(self._work_dir):
+
+                # Use tjrconv to get the frame closest to the current simulation time.
+                command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
+                    % (self._exe, self._traj_file, self._gro_file, time.picoseconds().magnitude())
+
+                # Run the command.
+                proc = _subprocess.run(command, shell=True,
+                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+                # Read the frame file.
+                new_system = _IO.readMolecules(["frame.gro", self._top_file])
+
+                # Delete the frame file.
+                _os.remove("frame.gro")
+
+                # Copy the old system and update the coordinates.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system)
+
+                # Update the periodic box information in the original system.
+                try:
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                except:
+                    pass
+
+                return old_system
+
+        except:
+            _warnings.warn("Failed to extract trajectory frame with trjconv. "
+                           "Try running 'getSystem' again.")
+            _os.remove("%s/frame.gro" % self._work_dir)
+            return None
