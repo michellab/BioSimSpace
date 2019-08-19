@@ -267,11 +267,11 @@ class FreeEnergy():
 
         # First leg.
         error0 = _math.sqrt((leg0[-1][2].magnitude() * leg0[-1][2].magnitude()) +
-                            (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
+                            (leg0[0][2].magnitude()  * leg0[0][2].magnitude()))
 
         # Second leg.
         error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
-                            (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+                            (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
 
         # Free energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
