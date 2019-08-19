@@ -434,7 +434,7 @@ class Process():
         if type(number) is not int:
             raise TypeError("'number' must be of type 'int'")
 
-        if number <= 0:
+        if number < 1:
             raise ValueError("'number' must be >= 1")
 
         # Convert tuple to list.
@@ -536,9 +536,9 @@ class Process():
                 valid_indices.append(x)
 
         # There are no valid samples.
-        if len(valid_indices) is 0:
+        if len(valid_indices) == 0:
             _warnings.warn("No valid configurations found!")
-            return None
+            return None, None
 
         # Shuffle the indices and take the required number.
         _random.shuffle(valid_indices)
