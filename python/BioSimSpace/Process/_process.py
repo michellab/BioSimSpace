@@ -32,8 +32,10 @@ import collections as _collections
 import glob as _glob
 import os as _os
 import pygtail as _pygtail
+import random as _random
 import timeit as _timeit
 import warnings as _warnings
+import sys as _sys
 import tempfile as _tempfile
 import zipfile as _zipfile
 
@@ -401,6 +403,164 @@ class Process():
 
         # Use the PLUMED interface to get the required data.
         return self._plumed.getFreeEnergy(index, stride, kt)
+
+    def _sampleConfigurations(self, bounds, number=1, block="AUTO"):
+        """Sample configurations based on values of the collective variable(s).
+
+           Parameters
+           ----------
+
+           bounds : [(:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.TYpes>`), ...]
+               The lower and uppoer bound for each collective variable. Use None
+               if there is no restriction of the value of a particular collective
+               variable.
+
+           number : int
+               The (maximum) number of configurations to return.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           configurations : [:class:`System <BioSimSpace._SireWrappers.System>`]
+               A list of randomly sampled molecular configurations.
+
+           collective_variables : [(:class:`Type <BioSimSpace.Types>`, int, float, ...)]
+               The value of the collective variable for each configuration.
+        """
+
+        if type(number) is not int:
+            raise TypeError("'number' must be of type 'int'")
+
+        if number <= 0:
+            raise ValueError("'number' must be >= 1")
+
+        # Convert tuple to list.
+        if type(bounds) is tuple:
+            bounds = list(bounds)
+
+        if type(bounds) is not list:
+            raise TypeError("'bounds' must be of type 'list'.")
+
+        # Make sure the number of bounds matches the number of collective variables.
+        if len(bounds) != self._plumed._num_colvar:
+            raise ValueError("'bounds' must contain %d values!" % self._plumed._num_colvar)
+
+        # General error message for invalid bounds argument.
+        msg = "'bounds' must contain tuples with the lower and upper bound " \
+              "for each collective variable."
+
+        # Store the list of collective varaible names and their units.
+        names = self._plumed._colvar_name
+        units = self._plumed._colvar_unit
+
+        # Make sure the values of the bounds match the types of the collective
+        # variables to which they correspond.
+        for x, bound in enumerate(bounds):
+
+            # Extract the unit of the collective variable. (Its type)
+            unit = units[names[x]]
+
+            if type(bound) is list or type(bound) is tuple:
+                # Must have upper/lower bound.
+                if len(bound) != 2:
+                    raise ValueError(msg)
+                # Check that the bound is of the correct type.
+                for value in bound:
+                    if value is not None:
+                        if type(value) is not type(unit):
+                            raise ValueError("Each value in 'bounds' must be None or match the type "
+                                             "of the collective variable to which it corresponds.")
+            else:
+                raise ValueError(msg)
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Create a list to hold all of the collective variable time-series
+        # records.
+        colvars = []
+
+        # The current minimum record number.
+        min_records = _sys.maxsize
+
+        # Store each collective variable time-series record.
+        for x in range(0, self._plumed._num_colvar):
+            colvars.append(self._getCollectiveVariable(x, time_series=True, block=block))
+
+            # Does this record have fewer records than those already recorded?
+            if len(colvars[-1]) < min_records:
+                min_records = len(colvars[-1])
+
+        # Get the time records so that we can extract the appropriate trajectory frames.
+        time = self.getTime(time_series=True, block=block)
+
+        # Create a list to store the list of indices that satisfy the bounds.
+        valid_indices = []
+
+        # Loop over all records.
+        for x in range(0, min_records):
+
+            # Whether this record is valid.
+            is_valid = True
+
+            # Loop over all collective variables.
+            for y in range(0, self._plumed._num_colvar):
+
+                # Extract the corresponding collective variable sample.
+                colvar = colvars[y][x]
+
+                # Store a local copy of the bound.
+                bound = bounds[y]
+
+                # Lower bound.
+                if bound[0] != None:
+                    if colvar < bound[0]:
+                        is_valid = False
+                        break
+
+                # Upper bound.
+                if bound[1] != None:
+                    if colvar > bound[1]:
+                        is_valid = False
+                        break
+
+            # The sample lies within the bounds, store the index and collectiv
+            # variable.
+            if is_valid:
+                valid_indices.append(x)
+
+        # There are no valid samples.
+        if len(valid_indices) is 0:
+            _warnings.warn("No valid configurations found!")
+            return None
+
+        # Shuffle the indices and take the required number.
+        _random.shuffle(valid_indices)
+        indices = valid_indices[:number]
+
+        # Create a list to store the sampled configurations.
+        configs = []
+
+        # Create a list to store the collective variable values for each configuration.
+        colvar_vals = []
+
+        for idx in indices:
+            # Append the matching configuration from the trajectory file.
+            configs.append(self._getFrame(time[idx]))
+
+            # Append the collective variable values for the sample.
+            data = []
+            for x in range(0, self._plumed._num_colvar):
+                data.append(colvars[x][idx])
+            colvar_vals.append(tuple(data))
+
+        return configs, colvar_vals
 
     def start(self):
         """Start the process.
