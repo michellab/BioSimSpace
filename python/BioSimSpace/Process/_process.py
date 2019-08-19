@@ -540,7 +540,7 @@ class Process():
             _warnings.warn("No valid configurations found!")
             return None, None
 
-        # Shuffle the indices and take the required number.
+        # Shuffle the indices and take the required number of samples.
         _random.shuffle(valid_indices)
         indices = valid_indices[:number]
 
