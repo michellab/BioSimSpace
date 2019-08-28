@@ -81,6 +81,10 @@ RUN rmdir work && \
 RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
     cp $HOME/demo/*.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes/
 
+# Change the executable name so that BioSimSpace notebook usage statistics
+# can be tracked separately.
+RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (notebook)"/g' /opt/conda/lib/python3.7/site-packages/Sire/__init__.py
+
 # Add in our custom notebook config.
 USER root
 
