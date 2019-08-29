@@ -53,7 +53,13 @@ name, e.g.:
 
 On OS X you will need to run Python scripts with the ``sire_python``
 interpreter. This is due to an issue with the default Python interpreter that
-is installed via Conda. (This applies to all installation methods.)
+is installed via Conda. (This applies to all installation methods.) To activate
+``sire_python`` with your IPython kernel (which can also be used in Jupyter)
+you can do the following:
+
+.. code-block:: bash
+
+    /path/to/conda/miniconda3/envs/biosimspace/bin/sire_python -m ipykernel install --prefix=/path/to/conda/miniconda3/envs/biosimspace/ --name 'sire_python'
 
 Binary install
 ==============
