@@ -15,7 +15,7 @@ Please answer the following questions for yourself before submitting an issue.
 
 **YOU MAY DELETE THE PREREQUISITES SECTION.**
 
-- [ ] I am running the latest version.
+- [ ] I am running the latest version (devel branch, or dev Conda package).
 - [ ] I checked the documentation and found no answer.
 - [ ] I checked to make sure that this issue has not already been filed.
 
