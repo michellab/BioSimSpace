@@ -8,7 +8,7 @@ cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-ext
 # Install additional pip packages. Note that conda-build turns off downloading
 # so pip won't be able to get packages from PyPi. We re-enable downloading by
 # setting PIP_NO_INDEX to True, i.e. 0.
-PIP_NO_INDEX=0 pip install --index-url https://pypi.org/simple --no-deps --ignore-installed --verbose fileupload pygtail pypdb
+PIP_NO_INDEX=0 pip install --index-url https://pypi.org/simple --no-deps --ignore-installed --verbose fileupload
 
 # Install and enable notebook extensions.
 jupyter-nbextension install fileupload --py --sys-prefix

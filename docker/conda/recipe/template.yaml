@@ -20,7 +20,9 @@ requirements:
     - mdtraj
     - mdanalysis
     - nglview
+    - pygtail
     - pymbar
+    - pypdb
     - pytest
     - pyyaml
     - rdkit
@@ -32,7 +34,9 @@ requirements:
     -  {{ pin_compatible('mdtraj') }}
     -  {{ pin_compatible('mdanalysis') }}
     -  {{ pin_compatible('nglview') }}
+    -  {{ pin_compatible('pygtail') }}
     -  {{ pin_compatible('pymbar') }}
+    -  {{ pin_compatible('pypdb') }}
     -  {{ pin_compatible('pytest') }}
     -  {{ pin_compatible('pyyaml') }}
     -  {{ pin_compatible('rdkit') }}
