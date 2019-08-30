@@ -51,29 +51,6 @@ name, e.g.:
 
     conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
 
-On OS X you will need to run Python scripts with the ``sire_python``
-interpreter. This is due to an issue with the default Python interpreter that
-is installed via Conda. (This applies to all installation methods.) To activate
-``sire_python`` as an IPython kernel you can do the following:
-
-.. code-block:: bash
-
-    /path/to/conda/miniconda3/envs/biosimspace/bin/sire_python -m ipykernel install --prefix=/path/to/conda/miniconda3/envs/biosimspace/ --name sire_python
-
-You can then select the ``sire_python`` kernel from within a Jupyter
-notebook using the Kernel dropdown menu. To use ``sire_python`` within the
-terminal console you will also need to install ``jupyter_console``:
-
-.. code-block:: bash
-
-    conda install jupyter_console
-
-Following this, you can launch an IPython session using:
-
-.. code-block:: bash
-
-    jupyter console --kernel sire_python
-
 Binary install
 ==============
 
