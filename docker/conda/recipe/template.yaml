@@ -42,6 +42,10 @@ requirements:
     -  {{ pin_compatible('rdkit') }}
     -  {{ pin_compatible('watchdog') }}
 
+test:
+  imports:
+    - BioSimSpace
+
 about:
   home: https://biosimspace.org
   license: GPL-2.0
