@@ -119,6 +119,7 @@ class Distance(_CollectiveVariable):
 
         self.setAtom0(atom0)
         self.setAtom1(atom1)
+        self.setHillWidth(hill_width)
 
         # Set the optional parameters.
 
