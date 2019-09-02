@@ -302,8 +302,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
            The base name of the output file.
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`, \
-                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>`
-                [ BioSimSpace._SireWrappers.Molecule ]
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecules>`
            The molecular system.
 
        fileformat : str, [str]
@@ -361,14 +361,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # A Molecule object.
     elif type(system) is _Molecule:
         system = _System(system)
+    elif type(system) is _Molecules:
+        system = system.toSystem()
     # A list of Molecule objects.
     elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
         system = _System(system)
     # Invalid type.
     else:
         raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-                        "'BioSimSpace._SireWrappers.Molecule, or a list of "
-                        "'BiSimSpace._SireWrappers.Molecule' types.")
+                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 

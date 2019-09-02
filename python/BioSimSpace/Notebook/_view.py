@@ -52,6 +52,7 @@ class View():
 
            handle : :class:`Process <BioSimSpace.Process>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
+                    :class:`System <BioSimSpace._SireWrappers.System>`
                A handle to a process or system.
         """
 
@@ -73,7 +74,12 @@ class View():
             self._is_process = False
 
         else:
-            raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+            try:
+                handle = handle.toSystem()
+                self._handle = handle._getSireObject()
+                self._is_process = False
+            except:
+                raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()

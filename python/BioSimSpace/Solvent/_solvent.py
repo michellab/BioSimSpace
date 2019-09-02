@@ -62,8 +62,9 @@ def solvate(model, molecule=None, box=None, shell=None,
            The name of the water model.
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -115,7 +116,9 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -167,8 +170,9 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -220,8 +224,9 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -273,8 +278,9 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -326,8 +332,9 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -378,8 +385,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
@@ -416,11 +424,13 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     if molecule is not None:
         if type(molecule) is _Molecule:
             _molecule = _Molecule(molecule)
+        elif type(molecule) is _Molecules:
+            _molecule = molecule.toSystem()
         elif type(molecule) is _System:
             _molecule = _System(molecule)
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                            "or 'BioSimSpace._SireWrappers.System'")
+                            "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None and shell is None:
