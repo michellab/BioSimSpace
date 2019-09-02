@@ -84,7 +84,7 @@ ADD patches .patches
 
 # Patch the BioSimSpace install so that we restrict GROMACS to use a single
 # MPI thread and four OpenMP thread per MPI thread.
-RUN cp .patches/_gromacs.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Process/
+RUN patch /opt/conda/lib/python3.7/site-packages/BioSimSpace/Process/ .patches/_gromacs.py.patch
 
 # Copy the example nodes into the Python library.
 RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
