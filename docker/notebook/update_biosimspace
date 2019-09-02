@@ -5,9 +5,11 @@ import os
 print("Updating BioSimSpace...")
 
 print("  -- [u] BioSimSpace")
-os.chdir("/home/jovyan/biosimspace_workshop")
+os.chdir("/home/jovyan/workshops/introduction")
 os.system("git pull")
-os.chdir("/home/jovyan/biosimspace/python")
+os.chdir("/home/jovyan/workshops/advanced")
+os.system("git pull")
+os.chdir("/home/jovyan/workshops/python")
 os.system("git pull")
 
 # First remove the existing package.
