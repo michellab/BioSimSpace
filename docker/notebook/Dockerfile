@@ -71,8 +71,10 @@ RUN conda clean -tipsy && \
 
 # Clone source and workshop repositories.
 RUN git clone https://github.com/michellab/biosimspace && \
-    git clone https://github.com/CCPBioSim/python_and_data_workshop && \
-    git clone https://github.com/CCPBioSim/biosimspace_workshop
+    mkdir workshops && \
+    git clone https://github.com/CCPBioSim/python_and_data_workshop workshops/python && \
+    git clone https://github.com/CCPBioSim/biosimspace-workshop workshops/introduction && \
+    git clone https://github.com/CCPBioSim/biosimspace-advanced-simulation workshops/advanced
 
 # Link the right directories into the right places.
 RUN rmdir work && \
