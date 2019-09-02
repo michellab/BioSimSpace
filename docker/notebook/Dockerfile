@@ -24,7 +24,8 @@ ENV SIRE_SILENT_PHONEHOME=1 \
     AMBERHOME=/home/amber \
     PATH=/home/gromacs/bin:/home/plumed/bin:$PATH \
     LD_LIBRARY_PATH=/home/plumed/lib:/opt/conda/lib:$LD_LIBRARY_PATH \
-    PLUMED_KERNEL=/home/plumed/lib/libplumedKernel.so
+    PLUMED_KERNEL=/home/plumed/lib/libplumedKernel.so \
+    OMP_NUM_THREADS=1
 
 # Download and install AmberTools into /home using wget.
 RUN wget $AMBER_DOWNLOAD -O amber.tar.bz2 && \
