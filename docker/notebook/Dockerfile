@@ -79,6 +79,13 @@ RUN git clone https://github.com/michellab/biosimspace && \
 RUN rmdir work && \
     ln -s $HOME/biosimspace/demo $HOME/demo
 
+# Add any BioSimSpace patches.
+ADD patches .patches
+
+# Patch the BioSimSpace install so that we restrict GROMACS to use a single
+# MPI thread and four OpenMP thread per MPI thread.
+RUN cp .patches/_gromacs.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Process/
+
 # Copy the example nodes into the Python library.
 RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
     cp $HOME/demo/*.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes/
