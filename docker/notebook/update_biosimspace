@@ -11,6 +11,8 @@ os.chdir("/home/jovyan/workshops/advanced")
 os.system("git pull")
 os.chdir("/home/jovyan/workshops/python")
 os.system("git pull")
+os.chdir("/home/jovyan/biosimspace/python")
+os.system("git pull")
 
 # First remove the existing package.
 os.system("rm -r /opt/conda/lib/python3.7/site-packages/BioSimSpace*")
