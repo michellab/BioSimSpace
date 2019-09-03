@@ -2557,7 +2557,7 @@ class Molecule(_SireWrapper):
         # and "bond1" properties, unless a ring is broken or changes size.
         if not (allow_ring_breaking or allow_ring_size_change):
             if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-                raise _IncompatibleError("Inconsistent number of bonds in merged molecule!"
+                raise _IncompatibleError("Inconsistent number of bonds in merged molecule! "
                                          "A ring may have broken, or changed size. If you want to "
                                          "allow this perturbation, try using the 'allow_ring_breaking' "
                                          "or 'allow_ring_size_change' options.")
