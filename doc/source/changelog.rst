@@ -1,6 +1,18 @@
 Changelog
 =========
 
+`2019.2.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.1.0>`_ - Sep 11 2019
+
+* Switched to using `RDKit <https://www.rdkit.org/>`_ for maximum common substructure (MCS) mappings.
+* Handle perturbable molecules for non free-energy protocols with SOMD and GROMACS.
+* Added basic metadynamics functionality with support for distance and torsion collective variables.
+* Added support for inferring formal charge of molecules.
+* Numerous MCS mapping fixes and improvements. Thanks to `@maxkuhn <https://github.com/maxkuhn>`_, `@dlukauskis <https://github.com/dlukauskis>`, and `@ptosco <https://github.com/ptosco>`_ for help testing and debugging.
+* Added Dockerfile to build thirdparty packages required by the BioSimSpace notebook server.
+* Exposed Sire search functionality.
+* Added thin-wrappers for several additional Sire objects, e.g. Residue, Atom, and Molecules container.
+* Performance improvements for searching, indexing, and extracting objects from molecular containers, e.g. System, Molecule.
+
 `2019.1.0 <https://github.com/michellab/BioSimSpace/compare/2018.1.1...2019.1.0>`_ - May 02 2019
 ------------------------------------------------------------------------------------------------
 
