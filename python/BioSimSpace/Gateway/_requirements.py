@@ -24,6 +24,19 @@ Functionality for defining and validating BioSimSpace input and output requireme
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
+           "File", "FileSet",                           # File types.
+           "Length", "Area", "Volume",                  # Length types.
+           "Angle",
+           "Charge",
+           "Energy",
+           "Pressure",
+           "Temperature",
+           "Time"]
+
 import bz2 as _bz2
 import copy as _copy
 import gzip as _gzip
@@ -33,19 +46,7 @@ import shutil as _shutil
 import tarfile as _tarfile
 import zipfile as _zipfile
 
-import BioSimSpace.Types as _Types
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
-           "File", "FileSet",                           # File types.
-           "Length", "Area", "Volume",                  # Length types.
-           "Charge",
-           "Energy",
-           "Pressure",
-           "Temperature",
-           "Time"]
+from BioSimSpace import Types as _Types
 
 class Requirement():
     """Base class for BioSimSpace Node requirements."""
@@ -181,8 +182,21 @@ class Requirement():
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
-            raise ValueError("The value (%s) is not in the list of allowed values: "
-                "%s" % (value, str(self._allowed)))
+            # For String requirements, strip whitespace and ingore case.
+            if type(self) is String:
+                new_value = value.replace(" ", "").upper()
+                allowed = [x.replace(" ", "").upper() for x in self._allowed]
+
+                # If we find a match, then set to the unmodified allowed value
+                # at the matching index.
+                if new_value in allowed:
+                    value = self._allowed[allowed.index(new_value)]
+                else:
+                    raise ValueError("The value (%s) is not in the list of allowed values: "
+                        "%s" % (value, str(self._allowed)))
+            else:
+                raise ValueError("The value (%s) is not in the list of allowed values: "
+                    "%s" % (value, str(self._allowed)))
 
         # All is okay. Set the value.
         self._value = value
@@ -535,6 +549,8 @@ class File(Requirement):
             file = _unarchive(value)
             if file is None:
                 file = value
+            elif type(file) is list:
+                raise ValueError("The archive contains multiple files: use a FileSet instead!")
         else:
             raise TypeError("The value should be of type 'str'")
 
@@ -845,7 +861,7 @@ class Volume(Requirement):
        Examples
        --------
 
-       Create an area requirement with a default of 10 cubed Angstrom.
+       Create a volume requirement with a default of 10 cubed Angstrom.
 
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
@@ -857,7 +873,7 @@ class Volume(Requirement):
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
 
        Create a volume requirement with a default of 10 cubed Angstrom and a maximum
-       of 50 square nanometers. Note that the unit is taken from the default value.
+       of 50 cubed nanometers. Note that the unit is taken from the default value.
 
        >>> import BioSimSpace as BSS
        >>> my_volume = BSS.Gateway.Volume(help="A volume requirement",
@@ -937,6 +953,105 @@ class Volume(Requirement):
                 return _Types.Volume(value, self._unit)
             else:
                 return _Types.Volume(value, unit)._convert_to(self._unit)
+
+class Angle(Requirement):
+    """An angle requirement.
+
+       Examples
+       --------
+
+       Create an angle requirement with a default of 3.14 radians.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14, unit="radian")
+
+       The same, but explicitly passing a :class:`Angle <BioSimSpace.Types.Angle>`
+       for the default.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14*BSS.Units.Angle.radian)
+
+       Create an angle requirement with a default of 3.14 radian and a maximum
+       of 360 degrees. Note that the unit is taken from the default value.
+
+       >>> import BioSimSpace as BSS
+       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement",
+       ...                              default=3.14*BSS.Units.Angle.radian,
+       ...                              maximum=360*BSS.Units.Angle.degree)
+    """
+
+    # Set the argparse argument type.
+    _arg_type = str
+
+    def __init__(self, help=None, default=None, unit=None,
+            minimum=None, maximum=None, allowed=None):
+        """Constructor.
+
+           Parameters
+           ----------
+
+           help : str
+               The help string.
+
+           default : :class:`Angle <BioSimSpace.Types.Angle>`
+               The default value.
+
+           unit : str
+               The unit.
+
+           minimum : :class:`Angle <BioSimSpace.Types.Angle>`
+               The minimum allowed value.
+
+           maximum : :class:`Angle <BioSimSpace.Types.Angle>`
+               The maximum allowed value.
+
+           allowed : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               A list of allowed values.
+        """
+
+        # Validate the unit.
+        if unit is not None:
+            angle = _Types.Angle("1 %s" % unit)
+            self._unit = angle.unit()
+            self._print_unit = angle._print_format[angle.unit()]
+        else:
+            try:
+                self._unit = default.unit()
+            except:
+                raise ValueError("No unit or default value has been specified!")
+
+        # Call the base class constructor.
+        super().__init__(help=help, default=default, unit=self._unit,
+            minimum=minimum, maximum=maximum, allowed=allowed)
+
+    def getValue(self):
+        """Return the value.
+
+           Returns
+           -------
+
+           value : :class:`Angle <BioSimSpace.Types.Angle>`
+               The value of the requirement.
+        """
+        if self._value is None:
+            return None
+        else:
+            return _copy.deepcopy(self._value)
+
+    def _validate(self, value):
+        """Validate that the value is of the correct type."""
+
+        if type(value) is _Types.Angle:
+            return value._convert_to(self._unit)
+
+        else:
+            # Extract the value and unit from the argument string.
+            value, unit = _validate_unit_requirement(value, "angle")
+
+            if unit is None:
+                return _Types.Angle(value, self._unit)
+            else:
+                return _Types.Angle(value, unit)._convert_to(self._unit)
 
 class Charge(Requirement):
     """A charge requirement.
@@ -1520,7 +1635,7 @@ def _unarchive(name):
     if dir == "uploads":
         dir += "/"
     else:
-        dir = "uncompressed/"
+        dir = _os.path.splitext(name)[0] + "/"
 
     # List of supported tar file formats.
     tarfiles = ["tar.gz", "tar.bz2", "tar"]
@@ -1568,7 +1683,7 @@ def _unarchive(name):
                 print(file)
             zip.extractall(dir)
 
-        return files
+        return [dir + file for file in files]
 
     # This is a gzip file.
     if ext.lower() == ".gz" or ext == ".gzip":

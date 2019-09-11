@@ -1,0 +1,34 @@
+#!/opt/conda/bin/python
+
+import os
+
+print("Updating BioSimSpace...")
+
+print("  -- [u] BioSimSpace")
+os.chdir("/home/jovyan/workshops/introduction")
+os.system("git pull")
+os.chdir("/home/jovyan/workshops/advanced")
+os.system("git pull")
+os.chdir("/home/jovyan/workshops/python")
+os.system("git pull")
+os.chdir("/home/jovyan/biosimspace/python")
+os.system("git pull")
+
+# First remove the existing package.
+os.system("rm -r /opt/conda/lib/python3.7/site-packages/BioSimSpace*")
+
+# Now install the updated package.
+result1 = os.system("BSS_SKIP_DEPENDENCIES=1 /opt/conda/bin/python setup.py install --single-version-externally-managed --root=/")
+result2 = os.system("/opt/conda/bin/pip install .")
+
+if result1 == 0 and result2 == 0:
+    print("\n\nEverything updated :-)")
+else:
+    print("\n\nSomething went wrong?")
+
+# Copy the example nodes into place.
+os.system("mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes")
+os.system("cp /home/jovyan/demo/*.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes/")
+
+# Re-apply GROMACS patch.
+os.system("patch /opt/conda/lib/python3.7/site-packages/BioSimSpace/Process/_gromacs.py /home/jovyan/.patches/_gromacs.py.patch")

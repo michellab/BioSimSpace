@@ -23,26 +23,27 @@
 Utility functions.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["packages", "createProcess"]
+
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
 from ._process_runner import *
 from ._somd import *
 
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["packages", "createProcess"]
-
-# Create a list of the supported molecular dynamics packages.
-_packages = []
-_package_dict = {}
+_packages = []         # List of supported packages (actual name).
+_packages_lower = []   # List of lower case package names.
+_package_dict = {}     # Mapping between lower case name and class.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "ProcessRunner":
         _packages.append(_var)
-        _package_dict[_var] = getattr(_namespace, _var)
+        _packages_lower.append(_var.lower())
+        _package_dict[_var.lower()] = getattr(_namespace, _var)
 del _namespace
 del _sys
 del _var
@@ -80,7 +81,10 @@ def createProcess(system, protocol, package):
            The process object for the specific simulation package.
     """
 
-    if package not in _package_dict:
+    # Strip whitespace and convert to lower case.
+    _package = package.replace(" ", "").lower()
+
+    if _package not in _packages_lower:
         raise KeyError("Unsupported package '%s', supported packages are %s" % (package, _packages))
 
-    return _package_dict[package](system, protocol)
+    return _package_dict[_package](system, protocol)

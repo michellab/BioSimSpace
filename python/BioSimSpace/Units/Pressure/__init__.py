@@ -23,12 +23,12 @@
 Pressure units.
 """
 
-from ...Types import Pressure as _Pressure
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["atm", "bar"]
+
+from BioSimSpace.Types import Pressure as _Pressure
 
 atm = _Pressure(1, "ATMOSPHERE")
 bar = _Pressure(1, "BAR")

@@ -23,25 +23,107 @@
 Functionality for reading and analysing molecular trajectories.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["getFrame", "Trajectory"]
+
 import MDAnalysis as _mdanalysis
 import mdtraj as _mdtraj
 import os as _os
 import shutil as _shutil
 import warnings as _warnings
 
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Process._process import Process as _Process
-from .._SireWrappers import System as _System
-from .._SireWrappers import Molecule as _Molecule
-from ..Types import Time as _Time
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Process._process import Process as _Process
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Types import Time as _Time
 
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+from BioSimSpace import IO as _IO
+from BioSimSpace import _SireWrappers as _SireWrappers
 
-__all__ = ["Trajectory"]
+# A dictionary mapping the Sire file format extension to those expected by MDTraj.
+_extensions = { "Gro87" : "gro",
+                "PRM7"   : "parm7" }
+
+def getFrame(trajectory, topology, index):
+    """Extract a single frame from a trajectory file.
+
+       Parameters
+       ----------
+
+       trajectory : str
+           A trajectory file.
+
+       topology : str
+           A topology file.
+
+       index : int
+          The index of the frame.
+
+       Returns
+       -------
+
+       frame : :class:`System <BioSimSpace._SireWrappers.System>`
+           The System object of the corresponding frame.
+    """
+
+    if type(trajectory) is not str:
+        raise TypeError("'trajectory' must be of type 'str'")
+
+    if type(topology) is not str:
+        raise TypeError("'topology' must be of type 'str'")
+
+    if type(index) is not int:
+        raise TypeError("'index' must be of type 'int'")
+
+    # Try to load the frame.
+    try:
+        frame = _mdtraj.load_frame(trajectory, index, top=topology)
+    except:
+        # Get the file format of the topology file.
+        try:
+            # Load the topology file to determine the file format.
+            file_format = _IO.readMolecules(topology).fileFormat()
+
+            # Set the extension.
+            extension = _extensions.get(file_format, file_format.lower())
+
+            # Set the path to the temporary topology file.
+            top_file = _os.getcwd() + "/.topology." + extension
+
+            # Copy the topology to a file with the correct extension.
+            _shutil.copyfile(topology, top_file)
+
+            frame = _mdtraj.load_frame(trajectory, index, top=top_file)
+        except:
+            _os.remove(top_file)
+            raise IOError("MDTraj failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology))
+
+        # Remove the temporary topology file.
+        _os.remove(top_file)
+
+    # The name of the frame coordinate file.
+    frame_file = ".frame.nc"
+
+    # Save the coordinates to file.
+    frame.save(frame_file)
+
+    # Load the frame into a System object.
+    try:
+        system = _System(_SireIO.MoleculeParser.read([topology, frame_file]))
+    except:
+        _os.remove(frame_file)
+        raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
+
+    # Remove the temporary frame coordinate file.
+    _os.remove(frame_file)
+
+    # Return the system.
+    return system
 
 class Trajectory():
     """A class for reading a manipulating biomolecular trajectories."""
@@ -138,114 +220,64 @@ class Trajectory():
             _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
             format = "mdtraj"
 
-        # Get the trajectory from the process.
+        # Set the location of the trajectory and topology files.
         if self._process is not None:
+            traj_file = self._process._traj_file
 
-            # AMBER / SOMD.
-            if self._process_name.upper() == "AMBER" or self._process_name.upper() == "SOMD":
-
-                # Path to the trajectory file.
-                if self._process_name.upper() == "AMBER":
-                    traj_file = "%s/%s.nc" % (self._process._work_dir, self._process._name)
-                else:
-                    traj_file = "%s/traj000000001.dcd" % self._process._work_dir
-
-                # MDTraj currently doesn't support the .prm7 extension, so we
-                # need to copy the topology file to a temporary .parm7 file.
-                # I've submitted a pull request to add support for the alternative
-                # .prm7 extension.
-                top_file = "%s/tmp.parm7" % self._process._work_dir
-                _shutil.copyfile(self._top_file, top_file)
-
-                # Set the topology format.
-                top_format = "PARM7"
-
-            # GROMACS.
-            elif self._process_name.upper() == "GROMACS":
-                # Path to the trajectory and topology files.
-                # Strangely, the GROMACS gro file is used for the topology.
-                traj_file = "%s/%s.trr" % (self._process._work_dir, self._process._name)
-                top_file = "%s/%s.gro" % (self._process._work_dir, self._process._name)
-
-                # Set the topology format.
-                top_format = "GRO"
-
-            # NAMD.
-            elif self._process_name.upper() == "NAMD":
-
-                # Path to the trajectory and topology files.
-                traj_file = "%s/%s_out.dcd" % (self._process._work_dir, self._process._name)
-                top_file = self._top_file
-
-                # Set the topology format.
-                top_format = "PDB"
-
-            # Unsupported process.
+            # Weirdly, the GRO file is used as the topology.
+            if self._process_name.upper() == "GROMACS":
+                top_file = self._process._gro_file
             else:
-                raise ValueError("BioSimSpace.Process.%s is unsupported!" % self._process_name)
-
-            # Check that the trajectory and topology files exist.
-            if not _os.path.isfile(traj_file):
-                raise IOError("Trajectory file doesn't exist: '%s'" % traj_file)
-
-            if not _os.path.isfile(top_file):
-                raise IOError("Topology file doesn't exist: '%s'" % top_file)
-
-            # Return an MDTraj object.
-            if format == "mdtraj":
-
-                # Create the MDTraj object.
-                try:
-                    traj = _mdtraj.load(traj_file, top=top_file)
-                except:
-                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
-                    traj = None
-
-                # Delete the temporary .parm7 file.
-                if self._process_name.upper() is "AMBER":
-                    _os.remove(top_file)
-
-                return traj
-
-            # Return an MDAnalysis Universe.
-            else:
-                try:
-                    universe = _mdanalysis.Universe(top_file, traj_file, topology_format=top_format)
-                except:
-                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
-                    universe = None
-
-                # Delete the temporary .parm7 file.
-                if self._process_name.upper() is "AMBER":
-                    _os.remove(top_file)
-
-                return universe
-
-        # Read trajectory from file.
-        # TODO:
-        # Make this more robust, i.e. determine topology format from the file
-        # extension and rename files if needed.
+                top_file = self._process._top_file
         else:
-            # Return an MDTraj object.
-            if format == "mdtraj":
+            traj_file = self._traj_file
+            top_file = self._top_file
 
-                try:
-                    traj = _mdtraj.load(self._traj_file, top=self._top_file)
-                except:
-                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
-                    traj = None
+        # Check that the trajectory and topology files exist.
+        if not _os.path.isfile(traj_file):
+            raise IOError("Trajectory file doesn't exist: '%s'" % traj_file)
 
-                return traj
+        if not _os.path.isfile(top_file):
+            raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
-            # Return an MDAnalysis Universe.
-            else:
-                try:
-                    universe = _mdanalysis.Universe(self._top_file, self._traj_file, topology_format=top_format)
-                except:
-                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
-                    universe = None
+        # Load the topology file to determine the file format.
+        file_format = _IO.readMolecules(top_file).fileFormat()
 
-                return universe
+        # Set the extension.
+        extension = _extensions.get(file_format, file_format.lower())
+
+        # Set the path to the temporary topology file.
+        new_top_file = _os.getcwd() + "/.topology." + extension
+
+        # Copy the topology to a file with the correct extension.
+        _shutil.copyfile(top_file, new_top_file)
+
+        # Return an MDTraj object.
+        if format == "mdtraj":
+
+            try:
+                traj = _mdtraj.load(traj_file, top=new_top_file)
+            except:
+                _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                traj = None
+
+            # Remove the temporary topology file.
+            _os.remove(new_top_file)
+
+            return traj
+
+        # Return an MDAnalysis Universe.
+        else:
+            try:
+                universe = _mdanalysis.Universe(new_top_file, traj_file)
+            except:
+                _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                universe = None
+
+            # Remove the temporary topology file.
+            _os.remove(new_top_file)
+
+            return universe
 
     def getFrames(self, indices=None):
         """Get trajectory frames as a list of System objects.
@@ -340,10 +372,11 @@ class Trajectory():
             # Write the current frame as a NetCDF file.
             self._trajectory[x].save(frame_file)
 
-            # Create a Sire system.
+            # Load the frame and create a System object.
             try:
                 system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
             except:
+                _os.remove(frame_file)
                 raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
 
             # Append the system to the list of frames.
@@ -375,7 +408,7 @@ class Trajectory():
         else:
             return self._trajectory.n_frames
 
-    def rmsd(self, frame=None, atoms=None, molecule=None):
+    def rmsd(self, frame=None, atoms=None):
         """Compute the root mean squared displacement.
 
            Parameters
@@ -386,9 +419,6 @@ class Trajectory():
 
            atoms : [int]
                A list of reference atom indices.
-
-           molecule : int
-               The index of the reference molecule.
 
            Returns
            -------
@@ -413,44 +443,6 @@ class Trajectory():
                 elif frame < -n_frames:
                     raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (frame, n_frames))
 
-        if molecule is not None and atoms is not None:
-            _warnings.warn("Cannot have a reference molecule and list of atoms. Defaulting to atoms.")
-            molecule = None
-
-        # Extract the molecule from the reference trajectory frame and generate a
-        # list of atom indices.
-        if molecule is not None:
-            # Integer molecule index.
-            if type(molecule) is int:
-                try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[_SireMol.MolIdx(molecule)]
-                except:
-                    raise ValueError("Missing molecule index '%d' in System" % molecule)
-            # Sire.Mol.MolIdx index.
-            elif type(molecule) is _SireMol.MolIdx:
-                try:
-                    molecule = self.getFrames(frame)[0]._getSireSystem()[molecule]
-                except:
-                    raise ValueError("Missing '%s' in System" % molecule.toString())
-
-            # A BioSimSpace Molecule object.
-            elif type(molecule) is _Molecule:
-                molecule = molecule._getSireMolecule()
-            # A Sire.Mol.Molecule object.
-            elif type(molecule) is _SireMol.Molecule:
-                pass
-            else:
-                raise TypeError("'molecule' must be of type 'int', 'BioSimSpace.Molecue', "
-                                "'Sire.Mol.MolIdx', or 'Sire.Mol.Molecule'")
-
-            # Initialise the list of atom indices.
-            atoms = []
-
-            # Loop over all of the atoms and add them to the list.
-            # Atoms are numbered from one in Sire, so subtract one to get the python index.
-            for atom in molecule.atoms():
-                atoms.append(atom.number().value() - 1)
-
         if atoms is not None:
             # Check that all of the atom indices are integers.
             if not all(isinstance(x, int) for x in atoms):
@@ -460,7 +452,7 @@ class Trajectory():
         try:
             rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
         except:
-            raise ValueError("Atom indices not found in the system.")
+            raise ValueError("Atom indices not found in the system.") from None
 
         # Convert to a list and return.
         return list(rmsd)

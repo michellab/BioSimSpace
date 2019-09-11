@@ -44,6 +44,15 @@ Area units
     Area.nanometer2
     Area.picometer2
 
+Angle units
+===========
+
+.. autosummary::
+    :toctree: generated/
+
+    Angle.radian
+    Angle.degree
+
 Volume units
 ============
 
@@ -109,6 +118,7 @@ Time units
     Time.femtosecond
 """
 
+from . import Angle
 from . import Area
 from . import Charge
 from . import Energy

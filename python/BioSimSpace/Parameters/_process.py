@@ -24,6 +24,11 @@ Functionality running parameterisation protocols as a background process.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Process"]
+
 # TODO:
 # Work out a way to safely kill running processes.
 #
@@ -35,7 +40,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 
 # Alternatively, one could use a multiprocessing.Process instead of a thread,
 # which has a terminate method. However, communication between the Process and
-# the run method requires the return type of the method to be  picklable, which
+# the run method requires the return type of the method to be picklable, which
 # isn't the case for our Molecule object.
 
 import glob as _glob
@@ -47,15 +52,13 @@ import threading as _threading
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
+from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import Protocol as _Protocol
-from .._Exceptions import ParameterisationError as _ParameterisationError
-from .._SireWrappers import Molecule as _Molecule
 
 if _is_notebook():
     from IPython.display import FileLink as _FileLink
-
-__all__ = ["Process"]
 
 def _wrap_protocol(protocol_function, process):
     """A simple decorator function to wrap the running of parameterisation
@@ -87,7 +90,7 @@ def _wrap_protocol(protocol_function, process):
 class Process():
     """A class for running parameterisation protocols as a background process."""
 
-    def __init__(self, molecule, protocol, work_dir=None, autostart=False):
+    def __init__(self, molecule, protocol, work_dir=None, auto_start=False):
         """Constructor
 
            Parameters
@@ -102,7 +105,7 @@ class Process():
            work_dir : str
                The working directory for the process.
 
-           autostart : bool
+           auto_start : bool
                Whether to automatically start the process.
         """
 
@@ -117,8 +120,8 @@ class Process():
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(autostart) is not bool:
-            raise TypeError("'autostart' must be of type 'bool'")
+        if type(auto_start) is not bool:
+            raise TypeError("'auto_start' must be of type 'bool'")
 
         # Set attributes.
         self._molecule = molecule
@@ -156,7 +159,7 @@ class Process():
         self._thread = None
 
         # Start the process.
-        if autostart:
+        if auto_start:
             self.start()
 
     def start(self):

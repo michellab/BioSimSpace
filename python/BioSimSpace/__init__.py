@@ -28,6 +28,25 @@ molecular workflow components.
 www.biosimspace.org
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Align",
+           "FreeEnergy",
+           "Gateway",
+           "IO",
+           "Metadynamics",
+           "MD",
+           "Node",
+           "Notebook",
+           "Parameters",
+           "Process",
+           "Protocol",
+           "Solvent",
+           "Trajectory",
+           "Types",
+           "Units"]
+
 # Make sure we're using the Sire python interpreter.
 try:
     import Sire
@@ -72,7 +91,7 @@ else:
     _amber_home = None
 
 # Check to see if GROMACS is installed.
-import Sire.Base as _SireBase
+from Sire import Base as _SireBase
 from os import path as _path
 
 # First, let the user tell us where to find GROMACS. This
@@ -118,7 +137,7 @@ if not _path.isdir(_gromacs_path):
         # Run the command.
         _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
 
-        del _command 
+        del _command
 
         # Get the data prefix.
         if _proc.returncode == 0:
@@ -135,6 +154,7 @@ from . import Align
 from . import FreeEnergy
 from . import Gateway
 from . import IO
+from . import Metadynamics
 from . import MD
 from . import Node
 from . import Notebook
@@ -169,11 +189,9 @@ def viewMolecules(files, idxs=None):
     v = Notebook.View(s)
 
     if idxs:
-        v.molecules(idxs)
+        return v.molecules(idxs)
     else:
-        v.molecules()
-
-    return v
+        return v.system()
 
 from ._version import get_versions
 __version__ = get_versions()['version']

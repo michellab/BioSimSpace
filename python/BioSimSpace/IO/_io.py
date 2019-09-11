@@ -23,6 +23,11 @@
 Functionality for reading/writing molecular systems.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
+
 from collections import OrderedDict as _OrderedDict
 from io import StringIO as _StringIO
 from warnings import warn as _warn
@@ -42,20 +47,14 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
 from BioSimSpace import _gromacs_path
-
-from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -286,7 +285,10 @@ def readMolecules(files, property_map={}):
                   ) % files
             raise IOError(msg) from None
         else:
-            raise IOError("Failed to read molecules from: %s" % files) from None
+            if "Incompatibility" in str(e):
+                raise IOError("Incompatibility between molecular information in files: %s" % files) from None
+            else:
+                raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
 
@@ -300,8 +302,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
            The base name of the output file.
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`, \
-                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>`
-                [ BioSimSpace._SireWrappers.Molecule ]
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecules>`
            The molecular system.
 
        fileformat : str, [str]
@@ -358,15 +360,17 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         pass
     # A Molecule object.
     elif type(system) is _Molecule:
-        system = [system]
+        system = _System(system)
+    elif type(system) is _Molecules:
+        system = system.toSystem()
     # A list of Molecule objects.
     elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
-        pass
+        system = _System(system)
     # Invalid type.
     else:
         raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-                        "'BioSimSpace._SireWrappers.Molecule, or a list of "
-                        "'BiSimSpace._SireWrappers.Molecule' types.")
+                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 
@@ -410,23 +414,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     if _gromacs_path is not None and ("GROMACS_PATH" not in _property_map):
         _property_map["GROMACS_PATH"] = _gromacs_path
 
-    # We have a list of molecules. Create a new system and add each molecule.
-    if type(system) is list:
-
-        # Create a Sire system and molecule group.
-        s = _SireSystem.System("BioSimSpace System")
-        m = _SireMol.MoleculeGroup("all")
-
-        # Add all of the molecules to the group.
-        for molecule in system:
-            m.add(molecule._getSireMolecule())
-
-        # Add the molecule group to the system.
-        s.add(m)
-
-        # Wrap the system.
-        system = _System(s)
-
     # Get the directory name.
     dirname = _os.path.dirname(filebase)
 
@@ -454,7 +441,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            file = _SireIO.MoleculeParser.save(system._getSireSystem(), filebase, _property_map)
+            file = _SireIO.MoleculeParser.save(system._getSireObject(), filebase, _property_map)
             files += file
         except:
             if dirname != "":

@@ -23,6 +23,11 @@
 Functionality for solvating molecular systems.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
+
 import os as _os
 import re as _re
 import subprocess as _subprocess
@@ -30,24 +35,21 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe, _gromacs_path
 
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from .._SireWrappers import Molecule as _Molecule
-from ..Types import Length as _Length
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import Molecules as _Molecules
+from BioSimSpace.Types import Coordinate as _Coordinate
+from BioSimSpace.Types import Length as _Length
 
-import BioSimSpace.IO as _IO
-import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
+from BioSimSpace import IO as _IO
+from BioSimSpace import _Utils as _Utils
 
 def solvate(model, molecule=None, box=None, shell=None,
         ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
@@ -60,11 +62,12 @@ def solvate(model, molecule=None, box=None, shell=None,
            The name of the water model.
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -96,7 +99,11 @@ def solvate(model, molecule=None, box=None, shell=None,
     if type(model) is not str:
         raise TypeError("'model' must be of type 'str'")
     else:
-        if model not in waterModels():
+        # Strip whitespace and convert to lower case.
+        model = model.replace(" ", "").lower()
+
+        # Check that this water model is supported.
+        if model not in _models_lower:
             raise ValueError("Supported water models are: %s" % waterModels())
 
     return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
@@ -109,10 +116,12 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -161,11 +170,12 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -214,11 +224,12 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -267,11 +278,12 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -320,11 +332,12 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -372,11 +385,12 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
        ----------
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
                   :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+           A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -410,11 +424,13 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
     if molecule is not None:
         if type(molecule) is _Molecule:
             _molecule = _Molecule(molecule)
+        elif type(molecule) is _Molecules:
+            _molecule = molecule.toSystem()
         elif type(molecule) is _System:
             _molecule = _System(molecule)
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                            "or 'BioSimSpace._SireWrappers.System'")
+                            "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None and shell is None:
@@ -440,6 +456,15 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
             shell = None
 
     if box is not None:
+        # Convert tuple to list.
+        if type(box) is tuple:
+            box = list(box)
+
+        # Convert Coordinate to list.
+        if type(box) is _Coordinate:
+            box = [box.x(), box.y(), box.z()]
+
+        # Validate.
         if len(box) != 3:
             raise ValueError("The 'box' must have x, y, and z size information.")
         else:
@@ -503,7 +528,7 @@ def _solvate(molecule, box, shell, model, num_point,
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute.
@@ -554,15 +579,14 @@ def _solvate(molecule, box, shell, model, num_point,
 
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
-            waters = _SireIO.setGromacsWater(molecule._sire_system.search("water"), model)
+            waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
+            # Convert to a BioSimSpace molecules container.
+            waters = _Molecules(waters.toMolecules())
+
+            # Remove the old water molecules then add those with the updated topology.
             molecule.removeWaterMolecules()
-            for wat in waters:
-                molecule._sire_system.add(wat, _SireMol.MGName("all"))
+            molecule.addMolecules(waters)
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -676,21 +700,21 @@ def _solvate(molecule, box, shell, model, num_point,
 
             if type(molecule) is _System:
                 # Extract the non-water molecules from the original system.
-                non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+                non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
 
                 # Create a system by adding these to the water molecules from
                 # gmx solvate, which will include the original waters.
-                system = _System(non_waters + water.getMolecules())
+                system = non_waters.toSystem() + water
 
             else:
-                system = molecule + water.getMolecules()
+                system = molecule.toSystem() + water
 
             # Add all of the water box properties to the new system.
-            for prop in water._sire_system.propertyKeys():
+            for prop in water._sire_object.propertyKeys():
                 prop = property_map.get(prop, prop)
 
                 # Add the space property from the water system.
-                system._sire_system.setProperty(prop, water._sire_system.property(prop))
+                system._sire_object.setProperty(prop, water._sire_object.property(prop))
         else:
             system = water
 
@@ -863,26 +887,26 @@ def _solvate(molecule, box, shell, model, num_point,
 
                         if type(molecule) is _System:
                             # Extract the non-water molecules from the original system.
-                            non_waters = [mol for mol in molecule.getMolecules() if not mol.isWater()]
+                            non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
 
                             # Create a system by adding these to the water and ion
                             # molecules from gmx solvate, which will include the
                             # original waters.
-                            system = _System(non_waters + water_ions.getMolecules())
+                            system = non_waters.toSystem() + water_ions
                         else:
-                            system = molecule + water_ions.getMolecules()
+                            system = molecule.toSystem() + water_ions
 
                         # Add all of the water molecules' properties to the new system.
-                        for prop in water_ions._sire_system.propertyKeys():
+                        for prop in water_ions._sire_object.propertyKeys():
                             prop = property_map.get(prop, prop)
 
                             # Add the space property from the water system.
-                            system._sire_system.setProperty(prop, water_ions._sire_system.property(prop))
+                            system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
                     else:
                         system = water_ions
 
         # Store the name of the water model as a system property.
-        system._sire_system.setProperty("water_model", _SireBase.wrap(model))
+        system._sire_object.setProperty("water_model", _SireBase.wrap(model))
 
     return system
 
@@ -897,7 +921,7 @@ def _check_box_size(molecule, box, property_map={}):
            A molecule, or system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension (in nm).
+           A list containing the box size in each dimension.
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -1006,14 +1030,16 @@ def _rename_water_molecule(molecule):
 
 # Create a list of the water models names.
 # This needs to come after all of the solvation functions.
-_models = []
-_model_dict = {}
+_models = []        # List of water models (actual names).
+_models_lower = []  # List of lower case names.
+_model_dict = {}    # Mapping between lower case names and functions.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "solvate" and _var[0] != "M":
         _models.append(_var)
-        _model_dict[_var] = getattr(_namespace, _var)
+        _models_lower.append(_var.lower())
+        _model_dict[_var.lower()] = getattr(_namespace, _var)
 del _namespace
 del _sys
 del _var

@@ -40,6 +40,7 @@ Classes
     Custom
     Equilibration
     FreeEnergy
+    Metadynamics
     Minimisation
     Production
 
@@ -91,6 +92,7 @@ while restraining the positions of any backbone atoms.
 from ._custom import *
 from ._equilibration import *
 from ._free_energy import *
+from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
 from ._utils import *

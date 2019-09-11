@@ -20,9 +20,14 @@
 #####################################################################
 
 """
-A thin wrapper around Sire.Mol. This is an internal package and should
+A thin wrapper around Sire.Mol.Molecule. This is an internal package and should
 not be directly exposed to the user.
 """
+
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Molecule"]
 
 from pytest import approx as _approx
 
@@ -30,25 +35,18 @@ import os.path as _path
 import random as _random
 import string as _string
 
-import Sire.Base as _SireBase
-import Sire.CAS as _SireCAS
-import Sire.Maths as _SireMaths
-import Sire.MM as _SireMM
-import Sire.Mol as _SireMol
-import Sire.Units as _SireUnits
-import Sire.Vol as _SireVol
+from Sire import Base as _SireBase
+from Sire import CAS as _SireCAS
+from Sire import MM as _SireMM
+from Sire import Mol as _SireMol
+from Sire import Units as _SireUnits
 
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Types import Length as _Length
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Length as _Length
 
-import BioSimSpace.Units as _Units
+from ._sire_wrapper import SireWrapper as _SireWrapper
 
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Molecule"]
-
-class Molecule():
+class Molecule(_SireWrapper):
     """A container class for storing a molecule."""
 
     def __init__(self, molecule):
@@ -57,16 +55,13 @@ class Molecule():
            Parameters
            ----------
 
-           molecule : Sire.Mol.Molecule, Molecule :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                A Sire or BioSimSpace Molecule object.
         """
 
         # Set the force field variable. This records the force field with which
         # the molecule has been parameterised, i.e. by BSS.Parameters.
         self._forcefield = None
-
-        # Set the molecule as un-merged.
-        self._is_merged = False
 
         # Set the components of the merged molecule to None.
         self._molecule0 = None
@@ -76,13 +71,13 @@ class Molecule():
 
         # A Sire Molecule object.
         if type(molecule) is _SireMol.Molecule:
-            self._sire_molecule = molecule.__deepcopy__()
-            if self._sire_molecule.hasProperty("is_perturbable"):
+            super().__init__(molecule)
+            if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
 
         # Another BioSimSpace Molecule object.
         elif type(molecule) is Molecule:
-            self._sire_molecule = molecule._sire_molecule.__deepcopy__()
+            super().__init__(molecule._sire_object)
             if molecule._molecule0 is not None:
                 self._molecule0 = Molecule(molecule._molecule0)
             if molecule._molecule1 is not None:
@@ -92,8 +87,11 @@ class Molecule():
 
         # Invalid type.
         else:
-            raise TypeError("'molecule' must be of type 'Sire.Mol._Mol.Molecule' "
+            raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule' "
                             "or 'BioSimSpace._SireWrappers.Molecule'.")
+
+        # Flag that this object holds multiple atoms.
+        self._is_multi_atom = True
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -110,20 +108,26 @@ class Molecule():
         if type(other) is tuple:
             other = list(other)
 
-        # Create a list of molecules.
-        molecules = [self]
+        # Whether other is a container of molecules.
+        is_sire_container = False
 
         # Validate the input.
 
-        # A single Molecule object.
-        if type(other) is Molecule:
-            molecules.append(other)
+        molecules = [self]
 
         # A System object.
-        elif type(other) is _System:
+        if type(other) is _System:
             system = _System(other)
             system.addMolecules(self)
             return system
+
+        # A single Molecule object.
+        elif type(other) is Molecule:
+            molecules.append(other)
+
+        # A Molecules object.
+        elif type(other) is _Molecules:
+            is_sire_container = True
 
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
@@ -132,19 +136,62 @@ class Molecule():
         # Unsupported.
         else:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
-                            "'BioSimSpace._SireWrappers.Molecule', or a list "
-                            "of 'BioSimSpace._SireWrappers.Molecule' types")
+                            "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
 
-        # Create and return a new system.
-        return _System(molecules)
+        # Add this molecule to the container and return.
+        if is_sire_container:
+            return other + self
 
-    def copy(self):
-        """Create a copy of this molecule.
+        # Create a new molecule group to store the molecules, then create a
+        # container and return.
+        else:
+            molgrp = _SireMol.MoleculeGroup("all")
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               A copy of the molecule.
+            for molecule in molecules:
+                molgrp.add(molecule._sire_object)
+
+            return _Molecules(molgrp.molecules())
+
+    def number(self):
+        """Return the number of the molecule. Each molecule has a unique
+           identification number.
+
+           Returns
+           -------
+
+           mol_num : int
+               The unique number of the molecule.
         """
-        return Molecule(self)
+        return self._sire_object.number().value()
+
+    def getResidues(self):
+        """Return a list containing the residues in the molecule.
+
+           Returns
+           -------
+
+           residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+               The list of residues in the molecule.
+        """
+        residues = []
+        for residue in self._sire_object.residues():
+            residues.append(_Residue(residue))
+        return residues
+
+    def getAtoms(self):
+        """Return a list containing the atoms in the molecule.
+
+           Returns
+           -------
+
+           atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+               The list of atoms in the molecule.
+        """
+        atoms = []
+        for atom in self._sire_object.atoms():
+            atoms.append(_Atom(atom))
+        return atoms
 
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
@@ -179,7 +226,7 @@ class Molecule():
            num_atoms : int
                The number of atoms in the molecule.
         """
-        return self._sire_molecule.nAtoms()
+        return self._sire_object.nAtoms()
 
     def nResidues(self):
         """Return the number of residues in the molecule.
@@ -190,7 +237,7 @@ class Molecule():
            num_residues : int
                The number of residues in the molecule.
         """
-        return self._sire_molecule.nResidues()
+        return self._sire_object.nResidues()
 
     def nChains(self):
         """Return the number of chains in the molecule.
@@ -201,7 +248,7 @@ class Molecule():
            num_chains : int
                The number of chains in the molecule.
         """
-        return self._sire_molecule.nChains()
+        return self._sire_object.nChains()
 
     def isMerged(self):
         """Whether this molecule has been merged with another.
@@ -232,7 +279,7 @@ class Molecule():
         num_oxygen = 0
 
         # Loop over all atoms in the molecule.
-        for atom in self._sire_molecule.atoms():
+        for atom in self._sire_object.atoms():
 
             # First try using the "element" property of the atom.
             try:
@@ -267,100 +314,6 @@ class Molecule():
         else:
             return False
 
-    def charge(self, property_map={}, is_lambda1=False):
-        """Return the total molecular charge.
-
-           Parameters
-           ----------
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-
-           is_lambda1 : bool
-              Whether to use the charge at lambda = 1 if the molecule is merged.
-
-           Returns
-           -------
-
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The molecular charge.
-        """
-
-        # Copy the map.
-        _property_map = property_map.copy()
-
-        # This is a merged molecule.
-        if self._is_merged:
-            if is_lambda1:
-                _property_map = { "charge" : "charge1" }
-            else:
-                _property_map = { "charge" : "charge0" }
-
-        # Calculate the charge.
-        try:
-            charge = self._sire_molecule.evaluate().charge(_property_map).value()
-        except:
-            charge = 0
-
-        # Return the charge.
-        return charge * _Units.Charge.electron_charge
-
-    def translate(self, vector, property_map={}):
-        """Translate the molecule.
-
-           Parameters
-           ----------
-
-           vector : [:class:`Length <BioSimSpace.Types.Length>`]
-               The translation vector.
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-        """
-
-        # Convert tuple to a list.
-        if type(vector) is tuple:
-            vector = list(vector)
-
-        # Validate input.
-        if type(vector) is list:
-            vec = []
-            for x in vector:
-                if type(x) is int:
-                    vec.append(float(x))
-                elif type(x) is float:
-                    vec.append(x)
-                elif type(x) is _Length:
-                    vec.append(x.angstroms().magnitude())
-                else:
-                    raise TypeError("'vector' must contain 'int', 'float', or "
-                                    "'BioSimSpace.Types.Length' types only!")
-        else:
-            raise TypeError("'vector' must be of type 'list' or 'tuple'")
-
-        if type(property_map) is not dict:
-            raise TypeError("'property_map' must be of type 'dict'")
-
-        # Make a local copy of the property map.
-        _property_map = property_map.copy()
-
-        try:
-            if "coordinates" not in property_map and self._is_merged:
-                _property_map["coordinates"] = "coordinates0"
-
-            # Perform the translation.
-            self._sire_molecule = self._sire_molecule                                   \
-                                      .move()                                           \
-                                      .translate(_SireMaths.Vector(vec), _property_map) \
-                                      .commit()
-
-        except UserWarning:
-            raise UserWarning("Molecule has no 'coordinates' property.") from None
-
     def toSystem(self):
         """Convert a single Molecule to a System.
 
@@ -371,15 +324,78 @@ class Molecule():
         """
         return _System(self)
 
-    def _getSireMolecule(self):
-        """Return the full Sire Molecule object.
+    def search(self, query):
+        """Search the molecule for atoms and residues. Search results will be
+           reduced to their minimal representation, i.e. a residue containing
+           a single atom will be returned as a atom.
+
+           Parameters
+           ----------
+
+           query : str
+               The search query.
 
            Returns
            -------
 
-           molecule : Sire.Mol.Molecule
+           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                      :class:`Residue <BioSimSpace._SireWrappers.Residue>`, ...]
+               A list of objects matching the search query.
+
+           Examples
+           --------
+
+           Search for all residues named ALA.
+
+           >>> result = molecule.search("resname ALA")
+
+           Search for all oxygen or hydrogen atoms.
+
+           >>> result = molecule.search("element oxygen or element hydrogen")
+
+           Search for atom index 23.
+
+           >>> result = molecule.search("atomidx 23")
         """
-        return self._sire_molecule
+
+        if type(query) is not str:
+            raise TypeError("'query' must be of type 'str'")
+
+        # Intialise a list to hold the search results.
+        results = []
+
+        try:
+            # Query the Sire system.
+            search_result = self._sire_object.search(query)
+
+        except:
+            raise ValueError("'Invalid search query: %r" % query) from None
+
+        return _SearchResult(search_result)
+
+    def _getPropertyMap0(self):
+        """Generate a property map for the lambda = 0 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "0":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
+
+    def _getPropertyMap1(self):
+        """Generate a property map for the lambda = 1 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "1":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
 
     def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
@@ -410,9 +426,9 @@ class Molecule():
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
         elif type(molecule) is Molecule:
-            mol1 = molecule._sire_molecule
+            mol1 = molecule._sire_object
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol._Mol.Molecule'")
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'")
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
@@ -427,14 +443,15 @@ class Molecule():
             raise TypeError("'verbose' must be of type 'bool'")
 
         # Get the two Sire molecules.
-        mol0 = self._sire_molecule
+        mol0 = self._sire_object
 
         # Store the number of atoms to match.
         num_atoms = mol0.nAtoms()
 
         # The new molecule must have at least as many atoms.
         if mol1.nAtoms() < num_atoms:
-            raise _IncompatibleError("The passed molecule does not contain enough atoms!")
+            raise _IncompatibleError("The passed molecule is incompatible with the original! "
+                                     "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms, mol1.nAtoms()))
 
         # Whether the atoms have been renamed.
         is_renamed = False
@@ -589,15 +606,15 @@ class Molecule():
                     raise _IncompatibleError("Failed to rename atom: %s --> %s" % (name0, name1)) from None
 
         # Commit the changes.
-        self._sire_molecule = edit_mol.commit()
+        self._sire_object = edit_mol.commit()
 
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""
 
         # Extract the components of the merged molecule.
         try:
-            mol0 = self._sire_molecule.property("molecule0")
-            mol1 = self._sire_molecule.property("molecule1")
+            mol0 = self._sire_object.property("molecule0")
+            mol1 = self._sire_object.property("molecule1")
         except:
             raise _IncompatibleError("The merged molecule doesn't have the required properties!")
 
@@ -623,7 +640,7 @@ class Molecule():
         # Get the user defined charge property.
         prop = property_map.get("charge", "charge")
 
-        if not self._sire_molecule.hasProperty(prop):
+        if not self._sire_object.hasProperty(prop):
             raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
 
         # Calculate the charge.
@@ -640,7 +657,7 @@ class Molecule():
         delta /= self.nAtoms()
 
         # Make the molecule editable.
-        edit_mol = self._sire_molecule.edit()
+        edit_mol = self._sire_object.edit()
 
         # Shift the charge of each atom in the molecule by delta.
         # Make sure to invert the sign of the charge since it is in
@@ -653,7 +670,7 @@ class Molecule():
                                .molecule()
 
         # Update the Sire molecule.
-        self._sire_molecule = edit_mol.commit()
+        self._sire_object = edit_mol.commit()
 
     def _fromPertFile(self, filename):
         """Create a merged molecule from a perturbation file.
@@ -671,7 +688,7 @@ class Molecule():
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
     def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
-            zero_dummy_impropers=False, property_map={}):
+            zero_dummy_impropers=False, print_all_atoms=False, property_map={}):
         """Write the merged molecule to a perturbation file.
 
            Parameters
@@ -688,6 +705,10 @@ class Molecule():
                Whether to zero the barrier height for impropers involving
                dummy atoms.
 
+           print_all_atoms : bool
+               Whether to print all atom records to the pert file, not just
+               the atoms that are perturbed.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -703,7 +724,7 @@ class Molecule():
         if not self._is_merged:
             raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
 
-        if not self._sire_molecule.property("forcefield0").isAmberStyle():
+        if not self._sire_object.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
         if type(zero_dummy_dihedrals) is not bool:
@@ -712,11 +733,14 @@ class Molecule():
         if type(zero_dummy_impropers) is not bool:
             raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
 
+        if type(print_all_atoms) is not bool:
+            raise TypeError("'print_all_atoms' must be of type 'bool'")
+
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Extract and copy the Sire molecule.
-        mol = self._sire_molecule.__deepcopy__()
+        mol = self._sire_object.__deepcopy__()
 
         # First work out the indices of atoms that are perturbed.
         pert_idxs = []
@@ -752,39 +776,77 @@ class Molecule():
             # Make the molecule editable.
             edit_mol = mol.edit()
 
-            # Loop over all perturbed atoms.
-            for idx in pert_idxs:
-                # Store the atom and its original atom.
-                atom = mol.atom(idx)
+            # Create a dictionary to flag whether we've seen each atom name.
+            is_seen = { name : False for name in names }
+
+            # Tally counter for the number of dummy atoms.
+            num_dummy = 1
+
+            # Loop over all atoms.
+            for atom in mol.atoms():
+                # Store the original atom.
                 name = atom.name()
 
-                # Create the base of the new name.
-                new_name = name.value()
+                # If this is a dummy atom, then rename it as "DU##", where ## is a
+                # two-digit number padded with a leading zero.
+                if atom.property("element0") == _SireMol.Element("X"):
+                    # Create the new atom name.
+                    new_name = "DU%02d" % num_dummy
 
-                # There is more than one atom with this name.
-                # Create a random suffix.
-                if atom_names[name] > 1:
-                    suffix = _random_suffix(new_name)
-                    num_attempts = 0
-                    # Keep trying until we get a unique name.
-                    while new_name + suffix in names:
-                        suffix = _random_suffix(new_name)
-                        num_attempts += 1
+                    # Convert to an AtomName and rename the atom.
+                    new_name = _SireMol.AtomName(new_name)
+                    edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
 
-                        # Abort if we've tried more than 100 times.
-                        if num_attempts == 100:
-                            raise RuntimeError("Error while writing SOMD pert file. "
-                                               "Unable to generate a unique suffix for "
-                                               "atom name: '%s'" % new_name)
+                    # Update the number of dummy atoms that have been named.
+                    num_dummy += 1
 
-                    # Append the suffix to the name and store in the set of seen
-                    # names.
-                    new_name = new_name + suffix
+                    # Since ligands typically have less than 100 atoms, the following
+                    # exception shouldn't be triggered. We can't support perturbations
+                    # with 100 or more dummy atoms in the lambda = 0 state because of
+                    # AMBER fixed width atom naming restrictions (4 character width).
+                    # We could give dummies a unique name in the same way that non-dummy
+                    # atoms are handled (see else) block below, but instead we'll raise
+                    # an exception.
+                    if num_dummy == 100:
+                        raise RuntimeError("Dummy atom naming limit exceeded! (100 atoms)")
+
+                    # Append to the list of seen names.
                     names.add(new_name)
 
-                # Convert to an AtomName and rename the atom.
-                new_name = _SireMol.AtomName(new_name)
-                edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+                else:
+                    # There is more than one atom with this name, and this is the second
+                    # time we've come across it.
+                    if atom_names[name] > 1 and is_seen[name]:
+                        # Create the base of the new name.
+                        new_name = name.value()
+
+                        # Create a random suffix.
+                        suffix = _random_suffix(new_name)
+
+                        # Zero the number of attempted renamings.
+                        num_attempts = 0
+
+                        # If this name already exists, keep trying until we get a unique name.
+                        while new_name + suffix in names:
+                            suffix = _random_suffix(new_name)
+                            num_attempts += 1
+
+                            # Abort if we've tried more than 100 times.
+                            if num_attempts == 100:
+                                raise RuntimeError("Error while writing SOMD pert file. "
+                                                   "Unable to generate a unique suffix for "
+                                                   "atom name: '%s'" % new_name)
+
+                        # Append the suffix to the name and store in the set of seen names.
+                        new_name = new_name + suffix
+                        names.add(new_name)
+
+                        # Convert to an AtomName and rename the atom.
+                        new_name = _SireMol.AtomName(new_name)
+                        edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+
+                    # Record that we've seen this atom name.
+                    is_seen[name] = True
 
             # Store the updated molecule.
             mol = edit_mol.commit()
@@ -802,28 +864,53 @@ class Molecule():
             file.write("molecule LIG\n")
 
             # 1) Atoms.
-            for idx in pert_idxs:
-                # Get the perturbed atom.
-                atom = mol.atom(idx)
 
-                # Start atom record.
-                file.write("    atom\n")
+            # Print all atom records.
+            if print_all_atoms:
+                for atom in mol.atoms():
+                    # Start atom record.
+                    file.write("    atom\n")
 
-                # Get the initial/final Lennard-Jones properties.
-                LJ0 = atom.property("LJ0");
-                LJ1 = atom.property("LJ1");
+                    # Get the initial/final Lennard-Jones properties.
+                    LJ0 = atom.property("LJ0");
+                    LJ1 = atom.property("LJ1");
 
-                # Atom data.
-                file.write("        name           %s\n" % atom.name().value())
-                file.write("        initial_type   %s\n" % atom.property("ambertype0"))
-                file.write("        final_type     %s\n" % atom.property("ambertype1"))
-                file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
-                file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
-                file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
-                file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+                    # Atom data.
+                    file.write("        name           %s\n" % atom.name().value())
+                    file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                    file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                    file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                    file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                    file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                    file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
 
-                # End atom record.
-                file.write("    endatom\n")
+                    # End atom record.
+                    file.write("    endatom\n")
+
+            # Only print records for the atoms that are perturbed.
+            else:
+                for idx in pert_idxs:
+                    # Get the perturbed atom.
+                    atom = mol.atom(idx)
+
+                    # Start atom record.
+                    file.write("    atom\n")
+
+                    # Get the initial/final Lennard-Jones properties.
+                    LJ0 = atom.property("LJ0");
+                    LJ1 = atom.property("LJ1");
+
+                    # Atom data.
+                    file.write("        name           %s\n" % atom.name().value())
+                    file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                    file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                    file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                    file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                    file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                    file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+
+                    # End atom record.
+                    file.write("    endatom\n")
 
             # 2) Bonds.
 
@@ -831,76 +918,164 @@ class Molecule():
             bonds0 = mol.property("bond0").potentials()
             bonds1 = mol.property("bond1").potentials()
 
-            # There are bond potentials.
-            if len(bonds0) > 0:
+            # Dictionaries to store the BondIDs at lambda = 0 and 1.
+            bonds0_idx = {}
+            bonds1_idx = {}
 
-                # Create a dictionary to store the BondIDs at lambda = 0.
-                bonds0_idx = {}
-                for idx, bond in enumerate(bonds0):
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond.atom0())
-                    idx1 = info.atomIdx(bond.atom1())
-                    bonds0_idx[_SireMol.BondID(idx0, idx1)] = idx
+            # Loop over all bonds at lambda = 0.
+            for idx, bond in enumerate(bonds0):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                # Now loop over all of the bonds at lambda = 1 and match to
-                # those at lambda = 0.
-                for bond1 in bonds1:
-                    # Get the AtomIdx for the atoms in the bond.
-                    idx0 = info.atomIdx(bond1.atom0())
-                    idx1 = info.atomIdx(bond1.atom1())
+                # Create the BondID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                    # Create the BondID.
-                    bond_id = _SireMol.BondID(idx0, idx1)
+                # Add to the list of ids.
+                bonds0_idx[bond_id] = idx
 
-                    # Get the matching bond at lambda = 0.
-                    try:
-                        bond0 = bonds0[bonds0_idx[bond_id]]
-                    except:
-                        bond0 = bonds0[bonds0_idx[bond_id.mirror()]]
+            # Loop over all bonds at lambda = 1.
+            for idx, bond in enumerate(bonds1):
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
 
-                    # Check that an atom in the bond is perturbed.
-                    if _has_pert_atom([idx0, idx1], pert_idxs):
+                # Create the AngleID.
+                bond_id = _SireMol.BondID(idx0, idx1)
 
-                        # Cast the bonds as AmberBonds.
-                        amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
-                        amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+                # Add to the list of ids.
+                if bond_id.mirror() in bonds0_idx:
+                    bonds1_idx[bond_id.mirror()] = idx
+                else:
+                    bonds1_idx[bond_id] = idx
 
-                        # Check whether a dummy atoms are present in the lambda = 0
-                        # and lambda = 1 states.
-                        initial_dummy = _has_dummy(mol, [idx0, idx1])
-                        final_dummy = _has_dummy(mol, [idx0, idx1], True)
+            # Now work out the BondIDs that are unique at lambda = 0 and 1
+            # as well as those that are shared.
+            bonds0_unique_idx = {}
+            bonds1_unique_idx = {}
+            bonds_shared_idx = {}
 
-                        # Cannot have a bond with a dummy in both states.
-                        if initial_dummy and final_dummy:
-                            raise _IncompatibleError("Dummy atoms are present in both the initial "
-                                                     "and final bond?")
+            # lambda = 0.
+            for idx in bonds0_idx.keys():
+                if idx not in bonds1_idx.keys():
+                    bonds0_unique_idx[idx] = bonds0_idx[idx]
+                else:
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], bonds1_idx[idx])
 
-                        # Set the bond parameters of the dummy state to those of the non-dummy end state.
-                        if initial_dummy or final_dummy:
-                            has_dummy = True
-                            if initial_dummy:
-                                amber_bond0 = amber_bond1
-                            else:
-                                amber_bond1 = amber_bond0
+            # lambda = 1.
+            for idx in bonds1_idx.keys():
+                if idx not in bonds0_idx.keys():
+                    bonds1_unique_idx[idx] = bonds1_idx[idx]
+                elif idx not in bonds_shared_idx.keys():
+                    bonds_shared_idx[idx] = (bonds0_idx[idx], angles1_idx[idx])
+
+            # First create records for the bonds that are unique to lambda = 0 and 1.
+
+            # lambda = 0.
+            for idx in bonds0_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds0[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        initial_force  %.5f\n" % amber_bond.k())
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # lambda = 1.
+            for idx in bonds1_unique_idx.values():
+                # Get the bond potential.
+                bond = bonds1[idx]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond.atom0())
+                idx1 = info.atomIdx(bond.atom1())
+
+                # Cast the function as an AmberBond.
+                amber_bond = _SireMM.AmberBond(bond.function(), _SireCAS.Symbol("r"))
+
+                # Start angle record.
+                file.write("    bond\n")
+
+                # Bond data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % amber_bond.k())
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+                # End bond record.
+                file.write("    endbond\n")
+
+            # Now add records for the shared bonds.
+            for idx0, idx1 in bonds_shared_idx.values():
+                # Get the bond potentials.
+                bond0 = bonds0[idx0]
+                bond1 = bonds1[idx1]
+
+                # Get the AtomIdx for the atoms in the bond.
+                idx0 = info.atomIdx(bond0.atom0())
+                idx1 = info.atomIdx(bond0.atom1())
+
+                # Check that an atom in the bond is perturbed.
+                if _has_pert_atom([idx0, idx1], pert_idxs):
+
+                    # Cast the bonds as AmberBonds.
+                    amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
+                    amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
+
+                    # Check whether a dummy atoms are present in the lambda = 0
+                    # and lambda = 1 states.
+                    initial_dummy = _has_dummy(mol, [idx0, idx1])
+                    final_dummy = _has_dummy(mol, [idx0, idx1], True)
+
+                    # Cannot have a bond with a dummy in both states.
+                    if initial_dummy and final_dummy:
+                        raise _IncompatibleError("Dummy atoms are present in both the initial "
+                                                 "and final bond?")
+
+                    # Set the bond parameters of the dummy state to those of the non-dummy end state.
+                    if initial_dummy or final_dummy:
+                        has_dummy = True
+                        if initial_dummy:
+                            amber_bond0 = amber_bond1
                         else:
-                            has_dummy = False
+                            amber_bond1 = amber_bond0
+                    else:
+                        has_dummy = False
 
-                        # Only write record if the bond parameters change.
-                        if has_dummy or amber_bond0 != amber_bond1:
+                    # Only write record if the bond parameters change.
+                    if has_dummy or amber_bond0 != amber_bond1:
 
-                            # Start bond record.
-                            file.write("    bond\n")
+                        # Start bond record.
+                        file.write("    bond\n")
 
-                            # Angle data.
-                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                            file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                            file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                            file.write("        final_force    %.5f\n" % amber_bond1.k())
-                            file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                        # Angle data.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
 
-                            # End bond record.
-                            file.write("    endbond\n")
+                        # End bond record.
+                        file.write("    endbond\n")
 
             # 3) Angles.
 
@@ -1264,33 +1439,39 @@ class Molecule():
                     # Only write record if the dihedral parameters change.
                     if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
-                        # Start dihedral record.
-                        file.write("    dihedral\n")
+                        # Initialise a null dihedral.
+                        null_dihedral = _SireMM.AmberDihedral()
 
-                        # Dihedral data.
-                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                        file.write("        initial_form  ")
-                        for term in amber_dihedral0.terms():
-                            if zero_k and has_dummy_initial:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
-                        file.write("        final_form    ")
-                        for term in amber_dihedral1.terms():
-                            if zero_k and has_dummy_final:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
+                        # Don't write the dihedral record if both potentials are null.
+                        if not (amber_dihedral0 == null_dihedral and amber_dihedral1 == null_dihedral):
 
-                        # End dihedral record.
-                        file.write("    enddihedral\n")
+                            # Start dihedral record.
+                            file.write("    dihedral\n")
+
+                            # Dihedral data.
+                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                            file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                            file.write("        initial_form  ")
+                            for term in amber_dihedral0.terms():
+                                if zero_k and has_dummy_initial:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+                            file.write("        final_form    ")
+                            for term in amber_dihedral1.terms():
+                                if zero_k and has_dummy_final:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+
+                            # End dihedral record.
+                            file.write("    enddihedral\n")
 
             # 5) Impropers.
 
@@ -1356,7 +1537,9 @@ class Molecule():
                 is_shared = False
                 for idx0 in impropers0_idx.keys():
                     if idx1.equivalent(idx0):
-                        impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
+                        # Don't store duplicates.
+                        if not idx0 in impropers_shared_idx.keys():
+                            impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
                         is_shared = True
                         break
                 if not is_shared:
@@ -1491,33 +1674,39 @@ class Molecule():
                     # Only write record if the improper parameters change.
                     if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
 
-                        # Start improper record.
-                        file.write("    improper\n")
+                        # Initialise a null dihedral.
+                        null_dihedral = _SireMM.AmberDihedral()
 
-                        # Improper data.
-                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                        file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                        file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
-                        file.write("        initial_form  ")
-                        for term in amber_dihedral0.terms():
-                            if zero_k and has_dummy_initial:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
-                        file.write("        final_form    ")
-                        for term in amber_dihedral1.terms():
-                            if zero_k and has_dummy_final:
-                                k = 0.0
-                            else:
-                                k = term.k()
-                            file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
-                        file.write("\n")
+                        # Don't write the improper record if both potentials are null.
+                        if not (amber_dihedral0 == null_dihedral and amber_dihedral1 == null_dihedral):
 
-                        # End improper record.
-                        file.write("    endimproper\n")
+                            # Start improper record.
+                            file.write("    improper\n")
+
+                            # Improper data.
+                            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                            file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
+                            file.write("        initial_form  ")
+                            for term in amber_dihedral0.terms():
+                                if zero_k and has_dummy_initial:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+                            file.write("        final_form    ")
+                            for term in amber_dihedral1.terms():
+                                if zero_k and has_dummy_final:
+                                    k = 0.0
+                                else:
+                                    k = term.k()
+                                file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
+                            file.write("\n")
+
+                            # End improper record.
+                            file.write("    endimproper\n")
 
             # End molecule record.
             file.write("endmolecule\n")
@@ -1628,10 +1817,10 @@ class Molecule():
             lam = "0"
 
         if not self._is_merged:
-            return Molecule(self._sire_molecule)
+            return Molecule(self._sire_object)
 
         # Extract and copy the Sire molecule.
-        mol = self._sire_molecule.__deepcopy__()
+        mol = self._sire_object.__deepcopy__()
 
         # Make the molecule editable.
         mol = mol.edit()
@@ -1657,7 +1846,8 @@ class Molecule():
         # Return the updated molecule.
         return Molecule(mol.commit())
 
-    def _merge(self, other, mapping, allow_ring_breaking=False, property_map0={}, property_map1={}):
+    def _merge(self, other, mapping, allow_ring_breaking=False,
+            allow_ring_size_change=False, property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Parameters
@@ -1671,6 +1861,9 @@ class Molecule():
 
            allow_ring_breaking : bool
                Whether to allow the opening/closing of rings during a merge.
+
+           allow_ring_size_change : bool
+               Whether to allow changes in ring size.
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -1705,6 +1898,12 @@ class Molecule():
         if type(property_map1) is not dict:
             raise TypeError("'property_map1' must be of type 'dict'")
 
+        if type(allow_ring_breaking) is not bool:
+            raise TypeError("'allow_ring_breaking' must be of type 'bool'")
+
+        if type(allow_ring_size_change) is not bool:
+            raise TypeError("'allow_ring_size_change' must be of type 'bool'")
+
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
@@ -1717,8 +1916,8 @@ class Molecule():
         mol = Molecule(self)
 
         # Set the two molecule objects.
-        molecule0 = mol._sire_molecule
-        molecule1 = other._sire_molecule
+        molecule0 = mol._sire_object
+        molecule1 = other._sire_object
 
         # Get the atom indices from the mapping.
         idx0 = mapping.keys()
@@ -2355,9 +2554,13 @@ class Molecule():
             edit_mol.setProperty("improper1", impropers)
 
         # The number of potentials should be consistent for the "bond0"
-        # and "bond1" properties.
-        if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
-            raise _IncompatibleError("Inconsistent number of bonds in merged molecule!")
+        # and "bond1" properties, unless a ring is broken or changes size.
+        if not (allow_ring_breaking or allow_ring_size_change):
+            if edit_mol.property("bond0").nFunctions() != edit_mol.property("bond1").nFunctions():
+                raise _IncompatibleError("Inconsistent number of bonds in merged molecule! "
+                                         "A ring may have broken, or changed size. If you want to "
+                                         "allow this perturbation, try using the 'allow_ring_breaking' "
+                                         "or 'allow_ring_size_change' options.")
 
         # Create the connectivity object
         conn = _SireMol.Connectivity(edit_mol.info()).edit()
@@ -2383,27 +2586,34 @@ class Molecule():
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c0, conn, idx, idy, idx, idy)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c0, conn, idx, idy, idx, idy)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
-                    # Ring opening/closing is allowed.
-                    if allow_ring_breaking:
-                        if not _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c0, conn, idx, idy, idx, idy):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
-
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
         # molecule1
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
@@ -2419,27 +2629,34 @@ class Molecule():
                 # Map the index to its position in the merged molecule.
                 idy_map = inv_mapping[idy]
 
+                # Was a ring openend/closed?
+                is_ring_broken =  _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring was broken and it is not allowed.
+                if is_ring_broken and not allow_ring_breaking:
+                    raise _IncompatibleError("The merge has opened/closed a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_breaking' option "
+                                             "to 'True'.")
+
+                # Did a ring change size?
+                is_ring_size_change =  _is_ring_size_changed(c1, conn, idx, idy, idx_map, idy_map)
+
+                # A ring changed size and it is not allowed.
+                if not is_ring_broken and is_ring_size_change and not allow_ring_size_change:
+                    raise _IncompatibleError("The merge has changed the size of a ring. To allow this "
+                                             "perturbation, set the 'allow_ring_size_change' option "
+                                             "to 'True'. Be aware that this perturbation may not work "
+                                             "and a transition through an intermediate state may be "
+                                             "preferable.")
+
                 # The connectivity has changed.
                 if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
-                    # Ring opening/closing is forbidden.
-                    if allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if not _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                     "Check your atom mapping.")
-                    else:
-                        raise _IncompatibleError("The merge has changed the molecular connectivity! "
-                                                 "If you want to open/close a ring, then set the "
-                                                 "'allow_ring_breaking' option to 'True'.")
 
-                # Check that a ring hasn't been opened/closed.
-                else:
-                    if not allow_ring_breaking:
-                        # We require that both atoms are in a ring before and aren't after, or vice-versa.
-                        if _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map):
-                            raise _IncompatibleError("The merge has changed opened/closed a ring! "
-                                                    "If you want to allow this perturbation, then set the "
-                                                    "'allow_ring_breaking' option to 'True'.")
+                    # The connectivity changed for an unknown reason.
+                    if not (is_ring_broken or is_ring_size_change):
+                        raise _IncompatibleError("The merge has changed the molecular connectivity "
+                                                "but a ring didn't open/close or change size. "
+                                                "Check your atom mapping.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)
@@ -2562,7 +2779,7 @@ class Molecule():
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
         # Update the Sire molecule object of the new molecule.
-        mol._sire_molecule = edit_mol.commit()
+        mol._sire_object = edit_mol.commit()
 
         # Flag that the molecule has been merged.
         mol._is_merged = True
@@ -2573,44 +2790,6 @@ class Molecule():
 
         # Return the new molecule.
         return mol
-
-    def _getAABox(self, property_map={}):
-        """Get the axis-aligned bounding box for the molecule.
-
-           Parameters
-           ----------
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-
-           Returns
-           -------
-
-           aabox : Sire.Vol.AABox
-               The axis-aligned bounding box for the molecule.
-        """
-
-        # Initialise the coordinates vector.
-        coord = []
-
-        # Extract the atomic coordinates and append them to the vector.
-        try:
-            if "coordinates" in property_map:
-                prop = property_map["coordinates"]
-            else:
-                if self._is_merged:
-                    prop = "coordinates0"
-                else:
-                    prop = "coordinates"
-            coord.extend(self._sire_molecule.property(prop).toVector())
-
-        except UserWarning:
-            raise UserWarning("Molecule has no 'coordinates' property.") from None
-
-        # Return the AABox for the coordinates.
-        return _SireVol.AABox(coord)
 
 def _has_pert_atom(idxs, pert_idxs):
     """Internal function to check whether a potential contains perturbed atoms.
@@ -2772,9 +2951,142 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
            The index of the second atom in the second state.
     """
 
-    # Have we opened/closed a ring? This means that both atoms are part of a ring in
-    # one end state, whereas at least one isn't in the other end state.
-    return (conn0.inRing(idx0) & conn0.inRing(idy0)) ^ (conn1.inRing(idx1) & conn1.inRing(idy1))
+    # Have we opened/closed a ring? This means that both atoms are part of a
+    # ring in one end state (either in it, or on it), whereas at least one
+    # are the result of changes in ring size, where atoms remain in or on a
+    # ring in both end states.
+
+    # Whether each atom is in a ring in both end states.
+    in_ring_idx0 = conn0.inRing(idx0)
+    in_ring_idy0 = conn0.inRing(idy0)
+    in_ring_idx1 = conn1.inRing(idx1)
+    in_ring_idy1 = conn1.inRing(idy1)
+
+    # Whether each atom is on a ring in both end states.
+    on_ring_idx0 = _onRing(idx0, conn0)
+    on_ring_idy0 = _onRing(idy0, conn0)
+    on_ring_idx1 = _onRing(idx1, conn1)
+    on_ring_idy1 = _onRing(idy1, conn1)
+
+    # Both atoms are in a ring in one end state and at least one isn't in the other.
+    if (in_ring_idx0 & in_ring_idy0) ^ (in_ring_idx1 & in_ring_idy1):
+        return True
+
+    # Both atoms are on a ring in one end state and at least one isn't in the other.
+    if ((on_ring_idx0 & on_ring_idy0 & (conn0.connectionType(idx0, idy0) == 4))
+        ^ (on_ring_idx1 & on_ring_idy1 & (conn1.connectionType(idx1, idy1) == 4))):
+        return True
+
+    # Both atoms are in or on a ring in one state and at least one isn't in the other.
+    if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0) & (conn0.connectionType(idx0, idy0) == 3)) ^
+        ((in_ring_idx1 | on_ring_idx1) & (in_ring_idy1 | on_ring_idy1) & (conn1.connectionType(idx1, idy1) == 3))):
+        iscn0 = set(conn0.connectionsTo(idx0)).intersection(set(conn0.connectionsTo(idy0)))
+        if (len(iscn0) != 1):
+            return True
+        common_idx = iscn0.pop()
+        in_ring_bond0 = (conn0.inRing(idx0, common_idx) | conn0.inRing(idy0, common_idx))
+        iscn1 = set(conn1.connectionsTo(idx1)).intersection(set(conn1.connectionsTo(idy1)))
+        if (len(iscn1) != 1):
+            return True
+        common_idx = iscn1.pop()
+        in_ring_bond1 = (conn1.inRing(idx1, common_idx) | conn1.inRing(idy1, common_idx))
+        if (in_ring_bond0 ^ in_ring_bond1):
+            return True
+
+    # If we get this far, then a ring wasn't broken.
+    return False
+
+def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
+    """Internal function to test whether a perturbation changes the connectivity
+       around two atoms such that a ring changes size.
+
+       Parameters
+       ----------
+
+       conn0 : Sire.Mol.Connectivity
+           The connectivity object for the first end state.
+
+       conn1 : Sire.Mol.Connectivity
+           The connectivity object for the second end state.
+
+       idx0 : Sire.Mol.AtomIdx
+           The index of the first atom in the first state.
+
+       idy0 : Sire.Mol.AtomIdx
+           The index of the second atom in the first state.
+
+       idx1 : Sire.Mol.AtomIdx
+           The index of the first atom in the second state.
+
+       idy1 : Sire.Mol.AtomIdx
+           The index of the second atom in the second state.
+    """
+
+    # Have a ring changed size? If so, then the minimum path size between
+    # two atoms will have changed.
+
+    # Work out the paths connecting the atoms in the two end states.
+    paths0 = conn0.findPaths(idx0, idy0)
+    paths1 = conn1.findPaths(idx1, idy1)
+
+    # Initalise the ring size in each end state.
+    ring0 = None
+    ring1 = None
+
+    # Determine the minimum path in the lambda = 0 state.
+    if len(paths0) > 1:
+        path_lengths0 = []
+        for path in paths0:
+            path_lengths0.append(len(path))
+        ring0 = min(path_lengths0)
+
+    if ring0 is None:
+        return False
+
+    # Determine the minimum path in the lambda = 1 state.
+    if len(paths1) > 1:
+        path_lengths1 = []
+        for path in paths1:
+            path_lengths1.append(len(path))
+        ring1 = min(path_lengths1)
+
+    # Return whether the ring has changed size.
+    if ring1:
+        return ring0 != ring1
+    else:
+        return False
+
+def _onRing(idx, conn):
+    """Internal function to test whether an atom is adjacent to a ring.
+
+       Parameters
+       ----------
+
+       idx : Sire.Mol.AtomIdx
+           The index of the atom
+
+       conn : Sire.Mol.Connectivity
+           The connectivity object.
+
+       Returns
+       -------
+
+       is_on_ring : bool
+           Whether the atom is adjacent to a ring.
+    """
+
+    # Loop over all atoms connected to this atom.
+    for x in conn.connectionsTo(idx):
+        # The neighbour is in a ring.
+        if conn.inRing(x) and (not conn.inRing(x, idx)):
+            return True
+
+    # If we get this far, then the atom is not adjacent to a ring.
+    return False
 
 # Import at bottom of module to avoid circular dependency.
+from ._atom import Atom as _Atom
+from ._molecules import Molecules as _Molecules
+from ._residue import Residue as _Residue
+from ._search_result import SearchResult as _SearchResult
 from ._system import System as _System

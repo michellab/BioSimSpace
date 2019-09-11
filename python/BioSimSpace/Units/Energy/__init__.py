@@ -23,12 +23,12 @@
 Energy units.
 """
 
-from ...Types import Energy as _Energy
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["kcal_per_mol", "kj_per_mol", "kt"]
+
+from BioSimSpace.Types import Energy as _Energy
 
 kcal_per_mol = _Energy(1, "KILO CALORIES PER MOL")
 kj_per_mol = _Energy(1, "KILO JOULES PER MOL")

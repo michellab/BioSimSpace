@@ -23,12 +23,12 @@
 Functionality for finding and managing hardware resources.
 """
 
-import argparse as _argparse
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["ResourceManager"]
+
+import argparse as _argparse
 
 class ResourceManager():
     """A class for finding and managing hardware resources."""

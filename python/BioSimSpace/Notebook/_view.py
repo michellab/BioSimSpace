@@ -23,23 +23,23 @@
 Tools for visualising molecular systems.
 """
 
-import nglview as _nglview
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["View"]
+
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
 import warnings as _warnings
 
-import Sire as _Sire
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
 from BioSimSpace import _is_notebook
-
-from ..Process._process import Process as _Process
-from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["View"]
+from BioSimSpace.Process._process import Process as _Process
+from BioSimSpace._SireWrappers import System as _System
 
 class View():
     """A class for handling interactive molecular visualisations."""
@@ -51,6 +51,7 @@ class View():
            ----------
 
            handle : :class:`Process <BioSimSpace.Process>`, \
+                    :class:`System <BioSimSpace._SireWrappers.System>`
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A handle to a process or system.
         """
@@ -69,11 +70,16 @@ class View():
 
         # BioSimSpace system.
         elif type(handle) is _System:
-            self._handle = handle._getSireSystem()
+            self._handle = handle._getSireObject()
             self._is_process = False
 
         else:
-            raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+            try:
+                handle = handle.toSystem()
+                self._handle = handle._getSireObject()
+                self._is_process = False
+            except:
+                raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -104,7 +110,7 @@ class View():
             if system is None:
                 return
             else:
-                system = system._getSireSystem()
+                system = system._getSireObject()
 
         else:
             system = self._handle
@@ -145,7 +151,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:
@@ -158,8 +164,8 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
 
         # Loop over all of the indices.
         for index in indices:
@@ -198,7 +204,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:
@@ -214,8 +220,8 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)
 
@@ -356,10 +362,13 @@ class View():
         # Create a PDB object and write to file.
         if system is not None:
             try:
-                pdb = _Sire.IO.PDB2(system)
+                pdb = _SireIO.PDB2(system)
                 pdb.writeToFile(filename)
             except:
                 raise IOError("Failed to write system to 'PDB' format.") from None
+
+        # Import NGLView when it is used for the first time.
+        import nglview as _nglview
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)

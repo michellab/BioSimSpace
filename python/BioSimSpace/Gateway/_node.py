@@ -23,6 +23,11 @@
 Functionality for creating BioSimSpace workflow components (nodes).
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Node"]
+
 import configargparse as _argparse
 import collections as _collections
 import __main__
@@ -42,6 +47,8 @@ if _is_notebook():
     import ipywidgets as _widgets
     import zipfile as _zipfile
 
+from BioSimSpace.Types._type import Type as _Type
+
 from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
 from ._requirements import File as _File
@@ -57,13 +64,6 @@ from ._requirements import String as _String
 from ._requirements import Temperature as _Temperature
 from ._requirements import Time as _Time
 from ._requirements import Volume as _Volume
-
-import BioSimSpace.Types._type as _Type
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Node"]
 
 # Float types (including those with units).
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
@@ -179,6 +179,10 @@ class Node():
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
+
+            # Overload the "_check_value" method for more flexible string support.
+            # (Ignore whitespace and case insensitive.)
+            self._parser._check_value = _check_value
 
     def __del__(self):
         """Destructor."""
@@ -469,7 +473,7 @@ class Node():
             default = input.getDefault()
 
             # Get the magnitude of types with units.
-            if isinstance(default, _Type.Type):
+            if isinstance(default, _Type):
                 default = default.magnitude()
 
             if allowed is not None:
@@ -478,7 +482,7 @@ class Node():
                     default = allowed[0]
 
                     # Get the magnitude of types with units.
-                    if isinstance(default, _Type.Type):
+                    if isinstance(default, _Type):
                         default = default.magnitude()
 
                 # Create a dropdown for the list of allowed values.
@@ -496,9 +500,9 @@ class Node():
                 _max = input.getMax()
 
                 # Get the magnitude of types with units.
-                if isinstance(_min, _Type.Type):
+                if isinstance(_min, _Type):
                     _min = _min.magnitude()
-                if isinstance(_max, _Type.Type):
+                if isinstance(_max, _Type):
                     _max = _max.magnitude()
 
                 # Whether the float is unbounded.
@@ -1274,6 +1278,25 @@ def _on_file_upload(change):
     # Update the widget value and label.
     change["owner"].value = new_filename
     change["owner"].label = label
+
+def _check_value(action, value):
+    """Helper function to overload argparse's choice checker."""
+    if action.choices is not None and value not in action.choices:
+        args = {"value"   : value,
+                "choices" : ", ".join(map(repr, action.choices))
+               }
+        msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
+
+        # If the value is a string, then strip whitespace and try a case insensitive search.
+        if type(value) is str:
+            new_value = value.replace(" ", "").upper()
+            choices = [x.replace(" ", "").upper() for x in action.choices]
+
+            # Check whether we now have a match.
+            if new_value not in choices:
+                raise _argparse.ArgumentError(action, msg % args)
+        else:
+            raise _argparse.ArgumentError(action, msg % args)
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""

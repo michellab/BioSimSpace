@@ -23,6 +23,11 @@
 Functionality for running simulations using AMBER.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Amber"]
+
 from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
 from watchdog.observers import Observer as _Observer
 
@@ -33,25 +38,22 @@ import time as _time
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _amber_home
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+from BioSimSpace.Types._type import Type as _Type
+
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
+
 from . import _process
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Amber"]
 
 class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -212,6 +214,9 @@ class Amber(_process.Process):
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
+        # The name of the trajectory file.
+        self._traj_file = "%s/%s.nc" % (self._work_dir, name)
+
         # Set the path for the AMBER configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
@@ -226,16 +231,54 @@ class Amber(_process.Process):
 
         # Create the input files...
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # If the system isn't created from AMBER format files, then we'll need
+        # to convert the water model topology.
+        if not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
+
+            # Get the water molecules.
+            waters = system.getWaterMolecules()
+
+            if len(waters) > 0:
+                num_point = waters[0].nAtoms()
+
+                # Try to get the name of the water model.
+                try:
+                    water_model = system._sire_object.property("water_model").toString()
+                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
+
+                except:
+                    num_point = waters[0].nAtoms()
+
+                    # Convert to an appropriate AMBER topology.
+                    if num_point == 3:
+                        # TODO: Assume TIP3P. Not sure how to detect SPC/E.
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP3P")
+                    elif num_point == 4:
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP4P")
+                    elif num_point == 5:
+                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP5P")
+
+                # Loop over all of the renamed water molecules, delete the old one
+                # from the system, then add the renamed one back in.
+                # TODO: This is a hack since the "update" method of Sire.System
+                # doesn't work properly at present.
+                system.removeWaterMolecules()
+                for wat in waters:
+                    system._sire_object.add(wat, _SireMol.MGName("all"))
+
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(self._system, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(self._system, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -265,7 +308,7 @@ class Amber(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if prop in self._system.propertyKeys():
+        if prop in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -1534,7 +1577,7 @@ class Amber(_process.Process):
                 max_time = float(max_time)
 
             # BioSimSpace.Types.Time
-            if isinstance(max_time, _Type.Type):
+            if isinstance(max_time, _Type):
                 max_time = max_time.minutes().magnitude()
 
             # Float.
@@ -1594,7 +1637,7 @@ class Amber(_process.Process):
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.

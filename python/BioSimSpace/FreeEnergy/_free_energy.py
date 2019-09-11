@@ -23,38 +23,46 @@
 Base class for free energy simulations.
 """
 
-import math as _math
-import os as _os
-import subprocess as _subprocess
-import tempfile as _tempfile
-
-from Sire.Base import getBinDir as _getBinDir
-
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
-
-from BioSimSpace import _gmx_exe
-
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Units as _Units
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
+from collections import OrderedDict as _OrderedDict
+
+import math as _math
+import sys as _sys
+import os as _os
+import subprocess as _subprocess
+import tempfile as _tempfile
+import warnings as _warnings
+
+from Sire.Base import getBinDir as _getBinDir
+from Sire.Base import getShareDir as _getShareDir
+
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+
+from BioSimSpace import _gmx_exe
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecules as _Molecules
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
+
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""
 
     # Check that the analyse_freenrg script exists.
-    _analyse_freenrg = _getBinDir() + "/analyse_freenrg"
-
+    if _sys.platform != "win32":
+        _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
+    else:
+        _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
     if not _os.path.isfile(_analyse_freenrg):
         raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+    if _sys.platform == "win32":
+        _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
@@ -122,11 +130,8 @@ class FreeEnergy():
             if engine == "GROMACS" and _gmx_exe is None:
                 raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
         else:
-            # Fall back on SOMD in GROMACS is not installed.
-            if _gmx_exe is None:
-                engine = "SOMD"
-            else:
-                engine = "GROMACS"
+            # Use SOMD as a default.
+            engine = "SOMD"
 
         # Set the engine.
         self._engine = engine
@@ -262,11 +267,11 @@ class FreeEnergy():
 
         # First leg.
         error0 = _math.sqrt((leg0[-1][2].magnitude() * leg0[-1][2].magnitude()) +
-                            (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
+                            (leg0[0][2].magnitude()  * leg0[0][2].magnitude()))
 
         # Second leg.
         error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
-                            (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+                            (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
 
         # Free energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
@@ -396,7 +401,7 @@ class FreeEnergy():
         return (leg0, leg1, free_energy)
 
     def _initialise_runner(self, system0, system1):
-        """Internral helper function to initialise the process runner.
+        """Internal helper function to initialise the process runner.
 
            Parameters
            ----------
@@ -432,29 +437,49 @@ class FreeEnergy():
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
-        # Try to get the water model property of the system.
-        try:
-            water_model = system0._sire_system.property("water_model").toString()
-        # Default to TIP3P.
-        except:
-            water_model = "tip3p"
-
+        # Convert to an appropriate AMBER topology. (Required by SOMD.)
         if self._engine == "SOMD":
-            # Reformat all of the water molecules so that they match the expected
-            # AMBER topology template. (Required by SOMD.)
-            waters0 = _SireIO.setAmberWater(system0._sire_system.search("water"), water_model)
-            waters1 = _SireIO.setAmberWater(system1._sire_system.search("water"), water_model)
+            # Try to get the water model used to solvate the system.
+            try:
+                water_model = system0._sire_object.property("water_model").toString()
+                waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
+                waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
+            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
+            # to guess the water model from the topology.
+            except:
+                num_point = system0.getWaterMolecules()[0].nAtoms()
+
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
+                    water_model = "tip3p"
+                elif num_point == 4:
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
+                    water_model = "tip4p"
+                elif num_point == 5:
+                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
+                    water_model = "tip5p"
+                else:
+                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
+
+                # Warn the user that we've guessed the water topology.
+                _warnings.warn("Guessed water topology: %r" % water_model)
+
+            # Remove the existing water molecules from the systems.
             system0.removeWaterMolecules()
             system1.removeWaterMolecules()
-            for wat in waters0:
-                system0._sire_system.add(wat, _SireMol.MGName("all"))
-            for wat in waters1:
-                system1._sire_system.add(wat, _SireMol.MGName("all"))
+
+            # Convert the waters to BioSimSpace molecule containers.
+            waters0 = _Molecules(waters0.toMolecules())
+            waters1 = _Molecules(waters1.toMolecules())
+
+            # Add the updated water topology back into the systems.
+            system0.addMolecules(waters0)
+            system1.addMolecules(waters1)
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()
@@ -469,16 +494,20 @@ class FreeEnergy():
 
             # SOMD.
             if self._engine == "SOMD":
-                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
+                # Check for GPU support.
+                if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+
                 leg0.append(_Process.Somd(system0, self._protocol,
-                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
+                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
                 leg1.append(_Process.Somd(system1, self._protocol,
-                    platform="CUDA", work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
             # GROMACS.
             elif self._engine == "GROMACS":
-                # TODO: This is currently hard-coded to use SOMD with the CUDA platform.
                 leg0.append(_Process.Gromacs(system0, self._protocol,
                     work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
@@ -488,3 +517,20 @@ class FreeEnergy():
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.
         self._runner = _Process.ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
+
+    def _update_run_args(self, args):
+        """Internal function to update run arguments for all subprocesses.
+
+           Parameters
+           ----------
+
+           args : dict, collections.OrderedDict
+               A dictionary which contains the new command-line arguments
+               for the process executable.
+        """
+
+        if type(args) is not dict and type(args) is not _OrderedDict:
+            raise TypeError("'args' must be of type 'dict', or 'collections.OrderedDict'")
+
+        for process in self._runner.processes():
+            process.setArgs(args)

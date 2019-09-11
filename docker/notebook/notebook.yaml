@@ -1,0 +1,33 @@
+proxy:
+  secretToken: "SECRET_KEY"
+  https:
+    enabled: true
+    hosts:
+      - notebook.biosimspace.org
+    type: letsencrypt
+    letsencrypt:
+      contactEmail: lester.hedges@gmail.com
+rbac:
+  enabled: true
+singleuser:
+  image:
+    name: biosimspace/biosimspace-notebook
+    tag: TAG
+  storage:
+    type: none
+  memory:
+    limit: 5.0G
+    guarantee: 1.0G
+  cpu:
+    limit: 10.0
+    guarantee: 0.2
+cull:
+  timeout: 2400
+  every: 600
+prePuller:
+  continuous:
+    enabled: true
+auth:
+  type: custom
+  custom:
+    className: tmpauthenticator.TmpAuthenticator

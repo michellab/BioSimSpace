@@ -36,6 +36,7 @@ Functions
     gaff
     gaff2
     forceFields
+    formalCharge
 
 Examples
 ========
@@ -97,6 +98,31 @@ as an input requirement by the user.
    # Initialise the parameterisation process and block until the molecule is
    # ready to be returned.
    molecule = BSS.Parameters.parameterise(molecule, "gaff").getMolecule()
+
+Parameterise a molecule using GAFF, passing the net formal charge computed
+by BioSimSpace. This is useful when your input PDB file has missing or
+incorrect formal charge information.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/benzene.pdb")
+
+   # Compute the net formal charge on the molecule.
+   formal_charge = BSS.Parameters.formalCharge(molecule)
+
+   # Initialise the parameterisation process. This will run the parameterisation
+   # in the background. This is useful when you are working interactively and
+   # wish to continue doing other things while the parameterisation runs.
+   # (Parameterisation can be slow.)
+   process = BSS.Parameters.gaff(molecule, net_charge=formal_charge)
+
+   # Get the parameterised molecule. This will now block until the
+   # parameterisation is finished.
+   molecule = process.getMolecule()
 """
 
 from ._parameters import *
+from ._utils import *

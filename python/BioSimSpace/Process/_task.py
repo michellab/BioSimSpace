@@ -23,6 +23,11 @@
 Functionality for running background tasks.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Task"]
+
 import glob as _glob
 import os as _os
 import tempfile as _tempfile
@@ -30,11 +35,6 @@ import threading as _threading
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Task"]
 
 def _wrap_task(task):
     """A simple wrapper function to run a background tasks and catch exceptions.
@@ -57,7 +57,7 @@ def _wrap_task(task):
 class Task():
     """Base class for running a background task."""
 
-    def __init__(self, name=None, work_dir=None, autostart=False):
+    def __init__(self, name=None, work_dir=None, auto_start=False):
         """Constructor.
 
            Parameters
@@ -69,7 +69,7 @@ class Task():
            work_dir : str
                The working directory for the task.
 
-           autostart : bool
+           auto_start : bool
                Whether to immediately start the task.
         """
 
@@ -85,8 +85,8 @@ class Task():
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(autostart) is not bool:
-            raise TypeError("'autostart' must be of type 'bool'")
+        if type(auto_start) is not bool:
+            raise TypeError("'auto_start' must be of type 'bool'")
 
         # Initialise status flags.
         self._is_started = False
@@ -124,7 +124,7 @@ class Task():
                 _os.makedirs(work_dir, exist_ok=True)
 
         # Start the task.
-        if autostart:
+        if auto_start:
             self.start()
 
     def start(self):

@@ -53,9 +53,23 @@ finally:
         stdout = open("setup.out", "w")
         stderr = open("setup.err", "w")
 
-        print("Updating conda")
-        command = "%s/conda update -y -q -n base conda" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        # Create a list of the conda dependencies.
+        conda_deps = ["mdanalysis",
+                      "mdtraj",
+                      "rdkit"]
+
+        # Create a list of the pip depdendencies.
+        pip_deps = ["configargparse",
+                    "duecredit",
+                    "fileupload",
+                    "jupyter",
+                    "mock",
+                    "nglview",
+                    "pyaml",
+                    "pygtail",
+                    "pymbar",
+                    "pypdb",
+                    "watchdog"]
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
@@ -65,66 +79,22 @@ finally:
         command = "%s/conda config --system --set auto_update_conda false" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
-        print("Installing package: mdtraj")
-        command = "%s/conda install -y -q -c omnia mdtraj" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: mdanalysis")
-        command = "%s/conda install -y -q mdanalysis" % bin_dir
+        print("Installing conda dependencies: %s" % ", ".join(conda_deps))
+        command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Upgrading pip")
         command = "%s/pip install --upgrade pip" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
-        print("Installing package: configargparse")
-        command = "%s/pip install configargparse" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: pyyaml")
-        command = "%s/pip install pyaml" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: pypdb")
-        command = "%s/pip install pypdb" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: watchdog")
-        command = "%s/pip install watchdog" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: jupyter")
-        command = "%s/pip install jupyter" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: duecredit")
-        command = "%s/pip install duecredit" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: mock")
-        command = "%s/pip install mock" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: pygtail")
-        command = "%s/pip install pygtail" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: pymbar")
-        command = "%s/pip install pymbar" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: fileupload")
-        command = "%s/pip install fileupload" % bin_dir
+        print("Installing pip dependencies: %s" % ", ".join(pip_deps))
+        command = "%s/pip install %s" % (bin_dir, " ".join(pip_deps))
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Activating notebook extension: fileupload")
         command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
         command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing package: nglview")
-        command = "%s/pip --no-cache-dir install nglview" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Activating notebook extension: nglview")

@@ -23,28 +23,31 @@
 Functionality for running simulations with SOMD.
 """
 
-import math as _math
-import os as _os
-import pygtail as _pygtail
-import timeit as _timeit
-import warnings as _warnings
-
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-
-from . import _process
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace._Utils as _Utils
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
+
+import math as _math
+import os as _os
+import pygtail as _pygtail
+import sys as _sys
+import timeit as _timeit
+import warnings as _warnings
+
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+
+from BioSimSpace import IO as _IO
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import _Utils as _Utils
+
+from . import _process
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""
@@ -113,14 +116,25 @@ class Somd(_process.Process):
         # executable.
         if exe is None:
             # Generate the name of the SOMD exe.
-            if type(self._protocol) is _Protocol.FreeEnergy:
-                somd_exe = _SireBase.getBinDir() + "/somd-freenrg"
+            if _sys.platform != "win32":
+                somd_path = _SireBase.getBinDir()
+                somd_suffix = ""
             else:
-                somd_exe = _SireBase.getBinDir() + "/somd"
+                somd_path = _os.path.join(_os.path.normpath(_SireBase.getShareDir()), "scripts")
+                somd_interpreter = _os.path.join(_os.path.normpath(_SireBase.getBinDir()), "sire_python.exe")
+                somd_suffix = ".py"
+            if type(self._protocol) is _Protocol.FreeEnergy:
+                somd_exe = "somd-freenrg"
+            else:
+                somd_exe = "somd"
+            somd_exe = _os.path.join(somd_path, somd_exe) + somd_suffix
             if not _os.path.isfile(somd_exe):
                 raise _MissingSoftwareError("'Cannot find SOMD executable in expected location: '%s'" % somd_exe)
-            else:
+            if _sys.platform != "win32":
                 self._exe = somd_exe
+            else:
+                self._exe = somd_interpreter
+                self._script = somd_exe
         else:
             # Make sure executable exists.
             if _os.path.isfile(exe):
@@ -131,6 +145,12 @@ class Somd(_process.Process):
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
         self._top_file = "%s/%s.prm7" % (self._work_dir, name)
+
+        # The name of the trajectory file.
+        self._traj_file = "%s/traj000000001.dcd" % self._work_dir
+
+        # The name of the binary restart file.
+        self._restart_file = "%s/latest.rst" % self._work_dir
 
         # Set the path for the SOMD configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
@@ -145,20 +165,28 @@ class Somd(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
+        # Initalise the number of moves per cycle.
+        self._num_moves = 10000
+
+        # Initialise the buffering frequency.
+        self._buffer_freq = 0
+
         # Now set up the working directory for the process.
         self._setup()
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', platform='%s', work_dir='%s' seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._platform, self._work_dir, self._seed)
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', platform='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
-               self._exe, self._name, self._platform, self._work_dir, self._seed)
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
 
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
@@ -166,7 +194,7 @@ class Somd(_process.Process):
         # Create the input files...
 
         # First create a copy of the system.
-        system = _System(self._system)
+        system = self._system.copy()
 
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
@@ -182,15 +210,15 @@ class Somd(_process.Process):
                 self._input_files.append(self._pert_file)
 
                 # Remove the perturbable molecule.
-                system._sire_system.remove(pert_mol.number())
+                system._sire_object.remove(pert_mol.number())
 
                 # Recreate the system, putting the perturbable molecule with
                 # renamed properties first.
                 updated_system = _System(pert_mol) + _System(system)
 
                 # Copy across all of the properties from the orginal system.
-                for prop in system._sire_system.propertyKeys():
-                    updated_system._sire_system.setProperty(prop, system._sire_system.property(prop))
+                for prop in system._sire_object.propertyKeys():
+                    updated_system._sire_object.setProperty(prop, system._sire_object.property(prop))
 
                 # Copy the updated system object across.
                 system = updated_system
@@ -200,19 +228,43 @@ class Somd(_process.Process):
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
-        # Extract the updated Sire system.
-        system = system._sire_system
+        # If this is a different protocol and the system still contains a
+        # perturbable molecule, then we'll warn the user and simulate the
+        # lambda = 0 state.
+        else:
+            if system.nPerturbableMolecules() > 0:
+                if not "is_lambda1" in self._property_map:
+                    is_lambda1 = False
+                    _warnings.warn("The system contains a perturbable molecule but "
+                                   "this isn't a 'FreeEnergy' protocol. We will assume "
+                                   "that you intend to simulate the lambda = 0 state. "
+                                   "If you want to simulate the lambda = 1 state, then "
+                                   "pass {'is_lambda1' : True} in the 'property_map' "
+                                   "argument.")
+                else:
+                    is_lambda1 = self._property_map["is_lambda1"]
+                    self._property_map.pop("is_lambda1")
+
+                # Loop over all perturbable molecules in the system and replace them
+                # with a regular molecule and the chosen end state.
+                for mol in system.getPerturbableMolecules():
+                    system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
+                                                                  is_lambda1=is_lambda1))
+
+                # Copy across the properties from the original system.
+                for prop in self._system._sire_object.propertyKeys():
+                    system._sire_object.setProperty(prop, self._system._sire_object.property(prop))
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
         except:
             raise IOError("Failed to write system to 'RST7' format.") from None
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
         except:
             raise IOError("Failed to write system to 'PRM7' format.") from None
@@ -240,7 +292,7 @@ class Somd(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system.propertyKeys():
+        if "space" in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -282,13 +334,8 @@ class Somd(_process.Process):
             self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
 
         # In the following protocols we save coordinates every cycle, which is
-        # 100 MD steps (moves) in length (this is for consistency with other
-        # MD drivers). Note that SOMD only saves coordinates to a DCD
-        # trajectory file, so it's impossible to decouple the frequency of
-        # recording configurations and trajectory frames, i.e. the number of
-        # trajectory frames specified in the protocol is disregarded. This also
-        # means that we lose the ability to use the user "property map" when
-        # reading configurations from the trajectory.
+        # 10000 MD steps (moves) in length (this is for consistency with other
+        # MD drivers).
 
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
@@ -300,8 +347,25 @@ class Somd(_process.Process):
             if self._protocol.isRestrained():
                 raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
+
+            # Work out the number of cycles per frame.
+            cycles_per_frame = ncycles / self._protocol.getFrames()
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * self._num_moves
+                cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -310,40 +374,57 @@ class Somd(_process.Process):
             temperature = self._protocol.getStartTemperature().kelvin().magnitude()
 
             if self._platform == "CUDA":
-                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
-            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
-            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+                self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
+            self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
+            self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
+            self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)              # Integration time step.
+            self.addToConfig("thermostat = True")                                   # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature)             # System temperature.
             if self._protocol.getPressure() is None:
-                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+                self.addToConfig("barostat = False")                                # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
-                    self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                    self.addToConfig("barostat = True")                             # Enable barostat.
+                    self.addToConfig("pressure = %.5f atm"                          # Pressure in atmosphere.
                         % self._protocol.getPressure().atm().magnitude())
                 else:
-                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
+                    self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+                self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
             else:
-                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
+                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:
-                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
+                self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
+            self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
+
+            # Work out the number of cycles per frame.
+            cycles_per_frame = ncycles / self._protocol.getFrames()
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * self._num_moves
+                cycles_per_frame = 1
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -352,40 +433,57 @@ class Somd(_process.Process):
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
             if self._platform == "CUDA":
-                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
-            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
-            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+                self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
+            self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
+            self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
+            self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)              # Integration time step.
+            self.addToConfig("thermostat = True")                                   # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature)             # System temperature.
             if self._protocol.getPressure() is None:
-                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+                self.addToConfig("barostat = False")                                # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
-                    self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                    self.addToConfig("barostat = True")                             # Enable barostat.
+                    self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
                         % self._protocol.getPressure().atm().magnitude())
                 else:
-                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
+                    self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+                self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
             else:
-                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
+                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:
-                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
+                self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
+            self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
+                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a free energy simulation.
         elif type(self._protocol) is _Protocol.FreeEnergy:
 
-            # Work out the number of cycles. (10000 MD steps per cycle.)
-            ncycles = _math.ceil((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 10000)
+            # Work out the number of cycles.
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+
+            # If there is less than a single cycle, then reduce the number of moves.
+            if ncycles < 1:
+                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                ncycles = 1
+
+            # Work out the number of cycles per frame.
+            cycles_per_frame = ncycles / self._protocol.getFrames()
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * self._num_moves
+                cycles_per_frame = 1
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
@@ -394,43 +492,44 @@ class Somd(_process.Process):
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
             if self._platform == "CUDA":
-                self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)                  # The number of SOMD cycles.
-            self.addToConfig("nmoves = 10000")                          # Perform 10000 MD moves per cycle.
-            self.addToConfig("energy frequency = 100")                  # Frequency of free energy gradient evaluation.
-            self.addToConfig("save coordinates = True")                 # Save molecular coordinates.
-            self.addToConfig("buffered coordinates frequency = 500")    # Save coordinates every 500 steps.
-            self.addToConfig("timestep = %.2f femtosecond" % timestep)  # Integration time step.
-            self.addToConfig("thermostat = True")                       # Turn on the thermostat.
-            self.addToConfig("temperature = %.2f kelvin" % temperature) # System temperature.
+                self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
+            self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
+            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
+            self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
+            self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
+            self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
+            self.addToConfig("timestep = %.2f femtosecond" % timestep)              # Integration time step.
+            self.addToConfig("thermostat = True")                                   # Turn on the thermostat.
+            self.addToConfig("temperature = %.2f kelvin" % temperature)             # System temperature.
             if self._protocol.getPressure() is None:
-                self.addToConfig("barostat = False")                    # Disable barostat (constant volume).
+                self.addToConfig("barostat = False")                                # Disable barostat (constant volume).
             else:
                 if self._has_water and has_box:
-                    self.addToConfig("barostat = True")                 # Enable barostat.
-                    self.addToConfig("pressure = %.5f atm"              # Presure in atmosphere.
+                    self.addToConfig("barostat = True")                             # Enable barostat.
+                    self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
                         % self._protocol.getPressure().atm().magnitude())
                 else:
-                    self.addToConfig("barostat = False")                # Disable barostat (constant volume).
+                    self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")    # Solvated box.
+                self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
             else:
-                self.addToConfig("reaction field dielectric = 82.0")    # Vacuum.
+                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")     # No periodic box.
+                self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:
-                self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
+                self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
+            self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)       # Random number seed.
-            self.addToConfig("constraint = hbonds-notperturbed")        # Handle hydrogen perturbations.
-            self.addToConfig("minimise = True")                         # Perform a minimisation.
-            self.addToConfig("equilibrate = False")                     # Don't equilibrate.
-                                                                        # The lambda value array.
+                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+            self.addToConfig("constraint = hbonds-notperturbed")                    # Handle hydrogen perturbations.
+            self.addToConfig("minimise = True")                                     # Perform a minimisation.
+            self.addToConfig("equilibrate = False")                                 # Don't equilibrate.
+                                                                                    # The lambda value array.
             self.addToConfig("lambda array = %s" \
                 % ", ".join([str(x) for x in self._protocol.getLambdaValues()]))
             self.addToConfig("lambda_val = %s" \
-                % self._protocol.getLambda())                           # The value of lambda.
+                % self._protocol.getLambda())                               # The value of lambda.
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
@@ -519,17 +618,24 @@ class Somd(_process.Process):
                The latest molecular system.
         """
 
-        # Get the trajectory object.
-        traj = self.getTrajectory(block=block)
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
 
-        # Try to get the latest frame from the trajectory.
+        # Try to grab the latest coordinates from the binary restart file.
         try:
-            new_system = traj.getFrames()[-1]
+            new_system = _IO.readMolecules([self._restart_file, self._top_file])
 
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
-            old_system = _System(self._system)
+            old_system = self._system.copy()
             old_system._updateCoordinates(new_system)
+
+            # Update the periodic box information in the original system.
+            box = new_system._sire_object.property("space")
+            old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
 
             return old_system
 
@@ -604,9 +710,13 @@ class Somd(_process.Process):
         if num_frames == 0:
             return None
 
-        # Create the list of time records. (Frames are saved every 100 MD steps.)
+        # Create the list of time records.
         try:
-            times = [(100 * self._protocol.getTimeStep().nanoseconds()) * x for x in range(1, num_frames + 1)]
+            if self._buffer_freq == 0:
+                interval = self._num_moves
+            else:
+                interval = self._buffer_freq
+            times = [(interval * self._protocol.getTimeStep().nanoseconds()) * x for x in range(1, num_frames + 1)]
         except:
             return None
 
@@ -708,9 +818,10 @@ class Somd(_process.Process):
         if _os.path.isfile(file):
             _os.remove(file)
 
-        file = "%s/traj000000001.dcd" % self._work_dir
-        if _os.path.isfile(file):
-            _os.remove(file)
+        files = _IO.glob("%s/traj*.dcd" % self._work_dir)
+        for file in files:
+            if _os.path.isfile(file):
+                _os.remove(file)
 
         # Additional files for free energy simulations.
         if type(self._protocol) is _Protocol.FreeEnergy:

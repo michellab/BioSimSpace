@@ -18,6 +18,7 @@ node.addInput("time", BSS.Gateway.Time(help="A time requirement.", unit="minute"
 node.addInput("length", BSS.Gateway.Length(help="A length requirement.", unit="angstrom"))
 node.addInput("area", BSS.Gateway.Area(help="An area requirement.", unit="angstrom squared"))
 node.addInput("volume", BSS.Gateway.Volume(help="A volume requirement.", unit="angstrom cubed"))
+node.addInput("angle", BSS.Gateway.Angle(help="An angle requirement.", unit="radian"))
 node.addInput("charge", BSS.Gateway.Charge(help="A charge requirement.", unit="electron charge"))
 node.addInput("energy", BSS.Gateway.Energy(help="An energy requirement.", unit="kcal/mol"))
 node.addInput("pressure", BSS.Gateway.Pressure(help="A pressure requirement.", unit="atmosphere"))
