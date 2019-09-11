@@ -54,6 +54,12 @@ name, e.g.:
 Binary install
 ==============
 
+The self-extracting binary for the 2019.2.0 release of BioSimSpace
+can be downloaded from one of the following links:
+
+* Linux: `biosimspace_2019_2_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/0ALaspTf-EZ3KwSNIKX4Y1bdhiXtMnd98IdcLElltz0/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_linux.run>`__
+* Mac OS X: `biosimspace_2019_2_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/g5GMMGqdNXb6Zv40vnRi5rVDjiKgmH78qI9WiW6xwxg/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_osx.run>`__
+
 The self-extracting binary for the 2019.1.0 release of BioSimSpace
 can be downloaded from one of the following links:
 
