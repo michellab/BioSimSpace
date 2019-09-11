@@ -103,7 +103,7 @@ def solvate(model, molecule=None, box=None, shell=None,
         model = model.replace(" ", "").lower()
 
         # Check that this water model is supported.
-        if model not in waterModels():
+        if model not in _models_lower:
             raise ValueError("Supported water models are: %s" % waterModels())
 
     return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
@@ -1030,14 +1030,16 @@ def _rename_water_molecule(molecule):
 
 # Create a list of the water models names.
 # This needs to come after all of the solvation functions.
-_models = []
-_model_dict = {}
+_models = []        # List of water models (actual names).
+_models_lower = []  # List of lower case names.
+_model_dict = {}    # Mapping between lower case names and functions.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "solvate" and _var[0] != "M":
         _models.append(_var)
-        _model_dict[_var] = getattr(_namespace, _var)
+        _models_lower.append(_var.lower())
+        _model_dict[_var.lower()] = getattr(_namespace, _var)
 del _namespace
 del _sys
 del _var
