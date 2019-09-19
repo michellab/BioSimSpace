@@ -241,6 +241,12 @@ def readMolecules(files, property_map={}):
 
        >>> import BioSimSpace as BSS
        >>> system = BSS.IO.readMolecules(BSS.IO.glob("dir/*"))
+
+       Load a molecular system from GROMACS coordinate and topology files using
+       a custom GROMACS topology directory.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["mol.gro87", "mol.grotop"], property_map={"GROMACS_PATH" : "/path/to/gromacs/topology"})
     """
 
     global _has_gmx_warned
