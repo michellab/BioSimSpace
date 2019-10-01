@@ -54,22 +54,20 @@ finally:
         stderr = open("setup.err", "w")
 
         # Create a list of the conda dependencies.
-        conda_deps = ["mdanalysis",
+        conda_deps = ["configargparse",
+                      "mdanalysis",
                       "mdtraj",
-                      "rdkit"]
+                      "nglview",
+                      "pygtail",
+                      "pymbar",
+                      "pypdb",
+                      "pytest",
+                      "pyyaml",
+                      "rdkit",
+                      "watchdog"]
 
         # Create a list of the pip depdendencies.
-        pip_deps = ["configargparse",
-                    "duecredit",
-                    "fileupload",
-                    "jupyter",
-                    "mock",
-                    "nglview",
-                    "pyaml",
-                    "pygtail",
-                    "pymbar",
-                    "pypdb",
-                    "watchdog"]
+        pip_deps = ["fileupload"]
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
@@ -129,3 +127,4 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
+        print("FKCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu")
