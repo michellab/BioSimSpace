@@ -419,6 +419,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
            The validated input arguments.
     """
 
+    # Whether to check the box size.
+    check_box = True
+
     # Validate the molecule and create a local copy called _molecule to ensure
     # that the passed molecule is preserved.
     if molecule is not None:
@@ -435,8 +438,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         # Try to extract the box dimensions from the system.
         if type(molecule) is _System and box is None and shell is None:
             try:
+                check_box = False
                 prop = property_map.get("space", "space")
-                box = molecule.property(prop).dimensions()
+                box = molecule._sire_object.property(prop).dimensions()
                 # Convert to a list of Length objects.
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
@@ -511,8 +515,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Check that the box is large enough to hold the molecule.
-    if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
-        raise ValueError("The 'box' is not large enough to hold the 'molecule'")
+    if check_box:
+        if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
+            raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
     return (_molecule, box, shell, work_dir, property_map)
 
