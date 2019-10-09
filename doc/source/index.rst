@@ -33,6 +33,13 @@ Development
    development
    changelog
 
+Media
+=====
+.. toctree::
+   :maxdepth: 2
+
+   media
+
 Legal Notices
 =============
 .. toctree::
