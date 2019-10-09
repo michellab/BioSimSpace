@@ -14,7 +14,7 @@ ENV GITHUB_EMAIL=$github_email
 RUN $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme sphinxcontrib.youtube
 
 # Patch the sphinxcontrib.youtube package.
-RUN cp youtube.py $HOME/sire.app/lib/python3.7/site-packages/sphinxcontrib/youtube
+RUN cp $HOME/BioSimSpace/docker/document-devel/youtube.py $HOME/sire.app/lib/python3.7/site-packages/sphinxcontrib/youtube
 
 # Build the html docs.
 RUN cd $HOME/BioSimSpace/doc && SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
