@@ -567,7 +567,7 @@ class System(_SireWrapper):
            Returns
            -------
 
-           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
                A container of water molecule objects.
         """
 
