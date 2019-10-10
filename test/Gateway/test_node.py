@@ -14,18 +14,18 @@ exe = sys.executable
 args = ["--bool",
         "--int=42",
         "--float=3.14",
-        "--string='hello'",
+        "--string=\"hello\"",
         "--file=test/io/amber/ala/ala.crd",
         "--fileset=test/io/amber/ala/ala.crd,test/io/amber/ala/ala.top",
-        "--temperature='298 kelvin'",
-        "--time='100 nanoseconds'",
-        "--length='10 angstroms'",
-        "--area='256 nanometers squared'",
-        "--volume='1024 picometers cubed'",
-        "--angle='3.14 radians'",
-        "--charge='-1 electron charge'",
-        "--energy='-1000 kcal/mol'",
-        "--pressure='1 atmosphere'"]
+        "--temperature=\"298 kelvin\"",
+        "--time=\"100 nanoseconds\"",
+        "--length=\"10 angstroms\"",
+        "--area=\"256 nanometers squared\"",
+        "--volume=\"1024 picometers cubed\"",
+        "--angle=\"3.14 radians\"",
+        "--charge=\"-1 electron charge\"",
+        "--energy=\"-1000 kcal/mol\"",
+        "--pressure=\"1 atmosphere\""]
 
 def test_correct_args():
     """Test that correct input from the command line is validated."""

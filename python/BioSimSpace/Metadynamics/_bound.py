@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Bound"]
 
-from ..Types._type import Type as _Type
+from BioSimSpace.Types._type import Type as _Type
 
 class Bound():
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
@@ -80,7 +80,7 @@ class Bound():
            Parameters
            ----------
 
-           value : :class:`Type <BioSimSpace.Types>`
+           value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         if not type(value) is int and   \
@@ -95,7 +95,7 @@ class Bound():
            Returns
            -------
 
-           value : :class:`Type <BioSimSpace.Types>`
+           value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
         return self._value

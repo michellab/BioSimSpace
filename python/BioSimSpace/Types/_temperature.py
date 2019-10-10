@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
-import Sire.Units as _Units
+from Sire import Units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -36,9 +36,9 @@ class Temperature(_Type):
     """A temperature type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "KELVIN"     : _Units.kelvin,
-                         "CELSIUS"    : _Units.celsius,
-                         "FAHRENHEIT" : _Units.fahrenheit }
+    _supported_units = { "KELVIN"     : _SireUnits.kelvin,
+                         "CELSIUS"    : _SireUnits.celsius,
+                         "FAHRENHEIT" : _SireUnits.fahrenheit }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "K" : "KELVIN",
@@ -276,7 +276,7 @@ class Temperature(_Type):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature in Celsius.
         """
-        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.celsius), "CELSIUS")
+        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.celsius), "CELSIUS")
 
     def fahrenheit(self):
         """Return the temperature in Fahrenheit.
@@ -287,7 +287,7 @@ class Temperature(_Type):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature in Fahrenheit.
         """
-        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_Units.fahrenheit), "FAHRENHEIT")
+        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.fahrenheit), "FAHRENHEIT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

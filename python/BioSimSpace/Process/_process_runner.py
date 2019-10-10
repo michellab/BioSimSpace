@@ -31,8 +31,9 @@ __all__ = ["ProcessRunner"]
 import os as _os
 import tempfile as _tempfile
 
+from BioSimSpace._SireWrappers import System as _System
+
 from ._process import Process as _Process
-from .._SireWrappers import System as _System
 
 class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.

@@ -35,20 +35,23 @@ import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
 
 from BioSimSpace import _gmx_exe
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+from BioSimSpace.Types._type import Type as _Type
+
+from BioSimSpace import IO as _IO
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Types as _Types
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
+
 from . import _process
 from ._plumed import Plumed as _Plumed
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
-
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
 
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
@@ -136,23 +139,20 @@ class Gromacs(_process.Process):
 
         # Create the input files...
 
-        # First create a copy of the system.
-        system = _System(self._system)
-
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule.
         if type(self._protocol) is _Protocol.FreeEnergy:
-            if system.nPerturbableMolecules() != 1:
+            if self._system.nPerturbableMolecules() != 1:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
         # GRO87 file.
-        gro = _SireIO.Gro87(self._system, self._property_map)
+        gro = _SireIO.Gro87(self._system._sire_object, self._property_map)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _SireIO.GroTop(self._system, self._property_map)
+        top = _SireIO.GroTop(self._system._sire_object, self._property_map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
@@ -182,7 +182,7 @@ class Gromacs(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system.propertyKeys():
+        if "space" in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -310,7 +310,7 @@ class Gromacs(_process.Process):
                 property_map["sort"] = _SireBase.wrap(False)
 
                 # Create a GROMACS topology object.
-                top = _SireIO.GroTop(self._system, property_map)
+                top = _SireIO.GroTop(self._system._sire_object, property_map)
 
                 # Get the top file as a list of lines.
                 top_lines = top.lines()
@@ -323,15 +323,12 @@ class Gromacs(_process.Process):
                     if "[ moleculetype ]" in line:
                         moleculetypes_idx.append(idx)
 
-                # Extract all of the molecules from the system.
-                mols = _System(self._system).getMolecules()
-
                 # The number of restraint files.
                 num_restraint = 1
 
                 # Loop over all of the molecules and create a constraint file for
                 # each, excluding any water molecules or ions.
-                for idx, mol in enumerate(mols):
+                for idx, mol in enumerate(self._system):
                     if not mol.isWater() and mol.nAtoms() > 1:
                         # Create a GRO file from the molecule.
                         gro = _SireIO.Gro87(mol.toSystem()._sire_object)
@@ -589,7 +586,7 @@ class Gromacs(_process.Process):
 
             # Create the PLUMED input file.
             self._plumed = _Plumed(self._work_dir)
-            self._setPlumedConfig(self._plumed.createConfig(_System(self._system), self._protocol))
+            self._setPlumedConfig(self._plumed.createConfig(self._system, self._protocol))
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
@@ -598,6 +595,7 @@ class Gromacs(_process.Process):
             setattr(self, "setPlumedConfig", self._setPlumedConfig)
             setattr(self, "getFreeEnergy", self._getFreeEnergy)
             setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "sampleConfigurations", self._sampleConfigurations)
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
@@ -767,34 +765,25 @@ class Gromacs(_process.Process):
                 # Read the molecular system.
                 new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
-                # If the system contains perturbable molecules, then
-                # copy the new coordinates back into the original system.
-                if self._has_perturbable:
-                    old_system = _System(self._system)
-                    old_system._updateCoordinates(new_system)
-                    return old_system
-                else:
-                    return new_system
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system)
+
+                # Update the periodic box information in the original system.
+                try:
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                except:
+                    pass
+
+                return old_system
+
             else:
                 return None
 
         else:
-            # Grab the last frame from the current trajectory file.
-            try:
-                new_system = self.getTrajectory().getFrames()[-1]
-
-                # If the system contains perturbable molecules, then
-                # copy the new coordinates back into the original system.
-                if self._has_perturbable:
-                    old_system = _System(self._system)
-                    old_system._updateCoordinates(new_system)
-                    return old_system
-                else:
-                    # Preserve the original fileformat property.
-                    new_system._sire_object.setProperty("fileformat", _SireBase.wrap("GroTop,Gro87"))
-                    return new_system
-            except:
-                return None
+            # Grab the most recent frame from the trajectory file.
+            return self._getFrame(self.getTime())
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -1916,7 +1905,7 @@ class Gromacs(_process.Process):
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.
@@ -1950,3 +1939,59 @@ class Gromacs(_process.Process):
 
             except KeyError:
                 return None
+
+    def _getFrame(self, time):
+        """Get the trajectory frame closest to a specific time value.
+
+           Parameters
+           ----------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The time value.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system from the closest trajectory frame.
+        """
+
+        if type(time) is not _Types.Time:
+            raise TypeError("'time' must be of type 'BioSimSpace.Types.Time'")
+
+        # Grab the last frame from the current trajectory file.
+        try:
+            with _Utils.cd(self._work_dir):
+
+                # Use tjrconv to get the frame closest to the current simulation time.
+                command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
+                    % (self._exe, self._traj_file, self._gro_file, time.picoseconds().magnitude())
+
+                # Run the command.
+                proc = _subprocess.run(command, shell=True,
+                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+                # Read the frame file.
+                new_system = _IO.readMolecules(["frame.gro", self._top_file])
+
+                # Delete the frame file.
+                _os.remove("frame.gro")
+
+                # Copy the old system and update the coordinates.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system)
+
+                # Update the periodic box information in the original system.
+                try:
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                except:
+                    pass
+
+                return old_system
+
+        except:
+            _warnings.warn("Failed to extract trajectory frame with trjconv. "
+                           "Try running 'getSystem' again.")
+            _os.remove("%s/frame.gro" % self._work_dir)
+            return None

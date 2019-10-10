@@ -119,6 +119,7 @@ class Distance(_CollectiveVariable):
 
         self.setAtom0(atom0)
         self.setAtom1(atom1)
+        self.setHillWidth(hill_width)
 
         # Set the optional parameters.
 
@@ -371,8 +372,8 @@ class Distance(_CollectiveVariable):
         """Get the weights to be used when computing the center of the first
            atom group.
 
-           Returnas
-           --------
+           Returns
+           -------
 
            weights0 : [float]
                A list of weights to be used when computing the center of the
@@ -431,8 +432,8 @@ class Distance(_CollectiveVariable):
         """Get the weights to be used when computing the center of the second
            atom group.
 
-           Returnas
-           --------
+           Returns
+           -------
 
            weights1 : [float]
                A list of weights to be used when computing the center of the

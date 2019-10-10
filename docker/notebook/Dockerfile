@@ -50,8 +50,8 @@ USER $NB_USER
 WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
-RUN conda install -y -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
-    conda install -y -c conda-forge openmpi-mpicc openssh
+RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
+    conda install -y -c conda-forge openmpi-mpicc openssh patch
 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator
@@ -70,16 +70,29 @@ RUN conda clean -tipsy && \
 
 # Clone source and workshop repositories.
 RUN git clone https://github.com/michellab/biosimspace && \
-    git clone https://github.com/CCPBioSim/python_and_data_workshop && \
-    git clone https://github.com/CCPBioSim/biosimspace_workshop
+    mkdir workshops && \
+    git clone https://github.com/CCPBioSim/python_and_data_workshop workshops/python && \
+    git clone https://github.com/CCPBioSim/biosimspace-workshop workshops/introduction && \
+    git clone https://github.com/CCPBioSim/biosimspace-advanced-simulation workshops/advanced
 
 # Link the right directories into the right places.
 RUN rmdir work && \
     ln -s $HOME/biosimspace/demo $HOME/demo
 
+# Add any BioSimSpace patches.
+ADD patches .patches
+
+# Patch the BioSimSpace install so that we restrict GROMACS to use a single
+# MPI thread and four OpenMP thread per MPI thread.
+RUN patch /opt/conda/lib/python3.7/site-packages/BioSimSpace/Process/_gromacs.py .patches/_gromacs.py.patch
+
 # Copy the example nodes into the Python library.
 RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
     cp $HOME/demo/*.py /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes/
+
+# Change the executable name so that BioSimSpace notebook usage statistics
+# can be tracked separately.
+RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (notebook)"/g' /opt/conda/lib/python3.7/site-packages/Sire/__init__.py
 
 # Add in our custom notebook config.
 USER root

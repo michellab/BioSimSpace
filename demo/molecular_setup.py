@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # Author: Lester Hedges<br>
@@ -86,12 +86,12 @@ node.showControls()
 system = BSS.IO.readMolecules(node.getInput("file"))
 
 
-# We now need to grab the molecule from the system so that we can parameterise it. The `getMolecules` method returns a list containing all of the molecules in the system. Here we assume that the system contains a single molecule and take the first item from the list.
+# We now need to grab the molecule from the system so that we can parameterise it. The system object can be indexed by molecule. Here we grab the first (and only) molecule from the system.
 
 # In[ ]:
 
 
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 
 # Now let's paramterise the molecule. We do so by calling the `parameterise` function from the `BSS.Parameters` package, passing the molecule and force field name as arguments. Since parameterisation can be slow, the function returns a handle to a process that runs the parameterisation in the background. To get the parameterised molecule from the process we need to call the `getMolecule` method. This is a blocking operation which waits for the process to finish before grabbing the molecule and returning it. 

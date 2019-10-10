@@ -28,10 +28,9 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["run"]
 
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
 
 def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
      seed=None, property_map={}):

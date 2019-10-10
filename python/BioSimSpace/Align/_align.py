@@ -40,20 +40,21 @@ _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
-    import rdkit.Chem as _Chem
-    import rdkit.Chem.rdFMCS as _rdFMCS
+    from rdkit import Chem as _Chem
+    from rdkit.Chem import rdFMCS as _rdFMCS
 
-import Sire.Base as _SireBase
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
+from Sire import Base as _SireBase
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import Units as _SireUnits
 
-from .._Exceptions import AlignmentError as _AlignmentError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
+from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 
-import BioSimSpace.IO as _IO
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
+from BioSimSpace import IO as _IO
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
 
 # Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
 try:
@@ -250,8 +251,41 @@ def matchAtoms(molecule0,
         raise RuntimeError("RDKIT MCS mapping failed!")
 
     # Score the mappings and return them in sorted order (best to worst).
-    mappings, scores = _score_mappings(mol0, mol1, mols[0], mols[1],
+    mappings, scores = _score_rdkit_mappings(mol0, mol1, mols[0], mols[1],
         mcs_smarts, prematch, _scoring_function, property_map0, property_map1)
+
+    # Sometimes RDKit fails to generate a mapping that includes the prematch.
+    # If so, then try generating a mapping using the MCS routine from Sire.
+    if len(mappings) == 1 and mappings[0] == prematch:
+
+        # Convert timeout to a Sire Unit.
+        timeout = timeout * _SireUnits.second
+
+        # Regular match. Include light atoms, but don't allow matches between heavy
+        # and light atoms.
+        m0 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
+                                            timeout, True, property_map0, property_map1, 6, False)
+
+        # Include light atoms, and allow matches between heavy and light atoms.
+        # This captures mappings such as O --> H in methane to methanol.
+        m1 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
+                                            timeout, True, property_map0, property_map1, 0, False)
+
+        # Take the mapping with the larger number of matches.
+        if len(m1) > 0:
+            if len(m0) > 0:
+                if len(m1[0]) > len(m0[0]):
+                    mappings = m1
+                else:
+                    mappings = m0
+            else:
+                mappings = m1
+        else:
+            mappings = m0
+
+        # Score the mappings and return them in sorted order (best to worst).
+        mappings, scores = _score_sire_mappings(mol0, mol1, mappings, prematch,
+            _scoring_function, property_map0, property_map1)
 
     if matches == 1:
         if return_scores:
@@ -475,7 +509,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
             raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
 
         # Load the aligned molecule.
-        aligned = _IO.readMolecules("aligned.pdb").getMolecules()[0]
+        aligned = _IO.readMolecules("aligned.pdb")[0]
 
         # Get the "coordinates" property for molecule0.
         prop = property_map0.get("coordinates", "coordinates")
@@ -488,7 +522,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     return _Molecule(molecule0)
 
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        property_map0={}, property_map1={}):
+        allow_ring_size_change=False, property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single- and
        dual-toplogy free energy calculations.
@@ -510,6 +544,9 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
        allow_ring_breaking : bool
            Whether to allow the opening/closing of rings during a merge.
+
+       allow_ring_size_change : bool
+           Whether to allow changes in ring size.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -555,6 +592,12 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     if type(property_map1) is not dict:
         raise TypeError("'property_map1' must be of type 'dict'")
 
+    if type(allow_ring_breaking) is not bool:
+        raise TypeError("'allow_ring_breaking' must be of type 'bool'")
+
+    if type(allow_ring_size_change) is not bool:
+        raise TypeError("'allow_ring_size_change' must be of type 'bool'")
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if type(mapping) is not dict:
@@ -573,9 +616,9 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
     # Create and return the merged molecule.
     return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            property_map0=property_map0, property_map1=property_map1)
+            allow_ring_size_change=allow_ring_size_change, property_map0=property_map0, property_map1=property_map1)
 
-def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
+def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
         mcs_smarts, prematch, scoring_function, property_map0, property_map1):
     """Internal function to score atom mappings based on the root mean squared
        displacement (RMSD) between mapped atoms in two molecules. Optionally,
@@ -742,6 +785,127 @@ def _score_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
     # Return the sorted mappings and their scores.
     return (mappings, scores)
 
+def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
+        scoring_function, property_map0, property_map1):
+    """Internal function to score atom mappings based on the root mean squared
+       displacement (RMSD) between mapped atoms in two molecules. Optionally,
+       molecule0 can first be aligned to molecule1 based on the mapping prior
+       to computing the RMSD. The function returns the mappings sorted based
+       on their score from best to worst, along with a list containing the
+       scores for each mapping.
+
+       Parameters
+       ----------
+
+       molecule0 : Sire.Molecule.Molecule
+           The first molecule (Sire representation).
+
+       molecule0 : Sire.Molecule.Molecule
+           The second molecule (Sire representation).
+
+       sire_mappings : [{}]
+           The list of mappings generated by Sire.
+
+       prematch : dict
+           A dictionary of atom mappings that must be included in the match.
+
+       scoring_function : str
+           The RMSD scoring function.
+
+       property_map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       property_map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+
+       Returns
+       -------
+
+       mapping, scores : ([dict], list)
+           The ranked mappings and corresponding scores.
+    """
+
+    # Make sure to re-map the coordinates property in both molecules, otherwise
+    # the move and align functions from Sire will not work.
+    prop0 = property_map0.get("coordinates", "coordinates")
+    prop1 = property_map1.get("coordinates", "coordinates")
+
+    if prop0 != "coordinates":
+        molecule0 = molecule0.edit().setProperty("coordinates", molecule0.property(prop0)).commit()
+    if prop1 != "coordinates":
+        molecule1 = molecule1.edit().setProperty("coordinates", molecule1.property(prop1)).commit()
+
+    # Initialise a list to hold the mappings.
+    mappings = []
+
+    # Initialise a list of to hold the score for each mapping.
+    scores = []
+
+    # Loop over all of the mappings.
+    for mapping in sire_mappings:
+
+        # Check that the mapping contains the pre-match.
+        is_valid = True
+        for idx0, idx1 in prematch.items():
+            # Pre-match isn't found, return to top of loop.
+            if _SireMol.AtomIdx(idx0) not in mapping or mapping[_SireMol.AtomIdx(idx0)] != _SireMol.AtomIdx(idx1):
+                is_valid = False
+                break
+
+        if is_valid:
+            # Rigidly align molecule0 to molecule1 based on the mapping.
+            if scoring_function == "RMSDALIGN":
+                try:
+                    molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+                except:
+                    raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+            # Flexibly align molecule0 to molecule1 based on the mapping.
+            elif scoring_function == "RMSDFLEXALIGN":
+                molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), _from_sire_mapping(mapping),
+                    property_map0=property_map0, property_map1=property_map1)._sire_object
+
+            # Append the mapping to the list.
+            mappings.append(_from_sire_mapping(mapping))
+
+            # We now compute the RMSD between the coordinates of the matched atoms
+            # in molecule0 and molecule1.
+
+            # Initialise lists to hold the coordinates.
+            c0 = []
+            c1 = []
+
+            # Loop over each atom index in the map.
+            for idx0, idx1 in mapping.items():
+                # Append the coordinates of the matched atom in molecule0.
+                c0.append(molecule0.atom(idx0).property("coordinates"))
+                # Append the coordinates of atom in molecule1 to which it maps.
+                c1.append(molecule1.atom(idx1).property("coordinates"))
+
+            # Compute the RMSD between the two sets of coordinates.
+            scores.append(_SireMaths.getRMSD(c0, c1))
+
+    # No mappings were found.
+    if len(mappings) == 0:
+        if len(prematch) == 0:
+            return ([{}], [])
+        else:
+            return ([prematch], [])
+
+    # Sort the scores and return the sorted keys. (Smaller RMSD is best)
+    keys = sorted(range(len(scores)), key=lambda k: scores[k])
+
+    # Sort the mappings.
+    mappings = [mappings[x] for x in keys]
+
+    # Sort the scores and convert to Angstroms.
+    scores = [scores[x] * _Units.Length.angstrom for x in keys]
+
+    # Return the sorted mappings and their scores.
+    return (mappings, scores)
+
 def _validate_mapping(molecule0, molecule1, mapping, name):
     """Internal function to validate that a mapping contains key:value pairs
        of the correct type.
@@ -778,19 +942,19 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
                                  % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
 
 def _to_sire_mapping(mapping):
-    """Internal function to convert a mapping to Sire AtomIdx format.
+    """Internal function to convert a regular mapping to Sire AtomIdx format.
 
        Parameters
        ----------
 
        mapping : {int:int}
-           The original mapping.
+           The regular mapping.
 
        Returns
        -------
 
-       mapping : {AtomIdx:AtomIdx}
-           The converted mapping.
+       sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
+           The Sire mapping.
     """
 
     sire_mapping = {}
@@ -804,3 +968,31 @@ def _to_sire_mapping(mapping):
             sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
 
     return sire_mapping
+
+def _from_sire_mapping(sire_mapping):
+    """Internal function to convert from a Sire mapping to regular format.
+
+       Parameters
+       ----------
+
+       sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
+           The Sire mapping.
+
+       Returns
+       -------
+
+       mapping : {int:int}
+           The regular mapping.
+    """
+
+    mapping = {}
+
+    # Convert the mapping to int key:value pairs.
+    for idx0, idx1 in sire_mapping.items():
+        # Early exit if the mapping is already the correct format.
+        if type(idx0) is int:
+            return sire_mapping
+        else:
+            mapping[idx0.value()] = idx1.value()
+
+    return mapping

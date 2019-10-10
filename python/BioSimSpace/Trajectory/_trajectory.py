@@ -34,16 +34,16 @@ import os as _os
 import shutil as _shutil
 import warnings as _warnings
 
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Process._process import Process as _Process
-from .._SireWrappers import System as _System
-from ..Types import Time as _Time
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Process._process import Process as _Process
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Types import Time as _Time
 
-import BioSimSpace.IO as _IO
-import BioSimSpace._SireWrappers as _SireWrappers
+from BioSimSpace import IO as _IO
+from BioSimSpace import _SireWrappers as _SireWrappers
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",

@@ -29,11 +29,12 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
 
-import Sire.Maths as _SireMaths
-import Sire.Mol as _SireMol
-import Sire.Vol as _SireVol
+from Sire import Maths as _SireMaths
+from Sire import Mol as _SireMol
+from Sire import Vol as _SireVol
 
-import BioSimSpace.Units as _Units
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace import Units as _Units
 
 class SireWrapper():
     """A base class for wrapping Sire objects."""
@@ -78,13 +79,16 @@ class SireWrapper():
         return hash(self._sire_object)
 
     def copy(self):
-        """Return a copy of this object
+        """Return a copy of this object. The return type is same as the object
+           on which copy is called.
 
            Returns
            -------
 
            system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
                     :class:`System <BioSimSpace._SireWrappers.System>`
                A copy of the object.
         """
@@ -181,7 +185,37 @@ class SireWrapper():
                                     .translate(_SireMaths.Vector(vec), _property_map) \
                                     .commit()
         except UserWarning:
-            raise UserWarning("Object has no 'coordinates' property.") from None
+            raise _IncompatibleError("Cannot compute axis-aligned bounding box since "
+                                     "the object has no 'coordinates' property.") from None
+
+    def getAxisAlignedBoundingBox(self, property_map={}):
+        """Get the axis-aligned bounding box enclosing the object.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           box_min : [:class:`Length <BioSimSpace.Types.Length>`]
+               The minimum coordinates of the axis-aligned bounding box in
+               each dimension.
+
+           box_max : [:class:`Length <BioSimSpace.Types.Length>`]
+               The minimum coordinates of the axis-aligned bounding box in
+               each dimension.
+        """
+        aabox = self._getAABox(property_map)
+
+        box_min = [x*_Units.Length.angstrom for x in aabox.minCoords()]
+        box_max = [x*_Units.Length.angstrom for x in aabox.maxCoords()]
+
+        return box_min, box_max
 
     def _getSireObject(self):
         """Return the underlying Sire object.
@@ -214,25 +248,29 @@ class SireWrapper():
         # Initialise the coordinates vector.
         coord = []
 
-        # Extract the atomic coordinates and append them to the vector.
+        prop = property_map.get("coordinates", "coordinates")
+
+        # Handle merged molecules.
+        if self._is_merged:
+            prop = "coordinates0"
+
+        # Residues need to be converted to molecules to have a
+        # coordinates property.
         try:
-            prop = property_map.get("coordinates", "coordinates")
-
-            # Handle merged molecules.
-            if self._is_merged:
-                prop = "coordinates0"
-
             c = self._sire_object.property(prop)
+        except:
+            try:
+                c = self.toMolecule()._sire_object.property(prop)
+            except:
+                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
+                                         "box since the object has no 'coordinates' property.") from None
 
-            # We have a vector of coordinates. (Multiple atoms)
-            if self._is_multi_atom:
-                coord.extend(c.toVector())
-            # Convert to a list.
-            else:
-                coord = [c]
-
-        except UserWarning:
-            raise UserWarning("Molecule has no 'coordinates' property.") from None
+        # We have a vector of coordinates. (Multiple atoms)
+        if self._is_multi_atom:
+            coord.extend(c.toVector())
+        # Convert to a list.
+        else:
+            coord = [c]
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)

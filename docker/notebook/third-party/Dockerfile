@@ -21,7 +21,7 @@ ENV LD_LIBARY_PATH=$HOME/plumed/lib:$HOME/sire.app/lib:$LD_LIBARY_PATH
 
 # Install the additional Conda packages that are required for the build process.
 RUN $HOME/sire.app/bin/conda install -y -c conda-forge binutils c-compiler compilers \
-    cxx-compiler fortran-compiler gsl openmpi-mpicc
+    cxx-compiler fortran-compiler gsl openblas openmpi-mpicc
 
 # Download and build PLUMED.
 RUN git clone https://github.com/plumed/plumed2.git && \
@@ -41,6 +41,7 @@ RUN wget http://ftp.gromacs.org/pub/gromacs/gromacs-2019.3.tar.gz -O gromacs-src
     export LD_LIBRARY_PATH=$LD_LIBARY_PATH && \
     echo 2 | $HOME/plumed/bin/plumed patch -p && \
     cmake . -DGMX_BUILD_OWN_FFTW=ON \
+            -DGMX_SIMD=AVX_512 \
             -DCMAKE_INSTALL_PREFIX=$HOME/gromacs \
             -DCMAKE_EXE_LINKER_FLAGS="-L$HOME/plumed/lib -L$HOME/sire.app/lib /home/sireuser/sire.app/lib/libopenblas.so.0 -lgsl -lmpi_cxx -lplumed -lplumedKernel -lz" && \
     make -j 4 && \

@@ -31,32 +31,38 @@ __all__ = ["FreeEnergy"]
 from collections import OrderedDict as _OrderedDict
 
 import math as _math
+import sys as _sys
 import os as _os
 import subprocess as _subprocess
 import tempfile as _tempfile
+import warnings as _warnings
 
 from Sire.Base import getBinDir as _getBinDir
+from Sire.Base import getShareDir as _getShareDir
 
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
-
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Units as _Units
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecules as _Molecules
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
 
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""
 
     # Check that the analyse_freenrg script exists.
-    _analyse_freenrg = _getBinDir() + "/analyse_freenrg"
-
+    if _sys.platform != "win32":
+        _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
+    else:
+        _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
     if not _os.path.isfile(_analyse_freenrg):
         raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+    if _sys.platform == "win32":
+        _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
@@ -261,11 +267,11 @@ class FreeEnergy():
 
         # First leg.
         error0 = _math.sqrt((leg0[-1][2].magnitude() * leg0[-1][2].magnitude()) +
-                            (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
+                            (leg0[0][2].magnitude()  * leg0[0][2].magnitude()))
 
         # Second leg.
         error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
-                            (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+                            (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
 
         # Free energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
@@ -431,38 +437,49 @@ class FreeEnergy():
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
+        # Convert to an appropriate AMBER topology. (Required by SOMD.)
         if self._engine == "SOMD":
-            # Try to get the name of the water model.
+            # Try to get the water model used to solvate the system.
             try:
                 water_model = system0._sire_object.property("water_model").toString()
                 waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
                 waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
 
+            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
+            # to guess the water model from the topology.
             except:
                 num_point = system0.getWaterMolecules()[0].nAtoms()
 
-                # Convert to an appropriate AMBER topology. (Required by SOMD.)
                 if num_point == 3:
                     # TODO: Assume TIP3P. Not sure how to detect SPC/E.
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
+                    water_model = "tip3p"
                 elif num_point == 4:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
+                    water_model = "tip4p"
                 elif num_point == 5:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
                     waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
+                    water_model = "tip5p"
+                else:
+                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
+                # Warn the user that we've guessed the water topology.
+                _warnings.warn("Guessed water topology: %r" % water_model)
+
+            # Remove the existing water molecules from the systems.
             system0.removeWaterMolecules()
             system1.removeWaterMolecules()
-            for wat in waters0:
-                system0._sire_object.add(wat, _SireMol.MGName("all"))
-            for wat in waters1:
-                system1._sire_object.add(wat, _SireMol.MGName("all"))
+
+            # Convert the waters to BioSimSpace molecule containers.
+            waters0 = _Molecules(waters0.toMolecules())
+            waters1 = _Molecules(waters1.toMolecules())
+
+            # Add the updated water topology back into the systems.
+            system0.addMolecules(waters0)
+            system1.addMolecules(waters1)
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()

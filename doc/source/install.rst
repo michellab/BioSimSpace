@@ -11,13 +11,13 @@ The easiest way to install BioSimSpace is using our `conda channel <https://anac
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab biosimspace
+    conda install -c conda-forge -c omnia -c michellab biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
@@ -32,7 +32,7 @@ need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
 Note that because of Conda's peculiar scoring metrics you might not end up with
 the latest version of BioSimSpace when performing a fresh install or update.
@@ -49,14 +49,16 @@ name, e.g.:
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
-
-On OS X you will need to run Python scripts with the ``sire_python``
-interpreter. This is due to an issue with the default Python interpreter that
-is installed via Conda. (This applies to all installation methods.)
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
 
 Binary install
 ==============
+
+The self-extracting binary for the 2019.2.0 release of BioSimSpace
+can be downloaded from one of the following links:
+
+* Linux: `biosimspace_2019_2_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/0ALaspTf-EZ3KwSNIKX4Y1bdhiXtMnd98IdcLElltz0/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_linux.run>`__
+* Mac OS X: `biosimspace_2019_2_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/g5GMMGqdNXb6Zv40vnRi5rVDjiKgmH78qI9WiW6xwxg/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_osx.run>`__
 
 The self-extracting binary for the 2019.1.0 release of BioSimSpace
 can be downloaded from one of the following links:

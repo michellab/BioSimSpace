@@ -31,22 +31,24 @@ __all__ = ["Plumed"]
 import glob as _glob
 import os as _os
 import pygtail as _pygtail
+import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings
 
 from Sire.Base import findExe as _findExe
 from Sire.Mol import MolNum as _MolNum
 
-from ._process import _MultiDict
-from .._SireWrappers import System as _System
-from ..Metadynamics import CollectiveVariable as _CollectiveVariable
-from ..Protocol import Metadynamics as _Metadynamics
-from ..Types import Coordinate as _Coordinate
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
+from BioSimSpace.Protocol import Metadynamics as _Metadynamics
+from BioSimSpace.Types import Coordinate as _Coordinate
 
-import BioSimSpace._Exceptions as _Exceptions
-import BioSimSpace.Types as _Types
-import BioSimSpace._Utils as _Utils
-import BioSimSpace.Units as _Units
+from BioSimSpace import _Exceptions as _Exceptions
+from BioSimSpace import Types as _Types
+from BioSimSpace import _Utils as _Utils
+from BioSimSpace import Units as _Units
+
+from ._process import _MultiDict
 
 class Plumed():
     def __init__(self, work_dir):
@@ -147,24 +149,37 @@ class Plumed():
         self._colvar_unit = {}
         self._config = []
 
+        # Check for restart files.
+        is_restart = False
+        if protocol.getHillsFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getHillsFile(), "%s/HILLS" % self._work_dir)
+        if protocol.getGridFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getGridFile(), "%s/GRID" % self._work_dir)
+        if protocol.getColvarFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
+
         # Is the simulation a restart?
-        if protocol.isRestart():
+        if is_restart:
             self._config.append("RESTART")
         else:
             self._config.append("RESTART NO")
 
-            # Delete any existing COLVAR and HILLS files.
+            # Delete any existing COLVAR, HILLS, and GRID files.
             try:
                 _os.remove("%s/COLVAR" % self._work_dir)
                 _os.remove("%s/COLVAR.offset" % self._work_dir)
                 _os.remove("%s/HILLS" % self._work_dir)
                 _os.remove("%s/HILLS.offset" % self._work_dir)
+                _os.remove("%s/GRID" % self._work_dir)
             except:
                 pass
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
-            system.getIndex(system.getMolecules()[0].getAtoms()[0])
+            system.getIndex(system[0].getAtoms()[0])
         except:
             raise ValueError("The system contains no molecules?")
 
@@ -262,6 +277,9 @@ class Plumed():
             lower_wall = colvar.getLowerBound()
             upper_wall = colvar.getUpperBound()
             grid = colvar.getGrid()
+
+            # Whether the collective variable is a torsion.
+            is_torsion = False
 
             # Distance.
             if type(colvar) is _CollectiveVariable.Distance:
@@ -374,6 +392,7 @@ class Plumed():
 
             # Torsion.
             elif type(colvar) is _CollectiveVariable.Torsion:
+                is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
                 colvar_string = "%s: TORSION ATOMS=%s" \
@@ -422,16 +441,19 @@ class Plumed():
 
             # Store grid data.
             if grid is not None:
-                try:
-                    # Unit based.
-                    grid_data.append((grid.getMinimum().magnitude(),
-                                      grid.getMaximum().magnitude(),
-                                      grid.getBins()))
-                except:
-                    # Dimensionless.
-                    grid_data.append((grid.getMinimum(),
-                                      grid.getMaximum(),
-                                      grid.getBins()))
+                if is_torsion:
+                        grid_data.append(("-pi", "pi", grid.getBins()))
+                else:
+                    try:
+                        # Unit based.
+                        grid_data.append((grid.getMinimum().magnitude(),
+                                          grid.getMaximum().magnitude(),
+                                          grid.getBins()))
+                    except:
+                        # Dimensionless.
+                        grid_data.append((grid.getMinimum(),
+                                          grid.getMaximum(),
+                                          grid.getBins()))
 
             # Add the argument to the METAD record.
             metad_string += "%s" % arg_name
@@ -471,6 +493,9 @@ class Plumed():
                     grid_bin_string += ","
 
             metad_string += grid_min_string + grid_max_string + grid_bin_string
+            metad_string += " GRID_WFILE=GRID GRID_WSTRIDE=%s" % protocol.getHillFrequency()
+            if protocol.getGridFile() is not None:
+                metad_string += " GRID_RFILE=GRID"
             metad_string += " CALC_RCT"
 
         # Temperature and bias parameters.

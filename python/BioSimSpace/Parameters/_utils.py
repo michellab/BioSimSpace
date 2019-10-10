@@ -30,9 +30,9 @@ __all__ = ["formalCharge"]
 
 import tempfile as _tempfile
 
-import BioSimSpace.IO as _IO
-import BioSimSpace._Utils as _Utils
-
+from BioSimSpace import _is_notebook
+from BioSimSpace import IO as _IO
+from BioSimSpace import _Utils as _Utils
 from BioSimSpace.Units.Charge import electron_charge as _electron_charge
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
@@ -56,16 +56,7 @@ def formalCharge(molecule):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    # Create a copy of the molecule.
-    mol = molecule.copy()
-
-    # Delete any existing formal charge information.
-    try:
-        mol._sire_object = mol.edit().removeProperty("formal_charge").molecule().commit()
-    except:
-        pass
-
-    import openbabel as ob
+    from rdkit import Chem as _Chem
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
@@ -74,56 +65,31 @@ def formalCharge(molecule):
     # Zero the total formal charge.
     formal_charge = 0
 
-    # Run in the working directory.
-    with _Utils.cd(work_dir):
+    # Stdout/stderr redirection doesn't work from within Jupyter.
+    if _is_notebook():
+        # Run in the working directory.
+        with _Utils.cd(work_dir):
 
-        # Save the molecule to a PDB file.
-        _IO.saveMolecules("tmp", molecule, "PDB")
+            # Save the molecule to a PDB file.
+            _IO.saveMolecules("tmp", molecule, "PDB")
 
-        # Read the ligand PDB into an OpenBabel molecule.
-        conv = ob.OBConversion()
-        mol = ob.OBMol()
-        conv.ReadFile(mol, "tmp.pdb")
+            # Read the ligand PDB into an RDKit molecule.
+            mol = _Chem.MolFromPDBFile("tmp.pdb")
 
-        # Adapted from FESetup.
+            # Compute the formal charge.
+            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
 
-        phospho = '[#15D4](~[OD1])(~[OD1])(~[OD2])~[OD2]'
-        sulfonyl = '[#16](~[OD1])(~[OD1])'
+    else:
+        # Run in the working directory and redirect stderr from RDKit.
+        with _Utils.cd(work_dir), _Utils.stderr_redirected():
 
-        # This compensates for missing charge determination by Openbabel, so
-        # will fail to detect charges in cases not covered here. Relies on
-        # explicit hydrogens!
-        CHARGE_SMARTS = (
-            ('[#16;$([#16D4](~[OD1])(~[OD1])~[OD1])]', -1),             # sulfates, Sac
-            ('[#16;$([#16D3](~[OD1])~[OD1])]', -1),                     # sulfonates, Sac
-            ('[#15;$([#15D4](~[OD1])(~[OD1])~[OD1])]', -2),             # phosphates, Pac
-            ('[#15;$([#15D3](~[OD1])~[OD1])]', -2),                     # phosphonates, Pac
-            ('[#15;$(%s)]' % phospho, -1),                              # polyphosphates or phosphate diesters
-            ('[CD3](~[NH2])(~[NH2])~[NH]', +1),                         # guanidinium
-            ('O=C~[CD3,ND2]~C=O', -1),                                  # beta-dicarbonyls, imides
-            ('%s~[ND2]~C(=O)~[NH]' % sulfonyl, -1),                     # sulfonylureas
-            ('%s~[ND2]~C(=O)~[#6]' % sulfonyl, -1),                     # (sulfon)imides
-            ('%s~[ND2]~c' % sulfonyl, -1),                              # N-aryl sulfonamides
-            ('{0}~[ND2]~{0}'.format(sulfonyl), -1),                     # sulfonimides 2
-            ('[#6][ND3]([#6])~[#6H]~[ND3]([#6])[#6]', +1),              # formamidiniums
-            ('C(~[OD1])~[OD1]', -1),                                    # carbonates, Cac in atomtyp.txt
-            ('[#6][#16D1]', -1),                                        # thiolates
-            ('[#6][#8D1]', -1),                                         # alkoxides (alcoholates)
-            ('[#7D4]', +1),                                             # atomtyp.txt checks for [#7X4]
-            ('{0}~[ND3](~{0})~[CD3](~{0})~{0}'.format('[#6,#1]'), +1),  # imines
-            )
+            # Save the molecule to a PDB file.
+            _IO.saveMolecules("tmp", molecule, "PDB")
 
-        # Initialise the smarts pattern object.
-        sm = ob.OBSmartsPattern()
+            # Read the ligand PDB into an RDKit molecule.
+            mol = _Chem.MolFromPDBFile("tmp.pdb")
 
-        # Loop over all smarts strings / formal charge pairs.
-        for smarts, fchg in CHARGE_SMARTS:
-            sm.Init(smarts)
-
-            # Does the molecule match this string.
-            # If so, update the formal charge.
-            if sm.Match(mol):
-                m = list(sm.GetUMapList() )
-                formal_charge += fchg * len(m)
+            # Compute the formal charge.
+            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
 
     return formal_charge * _electron_charge

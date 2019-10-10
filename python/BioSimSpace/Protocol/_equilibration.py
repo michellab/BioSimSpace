@@ -32,9 +32,9 @@ import math as _math
 import pytest as _pytest
 import warnings as _warnings
 
-from ._protocol import Protocol as _Protocol
+from BioSimSpace import Types as _Types
 
-import BioSimSpace.Types as _Types
+from ._protocol import Protocol as _Protocol
 
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""

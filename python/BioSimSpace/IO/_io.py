@@ -47,15 +47,14 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
-import Sire.System as _SireSystem
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
 from BioSimSpace import _gromacs_path
-
-from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -242,6 +241,12 @@ def readMolecules(files, property_map={}):
 
        >>> import BioSimSpace as BSS
        >>> system = BSS.IO.readMolecules(BSS.IO.glob("dir/*"))
+
+       Load a molecular system from GROMACS coordinate and topology files using
+       a custom GROMACS topology directory.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readMolecules(["mol.gro87", "mol.grotop"], property_map={"GROMACS_PATH" : "/path/to/gromacs/topology"})
     """
 
     global _has_gmx_warned
@@ -286,7 +291,10 @@ def readMolecules(files, property_map={}):
                   ) % files
             raise IOError(msg) from None
         else:
-            raise IOError("Failed to read molecules from: %s" % files) from None
+            if "Incompatibility" in str(e):
+                raise IOError("Incompatibility between molecular information in files: %s" % files) from None
+            else:
+                raise IOError("Failed to read molecules from: %s" % files) from None
 
     return _System(system)
 
@@ -300,8 +308,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
            The base name of the output file.
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`, \
-                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>`
-                [ BioSimSpace._SireWrappers.Molecule ]
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
+                :class:`Molecule< BioSimSpace._SireWrappers.Molecules>`
            The molecular system.
 
        fileformat : str, [str]
@@ -359,14 +367,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # A Molecule object.
     elif type(system) is _Molecule:
         system = _System(system)
+    elif type(system) is _Molecules:
+        system = system.toSystem()
     # A list of Molecule objects.
     elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
         system = _System(system)
     # Invalid type.
     else:
         raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-                        "'BioSimSpace._SireWrappers.Molecule, or a list of "
-                        "'BiSimSpace._SireWrappers.Molecule' types.")
+                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Check that fileformat argument is of the correct type.
 

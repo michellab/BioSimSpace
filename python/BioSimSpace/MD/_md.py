@@ -30,14 +30,13 @@ __all__ = ["run"]
 
 import os as _os
 
-import Sire.Base as _SireBase
+from Sire import Base as _SireBase
 
 from BioSimSpace import _amber_home, _gmx_exe
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE               GPU

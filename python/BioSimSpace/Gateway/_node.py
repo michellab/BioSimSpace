@@ -47,6 +47,8 @@ if _is_notebook():
     import ipywidgets as _widgets
     import zipfile as _zipfile
 
+from BioSimSpace.Types._type import Type as _Type
+
 from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
 from ._requirements import File as _File
@@ -62,8 +64,6 @@ from ._requirements import String as _String
 from ._requirements import Temperature as _Temperature
 from ._requirements import Time as _Time
 from ._requirements import Volume as _Volume
-
-import BioSimSpace.Types._type as _Type
 
 # Float types (including those with units).
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
@@ -473,7 +473,7 @@ class Node():
             default = input.getDefault()
 
             # Get the magnitude of types with units.
-            if isinstance(default, _Type.Type):
+            if isinstance(default, _Type):
                 default = default.magnitude()
 
             if allowed is not None:
@@ -482,7 +482,7 @@ class Node():
                     default = allowed[0]
 
                     # Get the magnitude of types with units.
-                    if isinstance(default, _Type.Type):
+                    if isinstance(default, _Type):
                         default = default.magnitude()
 
                 # Create a dropdown for the list of allowed values.
@@ -500,9 +500,9 @@ class Node():
                 _max = input.getMax()
 
                 # Get the magnitude of types with units.
-                if isinstance(_min, _Type.Type):
+                if isinstance(_min, _Type):
                     _min = _min.magnitude()
-                if isinstance(_max, _Type.Type):
+                if isinstance(_max, _Type):
                     _max = _max.magnitude()
 
                 # Whether the float is unbounded.

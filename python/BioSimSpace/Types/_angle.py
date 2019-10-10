@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Angle"]
 
-import Sire.Units as _Units
+from Sire import Units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -36,8 +36,8 @@ class Angle(_Type):
     """An angle type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "RADIAN" : _Units.radian,
-                         "DEGREE" : _Units.degree }
+    _supported_units = { "RADIAN" : _SireUnits.radian,
+                         "DEGREE" : _SireUnits.degree }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "R" : "RADIAN",
@@ -118,7 +118,7 @@ class Angle(_Type):
            angle : :class:`Angle <BioSimSpace.Types.Angle>`
                The angle in radians.
         """
-        return Angle((self._magnitude * self._supported_units[self._unit]).to(_Units.radian), "RADIAN")
+        return Angle((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.radian), "RADIAN")
 
     def degrees(self):
         """Return the angle in degrees.
@@ -129,7 +129,7 @@ class Angle(_Type):
            angle : :class:`Angle <BioSimSpace.Types.Angle>`
                The angle in degrees.
         """
-        return Angle((self._magnitude * self._supported_units[self._unit]).to(_Units.degree), "DEGREE")
+        return Angle((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.degree), "DEGREE")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

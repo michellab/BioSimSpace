@@ -38,21 +38,22 @@ import time as _time
 import timeit as _timeit
 import warnings as _warnings
 
-import Sire.Base as _SireBase
-import Sire.IO as _SireIO
-import Sire.Mol as _SireMol
+from Sire import Base as _SireBase
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _amber_home
-from . import _process
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-from ..Trajectory import Trajectory as _Trajectory
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Trajectory import Trajectory as _Trajectory
+from BioSimSpace.Types._type import Type as _Type
 
-import BioSimSpace.Protocol as _Protocol
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-import BioSimSpace._Utils as _Utils
+from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Units as _Units
+from BioSimSpace import _Utils as _Utils
+
+from . import _process
 
 class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -230,12 +231,12 @@ class Amber(_process.Process):
 
         # Create the input files...
 
-        # Convert to a BioSimSpace system.
-        system = _System(self._system)
+        # Create a copy of the system.
+        system = self._system.copy()
 
         # If the system isn't created from AMBER format files, then we'll need
         # to convert the water model topology.
-        if not "PRM7,RST7" in self._system.property("fileformat").toString():
+        if not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
 
             # Get the water molecules.
             waters = system.getWaterMolecules()
@@ -307,7 +308,7 @@ class Amber(_process.Process):
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if prop in self._system.propertyKeys():
+        if prop in self._system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -1576,7 +1577,7 @@ class Amber(_process.Process):
                 max_time = float(max_time)
 
             # BioSimSpace.Types.Time
-            if isinstance(max_time, _Type.Type):
+            if isinstance(max_time, _Type):
                 max_time = max_time.minutes().magnitude()
 
             # Float.
@@ -1636,7 +1637,7 @@ class Amber(_process.Process):
 
         # Valdate the unit.
         if unit is not None:
-            if not isinstance(unit, _Type.Type):
+            if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
         # Return the list of dictionary values.

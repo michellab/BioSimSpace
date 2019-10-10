@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'sphinx_issues',
+    'sphinxcontrib.youtube',
 ]
 
 # Github repo

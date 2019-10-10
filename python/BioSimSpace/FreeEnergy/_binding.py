@@ -28,12 +28,14 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Binding"]
 
-from . import _free_energy
-from .._SireWrappers import System as _System
+import warnings as _warnings
 
-import BioSimSpace.Solvent as _Solvent
-import BioSimSpace.Types as _Types
-import BioSimSpace.Units as _Units
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Solvent as _Solvent
+from BioSimSpace import Types as _Types
+from BioSimSpace import Units as _Units
+
+from . import _free_energy
 
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
@@ -112,11 +114,26 @@ class Binding(_free_energy.FreeEnergy):
                     if not all(isinstance(x, _Types.Length) for x in box):
                         raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
 
-            # Get the water model.
+            # Try to get the water model used to solvate the system.
             try:
                 water_model = system._sire_object.property("water_model").toString()
+            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
+            # to guess the water model from the topology.
             except:
-                raise ValueError("Cannot deduce water model of solvated protein-ligand system!")
+                num_point = self._system0.getWaterMolecules()[0].nAtoms()
+
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
+                    water_model = "tip3p"
+                elif num_point == 4:
+                    water_model = "tip4p"
+                elif num_point == 5:
+                    water_model = "tip5p"
+                else:
+                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
+
+                # Warn the user that we've guessed the water topology.
+                _warnings.warn("Guessed water topology: %r" % water_model)
 
             # Solvate the perturbable molecule using the same water model as
             # the original system. (This is used for the second leg.)

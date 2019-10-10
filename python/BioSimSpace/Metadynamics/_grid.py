@@ -28,7 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Grid"]
 
-from ..Types._type import Type as _Type
+from BioSimSpace.Types._type import Type as _Type
 
 class Grid():
     def __init__(self, minimum, maximum, num_bins=None):
@@ -80,7 +80,7 @@ class Grid():
            Parameters
            ----------
 
-           minimum : :class:`Type <BioSimSpace.Types>`
+           minimum : int, float, :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
         if not type(minimum) is int and   \
@@ -101,7 +101,7 @@ class Grid():
            Returns
            -------
 
-           minimum : :class:`Type <BioSimSpace.Types>`
+           minimum : int, float, :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
         return self._minimum
@@ -112,7 +112,7 @@ class Grid():
            Parameters
            ----------
 
-           maximum : :class:`Type <BioSimSpace.Types>`
+           maximum : int, float, :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
         if not type(maximum) is int and   \
@@ -133,7 +133,7 @@ class Grid():
            Returns
            -------
 
-           maximum : :class:`Type <BioSimSpace.Types>`
+           maximum : int, float, :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
         return self._maximum

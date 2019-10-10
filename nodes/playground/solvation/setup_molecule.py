@@ -42,7 +42,7 @@ isVerbose = node.getInput("verbose")
 if isVerbose:
     print("Reading in molecule from file %s" % node.getInput("molecule"))
 system = BSS.IO.readMolecules(node.getInput("molecule"))
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 if isVerbose:
     print("Running a parametrisation with forcefiled: %s" % node.getInput("forcefield"))

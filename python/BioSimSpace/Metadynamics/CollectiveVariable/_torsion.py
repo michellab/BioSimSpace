@@ -29,6 +29,8 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["Torsion"]
 
 from math import ceil as _ceil
+from math import pi as _pi
+from pytest import approx as _approx
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from ...Types import Angle as _Angle
@@ -205,6 +207,15 @@ class Torsion(_CollectiveVariable):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().radians())
+
+            # Torsion is a periodic collective variable, so the grid must be defined
+            # from -pi to pi. PLUMED allows no other grid, regardless of lower or
+            # upper walls.
+            if (self._grid.getMinimum().magnitude() / _pi) != _approx(-1.0):
+                raise ValueError("'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians.")
+            if (self._grid.getMaximum().magnitude() / _pi) != _approx(1.0):
+                raise ValueError("'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians.")
+
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
             if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():

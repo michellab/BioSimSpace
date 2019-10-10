@@ -33,7 +33,7 @@ import os.path as _path
 import random as _random
 import string as _string
 
-import Sire.Mol as _SireMol
+from Sire import Mol as _SireMol
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
@@ -46,7 +46,7 @@ class Residue(_SireWrapper):
            Parameters
            ----------
 
-           atom : Sire.Mol.Residue, Atom :class:`Atom <BioSimSpace._SireWrappers.Atom>`
+           residue : Sire.Mol.Residue, :class:`Residue <BioSimSpace._SireWrappers.Residue>`
                A Sire or BioSimSpace Residue object.
         """
 
@@ -68,6 +68,18 @@ class Residue(_SireWrapper):
         # Call the base class constructor.
         super().__init__(sire_object)
 
+        # Flag that this object holds multiple atoms.
+        self._is_multi_atom = True
+
+        # Store the number of atoms in the residue.
+        self._num_atoms = self._sire_object.nAtoms()
+
+        # Store the atom indices in the residue.
+        self._atom_idxs = self._sire_object.atomIdxs()
+
+        # Initialise the iterator count.
+        self._iter_count = 0
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
@@ -77,6 +89,68 @@ class Residue(_SireWrapper):
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
             % (self.name(), self.moleculeNumber(), self.index(), self.nAtoms())
+
+    def __getitem__(self, key):
+        """Get an atom from the residue."""
+
+        # Slice.
+        if type(key) is slice:
+
+            # Create a list to hold the atoms.
+            atoms = []
+
+            # Iterate over the slice.
+            for x in range(*key.indices(self._num_atoms)):
+                atoms.append(_Atom(self[x]))
+
+            # Return the list of atoms.
+            return atoms
+
+        # Index.
+        else:
+            try:
+                key = int(key)
+            except:
+                raise TypeError("'key' must be of type 'int'")
+
+            if key < -self._num_atoms or key > self._num_atoms -1:
+                raise IndexError("Residue index is out of range.")
+
+            if key < 0:
+                key = key + self._num_atoms
+
+            # Extract and return the corresponding atom.
+            return _Atom(self._sire_object.atom(self._atom_idxs[key]))
+
+    def __setitem__(self, key, value):
+        """Set an atom in the residue."""
+        raise TypeError("'Residue' object does not support assignment.")
+
+    def __iter__(self):
+        """An iterator for the object."""
+        # Reset the iterator counter and return the object.
+        self._iter_count = 0
+        return self
+
+    def __next__(self):
+        """An iterator for the object."""
+
+        # Stop if we've reached the end of the residue.
+        if self._iter_count == self._num_atoms:
+            raise StopIteration
+
+        # Extract the next atom in the residue.
+        atom = self[self._iter_count]
+
+        # Update the iterator counter.
+        self._iter_count += 1
+
+        # Return the atom.
+        return atom
+
+    def __len__(self):
+        """Return the number of atoms in the residue."""
+        return self._num_atoms
 
     def name(self):
         """Return the name of the residue.
@@ -120,7 +194,7 @@ class Residue(_SireWrapper):
            num_atoms : int
                The number of atoms in the system.
         """
-        return self._sire_object.nAtoms()
+        return self._num_atoms
 
     def getAtoms(self):
         """Return a list containing all of the atoms in the residue.

@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Julien Michel
-#
+# 
 # email: julien.michel@ed.ac.uk
 
 # # PrepareFEP
@@ -12,8 +12,10 @@
 
 
 import os
+import zipfile
 from Sire.Mol import AtomIdx
 import BioSimSpace as BSS
+
 
 # In[ ]:
 
@@ -57,7 +59,7 @@ def loadMapping(mapping_file):
         idx1 = int(elems[0])
         idx2 = int(elems[1])
         mapping[idx1] = idx2
-
+    
     return mapping
 
 
@@ -83,7 +85,8 @@ node.addInput("input2", BSS.Gateway.FileSet(help="A topology and coordinates fil
 node.addInput("prematch", BSS.Gateway.String(help="list of atom indices that are matched between input2 and input1. Syntax is of the format 1-3,4-8,9-11... Ignored if a mapping is provided", default=""))
 node.addInput("mapping", BSS.Gateway.File(help="csv file that contains atom indices in input1 mapped ot atom indices in input2", optional=True))
 node.addInput("timeout", BSS.Gateway.Time(help="The timeout for the maximum common substructure search", default=10*BSS.Units.Time.second))
-node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge.", default=False))
+node.addInput("allow_ring_breaking", BSS.Gateway.Boolean(help="Whether to allow opening/closing of rings during merge", default=False))
+node.addInput("allow_ring_size_change", BSS.Gateway.Boolean(help="Whether to allow ring size changes during merge", default=False))
 node.addInput("output", BSS.Gateway.String(help="The root name for the files describing the perturbation input1->input2."))
 
 
@@ -114,10 +117,10 @@ if custom_mapping is not None:
 # In[ ]:
 
 
-# Optional input, dictionary of Atom indices that should be matched in the search.
+# Optional input, dictionary of Atom indices that should be matched in the search. 
 prematch = {}
 prematchstring = node.getInput("prematch")
-if len(prematchstring) > 0:
+if len(prematchstring) > 0: 
     entries = prematchstring.split(",")
     for entry in entries:
         idxA, idxB = entry.split("-")
@@ -143,8 +146,8 @@ system2 = BSS.IO.readMolecules(node.getInput("input2"))
 
 
 # We assume the molecules to perturb are the first molecules in each system
-lig1 = system1.getMolecules()[0]
-lig2 = system2.getMolecules()[0]
+lig1 = system1[0]
+lig2 = system2[0]
 
 
 # In[ ]:
@@ -182,7 +185,7 @@ inverted_mapping = dict([[v,k] for k,v in mapping.items()])
 # (as opposed to merely taking the difference of centroids).
 lig2 = BSS.Align.rmsdAlign(lig2, lig1, inverted_mapping)
 # Merge the two ligands based on the mapping.
-merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"))
+merged = BSS.Align.merge(lig1, lig2, mapping, allow_ring_breaking=node.getInput("allow_ring_breaking"), allow_ring_size_change=node.getInput("allow_ring_size_change"))
 # Create a composite system
 system1.removeMolecules(lig1)
 system1.addMolecules(merged)
@@ -198,8 +201,8 @@ BSS.IO.saveMolecules("merged_at_lam0.pdb", merged, "PDB", { "coordinates" : "coo
 protocol = BSS.Protocol.FreeEnergy(runtime = 2*BSS.Units.Time.femtosecond, num_lam=3)
 process = BSS.Process.Somd(system1, protocol)
 process.getOutput()
-cmd = "unzip -o somd_output.zip"
-os.system(cmd)
+with zipfile.ZipFile("somd_output.zip", "r") as zip_hnd:
+    zip_hnd.extractall(".")
 
 
 # In[ ]:
@@ -216,9 +219,18 @@ mapping_str = "%s.mapping" % root
 # In[ ]:
 
 
-cmd = "mv merged_at_lam0.pdb %s ; mv somd.pert %s ; mv somd.prm7 %s ; mv somd.rst7 %s ; mv somd.mapping %s ; rm somd_output.zip ; rm somd.cfg ; rm somd.err; rm somd.out" % (mergedpdb,pert,prm7,rst7,mapping_str)
-#print (cmd)
-os.system(cmd)
+os.replace("merged_at_lam0.pdb", mergedpdb)
+os.replace("somd.pert", pert)
+os.replace("somd.prm7", prm7)
+os.replace("somd.rst7", rst7)
+os.replace("somd.mapping", mapping_str)
+try:
+    os.remove("somd_output.zip")
+    os.remove("somd.cfg")
+    os.remove("somd.err")
+    os.remove("somd.out")
+except Exception:
+    pass
 
 
 # In[ ]:
@@ -231,10 +243,4 @@ node.setOutput("nodeoutput",[mergedpdb, pert, prm7, rst7, mapping_str])
 
 
 node.validate()
-
-
-# In[ ]:
-
-
-
 

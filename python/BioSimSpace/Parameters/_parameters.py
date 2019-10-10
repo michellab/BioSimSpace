@@ -30,9 +30,9 @@ __all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "ga
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
-from ..Types import Charge as _Charge
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace.Types import Charge as _Charge
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
@@ -68,7 +68,10 @@ def parameterise(molecule, forcefield, work_dir=None, property_map={}):
     if type(forcefield) is not str:
         raise TypeError("'forcefield' must be of type 'str'")
     else:
-        if forcefield not in forceFields():
+        # Strip whitespace and convert to lower case.
+        forcefield = forcefield.replace(" ", "").lower()
+
+        if forcefield not in _forcefields_lower:
             raise ValueError("Supported force fields are: %s" % forceFields())
 
     return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
@@ -419,14 +422,16 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
 
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
-_forcefields = []
-_forcefield_dict = {}
+_forcefields = []           # List of force fields (actual names).
+_forcefields_lower = []     # List of lower case names.
+_forcefield_dict = {}       # Mapping between lower case names and functions.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
-        _forcefield_dict[_var] = getattr(_namespace, _var)
+        _forcefields_lower.append(_var.lower())
+        _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
 del _namespace
 del _sys
 del _var

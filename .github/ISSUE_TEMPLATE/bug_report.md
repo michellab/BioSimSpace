@@ -8,11 +8,14 @@ assignees: ''
 
 # Prerequisites
 
+If this is your first time posting an issue please take time to read the
+information in this page.
+
 Please answer the following questions for yourself before submitting an issue.
 
 **YOU MAY DELETE THE PREREQUISITES SECTION.**
 
-- [ ] I am running the latest version.
+- [ ] I am running the latest version (devel branch, or dev Conda package).
 - [ ] I checked the documentation and found no answer.
 - [ ] I checked to make sure that this issue has not already been filed.
 
@@ -38,7 +41,7 @@ import BioSimSpace as BSS
 
 # Load the system and extract the only molecule.
 system = BSS.IO.readMolecules(["molecule.prm7", "molecule.rst7"])
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 # Create a background process to parameterise the molecule.
 process = BSS.Parameters.gaff(molecule)
@@ -58,7 +61,7 @@ import BioSimSpace as BSS
 
 # Load the system and extract the only molecule.
 system = BSS.IO.readMolecules(["molecule.prm7", "molecule.rst7"])
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 # Create a background process to parameterise the molecule.
 process = BSS.Parameters.gaff(molecule)
@@ -66,7 +69,7 @@ process = BSS.Parameters.gaff(molecule)
 # Get the parameterised molecule from the process.
 molecule = process.getMolecule()
 
-# Get the intermediate files from the bacground process.
+# Get the intermediate files from the background process.
 process.getOutput(filename="param_eror.zip")
 ```
 
@@ -77,7 +80,7 @@ import BioSimSpace as BSS
 
 # Load the system and extract the only molecule.
 system = BSS.IO.readMolecules(["molecule.prm7", "molecule.rst7"])
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 # Create a background process to parameterise the molecule.
 # Run the process in a directory called "my_directory".
@@ -94,5 +97,5 @@ Please provide any relevant information about your setup. This is important in c
 * Operating System: Linux, macOS.
 * Installation method: conda, binary, source. (If installed from source, please
 also give the [Sire](https://github.com/michellab/Sire) version number.)
-* If you're running on a cluster: What is the scheduler? What type of nodes are you using, e.g. num GPUs, CPUS, amount of RAM?
+* If you're running on a cluster: What is the scheduler? What type of nodes are you using, e.g. number of CPUs, GPUS, amount of RAM?
 * What molecular system are you simulating?. If possible, please attach topology and coordinate files to help us debug. If you can't, please give basic information, such as the system size, which will help us estimate the expected memory footprint.
