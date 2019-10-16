@@ -28,19 +28,19 @@ requirements:
     - rdkit
     - watchdog
   run:
-    -  {{ pin_compatible('python') }}
-    -  {{ pin_compatible('sire') }}
-    -  {{ pin_compatible('configargparse') }}
-    -  {{ pin_compatible('mdtraj') }}
-    -  {{ pin_compatible('mdanalysis') }}
-    -  {{ pin_compatible('nglview') }}
-    -  {{ pin_compatible('pygtail') }}
-    -  {{ pin_compatible('pymbar') }}
-    -  {{ pin_compatible('pypdb') }}
-    -  {{ pin_compatible('pytest') }}
-    -  {{ pin_compatible('pyyaml') }}
-    -  {{ pin_compatible('rdkit') }}
-    -  {{ pin_compatible('watchdog') }}
+    - {{ pin_compatible('python') }}
+    - {{ pin_compatible('sire') }}
+    - {{ pin_compatible('configargparse') }}
+    - {{ pin_compatible('mdtraj') }}
+    - {{ pin_compatible('mdanalysis') }}
+    - {{ pin_compatible('nglview') }}
+    - {{ pin_compatible('pygtail') }}
+    - {{ pin_compatible('pymbar') }}
+    - {{ pin_compatible('pypdb') }}
+    - {{ pin_compatible('pytest') }}
+    - {{ pin_compatible('pyyaml') }}
+    - {{ pin_compatible('rdkit') }}
+    - {{ pin_compatible('watchdog') }}
 
 test:
   imports:
