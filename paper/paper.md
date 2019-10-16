@@ -50,6 +50,9 @@ Typically, the information needed to construct a molecular system is split acros
 
 As files are parsed, records in those files are assigned to a set of _properties_ that are associated with molecules in the system, e.g. `charge`, `coordinates`, `element`, etc. While some of these properties are unique to particular parsers, others are shared across formats and are converted to a consistent set of internal units on read. Those properties which represent mathematical expressions are stored using Sire's built in computer algebra system. On write, each parser expects molecules in the system to contain a specific set of properties, which are then extracted and converted in order to generate the appropriate records for the format in question. In this way, a bond record from an [AMBER](http://ambermd.org) format file can be read into an internal bond expression, which could then be converted to the appropriate [GROMACS](http://www.gromacs.org) bond record on write.
 
+
+![Files are parsed in parallel with the parser that successfully reads the file determining the file format. Once all files are parsed, a lead parser (solid red arrows) constructs the topology of the molecular system. Records within the file, e.g. representing terms in the molecular potential such as bonds, angles, etc., are converted into file format specific representations, then stored internally as properties of the molecule as general algebraic expressions. Parsers that follow add additional information to an existing system. Here the `AmberRst7` parser adds coordinate and simulation box data to the system (dashed blue arrows). The file format associated with the files is also stored as a property of the system so that nodes can always convert back to the original format on write.](figures/fig1.png)
+
 Another feature of our parsers is guaranteed read/write self-consistency. Any file that can be read can also be written, and vice-versa. In addition, when expected molecular information is missing from a file, unless obvious, we don't attempt to guess what it may have been. In this sense our parsers don't attempt to be _too_ clever, which can lead to unexpected behaviour, particulars when information is modified or supplemented behind the user's back.
 
 The code below shows how to load a set of AMBER format files from a directory:
@@ -140,7 +143,7 @@ node.validate()
 BioSimSpace nodes are flexible in the way in which they can be used, with the same script working seamlessly from within a Jupyter notebook or on the command-line. Typically, a user would a write a node as a fully documented, interactive Jupyter notebook, then save it as a regular Python script to run from the command-line. (For inclusion here we simply include the Python script representation of the node, which could be re-converted to a notebook using, e.g., [p2j](https://pypi.org/project/p2j).) Any purely interactive elements included in the node, e.g.  visualisations and plots, are simply ignored when the script is run in a non-interactive mode. To facilitate this dual-use the `node.addInput` method generates a custom [ipywidgets](https://ipywidgets.readthedocs.io/en/latest) based graphical user interface for interative use in Jupyter, or a custom [argparse](https://docs.python.org/3/library/argparse.html) parser for handling command-line arguments. Figure 1 shows the example node above running within a Jupyter notebook (top) and from the command-line (bottom).
 
 ![BioSimSpace nodes can be run within a Jupyter notebook (top) or
-from the command-line (bottom)](figures/fig1.png)
+from the command-line (bottom)](figures/fig2.png)
 
 When working interactively, BioSimSpace also provides functionality for interacting with processes while they are running. This allows the user to monitor the progress of a simulation and generate near real-time plots and visualisations.
 
@@ -185,7 +188,7 @@ node.validate()
 
 Figure 2 shows how the `allowed=BSS.IO.fileFormats()` argument is translated into a dropdown menu for the Jupyter GUI (top), or using the _choices_ option of argparse on the command-line (bottom). This means that the script is adaptive to the support of additional file parsers in future without need for modification.
 
-![BioSimSpace nodes are adaptive to new functionality without modification.](figures/fig2.png)
+![BioSimSpace nodes are adaptive to new functionality without modification.](figures/fig3.png)
 
 # Acknowledgments
 
