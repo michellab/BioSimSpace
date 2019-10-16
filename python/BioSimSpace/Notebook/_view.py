@@ -57,7 +57,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
 
@@ -99,7 +99,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Get the latest system from the process.
@@ -132,7 +132,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return a view of the entire system.
@@ -195,7 +195,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Check that the index is an integer.
@@ -242,7 +242,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return if there are no views.
@@ -289,7 +289,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Default to the most recent view.

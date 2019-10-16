@@ -57,7 +57,7 @@ from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import Protocol as _Protocol
 
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
 def _wrap_protocol(protocol_function, process):
@@ -274,7 +274,7 @@ class Process():
                 self._zipfile = zipname
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(self._zipfile)
             else:

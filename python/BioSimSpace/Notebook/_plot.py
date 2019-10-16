@@ -49,7 +49,7 @@ if _display is not None:
     except ImportError:
         _has_matplotlib = False
 else:
-    if _is_notebook():
+    if _is_notebook:
         try:
             import matplotlib.pyplot as _plt
             _has_matplotlib = True
@@ -109,7 +109,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
     """
 
     # Make sure were running interactively.
-    if not _is_interactive():
+    if not _is_interactive:
         _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
@@ -311,7 +311,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     from mpl_toolkits.axes_grid1 import make_axes_locatable as _make_axes_locatable
 
     # Make sure were running interactively.
-    if not _is_interactive():
+    if not _is_interactive:
         _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 

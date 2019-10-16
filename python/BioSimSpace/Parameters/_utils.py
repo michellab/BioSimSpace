@@ -66,7 +66,7 @@ def formalCharge(molecule):
     formal_charge = 0
 
     # Stdout/stderr redirection doesn't work from within Jupyter.
-    if _is_notebook():
+    if _is_notebook:
         # Run in the working directory.
         with _Utils.cd(work_dir):
 

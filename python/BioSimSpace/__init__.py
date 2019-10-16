@@ -56,30 +56,28 @@ except ModuleNotFoundError:
         + "Python interpreter: www.siremol.org")
 
 # Determine whether we're being imported from a Jupyter notebook.
-def _is_notebook():
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter
+try:
+    shell = get_ipython().__class__.__name__
+    if shell == 'ZMQInteractiveShell':
+        _is_notebook = True   # Jupyter notebook or qtconsole
+    elif shell == 'TerminalInteractiveShell':
+        _is_notebook = False  # Terminal running IPython
+    else:
+        _is_notebook = False  # Other type (?)
+except NameError:
+    _is_notebook = False      # Probably standard Python interpreter
 
 # Determine whether we're being run interactively.
-def _is_interactive():
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return True   # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter
+try:
+    shell = get_ipython().__class__.__name__
+    if shell == 'ZMQInteractiveShell':
+        _is_interactive = True   # Jupyter notebook or qtconsole
+    elif shell == 'TerminalInteractiveShell':
+        _is_interactive = True   # Terminal running IPython
+    else:
+        _is_interactive = False  # Other type (?)
+except NameError:
+    _is_interactive = False      # Probably standard Python interpreter
 
 from os import environ as _environ
 from warnings import warn as _warn
@@ -175,7 +173,7 @@ def viewMolecules(files, idxs=None):
        e.g. choosing different molecules to view etc.
     """
 
-    if not _is_notebook():
+    if not _is_notebook:
         _warn("You can only view molecules from within a Jupyter notebook.")
         return None
 
