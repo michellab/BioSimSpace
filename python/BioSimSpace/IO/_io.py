@@ -54,6 +54,7 @@ from Sire import System as _SireSystem
 
 from BioSimSpace import _gromacs_path
 from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
