@@ -48,7 +48,7 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Units as _Units
 
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
 class _MultiDict(dict):
@@ -119,7 +119,7 @@ class Process():
 
         # Is the process running interactively? If so, don't block
         # when a get method is called.
-        self._is_blocked = not _is_interactive()
+        self._is_blocked = not _is_interactive
 
         # Whether this process can generate trajectory data.
         # Even if a process can generate a trajectory, whether it does
@@ -963,7 +963,7 @@ class Process():
                 zip.write(file, arcname=_os.path.basename(file))
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(zipname)
             else:
@@ -1018,7 +1018,7 @@ class Process():
                 zip.write(file, arcname=_os.path.basename(file))
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(zipname)
             else:

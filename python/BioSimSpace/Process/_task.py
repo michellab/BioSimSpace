@@ -298,7 +298,7 @@ class Task():
                 self._zipfile = zipname
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(zipname)
             else:

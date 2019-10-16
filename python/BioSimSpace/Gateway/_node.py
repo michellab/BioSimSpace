@@ -40,7 +40,7 @@ import yaml as _yaml
 from BioSimSpace import _is_notebook
 
 # Enable Jupyter widgets.
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
     import fileupload as _fileupload
@@ -102,7 +102,7 @@ class Node():
     _is_knime = False
 
     # Whether the node is run from a Jupyter notebook.
-    _is_notebook = _is_notebook()
+    _is_notebook = _is_notebook
 
     def __init__(self, description, name=None):
         """Constructor.
