@@ -756,7 +756,8 @@ class Gromacs(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if type(self._protocol) is _Protocol.Minimisation or \
+          (type(self._protocol) is _Protocol.Custom and _is_minimisation(self.getConfig())):
             # Create the name of the restart GRO file.
             restart = "%s/%s.gro" % (self._work_dir, self._name)
 
@@ -1963,9 +1964,35 @@ class Gromacs(_process.Process):
         try:
             with _Utils.cd(self._work_dir):
 
+                # Default trajectory file.
+                traj_file = self._traj_file
+
+                # Check that a trr trajectory file exists.
+                if not _os.path.isfile(self._traj_file):
+                    # If not, first check for any trr extension.
+                    traj_file = _IO.glob("%s/*.trr" % self._work_dir)
+
+                    # Store the number of trr files.
+                    num_trr = len(traj_file)
+
+                    # Only accept if a single trajectory file is present.
+                    if num_trr == 1:
+                        traj_file = traj_file[0]
+                    else:
+                        # Now check for any xtc files.
+                        traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
+
+                        if len(traj_file) == 1:
+                            traj_file = traj_file[0]
+                        else:
+                            _warnings.warn("Invalid trajectory files! "
+                                           "%d trr files found, %d xtc files found."
+                                           % (num_trr, len(traj_file)))
+                            return None
+
                 # Use tjrconv to get the frame closest to the current simulation time.
                 command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
-                    % (self._exe, self._traj_file, self._gro_file, time.picoseconds().magnitude())
+                    % (self._exe, traj_file, self._gro_file, time.picoseconds().magnitude())
 
                 # Run the command.
                 proc = _subprocess.run(command, shell=True,
@@ -1993,5 +2020,36 @@ class Gromacs(_process.Process):
         except:
             _warnings.warn("Failed to extract trajectory frame with trjconv. "
                            "Try running 'getSystem' again.")
-            _os.remove("%s/frame.gro" % self._work_dir)
+            frame = "%s/frame.gro" % self._work_dir
+            if _os.path.isfile(frame):
+                _os.remove(frame)
             return None
+
+def _is_minimisation(config):
+    """Helper function to check whether a custom configuration
+       is a minimisation.
+
+       Parameters
+       ----------
+
+       config : [str]
+           A list of configuration strings.
+
+       Returns
+       -------
+
+       is_minimisation : bool
+           Whether this is a minimisation configuration.
+    """
+
+    for line in config:
+        # Remove any whitespace.
+        line = line.replace(" ", "")
+
+        # Check for integrators used for minimisation.
+        if "integrator=steep" in line or \
+           "integrator=cg" in line    or \
+           "integrator=l-bfgs" in line:
+               return True
+
+    return False
