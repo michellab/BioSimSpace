@@ -2015,41 +2015,41 @@ class Gromacs(_process.Process):
                 _os.remove(frame)
             return None
 
-        def _find_trajectory_file(self):
-            """Helper function to find the trajectory file associated with
-               the process.
+    def _find_trajectory_file(self):
+        """Helper function to find the trajectory file associated with the
+           process.
 
-               Returns
-               -------
+           Returns
+           -------
 
-               traj_file : str
-                   The path to the trajectory file.
-            """
+           traj_file : str
+               The path to the trajectory file.
+        """
 
-            # Check that the current trajectory file is found.
-            if not _os.path.isfile(self._traj_file):
-                # If not, first check for any trr extension.
-                traj_file = _IO.glob("%s/*.trr" % self._work_dir)
+        # Check that the current trajectory file is found.
+        if not _os.path.isfile(self._traj_file):
+            # If not, first check for any trr extension.
+            traj_file = _IO.glob("%s/*.trr" % self._work_dir)
 
-                # Store the number of trr files.
-                num_trr = len(traj_file)
+            # Store the number of trr files.
+            num_trr = len(traj_file)
 
-                # Only accept if a single trajectory file is present.
-                if num_trr == 1:
+            # Only accept if a single trajectory file is present.
+            if num_trr == 1:
+                traj_file = traj_file[0]
+            else:
+                # Now check for any xtc files.
+                traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
+
+                if len(traj_file) == 1:
                     traj_file = traj_file[0]
                 else:
-                    # Now check for any xtc files.
-                    traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
-
-                    if len(traj_file) == 1:
-                        traj_file = traj_file[0]
-                    else:
-                        _warnings.warn("Invalid trajectory file! "
-                                        "%d trr files found, %d xtc files found."
-                                        % (num_trr, len(traj_file)))
-                        return None
-            else:
-                return self._traj_file
+                    _warnings.warn("Invalid trajectory file! "
+                                   "%d trr files found, %d xtc files found."
+                                   % (num_trr, len(traj_file)))
+                    return None
+        else:
+            return self._traj_file
 
 def _is_minimisation(config):
     """Helper function to check whether a custom configuration
