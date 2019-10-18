@@ -36,9 +36,9 @@ In most research communities there is not a single, unified software-framework. 
 
 # Molecular dynamics
 
-One of the core features of BioSimSpace is the ability to set up and run molecular dynamics (MD) simulations. There are a large number of packages that can run molecular dynamics for biomolecules and BioSimSpace supports several of these: [AMBER](http://ambermd.org), [GROMACS](http://www.gromacs.org), and [NAMD](https://www.ks.uiuc.edu/Research/namd). BioSimSpace also comes with a bundled GPU accelerated molecular dynamics engine, SOMD, so there is always a fall back in case no other packages are installed.
+One of the core features of BioSimSpace is the ability to set up and run molecular dynamics (MD) simulations. There are a large number of packages that can run MD for biomolecules and BioSimSpace supports several of these: [AMBER](http://ambermd.org), [GROMACS](http://www.gromacs.org), and [NAMD](https://www.ks.uiuc.edu/Research/namd). BioSimSpace also comes with a bundled dynamics engine, SOMD, which interfaces with the [OpenMM](http://openmm.org) toolkit to provide graphics processing unit (GPU) acceleration. (This means that there is always a fall back in case no other MD engines are installed.)
 
-While, broadly speaking, the different molecular dynamics engines offer a similar range of features, their interfaces are quite different. This makes it hard to take expertise in one package and immediately apply it to another. At the heart of this problem is the incompatibility between the molecular file formats used by the different packages. While they all contain the same information, i.e. how atoms are laid out in space and how they interact with each other, the structure of the files is very different. In order to provide interoperability betwen packages we will need to be able to read and write many different file formats, and be able to interconvert between them too.
+While, broadly speaking, the different MD engines offer a similar range of features, their interfaces are quite different. This makes it hard to take expertise in one package and immediately apply it to another. At the heart of this problem is the incompatibility between the molecular file formats used by the different packages. While they all contain the same information, i.e. how atoms are laid out in space and how they interact with each other, the structure of the files is very different. In order to provide interoperability betwen packages we will need to be able to read and write many different file formats, and be able to interconvert between them too.
 
 # Features
 
@@ -46,7 +46,7 @@ While, broadly speaking, the different molecular dynamics engines offer a simila
 
 At its core, BioSimSpace is built around a powerful set of file parsers which allow reading and writing of a wide range of molecular file formats. File input/output is provided via the `BioSimSpace.IO` package using parsers from the [Sire](https://siremol.org) molecular simulation framework, on top of which BioSimSpace is built. Unlike many other programs, we take the approach that it is the _contents_ of the file that defines it format, not the _extension_. As such, we attempt to parse a file with all of our parsers in parallel. Any parser for which the contents of the file is incompatible will be rejected early, with the eventual format of the file determined by the parser that completed without error.
 
-Typically, the information needed to construct a molecular system is split across multiple files, e.g. a _coordinate_ file containing the atomic coordinates, and a _topology_ file that describes how the atoms within each molecule are bonded together, along with parameters for the potential of the molecular model. To handle this, each of our parsers are assigned as being able to _lead_, or _follow_, or both. Lead parsers are able to initialise a molecular system (typically by constructing the topology), whereas those that follow can add additional information to an existing molecular system. Lead parsers may also be able to follow, such that when multiple lead parsers are associated with a set of files then the one that ultimately leads will be determined by which lead parser is unable to follow. This approach allows us to easily parse molecular information from multiple files, even if those formats aren't typically associated with each other. As long as the molecular topology corresponding the information in the files is consistent, then they can be read.
+Typically, the information needed to construct a molecular system is split across multiple files, e.g. a _coordinate_ file containing the atomic coordinates, and a _topology_ file that describes how the atoms within each molecule are bonded together, along with parameters for the potential of the molecular model. To handle this, each of our parsers are assigned as being able to _lead_, or _follow_, or both. Lead parsers are able to initialise a molecular system (typically by constructing the topology), whereas those that follow can add additional information to an existing molecular system. Lead parsers may also be able to follow, such that when multiple lead parsers are associated with a set of files then the one that ultimately leads will be determined by which lead parser is unable to follow. This approach allows us to easily parse molecular information from multiple files, even if those formats aren't typically associated with each other. As long as the molecular topology corresponding the information in the files is consistent, then they can be read. For instance, one can initialise a system by reading an AMBER format topology, and obtain the coordinates of the system from a [Protein Data Bank](https://www.rcsb.org) (PDB) file.
 
 As files are parsed, records in those files are assigned to a set of _properties_ that are associated with molecules in the system, e.g. `charge`, `coordinates`, `element`, etc. While some of these properties are unique to particular parsers, others are shared across formats and are converted to a consistent set of internal units on read. Those properties which represent mathematical expressions are stored using Sire's built in computer algebra system. On write, each parser expects molecules in the system to contain a specific set of properties, which are then extracted and converted in order to generate the appropriate records for the format in question. In this way, a bond record from an [AMBER](http://ambermd.org) format file can be read into an internal bond expression, which could then be converted to the appropriate [GROMACS](http://www.gromacs.org) bond record on write.
 
@@ -69,7 +69,7 @@ BioSimSpace simplifies the set-up and running of molecular simulations through a
 
 The `BioSimSpace.Protocol` package provides a set of high-level objects for several common molecular simulation protocols. Each protocol offers as set of configurable options that are handled by all of the molecular simulation engines that we support. `BioSimSpace.Process` provides objects for configuring, running, and interacting with simulation processes for each of the supported engines. When a process is created by passing in a system and protocol, BioSimSpace automatically writes all of the input files required by the specific simulation engine and configures any command-line options required by its executable. (Expert users of a particular engine are free to fully override any of the configuration options if desired.)
 
-The example below shows how to configure and run a default energy minimisation protocol for the molecular system that was loaded earlier. Here we use AMBER as the molecular dynamics engine:
+The example below shows how to configure and run a default energy minimisation protocol for the molecular system that was loaded earlier. Here we use AMBER as the MD engine:
 
 ```python
 protocol = BSS.Protocol.Minimisation()
@@ -79,7 +79,7 @@ process.start()
 
 ## Interoperability
 
-While it is useful to be able to configure and run simulation processes using specific engines, any script written in this way would not be portable since we can't guarantee what software will be available on a different computer. To this end, the `BioSimSpace.MD` package provides functionality for automatically configuring a simulation process using _any_ suitable molecular dynamics engine that is installed on the host system. For example, the AMBER specific example in the previous section can be translated to an interoperable alternative as follows:
+While it is useful to be able to configure and run simulation processes using specific engines, any script written in this way would not be portable since we can't guarantee what software will be available on a different computer. To this end, the `BioSimSpace.MD` package provides functionality for automatically configuring a simulation process using _any_ suitable MD engine that is installed on the host system. As long as the user has installed an external package using the default installation procedure for that package, or has made sure that the executable is in their shell's path, BioSimSpace will find it. In the case of finding multiple MD engines, BioSimSpace will make a choice based on the file format of the system (to minimise conversions) and whether the user requests GPU support. As an example, the AMBER specific example in the previous section can be translated to an interoperable alternative as follows:
 
 ```python
 protocol = BSS.Protocol.Minimisation()
@@ -147,6 +147,29 @@ from the command-line (bottom)](figures/fig2.png)
 
 When working interactively, BioSimSpace also provides functionality for interacting with processes while they are running. This allows the user to monitor the progress of a simulation and generate near real-time plots and visualisations.
 
+While BioSimSpace isn't intended to be a workflow manager it does provide a means of chaining together nodes by passing the output of one node as the input to another. For example, given the following YAML configuration file, `config.yaml`:
+
+```yaml
+files:
+- amber/ala.crd
+- amber/ala.top
+```
+it would be possible to run a minimisation followed by an equilibration as follows:
+
+```sh
+python minimisation.py --config config.yaml && python equilibration.py --config output.yaml
+```
+
+Nodes can also be accessed from within BioSimSpace, allowing the user access to existing functionality as building blocks for more complex scripts. For example, the minimisation node can be run from within BioSimSpace as follows:
+
+```python
+# Create a dictionary of inputs to the node.
+input = {"files" : ["amber/ala.crd", "amber/ala.top"], "steps" : 1000}
+
+# Run the node and capture the output as a dictionary.
+output = BSS.Node.run("minimisation", input)
+```
+
 ## Forwards compatibility
 
 To ensure that BioSimSpace nodes are forwards compatible as new features are added all sub packages can query their own functionality and present this to the user. For example, calling `BioSimSpace.IO.fileFormats()` returns a list of the currently supported molecular file formats, `BioSimSpace.Solvent.waterModels` returns a list of the supported water models, etc. These values can be passed as the `allowed` keyword argument when setting an input requirement of a node, ensuring that the node supports the latest functionality of the package version that is installed. The following code snippet shows a node that can be used to convert to any supported molecular file format, which will continue to work as additional formats are added.
@@ -189,6 +212,10 @@ node.validate()
 Figure 2 shows how the `allowed=BSS.IO.fileFormats()` argument is translated into a dropdown menu for the Jupyter GUI (top), or using the _choices_ option of argparse on the command-line (bottom). This means that the script is adaptive to the support of additional file parsers in future without need for modification.
 
 ![BioSimSpace nodes are adaptive to new functionality without modification.](figures/fig3.png)
+
+## Ease of use
+
+BioSimSpace is avaiable to install from source, as a binary, and as a [conda package](https://anaconda.org/michellab/biosimspace), all of which are continually built and deployed as part of our [developent pipelone](https://dev.azure.com/michellab/BioSimSpace/_build). This means that it is easy for users to keep up to date with the latest features, without having to wait for a new release. In addition, access to BioSimSpace is always available through our [notebook server](https://notebook.biosimspace.org), where users are free to work through tutorials and workshop material and make use of our existing repository of nodes.
 
 # Acknowledgments
 
