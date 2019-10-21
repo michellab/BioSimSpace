@@ -1,0 +1,64 @@
+@article{ref-AMBER,
+author = {Case, David A. and Cheatham III, Thomas E. and Darden, Tom and Gohlke, Holger and Luo, Ray and Merz Jr., Kenneth M. and Onufriev, Alexey and Simmerling, Carlos and Wang, Bing and Woods, Robert J.},
+title = {The Amber biomolecular simulation programs},
+journal = {Journal of Computational Chemistry},
+volume = {26},
+number = {16},
+pages = {1668-1688},
+keywords = {Amber, biomolecular simulation programs},
+doi = {10.1002/jcc.20290},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20290},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/jcc.20290},
+abstract = {Abstract We describe the development, current features, and some directions for future development of the Amber package of computer programs. This package evolved from a program that was constructed in the late 1970s to do Assisted Model Building with Energy Refinement, and now contains a group of programs embodying a number of powerful tools of modern computational chemistry, focused on molecular dynamics and free energy calculations of proteins, nucleic acids, and carbohydrates. © 2005 Wiley Periodicals, Inc. J Comput Chem 26: 1668–1688, 2005},
+year = {2005}
+}
+
+@article{ref-GROMACS,
+title = "GROMACS: A message-passing parallel molecular dynamics implementation",
+journal = "Computer Physics Communications",
+volume = "91",
+number = "1",
+pages = "43 - 56",
+year = "1995",
+issn = "0010-4655",
+doi = "https://doi.org/10.1016/0010-4655(95)00042-E",
+url = "http://www.sciencedirect.com/science/article/pii/001046559500042E",
+author = "H.J.C. Berendsen and D. van der Spoel and R. van Drunen",
+keywords = "Molecular dynamics, Parallel computing",
+abstract = "A parallel message-passing implementation of a molecular dynamics (MD) program that is useful for bio(macro)molecules in aqueous environment is described. The software has been developed for a custom-designed 32-processor ring GROMACS (GROningen MAchine for Chemical Simulation) with communication to and from left and right neighbours, but can run on any parallel system onto which a a ring of processors can be mapped and which supports PVM-like block send and receive calls. The GROMACS software consists of a preprocessor, a parallel MD and energy minimization program that can use an arbitrary number of processors (including one), an optional monitor, and several analysis tools. The programs are written in ANSI C and available by ftp (information: gromacs@chem.rug.nl). The functionality is based on the GROMOS (GROningen MOlecular Simulation) package (van Gunsteren and Berendsen, 1987; BIOMOS B.V., Nijenborgh 4, 9747 AG Groningen). Conversion programs between GROMOS and GROMACS formats are included. The MD program can handle rectangular periodic boundary conditions with temperature and pressure scaling. The interactions that can be handled without modification are variable non-bonded pair interactions with Coulomb and Lennard-Jones or Buckingham potentials, using a twin-range cut-off based on charge groups, and fixed bonded interactions of either harmonic or constraint type for bonds and bond angles and either periodic or cosine power series interactions for dihedral angles. Special forces can be added to groups of particles (for non-equilibrium dynamics or for position restraining) or between particles (for distance restraints). The parallelism is based on particle decomposition. Interprocessor communication is largely limited to position and force distribution over the ring once per time step."
+}
+
+@article{ref-NAMD,
+author = {Phillips, James C. and Braun, Rosemary and Wang, Wei and Gumbart, James and Tajkhorshid, Emad and Villa, Elizabeth and Chipot, Christophe and Skeel, Robert D. and Kalé, Laxmikant and Schulten, Klaus},
+title = {Scalable molecular dynamics with NAMD},
+journal = {Journal of Computational Chemistry},
+volume = {26},
+number = {16},
+pages = {1781-1802},
+keywords = {biomolecular simulation, molecular dynamics, parallel computing},
+doi = {10.1002/jcc.20289},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20289},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/jcc.20289},
+abstract = {Abstract NAMD is a parallel molecular dynamics code designed for high-performance simulation of large biomolecular systems. NAMD scales to hundreds of processors on high-end parallel platforms, as well as tens of processors on low-cost commodity clusters, and also runs on individual desktop and laptop computers. NAMD works with AMBER and CHARMM potential functions, parameters, and file formats. This article, directed to novices as well as experts, first introduces concepts and methods used in the NAMD program, describing the classical molecular dynamics force field, equations of motion, and integration methods along with the efficient electrostatics evaluation algorithms employed and temperature and pressure controls used. Features for steering the simulation across barriers and for calculating both alchemical and conformational free energy differences are presented. The motivations for and a roadmap to the internal design of NAMD, implemented in C++ and based on Charm++ parallel objects, are outlined. The factors affecting the serial and parallel performance of a simulation are discussed. Finally, typical NAMD use is illustrated with representative applications to a small, a medium, and a large biomolecular system, highlighting particular features of NAMD, for example, the Tcl scripting language. The article also provides a list of the key features of NAMD and discusses the benefits of combining NAMD with the molecular graphics/sequence analysis software VMD and the grid computing/collaboratory software BioCoRE. NAMD is distributed free of charge with source code at www.ks.uiuc.edu. © 2005 Wiley Periodicals, Inc. J Comput Chem 26: 1781–1802, 2005},
+year = {2005}
+}
+
+@article{ref-OPENMM,
+    author = {Eastman, Peter AND Swails, Jason AND Chodera, John D. AND McGibbon, Robert T. AND Zhao, Yutong AND Beauchamp, Kyle A. AND Wang, Lee-Ping AND Simmonett, Andrew C. AND Harrigan, Matthew P. AND Stern, Chaya D. AND Wiewiora, Rafal P. AND Brooks, Bernard R. AND Pande, Vijay S.},
+    journal = {PLOS Computational Biology},
+    publisher = {Public Library of Science},
+    title = {OpenMM 7: Rapid development of high performance algorithms for molecular dynamics},
+    year = {2017},
+    month = {07},
+    volume = {13},
+    url = {https://doi.org/10.1371/journal.pcbi.1005659},
+    pages = {1-17},
+    abstract = {OpenMM is a molecular dynamics simulation toolkit with a unique focus on extensibility. It allows users to easily add new features, including forces with novel functional forms, new integration algorithms, and new simulation protocols. Those features automatically work on all supported hardware types (including both CPUs and GPUs) and perform well on all of them. In many cases they require minimal coding, just a mathematical description of the desired function. They also require no modification to OpenMM itself and can be distributed independently of OpenMM. This makes it an ideal tool for researchers developing new simulation methods, and also allows those new methods to be immediately available to the larger community.},
+    number = {7},
+    doi = {10.1371/journal.pcbi.1005659}
+}
+
+@misc{ref-SIRE,
+    title = {Sire: An advanced, multiscale, molecular simulation framework},
+    howpublished = {\url{http://siremol.org}},
+}
