@@ -1,5 +1,5 @@
 ---
-title: 'BioSimSpace: An interoperable Python framework for biomolecular simulation.'
+title: 'BioSimSpace: An interoperable Python framework for biomolecular simulation'
 tags:
   - biomolecular-simulation
   - computational-chemistry
