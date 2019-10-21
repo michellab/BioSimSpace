@@ -29,7 +29,6 @@ Naming
 
 We follow a C++ style naming convention.
 
-
 * Packages: CamelCase
 * Classes: CamelCase
 * Methods: camelCase
