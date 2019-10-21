@@ -31,6 +31,7 @@ Functions
     help
     list
     run
+    setNodeDirectory
 
 Examples
 ========
@@ -62,6 +63,14 @@ Run the minimisation node.
 
    # Run the node and get the output as a dictionary.
    output = BSS.Node.run("minimisation", input)
+
+Set a custom directory for the node library.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   BSS.Node.setNodeDirectory("/path/to/node/library")
 """
 
 from ._node import *

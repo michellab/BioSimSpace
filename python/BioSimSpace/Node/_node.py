@@ -27,10 +27,10 @@ import yaml as _yaml
 
 from Sire import Base as _SireBase
 
-# Set the node directory.
+# Set the default node directory.
 _node_dir = _os.path.dirname(__file__) + "/_nodes"
 
-__all__ = ["list", "help", "run"]
+__all__ = ["list", "help", "run", "setNodeDirectory"]
 
 def list():
     """Return a list of the available nodes."""
@@ -143,3 +143,19 @@ def run(name, args={}):
     else:
         # Print the standard error, decoded as UTF-8.
         print(proc.stderr.decode("utf-8"))
+
+def setNodeDirectory(dir):
+    """Set the directory of the node library.
+
+       Parameters
+       ----------
+
+       dir : str
+           The path to the node library.
+    """
+
+    if not _os.path.isdir(dir):
+        raise IOError("Node directory '%s' doesn't exist!" % dir)
+
+    global _node_dir
+    _node_dir = dir
