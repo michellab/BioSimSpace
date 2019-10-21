@@ -6,7 +6,7 @@ BioSimSpace
 `BioSimSpace <https://github.com/michellab/BioSimSpace>`__ is an interoperable
 Python framework for biomolecular simulation. With it you can:
 
-* Write robust and portable biomolecular workflow components that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
+* Write robust and portable biomolecular :ref:`workflow components <ref_nodes>` that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
 * Interact with molecular-simulation processes in real time.
 
 Installation
@@ -25,13 +25,12 @@ Documentation
 
    api/index
 
-Development
-===========
+Nodes
+=====
 .. toctree::
    :maxdepth: 2
 
-   development
-   changelog
+   nodes
 
 Media
 =====
@@ -39,6 +38,14 @@ Media
    :maxdepth: 2
 
    media
+
+Development
+===========
+.. toctree::
+   :maxdepth: 2
+
+   development
+   changelog
 
 Legal Notices
 =============
