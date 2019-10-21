@@ -220,7 +220,3 @@ BioSimSpace is avaiable to install from source, as a binary, and as a [conda pac
 # Acknowledgments
 
 This work was funded through an EPSRC Flagship Software grant: EP/P022138/1.
-
-# References
-
-(Probably need to cite AMBER/GROMACS. Not sure whether to use web sites, or papers.)
