@@ -9,6 +9,10 @@
    :target: https://anaconda.org/michellab/biosimspace
    :alt: Conda Downloads
 
+.. image:: https://img.shields.io/badge/License-GPL%20v2-blue.svg
+   :target: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+   :alt: License
+
 About
 -----
 
