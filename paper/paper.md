@@ -216,7 +216,7 @@ node.setOutput("converted",
 node.validate()
 ```
 
-Figure 2 shows how the `allowed=BSS.IO.fileFormats()` argument is translated into a dropdown menu for the Jupyter GUI (top), or using the _choices_ option of argparse on the command-line (bottom). This means that the script is adaptive to the support of additional file parsers in future without need for modification.
+Figure 3 shows how the `allowed=BSS.IO.fileFormats()` argument is translated into a dropdown menu for the Jupyter GUI (top), or using the _choices_ option of argparse on the command-line (bottom). This means that the script is adaptive to the support of additional file parsers in future without need for modification.
 
 ![BioSimSpace nodes are adaptive to new functionality without modification.](figures/fig3.png)
 
