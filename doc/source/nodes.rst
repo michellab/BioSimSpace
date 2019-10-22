@@ -195,12 +195,5 @@ modification.
 Examples
 ========
 
-Our `notebook server <https://notebook.biosimspace.org>`__ has a set of example
-nodes to get you started. To run any of these, simpy navigate to the ``demo``
-directory from the notebook server landing page. A description of each node
-is given below:
+A set of example nodes are available on our :ref:`notebook server <ref_notebook>`.
 
-* ``conversion.ipynb``: Convert between common molecular file formats.
-* ``input_files.ipynb``: Generate molecular dynamics input files for a range of protocols and molecular dynamics engines.
-* ``molecular_setup.ipynb``: Parameterise and solvate a molecule ready for simulation.
-* ``minimisation.ipynb``: Minimise a molecular configuration.

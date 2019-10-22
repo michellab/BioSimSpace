@@ -32,6 +32,13 @@ Nodes
 
    nodes
 
+Notebook server   
+===============
+.. toctree::
+   :maxdepth: 2
+
+   notebook
+
 Media
 =====
 .. toctree::
