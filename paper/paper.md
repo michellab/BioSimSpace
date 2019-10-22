@@ -32,7 +32,7 @@ bibliography: paper.bib
 
 # Summary
 
-In most research communities there is not a single, unified software-framework. Instead, researchers are presented with a collection of competing packages from which they pick and choose the functionality that they desire. Interoperability between packages is often poor, with incompatibilities between file formats, hardware, etc. This leads to brittle workflows, poor reproducibility, and lock in to specific software. For the biomolecular simulation community, our solution has been the introduction of an interoperable framework that collects together the core functionality of many packages and exposes it through a simple Python API. By not choosing to reinvent the wheel, we can take advantage of all the fantastic software that has already been written, and can easily plug into new software packages as they appear. Our software can convert between many common molecular file formats and automatically find packages available within the environment on which it is run. This allows allows the user to write portable workflow components that can be run with different input, on different environments, and in completely different ways, e.g. from the command-line, or within a [Jupyter](https://jupyter.org) notebook running on a cloud server.
+In most research communities there is not a single, unified software-framework. Instead, researchers are presented with a collection of competing packages from which they pick and choose the functionality that they desire. Interoperability between packages is often poor, with incompatibilities between file formats, hardware, etc. This leads to brittle workflows, poor reproducibility, and lock in to specific software. For the biomolecular simulation community, our solution has been the introduction of an interoperable framework that collects together the core functionality of many packages and exposes it through a simple Python API. By not choosing to reinvent the wheel, we can take advantage of all the fantastic software that has already been written, and can easily plug into new software packages as they appear. Our software can convert between many common molecular file formats and automatically find packages available within the environment on which it is run. This allows allows the user to write portable workflow components that can be run with different input, on different environments, and in completely different ways, e.g. from the command-line, or within a Jupyter notebook running on a cloud server.
 
 # Molecular dynamics
 
@@ -46,10 +46,9 @@ While, broadly speaking, the different MD engines offer a similar range of featu
 
 At its core, BioSimSpace is built around a powerful set of file parsers which allow reading and writing of a wide range of molecular file formats. File input/output is provided via the `BioSimSpace.IO` package using parsers from the [Sire][@ref-SIRE] molecular simulation framework, on top of which BioSimSpace is built. Unlike many other programs, we take the approach that it is the _contents_ of the file that defines it format, not the _extension_. As such, we attempt to parse a file with all of our parsers in parallel. Any parser for which the contents of the file is incompatible will be rejected early, with the eventual format of the file determined by the parser that completed without error.
 
-Typically, the information needed to construct a molecular system is split across multiple files, e.g. a _coordinate_ file containing the atomic coordinates, and a _topology_ file that describes how the atoms within each molecule are bonded together, along with parameters for the potential of the molecular model. To handle this, each of our parsers are assigned as being able to _lead_, or _follow_, or both. Lead parsers are able to initialise a molecular system (typically by constructing the topology), whereas those that follow can add additional information to an existing molecular system. Lead parsers may also be able to follow, such that when multiple lead parsers are associated with a set of files then the one that ultimately leads will be determined by which lead parser is unable to follow. This approach allows us to easily parse molecular information from multiple files, even if those formats aren't typically associated with each other. As long as the molecular topology corresponding the information in the files is consistent, then they can be read. For instance, one can initialise a system by reading an AMBER format topology, and obtain the coordinates of the system from a [Protein Data Bank](https://www.rcsb.org) (PDB) file.
+Typically, the information needed to construct a molecular system is split across multiple files, e.g. a _coordinate_ file containing the atomic coordinates, and a _topology_ file that describes how the atoms within each molecule are bonded together, along with parameters for the potential of the molecular model. To handle this, each of our parsers are assigned as being able to _lead_, or _follow_, or both. Lead parsers are able to initialise a molecular system (typically by constructing the topology), whereas those that follow can add additional information to an existing molecular system. Lead parsers may also be able to follow, such that when multiple lead parsers are associated with a set of files then the one that ultimately leads will be determined by which lead parser is unable to follow. This approach allows us to easily parse molecular information from multiple files, even if those formats aren't typically associated with each other. As long as the molecular topology corresponding the information in the files is consistent, then they can be read. For instance, one can initialise a system by reading an AMBER format topology, and obtain the coordinates of the system from a Protein Data Bank (PDB) file.
 
-As files are parsed, records in those files are assigned to a set of _properties_ that are associated with molecules in the system, e.g. `charge`, `coordinates`, `element`, etc. While some of these properties are unique to particular parsers, others are shared across formats and are converted to a consistent set of internal units on read. Those properties which represent mathematical expressions are stored using Sire's built in computer algebra system. On write, each parser expects molecules in the system to contain a specific set of properties, which are then extracted and converted in order to generate the appropriate records for the format in question. In this way, a bond record from an [AMBER](http://ambermd.org) format file can be read into an internal bond expression, which could then be converted to the appropriate [GROMACS](http://www.gromacs.org) bond record on write.
-
+As files are parsed, records in those files are assigned to a set of _properties_ that are associated with molecules in the system, e.g. `charge`, `coordinates`, `element`, etc. While some of these properties are unique to particular parsers, others are shared across formats and are converted to a consistent set of internal units on read. Those properties which represent mathematical expressions are stored using Sire's built in computer algebra system. On write, each parser expects molecules in the system to contain a specific set of properties, which are then extracted and converted in order to generate the appropriate records for the format in question. In this way, a bond record from an AMBER format file can be read into an internal bond expression, which could then be converted to the appropriate GROMACS bond record on write.
 
 ![Files are parsed in parallel with the parser that successfully reads the file determining the file format. Once all files are parsed, a lead parser (solid red arrows) constructs the topology of the molecular system. Records within the file, e.g. representing terms in the molecular potential such as bonds, angles, etc., are converted into file format specific representations, then stored internally as properties of the molecule as general algebraic expressions. Parsers that follow add additional information to an existing system. Here the `AmberRst7` parser adds coordinate and simulation box data to the system (dashed blue arrows). The file format associated with the files is also stored as a property of the system so that nodes can always convert back to the original format on write.](figures/fig1.png)
 
@@ -106,12 +105,17 @@ node.addAuthor(name="Lester Hedges",
 node.setLicense("GPLv3")
 
 # Set the node inputs.
-node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.",
-                                           minimum=0, maximum=1000000, default=10000))
+node.addInput("files",
+    BSS.Gateway.FileSet(help="A set of molecular input files."))
+node.addInput("steps",
+    BSS.Gateway.Integer(help="The number of minimisation steps.",
+                        minimum=0,
+                        maximum=1000000,
+                        default=10000))
 
 # Set the node outputs.
-node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
+node.addOutput("minimised",
+    BSS.Gateway.FileSet(help="The minimised molecular system."))
 
 # Show the graphical user interface (GUI) to allow the user to set the inputs.
 # This will only happen if running interactively, i.e. in a Jupyter notebook.
@@ -140,7 +144,7 @@ node.setOutput("minimised", BSS.IO.saveMolecules("minimised",
 node.validate()
 ```
 
-BioSimSpace nodes are flexible in the way in which they can be used, with the same script working seamlessly from within a Jupyter notebook or on the command-line. Typically, a user would a write a node as a fully documented, interactive Jupyter notebook, then save it as a regular Python script to run from the command-line. (For inclusion here we simply include the Python script representation of the node, which could be re-converted to a notebook using, e.g., [p2j](https://pypi.org/project/p2j).) Any purely interactive elements included in the node, e.g.  visualisations and plots, are simply ignored when the script is run in a non-interactive mode. To facilitate this dual-use the `node.addInput` method generates a custom [ipywidgets](https://ipywidgets.readthedocs.io/en/latest) based graphical user interface for interative use in Jupyter, or a custom [argparse](https://docs.python.org/3/library/argparse.html) parser for handling command-line arguments. Figure 1 shows the example node above running within a Jupyter notebook (top) and from the command-line (bottom).
+BioSimSpace nodes are flexible in the way in which they can be used, with the same script working seamlessly from within a Jupyter notebook or on the command-line. Typically, a user would a write a node as a fully documented, interactive Jupyter notebook, then save it as a regular Python script to run from the command-line. (For inclusion here we simply include the Python script representation of the node, which could be re-converted to a notebook using, e.g., p2j.) Any purely interactive elements included in the node, e.g.  visualisations and plots, are simply ignored when the script is run in a non-interactive mode. To facilitate this dual-use the `node.addInput` method generates a custom ipywidgets based graphical user interface for interative use in Jupyter, or a custom argparse parser for handling command-line arguments. Figure 1 shows the example node above running within a Jupyter notebook (top) and from the command-line (bottom).
 
 ![BioSimSpace nodes can be run within a Jupyter notebook (top) or
 from the command-line (bottom)](figures/fig2.png)
@@ -157,7 +161,8 @@ files:
 it would be possible to run a minimisation followed by an equilibration as follows:
 
 ```sh
-python minimisation.py --config config.yaml && python equilibration.py --config output.yaml
+python minimisation.py --config config.yaml && \
+python equilibration.py --config output.yaml
 ```
 
 Nodes can also be accessed from within BioSimSpace, allowing the user access to existing functionality as building blocks for more complex scripts. For example, the minimisation node can be run from within BioSimSpace as follows:
@@ -187,9 +192,11 @@ node.addAuthor(name="Lester Hedges",
 node.setLicense("GPLv3")
 
 # Set the node inputs.
-node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-node.addInput("file_format", BSS.Gateway.String(help="The format to convert to.",
-                                                allowed=BSS.IO.fileFormats()))
+node.addInput("files",
+    BSS.Gateway.FileSet(help="A set of molecular input files."))
+node.addInput("file_format",
+    BSS.Gateway.String(help="The format to convert to.",
+                       allowed=BSS.IO.fileFormats()))
 
 # Set the node outputs.
 node.addOutput("converted", BSS.Gateway.File(help="The converted file."))
@@ -215,7 +222,7 @@ Figure 2 shows how the `allowed=BSS.IO.fileFormats()` argument is translated int
 
 ## Ease of use
 
-BioSimSpace is avaiable to install from source, as a binary, and as a [conda package](https://anaconda.org/michellab/biosimspace), all of which are continually built and deployed as part of our [developent pipelone](https://dev.azure.com/michellab/BioSimSpace/_build). This means that it is easy for users to keep up to date with the latest features, without having to wait for a new release. In addition, access to BioSimSpace is always available through our [notebook server](https://notebook.biosimspace.org), where users are free to work through tutorials and workshop material and make use of our existing repository of nodes.
+BioSimSpace is avaiable to install from source, as a binary, and as a conda package (https://anaconda.org/michellab/biosimspace), all of which are continually built and deployed as part of our developent pipeline (https://dev.azure.com/michellab/BioSimSpace). This means that it is easy for users to keep up to date with the latest features, without having to wait for a new release. In addition, access to BioSimSpace is always available through our notebook server (https://notebook.biosimspace.org), where users are free to work through tutorials and workshop material and make use of our existing repository of nodes.
 
 # Acknowledgments
 
