@@ -13,6 +13,10 @@
    :target: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
    :alt: License
 
+.. image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
+   :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
+   :alt: Paper
+
 About
 -----
 
