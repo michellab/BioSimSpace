@@ -33,6 +33,7 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Vol as _SireVol
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace import Units as _Units
 
@@ -184,9 +185,13 @@ class SireWrapper():
                                     .move()                                           \
                                     .translate(_SireMaths.Vector(vec), _property_map) \
                                     .commit()
-        except UserWarning:
-            raise _IncompatibleError("Cannot compute axis-aligned bounding box since "
-                                     "the object has no 'coordinates' property.") from None
+        except UserWarning as e:
+            msg = "Cannot compute axis-aligned bounding box " + \
+                   "since the object has no 'coordinates' property."
+            if _isVerbose():
+                raise _IncompatibleError(msg) from e
+            else:
+                raise _IncompatibleError(msg) from None
 
     def getAxisAlignedBoundingBox(self, property_map={}):
         """Get the axis-aligned bounding box enclosing the object.
@@ -261,9 +266,14 @@ class SireWrapper():
         except:
             try:
                 c = self.toMolecule()._sire_object.property(prop)
-            except:
-                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
-                                         "box since the object has no 'coordinates' property.") from None
+            except Exception as e:
+                msg = "Cannot compute axis-aligned bounding box " + \
+                      "since the object has no 'coordinates' property."
+                if _isVerbose():
+                    print(msg)
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
 
         # We have a vector of coordinates. (Multiple atoms)
         if self._is_multi_atom:

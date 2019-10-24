@@ -33,6 +33,7 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace import _isVerbose
 from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
@@ -368,8 +369,12 @@ class Molecules(_SireWrapper):
             # Query the Sire system.
             search_result = self._sire_object.search(query)
 
-        except:
-            raise ValueError("'Invalid search query: %r" % query) from None
+        except Exception as e:
+            msg = "'Invalid search query: %r" % query
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         return _SearchResult(search_result)
 

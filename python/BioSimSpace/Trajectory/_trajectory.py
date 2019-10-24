@@ -37,6 +37,7 @@ import warnings as _warnings
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace.Process._process import Process as _Process
 from BioSimSpace._SireWrappers import System as _System
@@ -115,9 +116,13 @@ def getFrame(trajectory, topology, index):
     # Load the frame into a System object.
     try:
         system = _System(_SireIO.MoleculeParser.read([topology, frame_file]))
-    except:
+    except Exception as e:
         _os.remove(frame_file)
-        raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
+        msg = "Failed to read trajectory frame: '%s'" % frame_file
+        if _isVerbose():
+            raise IOError(msg) from e
+        else:
+            raise IOError(msg) from None
 
     # Remove the temporary frame coordinate file.
     _os.remove(frame_file)
@@ -375,9 +380,13 @@ class Trajectory():
             # Load the frame and create a System object.
             try:
                 system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
-            except:
+            except Exception as e:
                 _os.remove(frame_file)
-                raise IOError("Failed to read trajectory frame: '%s'" % frame_file) from None
+                msg = "Failed to read trajectory frame: '%s'" % frame_file
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
 
             # Append the system to the list of frames.
             frames.append(system)
@@ -451,8 +460,12 @@ class Trajectory():
         # Use MDTraj to compute the RMSD.
         try:
             rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
-        except:
-            raise ValueError("Atom indices not found in the system.") from None
+        except Exception as e:
+            msg = "Atom indices not found in the system."
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         # Convert to a list and return.
         return list(rmsd)

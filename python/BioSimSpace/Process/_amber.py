@@ -42,7 +42,7 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _amber_home
+from BioSimSpace import _amber_home, _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
@@ -273,15 +273,23 @@ class Amber(_process.Process):
         try:
             rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
-        except:
-            raise IOError("Failed to write system to 'RST7' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'RST7' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # PRM file (topology).
         try:
             prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
-        except:
-            raise IOError("Failed to write system to 'PRM7' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PRM7' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.

@@ -37,7 +37,7 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _is_notebook
+from BioSimSpace import _is_notebook, _isVerbose
 from BioSimSpace.Process._process import Process as _Process
 from BioSimSpace._SireWrappers import System as _System
 
@@ -364,8 +364,13 @@ class View():
             try:
                 pdb = _SireIO.PDB2(system)
                 pdb.writeToFile(filename)
-            except:
-                raise IOError("Failed to write system to 'PDB' format.") from None
+            except Exception as e:
+                msg = "Failed to write system to 'PDB' format."
+                if _isVerbose():
+                    print(msg)
+                    raise IOError(e) from None
+                else:
+                    raise IOError(msg) from None
 
         # Import NGLView when it is used for the first time.
         import nglview as _nglview
