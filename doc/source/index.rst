@@ -33,6 +33,14 @@ Documentation
 
    api/index
 
+Development
+===========
+.. toctree::
+   :maxdepth: 2
+
+   development
+   changelog
+
 Nodes
 =====
 .. toctree::
@@ -47,20 +55,19 @@ Notebook server
 
    notebook
 
+Protocols
+=========
+.. toctree::
+   :maxdepth: 2
+
+   protocols
+
 Media
 =====
 .. toctree::
    :maxdepth: 2
 
    media
-
-Development
-===========
-.. toctree::
-   :maxdepth: 2
-
-   development
-   changelog
 
 Legal Notices
 =============
