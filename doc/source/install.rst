@@ -207,3 +207,7 @@ recommended installation instructions.
 * `Amber / AmberTools <http://ambermd.org>`__ -- *Dynamics / Parameterisation*
 * `Gromacs <http://www.gromacs.org>`__ -- *Dynamics / Parameterisation / Solvation*
 * `Namd <http://www.ks.uiuc.edu/Research/namd>`__ -- *Dynamics*
+
+Please visit our :ref:`compatibility <ref_compatibility>` page to see which
+versions of the external dependencies BioSimSpace has currently been tested
+against.

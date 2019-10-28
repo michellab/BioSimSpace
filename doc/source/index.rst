@@ -17,6 +17,14 @@ Installation
 
    install
 
+Compatibility
+=============
+
+.. toctree::
+   :maxdepth: 2
+
+   compatibility
+
 Documentation
 =============
 
@@ -32,7 +40,7 @@ Nodes
 
    nodes
 
-Notebook server   
+Notebook server
 ===============
 .. toctree::
    :maxdepth: 2
