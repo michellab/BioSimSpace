@@ -42,6 +42,7 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
@@ -368,8 +369,12 @@ class GAFF(_protocol.Protocol):
         try:
             pdb = _SireIO.PDB2(s)
             pdb.writeToFile(prefix + "antechamber.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the Antechamber command.
         command = ("%s -at %d -i antechamber.pdb -fi pdb " +
@@ -459,8 +464,12 @@ class GAFF(_protocol.Protocol):
                     try:
                         par_mol = _Molecule(_IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
                                 ._getSireObject()[_SireMol.MolIdx(0)])
-                    except:
-                        raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
+                    except Exception as e:
+                        msg = "Failed to read molecule from: 'leap.top', 'leap.crd'"
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
 
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of

@@ -34,6 +34,7 @@ from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 from Sire import Vol as _SireVol
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
@@ -665,8 +666,12 @@ class System(_SireWrapper):
             # Query the Sire system.
             search_result = self._sire_object.search(query)
 
-        except:
-            raise ValueError("'Invalid search query: %r" % query) from None
+        except Exception as e:
+            msg = "'Invalid search query: %r" % query
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         return _SearchResult(search_result)
 
@@ -931,9 +936,13 @@ class System(_SireWrapper):
                         prop = "coordinates"
                 coord.extend(mol._sire_object.property(prop).toVector())
 
-            except UserWarning:
-                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
-                                         "box since a molecule has no 'coordinates' property.") from None
+            except UserWarning as e:
+                msg = "Unable to compute the axis-aligned bounding " + \
+                      "box since a molecule has no 'coordinates' property."
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)

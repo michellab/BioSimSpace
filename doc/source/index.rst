@@ -3,6 +3,18 @@
 BioSimSpace
 ===========
 
+.. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
+   :target: https://dev.azure.com/michellab/BioSimSpace/_build
+   :alt: Build Status
+
+.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
+   :target: https://anaconda.org/michellab/biosimspace
+   :alt: Conda Downloads
+
+.. image:: https://img.shields.io/badge/License-GPL%20v2-blue.svg
+   :target: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+   :alt: License
+
 `BioSimSpace <https://github.com/michellab/BioSimSpace>`__ is an interoperable
 Python framework for biomolecular simulation. With it you can:
 
@@ -17,6 +29,14 @@ Installation
 
    install
 
+Compatibility
+=============
+
+.. toctree::
+   :maxdepth: 2
+
+   compatibility
+
 Documentation
 =============
 
@@ -25,27 +45,6 @@ Documentation
 
    api/index
 
-Nodes
-=====
-.. toctree::
-   :maxdepth: 2
-
-   nodes
-
-Notebook server   
-===============
-.. toctree::
-   :maxdepth: 2
-
-   notebook
-
-Media
-=====
-.. toctree::
-   :maxdepth: 2
-
-   media
-
 Development
 ===========
 .. toctree::
@@ -53,6 +52,34 @@ Development
 
    development
    changelog
+
+Nodes
+=====
+.. toctree::
+   :maxdepth: 2
+
+   nodes
+
+Notebook server
+===============
+.. toctree::
+   :maxdepth: 2
+
+   notebook
+
+Protocols
+=========
+.. toctree::
+   :maxdepth: 2
+
+   protocols
+
+Media
+=====
+.. toctree::
+   :maxdepth: 2
+
+   media
 
 Legal Notices
 =============

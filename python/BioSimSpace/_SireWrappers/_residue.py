@@ -35,6 +35,8 @@ import string as _string
 
 from Sire import Mol as _SireMol
 
+from BioSimSpace import _isVerbose
+
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 class Residue(_SireWrapper):
@@ -260,8 +262,12 @@ class Residue(_SireWrapper):
             # Query the Sire system.
             search_result = self._sire_object.search(query)
 
-        except:
-            raise ValueError("'Invalid search query: %r" % query) from None
+        except Exception as e:
+            msg = "'Invalid search query: %r" % query
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         return _SearchResult(search_result)
 

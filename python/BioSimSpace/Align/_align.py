@@ -48,6 +48,7 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
@@ -385,8 +386,12 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Perform the alignment, mol0 to mol1.
     try:
         mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
-    except:
-        raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
+    except Exception as e:
+        msg = "Failed to align molecules based on mapping: %r" % mapping
+        if _isVerbose():
+            raise _AlignmentError(msg) from e
+        else:
+            raise _AlignmentError(msg) from None
 
     # Return the aligned molecule.
     return _Molecule(mol0)
@@ -739,8 +744,12 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
                     if scoring_function == "RMSDALIGN":
                         try:
                             molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
-                        except:
-                            raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                        except Exception as e:
+                            msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                            if _isVerbose():
+                                raise _AlignmentError(msg) from e
+                            else:
+                                raise _AlignmentError(msg) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
                         molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
@@ -860,8 +869,12 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
             if scoring_function == "RMSDALIGN":
                 try:
                     molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
-                except:
-                    raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                except Exception as e:
+                    msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                    if _isVerbose():
+                        raise _AlignmentError(msg) from e
+                    else:
+                        raise _AlignmentError(msg) from None
             # Flexibly align molecule0 to molecule1 based on the mapping.
             elif scoring_function == "RMSDFLEXALIGN":
                 molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), _from_sire_mapping(mapping),

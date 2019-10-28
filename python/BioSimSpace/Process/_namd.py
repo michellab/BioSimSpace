@@ -37,6 +37,7 @@ import warnings as _warnings
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
@@ -139,15 +140,23 @@ class Namd(_process.Process):
         try:
             psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)
             psf.writeToFile(self._psf_file)
-        except:
-            raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'CHARMMPSF' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # PDB file.
         try:
             pdb = _SireIO.PDB2(self._system._sire_object, self._property_map)
             pdb.writeToFile(self._top_file)
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Try to write a PDB "velocity" restart file.
         # The file will only be generated if all atoms in the system have

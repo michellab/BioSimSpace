@@ -37,7 +37,7 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace import _amber_home, _gmx_exe, _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -187,8 +187,12 @@ class Protocol():
         try:
             # Load the parameterised molecule.
             par_mol = _Molecule(_IO.readMolecules(output)._getSireObject()[_SireMol.MolIdx(0)])
-        except:
-            raise IOError("Failed to read molecule from: '%s', '%s'" % (output[0], output[1])) from None
+        except Exception as e:
+            msg = "Failed to read molecule from: '%s', '%s'" % (output[0], output[1])
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Make the molecule 'mol' compatible with 'par_mol'. This will create
         # a mapping between atom indices in the two molecules and add all of
@@ -230,8 +234,12 @@ class Protocol():
         try:
             pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "leap.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
@@ -305,8 +313,12 @@ class Protocol():
         try:
             pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "input.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the pdb2gmx command.
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \

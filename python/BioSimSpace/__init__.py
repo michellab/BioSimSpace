@@ -79,6 +79,36 @@ try:
 except NameError:
     _is_interactive = False      # Probably standard Python interpreter
 
+# Default to non-verbose error messages.
+_is_verbose = False
+
+def setVerbose(verbose):
+    """Set verbosity of error messages.
+
+       Parameters
+       ----------
+
+       verbose : bool
+           Whether to print verbose error messages.
+    """
+    if type(verbose) is not bool:
+        raise TypeError("'verbose' must be of type 'bool'.")
+
+    global _is_verbose
+    _is_verbose = verbose
+
+def _isVerbose():
+    """Whether verbose error messages are active.
+
+       Returns
+       ------
+
+       is_verbose : bool
+           Whether verbose error messages are active.
+    """
+    global _is_verbose
+    return _is_verbose
+
 from os import environ as _environ
 from warnings import warn as _warn
 
