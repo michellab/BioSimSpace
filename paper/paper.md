@@ -32,7 +32,7 @@ bibliography: paper.bib
 
 # Summary
 
-In most research communities there is not a single, unified software-framework. Instead, researchers are presented with a collection of competing packages from which they pick and choose the functionality that they desire. Interoperability between packages is often poor, with incompatibilities between file formats, hardware, etc. This leads to brittle workflows, poor reproducibility, and lock in to specific software. For the biomolecular simulation community, our solution has been the introduction of an interoperable framework that collects together the core functionality of many packages and exposes it through a simple Python API. By not choosing to reinvent the wheel, we can take advantage of all the fantastic software that has already been written, and can easily plug into new software packages as they appear. Our software can convert between many common molecular file formats and automatically find packages available within the environment on which it is run. This allows the user to write portable workflow components that can be run with different input, on different environments, and in completely different ways, e.g. from the command-line, or within a Jupyter notebook running on a cloud server.
+In most research communities there is not a single, unified software-framework. Instead, researchers are presented with a collection of competing packages from which they pick and choose the functionality that they desire. Interoperability between packages is often poor, with incompatibilities between file formats, hardware, etc. This leads to brittle workflows, poor reproducibility, and lock in to specific software. Working as part of the Collaborative Computational Project for Biomolecular Simulation (CCPBioSim), we have attempted to solve this problem for the biomolecular simulation community through the introduction of an interoperable framework that collects together the core functionality of many packages and exposes it through a simple Python API. By not choosing to reinvent the wheel, we can take advantage of all the fantastic software that has already been written, and can easily plug into new software packages as they appear. Our software can convert between many common molecular file formats and automatically find packages available within the environment on which it is run. This allows the user to write portable workflow components that can be run with different input, on different environments, and in completely different ways, e.g. from the command-line, or within a Jupyter notebook running on a cloud server.
 
 # Molecular dynamics
 
@@ -226,4 +226,4 @@ BioSimSpace is avaiable to install from source, as a binary, and as a conda pack
 
 # Acknowledgments
 
-This work was funded through an EPSRC Flagship Software grant: EP/P022138/1.
+BioSimSpace is the flagship software project of CCPBioSim and was funded through an EPSRC Flagship Software grant: EP/P022138/1.
