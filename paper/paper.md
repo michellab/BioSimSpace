@@ -24,7 +24,7 @@ authors:
 affiliations:
  - name: Advanced Computing Research Centre, University of Bristol
    index: 1
- - name: Department of Chemistry, University of Edinburgh
+ - name: EaStCHEM School of Chemistry, University of Edinburgh
    index: 2
 date: \today
 bibliography: paper.bib
