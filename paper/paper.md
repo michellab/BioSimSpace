@@ -224,4 +224,4 @@ BioSimSpace is avaiable to install from source, as a binary, and as a conda pack
 
 # Acknowledgments
 
-BioSimSpace is the flagship software project of CCPBioSim and was funded through an EPSRC Flagship Software grant: EP/P022138/1.
+BioSimSpace is the flagship software project of CCPBioSim and was funded through an EPSRC Flagship Software grant: EP/P022138/1. CJW is funded by an EPSRC Research Software Engineering Fellowship: EP/N018591/1.
