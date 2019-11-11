@@ -194,33 +194,6 @@ from . import Trajectory
 from . import Types
 from . import Units
 
-# Top-level functions.
-
-def viewMolecules(files, idxs=None):
-    """View the molecules contained in the passed file(s). Optionally supply
-       a list of indices of molecules you want to view. This views the molecules
-       and also returns a view object that will allow you to change the view,
-       e.g. choosing different molecules to view etc.
-    """
-
-    if not _is_notebook:
-        _warn("You can only view molecules from within a Jupyter notebook.")
-        return None
-
-    if isinstance(files, str):
-        files = [files]
-
-    print("Reading molecules from '%s'" % files)
-    s = IO.readMolecules(files)
-
-    print("Rendering the molecules...")
-    v = Notebook.View(s)
-
-    if idxs:
-        return v.molecules(idxs)
-    else:
-        return v.system()
-
 from ._version import get_versions
 __version__ = get_versions()['version']
 del _version
