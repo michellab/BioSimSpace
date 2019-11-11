@@ -103,7 +103,7 @@ The `BSS.MD.run` function searches the system for suitable packages that support
 
 ## Robust and flexible workflow components
 
-The building blocks described above can be used to write interoperable workflow components, or _nodes_. Typically, a node will perform a single, well-defined, unit of work with clear inputs and outputs. The `BioSimSpace.Gatway` package acts as a bridge between BioSimSpace and the outside world, allowing a user to construct a node and define the input and output requirements, along with restrictions on their types and values. As an example, the following code snippet shows how the minimisation example described above can be translated into a node.
+The building blocks described above can be used to write interoperable workflow components, or _nodes_. Typically, a node will perform a single, well-defined, unit of work with clear inputs and outputs. The `BioSimSpace.Gateway` package acts as a bridge between BioSimSpace and the outside world, allowing a user to construct a node and define the input and output requirements, along with restrictions on their types and values. As an example, the following code snippet shows how the minimisation example described above can be translated into a node.
 
 ```python
 import BioSimSpace as BSS
