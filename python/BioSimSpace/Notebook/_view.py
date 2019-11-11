@@ -38,6 +38,7 @@ from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
 from BioSimSpace import _is_notebook, _isVerbose
+from BioSimSpace import IO as _IO
 from BioSimSpace.Process._process import Process as _Process
 from BioSimSpace._SireWrappers import System as _System
 
@@ -51,9 +52,12 @@ class View():
            ----------
 
            handle : :class:`Process <BioSimSpace.Process>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-               A handle to a process or system.
+                    :class:`System <BioSimSpace._SireWrappers.System>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecule>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecules>` \
+                    str, [str]
+               A handle to a process, system, molecule, or molecule container,
+               or the path to molecular input file(s).
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -63,8 +67,22 @@ class View():
 
         # Check the handle.
 
+        # Convert tuple to list.
+        if isinstance(handle, tuple):
+            handle = list(handle)
+
+        # Convert single string to list.
+        if isinstance(handle, str):
+            handle = [handle]
+
+        # List of strings (file paths).
+        if isinstance(handle, list) and all(isinstance(x, str) for x in handle):
+            system = _IO.readMolecules(handle)
+            self._handle = system._getSireObject()
+            self._is_process = False
+
         # BioSimSpace process.
-        if isinstance(handle, _Process):
+        elif isinstance(handle, _Process):
             self._handle = handle
             self._is_process = True
 
@@ -79,7 +97,11 @@ class View():
                 self._handle = handle._getSireObject()
                 self._is_process = False
             except:
-                raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+                raise TypeError("The handle must be of type 'BioSimSpace.Process', "
+                                "'BioSimSpace._SireWrappers.System', "
+                                "'BioSimSpace._SireWrappers.Molecule', "
+                                "'BioSimSpace._SireWrappers.Molecules', "
+                                "'str', or a list of 'str' types.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()

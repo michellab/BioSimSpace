@@ -235,7 +235,7 @@ class Molecules(_SireWrapper):
         return self[index]
 
     def toSystem(self):
-        """Convert a single Molecule to a System.
+        """Convert to a System object.
 
            Returns
            -------
