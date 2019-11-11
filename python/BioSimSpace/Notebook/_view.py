@@ -51,9 +51,10 @@ class View():
            ----------
 
            handle : :class:`Process <BioSimSpace.Process>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-               A handle to a process or system.
+                    :class:`System <BioSimSpace._SireWrappers.System>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecule>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecules>`
+               A handle to a process, system, molecule, or molecule container.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -79,7 +80,10 @@ class View():
                 self._handle = handle._getSireObject()
                 self._is_process = False
             except:
-                raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+                raise TypeError("The handle must be of type 'BioSimSpace.Process', "
+                                "'BioSimSpace._SireWrappers.System', "
+                                "'BioSimSpace._SireWrappers.Molecule', or "
+                                "'BioSimSpace._SireWrappers.Molecules'")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
