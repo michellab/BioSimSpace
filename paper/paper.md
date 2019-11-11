@@ -9,13 +9,22 @@ tags:
   - molecular dynamics
   - reproducibility
 authors:
-  - name: Lester Hedges
+  - name: Lester O. Hedges
     orcid: 0000-0002-5624-0500
     affiliation: 1
-  - name: Antonia Mey
+  - name: Antonia S.J.S. Mey
     orcid: 0000-0001-7512-5252
     affiliation: 2
-  - name: Christopher Woods
+  - name: Charles A. Laughton
+    orcid: 0000-0003-4090-3960
+    affiliation: 3
+  - name: Francesco L. Gervasio
+    orcid: 0000-0003-4831-5039
+    affiliation: 4
+  - name: Adrian J. Mulholland
+    orcid: 0000-0003-1015-4567
+    affiliation: 1
+  - name: Christopher J. Woods
     orcid: 0000-0001-6563-9903
     affiliation: 1
   - name: Julien Michel
@@ -26,6 +35,10 @@ affiliations:
    index: 1
  - name: EaStCHEM School of Chemistry, University of Edinburgh
    index: 2
+ - name: School of Pharmacy, University of Nottingham
+   index: 3
+ - name: Department of Chemistry and Institute of Structural and Molecular Biology, University College London
+   index: 4
 date: \today
 bibliography: paper.bib
 ---
