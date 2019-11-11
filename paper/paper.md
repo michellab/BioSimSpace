@@ -95,46 +95,39 @@ The building blocks described above can be used to write interoperable workflow 
 ```python
 import BioSimSpace as BSS
 
-# Initialise the Node object.
+# Initialise the Node object and set metadata.
 node = BSS.Gateway.Node("Minimise a molecular system and save to file.")
-
-# Set the node author and license.
 node.addAuthor(name="Lester Hedges",
                email="lester.hedges@bristol.ac.uk",
                affiliation="University of Bristol")
 node.setLicense("GPLv3")
 
-# Set the node inputs.
+# Set the inputs and outputs.
 node.addInput("files",
     BSS.Gateway.FileSet(help="A set of molecular input files."))
 node.addInput("steps",
     BSS.Gateway.Integer(help="The number of minimisation steps.",
-                        minimum=0,
-                        maximum=1000000,
-                        default=10000))
-
-# Set the node outputs.
+                        minimum=0, maximum=1000000, default=10000))
 node.addOutput("minimised",
     BSS.Gateway.FileSet(help="The minimised molecular system."))
 
 # Show the graphical user interface (GUI) to allow the user to set the inputs.
-# This will only happen if running interactively, i.e. in a Jupyter notebook.
+# This will only happen if running from within a Jupyter notebook.
 node.showControls()
 
-# Load the molecular system using the user defined input "files".
+# Load the molecular system and define the a minimisation protocol using the
+# user-define input.
 system = BSS.IO.readMolecules(node.getInput("files"))
-
-# Define the minimisation protocol using the user defined number of "steps".
 protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
 
-# Execute the process using any available molecular dynamics engine.
+# Execute a simulation process using any available molecular dynamics engine.
 process = BSS.MD.run(system, protocol)
 
 # Set the node output to the final configuration of the minimisation process.
-# Note that the pass block=True to the getSystem call to ensure that the
-# process finished before getting the final configuration. (It is possible
+# Note that the block=True to the getSystem call to ensure that the
+# process finishes before getting the final configuration. (It is possible
 # to query the running process in real time when running interactively.)
-# Note that the original file format of the system is preserved on write.
+# Note also that the original file format of the system is preserved on write.
 node.setOutput("minimised", BSS.IO.saveMolecules("minimised",
     process.getSystem(block=True), system.fileFormat()))
 
@@ -182,27 +175,20 @@ To ensure that BioSimSpace nodes are forwards compatible as new features are add
 ```python
 import BioSimSpace as BSS
 
-# Initialise the Node object.
+# Initialise the Node object and set metadata.
 node = BSS.Gateway.Node("Convert between molecular file formats.")
-
-# Set the node author and license.
 node.addAuthor(name="Lester Hedges",
                email="lester.hedges@bristol.ac.uk",
                affiliation="University of Bristol")
 node.setLicense("GPLv3")
 
-# Set the node inputs.
+# Set the inputs and outputs and launch the GUI.
 node.addInput("files",
     BSS.Gateway.FileSet(help="A set of molecular input files."))
 node.addInput("file_format",
     BSS.Gateway.String(help="The format to convert to.",
                        allowed=BSS.IO.fileFormats()))
-
-# Set the node outputs.
 node.addOutput("converted", BSS.Gateway.File(help="The converted file."))
-
-# Show the graphical user interface to allow the user to set the inputs.
-# This will only happen if running interactively, i.e. in a Jupyter notebook.
 node.showControls()
 
 # Load the molecular system using the user defined input "files".
@@ -212,7 +198,6 @@ system = BSS.IO.readMolecules(node.getInput("files"))
 node.setOutput("converted",
     BSS.IO.saveMolecules("converted", system, node.getInput("file_format")))
 
-# Validate the node.
 node.validate()
 ```
 
