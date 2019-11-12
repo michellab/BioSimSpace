@@ -14,18 +14,17 @@ year = {2005}
 }
 
 @article{ref-GROMACS,
-title = "GROMACS: A message-passing parallel molecular dynamics implementation",
-journal = "Computer Physics Communications",
-volume = "91",
-number = "1",
-pages = "43 - 56",
-year = "1995",
-issn = "0010-4655",
-doi = "https://doi.org/10.1016/0010-4655(95)00042-E",
-url = "http://www.sciencedirect.com/science/article/pii/001046559500042E",
-author = "H.J.C. Berendsen and D. van der Spoel and R. van Drunen",
-keywords = "Molecular dynamics, Parallel computing",
-abstract = "A parallel message-passing implementation of a molecular dynamics (MD) program that is useful for bio(macro)molecules in aqueous environment is described. The software has been developed for a custom-designed 32-processor ring GROMACS (GROningen MAchine for Chemical Simulation) with communication to and from left and right neighbours, but can run on any parallel system onto which a a ring of processors can be mapped and which supports PVM-like block send and receive calls. The GROMACS software consists of a preprocessor, a parallel MD and energy minimization program that can use an arbitrary number of processors (including one), an optional monitor, and several analysis tools. The programs are written in ANSI C and available by ftp (information: gromacs@chem.rug.nl). The functionality is based on the GROMOS (GROningen MOlecular Simulation) package (van Gunsteren and Berendsen, 1987; BIOMOS B.V., Nijenborgh 4, 9747 AG Groningen). Conversion programs between GROMOS and GROMACS formats are included. The MD program can handle rectangular periodic boundary conditions with temperature and pressure scaling. The interactions that can be handled without modification are variable non-bonded pair interactions with Coulomb and Lennard-Jones or Buckingham potentials, using a twin-range cut-off based on charge groups, and fixed bonded interactions of either harmonic or constraint type for bonds and bond angles and either periodic or cosine power series interactions for dihedral angles. Special forces can be added to groups of particles (for non-equilibrium dynamics or for position restraining) or between particles (for distance restraints). The parallelism is based on particle decomposition. Interprocessor communication is largely limited to position and force distribution over the ring once per time step."
+title = "GROMACS: High performance molecular simulations through multi-level parallelism from laptops to supercomputers",
+journal = "SoftwareX",
+volume = "1-2",
+pages = "19 - 25",
+year = "2015",
+issn = "2352-7110",
+doi = "https://doi.org/10.1016/j.softx.2015.06.001",
+url = "http://www.sciencedirect.com/science/article/pii/S2352711015000059",
+author = "Mark James Abraham and Teemu Murtola and Roland Schulz and Szilárd Páll and Jeremy C. Smith and Berk Hess and Erik Lindahl",
+keywords = "Molecular dynamics, GPU, SIMD, Free energy",
+abstract = "GROMACS is one of the most widely used open-source and free software codes in chemistry, used primarily for dynamical simulations of biomolecules. It provides a rich set of calculation types, preparation and analysis tools. Several advanced techniques for free-energy calculations are supported. In version 5, it reaches new performance heights, through several new and enhanced parallelization algorithms. These work on every level; SIMD registers inside cores, multithreading, heterogeneous CPU–GPU acceleration, state-of-the-art 3D domain decomposition, and ensemble-level parallelization through built-in replica exchange and the separate Copernicus framework. The latest best-in-class compressed trajectory storage format is supported."
 }
 
 @article{ref-NAMD,
