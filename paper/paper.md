@@ -23,7 +23,7 @@ authors:
     affiliation: 4
   - name: Adrian J. Mulholland
     orcid: 0000-0003-1015-4567
-    affiliation: 1
+    affiliation: 5
   - name: Christopher J. Woods
     orcid: 0000-0001-6563-9903
     affiliation: 1
@@ -39,6 +39,8 @@ affiliations:
    index: 3
  - name: Department of Chemistry and Institute of Structural and Molecular Biology, University College London
    index: 4
+ - name: Centre for Computational Chemistry, School of Chemistry, University of Bristol
+   index: 5
 date: \today
 bibliography: paper.bib
 ---
