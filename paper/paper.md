@@ -224,6 +224,10 @@ Figure 3 shows how the `allowed=BSS.IO.fileFormats()` argument is translated int
 
 ![BioSimSpace nodes are adaptive to new functionality without modification.](figures/fig3.png)
 
+## Extensibility
+
+BioSimSpace has been developed with the intention of being easily extensible. Adding support for a new MD engine just requires the creation of a new `BioSimSpace.Process` class and accompanying functionality to translate the high level `BioSimSpace.Protocol` objects into package specific configuration files. Similarly, it is easy to add support for new tools and utilities as long as they read and write to one of the many molecular file formats that we support. For example, as an alternative to our built in molecular alignment code, it was trivial to wrap the FKCOMBU program from the KCOMBU [@ref-KCOMBU] package to enable flexible alignment of molecules. Importantly, support for new packages doesn't change our core API so that new functionality is exposed to users without breaking existing scripts.
+
 ## Ease of use
 
 BioSimSpace is avaiable to install from source, as a binary, and as a conda package (https://anaconda.org/michellab/biosimspace), all of which are continually built and deployed as part of our developent pipeline (https://dev.azure.com/michellab/BioSimSpace). This means that it is easy for users to keep up to date with the latest features, without having to wait for a new release. In addition, access to BioSimSpace is always available through our notebook server (https://notebook.biosimspace.org), where users are free to work through tutorials and workshop material and make use of our existing repository of nodes.
