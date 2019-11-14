@@ -57,7 +57,7 @@ Step 4
 Once the build has finished you can log into the `Oracle Cloud <https://cloud.oracle.com/home>`__
 and create pre-authenticated URLs for the new release binaries. (These files
 are currently located in the ``software_releases`` compartment of the ``Object Storage``
-menu. When generating a download URL make sure to choose a sensible expiry
+menu.) When generating a download URL make sure to choose a sensible expiry
 date. Copy the URL to your clipboard and add download links to the
 `install <https://github.com/michellab/BioSimSpace/blob/devel/doc/source/install.rst>`_
 page in the website documentation. (Note that the website won't be updated
