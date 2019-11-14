@@ -31,15 +31,15 @@ authors:
     orcid: 0000-0003-0360-1760
     affiliation: 2
 affiliations:
- - name: Advanced Computing Research Centre, University of Bristol
+ - name: Advanced Computing Research Centre, University of Bristol, UK
    index: 1
- - name: EaStCHEM School of Chemistry, University of Edinburgh
+ - name: EaStCHEM School of Chemistry, University of Edinburgh, UK
    index: 2
- - name: School of Pharmacy, University of Nottingham
+ - name: School of Pharmacy, University of Nottingham, UK
    index: 3
- - name: Department of Chemistry and Institute of Structural and Molecular Biology, University College London
+ - name: Department of Chemistry and Institute of Structural and Molecular Biology, University College London, UK
    index: 4
- - name: Centre for Computational Chemistry, School of Chemistry, University of Bristol
+ - name: Centre for Computational Chemistry, School of Chemistry, University of Bristol, UK
    index: 5
 date: \today
 bibliography: paper.bib
@@ -229,7 +229,8 @@ BioSimSpace has been developed with the intention of being easily extensible. Ad
 
 ## Advanced simulation methods
 
-As well as the basic molecular dynamics protocols described so far, BioSimSpace also supports several advanced biomolecular simulation techniques, providing an easy way to setup, run, and analyse complex simulations. Free-energy perturbation (FEP) [@ref-FEP] can be used to measure drug binding affinities and BioSimSpace has been used for a submission to the [Drug Design Data Resource](https://drugdesigndata.org) (D3R) [Grand Challenge 4](https://drugdesigndata.org/about/grand-challenge-4) (our submission resources are available [here](https://github.com/michellab/D3R2018)) and to compare results between SOMD and GROMACS. BioSimSpace also provides support for metadynamics [@ref-METADYNAMICS] simulations using [PLUMED](https://www.plumed.org) [@ref-PLUMED] and GROMACS. This powerful technique has wide-ranging application, from the prediction of equilibrium crystal structures, to the study of biomolecular dynamics. Our intention is to make these methods more widely accessible and to provide an easy way to benchmark them using different simulation engines.
+As well as the basic molecular dynamics protocols described so far, BioSimSpace also supports several advanced biomolecular simulation techniques that can be deployed with modular pipelines of setup, run, and analysis nodes executed with best-practices protocols encoded in the library. Our intention is to make it easier to benchmark complex biomolecular simulation techniques by varying different setup tools, simulation engines or analysis techniques. 
+For instance Free-Energy Perturbation (FEP) [@ref-FEP] functionality in BioSimSpace can currently be used to compute drug binding affinities with the simulation engines SOMD or GROMACS, keeping all setup and analysis protocols identicals so that any variability in the results can be ascribed to differences in the simulation engines and protocols only. BioSimSpace also provides support for metadynamics [@ref-METADYNAMICS] simulations using [PLUMED](https://www.plumed.org) [@ref-PLUMED] and GROMACS. The application of BioSimSpace FEP and metadynamics workflows to proteins of pharmaceutical interest will be reported elsewhere in due course. 
 
 ## Ease of use
 
