@@ -55,7 +55,7 @@ Within the Collaborative Computational Project for Biomolecular Simulation ([CCP
 
 # Molecular dynamics
 
-One of the core features of BioSimSpace is the ability to set up and run molecular dynamics (MD) simulations. There are a large number of packages that can run MD for biomolecules and BioSimSpace supports several of these: AMBER, GROMACS, and NAMD. BioSimSpace also comes with a bundled dynamics engine, [SOMD](https://siremol.org/tutorials/somd), which interfaces with the [OpenMM](http://openmm.org) [@ref-OPENMM] toolkit to provide GPU acceleration. This means that there is always a fall back in case no other MD engines are installed.
+One of the core features of BioSimSpace is the ability to set up and run molecular dynamics (MD) simulations. There are a large number of packages that can run MD for biomolecules and BioSimSpace supports several of these: AMBER, GROMACS, and NAMD. BioSimSpace also comes with a bundled MD engine, [SOMD](https://siremol.org/tutorials/somd), which interfaces with the [OpenMM](http://openmm.org) [@ref-OPENMM] toolkit to provide GPU acceleration. This means that there is always a fall back in case no other MD engines are installed.
 
 While, broadly speaking, the different MD engines offer a similar range of features, their interfaces are quite different. At the heart of this problem is the incompatibility between the molecular file formats used by the different packages. While they all contain the same information, i.e. how atoms are laid out in space and how they interact with each other, the structure of the files is very different. In order to provide interoperability betwen packages we need to be able to read and write many different file formats, and be able to interconvert between them too.
 
