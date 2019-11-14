@@ -3016,7 +3016,7 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     # If we get this far, then a ring wasn't broken.
     return False
 
-def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
+def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1, max_ring_size=12):
     """Internal function to test whether a perturbation changes the connectivity
        around two atoms such that a ring changes size.
 
@@ -3040,14 +3040,17 @@ def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1):
 
        idy1 : Sire.Mol.AtomIdx
            The index of the second atom in the second state.
+
+       max_ring_size : int
+           The maximum size of what is considered to be a ring.
     """
 
     # Have a ring changed size? If so, then the minimum path size between
     # two atoms will have changed.
 
     # Work out the paths connecting the atoms in the two end states.
-    paths0 = conn0.findPaths(idx0, idy0)
-    paths1 = conn1.findPaths(idx1, idy1)
+    paths0 = conn0.findPaths(idx0, idy0, max_ring_size)
+    paths1 = conn1.findPaths(idx1, idy1, max_ring_size)
 
     # Initalise the ring size in each end state.
     ring0 = None
