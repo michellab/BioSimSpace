@@ -158,8 +158,7 @@ node.validate()
 
 BioSimSpace nodes are flexible in the way in which they can be used, with the same script working seamlessly from within a Jupyter notebook or on the command-line. Typically, a user would a write a node as a fully documented, interactive Jupyter notebook, then save it as a regular Python script to run from the command-line. (For inclusion here we simply include the Python script representation of the node, which could be re-converted to a notebook using, e.g., [p2j](https://github.com/remykarem/python2jupyter).) Any purely interactive elements included in the node, e.g.  visualisations and plots, are simply ignored when the script is run in a non-interactive mode. To facilitate this dual-use the `node.addInput` method generates a custom [ipywidgets](https://ipywidgets.readthedocs.io/en/latest) based graphical user interface for interative use in Jupyter, or a custom [argparse](https://docs.python.org/3/library/argparse.html) parser for handling command-line arguments. Figure 2 shows the example node above running within a Jupyter notebook (top) and from the command-line (bottom).
 
-![BioSimSpace nodes can be run within a Jupyter notebook (top) or
-from the command-line (bottom)](figures/fig2.png)
+![BioSimSpace nodes can be run within a Jupyter notebook (top) or from the command-line (bottom)](figures/fig2.png)
 
 When working interactively, BioSimSpace also provides functionality for interacting with processes while they are running. This allows the user to monitor the progress of a simulation and generate near real-time plots and visualisations.
 
