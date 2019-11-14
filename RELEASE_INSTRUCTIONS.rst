@@ -15,7 +15,7 @@ Step 2
 ======
 
 When you're happy, tag the commit that you want to be associated with the
-release. The following with tag the latest commit:
+release. The following will tag the latest commit:
 
 .. code-block:: bash
 
@@ -69,7 +69,7 @@ Step 5
 ======
 
 Create a `GitHub release <https://github.com/michellab/BioSimSpace/releases>`_.
-When drafting the release, simpy choose the tag that you have created.
+When drafting the release, simply choose the tag that you have created.
 
 Step 6
 ======
