@@ -162,7 +162,7 @@ BioSimSpace nodes are flexible in the way in which they can be used, with the sa
 
 When working interactively, BioSimSpace also provides functionality for interacting with processes while they are running. This allows the user to monitor the progress of a simulation and generate near real-time plots and visualisations.
 
-While BioSimSpace isn't intended to be a workflow manager it does provide a means of chaining together nodes by passing the output of one node as the input to another. For example, given the following YAML configuration file, `config.yaml`:
+While BioSimSpace isn't intended to be a workflow manager it does provide a means of chaining together nodes by passing the output of one node as the input to another. For example, given the following [YAML](https://yaml.org) configuration file, `config.yaml`:
 
 ```yaml
 files:
