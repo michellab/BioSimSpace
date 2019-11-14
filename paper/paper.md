@@ -237,6 +237,6 @@ BioSimSpace is avaiable to install from [source](https://github.com/michellab/Bi
 
 # Acknowledgments
 
-BioSimSpace is the flagship software project of CCPBioSim and was funded through an EPSRC Flagship Software grant: EP/P022138/1. CJW is funded by an EPSRC Research Software Engineering Fellowship: EP/N018591/1.
+BioSimSpace is the flagship software project of CCPBioSim and was funded through an EPSRC Flagship Software grant: [EP/P022138/1](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/P022138/1). CJW is funded by an EPSRC Research Software Engineering Fellowship: [EP/N018591/1](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/N018591/1).
 
 # References
