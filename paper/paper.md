@@ -176,7 +176,7 @@ python minimisation.py --config config.yaml && \
 python equilibration.py --config output.yaml
 ```
 
-Nodes can also be accessed from within BioSimSpace, allowing the user access to existing functionality as building blocks for more complex scripts. For example, the minimisation node can be run from within BioSimSpace as follows:
+Nodes can also be run from within BioSimSpace itself, allowing the user access to existing functionality as building blocks for more complex scripts. For example, the minimisation node can be run from within BioSimSpace as follows:
 
 ```python
 # Create a dictionary of inputs to the node.
