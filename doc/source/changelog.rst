@@ -1,6 +1,14 @@
 Changelog
 =========
 
+`2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2019.2.0>`_ - Nov 22 2019
+------------------------------------------------------------------------------------------------
+
+* Make FKCOMBU download during conda build resilient to server downtime.
+* Added support for xtc trajectory files and custom protocols with GROMACS.
+* Fixed numerous typos in Sphinx documentation.
+* Added Journal of Open Source Software paper.
+
 `2019.2.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.1.0>`_ - Sep 11 2019
 ------------------------------------------------------------------------------------------------
 
