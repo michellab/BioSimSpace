@@ -102,9 +102,9 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-'logo_only': True
+'logo_only': False,
+'style_nav_header_background': '#161e3c'
 }
-
 # pngmath_latex_preamble = r"""
 # \usepackage{color}
 # \definecolor{textgray}{RGB}{51,51,51}
