@@ -11,7 +11,7 @@ ARG anaconda_token
 ENV ANACONDA_TOKEN=$anaconda_token
 
 # Install conda-build and anaconda-client
-RUN $HOME/sire.app/bin/conda install -y conda-build anaconda-client
+RUN $HOME/sire.app/bin/conda install -y conda-build=3.17 anaconda-client
 
 # Update the Conda package recipe.
 ADD update_recipe.sh .
