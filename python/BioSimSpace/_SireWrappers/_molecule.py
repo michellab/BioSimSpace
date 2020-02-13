@@ -998,7 +998,7 @@ class Molecule(_SireWrapper):
                 # Get the AtomIdx for the atoms in the bond.
                 idx0 = info.atomIdx(bond.atom0())
                 idx1 = info.atomIdx(bond.atom1())
-                
+
                 return (mol.atom(idx0).name().value(),
                         mol.atom(idx1).name().value())
 
@@ -1180,7 +1180,7 @@ class Molecule(_SireWrapper):
                 idx0 = info.atomIdx(angle.atom0())
                 idx1 = info.atomIdx(angle.atom1())
                 idx2 = info.atomIdx(angle.atom2())
-                
+
                 return (mol.atom(idx1).name().value(),
                         mol.atom(idx0).name().value(),
                         mol.atom(idx2).name().value())
@@ -1371,7 +1371,7 @@ class Molecule(_SireWrapper):
                 idx1 = info.atomIdx(dihedral.atom1())
                 idx2 = info.atomIdx(dihedral.atom2())
                 idx3 = info.atomIdx(dihedral.atom3())
-                
+
                 return (mol.atom(idx1).name().value(),
                         mol.atom(idx2).name().value(),
                         mol.atom(idx0).name().value(),
