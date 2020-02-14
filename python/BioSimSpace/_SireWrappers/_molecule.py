@@ -885,9 +885,22 @@ class Molecule(_SireWrapper):
 
             # 1) Atoms.
 
+            def atom_sorting_criteria(atom):
+                LJ0 = atom.property("LJ0");
+                LJ1 = atom.property("LJ1");
+                return (atom.name().value(),
+                        atom.property("ambertype0"),
+                        atom.property("ambertype1"),
+                        LJ0.sigma().value(),
+                        LJ1.sigma().value(),
+                        LJ0.epsilon().value(),
+                        LJ1.epsilon().value(),
+                        atom.property("charge0").value(),
+                        atom.property("charge1").value())
+
             # Print all atom records.
             if print_all_atoms:
-                for atom in mol.atoms():
+                for atom in sorted(mol.atoms(), key=lambda atom: atom_sorting_criteria(atom)):
                     # Start atom record.
                     file.write("    atom\n")
 
@@ -909,7 +922,7 @@ class Molecule(_SireWrapper):
 
             # Only print records for the atoms that are perturbed.
             else:
-                for idx in pert_idxs:
+                for idx in sorted(pert_idxs, key=lambda idx: atom_sorting_criteria(mol.atom(idx))):
                     # Get the perturbed atom.
                     atom = mol.atom(idx)
 
@@ -1401,11 +1414,13 @@ class Molecule(_SireWrapper):
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral.terms():
+                amber_dihedral_terms_sorted = sorted(
+                    amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final form    ")
-                for term in amber_dihedral.terms():
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
 
@@ -1436,11 +1451,13 @@ class Molecule(_SireWrapper):
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral.terms():
+                amber_dihedral_terms_sorted = sorted(
+                    amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
-                for term in amber_dihedral.terms():
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
@@ -1522,7 +1539,8 @@ class Molecule(_SireWrapper):
                             file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                             file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                             file.write("        initial_form  ")
-                            for term in amber_dihedral0.terms():
+                            for term in sorted(amber_dihedral0.terms(),
+                                               key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                 if zero_k and has_dummy_initial:
                                     k = 0.0
                                 else:
@@ -1530,7 +1548,8 @@ class Molecule(_SireWrapper):
                                 file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                             file.write("\n")
                             file.write("        final_form    ")
-                            for term in amber_dihedral1.terms():
+                            for term in sorted(amber_dihedral1.terms(),
+                                               key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                 if zero_k and has_dummy_final:
                                     k = 0.0
                                 else:
@@ -1638,11 +1657,13 @@ class Molecule(_SireWrapper):
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral.terms():
+                amber_dihedral_terms_sorted = sorted(
+                    amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final form    ")
-                for term in amber_dihedral.terms():
+                for term in amber_dihedral_terms_sorted:
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
 
@@ -1672,11 +1693,13 @@ class Molecule(_SireWrapper):
                 file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                 file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                 file.write("        initial_form  ")
-                for term in amber_dihedral0.terms():
+                for term in sorted(amber_dihedral0.terms(),
+                                   key=lambda t: (t.k(), t.periodicity(), t.phase())):
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                 file.write("\n")
                 file.write("        final_form    ")
-                for term in amber_dihedral1.terms():
+                for term in sorted(amber_dihedral1.terms(),
+                                   key=lambda t: (t.k(), t.periodicity(), t.phase())):
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                 file.write("\n")
 
@@ -1757,7 +1780,8 @@ class Molecule(_SireWrapper):
                             file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
                             file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                             file.write("        initial_form  ")
-                            for term in amber_dihedral0.terms():
+                            for term in sorted(amber_dihedral0.terms(),
+                                               key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                 if zero_k and has_dummy_initial:
                                     k = 0.0
                                 else:
@@ -1765,7 +1789,8 @@ class Molecule(_SireWrapper):
                                 file.write(" %5.4f %.1f %7.6f" % (k, term.periodicity(), term.phase()))
                             file.write("\n")
                             file.write("        final_form    ")
-                            for term in amber_dihedral1.terms():
+                            for term in sorted(amber_dihedral1.terms(),
+                                               key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                 if zero_k and has_dummy_final:
                                     k = 0.0
                                 else:
