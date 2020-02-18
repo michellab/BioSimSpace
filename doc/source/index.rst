@@ -1,4 +1,3 @@
-
 ===========
 BioSimSpace
 ===========
@@ -24,6 +23,27 @@ Python framework for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular :ref:`workflow components <ref_nodes>` that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
 * Interact with molecular-simulation processes in real time.
+
+Citation |DOI for Citing BioSimSpace|
+=====================================
+
+If you use BioSimSpace in any scientific software, please cite the following paper: ::
+
+    @article{Hedges2019,
+      doi = {10.21105/joss.01831},
+      url = {https://doi.org/10.21105/joss.01831},
+      year = {2019},
+      publisher = {The Open Journal},
+      volume = {4},
+      number = {43},
+      pages = {1831},
+      author = {Lester Hedges and Antonia Mey and Charles Laughton and Francesco Gervasio and Adrian Mulholland and Christopher Woods and Julien Michel},
+      title = {BioSimSpace: An interoperable Python framework for biomolecular simulation},
+      journal = {Journal of Open Source Software}
+    }
+
+.. |DOI for Citing BioSimSpace| image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
+   :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
 
 Installation
 ============
