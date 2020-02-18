@@ -44,7 +44,7 @@ jobs:
     displayName: 'Deploy binary to biosimspace.org'
   - script: |
       # finally create the BioSimSpace Conda package and upload to the Anaconda Cloud.
-      $HOME/sire.app/bin/conda clean --all
+      $HOME/sire.app/bin/conda clean -y --all
       bash docker/conda/update_recipe.sh
       bash docker/conda/build_and_deploy.sh
     env:
