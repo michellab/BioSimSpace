@@ -654,14 +654,8 @@ class Node():
             # Flag that this widget references files.
             widget._is_file = True
 
-            # Store a reference to the node.
-            widget._node = self
-
             # Store the requirement name.
             widget._name = name
-
-            # Store the requirement.
-            widget._input = input
 
             # Bind the callback function.
             widget.observe(_on_file_upload, names="data")
