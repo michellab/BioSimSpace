@@ -42,6 +42,7 @@ import zipfile as _zipfile
 from Sire import Mol as _SireMol
 
 from BioSimSpace import _is_interactive, _is_notebook
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace.Protocol import Metadynamics as _Metadynamics
 from BioSimSpace.Protocol._protocol import Protocol as _Protocol
 from BioSimSpace._SireWrappers import System as _System
@@ -110,6 +111,12 @@ class Process():
         # Check that the map is valid.
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
+
+        # Make sure that molecules in the system have coordinates.
+        prop = property_map.get("coordinates", "coordinates")
+        for mol in system.getMolecules():
+            if not mol._sire_object.hasProperty(prop):
+                raise _IncompatibleError("System object contains molecules without coordinates!")
 
         # Set the process to None.
         self._process = None
