@@ -6,8 +6,6 @@
 cd python && BSS_CONDA_INSTALL=True python setup.py install --single-version-externally-managed --record=record.txt
 
 # Install and enable notebook extensions.
-jupyter-nbextension install fileupload --py --sys-prefix
-jupyter-nbextension enable fileupload --py --sys-prefix
 jupyter-nbextension install nglview --py --sys-prefix
 jupyter-nbextension enable nglview --py --sys-prefix
 

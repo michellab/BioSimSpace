@@ -56,11 +56,9 @@ RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator
 
-# Install and enable nglview and fileupload.
+# Install and enable nglview.
 RUN jupyter-nbextension install nglview --py --sys-prefix && \
     jupyter-nbextension enable nglview --py --sys-prefix && \
-    jupyter-nbextension install fileupload --py --sys-prefix && \
-    jupyter-nbextension enable fileupload --py --sys-prefix
 
 # Clean up after conda, including clearing the cache.
 RUN conda clean -tipsy && \
