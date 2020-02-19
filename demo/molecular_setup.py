@@ -68,7 +68,7 @@ node.addOutput("system", BSS.Gateway.FileSet(help="The parameterised and solvate
 # 
 # Example files: [2JJC.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/molecules/2JJC.pdb), [benzene.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/molecules/benzene.pdb)
 # 
-# When uploading files the name of the current file will replace the `Browse` button. If you need to change the file, simply click on the button again and choose a new file.
+# When uploading files the name of the current file will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 
 # In[ ]:
 
