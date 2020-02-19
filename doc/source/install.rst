@@ -24,7 +24,6 @@ need to enable the required notebook extensions within your Conda environment:
 
 .. code-block:: bash
 
-    jupyter-nbextension enable fileupload --py --sys-prefix
     jupyter-nbextension enable nglview --py --sys-prefix
 
 Unless you add the required channels to your Conda configuration, then you'll

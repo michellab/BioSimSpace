@@ -69,7 +69,7 @@ node.addOutput("input_files", BSS.Gateway.FileSet(help="A zip file containing th
 # 
 # NAMD: [alanin.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.pdb), [alanin.psf](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.psf), [alanin.params](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.params)
 # 
-# When uploading files the name of the current file will replace the `Browse` button. If you need to change the file, simply click on the button again and choose a new file. For `FileSet` requirements, a new `Browse` button will appear whenever an additional file is uploaded.
+# When uploading files the name of the current file(s) will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 
 # In[ ]:
 

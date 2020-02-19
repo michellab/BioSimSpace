@@ -66,9 +66,6 @@ finally:
                       "rdkit",
                       "watchdog"]
 
-        # Create a list of the pip depdendencies.
-        pip_deps = ["fileupload"]
-
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
@@ -79,20 +76,6 @@ finally:
 
         print("Installing conda dependencies: %s" % ", ".join(conda_deps))
         command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Upgrading pip")
-        command = "%s/pip install --upgrade pip" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Installing pip dependencies: %s" % ", ".join(pip_deps))
-        command = "%s/pip install %s" % (bin_dir, " ".join(pip_deps))
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        print("Activating notebook extension: fileupload")
-        command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-        command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Activating notebook extension: nglview")
