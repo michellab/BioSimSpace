@@ -58,7 +58,7 @@ RUN pip install --upgrade pip && \
 
 # Install and enable nglview.
 RUN jupyter-nbextension install nglview --py --sys-prefix && \
-    jupyter-nbextension enable nglview --py --sys-prefix && \
+    jupyter-nbextension enable nglview --py --sys-prefix
 
 # Clean up after conda, including clearing the cache.
 RUN conda clean -tipsy && \
