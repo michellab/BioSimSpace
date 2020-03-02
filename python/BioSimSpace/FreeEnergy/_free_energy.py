@@ -151,7 +151,7 @@ class FreeEnergy():
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the second leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
@@ -292,7 +292,7 @@ class FreeEnergy():
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF) for the second leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
