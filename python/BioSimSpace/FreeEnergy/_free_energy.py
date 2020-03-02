@@ -89,6 +89,9 @@ class FreeEnergy():
         if type(self) is FreeEnergy:
             raise Exception("<FreeEnergy> must be subclassed.")
 
+        # Flag that this is a dual leg simulation (default).
+        self._is_dual = True
+
         # Validate the input.
 
         if protocol is not None:
@@ -170,9 +173,10 @@ class FreeEnergy():
             return None
 
         # Run the second command.
-        proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        if proc.returncode != 0:
-            return None
+        if self._is_dual:
+            proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            if proc.returncode != 0:
+                return None
 
         # Initialise lists to hold the data from each leg.
         leg0 = []
@@ -221,47 +225,51 @@ class FreeEnergy():
                              (total_error * _Units.Energy.kt).kcal_per_mol()))
 
         # Second leg.
-        with open("%s/bar_leg1.xvg" % self._work_dir) as file:
+        if self._is_dual:
+            with open("%s/bar_leg1.xvg" % self._work_dir) as file:
 
-            # Read all of the lines into a list.
-            lines = []
-            for line in file:
-                # Ignore comments and xmgrace directives.
-                if line[0] != "#" and line[0] != "@":
-                    lines.append(line.rstrip())
+                # Read all of the lines into a list.
+                lines = []
+                for line in file:
+                    # Ignore comments and xmgrace directives.
+                    if line[0] != "#" and line[0] != "@":
+                        lines.append(line.rstrip())
 
-            # Store the initial free energy reading.
-            leg1.append((0.0,
-                         0.0 * _Units.Energy.kcal_per_mol,
-                         0.0 * _Units.Energy.kcal_per_mol))
+                # Store the initial free energy reading.
+                leg1.append((0.0,
+                            0.0 * _Units.Energy.kcal_per_mol,
+                            0.0 * _Units.Energy.kcal_per_mol))
 
-            # Zero the accumulated error.
-            total_error = 0
+                # Zero the accumulated error.
+                total_error = 0
 
-            # Zero the accumulated free energy difference.
-            total_freenrg = 0
+                # Zero the accumulated free energy difference.
+                total_freenrg = 0
 
-            # Process the BAR data.
-            for x, line in enumerate(lines):
-                # Extract the data from the line.
-                data = line.split()
+                # Process the BAR data.
+                for x, line in enumerate(lines):
+                    # Extract the data from the line.
+                    data = line.split()
 
-                # Update the total free energy difference.
-                total_freenrg += float(data[1])
+                    # Update the total free energy difference.
+                    total_freenrg += float(data[1])
 
-                # Extract the error.
-                error = float(data[2])
+                    # Extract the error.
+                    error = float(data[2])
 
-                # Update the accumulated error.
-                total_error = _math.sqrt(total_error*total_error + error*error)
+                    # Update the accumulated error.
+                    total_error = _math.sqrt(total_error*total_error + error*error)
 
-                # Append the data.
-                leg1.append(((x + 1) / (len(lines)),
-                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
-                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+                    # Append the data.
+                    leg1.append(((x + 1) / (len(lines)),
+                                (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                                (total_error * _Units.Energy.kt).kcal_per_mol()))
 
         # Work out the difference in free energy.
-        free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
+        if self._is_dual:
+            free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
+        else:
+            free_energy = leg0[-1][1] - leg0[0][1]
 
         # Propagate the errors. (These add in quadrature.)
 
@@ -270,8 +278,11 @@ class FreeEnergy():
                             (leg0[0][2].magnitude()  * leg0[0][2].magnitude()))
 
         # Second leg.
-        error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
-                            (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
+        if self._is_dual:
+            error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
+                                (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
+        else:
+            error1 = 0
 
         # Free energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
@@ -311,9 +322,10 @@ class FreeEnergy():
             return None
 
         # Run the second command.
-        proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        if proc.returncode != 0:
-            return None
+        if self._is_dual:
+            proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            if proc.returncode != 0:
+                return None
 
         # Initialise lists to hold the data from each leg.
         leg0 = []
@@ -351,36 +363,40 @@ class FreeEnergy():
                     break
 
         # Second leg.
-        with open("%s/mbar_leg1.txt" % self._work_dir) as file:
+        if self._is_dual:
+            with open("%s/mbar_leg1.txt" % self._work_dir) as file:
 
-            # Read all of the lines into a list.
-            lines = []
-            for line in file:
-                lines.append(line.rstrip())
+                # Read all of the lines into a list.
+                lines = []
+                for line in file:
+                    lines.append(line.rstrip())
 
-            # Find the MBAR data.
-            for x, line in enumerate(lines):
-                if "PMF from MBAR" in line:
-                    # Increment the line index.
-                    x += 1
-
-                    # Loop until we hit the next comment.
-                    while lines[x][0] != "#":
-                        # Split the line.
-                        data = lines[x].split()
-
-                        # Append the data.
-                        leg1.append((float(data[0]),
-                                     float(data[1]) * _Units.Energy.kcal_per_mol,
-                                     float(data[2]) * _Units.Energy.kcal_per_mol))
-
+                # Find the MBAR data.
+                for x, line in enumerate(lines):
+                    if "PMF from MBAR" in line:
                         # Increment the line index.
                         x += 1
 
-                    break
+                        # Loop until we hit the next comment.
+                        while lines[x][0] != "#":
+                            # Split the line.
+                            data = lines[x].split()
+
+                            # Append the data.
+                            leg1.append((float(data[0]),
+                                        float(data[1]) * _Units.Energy.kcal_per_mol,
+                                        float(data[2]) * _Units.Energy.kcal_per_mol))
+
+                            # Increment the line index.
+                            x += 1
+
+                        break
 
         # Work out the difference in free energy.
-        free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
+        if self._is_dual:
+            free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
+        else:
+            free_energy = leg0[-1][1] - leg0[0][1]
 
         # Propagate the errors. (These add in quadrature.)
 
@@ -389,8 +405,11 @@ class FreeEnergy():
                             (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
 
         # Second leg.
-        error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
-                            (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+        if self._is_dual:
+            error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
+                                (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
+        else:
+            error1 = 0
 
         # Free energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
@@ -430,10 +449,12 @@ class FreeEnergy():
 
         if sim_type == "Solvation":
             self._dir0 = "%s/free" % self._work_dir
-            self._dir1 = "%s/vacuum" % self._work_dir
+            if self._is_dual:
+                self._dir1 = "%s/vacuum" % self._work_dir
         elif sim_type == "Binding":
             self._dir0 = "%s/bound" % self._work_dir
-            self._dir1 = "%s/free" % self._work_dir
+            if self._is_dual:
+                self._dir1 = "%s/free" % self._work_dir
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
@@ -443,7 +464,8 @@ class FreeEnergy():
             try:
                 water_model = system0._sire_object.property("water_model").toString()
                 waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
-                waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
+                if self._is_dual:
+                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
 
             # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
             # to guess the water model from the topology.
@@ -453,15 +475,18 @@ class FreeEnergy():
                 if num_point == 3:
                     # TODO: Assume TIP3P. Not sure how to detect SPC/E.
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
+                    if self._is_dual:
+                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
                     water_model = "tip3p"
                 elif num_point == 4:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
+                    if self._is_dual:
+                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
                     water_model = "tip4p"
                 elif num_point == 5:
                     waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
-                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
+                    if self._is_dual:
+                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
                     water_model = "tip5p"
                 else:
                     raise RuntimeError("Unsupported %d-point water model!" % num_point)
@@ -471,15 +496,18 @@ class FreeEnergy():
 
             # Remove the existing water molecules from the systems.
             system0.removeWaterMolecules()
-            system1.removeWaterMolecules()
+            if self._is_dual:
+                system1.removeWaterMolecules()
 
             # Convert the waters to BioSimSpace molecule containers.
             waters0 = _Molecules(waters0.toMolecules())
-            waters1 = _Molecules(waters1.toMolecules())
+            if self._is_dual:
+                waters1 = _Molecules(waters1.toMolecules())
 
             # Add the updated water topology back into the systems.
             system0.addMolecules(waters0)
-            system1.addMolecules(waters1)
+            if self._is_dual:
+                system1.addMolecules(waters1)
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()
@@ -503,16 +531,18 @@ class FreeEnergy():
                 leg0.append(_Process.Somd(system0, self._protocol,
                     platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
-                leg1.append(_Process.Somd(system1, self._protocol,
-                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                if self._is_dual:
+                    leg1.append(_Process.Somd(system1, self._protocol,
+                        platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
             # GROMACS.
             elif self._engine == "GROMACS":
                 leg0.append(_Process.Gromacs(system0, self._protocol,
                     work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
-                leg1.append(_Process.Gromacs(system1, self._protocol,
-                    work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                if self._is_dual:
+                    leg1.append(_Process.Gromacs(system1, self._protocol,
+                        work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.

@@ -36,7 +36,8 @@ from . import _free_energy
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
-    def __init__(self, system, protocol=None, work_dir=None, engine=None):
+    def __init__(self, system, protocol=None, vacuum_leg=True,
+            work_dir=None, engine=None):
         """Constructor.
 
            Parameters
@@ -47,6 +48,10 @@ class Solvation(_free_energy.FreeEnergy):
 
            protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
                The simulation protocol.
+
+           vacuum_leg : bool
+               Whether to simulation the free leg of the simulation. Set to False
+               if you only wish to run the bound leg.
 
            work_dir : str
                The working directory for the simulation.
@@ -79,6 +84,11 @@ class Solvation(_free_energy.FreeEnergy):
             # Create the vacuum system. (Used for the second leg.)
             self._system1 = system.copy()
             self._system1.removeWaterMolecules()
+
+        if type(vacuum_leg) is not bool:
+            raise TypeError("'vacuum_leg' must be of type 'bool.")
+        else:
+            self._is_dual = False
 
         # Initialise the process runner with all of the simulations required
         # for each leg.

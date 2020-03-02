@@ -40,7 +40,8 @@ from . import _free_energy
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, box=None, work_dir=None, engine=None, property_map={}):
+    def __init__(self, system, protocol=None, box=None, free_leg=True,
+            work_dir=None, engine=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -56,6 +57,10 @@ class Binding(_free_energy.FreeEnergy):
                A list containing the box size in each dimension. This box will be
                used for the "free" leg of the simulation, which typically can be
                run with a significantly smaller box than the "bound" leg.
+
+           free_leg : bool
+               Whether to simulation the free leg of the simulation. Set to False
+               if you only wish to run the bound leg.
 
            work_dir : str
                The working directory for the simulation.
@@ -138,6 +143,11 @@ class Binding(_free_energy.FreeEnergy):
             # Solvate the perturbable molecule using the same water model as
             # the original system. (This is used for the second leg.)
             self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box)
+
+        if type(vacuum_leg) is not bool:
+            raise TypeError("'vacuum_leg' must be of type 'bool.")
+        else:
+            self._is_dual = False
 
         # Initialise the process runner with all of the simulations required
         # for each leg.
