@@ -56,16 +56,16 @@ Binary install
 The self-extracting binary for the 2019.3.0 release of BioSimSpace
 can be downloaded from one of the following links:
 
-* Linux: `biosimspace_2019_3_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/0FCOVSXpoO9A9lLALaCDkCHScWA1tokuoShob-GAt_k/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_3_0_linux.run>`__
-* macOS: `biosimspace_2019_3_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/J1XOJZL1xa9aLTXgc4Vcp0JonIx4v9Hdx-wxMZX0tME/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_3_0_osx.run>`__
+* Linux: `biosimspace_2019_3_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_2019_3_0_linux.run>`__
+* macOS: `biosimspace_2019_3_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_2019_3_0_osx.run>`__
 
 For older releases, please visit our :ref:`binaries <ref_binaries>` page.
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
+* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
+* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
 
 (These are portable X86-64 binaries that should work on any Linux distribution released
 since ~2011, or any macOS >= 10.14 [Mojave, released 2018]. Note that they are compiled
