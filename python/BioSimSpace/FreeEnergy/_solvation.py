@@ -50,8 +50,8 @@ class Solvation(_free_energy.FreeEnergy):
                The simulation protocol.
 
            vacuum_leg : bool
-               Whether to simulation the free leg of the simulation. Set to False
-               if you only wish to run the bound leg.
+               Whether to simulation the vacuum leg of the simulation. Set to False
+               if you only wish to run the free leg.
 
            work_dir : str
                The working directory for the simulation.
