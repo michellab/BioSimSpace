@@ -1,0 +1,20 @@
+--- ../../python/BioSimSpace/Process/_gromacs.py	2019-09-02 21:50:38.362630249 +0100
++++ patches/_gromacs.py	2019-09-02 21:43:00.138869612 +0100
+@@ -614,6 +614,17 @@
+         self.setArg("mdrun", True)          # Use mdrun.
+         self.setArg("-v", True)             # Verbose output.
+         self.setArg("-deffnm", self._name)  # Output file prefix.
++        self.setArg("-ntmpi", 1)            # One MPI thread.
++
++        is_periodic = True
++        for line in self.getConfig():
++            if line == "pbc = no":
++                is_periodic = False
++                break
++
++        # Only set OpenMP threads if the box is periodic.
++        if is_periodic:
++            self.setArg("-ntomp", 2)        # Two OpenMP threads per MPI thread.
+ 
+         # Metadynamics arguments.
+         if type(self._protocol) is _Protocol.Metadynamics:

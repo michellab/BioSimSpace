@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,21 +24,25 @@ Functionality for handling parameterisation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Protocol"]
+
 import os as _os
 import queue as _queue
 import subprocess as _subprocess
 
-import Sire as _Sire
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home, _gmx_exe
-from ..._Exceptions import IncompatibleError as _IncompatibleError
-from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from ..._Exceptions import ParameterisationError as _ParameterisationError
-from ..._SireWrappers import Molecule as _Molecule
-
-import BioSimSpace.IO as _IO
-
-__all__ = ["Protocol"]
+from BioSimSpace import _amber_home, _gmx_exe, _isVerbose
+from BioSimSpace import IO as _IO
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:
@@ -152,8 +156,8 @@ class Protocol():
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a new molecule using a deep copy of the internal Sire Molecule.
-        new_mol = _Molecule(molecule._getSireMolecule().__deepcopy__())
+        # Create a copy of the molecule.
+        new_mol = molecule.copy()
 
         # Choose the program to run with depending on the force field compatibility.
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
@@ -182,9 +186,13 @@ class Protocol():
 
         try:
             # Load the parameterised molecule.
-            par_mol = _Molecule(_IO.readMolecules(output)._getSireSystem()[_Sire.Mol.MolIdx(0)])
-        except:
-            raise IOError("Failed to read molecule from: '%s', '%s'" % (output[0], output[1])) from None
+            par_mol = _Molecule(_IO.readMolecules(output)._getSireObject()[_SireMol.MolIdx(0)])
+        except Exception as e:
+            msg = "Failed to read molecule from: '%s', '%s'" % (output[0], output[1])
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Make the molecule 'mol' compatible with 'par_mol'. This will create
         # a mapping between atom indices in the two molecules and add all of
@@ -212,11 +220,11 @@ class Protocol():
         """
 
         # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireMolecule())
+        m.add(molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.
@@ -224,10 +232,14 @@ class Protocol():
 
         # Write the system to a PDB file.
         try:
-            pdb = _Sire.IO.PDB2(s, self._property_map)
+            pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "leap.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
@@ -287,11 +299,11 @@ class Protocol():
             raise _IncompatibleError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
 
         # Create a new system and molecule group.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireMolecule())
+        m.add(molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.
@@ -299,10 +311,14 @@ class Protocol():
 
         # Write the system to a PDB file.
         try:
-            pdb = _Sire.IO.PDB2(s, self._property_map)
+            pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "input.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the pdb2gmx command.
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \

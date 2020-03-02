@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,13 +24,14 @@ Functionality for running solvation free energy calculations.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from . import _free_energy
-from .._SireWrappers import System as _System
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Solvation"]
+
+from BioSimSpace._SireWrappers import System as _System
+
+from . import _free_energy
 
 class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
@@ -65,7 +66,7 @@ class Solvation(_free_energy.FreeEnergy):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the solvated system. (Used for the first leg.)
-            self._system0 = _System(system._getSireSystem().__deepcopy__())
+            self._system0 = system.copy()
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
@@ -76,7 +77,7 @@ class Solvation(_free_energy.FreeEnergy):
                 raise ValueError("The system must be solvated!")
 
             # Create the vacuum system. (Used for the second leg.)
-            self._system1 = _System(system._getSireSystem().__deepcopy__())
+            self._system1 = system.copy()
             self._system1.removeWaterMolecules()
 
         # Initialise the process runner with all of the simulations required

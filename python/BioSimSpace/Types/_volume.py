@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,23 +23,23 @@
 A volume type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Volume"]
 
+from Sire import Units as _SireUnits
+
+from ._type import Type as _Type
+
 class Volume(_Type):
     """A volume type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "METER3"      : _Units.meter3,
-                         "NANOMETER3"  : _Units.nanometer3,
-                         "ANGSTROM3"   : _Units.angstrom3,
-                         "PICOMETER3"  : _Units.picometer3 }
+    _supported_units = { "METER3"      : _SireUnits.meter3,
+                         "NANOMETER3"  : _SireUnits.nanometer3,
+                         "ANGSTROM3"   : _SireUnits.angstrom3,
+                         "PICOMETER3"  : _SireUnits.picometer3 }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "M3"  : "METER3",
@@ -165,7 +165,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic meters.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.meter3), "METER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter3), "METER3")
 
     def nanometers3(self):
         """Return the volume in cubic nanometers.
@@ -176,7 +176,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic nanometers.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer3), "NANOMETER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer3), "NANOMETER3")
 
     def angstroms3(self):
         """Return the volume in cubic Angstrom.
@@ -187,7 +187,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic Angstrom.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom3), "ANGSTROM3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom3), "ANGSTROM3")
 
     def picometers3(self):
         """Return the volume in cubic picometers.
@@ -198,7 +198,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic picometers.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer3), "PICOMETER3")
+        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer3), "PICOMETER3")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

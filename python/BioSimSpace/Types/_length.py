@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,25 +23,25 @@
 A length type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Length"]
 
+from Sire import Units as _SireUnits
+
+from ._type import Type as _Type
+
 class Length(_Type):
     """A length type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "METER"      : _Units.meter,
-                         "CENTIMETER" : _Units.centimeter,
-                         "MILLIMETER" : _Units.millimeter,
-                         "NANOMETER"  : _Units.nanometer,
-                         "ANGSTROM"   : _Units.angstrom,
-                         "PICOMETER"  : _Units.picometer }
+    _supported_units = { "METER"      : _SireUnits.meter,
+                         "CENTIMETER" : _SireUnits.centimeter,
+                         "MILLIMETER" : _SireUnits.millimeter,
+                         "NANOMETER"  : _SireUnits.nanometer,
+                         "ANGSTROM"   : _SireUnits.angstrom,
+                         "PICOMETER"  : _SireUnits.picometer }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "M"  : "METER",
@@ -112,10 +112,6 @@ class Length(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative lengths.
-        if self._magnitude < 0:
-            raise ValueError("The length cannot be negative!")
-
     def __mul__(self, other):
         """Multiplication operator."""
 
@@ -168,7 +164,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in meters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.meter), "METER")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter), "METER")
 
     def centimeters(self):
         """Return the length in centimeters.
@@ -179,7 +175,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in centimeters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.centimeter), "CENTIMETER")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.centimeter), "CENTIMETER")
 
     def millimeters(self):
         """Return the length in millimeters.
@@ -190,7 +186,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in millimeters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.millimeter), "MILLIMETER")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.millimeter), "MILLIMETER")
 
     def nanometers(self):
         """Return the length in nanometers.
@@ -201,7 +197,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in nanometers.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.nanometer), "NANOMETER")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer), "NANOMETER")
 
     def angstroms(self):
         """Return the length in angstroms.
@@ -212,7 +208,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in angstrom.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.angstrom), "ANGSTROM")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom), "ANGSTROM")
 
     def picometers(self):
         """Return the length in picometers.
@@ -223,7 +219,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in picometers.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_Units.picometer), "PICOMETER")
+        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer), "PICOMETER")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

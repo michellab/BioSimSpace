@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,6 +23,11 @@
 Functionality for creating BioSimSpace workflow components (nodes).
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Node"]
+
 import configargparse as _argparse
 import collections as _collections
 import __main__
@@ -33,14 +38,16 @@ import warnings as _warnings
 import yaml as _yaml
 
 from BioSimSpace import _is_notebook
+from BioSimSpace import setVerbose
 
 # Enable Jupyter widgets.
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
-    import fileupload as _fileupload
     import ipywidgets as _widgets
     import zipfile as _zipfile
+
+from BioSimSpace.Types._type import Type as _Type
 
 from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean
@@ -57,13 +64,6 @@ from ._requirements import String as _String
 from ._requirements import Temperature as _Temperature
 from ._requirements import Time as _Time
 from ._requirements import Volume as _Volume
-
-import BioSimSpace.Types._type as _Type
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["Node"]
 
 # Float types (including those with units).
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
@@ -102,7 +102,7 @@ class Node():
     _is_knime = False
 
     # Whether the node is run from a Jupyter notebook.
-    _is_notebook = _is_notebook()
+    _is_notebook = _is_notebook
 
     def __init__(self, description, name=None):
         """Constructor.
@@ -179,6 +179,12 @@ class Node():
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
+            self._optional.add_argument("-v", "--verbose", type=_str2bool, nargs='?', const=True, default=False,
+                                        help="Print verbose error messages.")
+
+            # Overload the "_check_value" method for more flexible string support.
+            # (Ignore whitespace and case insensitive.)
+            self._parser._check_value = _check_value
 
     def __del__(self):
         """Destructor."""
@@ -469,7 +475,7 @@ class Node():
             default = input.getDefault()
 
             # Get the magnitude of types with units.
-            if isinstance(default, _Type.Type):
+            if isinstance(default, _Type):
                 default = default.magnitude()
 
             if allowed is not None:
@@ -478,7 +484,7 @@ class Node():
                     default = allowed[0]
 
                     # Get the magnitude of types with units.
-                    if isinstance(default, _Type.Type):
+                    if isinstance(default, _Type):
                         default = default.magnitude()
 
                 # Create a dropdown for the list of allowed values.
@@ -496,9 +502,9 @@ class Node():
                 _max = input.getMax()
 
                 # Get the magnitude of types with units.
-                if isinstance(_min, _Type.Type):
+                if isinstance(_min, _Type):
                     _min = _min.magnitude()
-                if isinstance(_max, _Type.Type):
+                if isinstance(_max, _Type):
                     _max = _max.magnitude()
 
                 # Whether the float is unbounded.
@@ -627,10 +633,17 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-        # File.
-        elif type(input) is _File:
+        # File / File set.
+        elif type(input) is _File or type(input) is _FileSet:
+
             # Create a fileupload widget.
-            widget = _fileupload.FileUploadWidget()
+            if type(input) is _FileSet:
+                widget = _widgets.FileUpload(multiple=True)
+            else:
+                widget = _widgets.FileUpload(multiple=False)
+
+            # Make the widget dynamically resize to the content.
+            widget.layout = {"width": "max-content"}
 
             # Add the 'set' indicator button to the widget.
             widget._button = button
@@ -638,11 +651,8 @@ class Node():
             # Flag that the widget is unset.
             widget._is_set = False
 
-            # Flag that this is just a single file upload.
-            widget._is_multi = False
-
-            # Set the value to None.
-            widget.value = None
+            # Flag that this widget references files.
+            widget._is_file = True
 
             # Store the requirement name.
             widget._name = name
@@ -652,41 +662,6 @@ class Node():
 
             # Store the widget.
             self._widgets[name] = widget
-
-        # File set.
-        elif type(input) is _FileSet:
-            # Create a fileupload widget.
-            widget = _fileupload.FileUploadWidget()
-
-            # Add the 'set' indicator button to the widget.
-            widget._button = button
-
-            # Flag that the widget is unset.
-            widget._is_set = False
-
-            # Flag that this is is a set of files.
-            widget._is_multi = True
-
-            # Set the value to None.
-            widget.value = None
-
-            # Store a reference to the node.
-            widget._node = self
-
-            # Store the requirement name.
-            widget._name = name
-
-            # Store the requirement.
-            widget._input = input
-
-            # Bind the callback function.
-            widget.observe(_on_file_upload, names="data")
-
-            # This is a new widget.
-            if not name in self._widgets or reset:
-                self._widgets[name] = [widget]
-            else:
-                self._widgets[name].append(widget)
 
         # Unsupported input.
         else:
@@ -968,17 +943,19 @@ class Node():
                 # Use the widget value if it has been set, otherwise, set the value to None.
                 # This ensures that the user actually sets a value.
 
-                # This is a FileSet requirement with multiple widgets.
-                if type(widget) is list:
-                    value = []
-                    # Loop over all of the widgets.
-                    for w in widget:
-                        if w._is_set:
-                            value.append(w.value)
-                    # If there are no values, set to None.
-                    if len(value) == 0:
+                # File based widget.
+                if hasattr(widget, "_is_file"):
+                    if widget._is_set:
+                        if len(widget._files) == 1:
+                            # Single file.
+                            value = widget._files[0]
+                        else:
+                            # File set.
+                            value = widget._files
+                    else:
                         value = None
-                # Single widget.
+
+                # Non file widget.
                 else:
                     if widget._is_set:
                         value = widget.value
@@ -994,8 +971,11 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                if key is not "config":
-                    self._inputs[key].setValue(value, name=key)
+                if key is "verbose":
+                    setVerbose(value)
+                else:
+                    if key is not "config":
+                        self._inputs[key].setValue(value, name=key)
 
     def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
@@ -1180,48 +1160,70 @@ def _on_value_change(change):
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
 
-    # Store the number of bytes.
-    num_bytes = len(change["owner"].data)
+    # Intialise the widget label.
+    label = ""
 
-    # Return if there is no data.
-    if num_bytes == 0:
-        return
+    # Initialise file counter.
+    num_files = 0
 
-    # Get the file name.
-    filename = change["owner"].filename
+    # Clear the list of files.
+    change["owner"]._files = []
 
-    # Create the uploads directory if it doesn't already exist.
-    if not _os.path.isdir("uploads"):
-        _os.makedirs("uploads")
+    # Loop over all uploaded files.
+    for filename in change["owner"].value:
 
-    # Append the upload directory to the file name.
-    new_filename = "uploads/%s" % filename
+        # Store the number of bytes.
+        num_bytes = len(change["owner"].value[filename]["content"])
 
-    # Has this file already been uploaded?
-    if _os.path.isfile(new_filename):
+        # Return if there is no data.
+        if num_bytes == 0:
+            return
 
-        # We'll append a number to the file name.
-        index = 1
-        new_filename_append = new_filename + ".%d" % index
+        # Separate label with commas.
+        if num_files > 0:
+            label += ", "
 
-        # Keep trying until a unique name is found.
-        while _os.path.isfile(new_filename_append):
-            index += 1
+        # Extract the file content.
+        content = change["owner"].value[filename]["content"]
+
+        # Create the uploads directory if it doesn't already exist.
+        if not _os.path.isdir("uploads"):
+            _os.makedirs("uploads")
+
+        # Append the upload directory to the file name.
+        new_filename = "uploads/%s" % filename
+
+        # Has this file already been uploaded?
+        if _os.path.isfile(new_filename):
+
+            # We'll append a number to the file name.
+            index = 1
             new_filename_append = new_filename + ".%d" % index
 
-        # Copy back into the new_filename variable.
-        new_filename = new_filename_append
+            # Keep trying until a unique name is found.
+            while _os.path.isfile(new_filename_append):
+                index += 1
+                new_filename_append = new_filename + ".%d" % index
 
-    # Write the file to disk.
-    with open(new_filename, "wb") as file:
-        file.write(change["owner"].data)
+            # Copy back into the new_filename variable.
+            new_filename = new_filename_append
 
-    # Report that the file was uploaded.
-    print("Uploaded '{}' ({:.2f} kB)".format(
-        filename, num_bytes / 2 **10))
+        # Write the file to disk.
+        with open(new_filename, "wb") as file:
+            file.write(content)
 
-    # Clear the redundant data from the widget.
-    change["owner"].data = b""
+        # Report that the file was uploaded.
+        print("Uploaded '{}' ({:.2f} kB)".format(
+            filename, num_bytes / 2 **10))
+
+        # Truncate the filename string if it is more than 15 characters.
+        label += (filename[:15] + "...") if len(filename) > 15 else filename
+
+        # Increment the number of files.
+        num_files += 1
+
+        # Store the location of the uploaded file on disk.
+        change["owner"]._files.append(new_filename)
 
     # Flag that the widget value has been set.
     change["owner"]._is_set = True
@@ -1229,51 +1231,34 @@ def _on_file_upload(change):
     change["owner"]._button.button_style = "success"
     change["owner"]._button.icon = "fa-check"
 
-    # Now update the widget value.
+    # Update the widget description with the name of the uploaded file/files.
+    change["owner"].description = label
 
-    # Truncate the filename string if it is more than 15 characters.
-    label = (filename[:15] + "...") if len(filename) > 15 else filename
+    # Update the widget counter. For some reason the default shows the total
+    # number of files uploaded, rather than the current number of files.
+    # This means that the number is incorrect if the user changes the files
+    # that are uploaded, e.g. fixing an error, or re-running the same node
+    # with different input.
+    change["owner"]._counter = len(change["owner"].value)
 
-    # This is a file set widget.
-    if change["owner"]._is_multi:
-        # This is the first time the value has been set.
-        if change["owner"].value is None:
-            # Whether a match has been found.
-            is_match = False
+def _check_value(action, value):
+    """Helper function to overload argparse's choice checker."""
+    if action.choices is not None and value not in action.choices:
+        args = {"value"   : value,
+                "choices" : ", ".join(map(repr, action.choices))
+               }
+        msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
 
-            # Store the name of the input requirement.
-            name = change["owner"]._name
+        # If the value is a string, then strip whitespace and try a case insensitive search.
+        if type(value) is str:
+            new_value = value.replace(" ", "").upper()
+            choices = [x.replace(" ", "").upper() for x in action.choices]
 
-            # Loop over the widgets in the control panel and find the one
-            # that with the matching name.
-            for index, child in enumerate(change["owner"]._node._control_panel.children[0].children):
-                # The widget name matches.
-                if child.children[1]._name == name:
-                    is_match = True
-                    break
-
-                # Increment the index.
-                index += 1
-
-            # No match!
-            if not is_match:
-                raise RunTimeError("Missing widget for requirement name: '%s'" % name)
-
-            # Create a new widget.
-            change["owner"]._node._addInputJupyter(name, change["owner"]._input)
-
-            # Convert the children of the control panel to a list.
-            boxes = list(change["owner"]._node._control_panel.children[0].children[index].children)
-
-            # Append the new widget to the list.
-            boxes.append(change["owner"]._node._widgets[name][-1])
-
-            # Add the updated box back into the list of boxes.
-            change["owner"]._node._control_panel.children[0].children[index].children = tuple(boxes)
-
-    # Update the widget value and label.
-    change["owner"].value = new_filename
-    change["owner"].label = label
+            # Check whether we now have a match.
+            if new_value not in choices:
+                raise _argparse.ArgumentError(action, msg % args)
+        else:
+            raise _argparse.ArgumentError(action, msg % args)
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""

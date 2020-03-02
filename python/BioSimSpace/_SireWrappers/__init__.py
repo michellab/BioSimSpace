@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,17 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    Atom
     Molecule
+    Molecules
+    Residue
     System
+    SearchResult
 """
 
+from ._atom import *
 from ._molecule import *
+from ._molecules import *
+from ._residue import *
+from ._search_result import *
 from ._system import *

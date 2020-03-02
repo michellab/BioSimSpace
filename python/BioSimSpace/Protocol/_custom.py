@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,11 +24,14 @@ Functionality for storing custom simulation protocols.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-from ._protocol import Protocol as _Protocol
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["Custom"]
 
 import os as _os
 
-__all__ = ["Custom"]
+from ._protocol import Protocol as _Protocol
 
 class Custom(_Protocol):
     """A class for storing custom protocols."""

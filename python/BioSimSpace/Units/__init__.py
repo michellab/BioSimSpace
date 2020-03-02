@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -43,6 +43,15 @@ Area units
     Area.angstrom2
     Area.nanometer2
     Area.picometer2
+
+Angle units
+===========
+
+.. autosummary::
+    :toctree: generated/
+
+    Angle.radian
+    Angle.degree
 
 Volume units
 ============
@@ -109,6 +118,7 @@ Time units
     Time.femtosecond
 """
 
+from . import Angle
 from . import Area
 from . import Charge
 from . import Energy

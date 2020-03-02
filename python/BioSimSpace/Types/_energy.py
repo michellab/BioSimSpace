@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,22 +23,22 @@
 An energy type.
 """
 
-import Sire.Units as _Units
-
-from ._type import Type as _Type
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Energy"]
 
+from Sire import Units as _SireUnits
+
+from ._type import Type as _Type
+
 class Energy(_Type):
     """An energy type."""
 
     # Dictionary of allowed units.
-    _supported_units = { "KILO CALORIES PER MOL" : _Units.kcal_per_mol,
-                         "KILO JOULES PER MOL"   : _Units.kJ_per_mol,
-                         "KT"                    : 2.479 * _Units.kJ_per_mol }
+    _supported_units = { "KILO CALORIES PER MOL" : _SireUnits.kcal_per_mol,
+                         "KILO JOULES PER MOL"   : _SireUnits.kJ_per_mol,
+                         "KT"                    : 2.479 * _SireUnits.kJ_per_mol }
 
     # Map unit abbreviations to the full name.
     _abbreviations = { "KCAL/MOL" : "KILO CALORIES PER MOL",
@@ -110,7 +110,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in kcal per mol.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kcal_per_mol), "KILO CALORIES PER MOL")
+        return Energy((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.kcal_per_mol), "KILO CALORIES PER MOL")
 
     def kj_per_mol(self):
         """Return the energy in kJ per mol.
@@ -121,7 +121,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in kJ per mol.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_Units.kJ_per_mol), "KILO JOULES PER MOL")
+        return Energy((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.kJ_per_mol), "KILO JOULES PER MOL")
 
     def kt(self):
         """Return the energy in KT.
@@ -132,7 +132,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in KT.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _Units.kJ_per_mol), "KT")
+        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _SireUnits.kJ_per_mol), "KT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.

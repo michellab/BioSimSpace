@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,12 +23,12 @@
 Volume units.
 """
 
-from ...Types import Volume as _Volume
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["meter3", "nanometer3", "angstrom3", "picometer3"]
+
+from BioSimSpace.Types import Volume as _Volume
 
 meter3 = _Volume(1, "meter3")
 nanometer3 = _Volume(1, "nanometer3")

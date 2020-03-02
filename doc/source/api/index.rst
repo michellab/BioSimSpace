@@ -14,6 +14,7 @@ of packages.
    index_FreeEnergy
    index_Gateway
    index_IO
+   index_Metadynamics
    index_MD
    index_Node
    index_Notebook

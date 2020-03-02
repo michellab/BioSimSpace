@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,9 +24,12 @@ A collection of physical unit types.
 Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
-import re as _re
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Type"]
+
+import re as _re
 
 class Type():
     """A base class for custom types."""
@@ -98,6 +101,14 @@ class Type():
     def __repr__(self):
         """Return a human readable string representation of the object."""
         return self.__str__()
+
+    def __pos__(self):
+        """Unary + operator."""
+        return type(self)(self.magnitude(), self.unit())
+
+    def __neg__(self):
+        """Unary - operator."""
+        return type(self)(-self.magnitude(), self.unit())
 
     def __add__(self, other):
         """Addition operator."""

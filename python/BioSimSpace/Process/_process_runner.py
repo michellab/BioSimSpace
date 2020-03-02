@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,16 +23,17 @@
 Functionality for running multiple processes.
 """
 
-import os as _os
-import tempfile as _tempfile
-
-from ._process import Process as _Process
-from .._SireWrappers import System as _System
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["ProcessRunner"]
+
+import os as _os
+import tempfile as _tempfile
+
+from BioSimSpace._SireWrappers import System as _System
+
+from ._process import Process as _Process
 
 class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.

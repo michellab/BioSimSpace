@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,14 +23,16 @@
 Functionality for free energy protocols.
 """
 
-from ._protocol import Protocol as _Protocol
-
-import BioSimSpace.Types as _Types
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
+
+import math as _math
+
+from BioSimSpace import Types as _Types
+
+from ._protocol import Protocol as _Protocol
 
 class FreeEnergy(_Protocol):
     """A class for storing free energy protocols."""
@@ -44,7 +46,8 @@ class FreeEnergy(_Protocol):
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
-                 pressure=_Types.Pressure(1, "atmosphere")
+                 pressure=_Types.Pressure(1, "atmosphere"),
+                 frames=20
                 ):
         """Constructor.
 
@@ -77,6 +80,9 @@ class FreeEnergy(_Protocol):
 
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure. Pass pressure=None to use the NVT ensemble.
+
+           frames : int
+               The number of trajectory frames to record.
         """
 
         # Call the base class constructor.
@@ -100,15 +106,18 @@ class FreeEnergy(_Protocol):
         else:
             self._pressure = None
 
+        # Set the number of trajectory frames.
+        self.setFrames(frames)
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s>"
-                   ) % (self._lambda, self._lambda_vals, self._timestep,
-                        self._runtime, self._temperature, self._pressure)
+                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d>"
+                   ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
+                        self._temperature, self._pressure, self._frames)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -116,9 +125,9 @@ class FreeEnergy(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s)"
-                   ) % (self._lambda, self._lambda_vals, self._timestep,
-                        self._runtime, self._temperature, self._pressure)
+                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d)"
+                   ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
+                        self._temperature, self._pressure, self._frames)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
@@ -355,3 +364,32 @@ class FreeEnergy(_Protocol):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
+
+    def getFrames(self):
+        """Return the number of frames.
+
+           Returns
+           -------
+
+           frames : int
+               The number of trajectory frames.
+        """
+        return self._frames
+
+    def setFrames(self, frames):
+        """Set the number of frames.
+
+           Parameters
+           ----------
+
+           frames : int
+               The number of trajectory frames.
+        """
+        if type(frames) is not int:
+            raise TypeError("'frames' must be of type 'int'")
+
+        if frames <= 0:
+            warn("The number of frames must be positive. Using default (20).")
+            self._frames = 20
+        else:
+            self._frames = _math.ceil(frames)

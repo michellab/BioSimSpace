@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,23 +23,24 @@
 Tools for visualising molecular systems.
 """
 
-import nglview as _nglview
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["View"]
+
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
 import warnings as _warnings
 
-import Sire as _Sire
+from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 
-from BioSimSpace import _is_notebook
-
-from ..Process._process import Process as _Process
-from .._SireWrappers import System as _System
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["View"]
+from BioSimSpace import _is_notebook, _isVerbose
+from BioSimSpace import IO as _IO
+from BioSimSpace.Process._process import Process as _Process
+from BioSimSpace._SireWrappers import System as _System
 
 class View():
     """A class for handling interactive molecular visualisations."""
@@ -51,29 +52,56 @@ class View():
            ----------
 
            handle : :class:`Process <BioSimSpace.Process>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-               A handle to a process or system.
+                    :class:`System <BioSimSpace._SireWrappers.System>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecule>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecules>` \
+                    str, [str]
+               A handle to a process, system, molecule, or molecule container,
+               or the path to molecular input file(s).
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
 
         # Check the handle.
 
+        # Convert tuple to list.
+        if isinstance(handle, tuple):
+            handle = list(handle)
+
+        # Convert single string to list.
+        if isinstance(handle, str):
+            handle = [handle]
+
+        # List of strings (file paths).
+        if isinstance(handle, list) and all(isinstance(x, str) for x in handle):
+            system = _IO.readMolecules(handle)
+            self._handle = system._getSireObject()
+            self._is_process = False
+
         # BioSimSpace process.
-        if isinstance(handle, _Process):
+        elif isinstance(handle, _Process):
             self._handle = handle
             self._is_process = True
 
         # BioSimSpace system.
         elif type(handle) is _System:
-            self._handle = handle._getSireSystem()
+            self._handle = handle._getSireObject()
             self._is_process = False
 
         else:
-            raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+            try:
+                handle = handle.toSystem()
+                self._handle = handle._getSireObject()
+                self._is_process = False
+            except:
+                raise TypeError("The handle must be of type 'BioSimSpace.Process', "
+                                "'BioSimSpace._SireWrappers.System', "
+                                "'BioSimSpace._SireWrappers.Molecule', "
+                                "'BioSimSpace._SireWrappers.Molecules', "
+                                "'str', or a list of 'str' types.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -93,7 +121,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Get the latest system from the process.
@@ -104,7 +132,7 @@ class View():
             if system is None:
                 return
             else:
-                system = system._getSireSystem()
+                system = system._getSireObject()
 
         else:
             system = self._handle
@@ -126,7 +154,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return a view of the entire system.
@@ -145,7 +173,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:
@@ -158,8 +186,8 @@ class View():
         molnums = system.molNums()
 
         # Create a new system.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
 
         # Loop over all of the indices.
         for index in indices:
@@ -189,7 +217,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Check that the index is an integer.
@@ -198,7 +226,7 @@ class View():
 
         # Get the latest system from the process.
         if self._is_process:
-            system = self._handle.getSystem()._getSireSystem()
+            system = self._handle.getSystem()._getSireObject()
 
             # No system.
             if system is None:
@@ -214,8 +242,8 @@ class View():
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _Sire.System.System("BioSimSpace System")
-        m = _Sire.Mol.MoleculeGroup("all")
+        s = _SireSystem.System("BioSimSpace System")
+        m = _SireMol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)
 
@@ -236,7 +264,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return if there are no views.
@@ -283,7 +311,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Default to the most recent view.
@@ -356,10 +384,18 @@ class View():
         # Create a PDB object and write to file.
         if system is not None:
             try:
-                pdb = _Sire.IO.PDB2(system)
+                pdb = _SireIO.PDB2(system)
                 pdb.writeToFile(filename)
-            except:
-                raise IOError("Failed to write system to 'PDB' format.") from None
+            except Exception as e:
+                msg = "Failed to write system to 'PDB' format."
+                if _isVerbose():
+                    print(msg)
+                    raise IOError(e) from None
+                else:
+                    raise IOError(msg) from None
+
+        # Import NGLView when it is used for the first time.
+        import nglview as _nglview
 
         # Create the NGLview object.
         view = _nglview.show_file(filename)

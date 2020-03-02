@@ -9,6 +9,14 @@
    :target: https://anaconda.org/michellab/biosimspace
    :alt: Conda Downloads
 
+.. image:: https://img.shields.io/badge/License-GPL%20v2-blue.svg
+   :target: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+   :alt: License
+
+.. image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
+   :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
+   :alt: Paper
+
 About
 -----
 
@@ -20,6 +28,27 @@ for biomolecular simulation. With it you can:
   run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
 * Interact with molecular-simulation processes in real time.
 
+Citation |DOI for Citing BioSimSpace|
+=====================================
+
+If you use BioSimSpace in any scientific software, please cite the following paper: ::
+
+    @article{Hedges2019,
+      doi = {10.21105/joss.01831},
+      url = {https://doi.org/10.21105/joss.01831},
+      year = {2019},
+      publisher = {The Open Journal},
+      volume = {4},
+      number = {43},
+      pages = {1831},
+      author = {Lester Hedges and Antonia Mey and Charles Laughton and Francesco Gervasio and Adrian Mulholland and Christopher Woods and Julien Michel},
+      title = {BioSimSpace: An interoperable Python framework for biomolecular simulation},
+      journal = {Journal of Open Source Software}
+    }
+
+.. |DOI for Citing BioSimSpace| image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
+   :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
+
 Documentation
 -------------
 
@@ -28,49 +57,62 @@ Full documentation can be found `here <https://biosimspace.org>`__.
 Installation
 ------------
 
-1. Conda package
-^^^^^^^^^^^^^^^^
+Conda package
+^^^^^^^^^^^^^
 
 The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab biosimspace
+    conda install -c conda-forge -c omnia -c michellab biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Following this, you'll need to use ``pip`` to install some additional, non-conda,
-packages into your environment:
+If you plan on using BioSimSpace interactively via Jupyter, then you might also
+need to enable the required notebook extensions within your Conda environment:
 
 .. code-block:: bash
 
-    pip install fileupload pygtail pypdb
+    jupyter-nbextension enable nglview --py --sys-prefix
 
 Unless you add the required channels to your Conda configuration, then you'll
 need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Note that on OS X you will need to run Python scripts with the ``sire_python``
-interpreter. This is due to an issue with the default Python interpreter that
-is installed via Conda. (This applies to all installation methods.)
+Note that because of Conda's peculiar scoring metrics you might not end up with
+the latest version of BioSimSpace when performing a fresh install or update.
+(It tries to minimise various things, such as the number of dependencies
+installed, which is difficult when your package depends on many other packages.)
+To see what packages are available, run:
 
-2. Using the prebuilt binaries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+    conda search -c michellab/label/dev biosimspace
+
+You can then install the latest version by explicitly stating the full package
+name, e.g.:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
+
+Using the prebuilt binaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
 * Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
+* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
 
-One downloaded, the binary can be unpacked as follows:
+Once downloaded, the binary can be unpacked as follows:
 
 .. code-block:: bash
 
@@ -99,8 +141,8 @@ To run a BioSimSpace notebook:
 
    $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
 
-2. Installing from source
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing from source
+^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, to install BioSimSpace from source:
 

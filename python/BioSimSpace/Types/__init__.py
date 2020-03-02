@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,21 +28,27 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    Angle
     Area
     Charge
+    Coordinate
     Energy
     Length
     Pressure
     Temperature
     Time
+    Vector
     Volume
 """
 
+from ._angle import *
 from ._area import *
 from ._charge import *
+from ._coordinate import *
 from ._energy import *
 from ._length import *
 from ._pressure import *
 from ._temperature import *
 from ._time import *
+from ._vector import *
 from ._volume import *

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,12 +23,16 @@
 Tools for plotting data.
 """
 
+__author__ = "Lester Hedges"
+__email_ = "lester.hedges@gmail.com"
+
+__all__ = ["plot", "plotContour"]
+
 from warnings import warn as _warn
 from os import environ as _environ
 
 from BioSimSpace import _is_interactive, _is_notebook
-
-import BioSimSpace.Types._type as _Type
+from BioSimSpace.Types._type import Type as _Type
 
 # Check to see if DISPLAY is set.
 if "DISPLAY" in _environ:
@@ -45,7 +49,7 @@ if _display is not None:
     except ImportError:
         _has_matplotlib = False
 else:
-    if _is_notebook():
+    if _is_notebook:
         try:
             import matplotlib.pyplot as _plt
             _has_matplotlib = True
@@ -57,11 +61,6 @@ else:
         #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del _display
-
-__author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
-
-__all__ = ["plot"]
 
 if _has_matplotlib:
     # Define font sizes.
@@ -110,7 +109,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
     """
 
     # Make sure were running interactively.
-    if not _is_interactive():
+    if not _is_interactive:
         _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
@@ -174,7 +173,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
                 raise TypeError("All 'xerr' values must be of same type as x data")
 
         # Does this type have units?
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             is_unit_x = True
 
     # The y argument must be a list of data records.
@@ -203,7 +202,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
                 raise TypeError("All 'yerr' values must be of same type as y data")
 
         # Does this type have units?
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             is_unit_y = True
 
     # Lists must contain the same number of records.
@@ -229,14 +228,14 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
         if type(xlabel) is not str:
             raise TypeError("'xlabel' must be of type 'str'")
     else:
-        if isinstance(x[0], _Type.Type):
+        if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
         if type(ylabel) is not str:
             raise TypeError("'ylabel' must be of type 'str'")
     else:
-        if isinstance(y[0], _Type.Type):
+        if isinstance(y[0], _Type):
             ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
 
     # Convert the x and y values to floats.
@@ -278,5 +277,195 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
     # Turn on grid.
     _plt.grid()
+
+    return _plt.show()
+
+def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
+    """A simple function to create two-dimensional contour plots with matplotlib.
+
+       Parameters
+       ----------
+
+       x : list
+           A list of x data values.
+
+       y : list
+           A list of y data values.
+
+       z : list
+           A list of z data values.
+
+       xlabel : str
+           The x axis label string.
+
+       ylabel : str
+           The y axis label string.
+
+       zlabel : str
+           The z axis label string.
+    """
+
+    import numpy as _np
+    import scipy.interpolate as _interp
+
+    from mpl_toolkits.axes_grid1 import make_axes_locatable as _make_axes_locatable
+
+    # Make sure were running interactively.
+    if not _is_interactive:
+        _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
+        return None
+
+    # Matplotlib failed to import.
+    if not _has_matplotlib and _has_display:
+        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+            "to load. Please check your matplotlib installation.")
+        return None
+
+    # Convert tuple to a list.
+    if type(x) is tuple:
+        x = list(x)
+    if type(y) is tuple:
+        y = list(y)
+
+    # Whether we need to convert the x, y, and z data to floats.
+    is_unit_x = False
+    is_unit_y = False
+    is_unit_z = False
+
+    # The x argument must be a list of data records.
+    if type(x) is not list:
+        raise TypeError("'x' must be of type 'list'")
+
+    else:
+        # Make sure all records are of the same type.
+        _type = type(x[0])
+        if not all(isinstance(xx, _type) for xx in x):
+            raise TypeError("All 'x' data values must be of same type")
+
+        # Convert int to float.
+        if _type is int:
+            x = [float(xx) for xx in x]
+            _type = float
+
+        # Does this type have units?
+        if isinstance(x[0], _Type):
+            is_unit_x = True
+
+    # The y argument must be a list of data records.
+    if type(y) is not list:
+        raise TypeError("'y' must be of type 'list'")
+
+    else:
+        # Make sure all records are of the same type.
+        _type = type(y[0])
+        if not all(isinstance(yy, _type) for yy in y):
+            raise TypeError("All 'y' data values must be of same type")
+
+        # Convert int to float.
+        if _type is int:
+            y = [float(yy) for yy in y]
+            _type = float
+
+        # Does this type have units?
+        if isinstance(y[0], _Type):
+            is_unit_y = True
+
+    if type(z) is not list:
+        raise TypeError("'z' must be of type 'list'")
+
+    else:
+        # Make sure all records are of the same type.
+        _type = type(z[0])
+        if not all(isinstance(zz, _type) for zz in z):
+            raise TypeError("All 'z' data values must be of same type")
+
+        # Convert int to float.
+        if _type is int:
+            z = [float(zz) for zz in z]
+            _type = float
+
+        # Does this type have units?
+        if isinstance(z[0], _Type):
+            is_unit_z = True
+
+    # Lists must contain the same number of records.
+    # Truncate the longer list to the length of the shortest.
+    if len(x) != len(y) or \
+       len(x) != len(z) or \
+       len(y) != len(z):
+        _warn("Mismatch in list sizes: len(x) = %d, len(y) = %d, len(z) = %d"
+            % (len(x), len(y), len(z)))
+
+        lens = [len(x), len(y), len(z)]
+        min_len = min(lens)
+
+        x = x[:min_len]
+        y = y[:min_len]
+        z = z[:min_len]
+
+    if xlabel is not None:
+        if type(xlabel) is not str:
+            raise TypeError("'xlabel' must be of type 'str'")
+    else:
+        if isinstance(x[0], _Type):
+            xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
+
+    if ylabel is not None:
+        if type(ylabel) is not str:
+            raise TypeError("'ylabel' must be of type 'str'")
+    else:
+        if isinstance(y[0], _Type):
+            ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
+
+    if zlabel is not None:
+        if type(zlabel) is not str:
+            raise TypeError("'zlabel' must be of type 'str'")
+    else:
+        if isinstance(z[0], _Type):
+            zlabel = z[0].__class__.__qualname__ + " (" + z[0]._print_format[z[0].unit()] + ")"
+
+    # Convert the x and y values to floats.
+    if is_unit_x:
+        x = [x.magnitude() for x in x]
+    if is_unit_y:
+        y = [y.magnitude() for y in y]
+    if is_unit_z:
+        z = [z.magnitude() for z in z]
+
+    # Convert to two-dimensional arrays. We don't assume the data is on a grid,
+    # so we interpolate the z values.
+    try:
+        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(y), 1000),
+                             _np.linspace(_np.min(y), _np.max(y), 1000))
+        Z = _interp.griddata((x, y), z, (X, Y), method="linear")
+    except:
+        raise ValueError("Unable to interpolate x, y, and z data to a grid.")
+
+    # Set the figure size.
+    _plt.figure(figsize=(8, 8))
+
+    # Create the contour plot.
+    cp = _plt.contourf(X, Y, Z)
+
+    # Add axis labels.
+    if xlabel is not None:
+        _plt.xlabel(xlabel)
+    if ylabel is not None:
+        _plt.ylabel(ylabel)
+
+    # Get the current axes.
+    ax = _plt.gca()
+
+    # Make sure the axes are equal.
+    ax.set_aspect("equal", adjustable="box")
+
+    # Make sure the colour bar matches size of the axes.
+    divider = _make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+
+    # Add a colour bar and label it.
+    cbar = _plt.colorbar(cp, cax=cax)
+    if zlabel is not None:
+        cbar.set_label(zlabel)
 
     return _plt.show()

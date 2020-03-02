@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,16 +23,16 @@
 Functionality for production protocols.
 """
 
-import math as _math
-
-from ._protocol import Protocol as _Protocol
-
-import BioSimSpace.Types as _Types
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Production"]
+
+import math as _math
+
+from BioSimSpace import Types as _Types
+
+from ._protocol import Protocol as _Protocol
 
 class Production(_Protocol):
     """A class for storing production protocols."""

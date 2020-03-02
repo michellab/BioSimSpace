@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -29,6 +29,8 @@ Context managers
     :toctree: generated/
 
     cd
+    stdout_redirected
+    stderr_redirected
 """
 
 from ._contextmanagers import *

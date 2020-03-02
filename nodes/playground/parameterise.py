@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # Author: Julien Michel<br>
@@ -8,26 +8,26 @@
 # 
 # This notebook parameterises a molecule and writes a topology usable for a molecular simulation. Based on the Molecular Seup node written by Lester Hedges
 
-# In[1]:
+# In[ ]:
 
 
 import BioSimSpace as BSS
 
 
-# In[2]:
+# In[ ]:
 
 
 node = BSS.Gateway.Node("A node to parameterise a molecule ready for molecular simulation.")
 
 
-# In[3]:
+# In[ ]:
 
 
 node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edimnburgh")
 node.setLicense("GPLv3")
 
 
-# In[4]:
+# In[ ]:
 
 
 node.addInput("input", BSS.Gateway.File(help="A molecular input file, e.g. a PDB file."))
@@ -37,31 +37,37 @@ node.addInput("forcefield", BSS.Gateway.String(help="The name of the force field
 node.addInput("output", BSS.Gateway.String(help="The root name of the output files."))
 
 
-# In[5]:
+# In[ ]:
 
 
 node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="The parameterised and solvated molecular system in AMBER format."))
 
 
-# In[6]:
+# In[ ]:
 
 
 node.showControls()
 
 
-# In[7]:
+# In[ ]:
 
 
 system = BSS.IO.readMolecules(node.getInput("input"))
 
 
-# In[8]:
+# In[ ]:
 
 
-molecule = system.getMolecules()[0]
+molecule = system[0]
 
 
-# In[9]:
+# In[ ]:
+
+
+print (molecule)
+
+
+# In[ ]:
 
 
 molecule = BSS.Parameters.parameterise(molecule, node.getInput("forcefield")).getMolecule()
@@ -73,13 +79,13 @@ molecule = BSS.Parameters.parameterise(molecule, node.getInput("forcefield")).ge
 BSS.IO.saveMolecules(node.getInput("output"), molecule, ["prm7", "rst7"])
 
 
-# In[10]:
+# In[ ]:
 
 
 node.setOutput("nodeoutput", BSS.IO.saveMolecules(node.getInput("output"), molecule, ["prm7", "rst7"]))
 
 
-# In[11]:
+# In[ ]:
 
 
 node.validate()

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,32 +23,34 @@
 Functionality for running simulation processes.
 """
 
-import collections as _collections
-import glob as _glob
-import os as _os
-import pygtail as _pygtail
-import timeit as _timeit
-import warnings as _warnings
-import tempfile as _tempfile
-import zipfile as _zipfile
-
-import Sire.Mol as _SireMol
-
-from BioSimSpace import _is_interactive, _is_notebook
-
-from ..Protocol._protocol import Protocol as _Protocol
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Types._type as _Type
-import BioSimSpace.Units as _Units
-
-if _is_notebook():
-    from IPython.display import FileLink as _FileLink
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Process"]
+
+import collections as _collections
+import glob as _glob
+import os as _os
+import pygtail as _pygtail
+import random as _random
+import timeit as _timeit
+import warnings as _warnings
+import sys as _sys
+import tempfile as _tempfile
+import zipfile as _zipfile
+
+from Sire import Mol as _SireMol
+
+from BioSimSpace import _is_interactive, _is_notebook
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Protocol import Metadynamics as _Metadynamics
+from BioSimSpace.Protocol._protocol import Protocol as _Protocol
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Types._type import Type as _Type
+from BioSimSpace import Units as _Units
+
+if _is_notebook:
+    from IPython.display import FileLink as _FileLink
 
 class _MultiDict(dict):
     """A multi-valued dictionary."""
@@ -110,12 +112,21 @@ class Process():
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
+        # Make sure that molecules in the system have coordinates.
+        prop = property_map.get("coordinates", "coordinates")
+        for mol in system.getMolecules():
+            if not mol._sire_object.hasProperty(prop):
+                raise _IncompatibleError("System object contains molecules without coordinates!")
+
         # Set the process to None.
         self._process = None
 
+        # Set the script to None (used on Windows as it does not support symlinks).
+        self._script = None
+
         # Is the process running interactively? If so, don't block
         # when a get method is called.
-        self._is_blocked = not _is_interactive()
+        self._is_blocked = not _is_interactive
 
         # Whether this process can generate trajectory data.
         # Even if a process can generate a trajectory, whether it does
@@ -123,7 +134,7 @@ class Process():
         self._has_trajectory = False
 
 	# Copy the passed system, protocol, and process name.
-        self._system = system._getSireSystem()
+        self._system = system.copy()
         self._protocol = protocol
 
         # Flag whether the system contains water molecules.
@@ -182,6 +193,10 @@ class Process():
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
         self._stderr_file = "%s/%s.err" % (self._work_dir, name)
 
+        # Files for metadynamics simulation with PLUMED.
+        self._plumed_config_file = "%s/plumed.dat" % self._work_dir
+        self._plumed_config = None
+
         # Initialise the configuration file string list.
         self._config = []
 
@@ -195,13 +210,13 @@ class Process():
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s', seed=%s>" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', work_dir='%s', seed=%s)" \
-            % (self.__class__.__name__, str(_System(self._system)), self._protocol.__repr__(),
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
                self._exe, self._name, self._work_dir, self._seed)
 
     def _clear_output(self):
@@ -219,8 +234,340 @@ class Process():
         # Clean up any existing offset files.
         offset_files = _glob.glob("%s/*.offset" % self._work_dir)
 
+        # Remove any HILLS or COLVAR files from the list. These will be dealt
+        # with by the PLUMED interface.
+        try:
+            offset_files.remove("%s/COLVAR.offset" % self._work_dir)
+            offset_files.remove("%s/HILLS.offset" % self._work_dir)
+        except:
+            pass
+
         for file in offset_files:
             _os.remove(file)
+
+    def _getPlumedConfig(self):
+        """Return the list of PLUMED configuration strings.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of PLUMED configuration strings.
+        """
+        return self._plumed_config
+
+    def _setPlumedConfig(self, config):
+        """Set the list of PLUMED configuration file strings.
+
+           Parameters
+           ----------
+
+           config : str, [str]
+               The list of PLUMED configuration strings, or a path to a configuration
+               file.
+        """
+
+        # Check that the passed configuration is a list of strings.
+        if _is_list_of_strings(config):
+            self._plumed_config = config
+            self._writePlumedConfig(self._plumed_config_file)
+
+        # The user has passed a path to a file.
+        elif _os.path.isfile(config):
+
+            # Clear the existing config.
+            self._plumed_config = []
+
+            # Read the contents of the file.
+            with open(config, "r") as file:
+                for line in file:
+                    self._plumed_config.append(line.rstrip())
+
+            # Write the new configuration file.
+            self._writePlumedConfig(self._plumed_config_file)
+
+        else:
+            raise ValueError("'config' must be a list of strings, or a file path.")
+
+        # Flag that the protocol has been customised.
+        self._protocol._setCustomised(True)
+
+    def _getPlumedConfigFile(self):
+        """Return path to the PLUMED config file.
+
+           Returns
+           -------
+
+           config_file : str
+               The path to the PLUMED config file.
+        """
+        return self._plumed_config_file
+
+    def _getTime(self, time_series=False, block="AUTO"):
+        """Get the time (in nanoseconds).
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           time : :class:`Time <BioSimSpace.Types.Time>`
+               The current simulation time in nanoseconds.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getTime(time_series)
+
+    def _getCollectiveVariable(self, index, time_series=False, block="AUTO"):
+        """Get the value of a collective variable.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable.
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           collective_variable : :class:`Type <BioSimSpace.Types>`
+               The value of the collective variable.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getCollectiveVariable(index, time_series)
+
+    def _getFreeEnergy(self, index=None, stride=None, kt=None, block="AUTO"):
+        """Get the current free energy estimate.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the collective variable. If None, then all variables
+               will be considered.
+
+           stride : int
+               The stride for integrating the free energy. This can be used to
+               check for convergence.
+
+           kt : BioSimSpace.Types.Energy
+               The temperature in energy units for intergrating out variables.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
+                           [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
+               The free energy estimate for the chosen collective variables.
+        """
+
+        # Check that this is a metadynamics simulation.
+        if type(self._protocol) is not _Metadynamics:
+            return None
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Use the PLUMED interface to get the required data.
+        return self._plumed.getFreeEnergy(index, stride, kt)
+
+    def _sampleConfigurations(self, bounds, number=1, block="AUTO"):
+        """Sample configurations based on values of the collective variable(s).
+
+           Parameters
+           ----------
+
+           bounds : [(:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.TYpes>`), ...]
+               The lower and uppoer bound for each collective variable. Use None
+               if there is no restriction of the value of a particular collective
+               variable.
+
+           number : int
+               The (maximum) number of configurations to return.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           configurations : [:class:`System <BioSimSpace._SireWrappers.System>`]
+               A list of randomly sampled molecular configurations.
+
+           collective_variables : [(:class:`Type <BioSimSpace.Types>`, int, float, ...)]
+               The value of the collective variable for each configuration.
+        """
+
+        if type(number) is not int:
+            raise TypeError("'number' must be of type 'int'")
+
+        if number < 1:
+            raise ValueError("'number' must be >= 1")
+
+        # Convert tuple to list.
+        if type(bounds) is tuple:
+            bounds = list(bounds)
+
+        if type(bounds) is not list:
+            raise TypeError("'bounds' must be of type 'list'.")
+
+        # Make sure the number of bounds matches the number of collective variables.
+        if len(bounds) != self._plumed._num_colvar:
+            raise ValueError("'bounds' must contain %d values!" % self._plumed._num_colvar)
+
+        # General error message for invalid bounds argument.
+        msg = "'bounds' must contain tuples with the lower and upper bound " \
+              "for each collective variable."
+
+        # Store the list of collective varaible names and their units.
+        names = self._plumed._colvar_name
+        units = self._plumed._colvar_unit
+
+        # Make sure the values of the bounds match the types of the collective
+        # variables to which they correspond.
+        for x, bound in enumerate(bounds):
+
+            # Extract the unit of the collective variable. (Its type)
+            unit = units[names[x]]
+
+            if type(bound) is list or type(bound) is tuple:
+                # Must have upper/lower bound.
+                if len(bound) != 2:
+                    raise ValueError(msg)
+                # Check that the bound is of the correct type.
+                for value in bound:
+                    if value is not None:
+                        if type(value) is not type(unit):
+                            raise ValueError("Each value in 'bounds' must be None or match the type "
+                                             "of the collective variable to which it corresponds.")
+            else:
+                raise ValueError(msg)
+
+        # Wait for the process to finish.
+        if block is True:
+            self.wait()
+        elif block == "AUTO" and self._is_blocked:
+            self.wait()
+
+        # Create a list to hold all of the collective variable time-series
+        # records.
+        colvars = []
+
+        # The current minimum record number.
+        min_records = _sys.maxsize
+
+        # Store each collective variable time-series record.
+        for x in range(0, self._plumed._num_colvar):
+            colvars.append(self._getCollectiveVariable(x, time_series=True, block=block))
+
+            # Does this record have fewer records than those already recorded?
+            if len(colvars[-1]) < min_records:
+                min_records = len(colvars[-1])
+
+        # Get the time records so that we can extract the appropriate trajectory frames.
+        time = self.getTime(time_series=True, block=block)
+
+        # Create a list to store the list of indices that satisfy the bounds.
+        valid_indices = []
+
+        # Loop over all records.
+        for x in range(0, min_records):
+
+            # Whether this record is valid.
+            is_valid = True
+
+            # Loop over all collective variables.
+            for y in range(0, self._plumed._num_colvar):
+
+                # Extract the corresponding collective variable sample.
+                colvar = colvars[y][x]
+
+                # Store a local copy of the bound.
+                bound = bounds[y]
+
+                # Lower bound.
+                if bound[0] != None:
+                    if colvar < bound[0]:
+                        is_valid = False
+                        break
+
+                # Upper bound.
+                if bound[1] != None:
+                    if colvar > bound[1]:
+                        is_valid = False
+                        break
+
+            # The sample lies within the bounds, store the index and collectiv
+            # variable.
+            if is_valid:
+                valid_indices.append(x)
+
+        # There are no valid samples.
+        if len(valid_indices) == 0:
+            _warnings.warn("No valid configurations found!")
+            return None, None
+
+        # Shuffle the indices and take the required number of samples.
+        _random.shuffle(valid_indices)
+        indices = valid_indices[:number]
+
+        # Create a list to store the sampled configurations.
+        configs = []
+
+        # Create a list to store the collective variable values for each configuration.
+        colvar_vals = []
+
+        for idx in indices:
+            # Append the matching configuration from the trajectory file.
+            configs.append(self._getFrame(time[idx]))
+
+            # Append the collective variable values for the sample.
+            data = []
+            for x in range(0, self._plumed._num_colvar):
+                data.append(colvars[x][idx])
+            colvar_vals.append(tuple(data))
+
+        return configs, colvar_vals
 
     def start(self):
         """Start the process.
@@ -233,7 +580,7 @@ class Process():
         """
         raise NotImplementedError("Derived method 'BioSimSpace.Process.%s.start()' is not implemented!" % self.__class__.__name__)
 
-    def run(self, system=None, protocol=None, autostart=True, restart=False):
+    def run(self, system=None, protocol=None, auto_start=True, restart=False):
         """Create and run a new process.
 
            Parameters
@@ -245,7 +592,7 @@ class Process():
            protocol : :class:`Protocol <BioSimSpace.Protocol>`
                The simulation protocol.
 
-           autostart : bool
+           auto_start : bool
                Whether to start the process automatically.
 
            restart : bool
@@ -264,7 +611,7 @@ class Process():
 
         # Use the existing system.
         if system is None:
-            system = _System(self._system)
+            system = self._system
 
         # Check that the new system is valid.
         else:
@@ -284,7 +631,7 @@ class Process():
         process = type(self)(system, protocol)
 
         # Return the new process object.
-        if autostart:
+        if auto_start:
             return process.start()
         else:
             return process
@@ -372,7 +719,7 @@ class Process():
                 max_time = float(max_time)
 
             # BioSimSpace.Types.Time
-            if isinstance(max_time, _Type.Type):
+            if isinstance(max_time, _Type):
                 max_time = int(max_time.milliseconds().magnitude())
 
             # Float.
@@ -588,6 +935,50 @@ class Process():
 
         return self._stderr.copy()
 
+    def getInput(self, name=None, file_link=False):
+        """Return a link to a zip file containing the input files used by
+           the process.
+
+           Parameters
+           ----------
+
+           name : str
+               The name of the zip file.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
+
+           Returns
+           -------
+
+           ouput : str, IPython.display.FileLink
+               A path, or file link, to an archive of the process input.
+        """
+
+        if name is None:
+            name = self._name + "_input"
+        else:
+            if type(name) is not str:
+                raise TypeError("'name' must be of type 'str'")
+
+        # Generate the zip file name.
+        zipname = "%s.zip" % name
+
+        with _zipfile.ZipFile(zipname, "w") as zip:
+            # Loop over all of the file outputs.
+            for file in self.inputFiles():
+                zip.write(file, arcname=_os.path.basename(file))
+
+        # Return a link to the archive.
+        if _is_notebook:
+            if file_link:
+                return _FileLink(zipname)
+            else:
+                return zipname
+        # Return the path to the archive.
+        else:
+            return zipname
+
     def getOutput(self, name=None, block="AUTO", file_link=False):
         """Return a link to a zip file of the working directory.
 
@@ -611,7 +1002,7 @@ class Process():
         """
 
         if name is None:
-            name = self._name
+            name = self._name + "_output"
         else:
             if type(name) is not str:
                 raise TypeError("'name' must be of type 'str'")
@@ -634,7 +1025,7 @@ class Process():
                 zip.write(file, arcname=_os.path.basename(file))
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(zipname)
             else:
@@ -765,6 +1156,22 @@ class Process():
             for line in self._config:
                 f.write("%s\n" % line)
 
+    def _writePlumedConfig(self, file):
+        """Write the PLUMED configuration to file.
+
+           Parameters
+           ----------
+
+           file : str
+               The path to a file.
+        """
+        if type(file) is not str:
+            raise TypeError("'file' must be of type 'str'")
+
+        with open(file, "w") as f:
+            for line in self._plumed_config:
+                f.write("%s\n" % line)
+
     def getArgs(self):
         """Get the dictionary of command-line arguments.
 
@@ -799,6 +1206,8 @@ class Process():
 
         # Create an empty list.
         args = []
+        if self._script:
+            args.append(self._script)
 
         # Add the arguments to the list.
         for key, value in self._args.items():
@@ -819,7 +1228,7 @@ class Process():
            ----------
 
            args : dict, collections.OrderedDict
-               A dictionary of command line arguments.
+               A dictionary of command-line arguments.
         """
         if isinstance(args, _collections.OrderedDict):
             self._args = args

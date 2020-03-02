@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,13 +23,13 @@
 Time units.
 """
 
-from ...Types import Time as _Time
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["day", "hour", "minute", "second", "millisecond",
            "nanosecond", "picosecond", "femtosecond"]
+
+from BioSimSpace.Types import Time as _Time
 
 day = _Time(1, "day")
 hour = _Time(1, "hour")

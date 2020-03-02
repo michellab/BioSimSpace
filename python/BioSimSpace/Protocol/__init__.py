@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -40,6 +40,7 @@ Classes
     Custom
     Equilibration
     FreeEnergy
+    Metadynamics
     Minimisation
     Production
 
@@ -91,6 +92,7 @@ while restraining the positions of any backbone atoms.
 from ._custom import *
 from ._equilibration import *
 from ._free_energy import *
+from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
 from ._utils import *

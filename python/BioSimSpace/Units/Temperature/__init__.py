@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -23,12 +23,12 @@
 Temperature units.
 """
 
-from ...Types import Temperature as _Temperature
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["celsius", "fahrenheit", "kelvin"]
+
+from BioSimSpace.Types import Temperature as _Temperature
 
 celsius = _Temperature(1, "celsius")
 fahrenheit = _Temperature(1, "fahrenheit")

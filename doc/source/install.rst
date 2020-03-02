@@ -11,49 +11,64 @@ The easiest way to install BioSimSpace is using our `conda channel <https://anac
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab biosimspace
+    conda install -c conda-forge -c omnia -c michellab biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda install -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Following this, you'll need to use ``pip`` to install some additional, non-conda,
-packages into your environment:
+If you plan on using BioSimSpace interactively via Jupyter, then you might also
+need to enable the required notebook extensions within your Conda environment:
 
 .. code-block:: bash
 
-    pip install fileupload pygtail pypdb
+    jupyter-nbextension enable nglview --py --sys-prefix
 
 Unless you add the required channels to your Conda configuration, then you'll
 need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c rdkit -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Note that on OS X you will need to run Python scripts with the ``sire_python``
-interpreter. This is due to an issue with the default Python interpreter that
-is installed via Conda. (This applies to all installation methods.)
+Note that because of Conda's peculiar scoring metrics you might not end up with
+the latest version of BioSimSpace when performing a fresh install or update.
+(It tries to minimise various things, such as the number of dependencies
+installed, which is difficult when your package depends on many other packages.)
+To see what packages are available, run:
+
+.. code-block:: bash
+
+    conda search -c michellab/label/dev biosimspace
+
+You can then install the latest version by explicitly stating the full package
+name, e.g.:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
 
 Binary install
 ==============
 
-The self-extracting binary for the 2019.1.0 release of BioSimSpace
+The self-extracting binary for the 2019.3.0 release of BioSimSpace
 can be downloaded from one of the following links:
 
-* Linux: `biosimspace_2019_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/uM4T7NjDaeLBOt0cBXSEyW7p4XcPhcKewlytEheX3HA/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_linux.run>`__
-* Mac OS X: `biosimspace_2019_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/yFhNo6rPsh2QtWpjNNsx6DGr45idI3AZ_-cc6L7k51g/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_osx.run>`__
+* Linux: `biosimspace_2019_3_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/0FCOVSXpoO9A9lLALaCDkCHScWA1tokuoShob-GAt_k/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_3_0_linux.run>`__
+* macOS: `biosimspace_2019_3_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/J1XOJZL1xa9aLTXgc4Vcp0JonIx4v9Hdx-wxMZX0tME/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_3_0_osx.run>`__
+
+For older releases, please visit our :ref:`binaries <ref_binaries>` page.
 
 The latest self-extracting binary for the development version of BioSimSpace
 can be downloaded from one of the following links:
 
 * Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
+* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
 
 (These are portable X86-64 binaries that should work on any Linux distribution released
-since ~2011, or any OS X >= 10.9 [Mavericks, released 2013]. Note that they are compiled
+since ~2011, or any macOS >= 10.14 [Mojave, released 2018]. Note that they are compiled
 with AVX enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors.)
 
 Once downloaded, the binary can be unpacked as follows, e.g. for the Linux
@@ -187,3 +202,7 @@ recommended installation instructions.
 * `Amber / AmberTools <http://ambermd.org>`__ -- *Dynamics / Parameterisation*
 * `Gromacs <http://www.gromacs.org>`__ -- *Dynamics / Parameterisation / Solvation*
 * `Namd <http://www.ks.uiuc.edu/Research/namd>`__ -- *Dynamics*
+
+Please visit our :ref:`compatibility <ref_compatibility>` page to see which
+versions of the external dependencies BioSimSpace has currently been tested
+against.

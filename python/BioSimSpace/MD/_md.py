@@ -1,13 +1,14 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2020
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or # (at your option) any later version.
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,21 +23,20 @@
 Functionality for configuring and driving molecular dynamics simulations.
 """
 
-import os as _os
-
-import Sire.Base as _SireBase
-
-from BioSimSpace import _amber_home, _gmx_exe
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
-
-import BioSimSpace.Process as _Process
-import BioSimSpace.Protocol as _Protocol
-
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["run"]
+
+import os as _os
+
+from Sire import Base as _SireBase
+
+from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace import Process as _Process
+from BioSimSpace import Protocol as _Protocol
 
 # A dictionary mapping MD packages to their executable names and GPU support.
 #                PACKAGE        EXE               GPU
@@ -152,7 +152,7 @@ def _find_md_package(system, protocol, gpu_support=False):
     # If we get this far, then no package was found.
     raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
 
-def run(system, protocol, gpu_support=False, autostart=True,
+def run(system, protocol, gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={}):
     """Auto-configure and run a molecular dynamics process.
 
@@ -168,7 +168,7 @@ def run(system, protocol, gpu_support=False, autostart=True,
        gpu_support : bool
            Whether to choose a package with GPU support.
 
-       autostart : bool
+       auto_start : bool
            Whether to start the process automatically.
 
        name : str
@@ -209,8 +209,8 @@ def run(system, protocol, gpu_support=False, autostart=True,
     if type(gpu_support) is not bool:
         raise TypeError("'gpu_support' must be of type 'bool'")
 
-    if type(autostart) is not bool:
-        raise TypeError("'autostart' must be of type 'bool'")
+    if type(auto_start) is not bool:
+        raise TypeError("'auto_start' must be of type 'bool'")
 
     if type(name) is not str:
         raise TypeError("'name' must be of type 'str'")
@@ -256,7 +256,7 @@ def run(system, protocol, gpu_support=False, autostart=True,
             work_dir=work_dir, seed=seed, property_map=property_map)
 
     # Start the process.
-    if autostart:
+    if auto_start:
         return process.start()
     else:
         return process
