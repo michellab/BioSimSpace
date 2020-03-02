@@ -5,8 +5,12 @@ FROM $BASE_CONTAINER
 LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>"
 
 # Variables holding links to download dependencies
-ENV AMBER_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/7ODpDhtg0WbT9Dl8JHW_4pJDB1Eka_EfCL3L600gIXo/n/chryswoods/b/downloads/o/amber16.tar.bz2
-ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/2jeHceFVZcIMeyRm7T3TpaUY8JajKmE3QkZ1iQ7vE3I/n/chryswoods/b/downloads/o/gromacs.tar.bz2
+ENV AMBER_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/_4HhZazLxgkcRLxZbmGPuGV0ciotx3V7kDeqh8fgy7Y/n/hugs/b/notebook/o/amber.tar.bz2
+ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/HmW0HXTrRsvOPz9uHucA0hDsGdyNmnoe1jfcdoHiZJk/n/hugs/b/notebook/o/gromacs.tar.bz2
+
+# Not used here, but maybe somewhere else?
+ENV KCOMBU_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/lRplAwerQbpz3PFPhVtkc7O_Tj9RENtj4KS8MW54OGA/n/hugs/b/notebook/o/kcombu-src-20190208.tar.gz
+ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/peJ15kXeAtNpRbgNvAcjpyx04qLKd4GsbEzuL5VNbSM/n/hugs/b/notebook/o/plumed.tar.bz2
 
 USER root
 WORKDIR /home
