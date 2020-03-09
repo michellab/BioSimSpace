@@ -2033,7 +2033,7 @@ class Molecule(_SireWrapper):
         # Force field information is missing.
         if not molecule0.hasProperty(ff0):
             raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule0'!")
-        if not molecule1.hasProperty(ff0):
+        if not molecule1.hasProperty(ff1):
             raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule1'!")
 
         # The force fields are incompatible.
