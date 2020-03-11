@@ -47,6 +47,22 @@ from BioSimSpace.Types import Length as _Length
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
+def getVirtualSiteDictionary(self):
+    """Generate a dictionary with the parameters of the virtual site."""
+    vsite_str0 = str(self.property('virtual-sites0')).replace("\n    ", "").replace("Properties(","").replace("\n)","").replace("=>", ":").split(',')
+    dic_vs0 = {}
+    for item in vsite_str0:
+        mlk = item.split()
+        dic_vs0.update({mlk[0] : mlk[2]})
+
+    vsite_str1 = str(self.property('virtual-sites1')).replace("\n    ", "").replace("Properties(","").replace("\n)","").replace("=>", ":").split(',')
+    dic_vs1 = {}
+    for item in vsite_str1:
+        mlk = item.split()
+        dic_vs1.update({mlk[0] : mlk[2]})
+     
+    return dic_vs0, dic_vs1
+
 class Molecule(_SireWrapper):
     """A container class for storing a molecule."""
 
@@ -744,8 +760,8 @@ class Molecule(_SireWrapper):
         if not self._is_merged:
             raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
 
-        if not self._sire_object.property("forcefield0").isAmberStyle():
-            raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
+        #if not self._sire_object.property("forcefield0").isAmberStyle():
+        #    raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
         if type(zero_dummy_dihedrals) is not bool:
             raise TypeError("'zero_dummy_dihedrals' must be of type 'bool'")
@@ -772,6 +788,27 @@ class Molecule(_SireWrapper):
                atom.property("LJ0") != atom.property("LJ1")               or \
                atom.property("charge0") != atom.property("charge1"):
                 pert_idxs.append(atom.index())
+
+        # Get the virtual sites properties if the vsite is perturbated 
+        mol0 = self._sire_object
+        
+        pert_vsite = mol0.property("virtual-sites0")!= mol0.property("virtual-sites1")
+        if pert_vsite == True:
+
+            (dic_vs0 ,dic_vs1) = getVirtualSiteDictionary(mol0)
+            
+        # #Find the perturbed Virtual Site index number 
+        # ind = []
+        # for keys in dic_vs0:
+        #   if dic_vs0[keys] != dic_vs1[keys]:
+        #     vs = keys[-2]
+        #     index = dic_vs0['index(%s)'%vs]
+        #     ind.append(index)
+        
+        # #Remove the index duplicates
+        # ind =  list(dict.fromkeys(ind))
+        # for i in range(0, len(ind)):
+        #   pert_idxs.append(ind[i])
 
         # The pert file uses atom names for identification purposes. This means
         # that the names must be unique. As such we need to count the number of
@@ -883,6 +920,31 @@ class Molecule(_SireWrapper):
             # Start molecule record.
             file.write("molecule LIG\n")
 
+            # 0) Virtual-sites
+
+            # Print all v-sites records.
+            if pert_vsite == True:
+                for i in range(0, 1): #This is just for one vSite. Needs changing
+
+            # Atom data.
+                    file.write("    virtual-site\n")
+                    file.write("        name                       %s\n" % dic_vs0['name('+str(i)+')'])
+                    file.write("        initial_charge             %s\n" % dic_vs0['charge('+str(i)+')'])
+                    file.write("        final_charge               %s\n" % dic_vs1['charge('+str(i)+')'])
+                    file.write("        initial_sigma              %s\n" % dic_vs0['sigma('+str(i)+')'])
+                    file.write("        final_sigma                %s\n" % dic_vs1['sigma('+str(i)+')'])
+                    file.write("        initial_epsilon            %s\n" % dic_vs0['epsilon('+str(i)+')'])
+                    file.write("        final_epsilon              %s\n" % dic_vs1['epsilon('+str(i)+')'])
+                    file.write("        initial_local_coordinate1  %s\n" % dic_vs0['p1('+str(i)+')'])
+                    file.write("        final_local_coordinate1    %s\n" % dic_vs1['p1('+str(i)+')'])
+                    file.write("        initial_local_coordinate2  %s\n" % dic_vs0['p2('+str(i)+')'])
+                    file.write("        final_local_coordinate2    %s\n" % dic_vs1['p2('+str(i)+')'])
+                    file.write("        initial_local_coordinate3  %s\n" % dic_vs0['p3('+str(i)+')'])
+                    file.write("        final_local_coordinate3    %s\n" % dic_vs1['p3('+str(i)+')'])
+            # End virtual site record.
+                    file.write("    endvirtual-site\n")
+            #ADD THE V-SITE TO THE MERGED MOLECULE
+            
             # 1) Atoms.
 
             def atom_sorting_criteria(atom):
@@ -2027,18 +2089,18 @@ class Molecule(_SireWrapper):
         # the two force fields are compatible.
 
         # Get the user name for the "forcefield" property.
-        ff0 = inv_property_map0.get("forcefield", "forcefield")
-        ff1 = inv_property_map1.get("forcefield", "forcefield")
+        #ff0 = inv_property_map0.get("forcefield", "forcefield")
+        #ff1 = inv_property_map1.get("forcefield", "forcefield")
 
         # Force field information is missing.
-        if not molecule0.hasProperty(ff0):
-            raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule0'!")
-        if not molecule1.hasProperty(ff1):
-            raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule1'!")
+        #if not molecule0.hasProperty(ff0):
+        #    raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule0'!")
+        #if not molecule1.hasProperty(ff1):
+        #    raise _IncompatibleError("Cannot determine 'forcefield' of 'molecule1'!")
 
         # The force fields are incompatible.
-        if not molecule0.property(ff0).isCompatibleWith(molecule1.property(ff1)):
-            raise _IncompatibleError("Cannot merge molecules with incompatible force fields!")
+        #if not molecule0.property(ff0).isCompatibleWith(molecule1.property(ff1)):
+         #   raise _IncompatibleError("Cannot merge molecules with incompatible force fields!")
 
         # Create lists to store the atoms that are unique to each molecule,
         # along with their indices.
@@ -2160,6 +2222,10 @@ class Molecule(_SireWrapper):
 
                 # Add the property to the atom in the merged molecule.
                 edit_mol = edit_mol.atom(atom.index()).setProperty(name, atom.property(prop)).molecule()
+                
+        # Add the virtual-sites0 property
+        if molecule0.hasProperty("virtual-sites") == True:
+            edit_mol.setProperty("virtual-sites0", molecule0.property("virtual-sites"))
 
         # Add the atom properties from molecule1.
         for atom in atoms1:
@@ -2190,6 +2256,14 @@ class Molecule(_SireWrapper):
 
                     # Add the property to the atom in the merged molecule.
                     edit_mol = edit_mol.atom(idx).setProperty(name, atom.property(prop)).molecule()
+                    
+        #Virtual sites that exist only in one molecule
+        if molecule1.property("virtual-sites") == True:
+            vs1 =  molecule1.property("virtual-sites")
+            vs0 =  molecule0.property("virtual-sites")
+            if vs0.property(p1(0)) != vs1.property(p1(0)) or vs0.property(p2(0)) != vs1.property(p2(0)) or s0.property(p3(0)) != vs1.property(p3(0)):
+                print("unique vSite: this neeeds to be fixed")
+
 
         # We now need to merge "bond", "angle", "dihedral", and "improper" parameters.
         # To do so, we extract the properties from molecule0, then add the additional
@@ -2400,6 +2474,10 @@ class Molecule(_SireWrapper):
 
                 # Add the property to the atom in the merged molecule.
                 edit_mol = edit_mol.atom(idx).setProperty(name, atom.property(prop)).molecule()
+                
+        #Set the vortual-sites1 property
+        if molecule1.hasProperty("virtual-sites") == True:
+            edit_mol.setProperty("virtual-sites1", molecule1.property("virtual-sites"))
 
         # Add the properties from atoms unique to molecule0.
         for atom in atoms0:
@@ -2755,7 +2833,7 @@ class Molecule(_SireWrapper):
         edit_mol.setProperty("connectivity", conn)
 
         # Create the CLJNBPairs matrices.
-        ff = molecule0.property(ff0)
+        #ff = molecule0.property(ff0)
 
         clj_nb_pairs0 = _SireMM.CLJNBPairs(edit_mol.info(),
             _SireMM.CLJScaleFactor(0, 0))
@@ -2777,8 +2855,7 @@ class Molecule(_SireWrapper):
 
                 # The atoms are part of a dihedral.
                 elif conn_type == 4:
-                    clj_scale_factor = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
-                                                              ff.vdw14ScaleFactor())
+                    clj_scale_factor = _SireMM.CLJScaleFactor(0.5 ,0.5) #THIS IS SPECIFIC FOR QUBE MOLECULES
                     clj_nb_pairs0.set(idx0, idx1, clj_scale_factor)
 
         # Copy the intrascale matrix.
@@ -2865,8 +2942,8 @@ class Molecule(_SireWrapper):
         edit_mol.setProperty("intrascale1", clj_nb_pairs1)
 
         # Set the "forcefield" properties.
-        edit_mol.setProperty("forcefield0", molecule0.property(ff0))
-        edit_mol.setProperty("forcefield1", molecule1.property(ff1))
+        #edit_mol.setProperty("forcefield0", molecule0.property(ff0))
+        #edit_mol.setProperty("forcefield1", molecule1.property(ff1))
 
         # Flag that this molecule is perturbable.
         edit_mol.setProperty("is_perturbable", _SireBase.wrap(True))
