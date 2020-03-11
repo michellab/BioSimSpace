@@ -924,7 +924,8 @@ class Molecule(_SireWrapper):
 
             # Print all v-sites records.
             if pert_vsite == True:
-                for i in range(0, 1): #This is just for one vSite. Needs changing
+                nvSites = int(mol.property("virtual-sites0").property("nvirtualsites").toString() )
+                for i in range(0, nvSites): 
 
             # Atom data.
                     file.write("    virtual-site\n")
