@@ -874,8 +874,8 @@ if len(prematchstring) > 0:
 
 # Load system 1
 
-xmlfile = node.getInput("xml1")
-pdbfile = node.getInput("pdb1")
+xmlfile = node.getInput("xml1")[0]
+pdbfile = node.getInput("pdb1")[0]
 (molecules, space) = readXmlParameters(pdbfile, xmlfile) 
 
 
@@ -883,8 +883,8 @@ pdbfile = node.getInput("pdb1")
 
 # Load system 2
 
-xmlfile1 = node.getInput("xml2")
-pdbfile1 = node.getInput("pdb2")
+xmlfile1 = node.getInput("xml2")[0]
+pdbfile1 = node.getInput("pdb2")[0]
 (molecules1, space1) = readXmlParameters(pdbfile1, xmlfile1) 
 
 
