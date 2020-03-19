@@ -15,7 +15,7 @@ jupyter-nbextension enable nglview --py --sys-prefix
 # fallback in case the server is down.
 wget --user=kcombu --password=wakame -r --accept .tar.gz --level 1 --cut-dirs 3 -nH http://strcomp.protein.osaka-u.ac.jp/kcombu/src/
 if ! ls kcombu*.tar.gz > /dev/null 2>&1; then
-    curl -O https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/o-T2qreBE1Ly3Jg73kPXN_RTbPQNgdBWoAHF90bySJk/n/chryswoods/b/downloads/o/kcombu-src-20190208.tar.gz
+    curl -O https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/7p17kkk6oW8MI60-tlyQmWjOm3kzsZMzbYKgSd_gWto/n/hugs/b/notebook/o/kcombu-src-20190208.tar.gz
 fi
 mkdir kcombu
 tar -xzf kcombu*.tar.gz -C kcombu
