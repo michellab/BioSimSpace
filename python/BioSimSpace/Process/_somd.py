@@ -341,6 +341,8 @@ class Somd(_process.Process):
             else:
                 self.addToConfig("cutoff type = cutoffperiodic")        # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")           # Non-bonded cut-off.
+            if not has_box:
+                self.addToConfig("barostat = False")                    # Disable barostat if no simulation box.
 
         # In the following protocols we save coordinates every cycle, which is
         # 10000 MD steps (moves) in length (this is for consistency with other
