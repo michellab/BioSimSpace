@@ -88,7 +88,8 @@ class Solvation(_free_energy.FreeEnergy):
         if type(vacuum_leg) is not bool:
             raise TypeError("'vacuum_leg' must be of type 'bool.")
         else:
-            self._is_dual = False
+            if not vacuum_leg:
+                self._is_dual = False
 
         # Initialise the process runner with all of the simulations required
         # for each leg.

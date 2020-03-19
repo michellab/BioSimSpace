@@ -144,10 +144,11 @@ class Binding(_free_energy.FreeEnergy):
             # the original system. (This is used for the second leg.)
             self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box)
 
-        if type(vacuum_leg) is not bool:
-            raise TypeError("'vacuum_leg' must be of type 'bool.")
+        if type(free_leg) is not bool:
+            raise TypeError("'free_leg' must be of type 'bool.")
         else:
-            self._is_dual = False
+            if not free_leg:
+                self._is_dual = False
 
         # Initialise the process runner with all of the simulations required
         # for each leg.
