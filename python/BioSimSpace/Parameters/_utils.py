@@ -57,6 +57,10 @@ def formalCharge(molecule):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     from rdkit import Chem as _Chem
+    from rdkit import RDLogger as _RDLogger
+
+    # Disable RDKit warnings.
+    _RDLogger.DisableLog('rdApp.*')
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
@@ -65,31 +69,16 @@ def formalCharge(molecule):
     # Zero the total formal charge.
     formal_charge = 0
 
-    # Stdout/stderr redirection doesn't work from within Jupyter.
-    if _is_notebook:
-        # Run in the working directory.
-        with _Utils.cd(work_dir):
+    # Run in the working directory.
+    with _Utils.cd(work_dir):
 
-            # Save the molecule to a PDB file.
-            _IO.saveMolecules("tmp", molecule, "PDB")
+        # Save the molecule to a PDB file.
+        _IO.saveMolecules("tmp", molecule, "PDB")
 
-            # Read the ligand PDB into an RDKit molecule.
-            mol = _Chem.MolFromPDBFile("tmp.pdb")
+        # Read the ligand PDB into an RDKit molecule.
+        mol = _Chem.MolFromPDBFile("tmp.pdb")
 
-            # Compute the formal charge.
-            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
-
-    else:
-        # Run in the working directory and redirect stderr from RDKit.
-        with _Utils.cd(work_dir), _Utils.stderr_redirected():
-
-            # Save the molecule to a PDB file.
-            _IO.saveMolecules("tmp", molecule, "PDB")
-
-            # Read the ligand PDB into an RDKit molecule.
-            mol = _Chem.MolFromPDBFile("tmp.pdb")
-
-            # Compute the formal charge.
-            formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
+        # Compute the formal charge.
+        formal_charge = _Chem.rdmolops.GetFormalCharge(mol)
 
     return formal_charge * _electron_charge
