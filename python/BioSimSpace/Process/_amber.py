@@ -236,7 +236,8 @@ class Amber(_process.Process):
 
         # If the system isn't created from AMBER format files, then we'll need
         # to convert the water model topology.
-        if not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
+        if not "fileformat" in system._sire_object.propertyKeys() or \
+           not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
 
             # Get the water molecules.
             waters = system.getWaterMolecules()
