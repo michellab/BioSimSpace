@@ -16,7 +16,8 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
-@pytest.mark.skipif(has_amber is False or has_gromacs is False, reason="Requires that both AMBER and GROMACS are installed.")
+@pytest.mark.skipif(has_amber is False or has_gromacs is False,
+    reason="Requires that both AMBER and GROMACS are installed.")
 def test_amber_gromacs():
     """Single point energy comparison between AMBER and GROMACS."""
 
