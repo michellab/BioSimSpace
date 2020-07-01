@@ -275,25 +275,22 @@ def vsiteListToProperty(list):
 
 def readXmlParameters(pdbfile, xmlfile):
 # 1) Read a pdb file describing the system to simulate
-
     p = PDB2(pdbfile)
     s = p.toSystem()
     molecules = s.molecules()
     #print (molecules)
     with open (pdbfile, "r") as f:
-        for line in f:
-            if line.split()[0] == "CRYST1" :
-                print (line)
-                pbc_x = float(line.split()[1])
-                pbc_y = float(line.split()[2])
-                pbc_z = float(line.split()[3])
-                space = PeriodicBox(Vector(pbc_x, pbc_y, pbc_z))
-                break
-            else:
-                space = Cartesian()
-    #print("space:", space)
-
-    system = System()
+        first_line = f.readline()
+        if first_line.split()[0] == "CRYST1" :
+            print (first_line)
+            pbc_x = float(line.split()[1])
+            pbc_y = float(line.split()[2])
+            pbc_z = float(line.split()[3])
+            space = PeriodicBox(Vector(pbc_x, pbc_y, pbc_z))
+        else:
+            space = Cartesian()
+    print("space:", space)
+#     system = System()
 
      # 2) Now we read the xml file, and store parameters for each molecule
 
