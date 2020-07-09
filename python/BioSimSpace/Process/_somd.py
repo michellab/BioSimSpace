@@ -307,7 +307,8 @@ class Somd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        # Work out the GPU device ID.
+        # Work out the GPU device ID. (Default to 0.)
+        gpu_id = 0
         if self._platform == "CUDA":
             if "CUDA_VISIBLE_DEVICES" in _os.environ:
                 try:
@@ -327,7 +328,7 @@ class Somd(_process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
-            if self._platform == "CUDA":
+            if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("minimise = True")                         # Minimisation simulation.
             self.addToConfig("minimise maximum iterations = %d"         # Maximum number of steps.
@@ -384,7 +385,7 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getStartTemperature().kelvin().magnitude()
 
-            if self._platform == "CUDA":
+            if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
             self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
@@ -443,7 +444,7 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
-            if self._platform == "CUDA":
+            if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
             self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
@@ -502,7 +503,7 @@ class Somd(_process.Process):
             # Convert the temperature to Kelvin.
             temperature = self._protocol.getTemperature().kelvin().magnitude()
 
-            if self._platform == "CUDA":
+            if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
             self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
