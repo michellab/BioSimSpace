@@ -1,6 +1,6 @@
 package:
   name: biosimspace
-  version: VERSION
+  version: BSS_VERSION
 
 source:
   git_url: https://github.com/michellab/BioSimSpace.git
@@ -15,7 +15,7 @@ requirements:
   host:
     - python 3.7
     - pip
-    - sire
+    - sire SIRE_VERSION
     - configargparse
     - mdtraj
     - mdanalysis
