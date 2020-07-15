@@ -85,7 +85,7 @@ finally:
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Cleaning conda environment")
-        command = "%s/conda clean -all -y -q" % bin_dir
+        command = "%s/conda clean --all --yes --quiet" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Close the file handles.
