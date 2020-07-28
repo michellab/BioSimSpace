@@ -1,6 +1,20 @@
 Changelog
 =========
 
+`2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2019.3.0>`_ - July 28 2020
+------------------------------------------------------------------------------------------------
+
+* Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`).
+* Make sure potential terms are sorted when writing to SOMD perturbation files (`@ptosco <https://github.com/ptosco>`).
+* Switch to using ipywidgets.FileUpload to eliminate non-conda dependencies.
+* Added support for single-leg free energy simulations.
+* Created a KCOMBU mirror to avoid network issues during install.
+* Allow AMBER simulations when system wasn't loaded from file.
+* Handle GROMACS simulations with non-periodic boxes.
+* Run vacuum simulations on a single thread when using GROMACS to avoid domain decomposition.
+* Make sure BioSimSpace is always built against the latest version of Sire during conda build.
+
+
 `2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2019.2.0>`_ - Nov 22 2019
 ------------------------------------------------------------------------------------------------
 
