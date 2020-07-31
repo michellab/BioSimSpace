@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Set the bin directory.
-BIN_DIR=$HOME/sire.app/bin
-
 # Set the source and Conda build directories on macOS.
 SRC_DIR=$(pwd)
 CONDA_DIR=$SRC_DIR/docker/conda/recipe
@@ -26,19 +23,11 @@ BSS_VER=$(git --git-dir=$SRC_DIR/.git --work-tree=$SRC_DIR describe --tags --abb
 # Get the build number. (Number of commits since last tag.)
 BSS_BUILD=$(git --git-dir=$SRC_DIR/.git --work-tree=$SRC_DIR log --oneline $BSS_VER.. | wc -l)
 
-# Set the default Conda label.
-LABEL=dev
+# Clone Sire.
+git clone https://github.com/michellab/Sire > /dev/null 2>&1
 
-# Get the tag associated with the latest commit.
-TAG=$(git --git-dir=$SRC_DIR/.git --work-tree=$SRC_DIR tag --contains)
-
-# If the tag is not empty, then set the label to main.
-if [ ! -e $TAG ]; then
-    LABEL=main
-fi
-
-# Get the most recent Sire version from the channel with the label that we're building against.
-SIRE_VER=$($BIN_DIR/conda search -c michellab/label/$LABEL sire | awk 'NR>2{print $2}' | sort -g | tail -n 1)
+# Get the current Sire version.
+SIRE_VER=$(git --git-dir=Sire/.git --work-tree=Sire describe --tags --abbrev=0)
 
 # Update the BioSimSpace version number.
 echo "Updating BioSimSpace version number: '$BSS_VER'"
