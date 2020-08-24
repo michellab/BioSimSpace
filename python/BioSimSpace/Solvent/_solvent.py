@@ -46,13 +46,14 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace.Types import Coordinate as _Coordinate
+from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import _Utils as _Utils
 
-def solvate(model, molecule=None, box=None, shell=None,
-        ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
+def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
        Parameters
@@ -67,7 +68,10 @@ def solvate(model, molecule=None, box=None, shell=None,
            A molecule, or container/system of molecules.
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+           A list containing the box size in each dimension: x, y, and z.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -106,10 +110,10 @@ def solvate(model, molecule=None, box=None, shell=None,
         if model not in _models_lower:
             raise ValueError("Supported water models are: %s" % waterModels())
 
-    return _model_dict[model](molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    return _model_dict[model](molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
-def spc(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, property_map={}):
+def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC solvent.
 
        Parameters
@@ -122,6 +126,9 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -155,15 +162,15 @@ def spc(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, property_map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = \
+        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spc", 3, ion_conc,
+    return _solvate(molecule, box, angles, shell, "spc", 3, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
-        work_dir=None, property_map={}):
+def spce(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add SPC/E solvent.
 
        Parameters
@@ -176,6 +183,9 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -209,15 +219,15 @@ def spce(molecule=None, box=None, shell=None, ion_conc=0, is_neutral=True,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, property_map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = \
+        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "spce", 3, ion_conc,
+    return _solvate(molecule, box, angles, shell, "spce", 3, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, property_map={}):
+def tip3p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add TIP3P solvent.
 
        Parameters
@@ -230,6 +240,9 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -263,15 +276,15 @@ def tip3p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, property_map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = \
+        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
-    return _solvate(molecule, box, shell, "tip3p", 3, ion_conc,
+    return _solvate(molecule, box, angles, shell, "tip3p", 3, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, property_map={}):
+def tip4p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add TIP4P solvent.
 
        Parameters
@@ -284,6 +297,9 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -317,15 +333,15 @@ def tip4p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, property_map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = \
+        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip4p", 4, ion_conc,
+    return _solvate(molecule, box, angles, shell, "tip4p", 4, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
-        is_neutral=True, work_dir=None, property_map={}):
+def tip5p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
+        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
     """Add TIP5P solvent.
 
        Parameters
@@ -338,6 +354,9 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -371,14 +390,14 @@ def tip5p(molecule=None, box=None, shell=None, ion_conc=0,
                                     "Please install GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    molecule, box, shell, work_dir, property_map = \
-        _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = \
+        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
-    return _solvate(molecule, box, shell, "tip5p", 5, ion_conc,
+    return _solvate(molecule, box, angles, shell, "tip5p", 5, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, property_map):
+def _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map):
     """Internal function to validate function arguments.
 
        Parameters
@@ -391,6 +410,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute. Note that the
@@ -415,7 +437,7 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
        Returns
        -------
 
-       (molecule, box, shell, work_dir, property_map) : tuple
+       (molecule, box, angles, shell, work_dir, property_map) : tuple
            The validated input arguments.
     """
 
@@ -474,6 +496,20 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         else:
             if not all(isinstance(x, _Length) for x in box):
                 raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
+            if not all(x.magnitude() >= 0 for x in box):
+                raise ValueError("All box dimensions must be greater than zero.")
+
+    if angles is not None:
+        # Convert tuple to list.
+        if type(angles) is tuple:
+            angles = list(angles)
+
+        # Validate.
+        if len(angles) != 3:
+            raise ValueError("'angles' must have three components: yz, xz, and xy.")
+        else:
+            if not all(isinstance(x, _Angle) for x in angles):
+                raise ValueError("The angle between box vectors must be of type 'BioSimSpace.Types.Angle'")
 
     if shell is not None:
         if type(shell) is not _Length:
@@ -519,9 +555,9 @@ def _validate_input(molecule, box, shell, ion_conc, is_neutral, work_dir, proper
         if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
             raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
-    return (_molecule, box, shell, work_dir, property_map)
+    return (_molecule, box, angles, shell, work_dir, property_map)
 
-def _solvate(molecule, box, shell, model, num_point,
+def _solvate(molecule, box, angles, shell, model, num_point,
         ion_conc, is_neutral, work_dir=None, property_map={}):
     """Internal function to add solvent using 'gmx solvate'.
 
@@ -534,6 +570,9 @@ def _solvate(molecule, box, shell, model, num_point,
 
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
+
+       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+           A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
            Thickness of the water shell around the solute.
@@ -567,19 +606,6 @@ def _solvate(molecule, box, shell, model, num_point,
     """
 
     if molecule is not None:
-        # Store the centre of the molecule.
-        center = molecule._getAABox(property_map).center()
-
-        # Work out the vector from the centre of the molecule to the centre of the
-        # water box, converting the distance in each direction to Angstroms.
-        vec = []
-        for x, y in zip(box, center):
-            vec.append(0.5*x.angstroms().magnitude() - y)
-
-        # Translate the molecule. This allows us to create a water box
-        # around the molecule.
-        molecule.translate(vec, property_map)
-
         if type(molecule) is _System:
 
             # Reformat all of the water molecules so that they match the
@@ -601,39 +627,54 @@ def _solvate(molecule, box, shell, model, num_point,
     # Run the solvation in the working directory.
     with _Utils.cd(work_dir):
 
-        # Create the gmx command.
-        if num_point == 3:
-            mod = "spc216"
-        else:
-            mod = model
-        command = "%s solvate -cs %s" % (_gmx_exe, mod)
-
+        # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
             _IO.saveMolecules("input", molecule, "gro87")
             _os.rename("input.gro87", "input.gro")
 
-            # Update the command.
-            command += " -cp input.gro"
-
-            # Add the box information.
-            if box is not None:
-                command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                               box[1].nanometers().magnitude(),
-                                               box[2].nanometers().magnitude())
-
             # Add the shell information.
             if shell is not None:
                 command += " -shell %f" % shell.nanometers().magnitude()
 
-        # Just add box information.
+        # We need to create a dummy input file with no molecule in it.
         else:
-            command += " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                           box[1].nanometers().magnitude(),
-                                           box[2].nanometers().magnitude())
+            with open("input.gro", "w") as file:
+                f.write("BioSimSpace System\n")
+                f.write("    0\n")
+                f.write("   0.00000  0.00000  0.00000\n")
 
-        # Add the output file.
-        command += " -o output.gro"
+        # Create the editconf command.
+        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe    \
+                + " -box %f %f %f" % (box[0].nanometers().magnitude(),
+                                      box[1].nanometers().magnitude(),
+                                      box[2].nanometers().magnitude())   \
+                + " -angles %f %f %f" % (angles[0].degrees().magnitude(),
+                                         angles[1].degrees().magnitude(),
+                                         angles[2].degrees().magnitude()) \
+                + " -o box.gro"
+
+        # Create files for stdout/stderr.
+        stdout = open("editconf.out", "w")
+        stderr = open("editconf.err", "w")
+
+        # Run gmx solvate as a subprocess.
+        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
+
+        # gmx doesn't return sensible error codes, so we need to check that
+        # the expected output was generated.
+        if not _os.path.isfile("box.gro"):
+            raise RuntimeError("'gmx editconf failed to generate required box! " +
+                               "Check your lattice vectors and angles.")
+
+        # Create the gmx command.
+        if num_point == 3:
+            mod = "spc216"
+        else:
+            mod = model
+        command = "%s solvate -cs %s -cp box.gro -o output.gro" % (_gmx_exe, mod)
 
         with open("README.txt", "w") as file:
             # Write the command to file.
@@ -698,11 +739,6 @@ def _solvate(molecule, box, shell, model, num_point,
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
-            # Translate the molecule and water back to the original position.
-            vec = [-x for x in vec]
-            molecule.translate(vec, property_map)
-            water.translate(vec)
-
             if type(molecule) is _System:
                 # Extract the non-water molecules from the original system.
                 non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
