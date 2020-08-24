@@ -32,6 +32,7 @@ __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["Align",
+           "Box",
            "FreeEnergy",
            "Gateway",
            "IO",
@@ -179,6 +180,7 @@ if not _path.isdir(_gromacs_path):
         del _subprocess
 
 from . import Align
+from . import Box
 from . import FreeEnergy
 from . import Gateway
 from . import IO
