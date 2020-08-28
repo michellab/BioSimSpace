@@ -510,6 +510,9 @@ def _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir
         else:
             if not all(isinstance(x, _Angle) for x in angles):
                 raise ValueError("The angle between box vectors must be of type 'BioSimSpace.Types.Angle'")
+    else:
+        # Default to periodic box.
+        angles=3*[_Angle(90, "degrees")]
 
     if shell is not None:
         if type(shell) is not _Length:
