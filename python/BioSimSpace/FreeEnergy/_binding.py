@@ -40,8 +40,8 @@ from . import _free_energy
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, box=None, free_leg=True,
-            work_dir=None, engine=None, property_map={}):
+    def __init__(self, system, protocol=None, box=None, angles=3*[_Types.Angle(90, "degrees")],
+            free_leg=True, work_dir=None, engine=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -54,9 +54,12 @@ class Binding(_free_energy.FreeEnergy):
                The simulation protocol.
 
            box : [:class:`Length <BioSimSpace.Types.Length>`]
-               A list containing the box size in each dimension. This box will be
-               used for the "free" leg of the simulation, which typically can be
-               run with a significantly smaller box than the "bound" leg.
+               A list containing the box size in each dimension: x, y, and z.
+               This box will be used for the "free" leg of the simulation, which typically
+               can be run with a significantly smaller box than the "bound" leg.
+
+           angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+               A list containing the angles between the box vectors: yz, xz, and xy.
 
            free_leg : bool
                Whether to simulation the free leg of the simulation. Set to False
@@ -106,10 +109,20 @@ class Binding(_free_energy.FreeEnergy):
             if box is None:
                 try:
                     prop = property_map.get("space", "space")
-                    box = system._sire_object.property(prop).dimensions()
-                    box = [_Units.Length.angstrom * x for x in box]
                 except:
                     raise ValueError("The solvated protein-ligand system has no box information!")
+
+                # PeriodicBox.
+                try:
+                    box = system._sire_object.property(prop).dimensions()
+                    box = [_Units.Length.angstrom * x for x in box]
+                # TriclinicBox.
+                except:
+                    v0 = system._sire_object.property(prop).vector0()
+                    v1 = system._sire_object.property(prop).vector1()
+                    v2 = system._sire_object.property(prop).vector2()
+                    box = [v0, v1, v2]
+                    box = [_Units.Length.angstrom * x.magnitude() for x in box]
 
             # Solvate using the user specified box.
             else:
@@ -118,6 +131,18 @@ class Binding(_free_energy.FreeEnergy):
                 else:
                     if not all(isinstance(x, _Types.Length) for x in box):
                         raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
+
+            if angles is not None:
+                # Convert tuple to list.
+                if type(angles) is tuple:
+                    angles = list(angles)
+
+                # Validate.
+                if len(angles) != 3:
+                    raise ValueError("'angles' must have three components: yz, xz, and xy.")
+                else:
+                    if not all(isinstance(x, _Types.Angle) for x in angles):
+                        raise ValueError("The angle between box vectors must be of type 'BioSimSpace.Types.Angle'")
 
             # Try to get the water model used to solvate the system.
             try:
@@ -142,7 +167,7 @@ class Binding(_free_energy.FreeEnergy):
 
             # Solvate the perturbable molecule using the same water model as
             # the original system. (This is used for the second leg.)
-            self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box)
+            self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box, angles=angles)
 
         if type(free_leg) is not bool:
             raise TypeError("'free_leg' must be of type 'bool.")
