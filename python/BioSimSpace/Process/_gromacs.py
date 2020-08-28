@@ -2002,7 +2002,7 @@ class Gromacs(_process.Process):
                 old_system = self._system.copy()
                 old_system._updateCoordinates(new_system)
 
-                # Update the periodic box information in the original system.
+                # Update the box information in the original system.
                 try:
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
