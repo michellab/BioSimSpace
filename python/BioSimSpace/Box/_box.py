@@ -176,8 +176,6 @@ def truncatedOctahedron(image_distance):
 
     return _get_box_parameters(triclinic_box)
 
-
-
 def _get_box_parameters(triclinic_box):
     """Internal helper function to get paramters for the passed triclinic box.
 
@@ -202,7 +200,6 @@ def _get_box_parameters(triclinic_box):
               _Angle(_Vector.angle(triclinic_box.vector0(), triclinic_box.vector1()).value(), "radians").degrees()]
 
     return box, angles
-
 
 # Create a list of the box type names.
 # This needs to come after all of the box functions.
