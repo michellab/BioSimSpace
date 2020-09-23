@@ -19,6 +19,13 @@ To install the latest development version you can use:
 
     conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
+When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
+at the same time:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace sire
+
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
 
