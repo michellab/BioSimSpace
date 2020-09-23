@@ -825,7 +825,7 @@ class Gromacs(_process.Process):
 
         try:
             # Locate the trajectory file.
-            traj_file = _find_trajectory_file()
+            traj_file = self._find_trajectory_file()
 
             if traj_file is None:
                 return None
@@ -1977,7 +1977,7 @@ class Gromacs(_process.Process):
             with _Utils.cd(self._work_dir):
 
                 # Locate the trajectory file.
-                traj_file = _find_trajectory_file()
+                traj_file = self._find_trajectory_file()
 
                 if traj_file is None:
                     return None
@@ -2002,7 +2002,7 @@ class Gromacs(_process.Process):
                 old_system = self._system.copy()
                 old_system._updateCoordinates(new_system)
 
-                # Update the periodic box information in the original system.
+                # Update the box information in the original system.
                 try:
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
@@ -2040,13 +2040,13 @@ class Gromacs(_process.Process):
 
             # Only accept if a single trajectory file is present.
             if num_trr == 1:
-                traj_file = traj_file[0]
+                return traj_file[0]
             else:
                 # Now check for any xtc files.
                 traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
 
                 if len(traj_file) == 1:
-                    traj_file = traj_file[0]
+                    return traj_file[0]
                 else:
                     _warnings.warn("Invalid trajectory file! "
                                    "%d trr files found, %d xtc files found."

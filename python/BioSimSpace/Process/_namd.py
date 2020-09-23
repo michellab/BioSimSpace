@@ -36,6 +36,8 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire.Maths import Vector as _Vector
+
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
@@ -260,14 +262,32 @@ class Namd(_process.Process):
             # Flag that we have found a box.
             has_box = True
 
-            # Get the box size.
-            box_size = self._system._sire_object.property(prop).dimensions()
+            # Periodic box.
+            try:
+                box_size = self._system._sire_object.property(prop).dimensions()
+                v0 = _Vector(box_size.x(), 0, 0)
+                v1 = _Vector(0, box_size.y(), 0)
+                v2 = _Vector(0, 0, box_size.z())
+
+            # TriclinicBox.
+            except:
+                v0 = self._system._sire_object.property(prop).vector0()
+                v1 = self._system._sire_object.property(prop).vector1()
+                v2 = self._system._sire_object.property(prop).vector2()
+
+            # Work out the minimum box size.
+            box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
+
+            # Convert vectors to tuples.
+            v0 = tuple(v0)
+            v1 = tuple(v1)
+            v2 = tuple(v2)
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
             # ensures a consistent wrapping for coordinates in the  NAMD
             # output files.
-            origin = tuple(_process._getAABox(self._system._sire_object).center())
+            origin = tuple(self._system._getAABox().center())
 
         # No box information. Assume this is a gas phase simulation.
         else:
@@ -322,7 +342,7 @@ class Namd(_process.Process):
         # Solvated.
         else:
             # Only use a cutoff if the box is large enough.
-            if min(box_size) > 26:
+            if box_size > 26:
                 self.addToConfig("cutoff                12.")
                 self.addToConfig("pairlistdist          14.")
                 self.addToConfig("switching             on")
@@ -333,7 +353,12 @@ class Namd(_process.Process):
             # We force the cell origin to be located at the system's centre
             # of geometry. This ensures a consistent periodic wrapping for
             # all NAMD output.
-            self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
+            self.addToConfig("cellOrigin            %.3f   %.3f   %.3f" % origin)
+
+            # Add the cell vectors.
+            self.addToConfig("cellBasisVector1      %.3f   %.3f   %.3f" % v0)
+            self.addToConfig("cellBasisVector2      %.3f   %.3f   %.3f" % v1)
+            self.addToConfig("cellBasisVector3      %.3f   %.3f   %.3f" % v2)
 
             # Wrap all molecular coordinates to the periodic box.
             self.addToConfig("wrapAll               on")
