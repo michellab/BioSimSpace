@@ -17,7 +17,7 @@ WORKDIR /home
 
 # Pull in the required packages.
 RUN apt-get update && \
-    apt-get -yq --no-install-recommends install git libgfortran3 nano vim && \
+    apt-get -yq --no-install-recommends install git nano vim && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -54,7 +54,7 @@ WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
 RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
-    conda install -y -c conda-forge openmpi-mpicc=4.0.1 openssh patch
+    conda install -y -c conda-forge libgfortran=3 openmpi-mpicxx openssh patch
 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator

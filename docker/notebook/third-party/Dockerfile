@@ -21,29 +21,29 @@ ENV LD_LIBARY_PATH=$HOME/plumed/lib:$HOME/sire.app/lib:$LD_LIBARY_PATH
 
 # Install the additional Conda packages that are required for the build process.
 RUN $HOME/sire.app/bin/conda install -y -c conda-forge binutils c-compiler compilers \
-    cxx-compiler fortran-compiler gsl openblas openmpi-mpicc
+    cxx-compiler fortran-compiler gsl openblas openmpi-mpicxx
 
 # Download and build PLUMED.
 RUN git clone https://github.com/plumed/plumed2.git && \
     cd plumed2 && \
-    ./configure --prefix=$HOME/plumed && \
-    make CC=mpicc LDFLAGS="-L$HOME/sire.app/lib -lgsl -lopenblas -lz" -j 4 && \
+    ./configure --disable-python --prefix=$HOME/plumed && \
+    make CC=mpicc LDFLAGS="-L$HOME/sire.app/lib -lgomp -lgsl -lopenblas -lz" -j 4 && \
     make install && \
     cd $HOME && \
     tar -cjf  plumed.tar.bz2 plumed
 
 # Download and build GROMACS, patched with PLUMED.
 # Note tha CMake fails to link against various libraries, hence the use of CMAKE_EXE_LINKER_FLAGS.
-RUN wget http://ftp.gromacs.org/pub/gromacs/gromacs-2019.3.tar.gz -O gromacs-src.tar.gz && \
+RUN wget http://ftp.gromacs.org/pub/gromacs/gromacs-2019.6.tar.gz -O gromacs-src.tar.gz && \
     mkdir gromacs-build && \
     tar -xzf gromacs-src.tar.gz -C gromacs-build --strip 1 && \
     cd gromacs-build && \
     export LD_LIBRARY_PATH=$LD_LIBARY_PATH && \
-    echo 2 | $HOME/plumed/bin/plumed patch -p && \
+    echo 1 | $HOME/plumed/bin/plumed patch -p && \
     cmake . -DGMX_BUILD_OWN_FFTW=ON \
-            -DGMX_SIMD=AVX_512 \
+            -DGMX_SIMD=SSE4.1 \
             -DCMAKE_INSTALL_PREFIX=$HOME/gromacs \
-            -DCMAKE_EXE_LINKER_FLAGS="-L$HOME/plumed/lib -L$HOME/sire.app/lib /home/sireuser/sire.app/lib/libopenblas.so.0 -lgsl -lmpi_cxx -lplumed -lplumedKernel -lz" && \
+            -DCMAKE_EXE_LINKER_FLAGS="-L$HOME/plumed/lib -L$HOME/sire.app/lib /home/sireuser/sire.app/lib/libopenblas.so.0 -lgomp -lgsl -lmpi -lplumed -lplumedKernel -lstdc++ -lz" && \
     make -j 4 && \
     make install && \
     cd $HOME && \
