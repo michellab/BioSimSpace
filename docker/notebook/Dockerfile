@@ -61,7 +61,8 @@ RUN pip install --upgrade pip && \
 
 # Install and enable nglview.
 RUN jupyter-nbextension install nglview --py --sys-prefix && \
-    jupyter-nbextension enable nglview --py --sys-prefix
+    jupyter-nbextension enable nglview --py --sys-prefix && \
+    jupyter serverextension enable jupyterlab
 
 # Clean up after conda, including clearing the cache.
 RUN conda clean -tipsy && \
@@ -94,6 +95,10 @@ RUN mkdir /opt/conda/lib/python3.7/site-packages/BioSimSpace/Node/_nodes && \
 # Change the executable name so that BioSimSpace notebook usage statistics
 # can be tracked separately.
 RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (notebook)"/g' /opt/conda/lib/python3.7/site-packages/Sire/__init__.py
+
+# Fix symbolic link for libtinfo to avoid annoying Bash warning.
+RUN rm /opt/conda/lib/libtinfo.so && \
+    ln -sf /opt/conda/lib/libtinfo.so /opt/conda/lib/libtinfo.so.6
 
 # Add in our custom notebook config.
 USER root
