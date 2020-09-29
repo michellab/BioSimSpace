@@ -111,6 +111,10 @@ COPY jupyterhub_config.py /etc/jupyter/
 # Add in the 'update_biosimspace' command to make things easy.
 COPY update_biosimspace /usr/bin
 
+# Run update_biosimspace in case there have been any updates that haven't been
+# pushed to Conda.
+RUN /usr/bin/update_biosimspace
+
 # End as the User to make sure that we don't
 # accidentally run the container as root.
 USER $NB_USER
