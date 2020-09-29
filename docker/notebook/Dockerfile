@@ -58,7 +58,7 @@ WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
 RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
-    conda install -y -c conda-forge libgfortran=3 openmpi-mpicxx openssh patch
+    conda install -y -c conda-forge libgfortran=3 nodejs openmpi-mpicxx openssh patch
 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator
@@ -68,7 +68,7 @@ RUN jupyter-nbextension install nglview --py --sys-prefix && \
     jupyter-nbextension enable nglview --py --sys-prefix && \
     jupyter serverextension enable jupyterlab && \
     jupyter-labextension install @jupyter-widgets/jupyterlab-manager && \
-    jupyter labextension install  nglview-js-widgets
+    jupyter labextension install nglview-js-widgets
 
 # Clean up after conda, including clearing the cache.
 RUN conda clean -tipsy && \
