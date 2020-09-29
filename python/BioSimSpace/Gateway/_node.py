@@ -1040,8 +1040,14 @@ class Node():
                             for file in output.getValue():
                                 zip.write(file, arcname=_os.path.basename(file))
 
+                # Create a FileLink to the archive.
+                file_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                file_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
                 # Return a link to the archive.
-                return _FileLink(zipname)
+                return file_link
         else:
             # Initialise an empty dictionary to store the output data.
             data = {}
