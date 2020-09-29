@@ -10,6 +10,7 @@ proxy:
 rbac:
   enabled: true
 singleuser:
+  defaultUrl: "/lab"
   image:
     name: biosimspace/biosimspace-notebook
     tag: TAG
