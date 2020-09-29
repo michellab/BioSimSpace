@@ -103,9 +103,8 @@ RUN rm /opt/conda/lib/libtinfo.so && \
 # Add in our custom notebook config.
 USER root
 
-# Comment out the below line if you need to test locally.
-# YOU MUST UNCOMMENT THIS LINE FOR REMOTE DEPLOYMENT!
-COPY jupyter_notebook_config.py /etc/jupyter/
+# Copy acrross JupyterHub configuration.
+COPY jupyterhub_config.py /etc/jupyter/
 
 # Add in the 'update_biosimspace' command to make things easy.
 COPY update_biosimspace /usr/bin
