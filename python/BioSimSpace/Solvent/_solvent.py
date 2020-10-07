@@ -637,7 +637,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         molecule.translate(shift)
 
         if type(molecule) is _System:
-
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
             waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
