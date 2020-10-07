@@ -973,7 +973,14 @@ class Process():
         # Return a link to the archive.
         if _is_notebook:
             if file_link:
-                return _FileLink(zipname)
+                # Create a FileLink to the archive.
+                f_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
+                # Return a link to the archive.
+                return f_link
             else:
                 return zipname
         # Return the path to the archive.
