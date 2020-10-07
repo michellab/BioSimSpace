@@ -43,7 +43,6 @@ from Sire import Units as _SireUnits
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Types import Length as _Length
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
