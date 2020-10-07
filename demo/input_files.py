@@ -117,5 +117,5 @@ node.validate()
 
 # Once we are satisfied with our node we can choosed to download it as a regular Python script that can be run from the command-line.
 # 
-# In JupyterHub Click on: `File/Download As/Python`\
-# In JupyterLab Click on: `File/Export Notebook As/Export Notebook to Executable Script`
+# In JupyterHub, click on: `File/Download As/Python`\
+# In JupyterLab, click on: `File/Export Notebook As/Export Notebook to Executable Script`
