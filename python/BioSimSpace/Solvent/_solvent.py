@@ -616,7 +616,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         aabox_min, aabox_max = molecule.getAxisAlignedBoundingBox()
 
         # Work out the aabox center.
-        center = [0.5*(aabox_max[x] - aabox_min[x]).angstroms().magnitude()
+        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().magnitude()
                 for x in range(0, 3)]
 
         # Generate a TriclinicBox based on the box magnitudes and angles.
