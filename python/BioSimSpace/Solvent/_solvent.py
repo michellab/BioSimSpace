@@ -38,6 +38,9 @@ import warnings as _warnings
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
+from Sire.Maths import Vector as _Vector
+from Sire.Vol import TriclinicBox as _TriclinicBox
+from Sire.Units import degree as _degree
 
 from BioSimSpace import _gmx_exe, _gromacs_path
 
@@ -609,6 +612,30 @@ def _solvate(molecule, box, angles, shell, model, num_point,
     """
 
     if molecule is not None:
+        # Get the axis aligned bounding box.
+        aabox_min, aabox_max = molecule.getAxisAlignedBoundingBox()
+
+        # Work out the aabox center.
+        center = [0.5*(aabox_max[x] - aabox_min[x]).angstroms().magnitude()
+                for x in range(0, 3)]
+
+        # Generate a TriclinicBox based on the box magnitudes and angles.
+        triclinic_box = _TriclinicBox(box[0].angstroms().magnitude(),
+                                      box[1].angstroms().magnitude(),
+                                      box[2].angstroms().magnitude(),
+                                      angles[0].degrees().magnitude()*_degree,
+                                      angles[1].degrees().magnitude()*_degree,
+                                      angles[2].degrees().magnitude()*_degree)
+
+        # Work out the center of the triclinic cell.
+        box_center = triclinic_box.cellMatrix()*_Vector(0.5, 0.5, 0.5)
+
+        # Work out the offset between the molecule and box centers.
+        shift = [_Length(box_center[x]-center[x], "Angstrom") for x in range(0, 3)]
+
+        # Center the solute in the box.
+        molecule.translate(shift)
+
         if type(molecule) is _System:
 
             # Reformat all of the water molecules so that they match the
@@ -643,19 +670,24 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # We need to create a dummy input file with no molecule in it.
         else:
             with open("input.gro", "w") as file:
-                f.write("BioSimSpace System\n")
-                f.write("    0\n")
-                f.write("   0.00000  0.00000  0.00000\n")
+                file.write("BioSimSpace System\n")
+                file.write("    0\n")
+                file.write("   0.00000  0.00000  0.00000\n")
 
         # Create the editconf command.
-        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe    \
+        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe      \
                 + " -box %f %f %f" % (box[0].nanometers().magnitude(),
                                       box[1].nanometers().magnitude(),
-                                      box[2].nanometers().magnitude())   \
+                                      box[2].nanometers().magnitude())     \
                 + " -angles %f %f %f" % (angles[0].degrees().magnitude(),
                                          angles[1].degrees().magnitude(),
-                                         angles[2].degrees().magnitude()) \
-                + " -o box.gro"
+                                         angles[2].degrees().magnitude())  \
+                + " -noc -o box.gro"
+
+        with open("README.txt", "w") as file:
+            # Write the command to file.
+            file.write("# gmx editconf was run with the following command:\n")
+            file.write("%s\n" % command)
 
         # Create files for stdout/stderr.
         stdout = open("editconf.out", "w")
@@ -679,9 +711,9 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             mod = model
         command = "%s solvate -cs %s -cp box.gro -o output.gro" % (_gmx_exe, mod)
 
-        with open("README.txt", "w") as file:
+        with open("README.txt", "a") as file:
             # Write the command to file.
-            file.write("# gmx solvate was run with the following command:\n")
+            file.write("\n# gmx solvate was run with the following command:\n")
             file.write("%s\n" % command)
 
         # Create files for stdout/stderr.
@@ -928,7 +960,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                     # Create a new system by adding the water to the original molecule.
                     if molecule is not None:
-
                         if type(molecule) is _System:
                             # Extract the non-water molecules from the original system.
                             non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
@@ -946,6 +977,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                             # Add the space property from the water system.
                             system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
+
+                        # Shift the system back to recover the original coordinates.
+                        system.translate([-x for x in shift])
+
                     else:
                         system = water_ions
 
