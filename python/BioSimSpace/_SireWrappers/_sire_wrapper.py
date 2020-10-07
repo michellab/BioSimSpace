@@ -35,6 +35,7 @@ from Sire import Vol as _SireVol
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
 class SireWrapper():
