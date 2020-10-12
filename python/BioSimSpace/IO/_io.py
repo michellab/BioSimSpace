@@ -34,6 +34,7 @@ from warnings import warn as _warn
 
 import os as _os
 import sys as _sys
+import subprocess as _subprocess
 import tempfile as _tempfile
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
@@ -52,8 +53,10 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace import _amber_home
 from BioSimSpace import _gromacs_path
 from BioSimSpace import _isVerbose
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
@@ -143,7 +146,7 @@ def formatInfo(format):
         print("Unsupported format: '%s'" % format)
         return None
 
-def readPDB(id, property_map={}):
+def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     """Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
        website.
 
@@ -151,7 +154,14 @@ def readPDB(id, property_map={}):
        ----------
 
        id : str
-           The PDB ID string.
+           The PDB ID string, or path to a PDB file.
+
+       pdb4amber : bool
+           Whether to process the PDB file using pdb4amber. This reformats the file
+           such that it can be handled by the AMBER suite of tools.
+
+       work_dir : str
+           The working directory used to run pdb4amber.
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -171,7 +181,14 @@ def readPDB(id, property_map={}):
        Data Bank (PDB) record.
 
        >>> import BioSimSpace as BSS
-       >>> system = BSS.readPDB("1a3n")
+       >>> system = BSS.IO.readPDB("1a3n")
+
+       Create a molecular system from a PDB file on disk and re-format so that
+       it is compatible with the AmberTools suite.
+       Data Bank (PDB) record.
+
+       >>> import BioSimSpace as BSS
+       >>> system = BSS.IO.readPDB("file.pdb", pdb4amber=True)
     """
 
     if not _has_pypdb:
@@ -181,24 +198,87 @@ def readPDB(id, property_map={}):
     if type(id) is not str:
         raise TypeError("'id' must be of type 'str'")
 
-    # Strip any whitespace from the PDB ID and convert to upper case.
-    id = id.replace(" ", "").upper()
+    if type(pdb4amber) is not bool:
+        raise TypeError("'pdb4amber' must be of type 'bool'")
 
-    # Create a temporary directory to write the PDB file.
-    tmp_dir = _tempfile.TemporaryDirectory()
+    if work_dir and type(work_dir) is not str:
+        raise TypeError("'work_dir' must be of type 'str'")
 
-    # Attempt to download the PDB file. (Compression is currently broken!)
-    try:
-        pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
-    except:
-        raise IOError("Invalid PDB ID: '%s'" % id)
+    # Create a temporary working directory and store the directory name.
+    if work_dir is None:
+        tmp_dir = _tempfile.TemporaryDirectory()
+        work_dir = tmp_dir.name
 
-    # Create the name of the PDB file.
-    pdb_file = "%s/%s.pdb" % (tmp_dir.name, id)
+    # User specified working directory.
+    else:
+        # Use full path.
+        if work_dir[0] != "/":
+            work_dir = _os.getcwd() + "/" + work_dir
 
-    # Now write the PDB string to file.
-    with open(pdb_file, "w") as file:
-        file.write(pdb_string)
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(work_dir):
+            _os.makedirs(work_dir, exist_ok=True)
+
+    # Path to a PDB file.
+    if _os.path.isfile(id):
+        pdb_file = _os.path.abspath(id)
+
+    # ID from the Protein Data Bank.
+    else:
+        if not _has_pypdb:
+            _warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+            return None
+
+        # Strip any whitespace from the PDB ID and convert to upper case.
+        id = id.replace(" ", "").upper()
+
+        # Attempt to download the PDB file. (Compression is currently broken!)
+        try:
+            pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
+        except:
+            raise IOError("Invalid PDB ID: '%s'" % id)
+
+        # Create the name of the PDB file.
+        pdb_file = "%s/%s.pdb" % (work_dir, id)
+
+        # Now write the PDB string to file.
+        with open(pdb_file, "w") as file:
+            file.write(pdb_string)
+
+        # Store the absolute path of the file.
+        pdb_file = _os.path.abspath(pdb_file)
+
+    # Process the file with pdb4amber.
+    if pdb4amber:
+        # Check that pdb4amber exists.
+        if _amber_home is None:
+            raise _MissingSoftwareError("Please install AmberTools for pdb4amber support: http://ambermd.org")
+        else:
+            _pdb4amber_exe = "%s/bin/pdb4amber" % _amber_home
+            if not _os.path.isfile(_pdb4amber_exe):
+                raise IOError("Missing pdb4amber executable: '%s'" % _pdb4amber_exe)
+
+                # Create the file prefix.
+        prefix = work_dir + "/"
+
+        # Create the pdb4amber command.
+        command = "%s %s -o pdb4amber.pdb" % (_pdb4amber_exe, pdb_file)
+
+        # Create files for stdout/stderr.
+        stdout = open(prefix + "pdb4amber.out", "w")
+        stderr = open(prefix + "pdb4amber.err", "w")
+
+        # Run pdb4amber as a subprocess.
+        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        stdout.close()
+        stderr.close()
+
+        # Check that the output PDB file was generated.
+        # the expected output was generated.
+        if _os.path.isfile("%s/pdb4amber.pdb" % work_dir):
+            pdb_file = "%s/pdb4amber.pdb" % work_dir
+        else:
+            raise IOError("pdb4amber failed!")
 
     # Read the file and return a molecular system.
     return readMolecules(pdb_file, property_map)
