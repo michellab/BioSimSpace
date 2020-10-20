@@ -30,12 +30,12 @@ __all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecul
 
 from collections import OrderedDict as _OrderedDict
 from io import StringIO as _StringIO
-from warnings import warn as _warn
 
 import os as _os
 import sys as _sys
 import subprocess as _subprocess
 import tempfile as _tempfile
+import warnings as _warnings
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
 # we don't have a display running.
@@ -192,7 +192,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     """
 
     if not _has_pypdb:
-        _warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+        _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
         return None
 
     if type(id) is not str:
@@ -226,17 +226,17 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     # ID from the Protein Data Bank.
     else:
         if not _has_pypdb:
-            _warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+            _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
             return None
 
         # Strip any whitespace from the PDB ID and convert to upper case.
         id = id.replace(" ", "").upper()
 
         # Attempt to download the PDB file. (Compression is currently broken!)
-        try:
+        with _warnings.catch_warnings(record=True) as w:
             pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
-        except:
-            raise IOError("Invalid PDB ID: '%s'" % id)
+            if w:
+                raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
 
         # Create the name of the PDB file.
         pdb_file = "%s/%s.pdb" % (work_dir, id)
@@ -333,8 +333,8 @@ def readMolecules(files, property_map={}):
 
     global _has_gmx_warned
     if _gromacs_path is None and not _has_gmx_warned:
-        _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
-              "for GROMACS topology file support.")
+        _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+                       "for GROMACS topology file support.")
         _has_gmx_warned = True
 
     # Convert to a list.
@@ -444,8 +444,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     global _has_gmx_warned
     if _gromacs_path is None and not _has_gmx_warned:
-        _warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
-              "for GROMACS topology file support.")
+        _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+                       "for GROMACS topology file support.")
         _has_gmx_warned = True
 
     # Check that the filebase is a string.
