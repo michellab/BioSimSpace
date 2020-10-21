@@ -37,8 +37,10 @@ import string as _string
 
 from Sire import Base as _SireBase
 from Sire import CAS as _SireCAS
+from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
+from Sire import System as _SireSystem
 from Sire import Units as _SireUnits
 
 from BioSimSpace import _isVerbose
@@ -409,8 +411,9 @@ class Molecule(_SireWrapper):
            Parameters
            ----------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The molecule to match with.
+           molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                      Sire.System.System, :class:`System <Sire._SireWrappers.System>`
+               The molecule, or system of molecules, to match with.
 
            property_map : dict
                A map between property names and user supplied names.
@@ -427,10 +430,17 @@ class Molecule(_SireWrapper):
 
         # Validate input.
 
+        is_system = False
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
         elif type(molecule) is Molecule:
             mol1 = molecule._sire_object
+        elif isinstance(molecule, _SireSystem.System):
+            mol1 = molecule
+            is_system = True
+        elif type(molecule) is _System:
+            mol1 = molecule._sire_object
+            is_system = True
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'")
 
@@ -450,182 +460,543 @@ class Molecule(_SireWrapper):
         mol0 = self._sire_object
 
         # Store the number of atoms to match.
-        num_atoms = mol0.nAtoms()
+        num_atoms0 = mol0.nAtoms()
 
-        # The new molecule must have at least as many atoms.
-        if mol1.nAtoms() < num_atoms:
-            raise _IncompatibleError("The passed molecule is incompatible with the original! "
-                                     "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms, mol1.nAtoms()))
+        # Work out the number of atoms in mol1.
+        if is_system:
+            num_atoms1 = _System(mol1).nAtoms()
+        else:
+            num_atoms1 = mol1.nAtoms()
+
+        # The new molecule must have the same number of atoms.
+        if num_atoms1 != num_atoms0:
+            if is_system:
+                raise _IncompatibleError("The passed system is incompatible with the original! "
+                                         "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1))
+            else:
+                raise _IncompatibleError("The passed molecule is incompatible with the original! "
+                                         "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1))
 
         # Whether the atoms have been renamed.
         is_renamed = False
 
-        # Instantiate the default atom matcher (match by residue index and atom name).
-        matcher = _SireMol.ResIdxAtomNameMatcher()
+        if not is_system:
+            # Instantiate the default atom matcher (match by residue index and atom name).
+            matcher = _SireMol.ResIdxAtomNameMatcher()
 
-        # Match the atoms based on residue index and atom name.
-        matches = matcher.match(mol0, mol1)
-
-        # Have we matched all of the atoms?
-        if len(matches) < num_atoms:
-            # Atom names might have changed. Try to match by residue index
-            # and coordinates.
-            matcher = _SireMol.ResIdxAtomCoordMatcher()
+            # Match the atoms based on residue index and atom name.
             matches = matcher.match(mol0, mol1)
-
-            # We need to rename the atoms.
-            is_renamed = True
 
             # Have we matched all of the atoms?
             if len(matches) < num_atoms:
-                raise _IncompatibleError("Failed to match all atoms!")
+                # Atom names might have changed. Try to match by residue index
+                # and coordinates.
+                matcher = _SireMol.ResIdxAtomCoordMatcher()
+                matches = matcher.match(mol0, mol1)
 
-            # Are the atoms in the same order?
-            is_reordered = matcher.changesOrder(mol0, mol1)
+                # We need to rename the atoms.
+                is_renamed = True
 
-        else:
-            # Are the atoms in the same order?
-            is_reordered = matcher.changesOrder(mol0, mol1)
+                # Have we matched all of the atoms?
+                if len(matches) < num_atoms:
+                    raise _IncompatibleError("Failed to match all atoms!")
 
-        if verbose:
-            print("\nAtom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
+                # Are the atoms in the same order?
+                is_reordered = matcher.changesOrder(mol0, mol1)
 
-        # Get a list of the property keys for each molecule.
-        props0 = mol0.propertyKeys()
-        props1 = mol1.propertyKeys()
-
-        # Copy the property map.
-        _property_map = property_map.copy()
-
-        # See if any of the new properties are in the map, add them if not.
-        for prop in props0:
-            if not prop in _property_map:
-                _property_map[prop] = prop
-        for prop in props1:
-            if not prop in _property_map:
-                _property_map[prop] = prop
-
-        # Make the molecule editable.
-        edit_mol = mol0.edit()
-
-        if "parameters" in _property_map:
-            param = _property_map["parameters"]
-        else:
-            param = "parameters"
-
-        # The atom order is the same, simply copy across properties as is.
-        if not is_reordered:
-            if verbose:
-                print("\nSetting properties...")
-            # Loop over all of the keys in the new molecule.
-            for prop in props1:
-                # Skip 'parameters' property, since it contains references to other parameters.
-                if prop != param:
-                    # This is a new property, or we are allowed to overwrite.
-                    if (not mol0.hasProperty(_property_map[prop])) or overwrite:
-                        if verbose:
-                            print("  %s" % _property_map[prop])
-                        try:
-                            edit_mol = edit_mol.setProperty(_property_map[prop], mol1.property(prop))
-                        except Exception as e:
-                            msg = "Failed to set property '%s'" % _property_map[prop]
-                            if _isVerbose():
-                                raise _IncompatibleError(msg) from e
-                            else:
-                                raise _IncompatibleError(msg) from None
-
-        # The atom order is different, we need to map the atoms when setting properties.
-        else:
-            # Create a dictionary to flag whether a property has been seen.
-            seen_prop = {}
-            for prop in props1:
-                seen_prop[prop] = False
-
-            # First, set atom based properties.
+            else:
+                # Are the atoms in the same order?
+                is_reordered = matcher.changesOrder(mol0, mol1)
 
             if verbose:
-                print("\nSetting atom properties...")
+                print("\nAtom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
 
-            # Loop over all of the keys in the new molecule.
+            # Get a list of the property keys for each molecule.
+            props0 = mol0.propertyKeys()
+            props1 = mol1.propertyKeys()
+
+            # Copy the property map.
+            _property_map = property_map.copy()
+
+            # See if any of the new properties are in the map, add them if not.
+            for prop in props0:
+                if not prop in _property_map:
+                    _property_map[prop] = prop
             for prop in props1:
-                # This is a new property, or we are allowed to overwrite.
-                if (not mol0.hasProperty(_property_map[prop])) or overwrite:
-                    # Loop over all of the atom mapping pairs and set the property.
-                    for idx0, idx1 in matches.items():
-                        # Does the atom have this property?
-                        # If so, add it to the matching atom in this molecule.
-                        if mol1.atom(idx1).hasProperty(prop):
+                if not prop in _property_map:
+                    _property_map[prop] = prop
+
+            # Make the molecule editable.
+            edit_mol = mol0.edit()
+
+            if "parameters" in _property_map:
+                param = _property_map["parameters"]
+            else:
+                param = "parameters"
+
+            # The atom order is the same, simply copy across properties as is.
+            if not is_reordered:
+                if verbose:
+                    print("\nSetting properties...")
+                # Loop over all of the keys in the new molecule.
+                for prop in props1:
+                    # Skip 'parameters' property, since it contains references to other parameters.
+                    if prop != param:
+                        # This is a new property, or we are allowed to overwrite.
+                        if (not mol0.hasProperty(_property_map[prop])) or overwrite:
                             if verbose:
-                                print("  %-20s %s --> %s" % (_property_map[prop], idx1, idx0))
+                                print("  %s" % _property_map[prop])
                             try:
-                                edit_mol = edit_mol.atom(idx0).setProperty(_property_map[prop], mol1.atom(idx1).property(prop)).molecule()
-                                seen_prop[prop] = True
+                                edit_mol = edit_mol.setProperty(_property_map[prop], mol1.property(prop))
                             except Exception as e:
-                                msg = "Failed to copy property '%s' from %s to %s." % (_property_map[prop], idx1, idx0)
+                                msg = "Failed to set property '%s'" % _property_map[prop]
                                 if _isVerbose():
                                     raise _IncompatibleError(msg) from e
                                 else:
                                     raise _IncompatibleError(msg) from None
 
-            # Now deal with all unseen properties. These will be non atom-based
-            # properties, such as TwoAtomFunctions, StringProperty, etc.
+            # The atom order is different, we need to map the atoms when setting properties.
+            else:
+                # Create a dictionary to flag whether a property has been seen.
+                seen_prop = {}
+                for prop in props1:
+                    seen_prop[prop] = False
 
-            if verbose:
-                print("\nSetting molecule properties...")
+                # First, set atom based properties.
 
-            # Loop over all of the unseen properties.
-            for prop in seen_prop:
-                if not seen_prop[prop]:
-                    # Skip 'parameters' property, since it contains references to other parameters.
-                    if prop != "parameters":
-                        # This is a new property, or we are allowed to overwrite.
-                        if (not mol0.hasProperty(_property_map[prop])) or overwrite:
-                            if verbose:
-                                print("  %s" % _property_map[prop])
+                if verbose:
+                    print("\nSetting atom properties...")
 
-                            # Get the property from the parameterised molecule.
-                            propty = mol1.property(_property_map[prop])
-
-                            # Try making it compatible with the original molecule.
-                            if hasattr(propty, "makeCompatibleWith"):
+                # Loop over all of the keys in the new molecule.
+                for prop in props1:
+                    # This is a new property, or we are allowed to overwrite.
+                    if (not mol0.hasProperty(_property_map[prop])) or overwrite:
+                        # Loop over all of the atom mapping pairs and set the property.
+                        for idx0, idx1 in matches.items():
+                            # Does the atom have this property?
+                            # If so, add it to the matching atom in this molecule.
+                            if mol1.atom(idx1).hasProperty(prop):
+                                if verbose:
+                                    print("  %-20s %s --> %s" % (_property_map[prop], idx1, idx0))
                                 try:
-                                    propty = propty.makeCompatibleWith(mol0, matches)
+                                    edit_mol = edit_mol.atom(idx0).setProperty(_property_map[prop], mol1.atom(idx1).property(prop)).molecule()
+                                    seen_prop[prop] = True
                                 except Exception as e:
-                                    msg = "Incompatible property: %s" % _property_map[prop]
+                                    msg = "Failed to copy property '%s' from %s to %s." % (_property_map[prop], idx1, idx0)
                                     if _isVerbose():
                                         raise _IncompatibleError(msg) from e
                                     else:
                                         raise _IncompatibleError(msg) from None
 
-                            # Now try to set the property.
-                            edit_mol.setProperty(_property_map[prop], propty)
-
-        # Finally, rename the atoms.
-
-        if rename_atoms and is_renamed:
-            if verbose:
-                print("\nRenaming atoms...")
-
-            for idx0, idx1 in matches.items():
-                # Get the name of the atom in each molecule.
-                name0 = mol0.atom(idx0).name()
-                name1 = mol1.atom(idx1).name()
+                # Now deal with all unseen properties. These will be non atom-based
+                # properties, such as TwoAtomFunctions, StringProperty, etc.
 
                 if verbose:
-                    print("  %s --> %s" % (name0, name1))
+                    print("\nSetting molecule properties...")
 
-                # Try to rename the atom.
+                # Loop over all of the unseen properties.
+                for prop in seen_prop:
+                    if not seen_prop[prop]:
+                        # Skip 'parameters' property, since it contains references to other parameters.
+                        if prop != "parameters":
+                            # This is a new property, or we are allowed to overwrite.
+                            if (not mol0.hasProperty(_property_map[prop])) or overwrite:
+                                if verbose:
+                                    print("  %s" % _property_map[prop])
+
+                                # Get the property from the parameterised molecule.
+                                propty = mol1.property(_property_map[prop])
+
+                                # Try making it compatible with the original molecule.
+                                if hasattr(propty, "makeCompatibleWith"):
+                                    try:
+                                        propty = propty.makeCompatibleWith(mol0, matches)
+                                    except Exception as e:
+                                        msg = "Incompatible property: %s" % _property_map[prop]
+                                        if _isVerbose():
+                                            raise _IncompatibleError(msg) from e
+                                        else:
+                                            raise _IncompatibleError(msg) from None
+
+                                # Now try to set the property.
+                                edit_mol.setProperty(_property_map[prop], propty)
+
+            # Finally, rename the atoms.
+
+            if rename_atoms and is_renamed:
+                if verbose:
+                    print("\nRenaming atoms...")
+
+                for idx0, idx1 in matches.items():
+                    # Get the name of the atom in each molecule.
+                    name0 = mol0.atom(idx0).name()
+                    name1 = mol1.atom(idx1).name()
+
+                    if verbose:
+                        print("  %s --> %s" % (name0, name1))
+
+                    # Try to rename the atom.
+                    try:
+                        edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                    except Exception as e:
+                        msg = "Failed to rename atom: %s --> %s" % (name0, name1)
+                        if _isVerbose():
+                            raise _IncompatibleError(msg) from e
+                        else:
+                            raise _IncompatibleError(msg) from None
+
+            # Commit the changes.
+            self._sire_object = edit_mol.commit()
+
+        # Atoms from molecule in the passed system (mol1) need to be matched against atoms
+        # from the corresponding residue in mol0 and the properties aggregated.
+        else:
+            # Initalise a list to hold the matches for each molecule in mol1.
+            matches = []
+
+            # Tally counter for the total number of matches.
+            num_matches = 0
+
+            # Initalise the offset.
+            offset = 0
+
+            # Get the molecule numbers in the system.
+            mol_nums = mol1.molNums()
+
+            # Loop over all molecules in mol1.
+            for num in mol_nums:
+                # Extract the numbered molecule from the system mol1.
+                mol = mol1[num]
+
+                # Initialise the matcher.
+                matcher = _SireMol.ResIdxAtomCoordMatcher(_SireMol.ResIdx(offset))
+
+                # Get the matches for this molecule and append to the list.
+                match = matcher.match(mol0, mol)
+                matches.append(match)
+                num_matches += len(match)
+
+                # Increment the offset.
+                offset += mol.nResidues()
+
+            # Have we matched all of the atoms?
+            if num_matches < num_atoms0:
+                raise _IncompatibleError("Failed to match all atoms!")
+
+            # Make the molecule editable.
+            edit_mol = mol0.edit()
+
+            # Create objects to hold all of the potential terms.
+            bonds      = _SireMM.TwoAtomFunctions(edit_mol.info())
+            angles     = _SireMM.ThreeAtomFunctions(edit_mol.info())
+            dihedrals  = _SireMM.FourAtomFunctions(edit_mol.info())
+            impropers  = _SireMM.FourAtomFunctions(edit_mol.info())
+
+            # Next we need to work out what properties can be set at the atom level,
+            # and which are associated with the molecule as a whole.
+            mol_props = []
+            atom_props = []
+
+            # Each atom should have the same set of properties so we can check the
+            # first atom in each molecule.
+            for num in mol_nums:
+                mol = mol1[num]
+
+                # Get the molecule and atom properties.
+                props_mol = mol.propertyKeys()
+                props_atom = mol.atoms()[0].propertyKeys()
+
+                # Check the atomic properties and add any new ones to the list.
+                for prop in props_atom:
+                    prop = property_map.get(prop, prop)
+                    if prop not in atom_props:
+                        atom_props.append(prop)
+
+                # Check the molecular properties and add any new ones to the list.
+                for prop in props_mol:
+                    prop = property_map.get(prop, prop)
+                    if prop not in mol_props and prop not in atom_props:
+                        mol_props.append(prop)
+
+            # Create a list of excluded molecular properties. These are ones that
+            # must be re-mapped manually and set by hand.
+            excluded_props = [property_map.get("bond", "bond"),
+                              property_map.get("angle", "angle"),
+                              property_map.get("dihedral", "dihedral"),
+                              property_map.get("improper", "improper"),
+                              property_map.get("connectivity", "connectivity"),
+                              property_map.get("intrascale", "intrascale"),
+                              property_map.get("parameters", "parameters")]
+
+            # Loop over all atoms within each molecule. We set the allowed atomic
+            # properties and build the molecular ones as we go.
+            for idx, num in enumerate(mol_nums):
+                # Extract the molecule and its associated info object.
+                mol = mol1[num]
+                info = mol.info()
+
+                # An inverse mapping for indices in mol1 to those in mol0.
+                inv_mapping = {}
+
+                # Loop over all matching atom pairs for this molecule.
+                for idx0, idx1 in matches[idx].items():
+                    # Add indices to the inverse mapping.
+                    inv_mapping[idx1] = idx0
+
+                    # Check the atom names and see if they need updating.
+                    if rename_atoms:
+                        name0 = mol0.atom(idx0).name()
+                        name1 = mol1.atom(idx1).name()
+
+                        if verbose:
+                            print("  %s --> %s" % (name0, name1))
+
+                        # Try to rename the atom.
+                        try:
+                            edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                        except Exception as e:
+                            msg = "Failed to rename atom: %s --> %s" % (name0, name1)
+                            if _isVerbose():
+                                raise _IncompatibleError(msg) from e
+                            else:
+                                raise _IncompatibleError(msg) from None
+
+                    # Loop over all atom properties.
+                    for prop in atom_props:
+                        # This is a new property, or we're allowed to overwrite.
+                        if (not mol0.hasProperty(prop)) or overwrite:
+                            if verbose:
+                                print("  %-20s %s --> %s" % (prop, idx1, idx0))
+                            try:
+                                edit_mol = edit_mol.atom(idx0).setProperty(prop, mol.atom(idx1).property(prop)).molecule()
+                            except Exception as e:
+                                msg = "Failed to copy property '%s' from %s to %s." % (prop, idx1, idx0)
+                                if _isVerbose():
+                                    raise _IncompatibleError(msg) from e
+                                else:
+                                    raise _IncompatibleError(msg) from None
+
+                # Now deal with the molecular properties.
+                for prop in mol_props:
+                    # Get the property name from the user mapping.
+                    prop = property_map.get(prop, prop)
+
+                    # This is a new property, or we're allowed to overwrite, and it's not excluded.
+                    if ((not mol0.hasProperty(prop)) or overwrite) and prop not in excluded_props:
+                        if verbose:
+                            print("  %s" % prop)
+
+                        # Get the property from the parameterised molecule.
+                        propty = mol.property(prop)
+
+                        # Try making the property compatible with the original molecule.
+                        if hasattr(propty, "makeCompatibleWith"):
+                            try:
+                                propty = propty.makeCompatibleWith(mol0, matches[idx])
+                            except Exception as e:
+                                msg = "Incompatible property: %s" % prop
+                                if _isVerbose():
+                                    raise _IncompatibleError(msg) from e
+                                else:
+                                    raise _IncompatibleError(msg) from None
+
+                        # Now try to set the property.
+                        edit_mol.setProperty(prop, propty)
+
+                # Now re-map and build the properties for each of the potential terms.
+
+                # Bonds.
+                prop = property_map.get("bond", "bond")
+                if mol.hasProperty(prop):
+                    if verbose:
+                        print("  %s" % prop)
+                    for bond in mol.property(prop).potentials():
+                        # Extract the bond information.
+                        atom0 = info.atomIdx(bond.atom0())
+                        atom1 = info.atomIdx(bond.atom1())
+                        exprn = bond.function()
+
+                        # Map the atom indices to their position in the merged molecule.
+                        atom0 = inv_mapping[atom0]
+                        atom1 = inv_mapping[atom1]
+
+                        # Set the new bond.
+                        bonds.set(atom0, atom1, exprn)
+
+                # Angles.
+                prop = property_map.get("angle", "angle")
+                if mol.hasProperty(prop):
+                    if verbose:
+                        print("  %s" % prop)
+                    for angle in mol.property(prop).potentials():
+                        # Extract the angle information.
+                        atom0 = info.atomIdx(angle.atom0())
+                        atom1 = info.atomIdx(angle.atom1())
+                        atom2 = info.atomIdx(angle.atom2())
+                        exprn = angle.function()
+
+                        # Map the atom indices to their position in the merged molecule.
+                        atom0 = inv_mapping[atom0]
+                        atom1 = inv_mapping[atom1]
+                        atom2 = inv_mapping[atom2]
+
+                        # Set the new angle.
+                        angles.set(atom0, atom1, atom2, exprn)
+
+                # Dihedrals.
+                prop = property_map.get("dihedral", "dihedral")
+                if mol.hasProperty(prop):
+                    if verbose:
+                        print("  %s" % prop)
+                    for dihedral in mol.property(prop).potentials():
+                        # Extract the dihedral information.
+                        atom0 = info.atomIdx(dihedral.atom0())
+                        atom1 = info.atomIdx(dihedral.atom1())
+                        atom2 = info.atomIdx(dihedral.atom2())
+                        atom3 = info.atomIdx(dihedral.atom3())
+                        exprn = dihedral.function()
+
+                        # Map the atom indices to their position in the merged molecule.
+                        atom0 = inv_mapping[atom0]
+                        atom1 = inv_mapping[atom1]
+                        atom2 = inv_mapping[atom2]
+                        atom3 = inv_mapping[atom3]
+
+                        # Set the new dihedral.
+                        dihedrals.set(atom0, atom1, atom2, atom3, exprn)
+
+                # Improper.
+                prop = property_map.get("improper", "improper")
+                if mol.hasProperty(prop):
+                    if verbose:
+                        print("  %s" % prop)
+                    for improper in mol.property(prop).potentials():
+                        # Extract the improper information.
+                        atom0 = info.atomIdx(improper.atom0())
+                        atom1 = info.atomIdx(improper.atom1())
+                        atom2 = info.atomIdx(improper.atom2())
+                        atom3 = info.atomIdx(improper.atom3())
+                        exprn = improper.function()
+
+                        # Map the atom indices to their position in the merged molecule.
+                        atom0 = inv_mapping[atom0]
+                        atom1 = inv_mapping[atom1]
+                        atom2 = inv_mapping[atom2]
+                        atom3 = inv_mapping[atom3]
+
+                        # Set the new improper.
+                        impropers.set(atom0, atom1, atom2, atom3, exprn)
+
+            # Set properties for the molecular potential.
+
+            # Bonds.
+            if bonds.nFunctions() > 0:
+                prop = property_map.get("bond", "bond")
+                if verbose:
+                    print("  %s" % prop)
                 try:
-                    edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                    edit_mol.setProperty(prop, bonds)
                 except Exception as e:
-                    msg = "Failed to rename atom: %s --> %s" % (name0, name1)
+                    msg = "Incompatible property: %s" % prop
                     if _isVerbose():
                         raise _IncompatibleError(msg) from e
                     else:
                         raise _IncompatibleError(msg) from None
 
-        # Commit the changes.
-        self._sire_object = edit_mol.commit()
+            # Angles.
+            if angles.nFunctions() > 0:
+                prop = property_map.get("angle", "angle")
+                if verbose:
+                    print("  %s" % prop)
+                try:
+                    edit_mol.setProperty(prop, angles)
+                except Exception as e:
+                    msg = "Incompatible property: %s" % prop
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
+
+            # Dihedrals.
+            if dihedrals.nFunctions() > 0:
+                prop = property_map.get("dihedral", "dihedral")
+                if verbose:
+                    print("  %s" % prop)
+                try:
+                    edit_mol.setProperty(prop, dihedrals)
+                except Exception as e:
+                    msg = "Incompatible property: %s" % prop
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
+
+            # Impropers.
+            if impropers.nFunctions() > 0:
+                prop = property_map.get("improper", "improper")
+                if verbose:
+                    print("  %s" % prop)
+                try:
+                    edit_mol.setProperty(prop, impropers)
+                except Exception as e:
+                    msg = "Incompatible property: %s" % prop
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
+
+            # Now generate the molecular connectivity.
+            if bonds.nFunctions() > 0:
+                prop = property_map.get("connectivity", "connectivity")
+                if verbose:
+                    print("  %s" % prop)
+                conn = _SireMol.Connectivity(edit_mol.info()).edit()
+
+                # Connect the bonded atoms. Connectivity is the same at lambda = 0
+                # and lambda = 1.
+                for bond in bonds.potentials():
+                    conn.connect(bond.atom0(), bond.atom1())
+                conn = conn.commit()
+
+                try:
+                    edit_mol.setProperty(prop, conn)
+                except Exception as e:
+                    msg = "Incompatible property: %s" % prop
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
+
+            # Next we construct the intrascale matrix for the non-bonded
+            # interactions. It is prohibitively slow to do this on-the-fly so
+            # we use the GroTop parser to re-construct it for us, then copy it
+            # back into the original system.
+
+            prop = property_map.get("intrascale", "intrascale")
+            if (not mol0.hasProperty(prop)) or overwrite:
+                if verbose:
+                    print("  %s" % prop)
+                # Delete any existing intrascale property from the molecule.
+                if mol0.hasProperty(prop):
+                    edit_mol.removeProperty(prop)
+                mol = edit_mol.commit()
+                # Convert to a "GROMACS system" using the GroTop parser.
+                gro_system = _SireIO.GroTop(Molecule(mol).toSystem()._sire_object,
+                             _SireBase.PropertyMap(property_map)).toSystem()
+                # Extract the only molecule in the system.
+                gro_mol = gro_system[_SireMol.MolIdx(0)]
+                edit_mol = mol.edit()
+                try:
+                    edit_mol.setProperty(prop, gro_mol.property(prop))
+                except Exception as e:
+                    msg = "Incompatible property: %s" % prop
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
+
+            # Finally, commit the changes to the internal object.
+            self._sire_object = edit_mol.commit()
 
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""

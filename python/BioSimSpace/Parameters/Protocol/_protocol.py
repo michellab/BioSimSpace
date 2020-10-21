@@ -185,8 +185,11 @@ class Protocol():
         output = [prefix + output[0], prefix + output[1]]
 
         try:
-            # Load the parameterised molecule.
-            par_mol = _Molecule(_IO.readMolecules(output)._getSireObject()[_SireMol.MolIdx(0)])
+            # Load the parameterised molecule. (This could be a system of molecules.)
+            par_mol = _IO.readMolecules(output)
+            # Extract single molecules.
+            if par_mol.nMolecules() == 1:
+                par_mol = par_mol.getMolecules()[0]
         except Exception as e:
             msg = "Failed to read molecule from: '%s', '%s'" % (output[0], output[1])
             if _isVerbose():
