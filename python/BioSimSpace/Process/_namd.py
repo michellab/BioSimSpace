@@ -633,6 +633,22 @@ class Namd(_process.Process):
             # Create and return the molecular system.
             try:
                 return _System(_SireIO.MoleculeParser.read(files, self._property_map))
+                # Read the molecular system.
+                new_system = _System(_SireIO.MoleculeParser.read(files, self._property_map))
+
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system,
+                                              self._property_map,
+                                              self._property_map)
+
+                # Update the periodic box information in the original system.
+                if "space" in new_system._sire_object.propertyKeys():
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+                return old_system
+
             except:
                 return None
 

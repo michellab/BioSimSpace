@@ -588,12 +588,22 @@ class Amber(_process.Process):
 
         # Check that the file exists.
         if _os.path.isfile(restart):
-            # Create and return the molecular system.
-            try:
-                return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
-            except:
-                print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
-                return None
+            # Read the molecular system.
+            new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
+
+            # Copy the new coordinates back into the original system.
+            old_system = self._system.copy()
+            old_system._updateCoordinates(new_system,
+                                          self._property_map,
+                                          self._property_map)
+
+            # Update the periodic box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
+
         else:
             return None
 
