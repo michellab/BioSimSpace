@@ -63,3 +63,7 @@ def test_multi_chain_equivalence():
     nrg0 = process0.getDihedralEnergy().kj_per_mol().magnitude()
     nrg1 = process1.getDihedralEnergy().kj_per_mol().magnitude()
     assert nrg0 == pytest.approx(nrg1, rel=1e-2)
+
+    # Make sure we can load a system from the process for the single-molecule
+    # representation. This maps the coordinates back into the original topology.
+    new_system = process0.getSystem()
