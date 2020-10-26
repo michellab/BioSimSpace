@@ -200,7 +200,7 @@ class Protocol():
         # Make the molecule 'mol' compatible with 'par_mol'. This will create
         # a mapping between atom indices in the two molecules and add all of
         # the new properties from 'par_mol' to 'mol'.
-        new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -274,6 +274,15 @@ class Protocol():
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
         if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+            if molecule.nChains() > 1:
+                # If the original molecule was comprised of multiple chains, then we
+                # need to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
+                # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
+                with open(prefix + "leap.top", "a") as file:
+                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                    file.write("%FORMAT(10I8)\n")
+                    file.write("    %d\n" % molecule.nAtoms())
+
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
