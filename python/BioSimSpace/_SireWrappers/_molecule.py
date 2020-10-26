@@ -414,34 +414,10 @@ class Molecule(_SireWrapper):
 
         return _SearchResult(search_result)
 
-    def _getPropertyMap0(self):
-        """Generate a property map for the lambda = 0 state of the merged molecule."""
-
-        property_map = {}
-
-        if self._is_merged:
-            for prop in self._sire_object.propertyKeys():
-                if prop[-1] == "0":
-                    property_map[prop[:-1]] = prop
-
-        return property_map
-
-    def _getPropertyMap1(self):
-        """Generate a property map for the lambda = 1 state of the merged molecule."""
-
-        property_map = {}
-
-        if self._is_merged:
-            for prop in self._sire_object.propertyKeys():
-                if prop[-1] == "1":
-                    property_map[prop[:-1]] = prop
-
-        return property_map
-
-    def _makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
+    def makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
-           add all additional properties.
+           add all additional properties from the passed molecule.
 
            Parameters
            ----------
@@ -523,7 +499,7 @@ class Molecule(_SireWrapper):
             matches = matcher.match(mol0, mol1)
 
             # Have we matched all of the atoms?
-            if len(matches) < num_atoms:
+            if len(matches) < num_atoms0:
                 # Atom names might have changed. Try to match by residue index
                 # and coordinates.
                 matcher = _SireMol.ResIdxAtomCoordMatcher()
@@ -900,7 +876,7 @@ class Molecule(_SireWrapper):
                         # Set the new dihedral.
                         dihedrals.set(atom0, atom1, atom2, atom3, exprn)
 
-                # Improper.
+                # Impropers.
                 prop = property_map.get("improper", "improper")
                 if mol.hasProperty(prop):
                     if verbose:
@@ -1032,6 +1008,30 @@ class Molecule(_SireWrapper):
 
             # Finally, commit the changes to the internal object.
             self._sire_object = edit_mol.commit()
+
+    def _getPropertyMap0(self):
+        """Generate a property map for the lambda = 0 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "0":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
+
+    def _getPropertyMap1(self):
+        """Generate a property map for the lambda = 1 state of the merged molecule."""
+
+        property_map = {}
+
+        if self._is_merged:
+            for prop in self._sire_object.propertyKeys():
+                if prop[-1] == "1":
+                    property_map[prop[:-1]] = prop
+
+        return property_map
 
     def _convertFromMergedMolecule(self):
         """Convert from a merged molecule."""
