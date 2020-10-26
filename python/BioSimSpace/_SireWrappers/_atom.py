@@ -124,7 +124,11 @@ class Atom(_SireWrapper):
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
 
+           Returns
+           -------
+
            coordinates : class:`Coordinate <BioSimSpace.Types.Coordinate>`
+               The coordinates of the atom.
         """
         prop = property_map.get("coordinates", "coordinates")
 
