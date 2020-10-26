@@ -460,10 +460,21 @@ class GAFF(_protocol.Protocol):
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
                 if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
-                    # Load the parameterised molecule.
+                    # If the original molecule was comprised of multiple chains, then we need
+                    # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
+                    # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
+                    if new_mol.nChains() > 1:
+                        with open("leap.top", "a") as file:
+                            file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                            file.write("%FORMAT(10I8)\n")
+                            file.write("    %d\n" % new_mol.nAtoms())
+
+                    # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
-                        par_mol = _Molecule(_IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
-                                ._getSireObject()[_SireMol.MolIdx(0)])
+                        par_mol = _IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
+                        # Extract single molecules.
+                        if par_mol.nMolecules() == 1:
+                            par_mol = par_mol.getMolecules()[0]
                     except Exception as e:
                         msg = "Failed to read molecule from: 'leap.top', 'leap.crd'"
                         if _isVerbose():

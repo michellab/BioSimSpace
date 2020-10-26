@@ -11,6 +11,7 @@ of packages.
    :maxdepth: 1
 
    index_Align
+   index_Box
    index_FreeEnergy
    index_Gateway
    index_IO

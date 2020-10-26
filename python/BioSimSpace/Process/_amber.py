@@ -285,6 +285,16 @@ class Amber(_process.Process):
         try:
             prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
+
+            # If this is a single molecule with chains and the format is PRM7, then
+            # we add an ATOMS_PER_MOLECULE record to stop the parser splitting the
+            # molecule based on bonding on read.
+            if system.nMolecules() == 1 and system.nChains() > 1:
+                with open(self._top_file, "a") as file:
+                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                    file.write("%FORMAT(10I8)\n")
+                    file.write("    %d\n" % system.nAtoms())
+
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -588,12 +598,22 @@ class Amber(_process.Process):
 
         # Check that the file exists.
         if _os.path.isfile(restart):
-            # Create and return the molecular system.
-            try:
-                return _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
-            except:
-                print("Failed to read system from: '%s', '%s'" % (restart, self._top_file))
-                return None
+            # Read the molecular system.
+            new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
+
+            # Copy the new coordinates back into the original system.
+            old_system = self._system.copy()
+            old_system._updateCoordinates(new_system,
+                                          self._property_map,
+                                          self._property_map)
+
+            # Update the periodic box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
+
         else:
             return None
 

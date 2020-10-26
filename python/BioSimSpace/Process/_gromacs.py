@@ -774,7 +774,9 @@ class Gromacs(_process.Process):
 
                 # Copy the new coordinates back into the original system.
                 old_system = self._system.copy()
-                old_system._updateCoordinates(new_system)
+                old_system._updateCoordinates(new_system,
+                                              self._property_map,
+                                              self._property_map)
 
                 # Update the periodic box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
