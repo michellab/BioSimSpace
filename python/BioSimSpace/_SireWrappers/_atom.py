@@ -35,6 +35,8 @@ import string as _string
 
 from Sire import Mol as _SireMol
 
+from BioSimSpace.Types import Coordinate as _Coordinate
+from BioSimSpace.Types import Length as _Length
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 class Atom(_SireWrapper):
@@ -111,6 +113,33 @@ class Atom(_SireWrapper):
         """
         return self._sire_object.molecule().number().value()
 
+    def coordinates(self, property_map={}):
+        """Return the coordinates of the atom.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           coordinates : class:`Coordinate <BioSimSpace.Types.Coordinate>`
+        """
+        prop = property_map.get("coordinates", "coordinates")
+
+        # Get the "coordinates" property from the atom.
+        try:
+            sire_coord = self._sire_object.property(prop)
+            coordinates = _Coordinate(_Length(sire_coord[0], "Angstrom"),
+                                      _Length(sire_coord[1], "Angstrom"),
+                                      _Length(sire_coord[2], "Angstrom"))
+        except:
+            return None
+
+        # Return the coordinates.
+        return coordinates
+
     def element(self, property_map={}):
         """Return the element.
 
@@ -131,7 +160,7 @@ class Atom(_SireWrapper):
 
         prop = property_map.get("element", "element")
 
-        # Calculate the element.
+        # Get the element property from the atom.
         try:
             element = self._sire_object.property(prop).toString()
         except:

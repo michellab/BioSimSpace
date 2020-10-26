@@ -45,6 +45,8 @@ from Sire import Units as _SireUnits
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Coordinate as _Coordinate
+from BioSimSpace.Types import Length as _Length
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
@@ -166,6 +168,35 @@ class Molecule(_SireWrapper):
                The unique number of the molecule.
         """
         return self._sire_object.number().value()
+
+    def coordinates(self, property_map={}):
+        """Return the coordinates of the atoms in the molecule.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+        """
+        prop = property_map.get("coordinates", "coordinates")
+
+        # Get the "coordinates" property from the molecule.
+        try:
+            sire_coord = self._sire_object.property(prop).toVector()
+            coordinates = []
+            for coord in sire_coord:
+                coordinates.append(_Coordinate(_Length(coord[0], "Angstrom"),
+                                               _Length(coord[1], "Angstrom"),
+                                               _Length(coord[2], "Angstrom")))
+        except:
+            return None
+
+        # Return the coordinates.
+        return coordinates
 
     def getResidues(self):
         """Return a list containing the residues in the molecule.
