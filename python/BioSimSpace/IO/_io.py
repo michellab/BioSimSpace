@@ -551,6 +551,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             else:
                 raise IOError(msg) from None
 
+        # If this is a single molecule with chains and the format is PRM7, then
+        # we add an ATOMS_PER_MOLECULE record to stop the parser splitting the
+        # molecule based on bonding on read.
+        if format == "PRM7":
+            if system.nMolecules() == 1 and system.nChains() > 1:
+                with open("%s.prm7" % filebase, "a") as file:
+                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                    file.write("%FORMAT(10I8)\n")
+                    file.write("    %d\n" % system.nAtoms())
+
     # Change back to the original directory.
     if dirname != "":
         _os.chdir(dir)
