@@ -187,6 +187,34 @@ class Residue(_SireWrapper):
         """
         return self._sire_object.molecule().number().value()
 
+    def coordinates(self, property_map={}):
+        """Return the coordinates of the atoms in the residue.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+               The coordinates of the atoms in the residue.
+        """
+        # Get the "coordinates" property for each atom in the residue.
+        try:
+            coordinates = []
+            for atom in self.getAtoms():
+                coordinates.append(atom.coordinates(property_map))
+        except:
+            return None
+
+        # Return the coordinates.
+        return coordinates
+
     def nAtoms(self):
         """Return the number of atoms in the residue.
 
