@@ -605,6 +605,11 @@ class Molecule(_SireWrapper):
                 if verbose:
                     print("\nSetting molecule properties...")
 
+                # Create a dictionary mapping the atom matches from mol1 to mol0.
+                inv_matches = {}
+                for key, value in matches.items():
+                    inv_matches[value] = key
+
                 # Loop over all of the unseen properties.
                 for prop in seen_prop:
                     if not seen_prop[prop]:
@@ -621,7 +626,7 @@ class Molecule(_SireWrapper):
                                 # Try making it compatible with the original molecule.
                                 if hasattr(propty, "makeCompatibleWith"):
                                     try:
-                                        propty = propty.makeCompatibleWith(mol0, matches)
+                                        propty = propty.makeCompatibleWith(mol0, inv_matches)
                                     except Exception as e:
                                         msg = "Incompatible property: %s" % _property_map[prop]
                                         if _isVerbose():

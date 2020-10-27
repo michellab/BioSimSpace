@@ -14,7 +14,7 @@ else:
     has_amber = False
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_multi_chain_equivalence():
+def test_makeCompatibleWith():
     # Load the original PDB file. In this representation the system contains
     # a single molecule with two chains. We parse with pdb4amber to ensure
     # that the file can be parsed with tLEaP.
