@@ -495,6 +495,10 @@ class System(_SireWrapper):
         if index < -self.nMolecules() or index >= self.nMolecules():
             raise IndexError("The molecule 'index' is out of range.")
 
+        if type(molecule) is not _Molecule:
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
+
+
         # The molecule numbers match.
         if self[index].number() == molecule.number():
             self.updateMolecules(molecule)
