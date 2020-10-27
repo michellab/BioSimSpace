@@ -120,8 +120,9 @@ class System(_SireWrapper):
         # Initialise dictionary to map MolNum to MolIdx.
         self._molecule_index = {}
 
-        # Store the molecule numbers.
+        # Store the sorted molecule numbers.
         self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
         # Intialise the iterator counter.
         self._iter_count = 0
@@ -410,6 +411,7 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -459,6 +461,7 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
@@ -474,6 +477,53 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
+
+    def updateMolecule(self, index, molecule):
+        """Updated the molecule at the given index.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the molecule.
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The updated (or replacement) molecule.
+        """
+
+        if index < -self.nMolecules() or index >= self.nMolecules():
+            raise IndexError("The molecule 'index' is out of range.")
+
+        # The molecule numbers match.
+        if self[index].number() == molecule.number():
+            self.updateMolecules(molecule)
+
+        # The molecule numbers don't match.
+        else:
+            # Store the original molecule number.
+            mol_num = self[index]._sire_object.number()
+
+            # Store a copy of the passed molecule.
+            mol_copy = molecule._sire_object.__deepcopy__()
+
+            # Delete the existing molecule.
+            self._sire_object.remove(mol_num)
+
+            # Renumber the new molecule.
+            edit_mol = mol_copy.edit()
+            edit_mol.renumber(mol_num)
+            mol_copy = edit_mol.commit()
+
+            # Add the renumbered molecule to the system.
+            self._sire_object.add(mol_copy, _SireMol.MGName("all"))
+
+            # Reset the index mappings.
+            self._reset_mappings()
+
+            # Update the molecule numbers.
+            self._mol_nums = self._sire_object.molNums()
+            self._mol_nums.sort()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -519,6 +569,7 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
+        self._mol_nums.sort()
 
     def getMolecule(self, index):
         """Return the molecule at the given index.
