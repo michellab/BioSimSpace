@@ -286,15 +286,6 @@ class Amber(_process.Process):
             prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
 
-            # If this is a single molecule with chains and the format is PRM7, then
-            # we add an ATOMS_PER_MOLECULE record to stop the parser splitting the
-            # molecule based on bonding on read.
-            if system.nMolecules() == 1 and system.nChains() > 1:
-                with open(self._top_file, "a") as file:
-                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
-                    file.write("%FORMAT(10I8)\n")
-                    file.write("    %d\n" % system.nAtoms())
-
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
