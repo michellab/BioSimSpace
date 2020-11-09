@@ -70,6 +70,8 @@ def matchAtoms(molecule0,
                return_scores=False,
                prematch={},
                timeout=5*_Units.Time.second,
+               sanitize=False,
+               complete_rings_only=True,
                property_map0={},
                property_map1={}):
     """Find mappings between atom indices in molecule0 to those in molecule1.
@@ -113,6 +115,16 @@ def matchAtoms(molecule0,
 
        timeout : BioSimSpace.Types.Time
            The timeout for the maximum common substructure search.
+
+       sanitize : bool
+           Whether to sanitize the molecular input before performing the MCS
+           search. This option is only relevant to MCS performed using RDKit
+           and will be ignored when falling back on Sire.
+
+       complete_rings_only : bool
+           Whether to only match complete rings during the MCS search. This
+           option is only relevant to MCS performed using RDKit and will be
+           ignored when falling back on Sire.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -236,14 +248,19 @@ def matchAtoms(molecule0,
             # Note that the C++ function overloading seems to be broken, so we
             # need to pass all arguments by position, rather than keyword.
             # The arguments are: "filename", "sanitize", "removeHs", "flavor"
-            mols = [_Chem.MolFromPDBFile("tmp0.pdb", False, False, 0),
-                    _Chem.MolFromPDBFile("tmp1.pdb", False, False, 0)]
+            mols = [_Chem.MolFromPDBFile("tmp0.pdb", sanitize, False, 0),
+                    _Chem.MolFromPDBFile("tmp1.pdb", sanitize, False, 0)]
 
             # Generate the MCS match.
-            mcs = _rdFMCS.FindMCS(mols, atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                bondCompare=_rdFMCS.BondCompare.CompareAny, completeRingsOnly=True,
-                ringMatchesRingOnly=True, matchChiralTag=False, matchValences=False,
-                maximizeBonds=False, timeout=timeout)
+            mcs = _rdFMCS.FindMCS(mols,
+                                  atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                                  bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                  completeRingsOnly=complete_rings_only,
+                                  ringMatchesRingOnly=True,
+                                  matchChiralTag=False,
+                                  matchValences=False,
+                                  maximizeBonds=False,
+                                  timeout=timeout)
 
             # Get the common substructure as a SMARTS string.
             mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
@@ -258,6 +275,12 @@ def matchAtoms(molecule0,
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
     if len(mappings) == 1 and mappings[0] == prematch:
+
+        # Warn about unsupported options.
+        if sanitize:
+            _warnings.warn("Using Sire for MCS match: Ignoring unsupported 'sanitize' option!")
+        if not complete_rings_only:
+            _warnings.warn("Using Sire for MCS match: Ignoring unsupported 'complete_rings_only' option!")
 
         # Convert timeout to a Sire Unit.
         timeout = timeout * _SireUnits.second
