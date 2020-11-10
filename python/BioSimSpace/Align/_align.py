@@ -276,11 +276,14 @@ def matchAtoms(molecule0,
     # If so, then try generating a mapping using the MCS routine from Sire.
     if len(mappings) == 1 and mappings[0] == prematch:
 
+        # Warn that we've fallen back on using Sire.
+        _warnings.warn("RDKit mapping didn't include prematch. Using Sire MCS.")
+
         # Warn about unsupported options.
         if sanitize:
-            _warnings.warn("Using Sire for MCS match: Ignoring unsupported 'sanitize' option!")
+            _warnings.warn("Using Sire MCS. Ignoring unsupported 'sanitize' option!")
         if not complete_rings_only:
-            _warnings.warn("Using Sire for MCS match: Ignoring unsupported 'complete_rings_only' option!")
+            _warnings.warn("Using Sire MCS. Ignoring unsupported 'complete_rings_only' option!")
 
         # Convert timeout to a Sire Unit.
         timeout = timeout * _SireUnits.second
