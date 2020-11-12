@@ -42,6 +42,10 @@ with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
     from rdkit import Chem as _Chem
     from rdkit.Chem import rdFMCS as _rdFMCS
+    from rdkit import RDLogger as _RDLogger
+
+    # Disable RDKit warnings.
+    _RDLogger.DisableLog('rdApp.*')
 
 from Sire import Base as _SireBase
 from Sire import Maths as _SireMaths
