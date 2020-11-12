@@ -509,7 +509,7 @@ class Molecule(_SireWrapper):
                 is_renamed = True
 
                 # Have we matched all of the atoms?
-                if len(matches) < num_atoms:
+                if len(matches) < num_atoms0:
                     raise _IncompatibleError("Failed to match all atoms!")
 
                 # Are the atoms in the same order?
