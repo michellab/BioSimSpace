@@ -1463,7 +1463,7 @@ class Gromacs(_process.Process):
         """
         return self.getPotentialEnergy(time_series, block=False)
 
-    def getKinetecEnergy(self, time_series=False, block="AUTO"):
+    def getKineticEnergy(self, time_series=False, block="AUTO"):
         """Get the kinetic energy.
 
            Parameters
