@@ -121,7 +121,7 @@ combining_rules = Parameter("combining rules", "geometric",
 
 cutoff_type = Parameter("cutoff type", "nocutoff", """The cutoff method to use during the simulation.""")
 
-cutoff_dist = Parameter("cutoff distance", 500 * angstrom,
+cutoff_dist = Parameter("cutoff distance", 12 * angstrom,
                         """The cutoff distance to use for the non-bonded interactions.""")
 
 use_restraints = Parameter("use restraints", False, """Whether or not to use harmonic restaints on the solute atoms.""")
