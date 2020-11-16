@@ -96,6 +96,11 @@ class Process():
         if type(system) is not _System:
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
+        # Make sure the system is parameterised.
+        if not system._isParameterised():
+            raise _IncompatibleError("Cannot execute a Process for this System since "
+                                     "it appears to not be parameterised.")
+
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
