@@ -55,8 +55,13 @@ from . import _process
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
 
+    #Dictionary of platforms and their OpenMM keyword.
+    _platforms = { "CPU"    : "CPU",
+                   "CUDA"   : "CUDA",
+                   "OPENCL" : "OpenCL" }
+
     def __init__(self, system, protocol, exe=None, name="openmm",
-            work_dir=None, seed=None, property_map={}):
+            platform="CPU", work_dir=None, seed=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -73,6 +78,9 @@ class OpenMM(_process.Process):
 
            name : str
                The name of the process.
+
+           platform : str
+               The platform for the simulation: "CPU", "CUDA", or "OPENCL".
 
            work_dir :
                The working directory for the process.
@@ -110,6 +118,18 @@ class OpenMM(_process.Process):
             else:
                 raise IOError("OpenMM Python interpreter doesn't exist: '%s'" % exe)
 
+        if type(platform) is not str:
+            raise TypeError("'platform' must be of type 'str'.")
+        else:
+            # Strip all whitespace and convert to upper case.
+            platform = platform.replace(" ", "").upper()
+
+            # Check for platform support.
+            if platform not in self._platforms:
+                raise ValueError("Supported platforms are: %s" % self._platforms.keys())
+            else:
+                self._platform = self._platforms[platform]
+
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
 
@@ -139,6 +159,20 @@ class OpenMM(_process.Process):
 
         # Now set up the working directory for the process.
         self._setup()
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', platform='%s', work_dir='%s' seed=%s>" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        return "BioSimSpace.Process.%s(%s, %s, exe='%s', name='%s', platform='%s', work_dir='%s', seed=%s)" \
+            % (self.__class__.__name__, str(self._system), self._protocol.__repr__(),
+               self._exe + ("%s " % self._script if self._script else ""),
+               self._name, self._platform, self._work_dir, self._seed)
 
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
@@ -227,11 +261,16 @@ class OpenMM(_process.Process):
             self.addToConfig("                                1/picosecond,")
             self.addToConfig("                                0.002*picoseconds)")
 
+            # Set the simulation platform.
+            self.addToConfig("\n# Set the simulation platform.")
+            self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
+
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
             self.addToConfig("simulation = Simulation(prmtop.topology,")
             self.addToConfig("                        system,")
-            self.addToConfig("                        integrator)")
+            self.addToConfig("                        integrator,")
+            self.addToConfig("                        platform)")
             self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
             self.addToConfig("simulation.minimizeEnergy()")
 
