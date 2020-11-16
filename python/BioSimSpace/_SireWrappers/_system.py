@@ -989,6 +989,37 @@ class System(_SireWrapper):
 
         return indices
 
+    def _isParameterised(self, property_map={}):
+        """Whether the system is parameterised, i.e. can we run a simulation
+           using this system. Essentially we check whether every molecule in
+           the system has a "bond" property and assume that is parameterised
+           if so.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           is_parameterised : bool
+               Whether the system is parameterised.
+        """
+
+        # Get the "bond" property.
+        bond = property_map.get("bond", "bond")
+
+        # Check each molecule for a "bond" property.
+        for mol in self.getMolecules():
+            if bond not in mol._sire_object.propertyKeys():
+                return False
+
+        # If we get this far, then all molecules are okay.
+        return True
+
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
