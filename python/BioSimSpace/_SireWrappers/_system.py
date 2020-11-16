@@ -992,8 +992,8 @@ class System(_SireWrapper):
     def _isParameterised(self, property_map={}):
         """Whether the system is parameterised, i.e. can we run a simulation
            using this system. Essentially we check whether every molecule in
-           the system has a "bond" property and assume that is parameterised
-           if so.
+           the system has "bond" and "LJ" properties and ssume that is
+           parameterised if so.
 
            Parameters
            ----------
@@ -1012,9 +1012,13 @@ class System(_SireWrapper):
         # Get the "bond" property.
         bond = property_map.get("bond", "bond")
 
-        # Check each molecule for a "bond" property.
+        # Get the "LJ" property.
+        LJ = property_map.get("LJ", "LJ")
+
+        # Check each molecule for "bond" and "LJ" properties.
         for mol in self.getMolecules():
-            if bond not in mol._sire_object.propertyKeys():
+            props = mol._sire_object.propertyKeys()
+            if bond not in props or LJ not in props:
                 return False
 
         # If we get this far, then all molecules are okay.
