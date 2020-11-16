@@ -40,6 +40,7 @@ MD driver classes
     Amber
     Gromacs
     Namd
+    OpenMM
     Somd
 
 Multi process simulation tools
@@ -91,6 +92,7 @@ get the minimised molecular system.
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
+from ._openmm import *
 from ._process_runner import *
 from ._somd import *
 from ._utils import *
