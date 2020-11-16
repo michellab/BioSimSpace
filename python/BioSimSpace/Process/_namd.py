@@ -38,7 +38,6 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire.Maths import Vector as _Vector
 
-
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
