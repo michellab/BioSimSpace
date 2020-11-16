@@ -38,6 +38,7 @@ import warnings as _warnings
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Trajectory import Trajectory as _Trajectory
@@ -121,10 +122,10 @@ class OpenMM(_process.Process):
         # Initialise a dictionary to map log file records to their column order.
         self._record_mapping = {}
 
-        # The names of the input files. We choose to use GROMACS files but could
-        # equally work with AMBER files.
-        self._gro_file = "%s/%s.gro" % (self._work_dir, name)
-        self._top_file = "%s/%s.top" % (self._work_dir, name)
+        # The names of the input files. We choose to use AMBER files since they
+        # are self-contained, but could equally work with GROMACS files.
+        self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
+        self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # The name of the trajectory file.
         self._traj_file = "%s/%s.dcd" % (self._work_dir, name)
@@ -134,7 +135,7 @@ class OpenMM(_process.Process):
         self._config_file = "%s/%s.py" % (self._work_dir, name)
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._gro_file, self._top_file]
+        self._input_files = [self._config_file, self._rst_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -144,13 +145,28 @@ class OpenMM(_process.Process):
 
         # Create the input files...
 
-        # GRO87 file.
-        gro = _SireIO.Gro87(self._system._sire_object, self._property_map)
-        gro.writeToFile(self._gro_file)
+        # RST file (coordinates).
+        try:
+            rst = _SireIO.AmberRst7(self._system._sire_object, self._property_map)
+            rst.writeToFile(self._rst_file)
+        except Exception as e:
+            msg = "Failed to write system to 'RST7' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
-        # TOP file.
-        top = _SireIO.GroTop(self._system._sire_object, self._property_map)
-        top.writeToFile(self._top_file)
+        # PRM file (topology).
+        try:
+            prm = _SireIO.AmberPrm(self._system._sire_object, self._property_map)
+            prm.writeToFile(self._top_file)
+
+        except Exception as e:
+            msg = "Failed to write system to 'PRM7' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Skip if the user has passed a custom config.
         if type(self._protocol) is _Protocol.Custom:
@@ -174,14 +190,93 @@ class OpenMM(_process.Process):
         # Flag that this isn't a custom protocol.
         self._protocol._setCustomised(False)
 
-    def _generate_args(self):
-        """Generate the dictionary of command-line arguments."""
+        # Get the "space" property from the user mapping.
+        prop = self._property_map.get("space", "space")
 
-        # Clear the existing arguments.
-        self.clearArgs()
+        # Check whether the system contains periodic box information.
+        # For now, we'll not attempt to generate a box if the system property
+        # is missing. If no box is present, we'll assume a non-periodic simulation.
+        if prop in self._system._sire_object.propertyKeys():
+            has_box = True
+        else:
+            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
+            has_box = False
+
+        if type(self._protocol) is _Protocol.Minimisation:
+            # Write the OpenMM import statements.
+            self._add_config_imports()
+
+			# Load the input files.
+            self.addToConfig("\n# Load the topology and coordinate files.")
+            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
+            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+
+            # Don't use a cut-off if this is a vacuum simulation or if box information
+            # is missing.
+            self.addToConfig("\n# Initialise the molecular system.")
+            if not has_box or not self._has_water:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=NoCutoff,")
+            else:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
+            self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
+            self.addToConfig(    "                             constraints=HBonds)")
+
+            # Set the integrator.
+            self.addToConfig("\n# Define the integrator.")
+            self.addToConfig("integrator = LangevinIntegrator(300*kelvin,")
+            self.addToConfig("                                1/picosecond,")
+            self.addToConfig("                                0.002*picoseconds)")
+
+            # Set up the simulation object.
+            self.addToConfig("\n# Initialise and configure the simulation object.")
+            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("                        system,")
+            self.addToConfig("                        integrator)")
+            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig("simulation.minimizeEnergy()")
+
+            # Add the reporters.
+            self.addToConfig("\n# Add reporters.")
+            self._add_config_reporters()
+
+            # Now run the simulation.
+            self.addToConfig("\n# Run the simulation.")
+            self.addToConfig(f"simulation.step({self._protocol.getSteps()})")
+
+        #elif type(self._protocol) is _Protocol.Equilibration:
+
+        #elif type(self._protocol) is _Protocol.Production:
+
+        #elif type(self._protocol) is _Protocol.Custom:
+
+        #else:
+        #    raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
+
+    def getConfig(self):
+        """Get the list of strings defining the OpenMM Python script.
+
+           Returns
+           -------
+
+           config : [str]
+               The list of configuration strings.
+        """
+        return super().getConfig()
+
+    def setConfig(self, config):
+        """Set the list of strings defining the OpenMM Python script.
+
+           Parameters
+           ----------
+
+           config : str, [str]
+               The list of configuration strings, or a path to a configuration
+               file.
+        """
+        return super().setConfig()
 
     def addToConfig(self, config):
-        """Add a string to the configuration list.
+        """Add a string to the OpenMM Python script configuration.
 
            Parameters
            ----------
@@ -195,7 +290,7 @@ class OpenMM(_process.Process):
         super().addToConfig(config)
 
     def resetConfig(self):
-        """Reset the configuration parameters."""
+        """Reset the OpenMM Python script configuration."""
         self._generate_config()
 
     def setConfig(self, config):
@@ -283,35 +378,32 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        if type(self._protocol) is _Protocol.Minimisation or \
-          (type(self._protocol) is _Protocol.Custom and _is_minimisation(self.getConfig())):
-            # Create the name of the restart GRO file.
-            restart = "%s/%s.gro" % (self._work_dir, self._name)
+        # Try to get the most recent trajectory frame.
+        try:
+            traj = self.getTrajectory()
 
-            # Check that the file exists.
-            if _os.path.isfile(restart):
-                # Read the molecular system.
-                new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
-
-                # Copy the new coordinates back into the original system.
-                old_system = self._system.copy()
-                old_system._updateCoordinates(new_system,
-                                              self._property_map,
-                                              self._property_map)
-
-                # Update the periodic box information in the original system.
-                if "space" in new_system._sire_object.propertyKeys():
-                    box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-
-                return old_system
-
-            else:
+            # If there is no trajectory, simply return None.
+            if traj is None:
                 return None
 
-        else:
-            # Grab the most recent frame from the trajectory file.
-            return self._getFrame(self.getTime())
+            # Get the most recent frame.
+            new_system = traj.getFrames(-1)[0]
+
+            # Copy the new coordinates back into the original system.
+            old_system = self._system.copy()
+            old_system._updateCoordinates(new_system,
+                                          self._property_map,
+                                          self._property_map)
+
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
+
+        except:
+            return None
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -346,19 +438,10 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        try:
-            # Locate the trajectory file.
-            traj_file = self._find_trajectory_file()
-
-            if traj_file is None:
-                return None
-            else:
-                self._traj_file = traj_file
-
-            return _Trajectory(process=self)
-
-        except:
+        if not _os.path.isfile(self._traj_file):
             return None
+        else:
+            return _Trajectory(process=self)
 
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
         """Get a record from the stdout dictionary.
@@ -754,6 +837,34 @@ class OpenMM(_process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
+    def _add_config_imports(self):
+        """Helper function to write the header (import statements) to the
+           OpenMM Python script (config file).
+        """
+        self.addToConfig("from simtk.openmm.app import *")
+        self.addToConfig("from simtk.openmm import *")
+        self.addToConfig("from simtk.unit import *")
+
+    def _add_config_reporters(self):
+        """Helper function to write the reporter (output statements) section
+           to the OpenMM Python script (config file).
+        """
+		# Append to a trajectory file every 500 steps.
+        self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', 500))")
+
+		# Write state information to file every 100 steps.
+        self.addToConfig(f"simulation.reporters.append(StateDataReporter('{self._name}.log',")
+        self.addToConfig( "                                              100,")
+        self.addToConfig( "                                              step=True,")
+        self.addToConfig( "                                              time=True,")
+        self.addToConfig( "                                              potentialEnergy=True,")
+        self.addToConfig( "                                              kineticEnergy=True,")
+        self.addToConfig( "                                              totalEnergy=True,")
+        self.addToConfig( "                                              volume=True,")
+        self.addToConfig( "                                              temperature=True,")
+        self.addToConfig( "                                              totalSteps=True,")
+        self.addToConfig( "                                              separator=' '))")
+
     def _update_stdout_dict(self):
         """Update the dictonary of thermodynamic records."""
 
@@ -806,12 +917,20 @@ class OpenMM(_process.Process):
 
                 # Now split the line on the separator to work out the records.
                 # We ignore the first character since it is a comment.
-                records = line[1:].split(self._record_separator)
+                # Here we use the full separator, i.e. including the both quotes,
+                # so that we can correctly split record names with spaces in them.
+                records = line[1:].split(sep + '"')
+
+                # Store the number of records.
+                num_records = len(records)
 
                 # Map each record string to its position in the array (column order).
                 for idx, record in enumerate(records):
                     # Strip the extra quotes from the record.
-                    record = record[1:-1]
+                    if idx == 0:
+                        record = record[1:]
+                    elif idx == num_records - 1:
+                        record = record[:-1]
 
                     # Map the index to the record. Store records in upper
                     # case without whitespace to help catch typos from
