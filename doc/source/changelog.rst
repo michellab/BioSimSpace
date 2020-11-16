@@ -4,8 +4,8 @@ Changelog
 `2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2019.3.0>`_ - July 28 2020
 -------------------------------------------------------------------------------------------------
 
-* Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`).
-* Make sure potential terms are sorted when writing to SOMD perturbation files (`@ptosco <https://github.com/ptosco>`).
+* Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`_).
+* Make sure potential terms are sorted when writing to SOMD perturbation files (`@ptosco <https://github.com/ptosco>`_).
 * Switch to using ipywidgets.FileUpload to eliminate non-conda dependencies.
 * Added support for single-leg free energy simulations.
 * Created a KCOMBU mirror to avoid network issues during install.
