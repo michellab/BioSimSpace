@@ -956,6 +956,39 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
+    def _getBackBoneAtoms(self, property_map={}):
+        """Get the indices of backbone atoms.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           indices : [int]
+               A list of the backbone atom indices.
+        """
+
+        indices = []
+
+        # Get the element property.
+        element = property_map.get("element", "element")
+
+        # Loop over all non-water molecules.
+        for mol in self.search("not water"):
+            # Find all C, CA, N, and O atoms.
+            for atom in mol.search(f"{element} C or "
+                                   f"{element} Ca or "
+                                   f"{element} N or "
+                                   f"{element} O"):
+                indices.append(self.getIndex(atom))
+
+        return indices
+
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 
