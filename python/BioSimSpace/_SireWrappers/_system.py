@@ -992,7 +992,7 @@ class System(_SireWrapper):
     def _isParameterised(self, property_map={}):
         """Whether the system is parameterised, i.e. can we run a simulation
            using this system. Essentially we check whether every molecule in
-           the system has "bond" and "LJ" properties and ssume that is
+           the system has "bond" and "LJ" properties and assume that is
            parameterised if so.
 
            Parameters
