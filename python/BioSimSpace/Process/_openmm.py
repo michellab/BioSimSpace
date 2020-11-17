@@ -264,13 +264,30 @@ class OpenMM(_process.Process):
             # Set the simulation platform.
             self.addToConfig("\n# Set the simulation platform.")
             self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
+            if self._platform == "CPU":
+                self.addToConfig("properties = {}")
+            elif self._platform == "CUDA":
+                cuda_devices = _os.environ.get("CUDA_VISIBLE_DEVICES")
+                if cuda_devices is None:
+                    raise EnvironmentError("'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                                           "environment variable is unset.")
+                else:
+                    self.addToConfig(f"properties = {'CudaDeviceIndex': {cuda_devices}}")
+            elif self._platform == "OPENCL":
+                opencl_devices = _os.environ.get("OPENCL_VISIBLE_DEVICES")
+                if opencl_devices is None:
+                    raise EnvironmentError("'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                                           "environment variable is unset.")
+                else:
+                    self.addToConfig(f"properties = {'OpenCLDeviceIndex': {opencl_devices}}")
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
             self.addToConfig("simulation = Simulation(prmtop.topology,")
             self.addToConfig("                        system,")
             self.addToConfig("                        integrator,")
-            self.addToConfig("                        platform)")
+            self.addToConfig("                        platform,")
+            self.addToConfig("                        properties)")
             self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
             self.addToConfig("simulation.minimizeEnergy()")
 
