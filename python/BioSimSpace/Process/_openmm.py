@@ -261,25 +261,8 @@ class OpenMM(_process.Process):
             self.addToConfig("                                1/picosecond,")
             self.addToConfig("                                0.002*picoseconds)")
 
-            # Set the simulation platform.
-            self.addToConfig("\n# Set the simulation platform.")
-            self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
-            if self._platform == "CPU":
-                self.addToConfig("properties = {}")
-            elif self._platform == "CUDA":
-                cuda_devices = _os.environ.get("CUDA_VISIBLE_DEVICES")
-                if cuda_devices is None:
-                    raise EnvironmentError("'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
-                                           "environment variable is unset.")
-                else:
-                    self.addToConfig(f"properties = {'CudaDeviceIndex': {cuda_devices}}")
-            elif self._platform == "OPENCL":
-                opencl_devices = _os.environ.get("OPENCL_VISIBLE_DEVICES")
-                if opencl_devices is None:
-                    raise EnvironmentError("'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
-                                           "environment variable is unset.")
-                else:
-                    self.addToConfig(f"properties = {'OpenCLDeviceIndex': {opencl_devices}}")
+            # Add the platform information.
+            self._add_config_platform()
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
@@ -299,14 +282,153 @@ class OpenMM(_process.Process):
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"simulation.step({self._protocol.getSteps()})")
 
-        #elif type(self._protocol) is _Protocol.Equilibration:
+        elif type(self._protocol) is _Protocol.Equilibration:
+            # Write the OpenMM import statements and monkey-patches.
+            self._add_config_imports()
+            self._add_config_monkey_patches()
+
+            # Load the input files.
+            self.addToConfig("\n# Load the topology and coordinate files.")
+            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
+            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+
+            # Don't use a cut-off if this is a vacuum simulation or if box information
+            # is missing.
+            self.addToConfig("\n# Initialise the molecular system.")
+            if not has_box or not self._has_water:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=NoCutoff,")
+            else:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
+            self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
+            self.addToConfig(    "                             constraints=HBonds)")
+
+            # Get the starting temperature and system pressure.
+            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            pressure = self._protocol.getPressure()
+
+            # Add a Monte Carlo barostat if the simulation is at constant pressure.
+            is_const_pressure = False
+            if pressure is not None:
+                is_const_pressure = True
+
+                # Convert to bar and get the magnitude.
+                pressure = pressure.bar().magnitude()
+
+                # Create the barostat and add its force to the system.
+                self.addToConfig("\n# Add a barostat to run at constant pressure.")
+                self.addToConfig(f"barostat = MonteCarloBarostat({pressure}*bar, {temperature}*kelvin)")
+                if self._is_seeded:
+                    self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
+                self.addToConfig("system.addForce(barostat)")
+
+            # Add backbone restraints. This uses the approach from:
+            # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
+            # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
+            # issues with position rescaling during barostat updates.
+            if self._protocol.isRestrained():
+                # Get the list of backbone atom indices.
+                restrained_atoms = self._system._getBackBoneAtoms()
+
+                self.addToConfig("\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
+                self.addToConfig("restraint = HarmonicBondForce()")
+                self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
+                self.addToConfig("system.addForce(restraint)")
+                self.addToConfig("nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]")
+                self.addToConfig("dummy_indices = []")
+                self.addToConfig("positions = inpcrd.positions")
+                self.addToConfig(f"restrained_atoms = {restrained_atoms}")
+                self.addToConfig("for i in restrained_atoms:")
+                self.addToConfig("    j = system.addParticle(0)")
+                self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
+                self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
+                self.addToConfig("    restraint.addBond(i, j, 0*nanometers, 100*kilojoules_per_mole/nanometer**2)")
+                self.addToConfig("    dummy_indices.append(j)")
+                self.addToConfig("    positions.append(positions[i])")
+
+            # Get the integration time step from the protocol.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            # Set the integrator.
+            self.addToConfig( "\n# Define the integrator.")
+            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig( "                                1/picosecond,")
+            self.addToConfig(f"                                {timestep}*picoseconds)")
+
+            # Add the platform information.
+            self._add_config_platform()
+
+            # Set up the simulation object.
+            self.addToConfig("\n# Initialise and configure the simulation object.")
+            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("                        system,")
+            self.addToConfig("                        integrator,")
+            self.addToConfig("                        platform,")
+            self.addToConfig("                        properties)")
+            if self._is_seeded:
+                self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
+            if self._protocol.isRestrained():
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Add the reporters.
+            self.addToConfig("\n# Add reporters.")
+            self._add_config_reporters(state_interval=100, traj_interval=500)
+
+            # Set initial velocities from temperature distribution.
+            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+
+            # Now run the simulation.
+            self.addToConfig("\n# Run the simulation.")
+
+            # Constant temperature equilibration.
+            if self._protocol.isConstantTemp():
+                self.addToConfig(f"simulation.step({steps})")
+
+            # Heating / cooling cycle.
+            else:
+                # Adjust temperature every 100 cycles, assuming that there at
+                # least that many cycles.
+                if steps > 100:
+                    # Work out the number of temperature cycles.
+                    temp_cycles = _math.ceil(steps / 100)
+
+                    # Work out the temperature change per cycle.
+                    delta_temp = (self._protocol.getEndTemperature() -
+                                  self._protocol.getStartTemperature()) / temp_cycles
+                    delta_temp = delta_temp.kelvin().magnitude()
+
+                    self.addToConfig(f"start_temperature = {temperature}")
+                    self.addToConfig(f"for x in range(0, {temp_cycles}):")
+                    self.addToConfig(f"    temperature = {temperature} + x*{delta_temp}")
+                    self.addToConfig(f"    integrator.setTemperature(temperature*kelvin)")
+                    if is_const_pressure:
+                        self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
+                    self.addToConfig( "    simulation.step(100)")
+                else:
+                    # Work out the temperature change per step.
+                    delta_temp = (self._protocol.getEndTemperature() -
+                                  self._protocol.getStartTemperature()) / steps
+                    delta_temp = delta_temp.kelvin().magnitude()
+
+                    self.addToConfig(f"start_temperature = {temperature}")
+                    self.addToConfig(f"for x in range(0, {temp_cycles}):")
+                    self.addToConfig(f"    temperature = {temperature} + x*{delta_temp}")
+                    self.addToConfig(f"    integrator.setTemperature(temperature*kelvin)")
+                    if is_const_pressure:
+                        self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
+                    self.addToConfig( "    simulation.step(1)")
 
         #elif type(self._protocol) is _Protocol.Production:
 
         #elif type(self._protocol) is _Protocol.Custom:
 
-        #else:
-        #    raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
+        else:
+            raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
     def getConfig(self):
         """Get the list of strings defining the OpenMM Python script.
@@ -901,6 +1023,30 @@ class OpenMM(_process.Process):
         self.addToConfig("from simtk.openmm import *")
         self.addToConfig("from simtk.unit import *")
 
+    def _add_config_platform(self):
+        """Helper function to add platform information to the OpenMM
+           Python script.
+        """
+        # Set the simulation platform.
+        self.addToConfig("\n# Set the simulation platform.")
+        self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
+        if self._platform == "CPU":
+            self.addToConfig("properties = {}")
+        elif self._platform == "CUDA":
+            cuda_devices = _os.environ.get("CUDA_VISIBLE_DEVICES")
+            if cuda_devices is None:
+                raise EnvironmentError("'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                                        "environment variable is unset.")
+            else:
+                self.addToConfig(f"properties = {'CudaDeviceIndex': {cuda_devices}}")
+        elif self._platform == "OPENCL":
+            opencl_devices = _os.environ.get("OPENCL_VISIBLE_DEVICES")
+            if opencl_devices is None:
+                raise EnvironmentError("'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                                        "environment variable is unset.")
+            else:
+                self.addToConfig(f"properties = {'OpenCLDeviceIndex': {opencl_devices}}")
+
     def _add_config_monkey_patches(self):
         """Helper function to write any monkey-patches to the OpenMM Python
            script (config file).
@@ -919,15 +1065,15 @@ class OpenMM(_process.Process):
         # Create a monkey-patch where we slice the positions list to match the
         # number of atoms in the topology, then pass this through to the original
         # writeModel method.
-        self.addToConfig("def writeModel(self, positions, unitCellDimensions=None, periodicBoxVectors=None):")
+        self.addToConfig("def writeModelPatched(self, positions, unitCellDimensions=None, periodicBoxVectors=None):")
         self.addToConfig("    positions = positions[:len(list(self._topology.atoms()))]")
-        self.addToConfig("    _writeModel(self,")
-        self.addToConfig("                positions,")
-        self.addToConfig("                unitCellDimensions=unitCellDimensions,")
-        self.addToConfig("                periodicBoxVectors=periodicBoxVectors)")
+        self.addToConfig("    writeModel(self,")
+        self.addToConfig("               positions,")
+        self.addToConfig("               unitCellDimensions=unitCellDimensions,")
+        self.addToConfig("               periodicBoxVectors=periodicBoxVectors)")
 
         # Replace the writeModel method with the monkey-patch.
-        self.addToConfig("DCDFile.writeModel = writeModel")
+        self.addToConfig("DCDFile.writeModel = writeModelPatched")
 
     def _add_config_reporters(self, state_interval=100, traj_interval=500):
         """Helper function to write the reporter (output statements) section
