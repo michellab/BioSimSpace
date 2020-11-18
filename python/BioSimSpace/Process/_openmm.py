@@ -55,7 +55,7 @@ from . import _process
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
 
-    #Dictionary of platforms and their OpenMM keyword.
+    # Dictionary of platforms and their OpenMM keyword.
     _platforms = { "CPU"    : "CPU",
                    "CUDA"   : "CUDA",
                    "OPENCL" : "OpenCL" }
@@ -294,8 +294,10 @@ class OpenMM(_process.Process):
 
             # Don't use a cut-off if this is a vacuum simulation or if box information
             # is missing.
+            is_periodic = True
             self.addToConfig("\n# Initialise the molecular system.")
             if not has_box or not self._has_water:
+                is_periodic = False
                 self.addToConfig("system = prmtop.createSystem(nonbondedMethod=NoCutoff,")
             else:
                 self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
@@ -309,17 +311,21 @@ class OpenMM(_process.Process):
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
             is_const_pressure = False
             if pressure is not None:
-                is_const_pressure = True
+                # Cannot use a barostat with a non-periodic system.
+                if not is_periodic:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                else:
+                    is_const_pressure = True
 
-                # Convert to bar and get the magnitude.
-                pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the magnitude.
+                    pressure = pressure.bar().magnitude()
 
-                # Create the barostat and add its force to the system.
-                self.addToConfig("\n# Add a barostat to run at constant pressure.")
-                self.addToConfig(f"barostat = MonteCarloBarostat({pressure}*bar, {temperature}*kelvin)")
-                if self._is_seeded:
-                    self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
-                self.addToConfig("system.addForce(barostat)")
+                    # Create the barostat and add its force to the system.
+                    self.addToConfig("\n# Add a barostat to run at constant pressure.")
+                    self.addToConfig(f"barostat = MonteCarloBarostat({pressure}*bar, {temperature}*kelvin)")
+                    if self._is_seeded:
+                        self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
+                    self.addToConfig("system.addForce(barostat)")
 
             # Add backbone restraints. This uses the approach from:
             # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
@@ -353,6 +359,8 @@ class OpenMM(_process.Process):
             self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
+            if self._is_seeded:
+                self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
 
             # Add the platform information.
             self._add_config_platform()
@@ -364,8 +372,6 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            if self._is_seeded:
-                self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
             if self._protocol.isRestrained():
                 self.addToConfig("simulation.context.setPositions(positions)")
             else:
@@ -423,9 +429,88 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
                     self.addToConfig( "    simulation.step(1)")
 
-        #elif type(self._protocol) is _Protocol.Production:
+        elif type(self._protocol) is _Protocol.Production:
+            # Write the OpenMM import statements and monkey-patches.
+            self._add_config_imports()
+            self._add_config_monkey_patches()
 
-        #elif type(self._protocol) is _Protocol.Custom:
+            # Load the input files.
+            self.addToConfig("\n# Load the topology and coordinate files.")
+            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
+            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+
+            # Don't use a cut-off if this is a vacuum simulation or if box information
+            # is missing.
+            is_periodic = True
+            self.addToConfig("\n# Initialise the molecular system.")
+            if not has_box or not self._has_water:
+                is_periodic = False
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=NoCutoff,")
+            else:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
+            self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
+            self.addToConfig(    "                             constraints=HBonds)")
+
+            # Get the starting temperature and system pressure.
+            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            pressure = self._protocol.getPressure()
+
+            # Add a Monte Carlo barostat if the simulation is at constant pressure.
+            is_const_pressure = False
+            if pressure is not None:
+                # Cannot use a barostat with a non-periodic system.
+                if not is_periodic:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                else:
+                    is_const_pressure = True
+
+                    # Convert to bar and get the magnitude.
+                    pressure = pressure.bar().magnitude()
+
+                    # Create the barostat and add its force to the system.
+                    self.addToConfig("\n# Add a barostat to run at constant pressure.")
+                    self.addToConfig(f"barostat = MonteCarloBarostat({pressure}*bar, {temperature}*kelvin)")
+                    if self._is_seeded:
+                        self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
+                    self.addToConfig("system.addForce(barostat)")
+
+            # Get the integration time step from the protocol.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            # Set the integrator.
+            self.addToConfig( "\n# Define the integrator.")
+            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig( "                                1/picosecond,")
+            self.addToConfig(f"                                {timestep}*picoseconds)")
+            if self._is_seeded:
+                self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
+
+            # Add the platform information.
+            self._add_config_platform()
+
+            # Set up the simulation object.
+            self.addToConfig("\n# Initialise and configure the simulation object.")
+            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("                        system,")
+            self.addToConfig("                        integrator,")
+            self.addToConfig("                        platform,")
+            self.addToConfig("                        properties)")
+            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Add the reporters.
+            self.addToConfig("\n# Add reporters.")
+            self._add_config_reporters(state_interval=100, traj_interval=500)
+
+            # Set initial velocities from temperature distribution.
+            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+
+            # Now run the simulation.
+            self.addToConfig("\n# Run the simulation.")
+            self.addToConfig(f"simulation.step({steps})")
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
