@@ -237,8 +237,9 @@ class OpenMM(_process.Process):
             has_box = False
 
         if type(self._protocol) is _Protocol.Minimisation:
-            # Write the OpenMM import statements.
+            # Write the OpenMM import statements and monkey-patches.
             self._add_config_imports()
+            self._add_config_monkey_patches()
 
 			# Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -400,7 +401,7 @@ class OpenMM(_process.Process):
                 self._command = "%s %s " % (self._exe, self._config_file) + self.getArgString()
 
                 # Write the command to file.
-                f.write("# GROMACS was run with the following command:\n")
+                f.write("# OpenMM was run with the following command:\n")
                 f.write("%s\n" % self._command)
 
             # Start the timer.
@@ -900,6 +901,34 @@ class OpenMM(_process.Process):
         self.addToConfig("from simtk.openmm.app import *")
         self.addToConfig("from simtk.openmm import *")
         self.addToConfig("from simtk.unit import *")
+
+    def _add_config_monkey_patches(self):
+        """Helper function to write any monkey-patches to the OpenMM Python
+           script (config file).
+        """
+        # We monkey-patch the OpenMM DCDFile.writeModel method to avoid writing the
+        # positions of any dummy atoms that are used as restraints to trajectory files.
+        # This avoids the need to delete the dummies from the molecular system on read,
+        # allowing us to make use of System._updateCoordinates which requires that the
+        # number of atoms are consistent between systems. (Deleting the dummies from the
+        # system is slower than not writing them in the first place.)
+        self.addToConfig("\n# Monkey-patch the DCD.writeModel method to avoid writing dummy-atom positions.")
+
+        # Store the original writeModel method.
+        self.addToConfig("writeModel = DCDFile.writeModel")
+
+        # Create a monkey-patch where we slice the positions list to match the
+        # number of atoms in the topology, then pass this through to the original
+        # writeModel method.
+        self.addToConfig("def writeModel(self, positions, unitCellDimensions=None, periodicBoxVectors=None):")
+        self.addToConfig("    positions = positions[:len(list(self._topology.atoms()))]")
+        self.addToConfig("    _writeModel(self,")
+        self.addToConfig("                positions,")
+        self.addToConfig("                unitCellDimensions=unitCellDimensions,")
+        self.addToConfig("                periodicBoxVectors=periodicBoxVectors)")
+
+        # Replace the writeModel method with the monkey-patch.
+        self.addToConfig("DCDFile.writeModel = writeModel")
 
     def _add_config_reporters(self):
         """Helper function to write the reporter (output statements) section
