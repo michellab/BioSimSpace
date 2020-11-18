@@ -237,9 +237,8 @@ class OpenMM(_process.Process):
             has_box = False
 
         if type(self._protocol) is _Protocol.Minimisation:
-            # Write the OpenMM import statements and monkey-patches.
+            # Write the OpenMM import statements.
             self._add_config_imports()
-            self._add_config_monkey_patches()
 
 			# Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -256,9 +255,9 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
             self.addToConfig(    "                             constraints=HBonds)")
 
-            # Set the integrator.
+            # Set the integrator. (We use a zero-temperature Langevin integrator.)
             self.addToConfig("\n# Define the integrator.")
-            self.addToConfig("integrator = LangevinIntegrator(300*kelvin,")
+            self.addToConfig("integrator = LangevinIntegrator(0*kelvin,")
             self.addToConfig("                                1/picosecond,")
             self.addToConfig("                                0.002*picoseconds)")
 
@@ -294,7 +293,7 @@ class OpenMM(_process.Process):
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters()
+            self._add_config_reporters(state_interval=100, traj_interval=100)
 
             # Now run the simulation.
             self.addToConfig("\n# Run the simulation.")
@@ -930,16 +929,36 @@ class OpenMM(_process.Process):
         # Replace the writeModel method with the monkey-patch.
         self.addToConfig("DCDFile.writeModel = writeModel")
 
-    def _add_config_reporters(self):
+    def _add_config_reporters(self, state_interval=100, traj_interval=500):
         """Helper function to write the reporter (output statements) section
            to the OpenMM Python script (config file).
+
+           Parameters
+           ----------
+
+           state_interval : int
+               The frequency at which to write state information in
+               integration steps.
+
+           traj_interval : int
+               The frequency at which to write trajectory frames in
+               integration steps.
         """
+        if type(state_interval) is not int:
+            raise TypeError("'state_interval' must be of type 'int'.")
+        if state_interval <= 0:
+            raise ValueError("'state_interval' must be a positive integer.")
+        if type(traj_interval) is not int:
+            raise TypeError("'traj_interval' must be of type 'int'.")
+        if traj_interval <= 0:
+            raise ValueError("'traj_interval' must be a positive integer.")
+
 		# Append to a trajectory file every 500 steps.
-        self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', 500))")
+        self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', {traj_interval}))")
 
 		# Write state information to file every 100 steps.
         self.addToConfig(f"simulation.reporters.append(StateDataReporter('{self._name}.log',")
-        self.addToConfig( "                                              100,")
+        self.addToConfig(f"                                              {state_interval},")
         self.addToConfig( "                                              step=True,")
         self.addToConfig( "                                              time=True,")
         self.addToConfig( "                                              potentialEnergy=True,")
