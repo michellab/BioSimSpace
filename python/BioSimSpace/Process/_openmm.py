@@ -404,9 +404,8 @@ class OpenMM(_process.Process):
                     temp_cycles = _math.ceil(steps / 100)
 
                     # Work out the temperature change per cycle.
-                    delta_temp = (self._protocol.getEndTemperature() -
-                                  self._protocol.getStartTemperature()) / temp_cycles
-                    delta_temp = delta_temp.kelvin().magnitude()
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
+                                  self._protocol.getStartTemperature().kelvin().magnitude()) / temp_cycles
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {temp_cycles}):")
@@ -417,9 +416,8 @@ class OpenMM(_process.Process):
                     self.addToConfig( "    simulation.step(100)")
                 else:
                     # Work out the temperature change per step.
-                    delta_temp = (self._protocol.getEndTemperature() -
-                                  self._protocol.getStartTemperature()) / steps
-                    delta_temp = delta_temp.kelvin().magnitude()
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
+                                  self._protocol.getStartTemperature().kelvin().magnitude()) / steps
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {temp_cycles}):")
