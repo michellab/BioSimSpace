@@ -81,6 +81,10 @@ class OpenMM(_process.Process):
 
            platform : str
                The platform for the simulation: "CPU", "CUDA", or "OPENCL".
+               For CUDA use the CUDA_VISIBLE_DEVICES environment variable to
+               set the GPUs on which to run, e.g. to run on two GPUs indexed
+               0 and 1 use: CUDA_VISIBLE_DEVICES=0,1. For OPENCL, instead use
+               OPENCL_VISIBLE_DEVICES.
 
            work_dir :
                The working directory for the process.
