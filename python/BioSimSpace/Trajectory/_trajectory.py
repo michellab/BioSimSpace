@@ -316,7 +316,7 @@ class Trajectory():
         # How can we do this in a robust way if the trajectory is loaded from file?
         # Some formats do not store time information as part of the trajectory.
         if n_frames > 1:
-            if self._process is not None:
+            if self._process is not None and self._process._package_name != "OPENMM":
                 time_interval = self._process._protocol.getRunTime() / self._process._protocol.getFrames()
             else:
                 time_interval = self._trajectory.timestep / 1000

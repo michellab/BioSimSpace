@@ -88,13 +88,18 @@ class Process():
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Process:
             raise Exception("<Process> must be subclassed.")
 
         # Check that the system is valid.
         if type(system) is not _System:
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # Make sure the system is parameterised.
+        if not system._isParameterised():
+            raise _IncompatibleError("Cannot execute a Process for this System since "
+                                     "it appears to not be parameterised.")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):

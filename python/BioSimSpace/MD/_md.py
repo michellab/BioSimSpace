@@ -46,8 +46,9 @@ _md_packages = { "AMBER"   : { "pmemd.cuda.MPI" : True,
                                "sander"         : False },
                  "GROMACS" : { "gmx"            : True,
                                "gmx_mpi"        : True },
-                 "SOMD"    : { "somd"           : True },
-                 "NAMD"    : { "namd2"          : False }
+                 "NAMD"    : { "namd2"          : False },
+                 "OPENMM"  : { "sire_python"    : True },
+                 "SOMD"    : { "somd"           : True }
                }
 
 # A dictionary reverse mapping MD packages to their supported Sire file extensions.
@@ -55,9 +56,9 @@ _md_packages = { "AMBER"   : { "pmemd.cuda.MPI" : True,
 # of potentials for CHARMM-PSF format input files, we restrict such simulations to
 # only run using NAMD.
 #                    EXTENSION        PACKAGES
-_file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "SOMD"],
-                     "PRM7,RST"     : ["AMBER", "GROMACS", "SOMD"],
-                     "GroTop,Gro87" : ["GROMACS", "AMBER", "SOMD"],
+_file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
+                     "PRM7,RST"     : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
+                     "GroTop,Gro87" : ["GROMACS", "AMBER", "OPENMM", "SOMD"],
                      "PSF,PDB"      : ["NAMD"]
                    }
 
@@ -65,8 +66,9 @@ _file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "SOMD"],
 # be updated as support for different packages is added.
 _free_energy = { "AMBER"   : False,
                  "GROMACS" : True,
-                 "SOMD"    : True,
-                 "NAMD"    : False
+                 "NAMD"    : False,
+                 "OPENMM"  : False,
+                 "SOMD"    : True
                 }
 
 def _find_md_package(system, protocol, gpu_support=False):
@@ -138,6 +140,9 @@ def _find_md_package(system, protocol, gpu_support=False):
                     elif package == "GROMACS":
                         if _gmx_exe is not None:
                             return (package, _gmx_exe)
+                    # OPENMM
+                    elif package == "OPENMM":
+                        return (package, _SireBase.getBinDir() + "/sire_python")
                     # SOMD
                     elif package == "SOMD":
                         return (package, _SireBase.getBinDir() + "/somd")
@@ -241,19 +246,30 @@ def run(system, protocol, gpu_support=False, auto_start=True,
         process = _Process.Gromacs(system, protocol, exe=exe, name=name,
             work_dir=work_dir, seed=seed, property_map=property_map)
 
+    # NAMD.
+    elif package == "NAMD":
+        process = _Process.Namd(system, protocol, exe=exe, name=name,
+            work_dir=work_dir, seed=seed, property_map=property_map)
+
+    # OPENMM.
+    elif package == "OPENMM":
+        if gpu_support:
+            platform = "CUDA"
+        else:
+            platform = "CPU"
+        # Don't pass the executable name through so that this works on Windows too.
+        process = _Process.OpenMM(system, protocol, exe=None, name=name,
+            work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+
     # SOMD.
     elif package == "SOMD":
         if gpu_support:
             platform = "CUDA"
         else:
             platform = "CPU"
-        process = _Process.Somd(system, protocol, exe=exe, name=name,
+        # Don't pass the executable name through so that this works on Windows too.
+        process = _Process.Somd(system, protocol, exe=None, name=name,
             work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
-
-    # NAMD.
-    elif package == "NAMD":
-        process = _Process.Namd(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
 
     # Start the process.
     if auto_start:

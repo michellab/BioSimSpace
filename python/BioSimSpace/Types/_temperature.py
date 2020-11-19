@@ -162,7 +162,7 @@ class Temperature(_Type):
                         # Return a new object of the same type with the original unit.
                         return Temperature(mag, self._unit)
                 else:
-                    return super().__add__(other)
+                    return super().__sub__(other)
             else:
                 if not allow_offset:
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)

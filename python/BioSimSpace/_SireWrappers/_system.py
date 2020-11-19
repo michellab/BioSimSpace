@@ -956,6 +956,74 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
+    def _getBackBoneAtoms(self, property_map={}):
+        """Get the indices of backbone atoms.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           indices : [int]
+               A list of the backbone atom indices.
+        """
+
+        indices = []
+
+        # Get the element property.
+        element = property_map.get("element", "element")
+
+        # Loop over all non-water molecules.
+        for mol in self.search("not water"):
+            # Find all C, CA, N, and O atoms.
+            for atom in mol.search(f"{element} C or "
+                                   f"{element} Ca or "
+                                   f"{element} N or "
+                                   f"{element} O"):
+                indices.append(self.getIndex(atom))
+
+        return indices
+
+    def _isParameterised(self, property_map={}):
+        """Whether the system is parameterised, i.e. can we run a simulation
+           using this system. Essentially we check whether every molecule in
+           the system has "bond" and "LJ" properties and assume that is
+           parameterised if so.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           is_parameterised : bool
+               Whether the system is parameterised.
+        """
+
+        # Get the "bond" property.
+        bond = property_map.get("bond", "bond")
+
+        # Get the "LJ" property.
+        LJ = property_map.get("LJ", "LJ")
+
+        # Check each molecule for "bond" and "LJ" properties.
+        for mol in self.getMolecules():
+            props = mol._sire_object.propertyKeys()
+            if bond not in props or LJ not in props:
+                return False
+
+        # If we get this far, then all molecules are okay.
+        return True
+
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
 

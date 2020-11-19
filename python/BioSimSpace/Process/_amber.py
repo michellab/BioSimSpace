@@ -316,7 +316,7 @@ class Amber(_process.Process):
         prop = self._property_map.get("space", "space")
 
         # Check whether the system contains periodic box information.
-        # For now, well not attempt to generate a box if the system property
+        # For now, we'll not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
         if prop in self._system._sire_object.propertyKeys():
             has_box = True
@@ -598,7 +598,7 @@ class Amber(_process.Process):
                                           self._property_map,
                                           self._property_map)
 
-            # Update the periodic box information in the original system.
+            # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
                 box = new_system._sire_object.property("space")
                 old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)

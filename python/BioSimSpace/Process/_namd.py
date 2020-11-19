@@ -38,7 +38,6 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire.Maths import Vector as _Vector
 
-
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -642,7 +641,7 @@ class Namd(_process.Process):
                                               self._property_map,
                                               self._property_map)
 
-                # Update the periodic box information in the original system.
+                # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
