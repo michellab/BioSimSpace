@@ -980,11 +980,23 @@ class System(_SireWrapper):
 
         # Loop over all non-water molecules.
         for mol in self.search("not water"):
+            # Convert all search results to a molecule.
+            try:
+                mol = mol.toMolecule()
+            except:
+                pass
+
             # Find all C, CA, N, and O atoms.
-            for atom in mol.search(f"{element} C or "
-                                   f"{element} Ca or "
-                                   f"{element} N or "
-                                   f"{element} O"):
+
+            # First search for atoms by element.
+            search = mol.search(f"{element} C,N,O")
+
+            # Now search for the required names within these results.
+            if search.nResults() > 0:
+                search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+
+            # Loop over all matching atoms and get their indices.
+            for atom in search:
                 indices.append(self.getIndex(atom))
 
         return indices
