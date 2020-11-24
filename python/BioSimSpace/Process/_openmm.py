@@ -244,7 +244,7 @@ class OpenMM(_process.Process):
             # Write the OpenMM import statements.
             self._add_config_imports()
 
-			# Load the input files.
+            # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
             self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
             self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
