@@ -48,11 +48,11 @@ class Distance(_CollectiveVariable):
            Parameters
            ----------
 
-           atom0 : int, [int, int, ...], [:class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+           atom0 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
                The atom, group of atoms, or coordinate, that the distance
                will be measured from.
 
-           atom1 : int, [int, int, ...], [:class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+           atom1 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
                The atom, group of atoms, or coordinate, that the distance
                will be measured to.
 
