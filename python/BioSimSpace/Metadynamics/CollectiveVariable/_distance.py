@@ -116,13 +116,11 @@ class Distance(_CollectiveVariable):
         self._component = None
 
         # Set the required parameters.
-
         self.setAtom0(atom0)
         self.setAtom1(atom1)
         self.setHillWidth(hill_width)
 
         # Set the optional parameters.
-
         if weights0 is not None:
             self.setWeights0(weights0)
         if weights1 is not None:

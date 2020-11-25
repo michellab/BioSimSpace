@@ -76,12 +76,10 @@ class Torsion(_CollectiveVariable):
         self._grid = None
 
         # Set the required parameters.
-
         self.setAtoms(atoms)
         self.setHillWidth(hill_width)
 
         # Set the optional parameters.
-
         if lower_bound is not None:
             self.setLowerBound(lower_bound)
         if upper_bound is not None:
