@@ -13,3 +13,10 @@ __pycache__/
 
 # Jupyter notebook checkpoints.
 .ipynb_checkpoints/
+
+# Build artifacts.
+setup.out
+setup.err
+dist/
+build/
+BioSimSpace.egg-info
