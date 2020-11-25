@@ -1023,14 +1023,19 @@ class System(_SireWrapper):
 
         # Get the "bond" property.
         bond = property_map.get("bond", "bond")
+        # Test for perturbable molecules too.
+        bond0 = bond + "0"
 
         # Get the "LJ" property.
         LJ = property_map.get("LJ", "LJ")
+        # Test for perturbable molecules too.
+        LJ0 = LJ + "0"
 
         # Check each molecule for "bond" and "LJ" properties.
         for mol in self.getMolecules():
             props = mol._sire_object.propertyKeys()
-            if bond not in props or LJ not in props:
+            if (bond not in props and bond0 not in props) or \
+               (LJ   not in props and LJ0   not in props):
                 return False
 
         # If we get this far, then all molecules are okay.
