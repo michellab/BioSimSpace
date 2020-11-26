@@ -26,7 +26,7 @@ Functionality for distance based collective variables.
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["Funnel", "funnelMaker"]
+__all__ = ["Funnel", "makeFunnel"]
 
 from math import ceil as _ceil
 
@@ -279,7 +279,7 @@ class Funnel(_CollectiveVariable):
                 num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
                 self._grid.setBins(num_bins)
 
-def funnelMaker(system, protein=None, ligand=None,
+def makeFunnel(system, protein=None, ligand=None,
         search_radius=_Length(10, "A"), alpha_carbon_name="CA"):
     """Constructor.
 

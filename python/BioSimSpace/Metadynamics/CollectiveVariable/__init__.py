@@ -28,8 +28,8 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    funnelMaker
     list
+    makeFunnel
 
 Classes
 =======
