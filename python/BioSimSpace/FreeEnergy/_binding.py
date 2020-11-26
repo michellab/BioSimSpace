@@ -92,11 +92,13 @@ class Binding(_free_energy.FreeEnergy):
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable molecule!")
+                raise ValueError("The system must contain a single perturbable molecule! "
+                                 "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
             # The system must be solvated.
             if system.nWaterMolecules() == 0:
-                raise ValueError("The system must be solvated!")
+                raise ValueError("The system must be solvated! Use the 'BioSimSpace.Solvent' "
+                                 "package to solvate your system.")
 
             # There must be at least one additional molecule in the system.
             if system.nMolecules() == (system.nWaterMolecules() + system.nPerturbableMolecules()):

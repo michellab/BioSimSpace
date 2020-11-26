@@ -75,11 +75,13 @@ class Solvation(_free_energy.FreeEnergy):
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable molecule!")
+                raise ValueError("The system must contain a single perturbable molecule! "
+                                 "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
             # The system must be solvated.
             if system.nWaterMolecules() == 0:
-                raise ValueError("The system must be solvated!")
+                raise ValueError("The system must be solvated! Use the 'BioSimSpace.Solvent' "
+                                 "package to solvate your system.")
 
             # Create the vacuum system. (Used for the second leg.)
             self._system1 = system.copy()

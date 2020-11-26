@@ -98,8 +98,9 @@ class Process():
 
         # Make sure the system is parameterised.
         if not system._isParameterised():
-            raise _IncompatibleError("Cannot execute a Process for this System since "
-                                     "it appears to not be parameterised.")
+            raise _IncompatibleError("Cannot execute a Process for this System since it appears "
+                                     "to contain molecules that are not parameterised. Consider "
+                                     "using the 'BioSimSpace.Parameters' package.")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
