@@ -47,8 +47,7 @@ class FreeEnergy(_Protocol):
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 frames=20,
-                 pert_type="standard"
+                 frames=20
                 ):
         """Constructor.
 
@@ -84,9 +83,6 @@ class FreeEnergy(_Protocol):
 
            frames : int
                The number of trajectory frames to record.
-
-           pert_type : str
-               The type of perturbation to perform.            
         """
 
         # Call the base class constructor.
@@ -113,9 +109,6 @@ class FreeEnergy(_Protocol):
         # Set the number of trajectory frames.
         self.setFrames(frames)
 
-        # Set the type of perturbation.
-        self.setPertType(pert_type)
-
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
@@ -124,7 +117,7 @@ class FreeEnergy(_Protocol):
             return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
                     "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d>"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames, self._pert_type)
+                        self._temperature, self._pressure, self._frames)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -134,7 +127,7 @@ class FreeEnergy(_Protocol):
             return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
                     "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d)"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames, self._pert_type)
+                        self._temperature, self._pressure, self._frames)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
@@ -400,34 +393,3 @@ class FreeEnergy(_Protocol):
             self._frames = 20
         else:
             self._frames = _math.ceil(frames)
-
-    def getPertType(self):
-        """Return the perturbation type.
-
-           Returns
-           -------
-
-           pert_type : str
-               The perturbation type.
-        """
-        return self._pert_type
-
-    def setPertType(self, pert_type):
-        """Set the perturbation type.
-
-           Parameters
-           ----------
-
-           pert_type : str
-               The perturbation type.
-        """
-        if type(pert_type) is not str:
-          raise TypeError("'pert_type' must be of type 'str'")   
-
-        if pert_type not in ("standard", "multistep"):
-          raise ValueError("'pert_type' must be set as either 'standard' or 'multistep'")
-        else:
-          self._pert_type = pert_type
-
-
-            
