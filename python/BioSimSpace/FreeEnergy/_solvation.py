@@ -76,8 +76,8 @@ class Solvation(_free_energy.FreeEnergy):
                term5 : n_5,
                term6 : n_6                             
                }
-               if not defined while multistep==True, will default to setting up all terms with 5 lambda
-               windows each.
+               if not defined while multistep==True, will default to setting up all terms with the number 
+               of lambda windows specified in Protocol per term.
 
         """
 
@@ -129,8 +129,6 @@ class Solvation(_free_energy.FreeEnergy):
             # do stuff here. How should this call change?
             self._initialise_runner(self._system0, self._system1)
             # assume all terms should be perturbed with 5 lambda windows each.
-
-
 
 
 
