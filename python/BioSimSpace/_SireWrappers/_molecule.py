@@ -1118,7 +1118,8 @@ class Molecule(_SireWrapper):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
     def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
-            zero_dummy_impropers=False, print_all_atoms=False, property_map={}):
+            zero_dummy_impropers=False, print_all_atoms=False, property_map={},
+            pert_type=False):
         """Write the merged molecule to a perturbation file.
 
            Parameters
@@ -1144,6 +1145,10 @@ class Molecule(_SireWrapper):
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
 
+           pert_type : str
+               String that specifies whether to use the 'standard' or 'multistep'
+               approach in perturbing the LJ, bond and angle terms.
+
            Returns
            -------
 
@@ -1168,6 +1173,9 @@ class Molecule(_SireWrapper):
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
+
+        if type(pert_type) is not str:
+            raise TypeError("'pert_type' must be of type 'str'")
 
         # Extract and copy the Sire molecule.
         mol = self._sire_object.__deepcopy__()
@@ -1292,6 +1300,10 @@ class Molecule(_SireWrapper):
 
             # Start molecule record.
             file.write("molecule LIG\n")
+
+            ### TODO: 
+            # here, refer to sub-functions in cases where pert_type == multistep?
+            # else, do the below i.e. standard approach:
 
             # 1) Atoms.
 
