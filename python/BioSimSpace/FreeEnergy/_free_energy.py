@@ -85,7 +85,7 @@ class FreeEnergy():
                BioSimSpace will choose an appropriate engine for you.
         """
 
-	# Don't allow user to create an instance of this base class.
+    # Don't allow user to create an instance of this base class.
         if type(self) is FreeEnergy:
             raise Exception("<FreeEnergy> must be subclassed.")
 
@@ -99,6 +99,9 @@ class FreeEnergy():
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
             else:
                 self._protocol = protocol
+                
+            if protocol.getPertType() is not "standard" and engine == "GROMACS":
+                raise NotImplementedError("Multistep specification with GROMACS is not yet supported.")
         else:
             # Use a default protocol.
             self._protocol = _FreeEnergy()
