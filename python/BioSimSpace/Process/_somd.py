@@ -206,12 +206,10 @@ class Somd(_process.Process):
                 pert_mol = system.getPerturbableMolecules()[0]
 
                 # Write the perturbation file and get the molecule corresponding
-                # to the lambda = 0 state while using either the standard or 
-                # multistep approach.
+                # to the lambda = 0.
                 pert_mol = pert_mol._toPertFile(
                                                 self._pert_file, 
-                                                property_map=self._property_map,
-                                                pert_type=self._protocol.getPertType()
+                                                property_map=self._property_map
                                                 )
                 self._input_files.append(self._pert_file)
 
