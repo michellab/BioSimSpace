@@ -33,6 +33,7 @@ import os as _os
 from Sire import Base as _SireBase
 
 from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import Process as _Process
@@ -200,6 +201,11 @@ def run(system, protocol, gpu_support=False, auto_start=True,
     # Check that the system is valid.
     if type(system) is not _System:
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+    # Make sure the system is parameterised.
+    if not system._isParameterised():
+        raise _IncompatibleError("Cannot execute a Process for this System since "
+                                 "it appears to not be parameterised.")
 
     # Check that the protocol is valid.
     if not isinstance(protocol, _Protocol._protocol.Protocol):
