@@ -37,7 +37,7 @@ class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
     def __init__(self, system, protocol=None, vacuum_leg=True,
-            work_dir=None, engine=None):
+            work_dir=None, engine=None, multistep=False, steps=None):
         """Constructor.
 
            Parameters
@@ -60,6 +60,25 @@ class Solvation(_free_energy.FreeEnergy):
                The molecular dynamics engine used to run the simulation. Available
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
+
+           multistep : bool
+               Whether or not to perform a multistep perturbation which splits perturbing
+               the terms (LJ/charge/bond) instead of all at the same time.  
+
+           steps: dict
+               Optional dictionary of specified terms to perturb as keys and number of lambda windows
+               per term as values. The full dictionary should look like:
+               {
+               term1 : n_1,
+               term2 : n_2,
+               term3 : n_3,
+               term4 : n_4,
+               term5 : n_5,
+               term6 : n_6                             
+               }
+               if not defined while multistep==True, will default to setting up all terms with 5 lambda
+               windows each.
+
         """
 
         # Call the base class constructor.
@@ -91,9 +110,35 @@ class Solvation(_free_energy.FreeEnergy):
             if not vacuum_leg:
                 self._is_dual = False
 
+        if type(multistep) is not bool:
+          raise TypeError("'multistep' must be of type 'bool'.")
+
+        if steps:
+          if type(steps) is not dict:
+            raise TypeError("'steps' must be of type 'dict'.")
+
         # Initialise the process runner with all of the simulations required
         # for each leg.
-        self._initialise_runner(self._system0, self._system1)
+        if not multistep:
+          self._initialise_runner(self._system0, self._system1)
+
+        # multistep approach.
+        else:
+          if not steps:
+
+            # do stuff here. How should this call change?
+            self._initialise_runner(self._system0, self._system1)
+            # assume all terms should be perturbed with 5 lambda windows each.
+
+
+
+
+
+          else:
+            # perturb user-specified terms only.
+            raise NotImplementedError("Custom multistep approach not yet implemented.")
+
+
 
     def analyse(self):
         """Analyse the solvation free energy data.
