@@ -1173,9 +1173,9 @@ class Molecule(_SireWrapper):
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
-
-        if type(pert_type) is not str:
-            raise TypeError("'pert_type' must be of type 'str'")
+        if pert_type:
+          if type(pert_type) is not str:
+              raise TypeError("'pert_type' must be of type 'str'")
 
         # Extract and copy the Sire molecule.
         mol = self._sire_object.__deepcopy__()
