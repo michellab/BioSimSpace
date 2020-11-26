@@ -37,7 +37,7 @@ _colvars = []
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
-    if _var[0] != "_" and _var != "Custom" and _var[0] != _var[0].lower():
+    if _var[0] != "_" and _var[0] != _var[0].lower():
         _colvars.append(_var)
 del _namespace
 del _sys
