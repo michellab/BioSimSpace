@@ -127,6 +127,44 @@ class Vector():
 
         return self._from_sire_vector(self._sire_object - other._sire_object)
 
+    def __mul__(self, other):
+        """Multiplication operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Only support multiplication by float.
+        if type(other) is float:
+            # Return a new vector multiplied by other.
+            return self._from_sire_vector(other * self._sire_object)
+
+        else:
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __rmul__(self, other):
+        """Multiplication operator."""
+
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        """Division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if type(other) is float:
+            # Return a new vector divided by other.
+            return self._from_sire_vector(self._sire_object / other)
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
     def dot(self, other):
         """Return the dot (scalar) product with the other vector.
 
