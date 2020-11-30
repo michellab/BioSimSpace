@@ -110,6 +110,12 @@ name, e.g.:
 
     conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
 
+Alternatively you can try passing the ``--all`` option to Conda, e.g.:
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace --all
+
 If you find that Conda is particularly slow to install or upgrade BioSimSpace, particularly
 on macOS, then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__::
 
@@ -118,6 +124,8 @@ on macOS, then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
 You can then replace all installation/upgrade commands with ``mamba``, e.g.::
 
     mamba install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+
+(Mamba also always installs/ugrades the most recent version.)
 
 Using the prebuilt binaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
