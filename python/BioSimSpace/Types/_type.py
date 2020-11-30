@@ -52,7 +52,7 @@ class Type():
                A string representation of the type.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Type:
             raise Exception("<Type> must be subclassed.")
 
