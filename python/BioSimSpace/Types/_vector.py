@@ -125,7 +125,7 @@ class Vector():
             raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
-        return self._from_sire_vector(self._sire_object - other._object)
+        return self._from_sire_vector(self._sire_object - other._sire_object)
 
     def dot(self, other):
         """Return the dot (scalar) product with the other vector.
