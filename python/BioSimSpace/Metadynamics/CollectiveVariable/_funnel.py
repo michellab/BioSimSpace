@@ -30,6 +30,9 @@ __all__ = ["Funnel", "makeFunnel"]
 
 from math import ceil as _ceil
 
+from Sire.Maths import Vector as _SireVector
+from Sire.Mol import Evaluator as _Evaluator
+
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
@@ -279,8 +282,7 @@ class Funnel(_CollectiveVariable):
                 num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
                 self._grid.setBins(num_bins)
 
-def makeFunnel(system, protein=None, ligand=None,
-        search_radius=_Length(10, "A"), alpha_carbon_name="CA"):
+def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
     """Constructor.
 
        Parameters
@@ -303,12 +305,13 @@ def makeFunnel(system, protein=None, ligand=None,
            the binding site within the protein. If None is passed then we
            assume that the ligand is the second largest molecule in the system.
 
-       search_radius : :class:`Length <BioSimSpace.Types.Length>`
-           The search radius around the binding site used to determine the
-           funnel origin and inflection point.
-
        alpha_carbon_name : str
            The name of alhpa carbon atoms in the system topology.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
 
        Returns
        -------
@@ -360,6 +363,11 @@ def makeFunnel(system, protein=None, ligand=None,
     else:
         raise TypeError("'protein' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'None'.")
 
+    # Get the "coordinates" property from the user mapping.
+    coordinates = property_map.get("coordinates", "coordinates")
+    if not protein._sire_object.hasProperty(coordinates):
+        raise ValueError(f"The 'protein' molecule doesn't have a {coordinates} property!")
+
     # Ligand.
     if type(ligand) is _Molecule:
         # Make sure the molecule exists in the system.
@@ -373,8 +381,10 @@ def makeFunnel(system, protein=None, ligand=None,
             ligand = system[ligand]
         except:
             ValueError(f"Couldn't find 'ligand' index {ligand} in the 'system'.")
+        binding_site = ligand
 
     elif type(ligand) is _Coordinate:
+        binding_site = ligand
         pass
 
     elif ligand is None:
@@ -392,10 +402,128 @@ def makeFunnel(system, protein=None, ligand=None,
     else:
         raise TypeError("'ligand' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'None'.")
 
-    # Search radius.
-    if type(search_radius) is not _Length:
-        raise TypeError("'search_radius' must be of type 'BioSimSpace.Types.Length'.")
-
     # Alpha carbon name.
     if type(alpha_carbon_name) is not str:
         raise TypeError("'alpha_carbon_name' must be of type 'str'.")
+
+    # The following is adapted from funnel_maker.py by Dominykas Lukauskis.
+
+    # To compute the funnel vector we project a grid on the binding site and
+    # determine the average x,y,z coordinate that doesn't contain any protein
+    # atoms within a specified search radius. This is more robust than searching
+    # for solvent molecules directly, since it allows for dry binding sites.
+
+    # If the ligand is a Molecule, then assume the binding site is the ligand
+    # center of mass.
+    if type(ligand) is _Molecule:
+        com = _Evaluator(ligand._sire_object).centerOfMass()
+        binding_site = _Coordinate(_Length(com.x(), "A"),
+                                   _Length(com.y(), "A"),
+                                   _Length(com.z(), "A"))
+
+    # Set up the grid.
+
+    # 20 Angstrom grid edge.
+    grid_length = _Length(20, "A")
+
+    # Number of points along each edge.
+    num_edge = 5
+
+    # Search radius.
+    search_radius = (grid_length / num_edge) / 2
+
+    # Work out the grid extent.
+    grid_min = binding_site - 0.5*grid_length
+    grid_max = binding_site + 0.5*grid_length
+
+    # Initalise a vector to store the average non-protein coordinate.
+    non_protein = _SireVector()
+    num_non_protein = 0
+
+    import numpy as _np
+    # Loop over x grid points.
+    for x in _np.linspace(grid_min.x().angstroms().magnitude(),
+                          grid_max.x().angstroms().magnitude(),
+                          num_edge):
+        # Loop over y grid points.
+        for y in _np.linspace(grid_min.y().angstroms().magnitude(),
+                              grid_max.y().angstroms().magnitude(),
+                              num_edge):
+            # Loop over z grid points.
+            for z in _np.linspace(grid_min.z().angstroms().magnitude(),
+                                  grid_max.z().angstroms().magnitude(),
+                                  num_edge):
+                # Generate the search string.
+                string = f"atoms within {search_radius.angstroms().magnitude()} of {x},{y},{z}"
+
+                # Search the protein for atoms with the search radius of the
+                # point x,y,z.
+                search = protein.search(string)
+
+                # If there are no protein atoms then add the grid coordinate
+                # to our running total.
+                if search.nResults() == 0:
+                    non_protein += _SireVector(x, y, z)
+                    num_non_protein += 1
+
+    # Work out the average non-protein coordinate.
+    non_protein /= num_non_protein
+    non_protein = _Coordinate._from_sire_vector(non_protein)
+
+    # Now select all alpha carbon atoms within 10 Angstrom of the ligand or grid.
+
+    # Generate the search string.
+    x = binding_site.x().angstroms().magnitude()
+    y = binding_site.y().angstroms().magnitude()
+    z = binding_site.z().angstroms().magnitude()
+    string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
+
+    # Perform the search.
+    search = system.search(string)
+
+    # Raise exception if no atoms were found.
+    if search.nResults() == 0:
+        raise ValueError("No alpha carbon atoms found within 10 Angstrom of "
+                         "the binding pocket center. Try explicitly setting "
+                         "the center using a 'BioSimSpace.Types.Coordinate' "
+                         "or using a different option for 'alpha_carbon_name'.")
+
+    # Work out the center of mass of the alpha carbon atoms. (In Angstrom.)
+    com = _Coordinate(_Length(0, "A"), _Length(0, "A"), _Length(0, "A"))
+    atoms1 = []
+    for atom in search:
+        com += atom.coordinates(property_map=property_map)
+        atoms1.append(system.getIndex(atom))
+    com /= search.nResults()
+
+    # Compute the normal vector for the funnel.
+    initial_funnel_normal_vector = (non_protein - com).toVector().normalise()
+
+    # Compute the location of a point 10 Angstom in the direction of the funnel
+    # normal vector in the direction of the protein.
+    into_the_protein = com.toVector() - 10 * initial_funnel_normal_vector
+
+    # Search for all alpha carbons within 7 Angstrom of the point.
+
+    # Generate the search string.
+    x = into_the_protein.x()
+    y = into_the_protein.y()
+    z = into_the_protein.z()
+    string = f"atoms within 7 of {x},{y},{z} and atomname {alpha_carbon_name}"
+
+    # Perform the search.
+    search = system.search(string)
+
+    # Raise exception if no atoms were found.
+    if search.nResults() == 0:
+        raise ValueError("No alpha carbon atoms found within 10 Angstrom of "
+                         "the binding pocket center. Try explicitly setting "
+                         "the center using a 'BioSimSpace.Types.Coordinate' "
+                         "or using a different option for 'alpha_carbon_name'.")
+
+    # Append the indices of these atoms to the atoms0 vector.
+    atoms0 = []
+    for atom in search:
+        atoms0.append(system.getIndex(atom))
+
+    return atoms0, atoms1
