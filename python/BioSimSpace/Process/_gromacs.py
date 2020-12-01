@@ -591,7 +591,7 @@ class Gromacs(_process.Process):
             self._setPlumedConfig(plumed_config)
             if auxillary_files is not None:
                 for file in auxillary_files:
-                    _shutil.copyfile(file, self._work_dir):
+                    _shutil.copyfile(file, self._work_dir)
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
