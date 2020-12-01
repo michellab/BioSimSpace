@@ -124,9 +124,6 @@ def _writePertAtoms(mol, file, pert_type, print_all_atoms=False):
             LJ0 = atom.property("LJ0");
             LJ1 = atom.property("LJ1");
 
-            # € Rethink whether this protocol accounts for both grow and shrink,
-            # € or just shrink at the moment. Should we only be using param0/param1 
-            # € mixing instead of zeroes?
 
             #######################################################################
             # set LJ/charge based on requested perturbed term.
