@@ -45,7 +45,10 @@ class Funnel(_CollectiveVariable):
     """A class for a funnel collective variable."""
 
     def __init__(self, atoms0, atoms1, hill_width=_Length(0.025, "nanometer"),
-            lower_bound=None, upper_bound=None, grid=None):
+            lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000), 
+            upper_bound=_Bound(_Length(4.0, "nanometers"), force_constant=2000), 
+            grid=(_Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=900),
+                  _Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=15))):
         """Constructor.
 
            Parameters
