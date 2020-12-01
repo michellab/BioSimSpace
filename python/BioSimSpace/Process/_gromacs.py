@@ -31,6 +31,7 @@ __all__ = ["Gromacs"]
 import math as _math
 import os as _os
 import pygtail as _pygtail
+import shutil as _shutil
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
@@ -584,9 +585,13 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Create the PLUMED input file.
+            # Create the PLUMED input file and copy auxillary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            self._setPlumedConfig(self._plumed.createConfig(self._system, self._protocol))
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system, self._protocol)
+            self._setPlumedConfig(plumed_config)
+            if auxillary_files is not None:
+                for file in auxillary_files:
+                    _shutil.copyfile(file, self._work_dir):
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.

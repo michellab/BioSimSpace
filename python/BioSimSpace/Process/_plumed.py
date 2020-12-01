@@ -105,8 +105,9 @@ class Plumed():
         # records from the log files.
         self._colvar_unit = {}
 
-        # Initalise the list of configuration file strings.
+        # Initalise the list of configuration file strings and auxillary files.
         self._config = []
+        self._aux_files = []
 
         # Initialise dictionaries to hold COLVAR and HILLS time-series records.
         self._colvar_dict = _MultiDict()
@@ -131,8 +132,9 @@ class Plumed():
            Returns
            -------
 
-           config : [str]
-               The list of PLUMED configuration strings.
+           config, auxillary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxillary
+               files required by the collective variables.
         """
 
         if type(system) is not _System:
@@ -148,6 +150,7 @@ class Plumed():
         self._colvar_name = []
         self._colvar_unit = {}
         self._config = []
+        self._aux_files = []
 
         # Check for restart files.
         is_restart = False
