@@ -45,7 +45,7 @@ class Funnel(_CollectiveVariable):
     """A class for a funnel collective variable."""
 
     def __init__(self, atoms0, atoms1, ligand=None, hill_width=_Length(0.025, "nanometer"),
-            lower_bound=None, upper_bound=None, grid=None, pbc=False):
+            lower_bound=None, upper_bound=None, grid=None):
         """Constructor.
 
            Parameters
@@ -62,27 +62,28 @@ class Funnel(_CollectiveVariable):
 
            lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
                A lower bound on the value of the collective variable. This is
-               used to constrain the distance along projection axis of the
-               funnel.
+               used to constrain the "projection on axis" component of the
+               collective variable, i.e. the distance from the funnel axis to
+               the origin, along the axis.
 
            upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
                An upper bound on the value of the collective variable. This is
-               used to constrain the distance along projection axis of the
-               funnel.
+               used to constrain the "projection on axis" component of the
+               collective variable, i.e. the distance from the funnel axis to
 
-           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+           grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`, :class:`Grid <BioSimSpace.Metadynamics.Grid>`)
                The grid on which the collective variable will be sampled.
                This can help speed up long metadynamics simulations where
-               the number of Gaussian kernels can become prohibitive.
-
-           pbc : bool
-               Whether to use periodic boundary conditions when computing the
-               collective variable. For funnel metadynamics it is advisable
-               that this is set to False.
+               the number of Gaussian kernels can become prohibitive. The
+               collective variable has two components: the "projection on
+               the funnel axis" (the distance from the axis to the origin,
+               along the axis) and the orthogonal distance between the ligand
+               and the axis. The grid should be passed as a tuple with
+               the parameters for each component.
         """
 
         # Call the base class constructor.
-        super().__init__(pbc)
+        super().__init__()
 
         # This collective variable has two components: the projection along
         # the funnel axis and the extension orthogonal to it.
@@ -125,8 +126,7 @@ class Funnel(_CollectiveVariable):
         if self._upper_bound is not None:
             string += ", upper_bound=%s" % self._upper_bound
         if self._grid is not None:
-            string += ", grid=%s" % self._grid
-        string += ", pbc=%s"% self._pbc
+            string += ", grid=(%s, %s)" % self._grid
         string += ">"
         return string
 
@@ -245,6 +245,58 @@ class Funnel(_CollectiveVariable):
         """
         return self._hill_width
 
+    def setGrid(self, grid=None):
+        """Set a grid on which the collective variable will be sampled.
+           Call with no arguments to clear the grid.
+
+           Parameters
+           ----------
+
+           grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`,: class:`Grid <BioSimSpace.Metadynamics.Grid>`)
+               A grid for the two commponents of the collective variable:
+               the distance along the funnel projection axis, and the
+               orthogonal extent from the axis.
+        """
+
+        if grid is None:
+            self._grid = None
+            return
+
+        # Convert list to tuple.
+        if type(grid) is list:
+            grid = tuple(grid)
+
+        if type(grid) is tuple:
+            if len(grid) != 2 or not all(isinstance(x, _Grid) for x in grid):
+                raise ValueError("'grid' must be a two-component tuple of of type 'BioSimSpace.Metadynamics.Grid'")
+
+        # Store the existing value.
+        old_value = self._grid
+
+        # Set the new value.
+        self._grid = grid
+
+        # If we are modifying an existing object, then check for consistency.
+        if not self._is_new_object:
+            try:
+                self._validate()
+            except:
+                self._grid = old_value
+                raise
+
+    def getGrid(self):
+        """Get the grid on which the collective variable is sampled.
+
+           Returns
+           -------
+
+           grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`,: class:`Grid <BioSimSpace.Metadynamics.Grid>`)
+               The grid on which the two-components of the collective variable are sampled.
+               A grid for the two commponents of the collective variable:
+               the distance along the funnel projection axis, and the
+        """
+        return self._grid
+
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
 
@@ -263,24 +315,38 @@ class Funnel(_CollectiveVariable):
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
-            if type(self._grid.getMinimum()) is not _Length:
+            # Check the two components of the grid.
+            if type(self._grid[0].getMinimum()) is not _Length:
+                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
+            if type(self._grid[1].getMinimum()) is not _Length:
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
-            self._grid.setMinimum(self._grid.getMinimum().nanometers())
-            if type(self._grid.getMaximum()) is not _Length:
+            self._grid[0].setMinimum(self._grid[0].getMinimum().nanometers())
+            self._grid[1].setMinimum(self._grid[1].getMinimum().nanometers())
+            if type(self._grid[0].getMaximum()) is not _Length:
+                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
+            if type(self._grid[1].getMaximum()) is not _Length:
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
-            self._grid.setMaximum(self._grid.getMaximum().nanometers())
-            if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
+            self._grid[0].setMaximum(self._grid[0].getMaximum().nanometers())
+            self._grid[1].setMaximum(self._grid[1].getMaximum().nanometers())
+            # Lower and upper bounds only apply to the grid parameters for the
+            # first component of the collective variable, the projection on the
+            # funnel axis.
+            if self._lower_bound is not None and self._grid[0].getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
-            if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
+            if self._upper_bound is not None and self._grid[0].getMaximum() < self._upper_bound.getValue():
                 raise ValueError("'upper_bound' is greater than 'grid' maximum.")
 
             # If the number of bins isn't specified, estimate it out from the hill width.
-            if self._grid.getBins() is None:
-                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).magnitude()
+            if self._grid[0].getBins() is None:
+                grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).magnitude()
                 num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
-                self._grid.setBins(num_bins)
+                self._grid[0].setBins(num_bins)
+            if self._grid[1].getBins() is None:
+                grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).magnitude()
+                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                self._grid[1].setBins(num_bins)
 
 def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
     """Constructor.
