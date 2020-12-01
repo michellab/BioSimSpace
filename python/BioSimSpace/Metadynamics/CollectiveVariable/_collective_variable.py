@@ -34,7 +34,7 @@ from .._grid import Grid as _Grid
 class CollectiveVariable():
     """A base class for holding collective variables."""
 
-    def __init__(self, pbc=True):
+    def __init__(self):
         """Constructor.
 
            Parameters
@@ -50,8 +50,6 @@ class CollectiveVariable():
 
         # Whether this is a newly created object.
         self._is_new_object = True
-
-        self.setPeriodicBoundaries(pbc)
 
     def setLowerBound(self, lower_bound=None):
         """Set a lower bound on the value of the collective variable.
@@ -179,32 +177,6 @@ class CollectiveVariable():
                The grid on which the collective variable is sampled.
         """
         return self._grid
-
-    def setPeriodicBoundaries(self, pbc):
-        """Set whether to use periodic_boundaries when calculating the
-           collective variable.
-
-           Parameters
-           ----------
-
-           pbc : bool
-               Whether to use periodic boundaries conditions.
-        """
-        if type(pbc) is not bool:
-            raise TypeError("'pbc' must be of type 'bool'")
-        self._pbc = pbc
-
-    def getPeriodicBoundaries(self):
-        """Return whether to take account of periodic boundary conditions
-           when computing the collective variable.
-
-           Returns
-           -------
-
-           pbc : bool
-               Whether to use periodic boundaries conditions.
-        """
-        return self._pbc
 
     def _validate(self):
         """Internal function to validate that the object is in a consistent
