@@ -44,7 +44,7 @@ class CollectiveVariable():
               Whether to use periodic boundaries conditions.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is CollectiveVariable:
             raise Exception("<CollectiveVariable> must be subclassed.")
 
