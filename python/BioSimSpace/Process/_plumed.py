@@ -90,8 +90,9 @@ class Plumed():
         self._hills_file = "%s/HILLS" % self._work_dir
         self._colvar_file = "%s/COLVAR" % self._work_dir
 
-        # The number of collective variables.
+        # The number of collective variables and total number of components.
         self._num_colvar = 0
+        self._num_components = 0
 
         # The number of lower/upper walls.
         self._num_lower_walls = 0
@@ -189,6 +190,8 @@ class Plumed():
         # Store the collective variable(s).
         colvars = protocol.getCollectiveVariable()
         self._num_colvar = len(colvars)
+        for cv in colvars:
+            self._num_components += cv.nComponents()
 
         # Loop over each collective variable and create WHOLEMOLECULES entities
         # for any molecule that involve atoms in a collective variable. We only
@@ -612,15 +615,11 @@ class Plumed():
             grid_max_string = " GRID_MAX="
             grid_bin_string = " GRID_BIN="
 
-            num_colvar = self._num_colvar
-            if is_funnel:
-                num_colvar += 1
-
             for idx, grid in enumerate(grid_data):
                 grid_min_string += str(grid[0])
                 grid_max_string += str(grid[1])
                 grid_bin_string += str(grid[2])
-                if idx < num_colvar - 1:
+                if idx < self._num_components - 1:
                     grid_min_string += ","
                     grid_max_string += ","
                     grid_bin_string += ","
@@ -676,7 +675,12 @@ class Plumed():
            ----------
 
            index : int
-               The index of the collective variable.
+               The index of the collective variable (CV), or CV component. If
+               there are a mixture of single and multi-component CVs, then they
+               are indexed by the total number of components in the CV list that
+               was passed to the protocol. For example, if there are two CVs,
+               the first with one component and the second with two, then index
+               1 would refer to the first component of the second CV.
 
            time_series : bool
                Whether to return a list of time series records.
@@ -707,8 +711,13 @@ class Plumed():
            ----------
 
            index : int
-               The index of the collective variable. If None, then all variables
-               will be considered.
+               The index of the collective variable (CV), or CV component. If
+               there are a mixture of single and multi-component CVs, then they
+               are indexed by the total number of components in the CV list that
+               was passed to the protocol. For example, if there are two CVs,
+               the first with one component and the second with two, then index
+               1 would refer to the first component of the second CV. If None,
+               then all variables and components will be considered.
 
            stride : int
                The stride for integrating the free energy. This can be used to
@@ -763,12 +772,12 @@ class Plumed():
         with _Utils.cd(self._work_dir):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(command, shell=True,
+            proc = _subprocess.run(command, shell=True, text=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
             if proc.returncode != 0:
                 raise RuntimeError("Failed to generate free energy estimate.\n"
-                                   "Error: %s" % proc.stderr.decode("utf-8"))
+                                   "Error: %s" % proc.stderr)
 
             # Get a sorted list of all the fes*.dat files.
             fes_files = _glob.glob("fes*.dat")

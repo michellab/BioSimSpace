@@ -48,8 +48,15 @@ class CollectiveVariable():
         if type(self) is CollectiveVariable:
             raise Exception("<CollectiveVariable> must be subclassed.")
 
+        # Default to single-component collective variable.
+        self._num_components = 1
+
         # Whether this is a newly created object.
         self._is_new_object = True
+
+    def nComponents(self):
+        """Return the number of components for the collective variable."""
+        return self._num_components
 
     def setLowerBound(self, lower_bound=None):
         """Set a lower bound on the value of the collective variable.
