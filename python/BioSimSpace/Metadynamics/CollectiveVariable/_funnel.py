@@ -45,8 +45,10 @@ class Funnel(_CollectiveVariable):
     """A class for a funnel collective variable."""
 
     def __init__(self, atoms0, atoms1, hill_width=_Length(0.025, "nanometer"),
-            lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000), 
-            upper_bound=_Bound(_Length(4.0, "nanometers"), force_constant=2000), 
+            width=_Length(0.6, "nanometers"), buffer=_Length(0.15, "nanometers"),
+            steepness=1.5, inflection=2.0,
+            lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000),
+            upper_bound=_Bound(_Length(4.0, "nanometers"), force_constant=2000),
             grid=(_Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=900),
                   _Grid(_Length(0.0, "nanometers"), _Length(0.9, "nanometers"), num_bins=15))):
         """Constructor.
@@ -59,6 +61,19 @@ class Funnel(_CollectiveVariable):
 
            atoms1 : [int, int, ...]
                A list of atom indices that define the inflection point of the funnel.
+
+           width : :class:`Length <BioSimSpace.Types.Length>`
+              The funnel "wall width".
+
+           buffer : :class:`Length <BioSimSpace.Types.Length>`
+              The funnel "wall buffer".
+
+           steepness : float
+               The steepness of the funnel at the inflection point.
+
+           inflection : float
+               The inflection point as a value of the projection along the
+               funnel axis.
 
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill used to sample this variable.
@@ -102,6 +117,10 @@ class Funnel(_CollectiveVariable):
         # Set the required parameters.
         self.setAtoms0(atoms0)
         self.setAtoms1(atoms1)
+        self.setWidth(width)
+        self.setBuffer(buffer)
+        self.setSteepness(steepness)
+        self.setInflection(inflection)
         self.setHillWidth(hill_width)
 
         # Set the optional parameters.
@@ -123,6 +142,10 @@ class Funnel(_CollectiveVariable):
         string = "<BioSimSpace.Metadynamics.CollectiveVariable.Funnel: "
         string += "atoms0=%s" % self._atoms0
         string += ", atoms1=%s" % self._atoms1
+        string += ", width=%s" % self._width
+        string += ", buffer=%s" % self._buffer
+        string += ", steepness=%s" % self._steepness
+        string += ", inflection=%s" % self._inflection
         string += ", hill_width=%s" % self._hill_width
         if self._lower_bound is not None:
             string += ", lower_bound=%s" % self._lower_bound
@@ -216,6 +239,132 @@ class Funnel(_CollectiveVariable):
                inflection point of the funnel.
         """
         return self._atoms1
+
+    def setWidth(self, width):
+        """Set the funnel "wall width".
+
+           Parameters
+           ----------
+
+           width : :class:`Length <BioSimSpace.Types.Length>`
+               The width of the funnel wall.
+        """
+        if type(width) is not _Length:
+            raise TypeError("'width' must be of type 'BioSimSpace.Types.Length'")
+
+        if width.magnitude() < 0:
+            raise ValueError("'width' must have a magnitude of > 0")
+
+        # Convert to the internal unit.
+        self._width = width.nanometers()
+
+    def getWidth(self):
+        """Return the funnel "wall width".
+
+           Returns
+           -------
+
+           width : :class:`Length <BioSimSpace.Types.Length>`
+               The funnel "wall width".
+        """
+        return self._width
+
+    def setBuffer(self, buffer):
+        """Set the funnel "wall buffer".
+
+           Parameters
+           ----------
+
+           buffer : :class:`Length <BioSimSpace.Types.Length>`
+               The width of the funnel wall buffer.
+        """
+        if type(buffer) is not _Length:
+            raise TypeError("'buffer' must be of type 'BioSimSpace.Types.Length'")
+
+        if buffer.magnitude() < 0:
+            raise ValueError("'buffer' must have a magnitude of > 0")
+
+        # Convert to the internal unit.
+        self._buffer = buffer.nanometers()
+
+    def getBuffer(self):
+        """Return the funnel "wall buffer".
+
+           Returns
+           -------
+
+           buffer : :class:`Length <BioSimSpace.Types.Length>`
+               The funnel "wall buffer".
+        """
+        return self._buffer
+
+    def setSteepness(self, steepness):
+        """Set the steepness of the funnel at the inflection point.
+
+           Parameters
+           ----------
+
+           steepness : float
+               The steepness of the funnel at the inflection point.
+        """
+        # Convert int to float.
+        if type(steepness) is int:
+            steepness = float(steepness)
+
+        if type(steepness) is not float:
+            raise TypeError("'steepness' must be of type 'float'")
+
+        if steepness < 0:
+            raise ValueError("'steepness' must be > 0")
+
+        self._steepness = steepness
+
+    def getSteepness(self):
+        """Return the steepness of the funnel at the inflection point.
+
+           Returns
+           -------
+
+           steepness : float
+               The steepness of the funnel at the inflection point.
+        """
+        return self._steepness
+
+    def setInflection(self, inflection):
+        """Set the inflection point as a value of the projection along the
+           funnel axis.
+
+           Parameters
+           ----------
+
+           inflection : float
+               The inflection point as avalue of the projection along the
+               funnel axis.
+        """
+        # Convert int to float.
+        if type(inflection) is int:
+            inflection = float(inflection)
+
+        if type(inflection) is not float:
+            raise TypeError("'inflection' must be of type 'float'")
+
+        if inflection < 0:
+            raise ValueError("'inflection' must be > 0")
+
+        self._inflection = inflection
+
+    def getInflection(self):
+        """Return the inflection point as a value of the projection along the
+           funnel axis.
+
+           Returns
+           -------
+
+           inflection : float
+               The inflection point as avalue of the projection along the
+               funnel axis.
+        """
+        return self._inflection
 
     def setHillWidth(self, hill_width):
         """Set the width of the Gaussian hills used to bias this collective

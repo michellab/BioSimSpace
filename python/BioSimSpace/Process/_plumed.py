@@ -494,10 +494,10 @@ class Plumed():
                 # Add funnel parameters.
                 self._config.append("")
                 self._config.append("# Funnel parameters.")
-                self._config.append("s_cent: CONSTANT VALUES=2.0")      # inflection
-                self._config.append("beta_cent: CONSTANT VALUES=1.5")   # steepness
-                self._config.append("wall_width: CONSTANT VALUES=0.6")  # width
-                self._config.append("wall_buffer: CONSTANT VALUES=0.6") # total = width + buffer
+                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection()}")              # inflection
+                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")            # steepness
+                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().magnitude()}")   # width
+                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().magnitude()}") # total = width + buffer
 
                 # Define the funnel calculation. This function returns the
                 # radius of the funnel at the current value of the collective
