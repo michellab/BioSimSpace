@@ -46,7 +46,7 @@ class Funnel(_CollectiveVariable):
 
     def __init__(self, atoms0, atoms1, hill_width=_Length(0.025, "nanometer"),
             width=_Length(0.6, "nanometers"), buffer=_Length(0.15, "nanometers"),
-            steepness=1.5, inflection=2.0,
+            steepness=1.5, inflection=_Length(2.0, "nanometers"),
             lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000),
             upper_bound=_Bound(_Length(4.0, "nanometers"), force_constant=2000),
             grid=(_Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=900),
@@ -71,7 +71,7 @@ class Funnel(_CollectiveVariable):
            steepness : float
                The steepness of the funnel at the inflection point.
 
-           inflection : float
+           inflection : :class:`Length <BioSimSpace.Types.Length>`
                The inflection point as a value of the projection along the
                funnel axis.
 
@@ -337,21 +337,18 @@ class Funnel(_CollectiveVariable):
            Parameters
            ----------
 
-           inflection : float
+           inflection : :class:`Length <BioSimSpace.Types.Length>`
                The inflection point as avalue of the projection along the
                funnel axis.
         """
-        # Convert int to float.
-        if type(inflection) is int:
-            inflection = float(inflection)
+        if type(inflection) is not _Length:
+            raise TypeError("'inflection' must be of type 'BioSimSpace.Types.Length'")
 
-        if type(inflection) is not float:
-            raise TypeError("'inflection' must be of type 'float'")
+        if inflection.magnitude() < 0:
+            raise ValueError("'inflection' must have a magnitude of > 0")
 
-        if inflection < 0:
-            raise ValueError("'inflection' must be > 0")
-
-        self._inflection = inflection
+        # Convert to the internal unit.
+        self._inflection = inflection.nanometers()
 
     def getInflection(self):
         """Return the inflection point as a value of the projection along the
@@ -360,7 +357,7 @@ class Funnel(_CollectiveVariable):
            Returns
            -------
 
-           inflection : float
+           inflection : :class:`Length <BioSimSpace.Types.Length>`
                The inflection point as avalue of the projection along the
                funnel axis.
         """
