@@ -58,7 +58,7 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, property_map={}):
+            work_dir=None, seed=None, property_map={}, ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -86,6 +86,13 @@ class Gromacs(_process.Process):
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+           ignore_warnings : bool
+               Whether to ignore warnings when generating the binary run file.
+
+           show_warnings : bool
+               Whether to show warning/error messages when generating the binary
+               run file.
         """
 
         # Call the base class constructor.
@@ -109,6 +116,14 @@ class Gromacs(_process.Process):
             else:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
                                             "Please install GROMACS (http://www.gromacs.org).")
+
+        if type(ignore_warnings) is not bool:
+            raise ValueError("'ignore_warnings' must be of type 'bool.")
+        self._ignore_warnings = ignore_warnings
+
+        if type(show_errors) is not bool:
+            raise ValueError("'show_errors' must be of type 'bool.")
+        self._show_errors = show_errors
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
@@ -592,7 +607,7 @@ class Gromacs(_process.Process):
             if auxillary_files is not None:
                 for file in auxillary_files:
                     file_name = _os.path.basename(file)
-                    _shutil.copyfile(file, self._work_dir + f"/{file_name}") 
+                    _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
@@ -643,13 +658,54 @@ class Gromacs(_process.Process):
             % (self._exe, self._config_file, mdp_out, self._gro_file,
                self._top_file, self._gro_file, self._tpr_file)
 
+        # Warnings don't trigger an error. Set to a suitably large number.
+        if self._ignore_warnings:
+            command += " --maxwarn 1000"
+
         # Run the command.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(command, shell=True, text=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
-            raise RuntimeError("Unable to generate GROMACS binary run input file.")
+            if self._show_errors:
+                # Capture errors and warnings from the grompp output.
+                errors = []
+                warnings = []
+                is_error = False
+                is_warn = False
+                lines = proc.stdout.split("\n")
+                for line in lines:
+                    line = line.strip()
+                    if line[0:5] == "ERROR" or is_error:
+                        if line == "":
+                            is_error = False
+                            break
+                        error.append(line)
+                        is_error = True
+                    elif line[0:7] == "WARNING" or is_warn:
+                        if line == "":
+                            is_warnings = False
+                            break
+                        warnings.append(line)
+                        is_warn = True
+
+                error_string = "\n  ".join(errors)
+                warning_string = "\n  ".join(warnings)
+
+                exception_string = "Unable to generate GROMACS binary run input file.\n"
+                if len(errors) > 0:
+                    exception_string += "\n'gmx grompp' reported the following errors:\n"   \
+                                     + f"{error_string}\n"
+                if len(warnings) > 0:
+                    exception_string += "\n'gmx grompp' reported the following warnings:\n" \
+                                     + f"{warning_string}\n"                                \
+                                     +  "\nUse 'ignore_warnings' to ignore warnings."
+
+                raise RuntimeError(exception_string)
+
+            else:
+                raise RuntimeError("Unable to generate GROMACS binary run input file.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list.
