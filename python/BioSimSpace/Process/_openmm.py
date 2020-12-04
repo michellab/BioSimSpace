@@ -521,6 +521,9 @@ class OpenMM(_process.Process):
                 raise _IncompatibleError("We currently only support '%s' collective variables for '%s' protocols"
                         % (_CollectiveVariable.Funnel.__name__, self._protocol.__class__.__name__))
 
+            # The following OpenMM native implementation of the funnel metadynamics protocol
+            # is adapted from funnel_maker.py by Dominykas Lukauskis.
+
             # Extract the only collective variable.
             colvar = colvar[0]
 
