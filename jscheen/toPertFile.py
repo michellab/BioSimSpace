@@ -27,7 +27,7 @@ from BioSimSpace.Types import Length as _Length
 
 # from ._sire_wrapper import SireWrapper as _SireWrapper
 
-def _writePertAtoms(mol, file, pert_type, print_all_atoms=False):
+def _writePertAtoms(mol, file, pert_type, print_all_atoms=True):
     """Write the merged molecule atoms to a perturbation file.
 
     Parameters
@@ -112,11 +112,9 @@ def _writePertAtoms(mol, file, pert_type, print_all_atoms=False):
                 file.write("    endatom\n")
 
 
-    else:
-        
+    else:        
         # Given multistep protocol, assume print all atom records.
         for atom in sorted(mol.atoms(), key=lambda atom: atom_sorting_criteria(atom)):
-            print(atom.property("element0"), "--->", atom.property("element1"))
             # Start atom record.
             file.write("    atom\n")
 
@@ -125,102 +123,90 @@ def _writePertAtoms(mol, file, pert_type, print_all_atoms=False):
             LJ1 = atom.property("LJ1");
 
 
-            #######################################################################
+            
             # set LJ/charge based on requested perturbed term.
+            #######################################################################
             if pert_type == "discharge_soft":
-                if atom.property("element0") == atom.property("element1"):
-                    # In this step, only remove charges from non-perturbed atoms.
-                    LJ0_value = LJ0.sigma().value(), LJ0.epsilon().value()
-                    LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
+                if (atom.property("element0") == _SireMol.Element("X") or 
+                    atom.property("element1") == _SireMol.Element("X")):
+                    # In this step, only remove charges from soft-core perturbations.
+                    LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
+
                     charge0_value = atom.property("charge0").value()
                     charge1_value = 0.0
                 else:
-                    # If atom is perturbed, prevent other terms from changing.
+                    # If only hard atoms in perturbation, hold parameters.
                     LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
                     charge0_value = charge1_value = atom.property("charge0").value()
 
             #######################################################################
             elif pert_type == "vanish_soft":
-                if atom.property("element0") == atom.property("element1"):
-                    print("VANISH")
-                    # In this step, only vanish non-perturbed atoms.
-                    # Atom should have been discharged in previous step.
+                if (atom.property("element0") == _SireMol.Element("X") or 
+                    atom.property("element1") == _SireMol.Element("X")):
+                    # In this step, only remove LJ from soft-core perturbations.
                     LJ0_value = LJ0.sigma().value(), LJ0.epsilon().value()
                     LJ1_value = (0.0, 0.0)
-                    charge0_value = 0.0
-                    charge1_value = 0.0
+
+                    # soft discharge was previous step, so assume 0.0.
+                    charge0_value = charge1_value = 0.0
                 else:
-                    # If atom is perturbed, prevent other terms from changing.
+                    # If only hard atoms in perturbation, hold parameters.
                     LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
                     charge0_value = charge1_value = atom.property("charge0").value()
 
             #######################################################################
             elif pert_type == "change_bonds":
-                # this is handled in _writePertBonds()
-                raise ValueError("'change_bonds' as pert_type can only be set for _writePertBonds()")
+                # this is handled in _writePertBonds(); states should be set to final
+                # states of previous step.
+                if (atom.property("element0") == _SireMol.Element("X") or 
+                    atom.property("element1") == _SireMol.Element("X")):
+                    # In previous steps, soft-core transformations were discharged and vanished.
+                    LJ0_value = LJ1_value = (0.0, 0.0)
+                    charge0_value = charge1_value = 0.0
+                else:
+                    # If only hard atoms in perturbation, hold parameters as in previous steps.
+                    LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
+                    charge0_value = charge1_value = atom.property("charge0").value()
 
             #######################################################################
             elif pert_type == "change_hard":
-                if atom.property("element0") == atom.property("element1"):
-                    # In this step, non-perturbed atoms are charges and LJ are perturbed.
+                if (atom.property("element0") == _SireMol.Element("X") or 
+                    atom.property("element1") == _SireMol.Element("X")):
+                    # In this step, soft-core perturbations are untouched.
+                    LJ0_value = LJ1_value = (0.0, 0.0)
+                    charge0_value = charge1_value = 0.0
+                else:
+                    # If only hard atoms in perturbation, change all parameters.
+                    LJ0_value = LJ0.sigma().value(), LJ0.epsilon().value()
+                    LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
+                    charge0_value = atom.property("charge0").value()
+                    charge1_value = atom.property("charge1").value()
+
+            #######################################################################
+            elif pert_type == "grow_soft":
+                if (atom.property("element0") == _SireMol.Element("X") or 
+                    atom.property("element1") == _SireMol.Element("X")):
+                    # In this step, soft-core perturbations are grown from 0.
                     LJ0_value = (0.0, 0.0)
                     LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
                     charge0_value = 0.0
-                    charge1_value = atom.property("charge1").value()
-                elif (
-                    atom.property("element0") == _SireMol.Element("X") or 
+                    charge1_value = 0.0
+                else:
+                    # If only hard atoms in perturbation, parameters are already changed.
+                    LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
+                    charge0_value = charge1_value = atom.property("charge1").value()
+
+            #######################################################################
+            elif pert_type == "charge_soft":
+                if (atom.property("element0") == _SireMol.Element("X") or 
                     atom.property("element1") == _SireMol.Element("X")):
-                    # If atom is to/from dummy, prevent changes.
-                    LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
-                    charge0_value = charge1_value = atom.property("charge0").value()
-                else:
-                    # grow + charge perturbed non-dummy atoms.
-                    LJ0_value = LJ0.sigma().value(), LJ0.epsilon().value()
+                    # In this step, soft-core perturbations are charged from 0.
+                    LJ0_value = LJ1.sigma().value(), LJ1.epsilon().value()
                     LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-                    charge0_value = atom.property("charge0").value()
-                    charge1_value = atom.property("charge1").value()
-
-            #######################################################################
-            elif pert_type == "grow_dummies":
-                # In this step grow/shrink atoms that have dummy types.
-                if atom.property("element0") == atom.property("element1"):
-                    # In this step, non-perturbed atoms are already at lambda1 state.
-                    LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-                    charge0_value = charge1_value = atom.property("charge1").value()
-                elif (
-                     atom.property("element0") == _SireMol.Element("X") or 
-                     atom.property("element1") == _SireMol.Element("X")):
-                    # If atom is to/from dummy, make changes.
-                    # Grow the atom.
-                    LJ0_value = LJ0.sigma().value(), LJ0.epsilon().value()
-                    LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-
-                    # Keep charge constant (handled in 'charge_dummies').
-                    charge0_value = charge1_value = atom.property("charge0").value()
-                else:
-                    # Perturbed non-dummy atoms have been changed in previous step.
-                    LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-                    charge0_value = charge1_value = atom.property("charge1").value()
-
-            #######################################################################
-            elif pert_type == "charge_dummies":
-                # In this step recharge atoms that have dummy types.
-                if atom.property("element0") == atom.property("element1"):
-                    # In this step, non-perturbed atoms are already at lambda1 state.
-                    LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-                    charge0_value = charge1_value = atom.property("charge1").value()
-                elif (
-                     atom.property("element0") == _SireMol.Element("X") or 
-                     atom.property("element1") == _SireMol.Element("X")):
-                    # If atom is to/from dummy, make changes.
-                    # LJ has been handled in previous step ('grow_dummies').
-                    LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
-                    
-                    # Perturb charge.
-                    charge0_value = atom.property("charge0").value()
+                    charge0_value = 0.0
                     charge1_value = atom.property("charge1").value()
                 else:
-                    # Perturbed non-dummy atoms have been changed in previous step.
+                    # If only hard atoms in perturbation, parameters are already changed.
                     LJ0_value = LJ1_value = LJ1.sigma().value(), LJ1.epsilon().value()
                     charge0_value = charge1_value = atom.property("charge1").value()
 
@@ -298,6 +284,21 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     if pert_type:
       if type(pert_type) is not str:
           raise TypeError("'pert_type' must be of type 'str'")
+
+      allowed_pert_types = [  "standard",
+                                "discharge_soft",
+                                "vanish_soft",
+                                "change_bonds",
+                                "change_hard",
+                                "grow_soft",
+                                "charge_soft"]
+      if pert_type not in allowed_pert_types:
+        raise ValueError("'pert_type' must be any of: "+str(allowed_pert_types), pert_type)
+      # change pertfile name:
+      filename = "SOMD_INPUTS/"+pert_type+".pert"
+
+
+
 
     # Extract and copy the Sire molecule.
     mol = molecule._sire_object.__deepcopy__()
@@ -541,14 +542,43 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
             # Start bond record.
             file.write("    bond\n")
+            if pert_type in [
+                "discharge_soft",
+                "vanish_soft"
+                            ]:
+                # Bond data is unchanged.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
 
-            # Bond data.
-            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-            file.write("        initial_force  %.5f\n" % 0.0)
-            file.write("        initial_equil  %.5f\n" % amber_bond.r0())
-            file.write("        final_force    %.5f\n" % amber_bond.k())
-            file.write("        final_equil    %.5f\n" % amber_bond.r0())
+            elif pert_type == "change_bonds" or pert_type == "standard":
+                # bonds are perturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % amber_bond.k())
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())                
+
+            elif pert_type in [
+                "change_hard",
+                "grow_soft",
+                "charge_soft"
+                            ]:
+                # Bond data has already been changed, assume endpoints.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        initial_force  %.5f\n" % amber_bond.k())
+                file.write("        initial_equil  %.5f\n" % amber_bond.r0())
+                file.write("        final_force    %.5f\n" % amber_bond.k())
+                file.write("        final_equil    %.5f\n" % amber_bond.r0())
+
+
+
+
 
             # End bond record.
             file.write("    endbond\n")
@@ -596,14 +626,38 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
                     # Start bond record.
                     file.write("    bond\n")
+                    if pert_type in [
+                        "discharge_soft",
+                        "vanish_soft"
+                                    ]:
+                        # Bonds are not perturbed.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond0.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond0.r0())
+                    elif pert_type == "change_bonds" or pert_type == "standard":
+                        # Bonds are perturbed.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond0.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())
+                    elif pert_type in [
+                        "change_hard",
+                        "grow_soft",
+                        "charge_soft"
+                                    ]:
+                        # Bonds are already perturbed.
+                        file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                        file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                        file.write("        initial_force  %.5f\n" % amber_bond1.k())
+                        file.write("        initial_equil  %.5f\n" % amber_bond1.r0())
+                        file.write("        final_force    %.5f\n" % amber_bond1.k())
+                        file.write("        final_equil    %.5f\n" % amber_bond1.r0())                                    
 
-                    # Angle data.
-                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                    file.write("        initial_force  %.5f\n" % amber_bond0.k())
-                    file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
-                    file.write("        final_force    %.5f\n" % amber_bond1.k())
-                    file.write("        final_equil    %.5f\n" % amber_bond1.r0())
 
                     # End bond record.
                     file.write("    endbond\n")
@@ -699,15 +753,39 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             # Start angle record.
             file.write("    angle\n")
 
-            # Angle data.
-            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-            file.write("        initial_force  %.5f\n" % amber_angle.k())
-            file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
-            file.write("        final_force    %.5f\n" % 0.0)
-            file.write("        final_equil    %.5f\n" % amber_angle.theta0())
-
+            if pert_type in ["standard", "change_bonds"]:
+                # Angle data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
+            elif pert_type in [
+                "discharge_soft",
+                "vanish_soft",
+                "change_bonds"]:
+                # Angle data, unperturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())                
+            elif pert_type in [
+                "change_hard",
+                "grow_soft",
+                "charge_soft"]:
+                # Angle data, already perturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0()) 
             # End angle record.
             file.write("    endangle\n")
 
@@ -728,14 +806,39 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             # Start angle record.
             file.write("    angle\n")
 
-            # Angle data.
-            file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-            file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-            file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-            file.write("        initial_force  %.5f\n" % 0.0)
-            file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
-            file.write("        final_force    %.5f\n" % amber_angle.k())
-            file.write("        final_equil    %.5f\n" % amber_angle.theta0())
+            if pert_type in ["standard", "change_bonds"]:
+                # Angle data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())
+            elif pert_type in [
+                "discharge_soft",
+                "vanish_soft",
+                "change_bonds"]:
+                # Angle data, unperturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % 0.0)
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % 0.0)
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0())                
+            elif pert_type in [
+                "change_hard",
+                "grow_soft",
+                "charge_soft"]:
+                # Angle data, already perturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle.k())
+                file.write("        final_equil    %.5f\n" % amber_angle.theta0()) 
 
             # End angle record.
             file.write("    endangle\n")
@@ -783,18 +886,42 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
                     # Start angle record.
                     file.write("    angle\n")
+            if pert_type in ["standard", "change_bonds"]:
+                # Angle data.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle0.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle1.k())
+                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
+            elif pert_type in [
+                "discharge_soft",
+                "vanish_soft",
+                "change_bonds"]:
+                # Angle data, unperturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle0.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle0.k())
+                file.write("        final_equil    %.5f\n" % amber_angle0.theta0())             
+            elif pert_type in [
+                "change_hard",
+                "grow_soft",
+                "charge_soft"]:
+                # Angle data, already perturbed.
+                file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
+                file.write("        initial_force  %.5f\n" % amber_angle1.k())
+                file.write("        initial_equil  %.5f\n" % amber_angle1.theta0())
+                file.write("        final_force    %.5f\n" % amber_angle1.k())
+                file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
 
-                    # Angle data.
-                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
-                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
-                    file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
-                    file.write("        initial_force  %.5f\n" % amber_angle0.k())
-                    file.write("        initial_equil  %.5f\n" % amber_angle0.theta0())
-                    file.write("        final_force    %.5f\n" % amber_angle1.k())
-                    file.write("        final_equil    %.5f\n" % amber_angle1.theta0())
-
-                    # End angle record.
-                    file.write("    endangle\n")
+            # End angle record.
+            file.write("    endangle\n")
 
         # 4) Dihedrals.
 
@@ -901,11 +1028,23 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             amber_dihedral_terms_sorted = sorted(
                 amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft",
+                    "change_bonds",
+                    "standard"]:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                else: 
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
             file.write("\n")
             file.write("        final form    ")
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft"]:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
             file.write("\n")
 
             # End dihedral record.
@@ -938,11 +1077,24 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             amber_dihedral_terms_sorted = sorted(
                 amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft",
+                    "change_bonds",
+                    "standard"]:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                else: 
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+
             file.write("\n")
             file.write("        final_form    ")
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft"]:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
             file.write("\n")
 
             # End dihedral record.
@@ -1144,11 +1296,24 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             amber_dihedral_terms_sorted = sorted(
                 amber_dihedral.terms(), key=lambda t: (t.k(), t.periodicity(), t.phase()))
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft",
+                    "change_bonds",
+                    "standard"]:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                
             file.write("\n")
             file.write("        final form    ")
             for term in amber_dihedral_terms_sorted:
-                file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft"]:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
             file.write("\n")
 
             # End improper record.
@@ -1179,12 +1344,24 @@ def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             file.write("        initial_form  ")
             for term in sorted(amber_dihedral0.terms(),
                                key=lambda t: (t.k(), t.periodicity(), t.phase())):
-                file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft",
+                    "change_bonds",
+                    "standard"]:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
             file.write("\n")
             file.write("        final_form    ")
             for term in sorted(amber_dihedral1.terms(),
                                key=lambda t: (t.k(), t.periodicity(), t.phase())):
-                file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
+                if pert_type in [
+                    "discharge_soft",
+                    "vanish_soft"]:
+                    file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
+                else:
+                    file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
             file.write("\n")
 
             # End improper record.
