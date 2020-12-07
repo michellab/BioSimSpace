@@ -46,7 +46,8 @@ class Equilibration(_Protocol):
                  temperature_end=_Types.Temperature(300, "kelvin"),
                  temperature=None,
                  pressure=None,
-                 frames=20,
+                 report_interval=100,
+                 restart_interval=500,
                  restrain_backbone=False
                 ):
         """Constructor.
@@ -74,8 +75,12 @@ class Equilibration(_Protocol):
                The pressure. If this argument is omitted then the simulation
                is run using the NVT ensemble.
 
-           frames : int
-               The number of trajectory frames to record.
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
+               frames are saved. (In integration steps.)
 
            restrain_backbone : bool
                Whether the atoms in the backbone are fixed.
@@ -116,8 +121,11 @@ class Equilibration(_Protocol):
         else:
             self._pressure = None
 
-        # Set the number of trajectory frames.
-        self.setFrames(frames)
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
 
         # Set the backbone restraint.
         self.setRestraint(restrain_backbone)
@@ -128,9 +136,10 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r>"
-                   ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, "
+                    "report_interval=%d, restart_interval=%d,restrain_backbone=%r>"
+                   ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
+                           self._pressure, self._report_interval, self._restart_interval, self._is_restrained)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -138,9 +147,10 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r)"
-                   ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, "
+                    "report_interval=%d, restart_interval=%d, restrain_backbone=%r)"
+                   ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
+                           self._pressure, self._report_interval, self._restart_interval, self._is_restrained)
 
     def getTimeStep(self):
         """Return the time step.
@@ -272,34 +282,67 @@ class Equilibration(_Protocol):
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
-    def getFrames(self):
-        """Return the number of frames.
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
 
            Returns
            -------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        return self._frames
+        return self._report_interval
 
-    def setFrames(self, frames):
-        """Set the number of frames.
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
 
            Parameters
            ----------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        if type(frames) is not int:
-            raise TypeError("'frames' must be of type 'int'")
+        if type(report_interval) is not int:
+            raise TypeError("'report_interval' must be of type 'int'")
 
-        if frames <= 0:
-            _warnings.warn("The number of frames must be positive. Using default (20).")
-            self._frames = 20
-        else:
-            self._frames = _math.ceil(frames)
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
+
+        self._report_interval = report_interval
+
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Returns
+           -------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        return self._restart_interval
+
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Parameters
+           ----------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        if type(restart_interval) is not int:
+            raise TypeError("'restart_interval' must be of type 'int'")
+
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
+
+        self._restart_interval = restart_interval
 
     def isRestrained(self):
         """Return whether the backbone is restrained.

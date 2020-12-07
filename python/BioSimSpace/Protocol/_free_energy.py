@@ -47,7 +47,8 @@ class FreeEnergy(_Protocol):
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 frames=20
+                 report_interval=100,
+                 restart_interval=500
                 ):
         """Constructor.
 
@@ -81,8 +82,11 @@ class FreeEnergy(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure. Pass pressure=None to use the NVT ensemble.
 
-           frames : int
-               The number of trajectory frames to record.
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
         """
 
         # Call the base class constructor.
@@ -106,28 +110,31 @@ class FreeEnergy(_Protocol):
         else:
             self._pressure = None
 
-        # Set the number of trajectory frames.
-        self.setFrames(frames)
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d>"
+            return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, timestep=%s, "
+                    "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d>"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames)
+                        self._temperature, self._pressure, self._report_interval, self._restart_interval)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d)"
+            return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, timestep=%s, "
+                    "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d)"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames)
+                        self._temperature, self._pressure, self._report_interval, restart_interval)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
@@ -365,31 +372,64 @@ class FreeEnergy(_Protocol):
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
-    def getFrames(self):
-        """Return the number of frames.
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
 
            Returns
            -------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        return self._frames
+        return self._report_interval
 
-    def setFrames(self, frames):
-        """Set the number of frames.
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
 
            Parameters
            ----------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        if type(frames) is not int:
-            raise TypeError("'frames' must be of type 'int'")
+        if type(report_interval) is not int:
+            raise TypeError("'report_interval' must be of type 'int'")
 
-        if frames <= 0:
-            warn("The number of frames must be positive. Using default (20).")
-            self._frames = 20
-        else:
-            self._frames = _math.ceil(frames)
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
+
+        self._report_interval = report_interval
+
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Returns
+           -------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        return self._restart_interval
+
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Parameters
+           ----------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        if type(restart_interval) is not int:
+            raise TypeError("'restart_interval' must be of type 'int'")
+
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
+
+        self._restart_interval = restart_interval

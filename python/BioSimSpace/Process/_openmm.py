@@ -386,9 +386,19 @@ class OpenMM(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=100, traj_interval=500)
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
 
             # Set initial velocities from temperature distribution.
             self.addToConfig("\n# Setting intial system velocities.")
@@ -503,9 +513,19 @@ class OpenMM(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=100, traj_interval=500)
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
 
             # Set initial velocities from temperature distribution.
             self.addToConfig("\n# Setting intial system velocities.")
@@ -683,10 +703,23 @@ class OpenMM(_process.Process):
             height = self._protocol.getHillHeight().kj_per_mol().magnitude()
             freq = self._protocol.getHillFrequency()
 
-            # The simulation will likely take a while, so only sample 100 points.
-            sample_freq = int((self._protocol.getRunTime() / self._protocol.getTimeStep()) / 100)
+            # Work out the number of integration.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
-            self.addToConfig(f"meta = Metadynamics(system, [proj,ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {sample_freq})")
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Work out the number of cycles.
+            cycles = _math.ceil(steps / report_interval)
+
+            self.addToConfig(f"meta = Metadynamics(system, [proj,ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
@@ -730,13 +763,13 @@ class OpenMM(_process.Process):
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=sample_freq, traj_interval=sample_freq)
-            self.addToConfig(f"simulation.reporters.append(CheckpointReporter('{self._name}.chk', {sample_freq}))")
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
+            self.addToConfig(f"simulation.reporters.append(CheckpointReporter('{self._name}.chk', {report_interval}))")
 
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"steps = {steps}")
-            self.addToConfig( "cycles = 100")
+            self.addToConfig(f"cycles = {cycles}")
             self.addToConfig( "colvar = np.array([meta.getCollectiveVariables(simulation)])")
             self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
             self.addToConfig( "for x in range(0, cycles):")

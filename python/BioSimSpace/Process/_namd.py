@@ -371,16 +371,16 @@ class Namd(_process.Process):
         self.addToConfig("binaryOutput          no")
         self.addToConfig("binaryRestart         no")
 
-        # Output frequency.
-        self.addToConfig("restartfreq           500")
-        self.addToConfig("xstFreq               500")
-
-        # Printing frequency.
-        self.addToConfig("outputEnergies        100")
-        self.addToConfig("outputTiming          1000")
-
         # Add configuration variables for a minimisation simulation.
         if type(self._protocol) is _Protocol.Minimisation:
+            # Output frequency.
+            self.addToConfig("restartfreq           500")
+            self.addToConfig("xstFreq               500")
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        100")
+            self.addToConfig("outputTiming          1000")
+
             self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
@@ -390,6 +390,27 @@ class Namd(_process.Process):
 
         # Add configuration variables for an equilibration simulation.
         elif type(self._protocol) is _Protocol.Equilibration:
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Output frequency.
+            self.addToConfig("restartfreq           %d" % restart_interval)
+            self.addToConfig("xstFreq               %d" % restart_interval)
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        %d" % report_interval)
+            self.addToConfig("outputTiming          1000")
+
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
@@ -449,11 +470,6 @@ class Namd(_process.Process):
                 self.addToConfig("fixedAtoms            yes")
                 self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
 
-            # Work out number of steps needed to exceed desired running time,
-            # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-            steps = 20 * _math.ceil(steps / 20)
-
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
@@ -469,13 +485,34 @@ class Namd(_process.Process):
                     % self._protocol.getEndTemperature().kelvin().magnitude())
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % restart_interval)
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Output frequency.
+            self.addToConfig("restartfreq           %d" % restart_interval)
+            self.addToConfig("xstFreq               %d" % restart_interval)
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        %d" % report_interval)
+            self.addToConfig("outputTiming          1000")
+
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
                 % self._protocol.getTemperature().kelvin().magnitude())
@@ -508,13 +545,11 @@ class Namd(_process.Process):
                 self.addToConfig("useFlexibleCell       no")
                 self.addToConfig("useConstantArea       no")
 
-            # Work out number of steps needed to exceed desired running time,
-            # rounded up to the nearest 20.
+            # Work out number of steps needed to exceed desired running time.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-            steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % restart_interval)
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
