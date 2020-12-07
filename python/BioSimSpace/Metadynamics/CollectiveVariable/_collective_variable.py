@@ -36,12 +36,6 @@ class CollectiveVariable():
 
     def __init__(self):
         """Constructor.
-
-           Parameters
-           ----------
-
-           pbc : bool
-              Whether to use periodic boundaries conditions.
         """
 
         # Don't allow user to create an instance of this base class.
