@@ -34,7 +34,7 @@ class Protocol():
     def __init__(self):
         """Constructor."""
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
 
