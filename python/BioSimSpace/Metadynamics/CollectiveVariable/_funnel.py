@@ -49,8 +49,8 @@ class Funnel(_CollectiveVariable):
             steepness=1.5, inflection=_Length(2.0, "nanometers"),
             lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000),
             upper_bound=_Bound(_Length(4.0, "nanometers"), force_constant=2000),
-            grid=(_Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=900),
-                  _Grid(_Length(0.0, "nanometers"), _Length(0.9, "nanometers"), num_bins=15))):
+            grid=(_Grid(_Length(0.0, "nanometers"), _Length(4.5, "nanometers"), num_bins=400),
+                  _Grid(_Length(0.0, "nanometers"), _Length(0.9, "nanometers"), num_bins=400))):
         """Constructor.
 
            Parameters
