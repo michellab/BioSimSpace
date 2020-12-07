@@ -1169,6 +1169,10 @@ class Molecule(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
+        # Seed the random number generator so that we get reproducible atom names.
+        # This is helpful when debugging since we can directly compare pert files.
+        _random.seed(42)
+
         # Extract and copy the Sire molecule.
         mol = self._sire_object.__deepcopy__()
 
