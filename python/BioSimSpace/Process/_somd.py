@@ -650,6 +650,10 @@ class Somd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         # Try to grab the latest coordinates from the binary restart file.
         try:
             new_system = _IO.readMolecules([self._restart_file, self._top_file])
@@ -704,6 +708,10 @@ class Somd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         try:
             return _Trajectory(process=self)
 
@@ -728,6 +736,10 @@ class Somd(_process.Process):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The current simulation time in nanoseconds.
         """
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         # No time records for minimisation protocols.
         if type(self._protocol) is _Protocol.Minimisation:
@@ -795,6 +807,10 @@ class Somd(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         # No gradient file.
         if not _os.path.isfile(self._gradient_file):

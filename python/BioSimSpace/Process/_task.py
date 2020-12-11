@@ -191,13 +191,13 @@ class Task():
         return self._is_started
 
     def isError(self):
-        """Return whether the task errored.
+        """Return whether the task exited with an error.
 
            Returns
            -------
 
            is_error : bool
-               Whether the task errored.
+               Whether the task exited with an error.
         """
         return self._is_error
 

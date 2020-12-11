@@ -626,6 +626,10 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         # Read the PDB coordinate file and construct a parameterised molecular
         # system using the original PSF and param files.
 
@@ -721,6 +725,10 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         try:
             return _Trajectory(process=self)
 
@@ -751,12 +759,15 @@ class Namd(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
-
         # Wait for the process to finish.
         if block is True:
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         self.stdout(0)
         return self._get_stdout_record(record, time_series, unit)
@@ -782,6 +793,10 @@ class Namd(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self.stdout(0)
         return self._get_stdout_record(record, time_series, unit)
 
@@ -805,6 +820,10 @@ class Namd(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         return self._stdout_dict.copy()
 

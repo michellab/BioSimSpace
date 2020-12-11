@@ -864,6 +864,10 @@ class Gromacs(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         if type(self._protocol) is _Protocol.Minimisation or \
           (type(self._protocol) is _Protocol.Custom and _is_minimisation(self.getConfig())):
             # Create the name of the restart GRO file.
@@ -927,6 +931,10 @@ class Gromacs(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         try:
             # Locate the trajectory file.
             traj_file = self._find_trajectory_file()
@@ -972,6 +980,10 @@ class Gromacs(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self._update_stdout_dict()
         return self._get_stdout_record(record, time_series, unit)
 
@@ -996,6 +1008,10 @@ class Gromacs(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self._update_stdout_dict()
         return self._get_stdout_record(record, time_series, unit)
 
@@ -1019,6 +1035,10 @@ class Gromacs(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         return self._stdout_dict.copy()
 
