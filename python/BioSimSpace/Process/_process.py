@@ -773,13 +773,13 @@ class Process():
             return False
 
     def isError(self):
-        """Return whether the process errored.
+        """Return whether the process exited with an error.
 
            Returns
            -------
 
            is_error : bool
-               Whether the process errored.
+               Whether the process exited with an error.
         """
         try:
             return self._process.isError()

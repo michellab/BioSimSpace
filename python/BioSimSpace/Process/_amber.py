@@ -584,6 +584,10 @@ class Amber(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         # Create the name of the restart CRD file.
         restart = "%s/%s.crd" % (self._work_dir, self._name)
 
@@ -641,6 +645,10 @@ class Amber(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         try:
             return _Trajectory(process=self)
 
@@ -678,6 +686,10 @@ class Amber(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         return self._get_stdout_record(record.strip().upper(), time_series, unit)
 
     def getCurrentRecord(self, record, time_series=False, unit=None):
@@ -701,6 +713,11 @@ class Amber(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         return self._get_stdout_record(record.strip().upper(), time_series, unit)
 
     def getRecords(self, block="AUTO"):
@@ -724,6 +741,10 @@ class Amber(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         return self._stdout_dict.copy()
 

@@ -643,6 +643,10 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         # Try to get the most recent trajectory frame.
         try:
             traj = self.getTrajectory()
@@ -703,6 +707,10 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         if not _os.path.isfile(self._traj_file):
             return None
         else:
@@ -739,6 +747,10 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self._update_stdout_dict()
         return self._get_stdout_record(record, time_series, unit)
 
@@ -763,6 +775,10 @@ class OpenMM(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self._update_stdout_dict()
         return self._get_stdout_record(record, time_series, unit)
 
@@ -786,6 +802,10 @@ class OpenMM(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         return self._stdout_dict.copy()
 
