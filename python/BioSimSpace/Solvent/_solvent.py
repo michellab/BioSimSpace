@@ -662,10 +662,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             _IO.saveMolecules("input", molecule, "gro87")
             _os.rename("input.gro87", "input.gro")
 
-            # Add the shell information.
-            if shell is not None:
-                command += " -shell %f" % shell.nanometers().magnitude()
-
         # We need to create a dummy input file with no molecule in it.
         else:
             with open("input.gro", "w") as file:
@@ -708,7 +704,13 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             mod = "spc216"
         else:
             mod = model
-        command = "%s solvate -cs %s -cp box.gro -o output.gro" % (_gmx_exe, mod)
+        command = "%s solvate -cs %s" % (_gmx_exe, mod)
+
+        # Add the shell information.
+        if molecule is not None and shell is not None:
+            command += " -shell %f" % shell.nanometers().magnitude()
+
+        command += " -cp box.gro -o output.gro"
 
         with open("README.txt", "a") as file:
             # Write the command to file.
