@@ -69,6 +69,29 @@ from ._requirements import Volume as _Volume
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
 
+class CwlAction(_argparse.Action):
+    """Helper class to export CWL wrappers from Node metadata."""
+
+    @classmethod
+    def bind_node(cls, node):
+        """Bind the inputs and outputs of a node to this action."""
+        cls.inputs = node._inputs
+        cls.outputs = node._outputs
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Export the CWL wrapper."""
+
+        print("Inputs...")
+        for key, value in self.inputs.items():
+            print(key, value.isOptional())
+
+        print("Outputs...")
+        for key, value in self.outputs.items():
+            print(key, value.isOptional())
+
+        # Exit the parser.
+        parser.exit()
+
 class Node():
     """A class for interfacing with BioSimSpace nodes.
 
@@ -174,10 +197,15 @@ class Node():
                 config_file_parser_class=_argparse.YAMLConfigFileParser,
                 add_config_file_help=False)
 
+            # Bind the node inputs and outputs to the CWL action.
+            CwlAction.bind_node(self)
+
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
+            self._optional.add_argument("--export-cwl", action=CwlAction, nargs=0,
+                                        help="Export Common Workflow Language (CWL) wrapper and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
             self._optional.add_argument("-v", "--verbose", type=_str2bool, nargs='?', const=True, default=False,
                                         help="Print verbose error messages.")
@@ -974,7 +1002,7 @@ class Node():
                 if key is "verbose":
                     setVerbose(value)
                 else:
-                    if key is not "config":
+                    if not key in ["config", "export_cwl"]:
                         self._inputs[key].setValue(value, name=key)
 
     def validate(self, file_prefix="output"):
