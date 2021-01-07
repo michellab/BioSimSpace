@@ -155,11 +155,11 @@ Here ``config.yaml`` is a YAML configuration file, e.g.:
 .. code-block:: yaml
 
     files:
-    - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.top}
-    - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.crd}
+      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.top}
+      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.crd}
 
     steps:
-    1000
+      1000
 
 At present, using BioSimSpace within CWL is limited to the use of
 :class:`BioSimSpace.Gateway.File <BioSimSpace.Gateway.File>`
@@ -179,7 +179,7 @@ specifing as a CWL ``string`` type to allow for greatest flexibility, e.g.:
 .. code-block:: yaml
 
     length:
-    25 Angstroms
+      25 Angstroms
 
 Forwards compatibility
 ======================
