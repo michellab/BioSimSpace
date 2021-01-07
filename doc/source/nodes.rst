@@ -170,6 +170,15 @@ named ``output.txt``. This allows the use of ``glob`` in the CWL ``outputBinding
 functionality. This requirement is automatically enforced so that files will
 be renamed when a mismatch is found.
 
+Any unit based input requirement, e.g.
+:class:`BioSimSpace.Gateway.Length <BioSimSpace.Gateway.Length>`, should be
+specifing as a CWL ``string`` type to allow for greatest flexibility, e.g.:
+
+.. code-block:: yaml
+
+    length:
+    25 Angstroms
+
 Forwards compatibility
 ======================
 
