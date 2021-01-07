@@ -108,7 +108,7 @@ input to another. For example, given the following YAML configuration file,
 
 it would be possible to run a minimisation followed by an equilibration as follows:
 
-.. code-block:: python
+.. code-block:: bash
 
     python minimisation.py --config config.yaml && python equilibration.py --config output.yaml
 
@@ -130,6 +130,56 @@ directory wherever BioSimSpace is installed, e.g.
 set a custom directory, use the
 :class:`BioSimSpace.Node.setNodeDirectory <BioSimSpace.Node.setNodeDirectory>`
 function.)
+
+Common Workflow Language
+========================
+
+It is also possible to export a node as a
+`Common Workflow Language <https://www.commonwl.org/>`__ (CWL) wrapper.
+For example, using the ``minimisation.py`` example from the previous section:
+
+.. code-block:: bash
+
+    python minimisation.py --export-cwl
+
+This will write a wrapper called ``minimisation.cwl`` to the current directory.
+
+The node could then be run as part of a CWL workflow using something like:
+
+.. code-block:: bash
+
+    cwltool minimisation.cwl config.yaml
+
+Here ``config.yaml`` is a YAML configuration file, e.g.:
+
+.. code-block:: yaml
+
+    files:
+      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.top}
+      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.crd}
+
+    steps:
+      1000
+
+At present, using BioSimSpace within CWL is limited to the use of
+:class:`BioSimSpace.Gateway.File <BioSimSpace.Gateway.File>`
+and
+:class:`BioSimSpace.Gateway.FileSet <BioSimSpace.Gateway.FileSet>`
+requirements, which cover the majority of use cases. Due to the way in which
+CWL works, the prefix used for output files must match the name used for the
+requirement, e.g. if a requirement was called ``output``, then a file might be
+named ``output.txt``. This allows the use of ``glob`` in the CWL ``outputBinding``
+functionality. This requirement is automatically enforced so that files will
+be renamed when a mismatch is found.
+
+Any unit based input requirement, e.g.
+:class:`BioSimSpace.Gateway.Length <BioSimSpace.Gateway.Length>`, should be
+specifing as a CWL ``string`` type to allow for greatest flexibility, e.g.:
+
+.. code-block:: yaml
+
+    length:
+      25 Angstroms
 
 Forwards compatibility
 ======================
