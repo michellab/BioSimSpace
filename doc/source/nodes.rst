@@ -142,6 +142,8 @@ It is also possible to export a node as a Common Workflow Language
 
     python minimisation.py --export-cwl
 
+This will write a wrapper called ``minimisation.cwl`` to the current directory.
+
 The node could then be run as part of a CWL workflow using something like:
 
 .. code-block:: bash
