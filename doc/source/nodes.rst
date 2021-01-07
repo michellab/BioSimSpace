@@ -134,9 +134,9 @@ function.)
 Common Workflow Language
 ========================
 
-It is also possible to export a node as a Common Workflow Language
-`(CFL) <https://www.commonwl.org/>`__ wrapper. For example, using the
-``minimisation.py`` example from the previous section:
+It is also possible to export a node as a
+`Common Workflow Language <https://www.commonwl.org/>`__ (CWL) wrapper.
+For example, using the ``minimisation.py`` example from the previous section:
 
 .. code-block:: bash
 
