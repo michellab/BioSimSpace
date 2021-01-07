@@ -32,6 +32,7 @@ import configargparse as _argparse
 import collections as _collections
 import __main__
 import os as _os
+import shutil as _shutil
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
@@ -82,9 +83,12 @@ class CwlAction(_argparse.Action):
         cls.inputs = node._inputs
         cls.outputs = node._outputs
 
-
     def __call__(self, parser, namespace, values, option_string=None):
         """Export the CWL wrapper."""
+
+        if values == False:
+            parser.exit()
+            return
 
         for value in self.outputs.values():
             # Currently we only support File and FileSet output
@@ -109,7 +113,7 @@ class CwlAction(_argparse.Action):
             # Write the header.
             file.write( "cwlVersion: v1.0\n")
             file.write( "class: CommandLineTool\n")
-            file.write(f'baseCommand: ["{exe}", "{node}"]\n')
+            file.write(f'baseCommand: ["{exe}", "{node}", "--strict-file-naming"]\n')
 
             # Write the inputs section.
             file.write("\n")
@@ -298,6 +302,9 @@ class Node():
         # Intialise the Jupyter input panel.
         self._control_panel = None
 
+        # Strict file naming is off by default.
+        self._strict_file_naming = False
+
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
             # Generate the node help description.
@@ -316,11 +323,13 @@ class Node():
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
-            self._optional.add_argument("--export-cwl", action=CwlAction, nargs=0,
-                                        help="Export Common Workflow Language (CWL) wrapper and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
             self._optional.add_argument("-v", "--verbose", type=_str2bool, nargs='?', const=True, default=False,
                                         help="Print verbose error messages.")
+            self._optional.add_argument("--export-cwl", action=CwlAction, type=_str2bool, nargs='?', const=True,
+                                        default=False, help="Export Common Workflow Language (CWL) wrapper and exit.")
+            self._optional.add_argument("--strict-file-naming", type=_str2bool, nargs='?', const=True, default=False,
+                                        help="Enforce that the prefix of any file based output matches its name.")
 
             # Overload the "_check_value" method for more flexible string support.
             # (Ignore whitespace and case insensitive.)
@@ -850,6 +859,44 @@ class Node():
                The value of the output.
         """
         try:
+            # Enforce strict naming for all file-based outputs. This ensures
+            # that the prefix used matches the requirement name.
+            if self._strict_file_naming:
+                if type(self._outputs[name]) in [_File, _FileSet]:
+                    is_file = False
+                    new_value = []
+                    # For convenience, convert single file names to a list with
+                    # one entry.
+                    if type(value) == str:
+                        value = [value]
+                        is_file = True
+                    # Loop over each file.
+                    for file in value:
+                        # Get the directory name, file prefix, and file extension.
+                        basename = _os.path.basename(file)
+                        dirname = _os.path.dirname(file)
+                        fileprefix = basename.split(".")[0]
+                        extension = basename.split(".")[1]
+
+                        # If the file prefix doesn't match the requirement name, then
+                        # rename, i.e. move, the file.
+                        if fileprefix != name:
+                            _warnings.warn(f"Output file prefix '{fileprefix}' "
+                                           f"doesn't match requirement name '{name}'. "
+                                            "Renaming file!")
+                            new_name = dirname + f"/{name}.{extension}"
+                            _shutil.move(file, new_name)
+                            file = new_name
+
+                        # Store the new value of the file name.
+                        new_value.append(file)
+
+                    # Convert back into a single entry if this was a File requirement.
+                    if is_file:
+                        value = new_value[0]
+                    else:
+                        value = new_value
+
             self._outputs[name].setValue(value, name=name)
         except KeyError:
             raise
@@ -1113,6 +1160,9 @@ class Node():
             for key, value in args.items():
                 if key is "verbose":
                     setVerbose(value)
+                elif key is "strict_file_naming":
+                    if value is True:
+                        self._strict_file_naming = True
                 else:
                     if not key in ["config", "export_cwl"]:
                         self._inputs[key].setValue(value, name=key)
