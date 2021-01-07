@@ -177,7 +177,7 @@ class Requirement():
 
         # Maximum.
         if self._max is not None and value > self._max:
-            raise ValueError("The value (%s) is less than the allowed "
+            raise ValueError("The value (%s) is greater than the allowed "
                 "maximum (%s)" % (value, self._max))
 
         # Allowed values.
