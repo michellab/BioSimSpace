@@ -159,6 +159,17 @@ Here ``config.yaml`` is a YAML configuration file, e.g.:
     steps:
     1000
 
+At present, using BioSimSpace within CWL is limited to the use of
+:class:`BioSimSpace.Gateway.File <BioSimSpace.Gateway.File>`
+and
+:class:`BioSimSpace.Gateway.FileSet <BioSimSpace.Gateway.FileSet>`
+requirements, which cover the majority of use cases. Due to the way in which
+CWL works, the prefix used for output files must match the name used for the
+requirement, e.g. if a requirement was called ``output``, then a file might be
+named ``output.txt``. This allows the use of ``glob`` in the CWL ``outputBinding``
+functionality. This requirement is automatically enforced so that files will
+be renamed when a mismatch is found.
+
 Forwards compatibility
 ======================
 
