@@ -69,6 +69,10 @@ from ._requirements import Volume as _Volume
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
 
+# Unit types.
+_unit_types = [_Charge, _Energy, _Pressure, _Length, _Area, _Volume,
+    _Temperature, _Time]
+
 class CwlAction(_argparse.Action):
     """Helper class to export CWL wrappers from Node metadata."""
 
@@ -78,16 +82,124 @@ class CwlAction(_argparse.Action):
         cls.inputs = node._inputs
         cls.outputs = node._outputs
 
+
     def __call__(self, parser, namespace, values, option_string=None):
         """Export the CWL wrapper."""
 
-        print("Inputs...")
-        for key, value in self.inputs.items():
-            print(key, value.isOptional())
+        for value in self.outputs.values():
+            # Currently we only support File and FileSet output
+            # requirements with CWL.
+            output_type = type(value)
+            if output_type not in [_File, _FileSet]:
+                raise TypeError("We currently only support File and "
+                                "FileSet outputs with CWL.")
 
-        print("Outputs...")
-        for key, value in self.outputs.items():
-            print(key, value.isOptional())
+        # Store the absolute path of the Python interpreter used to run the node.
+        exe = _sys.executable
+
+        # Store the absolute path of the node.
+        import __main__
+        node = _os.path.abspath(__main__.__file__)
+
+        # Create the name of the CWL wrapper.
+        cwl_wrapper = __main__.__file__.replace(".py", ".cwl")
+
+        # Write the wrapper.
+        with open(cwl_wrapper, "w") as file:
+            # Write the header.
+            file.write( "cwlVersion: v1.0\n")
+            file.write( "class: CommandLineTool\n")
+            file.write(f'baseCommand: ["{exe}", "{node}"]\n')
+
+            # Write the inputs section.
+            file.write("\n")
+            file.write("inputs:\n")
+            for key, value in self.inputs.items():
+                file.write(f"  {key}:\n")
+
+                # Map the requirement to the appropriate CWL type.
+
+                if type(value) is _Boolean:
+                    cwl_type = "bool"
+
+                elif type(value) is _Integer:
+                    cwl_type = "int"
+
+                elif type(value) is _Float:
+                    cwl_type = "float"
+
+                elif type(value) is _File:
+                    cwl_type = "File"
+
+                elif type(value) is _FileSet:
+                    cwl_type = "array"
+
+                # Use a string for unit-based types since it gives
+                # the user greatest flexibility in expressing the input.
+                if type(value) in _unit_types:
+                    cwl_type = "string"
+
+                # Handle FileSet types separately.
+                if cwl_type == "array":
+                    file.write("    type:\n")
+                    if value.isOptional():
+                        file.write('      - "null"\n')
+                    file.write("      - type: array\n")
+                    file.write("        items: File\n")
+
+                # Handle optional values.
+                else:
+                    if value.isOptional():
+                        cwl_type += "?"
+                    file.write(f"    type: {cwl_type}\n")
+
+                # Handle default values.
+                default = value.getDefault()
+                if default is not None:
+                    if type(value) in _unit_types:
+                        magnitude = default.magnitude()
+                        unit = default.unit()
+                        unit = unit.lower()
+                        file.write(f"    default: {magnitude} {unit}\n")
+                    else:
+                        file.write(f"    default: {default}\n")
+
+                # Bind the command-line option name.
+                file.write( "    inputBinding:\n")
+                file.write(f"      prefix: --{key}\n")
+                file.write( "      separate: true\n")
+
+                file.write("\n")
+
+            # Write the outputs section.
+            if len(self.outputs) == 0:
+                file.write("outputs: []\n")
+            else:
+                file.write("outputs:\n")
+                for key, value in self.outputs.items():
+                    output_type = type(value)
+                    file.write(f"  {key}:\n")
+
+                    # Only support File and FileSet for now. This has been
+                    # validated at the start of the __call__ method, but we
+                    # include an if/elif/else conditional block so that we
+                    # can support additional types in future. Note that we
+                    # use glob to bind the output, so the prefix used to name
+                    # files must match the key used to define the requirement.
+
+                    # File.
+                    if output_type is _File:
+                        file.write( "    type: File\n")
+                        file.write( "    outputBinding:\n")
+                        file.write(f'      glob: "{key}.*"\n')
+
+                    # FileSet.
+                    elif output_type is _FileSet:
+                        file.write( "    type:\n")
+                        file.write( "      type: array\n")
+                        file.write( "      items: File\n")
+                        file.write( "    outputBinding:\n")
+                        file.write(f'      glob: "{key}.*"\n')
 
         # Exit the parser.
         parser.exit()
