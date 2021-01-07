@@ -108,7 +108,7 @@ input to another. For example, given the following YAML configuration file,
 
 it would be possible to run a minimisation followed by an equilibration as follows:
 
-.. code-block:: python
+.. code-block:: bash
 
     python minimisation.py --config config.yaml && python equilibration.py --config output.yaml
 
@@ -130,6 +130,34 @@ directory wherever BioSimSpace is installed, e.g.
 set a custom directory, use the
 :class:`BioSimSpace.Node.setNodeDirectory <BioSimSpace.Node.setNodeDirectory>`
 function.)
+
+Common Workflow Language
+========================
+
+It is also possible to export a node as a Common Workflow Language
+`(CFL) <https://www.commonwl.org/>`__ wrapper. For example, using the
+``minimisation.py`` example from the previous section:
+
+.. code-block:: bash
+
+    python minimisation.py --export-cwl
+
+The node could then be run as part of a CWL workflow using something like:
+
+.. code-block:: bash
+
+    cwltool minimisation.cwl config.yaml
+
+Here ``config.yaml`` is a YAML configuration file, e.g.:
+
+.. code-block:: yaml
+
+    files:
+    - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.top}
+    - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.crd}
+
+    steps:
+    1000
 
 Forwards compatibility
 ======================
