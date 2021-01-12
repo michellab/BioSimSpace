@@ -26,7 +26,15 @@ Functionality for parameterising molecules.
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["parameterise", "ff99", "ff99SB", "ff99SBildn", "ff14SB", "gaff", "gaff2", "forceFields"]
+__all__ = ["parameterise",
+           "ff99",
+           "ff99SB",
+           "ff99SBildn",
+           "ff14SB",
+           "gaff",
+           "gaff2",
+           "forceFields",
+           "openForceFields"]
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
@@ -420,6 +428,37 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
+def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
+    """Parameterise a molecule using a force field from the Open Force Field
+       Initiative.
+
+       Parameters
+       ----------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule to parameterise.
+
+       forcefield : str
+           The force field. Run BioSimSpace.Parameters.openForceFields() to get a
+           list of the supported force fields.
+
+       work_dir : str
+           The working directory for the process.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+       Returns
+       -------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The parameterised molecule.
+    """
+
+    print(forcefield)
+
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
 _forcefields = []           # List of force fields (actual names).
@@ -432,9 +471,57 @@ for _var in dir():
         _forcefields.append(_var)
         _forcefields_lower.append(_var.lower())
         _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
-del _namespace
 del _sys
 del _var
+
+# Wrapper function to dynamically generate functions with a given name.
+# Here "name" refers to the name of a supported force field from the Open
+# Force Field Initiative. The force field name has been "tidied" so that
+# it conforms to sensible function naming standards, i.e. "-" and "."
+# characters replaced by underscores.
+def _make_function(name):
+    def _function(molecule, work_dir=None, property_map={}):
+        _parameterise_openff(molecule, name, work_dir, property_map)
+    return _function
+
+# Dynamically create functions for all available force fields from the Open
+# Force Field Initiative.
+from glob import glob as _glob
+import openforcefields as _openforcefields
+import os as _os
+_openff_dirs = _openforcefields.get_forcefield_dirs_paths()
+_open_forcefields = []
+# Loop over all force field directories.
+for _dir in _openff_dirs:
+    # Glob all offxml files in the directory.
+    _ff_list = _glob(f"{_dir}" + "/*.offxml")
+    for _ff in _ff_list:
+        # Get the force field name (base name minus extension).
+        _base = _os.path.basename(_ff)
+        _ff = _os.path.splitext(_base)[0]
+        # Append to the list of available force fields.
+        _forcefields.append(_ff)
+        _open_forcefields.append(_ff)
+
+        # Create a sane function name, i.e. replace "-" and "."
+        # characters with "_".
+        _func_name = _ff.replace("-", "_")
+        _func_name = _func_name.replace(".", "_")
+
+        # Generate the function and bind it to the namespace.
+        _function = _make_function(_func_name)
+        setattr(_namespace, _func_name, _function)
+
+        # Expose the function to the user.
+        __all__.append(_func_name)
+
+        # Convert force field name to lower case and map to its function.
+        _forcefields_lower.append(_ff.lower())
+        _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+del _glob
+del _openforcefields
+del _os
+del _namespace
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -446,3 +533,15 @@ def forceFields():
            A list of the supported force fields.
     """
     return _forcefields
+
+def openForceFields():
+    """Return a list of the supported force fields from the Open Force Field
+       Initiative.
+
+       Returns
+       -------
+
+       force_fields : [str]
+           A list of the supported force fields.
+    """
+    return _open_forcefields
