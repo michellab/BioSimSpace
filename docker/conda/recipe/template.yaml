@@ -34,6 +34,7 @@ requirements:
     - {{ pin_compatible('mdtraj') }}
     - {{ pin_compatible('mdanalysis') }}
     - {{ pin_compatible('nglview') }}
+    - {{ pin_compatible('openforcefield') }}
     - {{ pin_compatible('pygtail') }}
     - {{ pin_compatible('pymbar') }}
     - {{ pin_compatible('pypdb') }}
