@@ -28,14 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    parameterise
-    ff99
-    ff99SB
-    ff99SBildn
-    ff14SB
-    gaff
-    gaff2
-    forceFields
+    __FORCE_FIELDS__
     formalCharge
 
 Examples
