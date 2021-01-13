@@ -471,8 +471,6 @@ for _var in dir():
         _forcefields.append(_var)
         _forcefields_lower.append(_var.lower())
         _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
-del _sys
-del _var
 
 # Wrapper function to dynamically generate functions with a given name.
 # Here "name" refers to the name of a supported force field from the Open
@@ -518,10 +516,6 @@ for _dir in _openff_dirs:
         # Convert force field name to lower case and map to its function.
         _forcefields_lower.append(_ff.lower())
         _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
-del _glob
-del _openforcefields
-del _os
-del _namespace
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -545,3 +539,19 @@ def openForceFields():
            A list of the supported force fields.
     """
     return _open_forcefields
+
+# Clean up redundant attributes.
+del _base
+del _dir
+del _ff
+del _ff_list
+del _function
+del _func_name
+del _glob
+del _make_function
+del _openforcefields
+del _openff_dirs
+del _os
+del _namespace
+del _sys
+del _var
