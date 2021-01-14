@@ -479,6 +479,33 @@ for _var in dir():
 # characters replaced by underscores.
 def _make_function(name):
     def _function(molecule, work_dir=None, property_map={}):
+        """Parameterise a molecule using the named force field from the
+           Open Force Field initiative.
+
+           Parameters
+           ----------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The molecule to parameterise.
+
+           forcefield : str
+               The force field. Run BioSimSpace.Parameters.forceFields() to get a
+               list of the supported force fields.
+
+           work_dir : str
+               The working directory for the process.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The parameterised molecule.
+        """
         _parameterise_openff(molecule, name, work_dir, property_map)
     return _function
 
