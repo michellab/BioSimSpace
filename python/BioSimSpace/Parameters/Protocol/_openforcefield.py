@@ -270,7 +270,7 @@ def _uniquify_atom_names(molecule):
 
     # Initialise dictionaries.
     name_tally = {}
-    atoms_named = {}
+    num_named = {}
 
     # Loop over all atoms in the molecule.
     for atom in molecule.getAtoms():
@@ -285,7 +285,7 @@ def _uniquify_atom_names(molecule):
 
     # Make sure it's possible to rename the atoms within the PDB specification.
     for name, tally in name_tally.items():
-        atoms_named[name] = 1
+        num_named[name] = 1
         if tally > 1:
             if len(name) > 2:
                 raise _IncompatibleError(f"Cannot generate unique PDB atom name for atom '{name}'.")
@@ -304,9 +304,9 @@ def _uniquify_atom_names(molecule):
 
         # If there is more than one atom with this name, then rename it.
         if name_tally[name] > 1:
-            new_name = _SireMol.AtomName(name + str(atoms_named[name]))
+            new_name = _SireMol.AtomName(name + str(num_named[name]))
             edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
-            atoms_named[name] += 1
+            num_named[name] += 1
 
     # Commit the changes to the molecule.
     mol = edit_mol.commit()
