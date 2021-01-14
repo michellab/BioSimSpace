@@ -506,7 +506,7 @@ def _make_function(name):
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The parameterised molecule.
         """
-        _parameterise_openff(molecule, name, work_dir, property_map)
+        return _parameterise_openff(molecule, name, work_dir, property_map)
     return _function
 
 # Dynamically create functions for all available force fields from the Open
