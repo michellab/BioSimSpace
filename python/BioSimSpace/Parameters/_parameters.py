@@ -534,7 +534,7 @@ for _dir in _openff_dirs:
         _func_name = _func_name.replace(".", "_")
 
         # Generate the function and bind it to the namespace.
-        _function = _make_function(_func_name)
+        _function = _make_function(_ff)
         setattr(_namespace, _func_name, _function)
 
         # Expose the function to the user.
