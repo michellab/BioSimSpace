@@ -182,6 +182,8 @@ class OpenForceField(_protocol.Protocol):
             off_molecules = []
             for s in smiles:
                 off_molecules.append(_OpenFFMolecule.from_smiles(s))
+            # Convert to a set then back to a list to remove duplicates.
+            off_molecules = list(set(off_molecules))
         except Exception as e:
             raise IOError("Unable to convert SMILES to an OpenFF Molecule!") from None
 
