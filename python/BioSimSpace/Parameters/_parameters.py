@@ -457,7 +457,29 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
            The parameterised molecule.
     """
 
-    print(forcefield)
+    # Validate arguments.
+
+    if type(molecule) is not _Molecule:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(forcefield) is not str:
+        raise TypeError("'forcefield' must be of type 'str'")
+    else:
+        # Strip whitespace and convert to lower case.
+        forcefield = forcefield.replace(" ", "").lower()
+
+        if forcefield not in _forcefields_lower:
+            raise ValueError("Supported force fields are: %s" % openForceFields())
+
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
+
+    # Create a default protocol.
+    protocol = _Protocol.OpenForceField(forcefield, property_map=property_map)
+
+    # Run the parameterisation protocol in the background and return
+    # a handle to the thread.
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
