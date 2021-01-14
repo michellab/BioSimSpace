@@ -69,6 +69,7 @@ from Sire import System as _SireSystem
 
 from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import _protocol
@@ -139,9 +140,12 @@ class OpenForceField(_protocol.Protocol):
         # Create a copy of the molecule.
         new_mol = molecule.copy()
 
+        # Uniquify the atom names.
+        unique_mol = _uniquify_atom_names(new_mol)
+
         # Write the molecule to a PDB file.
         try:
-            pdb = _SireIO.PDB2(new_mol.toSystem()._sire_object)
+            pdb = _SireIO.PDB2(unique_mol.toSystem()._sire_object)
             pdb.writeToFile(prefix + "molecule.pdb")
         except Exception as e:
             msg = "Failed to write the molecule to 'PDB' format."
@@ -241,3 +245,71 @@ class OpenForceField(_protocol.Protocol):
         if queue is not None:
             queue.put(new_mol)
         return new_mol
+
+def _uniquify_atom_names(molecule):
+    """Helper function to genrate unique PDB atom names.
+
+       Parameters
+       ----------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           A molecule object.
+
+       Returns
+       -------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule with unique atom names.
+    """
+
+    if type(molecule) is not _Molecule:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    # Generate a dictionary mapping between atom names and the number of times
+    # they occur in the molecule.
+
+    # Initialise dictionaries.
+    name_tally = {}
+    atoms_named = {}
+
+    # Loop over all atoms in the molecule.
+    for atom in molecule.getAtoms():
+        # Get the atom name.
+        name = atom.name()
+
+        # Update the dictionary.
+        if name in name_tally:
+            name_tally[name] += 1
+        else:
+            name_tally[name] = 1
+
+    # Make sure it's possible to rename the atoms within the PDB specification.
+    for name, tally in name_tally.items():
+        atoms_named[name] = 1
+        if tally > 1:
+            if len(name) > 2:
+                raise _IncompatibleError(f"Cannot generate unique PDB atom name for atom '{name}'.")
+            else:
+                # Work out the maximum number of atoms we can name.
+                max_num = 10**(3-len(name)) - 1
+                if tally > max_num:
+                    raise _IncompatibleError(f"Cannot generate unique PDB atom name for atom '{name}'.")
+
+    # Get the Sire molecule and make it editable.
+    edit_mol = molecule._sire_object.edit()
+
+    # Loop over all atoms and rename them.
+    for atom in edit_mol.atoms():
+        name = atom.name().value()
+
+        # If there is more than one atom with this name, then rename it.
+        if name_tally[name] > 1:
+            new_name = _SireMol.AtomName(name + str(atoms_named[name]))
+            edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
+            atoms_named[name] += 1
+
+    # Commit the changes to the molecule.
+    mol = edit_mol.commit()
+
+    # Return the updated molecule.
+    return _Molecule(mol)
