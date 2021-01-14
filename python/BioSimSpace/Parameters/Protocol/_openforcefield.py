@@ -34,9 +34,34 @@ __all__ = ["OpenForceField"]
 # of the classes.
 
 import os as _os
+import parmed as _parmed
 import queue as _queue
 import subprocess as _subprocess
+
 import warnings as _warnings
+# Suppress numpy warnings from RDKit import.
+_warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+_warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+# Suppress duplicate to-Python converted warnings.
+# Both Sire and RDKit register the same converter.
+with _warnings.catch_warnings():
+    _warnings.filterwarnings("ignore")
+    from rdkit import Chem as _Chem
+    from rdkit import RDLogger as _RDLogger
+
+    # Disable RDKit warnings.
+    _RDLogger.DisableLog('rdApp.*')
+
+import sys as _sys
+# Temporarily redirect stderr to suppress import warnings.
+_sys.stderr = open(_os.devnull, "w")
+from simtk.openmm.app import PDBFile as _PDBFile
+from openforcefield.topology import Molecule as _OpenFFMolecule
+from openforcefield.topology import Topology as _OpenFFTopology
+from openforcefield.typing.engines.smirnoff import ForceField as _Forcefield
+# Reset stderr.
+_sys.stderr = _sys.__stderr__
+del _sys
 
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
@@ -44,10 +69,7 @@ from Sire import System as _SireSystem
 
 from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
-from BioSimSpace.Types import Charge as _Charge
 
 from . import _protocol
 
@@ -116,6 +138,103 @@ class OpenForceField(_protocol.Protocol):
 
         # Create a copy of the molecule.
         new_mol = molecule.copy()
+
+        # Write the molecule to a PDB file.
+        try:
+            pdb = _SireIO.PDB2(new_mol.toSystem()._sire_object)
+            pdb.writeToFile(prefix + "molecule.pdb")
+        except Exception as e:
+            msg = "Failed to write the molecule to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
+        # Create an RDKit molecule from the PDB file.
+        try:
+            rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
+        except Exception as e:
+            raise IOError("RDKit was unable to read the molecular PDB file!") from None
+
+        # Use RDKit to write back to PDB format so that we generate a CONECT
+        # record, which is required by OpenFF.
+        try:
+            _Chem.MolToPDBFile(rdmol, prefix + "molecule.pdb")
+        except Exception as e:
+            raise IOError("RDKit was unable to write the molecular PDB file!") from None
+
+        # Obtain the OpenMM Topology object from the PDB file.
+        try:
+            pdbfile = _PDBFile(prefix + "molecule.pdb")
+            omm_topology = pdbfile.topology
+        except Exception as e:
+            raise IOError("OpenMM was unable to read the molecular PDB file!") from None
+
+        # Use RDKit to generate the smiles string for the molecule.
+        try:
+            # Split on a dot in case multiple molecules were present.
+            smiles = _Chem.MolToSmiles(rdmol).split(".")
+        except Exception as e:
+            raise IOError("RDKit was unable to generate a SMILE string for the molecule!") from None
+
+        # Convert the SMILES string to an OpenFF molecule.
+        try:
+            off_molecules = []
+            for s in smiles:
+                off_molecules.append(_OpenFFMolecule.from_smiles(s))
+        except Exception as e:
+            raise IOError("Unable to convert SMILES to an OpenFF Molecule!") from None
+
+        # Create the Open Forcefield Topology.
+        try:
+            off_topology = _OpenFFTopology.from_openmm(omm_topology, unique_molecules=off_molecules)
+        except Exception as e:
+            raise IOError("Unable to create OpenFF Topology!") from None
+
+        # Load the force field.
+        try:
+            ff = self._forcefield + ".offxml"
+            forcefield = _Forcefield(ff)
+        except Exception as e:
+            raise IOError(f"Unable to load force field: {ff}") from None
+
+        # Create an OpenMM system.
+        try:
+            omm_system = forcefield.create_openmm_system(off_topology)
+        except Exception as e:
+            raise IOError("Unable to create OpenMM System!") from None
+
+        # Convert the OpenMM System to a ParmEd structure.
+        try:
+            parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, pdbfile.positions)
+        except Exception as e:
+            raise IOError("Unable to convert OpenMM System to ParmEd structure!") from None
+
+        # Export AMBER format files.
+        try:
+            parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
+            parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
+        except Exception as e:
+            raise IOError("Unable to write ParmEd structure to AMBER format!!") from None
+
+        # Load the parameterised molecule. (This could be a system of molecules.)
+        try:
+            par_mol = _IO.readMolecules([prefix + "parmed.prmtop", prefix + "parmed.inpcrd"])
+            # Extract single molecules.
+            if par_mol.nMolecules() == 1:
+                par_mol = par_mol.getMolecules()[0]
+        except Exception as e:
+            msg = "Failed to read molecule from: 'parmed.prmtop', 'parmed.inpcrd'"
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
+        # Make the parameterised molecule compatible with the original topology.
+        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+
+        # Record the forcefield used to parameterise the molecule.
+        new_mol._forcefield = self._forcefield
 
         if queue is not None:
             queue.put(new_mol)
