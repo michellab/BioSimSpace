@@ -234,41 +234,38 @@ class Amber(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        # If the system isn't created from AMBER format files, then we'll need
-        # to convert the water model topology.
-        if not "fileformat" in system._sire_object.propertyKeys() or \
-           not "PRM7,RST7" in system._sire_object.property("fileformat").toString():
+        # Convert the water model topology so that it matches the AMBER naming conventions.
 
-            # Get the water molecules.
-            waters = system.getWaterMolecules()
+        # Get the water molecules.
+        waters = system.getWaterMolecules()
 
-            if len(waters) > 0:
+        if len(waters) > 0:
+            num_point = waters[0].nAtoms()
+
+            # Try to get the name of the water model.
+            try:
+                water_model = system._sire_object.property("water_model").toString()
+                waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
+
+            except:
                 num_point = waters[0].nAtoms()
 
-                # Try to get the name of the water model.
-                try:
-                    water_model = system._sire_object.property("water_model").toString()
-                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
+                # Convert to an appropriate AMBER topology.
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
+                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP3P")
+                elif num_point == 4:
+                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP4P")
+                elif num_point == 5:
+                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP5P")
 
-                except:
-                    num_point = waters[0].nAtoms()
-
-                    # Convert to an appropriate AMBER topology.
-                    if num_point == 3:
-                        # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP3P")
-                    elif num_point == 4:
-                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP4P")
-                    elif num_point == 5:
-                        waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP5P")
-
-                # Loop over all of the renamed water molecules, delete the old one
-                # from the system, then add the renamed one back in.
-                # TODO: This is a hack since the "update" method of Sire.System
-                # doesn't work properly at present.
-                system.removeWaterMolecules()
-                for wat in waters:
-                    system._sire_object.add(wat, _SireMol.MGName("all"))
+            # Loop over all of the renamed water molecules, delete the old one
+            # from the system, then add the renamed one back in.
+            # TODO: This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.
+            system.removeWaterMolecules()
+            for wat in waters:
+                system._sire_object.add(wat, _SireMol.MGName("all"))
 
         # RST file (coordinates).
         try:
