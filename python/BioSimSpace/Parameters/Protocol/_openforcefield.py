@@ -143,6 +143,10 @@ class OpenForceField(_protocol.Protocol):
         # Uniquify the atom names.
         unique_mol = _uniquify_atom_names(new_mol)
 
+        # The following is adapted from the Open Force Field examples, where an
+        # OpenFF system is converted to AMBER format files using ParmEd:
+        # https://github.com/openforcefield/openff-toolkit/blob/master/examples/using_smirnoff_in_amber_or_gromacs/convert_to_amber_gromacs.ipynb
+
         # Write the molecule to a PDB file.
         try:
             pdb = _SireIO.PDB2(unique_mol.toSystem()._sire_object)
