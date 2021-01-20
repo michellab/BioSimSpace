@@ -147,12 +147,18 @@ class Gromacs(_process.Process):
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # Convert the water model topology so that it matches the GROMACS naming conventions.
+        system._set_water_topology("GROMACS")
+
         # GRO87 file.
-        gro = _SireIO.Gro87(self._system._sire_object, self._property_map)
+        gro = _SireIO.Gro87(system._sire_object, self._property_map)
         gro.writeToFile(self._gro_file)
 
         # TOP file.
-        top = _SireIO.GroTop(self._system._sire_object, self._property_map)
+        top = _SireIO.GroTop(system._sire_object, self._property_map)
         top.writeToFile(self._top_file)
 
         # Create the binary input file name.
