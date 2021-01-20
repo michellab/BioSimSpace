@@ -11,4 +11,4 @@ force_fields=$($HOME/sire.app/bin/python $HOME/BioSimSpace/docker/document-devel
 
 # Inject the string into the __init__ of the BioSimSpace.Parameters package.
 # This is only run on Linux so the following, non-portable, sed command is fine.
-sed -i "s/__FORCE_FIELDS__/$forcefields" $HOME/sire.app/lib/python3.7/site-packages/BioSimSpace/Parameters/__init__.py
+sed -i "s/__FORCE_FIELDS__/$forcefields/g" $HOME/sire.app/lib/python3.7/site-packages/BioSimSpace/Parameters/__init__.py
