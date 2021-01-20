@@ -351,6 +351,98 @@ class Molecule(_SireWrapper):
         else:
             return False
 
+    def isAmberWater(self):
+        """Whether this is an AMBER format water molecule.
+
+           Returns
+           -------
+
+           is_amber_water : bool
+               Whether this molecule is an AMBER format water.
+        """
+
+        # First check that this is a water molecule.
+        if not self.isWater():
+            return False
+
+        # Now check the residue name.
+        if self.getResidues()[0].name() != "WAT":
+            return False
+
+        # Now check the atom names.
+
+        # Get the number of atoms.
+        num_atoms = self.nAtoms()
+
+        # SPC/E or TIP3P.
+        if num_atoms == 3:
+            atom_names = ["O", "H1", "H2"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # TIP4P.
+        elif num_atoms == 4:
+            atom_names = ["O", "H1", "H2", "EPW"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # TIP5P.
+        elif num_atoms == 5:
+            atom_names = ["O", "H1", "H2", "EP1", "EP2"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # If we get this far, then it is an AMBER format water.
+        return True
+
+    def isGromacsWater(self):
+        """Whether this is a GROMACS format water molecule.
+
+           Returns
+           -------
+
+           is_gromacs_water : bool
+               Whether this molecule is a GROMACS format water.
+        """
+
+        # First check that this is a water molecule.
+        if not self.isWater():
+            return False
+
+        # Now check the residue name.
+        if self.getResidues()[0].name() != "SOL":
+            return False
+
+        # Get the number of atoms.
+        num_atoms = self.nAtoms()
+
+        # SPC/E or TIP3P.
+        if num_atoms == 3:
+            atom_names = ["OW", "HW1", "HW2"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # TIP4P.
+        elif num_atoms == 4:
+            atom_names = ["OW", "HW1", "HW2", "MW"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # TIP5P.
+        elif num_atoms == 5:
+            atom_names = ["OW", "HW1", "LP1", "LP2"]
+            for atom in self.getAtoms():
+                if atom.name() not in atom_names:
+                    return False
+
+        # If we get this far, then it is a GROMACS format water.
+        return True
+
     def toSystem(self):
         """Convert a single Molecule to a System.
 
