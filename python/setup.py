@@ -58,6 +58,7 @@ finally:
                       "mdanalysis",
                       "mdtraj",
                       "nglview",
+                      "openforcefield",
                       "pygtail",
                       "pymbar",
                       "pypdb",
@@ -67,7 +68,7 @@ finally:
                       "watchdog"]
 
         print("Adding conda-forge channel")
-        command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
+        command = "%s/conda config --system --prepend channels conda-forge omnia" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Disabling conda auto update")

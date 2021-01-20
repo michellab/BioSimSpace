@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2020
+# Copyright: 2017-2021
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,14 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    parameterise
-    ff99
-    ff99SB
-    ff99SBildn
-    ff14SB
-    gaff
-    gaff2
-    forceFields
+    __FORCE_FIELDS__
     formalCharge
 
 Examples

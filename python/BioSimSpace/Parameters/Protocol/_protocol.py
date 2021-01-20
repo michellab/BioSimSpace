@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2020
+# Copyright: 2017-2021
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -97,7 +97,7 @@ class Protocol():
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
 
