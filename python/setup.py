@@ -68,8 +68,12 @@ finally:
                       "rdkit",
                       "watchdog"]
 
+        print("Adding omnia channel")
+        command = "%s/conda config --system --prepend channels omnia" % bin_dir
+        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+
         print("Adding conda-forge channel")
-        command = "%s/conda config --system --prepend channels conda-forge omnia" % bin_dir
+        command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Disabling conda auto update")
