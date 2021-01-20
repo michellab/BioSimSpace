@@ -140,7 +140,7 @@ class Process():
         # will depend on the chosen protocol.
         self._has_trajectory = False
 
-	# Copy the passed system, protocol, and process name.
+        # Copy the passed system, protocol, and process name.
         self._system = system.copy()
         self._protocol = protocol
 
