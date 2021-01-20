@@ -60,6 +60,7 @@ finally:
                       "mdtraj",
                       "nglview",
                       "openforcefield",
+                      "parmed",
                       "pygtail",
                       "pymbar",
                       "pypdb",
