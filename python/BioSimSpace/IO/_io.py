@@ -540,10 +540,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            # AMBER files require a specific water toplogy.
+            # Make sure AMBER and GROMACS files have the expected water topology.
             if format == "PRM7":
                 system = system.copy()
                 system._set_water_topology("AMBER")
+            elif format == "GROTOP":
+                system = system.copy()
+                system._set_water_topology("GROMACS")
             file = _SireIO.MoleculeParser.save(system._getSireObject(), filebase, _property_map)
             files += file
         except Exception as e:
