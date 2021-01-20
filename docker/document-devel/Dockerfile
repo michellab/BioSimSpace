@@ -19,7 +19,7 @@ RUN cp $HOME/BioSimSpace/docker/document-devel/youtube.py $HOME/sire.app/lib/pyt
 # Inject the dynamically create force field function names into the Sphinx
 # documentation.
 ADD inject_force_fields.sh .
-RUN inject_force_fields.sh
+RUN $HOME/inject_force_fields.sh
 
 # Build the html docs.
 RUN cd $HOME/BioSimSpace/doc && SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
