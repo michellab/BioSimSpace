@@ -234,7 +234,7 @@ class Amber(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        # Convert the water model topology so that it matches the AMBER naming conventions.
+        # Convert the water model topology so that it matches the AMBER naming convention.
         system._set_water_topology("AMBER")
 
         # RST file (coordinates).

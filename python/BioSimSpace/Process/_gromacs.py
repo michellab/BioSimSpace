@@ -150,7 +150,7 @@ class Gromacs(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        # Convert the water model topology so that it matches the GROMACS naming conventions.
+        # Convert the water model topology so that it matches the GROMACS naming convention.
         system._set_water_topology("GROMACS")
 
         # GRO87 file.
