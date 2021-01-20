@@ -639,14 +639,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         if type(molecule) is _System:
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
-            waters = _SireIO.setGromacsWater(molecule._sire_object.search("water"), model)
-
-            # Convert to a BioSimSpace molecules container.
-            waters = _Molecules(waters.toMolecules())
-
-            # Remove the old water molecules then add those with the updated topology.
-            molecule.removeWaterMolecules()
-            molecule.addMolecules(waters)
+            molecule._set_water_topology("GROMACS")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:

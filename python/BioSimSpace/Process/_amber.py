@@ -235,37 +235,7 @@ class Amber(_process.Process):
         system = self._system.copy()
 
         # Convert the water model topology so that it matches the AMBER naming conventions.
-
-        # Get the water molecules.
-        waters = system.getWaterMolecules()
-
-        if len(waters) > 0:
-            num_point = waters[0].nAtoms()
-
-            # Try to get the name of the water model.
-            try:
-                water_model = system._sire_object.property("water_model").toString()
-                waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
-
-            except:
-                num_point = waters[0].nAtoms()
-
-                # Convert to an appropriate AMBER topology.
-                if num_point == 3:
-                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP3P")
-                elif num_point == 4:
-                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP4P")
-                elif num_point == 5:
-                    waters = _SireIO.setAmberWater(system._sire_object.search("water"), "TIP5P")
-
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
-            system.removeWaterMolecules()
-            for wat in waters:
-                system._sire_object.add(wat, _SireMol.MGName("all"))
+        system._set_water_topology("AMBER")
 
         # RST file (coordinates).
         try:

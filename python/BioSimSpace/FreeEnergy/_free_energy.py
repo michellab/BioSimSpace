@@ -458,56 +458,12 @@ class FreeEnergy():
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD.)
+        # Convert to an appropriate AMBER topology. (Required by SOMD for its
+        # FEP setup.)
         if self._engine == "SOMD":
-            # Try to get the water model used to solvate the system.
-            try:
-                water_model = system0._sire_object.property("water_model").toString()
-                waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), water_model)
-                if self._is_dual:
-                    waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), water_model)
-
-            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
-            # to guess the water model from the topology.
-            except:
-                num_point = system0.getWaterMolecules()[0].nAtoms()
-
-                if num_point == 3:
-                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP3P")
-                    if self._is_dual:
-                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP3P")
-                    water_model = "tip3p"
-                elif num_point == 4:
-                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP4P")
-                    if self._is_dual:
-                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP4P")
-                    water_model = "tip4p"
-                elif num_point == 5:
-                    waters0 = _SireIO.setAmberWater(system0._sire_object.search("water"), "TIP5P")
-                    if self._is_dual:
-                        waters1 = _SireIO.setAmberWater(system1._sire_object.search("water"), "TIP5P")
-                    water_model = "tip5p"
-                else:
-                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
-
-                # Warn the user that we've guessed the water topology.
-                _warnings.warn("Guessed water topology: %r" % water_model)
-
-            # Remove the existing water molecules from the systems.
-            system0.removeWaterMolecules()
+            system0._set_water_topology("AMBER")
             if self._is_dual:
-                system1.removeWaterMolecules()
-
-            # Convert the waters to BioSimSpace molecule containers.
-            waters0 = _Molecules(waters0.toMolecules())
-            if self._is_dual:
-                waters1 = _Molecules(waters1.toMolecules())
-
-            # Add the updated water topology back into the systems.
-            system0.addMolecules(waters0)
-            if self._is_dual:
-                system1.addMolecules(waters1)
+                system1._set_water_topology("AMBER")
 
         # Get the lambda values from the protocol.
         lam_vals = self._protocol.getLambdaValues()
