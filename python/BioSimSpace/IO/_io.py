@@ -542,7 +542,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         try:
             # AMBER files require a specific water toplogy.
             if format == "PRM7":
-                system = _swap_water_topology(system, "AMBER")
+                system = system.copy()
+                system._set_water_topology("AMBER")
             file = _SireIO.MoleculeParser.save(system._getSireObject(), filebase, _property_map)
             files += file
         except Exception as e:
@@ -560,85 +561,3 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Return the list of files.
     return files
-
-def _swap_water_topology(system, format):
-    """Internal function to swap the water topology to AMBER or GROMACS format.
-
-       Parameters
-       ----------
-
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecular system.
-
-       format : string
-           The format to convert to: either "AMBER" or "GROMACS".
-
-       Returns
-       -------
-
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The system with an updated water topology.
-    """
-
-    # Validate input.
-
-    if type(system) is not _System:
-        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
-
-    if type(format) is not str:
-        raise TypeError("'format' must be of type 'str'")
-
-    # Strip whitespace and convert to upper case.
-    format = format.replace(" ", "").upper()
-
-    # We allow conversion to AMBER or GROMACS format water toplogies. While
-    # AMBER requires a specific topology, GROMACS can handle whatever. We
-    # leave this format as an option in case we want to allow the user to
-    # swap the topology in future.
-    if format not in ["AMBER", "GROMACS"]:
-        raise ValueError("'format' must be 'AMBER' or 'GROMACS'.")
-
-    # Get the water molecules.
-    waters = system.getWaterMolecules()
-
-    if len(waters) > 0:
-        # Copy the system.
-        system = system.copy()
-
-        num_point = waters[0].nAtoms()
-
-        # Try to get the name of the water model.
-        try:
-            water_model = system._sire_object.property("water_model").toString()
-
-            if format == "AMBER":
-                waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
-            else:
-                waters = _SireIO.setGromacsWater(system._sire_object.search("water"), water_model)
-
-        except:
-            num_point = waters[0].nAtoms()
-
-            # Convert to an appropriate AMBER topology.
-            if num_point == 3:
-                # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                water_model = "TIP3P"
-            elif num_point == 4:
-                water_model = "TIP4P"
-            elif num_point == 5:
-                water_model = "TIP5P"
-
-            if format == "AMBER":
-                waters = _SireIO.setAmberWater(system._sire_object.search("water"), water_model)
-            else:
-                waters = _SireIO.setGromacsWater(system._sire_object.search("water"), water_model)
-
-        # Loop over all of the renamed water molecules, delete the old one
-        # from the system, then add the renamed one back in.
-        # TODO: This is a hack since the "update" method of Sire.System
-        # doesn't work properly at present.
-        system.removeWaterMolecules()
-        for wat in waters:
-            system._sire_object.add(wat, _SireMol.MGName("all"))
-
-    return system

@@ -29,6 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
+from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
@@ -1284,6 +1285,86 @@ class System(_SireWrapper):
         # Rebuild the MolNum to index mapping.
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+
+    def _set_water_topology(self, format):
+        """Internal function to swap the water topology to AMBER or GROMACS format.
+
+            Parameters
+            ----------
+
+            format : string
+                The format to convert to: either "AMBER" or "GROMACS".
+        """
+
+        # Validate input.
+
+        if type(format) is not str:
+            raise TypeError("'format' must be of type 'str'")
+
+        # Strip whitespace and convert to upper case.
+        format = format.replace(" ", "").upper()
+
+        # We allow conversion to AMBER or GROMACS format water toplogies. While
+        # AMBER requires a specific topology, GROMACS can handle whatever. We
+        # leave this format as an option in case we want to allow the user to
+        # swap the topology in future.
+        if format not in ["AMBER", "GROMACS"]:
+            raise ValueError("'format' must be 'AMBER' or 'GROMACS'.")
+
+        # Get the water molecules.
+        waters = self.getWaterMolecules()
+
+        if len(waters) > 0:
+
+            # Don't perform conversion if the topology already matches the
+            # the template for the desired format.
+
+            if format == "AMBER":
+                if waters[0].isAmberWater():
+                    return
+
+            if format == "GROMACS":
+                if waters[0].isGromacsWater():
+                    return
+
+            # Store the number of "points" (atoms) in the water model.
+            num_point = waters[0].nAtoms()
+
+            # Try to get the name of the water model.
+            try:
+                water_model = self._sire_object.property("water_model").toString()
+
+                if format == "AMBER":
+                    waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                else:
+                    waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
+
+            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
+            # to guess the water model from the topology.
+            except:
+                num_point = waters[0].nAtoms()
+
+                # Convert to an appropriate topology.
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E at present.
+                    water_model = "TIP3P"
+                elif num_point == 4:
+                    water_model = "TIP4P"
+                elif num_point == 5:
+                    water_model = "TIP5P"
+
+                if format == "AMBER":
+                    waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                else:
+                    waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
+
+            # Loop over all of the renamed water molecules, delete the old one
+            # from the system, then add the renamed one back in.
+            # TODO: This is a hack since the "update" method of Sire.System
+            # doesn't work properly at present.
+            self.removeWaterMolecules()
+            for wat in waters:
+                self._sire_object.add(wat, _SireMol.MGName("all"))
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
