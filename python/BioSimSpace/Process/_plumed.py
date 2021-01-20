@@ -90,8 +90,9 @@ class Plumed():
         self._hills_file = "%s/HILLS" % self._work_dir
         self._colvar_file = "%s/COLVAR" % self._work_dir
 
-        # The number of collective variables.
+        # The number of collective variables and total number of components.
         self._num_colvar = 0
+        self._num_components = 0
 
         # The number of lower/upper walls.
         self._num_lower_walls = 0
@@ -105,8 +106,9 @@ class Plumed():
         # records from the log files.
         self._colvar_unit = {}
 
-        # Initalise the list of configuration file strings.
+        # Initalise the list of configuration file strings and auxillary files.
         self._config = []
+        self._aux_files = []
 
         # Initialise dictionaries to hold COLVAR and HILLS time-series records.
         self._colvar_dict = _MultiDict()
@@ -131,8 +133,9 @@ class Plumed():
            Returns
            -------
 
-           config : [str]
-               The list of PLUMED configuration strings.
+           config, auxillary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxillary
+               files required by the collective variables.
         """
 
         if type(system) is not _System:
@@ -148,6 +151,7 @@ class Plumed():
         self._colvar_name = []
         self._colvar_unit = {}
         self._config = []
+        self._aux_files = []
 
         # Check for restart files.
         is_restart = False
@@ -186,6 +190,8 @@ class Plumed():
         # Store the collective variable(s).
         colvars = protocol.getCollectiveVariable()
         self._num_colvar = len(colvars)
+        for cv in colvars:
+            self._num_components += cv.nComponents()
 
         # Loop over each collective variable and create WHOLEMOLECULES entities
         # for any molecule that involve atoms in a collective variable. We only
@@ -242,6 +248,29 @@ class Plumed():
                 if num not in molecules:
                     molecules.append(num)
 
+        # Funnel.
+        if type(colvar) is _CollectiveVariable.Funnel:
+            # Here we assume that we have a solvated protein/ligand
+            # (or host/guest). The largest molecule in the system
+            # will be the protein, the second largest the ligand.
+
+            # Store the number of atoms in each molecule.
+            atom_nums = []
+            for mol in system:
+                atom_nums.append(mol.nAtoms())
+
+            # Sort the molecule indices by the number of atoms they contain.
+            sorted_nums = sorted((value, num) for value, num in zip(atom_nums, system._mol_nums))
+
+            # Store the indices of the largest and second largest molecules.
+            molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
+
+            # The funnel collective variable requires an auxillary file.
+            aux_file = "ProjectionOnAxis.cpp"
+            self._config.append(f"LOAD FILE={aux_file}")
+            aux_file = _os.path.dirname(_CollectiveVariable.__file__) + "/" + aux_file
+            self._aux_files.append(aux_file)
+
         # Initialise the configuration string.
         string = "WHOLEMOLECULES"
 
@@ -257,6 +286,7 @@ class Plumed():
             string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
 
         # Append the string to the configuration list.
+        self._config.append("\n# Define the molecular entities.")
         self._config.append(string)
 
         # Intialise tally counters.
@@ -280,6 +310,7 @@ class Plumed():
 
             # Whether the collective variable is a torsion.
             is_torsion = False
+            is_funnel = False
 
             # Distance.
             if type(colvar) is _CollectiveVariable.Distance:
@@ -384,11 +415,16 @@ class Plumed():
                     arg_name += ".%s" % colvar.getComponent()
 
                 # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
                 self._config.append(colvar_string)
 
                 # Store the collective variable name and its unit.
                 self._colvar_name.append(arg_name)
                 self._colvar_unit[arg_name] = _Units.Length.nanometer
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
 
             # Torsion.
             elif type(colvar) is _CollectiveVariable.Torsion:
@@ -407,12 +443,95 @@ class Plumed():
                     colvar_string += " NOPBC"
 
                 # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
                 self._config.append(colvar_string)
 
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # Funnel.
+            elif type(colvar) is _CollectiveVariable.Funnel:
+                is_funnel = True
+
+                # Store the collective variable name and its unit.
+                # Funnel has two components, the projection and extent.
+                self._colvar_name.append("pp.proj")
+                self._colvar_unit["pp.proj"] = _Units.Length.nanometer
+                self._colvar_name.append("pp.ext")
+                self._colvar_unit["pp.ext"] = _Units.Length.nanometer
+
+                self._config.append("\n# Center-of-mass definitions.")
+
+                # Get the start index of the ligand.
+                idx = system._atom_index_tally[molecules[1]]
+
+                # Get the number of atoms in the ligand.
+                num_atoms = system._sire_object.molecule(molecule).nAtoms()
+
+                # Create the ligand record. Rember to one-index the atoms.
+                string += "lig: COM=%d-%d" % (idx+1, idx+num_atoms)
+
+                # Create the center-of-mass record for the atoms that are used
+                # to define the funnel origin.
+                arg_name = "p1"
+                colvar_string = "%s: COM ATOMS=%s" \
+                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms0()]))
+                self._config.append(colvar_string)
+
+                # Create the center-of-mass record for the atoms that are used
+                # to define the funnel inflection point.
+                arg_name = "p2"
+                colvar_string = "%s: COM ATOMS=%s" \
+                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms1()]))
+                self._config.append(colvar_string)
+
+                # Create the "projection-on-axis" collective variable.
+                self._config.append("\n# Projection-on-axis collective variable.")
+                colvar_string = "pp: PROJECTION_ON_AXIS AXIS_ATOMS=p1,p2 ATOM=lig"
+                self._config.append(colvar_string)
+
+                # Add funnel parameters.
+                self._config.append("")
+                self._config.append("# Funnel parameters.")
+                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().magnitude()}")  # inflection
+                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")            # steepness
+                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().magnitude()}")   # width
+                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().magnitude()}") # total = width + buffer
+
+                # Define the funnel calculation. This function returns the
+                # radius of the funnel at the current value of the collective
+                # variable.
+                self._config.append("\n# Calculate the funnel.")
+                self._config.append("MATHEVAL ...")
+                self._config.append("        LABEL=wall_center")
+                self._config.append("        ARG=pp.proj,s_cent,beta_cent,wall_width,wall_buffer")
+                self._config.append("        VAR=s,sc,b,h,f")
+                self._config.append("        FUNC=h*(1./(1.+exp(b*(s-sc))))+f")
+                self._config.append("        PERIODIC=NO")
+                self._config.append("... MATHEVAL")
+
+                # Define the funnel potential.
+                self._config.append("\n# Define the potential.")
+                self._config.append("scaling: CONSTANT VALUES=1.0")
+                self._config.append("spring: CONSTANT VALUES=1000.0")
+                self._config.append("MATHEVAL ...")
+                self._config.append("        LABEL=wall_bias")
+                self._config.append("        ARG=pp.ext,spring,wall_center,scaling")
+                self._config.append("        VAR=z,k,zc,sf")
+                self._config.append("        FUNC=step(z-zc)*k*(z-zc)*(z-zc)/(sf*sf)")
+                self._config.append("        PERIODIC=NO")
+                self._config.append("... MATHEVAL")
+                self._config.append("finalbias: BIASVALUE ARG=wall_bias")
+
+                # Store the argument names in a list.
+                arg_name = ["pp.proj", "pp.ext"]
+
             # Check for lower and upper bounds on the collective variable.
+            # This only applies to the first collective variable name.
             if lower_wall is not None:
                 self._num_lower_walls += 1
-                lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name)
+                lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name[0])
                 try:
                     # Unit based.
                     lower_wall_string += ", AT=%s" % lower_wall.getValue().magnitude()
@@ -422,12 +541,14 @@ class Plumed():
                 lower_wall_string += ", KAPPA=%s" % lower_wall.getForceConstant()
                 lower_wall_string += ", EXP=%s" % lower_wall.getExponent()
                 lower_wall_string += ", EPS=%s" % lower_wall.getEpsilon()
+                self._config.append("\n# Lower bound on collective variable.")
                 self._config.append(lower_wall_string)
 
             # Check for lower and upper bounds on the collective variable.
+            # This only applies to the first collective variable name.
             if upper_wall is not None:
                 self._num_upper_walls += 1
-                upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name)
+                upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name[0])
                 try:
                     # Unit based.
                     upper_wall_string += ", AT=%s" % upper_wall.getValue().magnitude()
@@ -437,12 +558,22 @@ class Plumed():
                 upper_wall_string += ", KAPPA=%s" % upper_wall.getForceConstant()
                 upper_wall_string += ", EXP=%s" % upper_wall.getExponent()
                 upper_wall_string += ", EPS=%s" % upper_wall.getEpsilon()
+                self._config.append("\n# Upper bound on collective variable.")
                 self._config.append(upper_wall_string)
 
             # Store grid data.
             if grid is not None:
                 if is_torsion:
                         grid_data.append(("-pi", "pi", grid.getBins()))
+                elif is_funnel:
+                    # Grid for "projection" component.
+                    grid_data.append((grid[0].getMinimum().magnitude(),
+                                      grid[0].getMaximum().magnitude(),
+                                      grid[0].getBins()))
+                    # Grid for "extent" component.
+                    grid_data.append((grid[1].getMinimum().magnitude(),
+                                      grid[1].getMaximum().magnitude(),
+                                      grid[1].getBins()))
                 else:
                     try:
                         # Unit based.
@@ -455,8 +586,9 @@ class Plumed():
                                           grid.getMaximum(),
                                           grid.getBins()))
 
-            # Add the argument to the METAD record.
-            metad_string += "%s" % arg_name
+            # Add the argument to the METAD record. We join argument names with
+            # a "," to handle multi-component collective variables.
+            metad_string += "%s" % ",".join(arg_name)
 
             # Update the METAD record to separate the collective variable arguments.
             if idx < self._num_colvar - 1:
@@ -487,7 +619,7 @@ class Plumed():
                 grid_min_string += str(grid[0])
                 grid_max_string += str(grid[1])
                 grid_bin_string += str(grid[2])
-                if idx < self._num_colvar - 1:
+                if idx < self._num_components - 1:
                     grid_min_string += ","
                     grid_max_string += ","
                     grid_bin_string += ","
@@ -504,13 +636,14 @@ class Plumed():
             metad_string += " BIASFACTOR=%s" % protocol.getBiasFactor()
 
         # Append the METAD record to the config.
+        self._config.append("\n# Define the metadynamics simulation.")
         self._config.append(metad_string)
 
         # Print all record data to the COLVAR file.
         print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getHillFrequency()
         self._config.append(print_string)
 
-        return self._config
+        return self._config, self._aux_files
 
     def getTime(self, time_series=False):
         """Get the simulation run time.
@@ -542,7 +675,12 @@ class Plumed():
            ----------
 
            index : int
-               The index of the collective variable.
+               The index of the collective variable (CV), or CV component. If
+               there are a mixture of single and multi-component CVs, then they
+               are indexed by the total number of components in the CV list that
+               was passed to the protocol. For example, if there are two CVs,
+               the first with one component and the second with two, then index
+               1 would refer to the first component of the second CV.
 
            time_series : bool
                Whether to return a list of time series records.
@@ -573,8 +711,13 @@ class Plumed():
            ----------
 
            index : int
-               The index of the collective variable. If None, then all variables
-               will be considered.
+               The index of the collective variable (CV), or CV component. If
+               there are a mixture of single and multi-component CVs, then they
+               are indexed by the total number of components in the CV list that
+               was passed to the protocol. For example, if there are two CVs,
+               the first with one component and the second with two, then index
+               1 would refer to the first component of the second CV. If None,
+               then all variables and components will be considered.
 
            stride : int
                The stride for integrating the free energy. This can be used to
@@ -629,12 +772,12 @@ class Plumed():
         with _Utils.cd(self._work_dir):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(command, shell=True,
+            proc = _subprocess.run(command, shell=True, text=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
             if proc.returncode != 0:
                 raise RuntimeError("Failed to generate free energy estimate.\n"
-                                   "Error: %s" % proc.stderr.decode("utf-8"))
+                                   "Error: %s" % proc.stderr)
 
             # Get a sorted list of all the fes*.dat files.
             fes_files = _glob.glob("fes*.dat")

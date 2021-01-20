@@ -359,21 +359,25 @@ class Somd(_process.Process):
             if self._protocol.isRestrained():
                 raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
             # Work out the number of cycles.
-            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
             # If there is less than a single cycle, then reduce the number of moves.
             if ncycles < 1:
-                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                report_interval = _math.ceil(ncycles * report_interval)
                 ncycles = 1
 
             # Work out the number of cycles per frame.
-            cycles_per_frame = ncycles / self._protocol.getFrames()
+            cycles_per_frame = report_interval / restart_interval
 
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * self._num_moves
+                buffer_freq = cycles_per_frame * report_interval
                 cycles_per_frame = 1
                 self._buffer_freq = buffer_freq
             else:
@@ -388,7 +392,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("nmoves = %d" % report_interval)                       # The number of moves per cycle.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
@@ -419,22 +423,27 @@ class Somd(_process.Process):
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
             # Work out the number of cycles.
-            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
             # If there is less than a single cycle, then reduce the number of moves.
             if ncycles < 1:
-                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                report_interval = _math.ceil(ncycles * report_interval)
                 ncycles = 1
 
             # Work out the number of cycles per frame.
-            cycles_per_frame = ncycles / self._protocol.getFrames()
+            cycles_per_frame = report_interval / restart_interval
 
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * self._num_moves
+                buffer_freq = cycles_per_frame * report_interval
                 cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
@@ -447,7 +456,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("nmoves = %d" % report_interval)                       # The number of moves per cycle.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
@@ -478,22 +487,27 @@ class Somd(_process.Process):
         # Add configuration variables for a free energy simulation.
         elif type(self._protocol) is _Protocol.FreeEnergy:
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
             # Work out the number of cycles.
-            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / self._num_moves
+            ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
             # If there is less than a single cycle, then reduce the number of moves.
             if ncycles < 1:
-                self._num_moves = _math.ceil(ncycles * self._num_moves)
+                report_interval = _math.ceil(ncycles * report_interval)
                 ncycles = 1
 
             # Work out the number of cycles per frame.
-            cycles_per_frame = ncycles / self._protocol.getFrames()
+            cycles_per_frame = report_interval / restart_interval
 
             # Work out whether we need to adjust the buffer frequency.
             buffer_freq = 0
             if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * self._num_moves
+                buffer_freq = cycles_per_frame * report_interval
                 cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
@@ -506,7 +520,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = %d" % self._num_moves)                       # The number of moves per cycle.
+            self.addToConfig("nmoves = %d" % report_interval._num_moves)            # The number of moves per cycle.
             self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.

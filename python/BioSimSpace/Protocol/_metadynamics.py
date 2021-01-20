@@ -50,6 +50,8 @@ class Metadynamics(_Protocol):
                  pressure=_Types.Pressure(1, "atmosphere"),
                  hill_height=_Types.Energy(1, "kj per mol"),
                  hill_frequency=1000,
+                 report_interval=1000,
+                 restart_interval=1000,
                  bias_factor=None,
                  hills_file=None,
                  grid_file=None,
@@ -81,6 +83,13 @@ class Metadynamics(_Protocol):
 
            hill_frequency : int
                The frequency at which hills are deposited.
+
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
+               frames are saved. (In integration steps.)
 
            bias_factor : float
                The bias factor for well tempered metadynamics.
@@ -120,6 +129,12 @@ class Metadynamics(_Protocol):
 
         # Set the system temperature.
         self.setTemperature(temperature)
+
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
 
         # Set the system pressure.
         if pressure is not None:
@@ -176,6 +191,8 @@ class Metadynamics(_Protocol):
                 string += ", grid_file=%r" % self._grid_file
             if self._colvar_file is not None:
                 string += ", colvar_file=%r" % self._colvar_file
+            string += ", report_interval=%d" % self._report_interval
+            string += ", restart_interval=%d" % self._restart_interval
             string += ">"
 
             return string
@@ -586,3 +603,65 @@ class Metadynamics(_Protocol):
             raise ValueError("'colvar_file' doesn't exist: %s" % colvar_file)
 
         self._colvar_file = colvar_file
+
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
+
+           Returns
+           -------
+
+           report_interval : int
+               The number of integration steps between reporting statistics.
+        """
+        return self._report_interval
+
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
+
+           Parameters
+           ----------
+
+           report_interval : int
+               The number of integration steps between reporting statistics.
+        """
+        if type(report_interval) is not int:
+            raise TypeError("'report_interval' must be of type 'int'")
+
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
+
+        self._report_interval = report_interval
+
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Returns
+           -------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        return self._restart_interval
+
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Parameters
+           ----------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        if type(restart_interval) is not int:
+            raise TypeError("'restart_interval' must be of type 'int'")
+
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
+
+        self._restart_interval = restart_interval

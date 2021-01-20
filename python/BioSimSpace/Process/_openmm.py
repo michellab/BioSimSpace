@@ -39,8 +39,10 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 
 from BioSimSpace import _isVerbose
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
 from BioSimSpace.Trajectory import Trajectory as _Trajectory
 from BioSimSpace.Types._type import Type as _Type
 
@@ -384,9 +386,19 @@ class OpenMM(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=100, traj_interval=500)
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
 
             # Set initial velocities from temperature distribution.
             self.addToConfig("\n# Setting intial system velocities.")
@@ -432,9 +444,8 @@ class OpenMM(_process.Process):
                     self.addToConfig( "    simulation.step(1)")
 
         elif type(self._protocol) is _Protocol.Production:
-            # Write the OpenMM import statements and monkey-patches.
+            # Write the OpenMM import statements.
             self._add_config_imports()
-            self._add_config_monkey_patches()
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -502,9 +513,19 @@ class OpenMM(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=100, traj_interval=500)
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
 
             # Set initial velocities from temperature distribution.
             self.addToConfig("\n# Setting intial system velocities.")
@@ -513,6 +534,253 @@ class OpenMM(_process.Process):
             # Now run the simulation.
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"simulation.step({steps})")
+
+        elif type(self._protocol) is _Protocol.Metadynamics:
+            colvar = self._protocol.getCollectiveVariable()
+            if len(colvar) != 1 or (type(colvar[0]) is not _CollectiveVariable.Funnel):
+                raise _IncompatibleError("We currently only support '%s' collective variables for '%s' protocols"
+                        % (_CollectiveVariable.Funnel.__name__, self._protocol.__class__.__name__))
+
+            # The following OpenMM native implementation of the funnel metadynamics protocol
+            # is adapted from funnel_maker.py by Dominykas Lukauskis.
+
+            # Extract the only collective variable.
+            colvar = colvar[0]
+
+            # Write the OpenMM import statements.
+            self._add_config_imports()
+            self.addToConfig("from simtk.openmm.app.metadynamics import *")
+            self.addToConfig("from glob import glob")
+            self.addToConfig("import os")
+            self.addToConfig("import shutil")
+
+            # Load the input files.
+            self.addToConfig("\n# Load the topology and coordinate files.")
+            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
+            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+
+            # Don't use a cut-off if this is a vacuum simulation or if box information
+            # is missing.
+            is_periodic = True
+            self.addToConfig("\n# Initialise the molecular system.")
+            if not has_box or not self._has_water:
+                is_periodic = False
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=NoCutoff,")
+            else:
+                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
+            self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
+            self.addToConfig(    "                             constraints=HBonds)")
+
+            # Get the starting temperature and system pressure.
+            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            pressure = self._protocol.getPressure()
+
+            # Add a Monte Carlo barostat if the simulation is at constant pressure.
+            is_const_pressure = False
+            if pressure is not None:
+                # Cannot use a barostat with a non-periodic system.
+                if not is_periodic:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                else:
+                    is_const_pressure = True
+
+                    # Convert to bar and get the magnitude.
+                    pressure = pressure.bar().magnitude()
+
+                    # Create the barostat and add its force to the system.
+                    self.addToConfig("\n# Add a barostat to run at constant pressure.")
+                    self.addToConfig(f"barostat = MonteCarloBarostat({pressure}*bar, {temperature}*kelvin)")
+                    if self._is_seeded:
+                        self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
+                    self.addToConfig("system.addForce(barostat)")
+
+            # Store the number of atoms in each molecule.
+            atom_nums = []
+            for mol in self._system:
+                atom_nums.append(mol.nAtoms())
+
+            # Sort the molecule indices by the number of atoms they contain.
+            sorted_nums = sorted((value, idx) for idx, value in enumerate(atom_nums))
+
+            # Set the ligand to the index of the second largest molecule.
+            ligand = sorted_nums[-2][1]
+
+            # Work out the start/end indices of the ligand within the system.
+            idx_start = self._system.getIndex(self._system[ligand].getAtoms()[0])
+            idx_end = self._system.getIndex(self._system[ligand+1].getAtoms()[0])
+
+            # Add the funnel variables.
+            p1_string = ",".join([str(x) for x in colvar.getAtoms0()])
+            p2_string = ",".join([str(x) for x in colvar.getAtoms1()])
+            self.addToConfig("\n# Set funnel variables.")
+            self.addToConfig(f"p1 = [{p1_string}]")
+            self.addToConfig(f"p2 = [{p2_string}]")
+            self.addToConfig(f"lig = [x for x in range({idx_start}, {idx_end})]")
+
+            self.addToConfig("\n# Create the bias variable for the funnel projection.")
+            self.addToConfig("projection = CustomCentroidBondForce(3, 'distance(g1,g2)*cos(angle(g1,g2,g3))')")
+            self.addToConfig("projection.addGroup(lig)")
+            self.addToConfig("projection.addGroup(p1)")
+            self.addToConfig("projection.addGroup(p2)")
+            self.addToConfig("projection.addBond([0,1,2])")
+            self.addToConfig("projection.setUsesPeriodicBoundaryConditions(True)")
+            hill_width = colvar.getHillWidth().nanometers().magnitude()
+            if colvar.getLowerBound() is None and colvar.getUpperBound() is None:
+                # Sane defaults if no bounds are set.
+                lower_wall = 0.5
+                upper_wall = 4.5
+            else:
+                lower_wall = colvar.getLowerBound().getValue().nanometers().magnitude()
+                upper_wall = colvar.getUpperBound().getValue().nanometers().magnitude()
+            self.addToConfig(f"proj = BiasVariable(projection, {lower_wall-0.2}, {upper_wall+0.2}, {hill_width}, False, gridWidth=200)")
+
+            self.addToConfig("\n# Create the bias variable for the funnel extent.")
+            self.addToConfig("extent = CustomCentroidBondForce(3, 'distance(g1,g2)*sin(angle(g1,g2,g3))')")
+            self.addToConfig("extent.addGroup(lig)")
+            self.addToConfig("extent.addGroup(p1)")
+            self.addToConfig("extent.addGroup(p2)")
+            self.addToConfig("extent.addBond([0,1,2])")
+            self.addToConfig("extent.setUsesPeriodicBoundaryConditions(True)")
+            extent_max = colvar.getWidth().nanometers().magnitude()  \
+                       + colvar.getBuffer().nanometers().magnitude() \
+                       + 0.2
+            self.addToConfig(f"ext = BiasVariable(extent, 0.0, {extent_max}, 0.05, False, gridWidth=200)")
+
+            # Add restraints.
+            self.addToConfig("\n# Add restraints.")
+
+            self.addToConfig("k1 = 10000*kilojoules_per_mole")
+            self.addToConfig("k2 = 1000*kilojoules_per_mole")
+            self.addToConfig(f"lower_wall = {lower_wall}*nanometer")
+            self.addToConfig(f"upper_wall = {upper_wall}*nanometer")
+
+            self.addToConfig("\n# Upper wall.")
+            self.addToConfig("upper_wall_rest = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*cos(angle(g1,g2,g3)) - upper_wall, 0)^2')")
+            self.addToConfig("upper_wall_rest.addGroup(lig)")
+            self.addToConfig("upper_wall_rest.addGroup(p1)")
+            self.addToConfig("upper_wall_rest.addGroup(p2)")
+            self.addToConfig("upper_wall_rest.addBond([0,1,2])")
+            self.addToConfig("upper_wall_rest.addGlobalParameter('k', k1)")
+            self.addToConfig("upper_wall_rest.addGlobalParameter('upper_wall', upper_wall)")
+            self.addToConfig("upper_wall_rest.setUsesPeriodicBoundaryConditions(True)")
+            self.addToConfig("system.addForce(upper_wall_rest)")
+
+            self.addToConfig("\n# Sides of the funnel.")
+            self.addToConfig(f"wall_width = {colvar.getWidth().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"wall_buffer = {colvar.getBuffer().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"beta_cent = {colvar.getSteepness()}")
+            self.addToConfig(f"s_cent = {colvar.getInflection().nanometers().magnitude()}*nanometer")
+
+            self.addToConfig("dist_restraint = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*sin(angle(g1,g2,g3)) - (a/(1+exp(b*(distance(g1,g2)*cos(angle(g1,g2,g3))-c)))+d), 0)^2')")
+            self.addToConfig("dist_restraint.addGroup(lig)")
+            self.addToConfig("dist_restraint.addGroup(p1)")
+            self.addToConfig("dist_restraint.addGroup(p2)")
+            self.addToConfig("dist_restraint.addBond([0,1,2])")
+            self.addToConfig("dist_restraint.addGlobalParameter('k', k2)")
+            self.addToConfig("dist_restraint.addGlobalParameter('a', wall_width)")
+            self.addToConfig("dist_restraint.addGlobalParameter('b', beta_cent)")
+            self.addToConfig("dist_restraint.addGlobalParameter('c', s_cent)")
+            self.addToConfig("dist_restraint.addGlobalParameter('d', wall_buffer)")
+            self.addToConfig("dist_restraint.setUsesPeriodicBoundaryConditions(True)")
+            self.addToConfig("system.addForce(dist_restraint)")
+
+            self.addToConfig("\n# Lower wall.")
+            self.addToConfig("lower_wall_rest = CustomCentroidBondForce(3, '(k/2)*min(distance(g1,g2)*cos(angle(g1,g2,g3)) - lower_wall, 0)^2')")
+            self.addToConfig("lower_wall_rest.addGroup(lig)")
+            self.addToConfig("lower_wall_rest.addGroup(p1)")
+            self.addToConfig("lower_wall_rest.addGroup(p2)")
+            self.addToConfig("lower_wall_rest.addBond([0,1,2])")
+            self.addToConfig("lower_wall_rest.addGlobalParameter('k', k1)")
+            self.addToConfig("lower_wall_rest.addGlobalParameter('lower_wall', lower_wall)")
+            self.addToConfig("lower_wall_rest.setUsesPeriodicBoundaryConditions(True)")
+            self.addToConfig("system.addForce(lower_wall_rest)")
+
+            self.addToConfig("\n# Initialise the metadynamics object.")
+            if self._protocol.getBiasFactor() is None:
+                bias = 1.0
+            else:
+                bias = self._protocol.getBiasFactor()
+            height = self._protocol.getHillHeight().kj_per_mol().magnitude()
+            freq = self._protocol.getHillFrequency()
+
+            # Work out the number of integration.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Work out the number of cycles.
+            cycles = _math.ceil(steps / report_interval)
+
+            self.addToConfig(f"meta = Metadynamics(system, [proj,ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
+
+            # Get the integration time step from the protocol.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            # Set the integrator.
+            self.addToConfig( "\n# Define the integrator.")
+            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig( "                                1/picosecond,")
+            self.addToConfig(f"                                {timestep}*picoseconds)")
+            if self._is_seeded:
+                self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
+
+            # Add the platform information.
+            self._add_config_platform()
+
+            # Set up the simulation object.
+            self.addToConfig("\n# Initialise and configure the simulation object.")
+            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("                        system,")
+            self.addToConfig("                        integrator,")
+            self.addToConfig("                        platform,")
+            self.addToConfig("                        properties)")
+            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+
+            # Work out the number of integration.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Set initial velocities from temperature distribution.
+            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+
+            self.addToConfig("\n# Look for a restart file.")
+            self.addToConfig(f"if os.path.isfile('{self._name}.chk'):")
+            self.addToConfig(f"    simulation.loadCheckpoint('{self._name}.chk')")
+            self.addToConfig(f"    shutil.copy('{self._name}.out','old_{self._name}.out')")
+            self.addToConfig(f"    sim_log_file = [ line[:-2] for line in open('{self._name}.out').readlines()]")
+            self.addToConfig( "    current_steps = int(sim_log_file[-1].split(',')[1])")
+            self.addToConfig( "    steps -= current_steps")
+            self.addToConfig( "    shutil.copy('COLVAR.npy','old_COLVAR.npy')")
+            self.addToConfig(f"    shutil.copy('{self._name}.dcd','old_{self._name}.dcd')")
+
+            # Add the reporters.
+            self.addToConfig("\n# Add reporters.")
+            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
+            self.addToConfig(f"simulation.reporters.append(CheckpointReporter('{self._name}.chk', {report_interval}))")
+
+            # Run the metadynamics simulation.
+            self.addToConfig("\n# Run the simulation.")
+            self.addToConfig(f"steps = {steps}")
+            self.addToConfig(f"cycles = {cycles}")
+            self.addToConfig( "colvar = np.array([meta.getCollectiveVariables(simulation)])")
+            self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
+            self.addToConfig( "for x in range(0, cycles):")
+            self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
+            self.addToConfig( "    current_colvar = np.array([meta.getCollectiveVariables(simulation)])")
+            self.addToConfig( "    colvar = np.append(colvar, [current_colvar], axis=0)")
+            self.addToConfig( "    np.save('COLVAR.np', colvar)")
+            self.addToConfig( "    bias_files = glob('bias_*')")
+            self.addToConfig( "    latest_bias_file = max(bias_files, key=os.path.getctime)")
+            self.addToConfig( "    bias_backup = '_' + latest_bias_file")
+            self.addToConfig(f"    shutil.copyfile(latest_bias_file, bias_backup)")
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)

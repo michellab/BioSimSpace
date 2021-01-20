@@ -68,7 +68,7 @@ class Torsion(_CollectiveVariable):
         """
 
         # Call the base class constructor.
-        super().__init__(pbc)
+        super().__init__()
 
         # Initialise optional member data.
         self._lower_bound = None
@@ -76,12 +76,11 @@ class Torsion(_CollectiveVariable):
         self._grid = None
 
         # Set the required parameters.
-
         self.setAtoms(atoms)
         self.setHillWidth(hill_width)
+        self.setPeriodicBoundaries(pbc)
 
         # Set the optional parameters.
-
         if lower_bound is not None:
             self.setLowerBound(lower_bound)
         if upper_bound is not None:
@@ -180,6 +179,32 @@ class Torsion(_CollectiveVariable):
                The width of the Gaussian hill.
         """
         return self._hill_width
+
+    def setPeriodicBoundaries(self, pbc):
+        """Set whether to use periodic_boundaries when calculating the
+           collective variable.
+
+           Parameters
+           ----------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        if type(pbc) is not bool:
+            raise TypeError("'pbc' must be of type 'bool'")
+        self._pbc = pbc
+
+    def getPeriodicBoundaries(self):
+        """Return whether to take account of periodic boundary conditions
+           when computing the collective variable.
+
+           Returns
+           -------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        return self._pbc
 
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""

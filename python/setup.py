@@ -36,6 +36,7 @@ try:
           url='https://github.com/michellab/BioSimSpace',
           license='GPLv2',
           packages=find_packages(),
+          include_package_data=True,
           zip_safe=True
         )
 

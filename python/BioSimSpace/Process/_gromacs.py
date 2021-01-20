@@ -31,6 +31,7 @@ __all__ = ["Gromacs"]
 import math as _math
 import os as _os
 import pygtail as _pygtail
+import shutil as _shutil
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
@@ -57,7 +58,7 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, property_map={}):
+            work_dir=None, seed=None, property_map={}, ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -85,6 +86,13 @@ class Gromacs(_process.Process):
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+           ignore_warnings : bool
+               Whether to ignore warnings when generating the binary run file.
+
+           show_warnings : bool
+               Whether to show warning/error messages when generating the binary
+               run file.
         """
 
         # Call the base class constructor.
@@ -108,6 +116,14 @@ class Gromacs(_process.Process):
             else:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
                                             "Please install GROMACS (http://www.gromacs.org).")
+
+        if type(ignore_warnings) is not bool:
+            raise ValueError("'ignore_warnings' must be of type 'bool.")
+        self._ignore_warnings = ignore_warnings
+
+        if type(show_errors) is not bool:
+            raise ValueError("'show_errors' must be of type 'bool.")
+        self._show_errors = show_errors
 
         # Initialise the stdout dictionary and title header.
         self._stdout_dict = _process._MultiDict()
@@ -235,6 +251,16 @@ class Gromacs(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
@@ -244,33 +270,33 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
-            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)            # Random number seed.
-            config.append("dt = %.3f" % timestep)           # Integration time step.
-            config.append("nsteps = %d" % steps)            # Number of integration steps.
-            config.append("nstlog = 100")                   # Write to log file every 100 steps.
-            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
-            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)                # Random number seed.
+            config.append("dt = %.3f" % timestep)               # Integration time step.
+            config.append("nsteps = %d" % steps)                # Number of integration steps.
+            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
+            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
+            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("ns-type = grid")             # Use a grid to search for neighbours.
-                config.append("rlist = 1.2")                # Set short-range cutoff.
-                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
-                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")                      # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+                config.append("rlist = 1.2")                    # Set short-range cutoff.
+                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
+                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                   # No boundary conditions.
-                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                  # Zero short-range cutoff.
-                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = no")                       # No boundary conditions.
+                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                      # Zero short-range cutoff.
+                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")          # Plain cut-off.
+            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")              # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -396,6 +422,16 @@ class Gromacs(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
@@ -405,36 +441,36 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
-            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)            # Random number seed.
-            config.append("dt = %.3f" % timestep)           # Integration time step.
-            config.append("nsteps = %d" % steps)            # Number of integration steps.
+            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)                # Random number seed.
+            config.append("dt = %.3f" % timestep)               # Integration time step.
+            config.append("nsteps = %d" % steps)                # Number of integration steps.
             config.append("init-step = %d"
-                % self._protocol.getFirstStep())            # First time step.
-            config.append("nstlog = 100")                   # Write to log file every 100 steps.
-            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
-            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+                % self._protocol.getFirstStep())                # First time step.
+            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
+            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
+            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("ns-type = grid")             # Use a grid to search for neighbours.
-                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
-                config.append("rlist = 1.2")                # Set short-range cutoff.
-                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
-                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")                      # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                    # Set short-range cutoff.
+                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
+                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                   # No boundary conditions.
-                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                  # Zero short-range cutoff.
-                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = no")                       # No boundary conditions.
+                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                      # Zero short-range cutoff.
+                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")          # Plain cut-off.
+            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")              # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -456,6 +492,16 @@ class Gromacs(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
@@ -465,34 +511,34 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
 
-            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)            # Random number seed.
-            config.append("dt = %.3f" % timestep)           # Integration time step.
-            config.append("nsteps = %d" % steps)            # Number of integration steps.
-            config.append("nstlog = 100")                   # Write to log file every 100 steps.
-            config.append("nstenergy = 100")                # Write to energy file every 100 steps.
-            config.append("nstxout = 500")                  # Write coordinates every 500 steps.
+            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)                # Random number seed.
+            config.append("dt = %.3f" % timestep)               # Integration time step.
+            config.append("nsteps = %d" % steps)                # Number of integration steps.
+            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
+            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
+            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("ns-type = grid")             # Use a grid to search for neighbours.
-                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
-                config.append("rlist = 1.2")                # Set short-range cutoff.
-                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
-                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")                      # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                    # Set short-range cutoff.
+                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
+                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                   # No boundary conditions.
-                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                  # Zero short-range cutoff.
-                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = no")                       # No boundary conditions.
+                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                      # Zero short-range cutoff.
+                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")          # Plain cut-off.
+            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")              # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -532,6 +578,16 @@ class Gromacs(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
@@ -546,34 +602,34 @@ class Gromacs(_process.Process):
             # cross-referenced.
             hill_freq = self._protocol.getHillFrequency()
 
-            config.append("integrator = sd")                # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)            # Random number seed.
-            config.append("dt = %.3f" % timestep)           # Integration time step.
-            config.append("nsteps = %d" % steps)            # Number of integration steps.
-            config.append("nstlog = %d" % hill_freq)        # Write to log file at the metadynamics hill deposition frequency.
-            config.append("nstenergy = %d" % hill_freq)     # Write to energy file at the metadynamics hill deposition frequency.
-            config.append("nstxout = %d" % hill_freq)       # Write to energy file at the metadynamics hill deposition frequency.
+            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)                # Random number seed.
+            config.append("dt = %.3f" % timestep)               # Integration time step.
+            config.append("nsteps = %d" % steps)                # Number of integration steps.
+            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
+            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
+            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("ns-type = grid")             # Use a grid to search for neighbours.
-                config.append("nstlist = 10")               # Rebuild neigbour list every 10 steps.
-                config.append("rlist = 1.2")                # Set short-range cutoff.
-                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
-                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")                      # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
+                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
+                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("rlist = 1.2")                    # Set short-range cutoff.
+                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
+                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                   # No boundary conditions.
-                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                  # Zero short-range cutoff.
-                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = no")                       # No boundary conditions.
+                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
+                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
+                config.append("rlist = 0")                      # Zero short-range cutoff.
+                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
+                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
+                config.append("coulombtype = Cut-off")          # Plain cut-off.
+            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")              # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -590,9 +646,14 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Create the PLUMED input file.
+            # Create the PLUMED input file and copy auxillary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            self._setPlumedConfig(self._plumed.createConfig(self._system, self._protocol))
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system, self._protocol)
+            self._setPlumedConfig(plumed_config)
+            if auxillary_files is not None:
+                for file in auxillary_files:
+                    file_name = _os.path.basename(file)
+                    _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
 
             # Expose the PLUMED specific member functions.
@@ -643,13 +704,54 @@ class Gromacs(_process.Process):
             % (self._exe, self._config_file, mdp_out, self._gro_file,
                self._top_file, self._gro_file, self._tpr_file)
 
+        # Warnings don't trigger an error. Set to a suitably large number.
+        if self._ignore_warnings:
+            command += " --maxwarn 1000"
+
         # Run the command.
-        proc = _subprocess.run(command, shell=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(command, shell=True, text=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
-            raise RuntimeError("Unable to generate GROMACS binary run input file.")
+            if self._show_errors:
+                # Capture errors and warnings from the grompp output.
+                errors = []
+                warnings = []
+                is_error = False
+                is_warn = False
+                lines = proc.stdout.split("\n")
+                for line in lines:
+                    line = line.strip()
+                    if line[0:5] == "ERROR" or is_error:
+                        if line == "":
+                            is_error = False
+                            break
+                        error.append(line)
+                        is_error = True
+                    elif line[0:7] == "WARNING" or is_warn:
+                        if line == "":
+                            is_warnings = False
+                            break
+                        warnings.append(line)
+                        is_warn = True
+
+                error_string = "\n  ".join(errors)
+                warning_string = "\n  ".join(warnings)
+
+                exception_string = "Unable to generate GROMACS binary run input file.\n"
+                if len(errors) > 0:
+                    exception_string += "\n'gmx grompp' reported the following errors:\n"   \
+                                     + f"{error_string}\n"
+                if len(warnings) > 0:
+                    exception_string += "\n'gmx grompp' reported the following warnings:\n" \
+                                     + f"{warning_string}\n"                                \
+                                     +  "\nUse 'ignore_warnings' to ignore warnings."
+
+                raise RuntimeError(exception_string)
+
+            else:
+                raise RuntimeError("Unable to generate GROMACS binary run input file.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list.

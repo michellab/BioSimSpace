@@ -330,6 +330,16 @@ class Amber(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._is_seeded:
                 seed = self._seed
@@ -341,30 +351,29 @@ class Amber(_process.Process):
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)             # Random number seed.
-            self.addToConfig("  ntx=1,")                    # Only read coordinates from file.
-            self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
-            self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
-            self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
-            self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
-                % _math.floor(steps / self._protocol.getFrames()))
-            self.addToConfig("  irest=0,")                  # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)       # Time step.
-            self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
-            self.addToConfig("  ntc=2,")                    # Enable SHAKE.
-            self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")                    # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
+            self.addToConfig("  ig=%d," % seed)                 # Random number seed.
+            self.addToConfig("  ntx=1,")                        # Only read coordinates from file.
+            self.addToConfig("  ntxo=1,")                       # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=%d," % report_interval)    # Interval between reporting energies.
+            self.addToConfig("  ntwr=%d," % restart_interval)   # Interval between saving restart files.
+            self.addToConfig("  ntwx=%d," % restart_interval)   # Trajectory sampling frequency.
+            self.addToConfig("  irest=0,")                      # Don't restart.
+            self.addToConfig("  dt=%.3f," % timestep)           # Time step.
+            self.addToConfig("  nstlim=%d," % steps)            # Number of integration steps.
+            self.addToConfig("  ntc=2,")                        # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                        # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                        # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")                   # Collision frequency (ps).
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")                # No periodic box.
-                self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+                self.addToConfig("  ntb=0,")                    # No periodic box.
+                self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
             else:
-                self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
+                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
                     % self._protocol.getPressure().bar().magnitude())
 
             # Restrain the backbone.
@@ -395,6 +404,16 @@ class Amber(_process.Process):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
             # Set the random number seed.
             if self._seed is None:
                 seed = -1
@@ -406,41 +425,40 @@ class Amber(_process.Process):
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)             # Random number seed.
+            self.addToConfig("  ig=%d," % seed)                 # Random number seed.
             if self._protocol.isRestart():
-                self.addToConfig("  ntx=5,")                # Read coordinates and velocities.
+                self.addToConfig("  ntx=5,")                    # Read coordinates and velocities.
             else:
-                self.addToConfig("  ntx=1,")                # Only read coordinates.
-            self.addToConfig("  ntxo=1,")                   # Output coordinates in ASCII.
-            self.addToConfig("  ntpr=100,")                 # Output energies every 100 steps.
-            self.addToConfig("  ntwr=500,")                 # Save restart configuration every 500 steps.
-            self.addToConfig("  ntwx=%d,"                   # Trajectory sampling frequency.
-                % _math.floor(steps / self._protocol.getFrames()))
+                self.addToConfig("  ntx=1,")                    # Only read coordinates.
+            self.addToConfig("  ntxo=1,")                       # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=%d," % report_interval)    # Interval between reporting energies.
+            self.addToConfig("  ntwr=%d," % restart_interval)   # Interval between saving restart files.
+            self.addToConfig("  ntwx=%d," % restart_interval)   # Trajectory sampling frequency.
             if self._protocol.isRestart():
-                self.addToConfig("  irest=1,")              # Restart using previous velocities.
+                self.addToConfig("  irest=1,")                  # Restart using previous velocities.
             else:
-                self.addToConfig("  irest=0,")              # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)       # Time step.
-            self.addToConfig("  nstlim=%d," % steps)        # Number of integration steps.
-            self.addToConfig("  ntc=2,")                    # Enable SHAKE.
-            self.addToConfig("  ntf=2,")                    # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")                    # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")               # Collision frequency (ps).
+                self.addToConfig("  irest=0,")                  # Don't restart.
+            self.addToConfig("  dt=%.3f," % timestep)           # Time step.
+            self.addToConfig("  nstlim=%d," % steps)            # Number of integration steps.
+            self.addToConfig("  ntc=2,")                        # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                        # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                        # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")                   # Collision frequency (ps).
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")                # No periodic box.
-                self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+                self.addToConfig("  ntb=0,")                    # No periodic box.
+                self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
             else:
-                self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             if not self._protocol.isRestart():
-                self.addToConfig("  tempi=%.2f,"            # Initial temperature.
+                self.addToConfig("  tempi=%.2f,"                # Initial temperature.
                     % self._protocol.getTemperature().kelvin().magnitude())
-            self.addToConfig("  temp0=%.2f,"                # Target temperature.
+            self.addToConfig("  temp0=%.2f,"                    # Target temperature.
                 % self._protocol.getTemperature().kelvin().magnitude())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
+                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
                     % self._protocol.getPressure().bar().magnitude())
 
             self.addToConfig(" /")

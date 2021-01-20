@@ -85,8 +85,8 @@ class Coordinate():
            Parameters
            ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               Another coordinate.
+           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                   :class: `Length <BioSimSpace.Types.Length>`
 
            Return
            ------
@@ -94,11 +94,18 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The sum of the two coordinates.
         """
-        if type(other) is not Coordinate:
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+        if type(other) is Coordinate:
+            return self._from_sire_vector(self._vector + other._vector)
 
-        return self._from_sire_vector(self._vector + other._vector)
+        elif type(other) is _Length:
+            vector = self._vector + _Vector(other.angstroms().magnitude(),
+                                            other.angstroms().magnitude(),
+                                            other.angstroms().magnitude())
+            return self.fromVector(vector, _Length(1, "A"))
+
+        else:
+            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __sub__(self, other):
         """Subtraction operator.
@@ -106,8 +113,9 @@ class Coordinate():
            Parameters
            ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               Another coordinate.
+           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                   :class: `Length <BioSimSpace.Types.Length>`
+               Another coordinate or a length.
 
            Return
            ------
@@ -115,11 +123,57 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The difference of the two coordinates.
         """
-        if type(other) is not Coordinate:
+        if type(other) is Coordinate:
+            return self._from_sire_vector(self._vector - other._vector)
+
+        elif type(other) is _Length:
+            vector = self._vector - _Vector(other.angstroms().magnitude(),
+                                            other.angstroms().magnitude(),
+                                            other.angstroms().magnitude())
+            return self.fromVector(vector, _Length(1, "A"))
+
+        else:
             raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
-        return self._from_sire_vector(self._vector - other._vector)
+    def __mul__(self, other):
+        """Multiplication operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Only support multiplication by float.
+        if type(other) is float:
+            # Return a new vector multiplied by other.
+            return self._from_sire_vector(other * self._vector)
+
+        else:
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __rmul__(self, other):
+        """Multiplication operator."""
+
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        """Division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if type(other) is float:
+            # Return a new vector divided by other.
+            return self._from_sire_vector(self._vector / other)
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
 
     def x(self):
         """Return the x component of the coordinate.

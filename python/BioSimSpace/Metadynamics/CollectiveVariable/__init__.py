@@ -29,6 +29,7 @@ Functions
     :toctree: generated/
 
     list
+    makeFunnel
 
 Classes
 =======
@@ -37,9 +38,11 @@ Classes
     :toctree: generated/
 
     Distance
+    Funnel
     Torsion
 """
 
 from ._distance import *
+from ._funnel import *
 from ._torsion import *
 from ._utils import *
