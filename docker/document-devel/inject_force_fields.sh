@@ -13,4 +13,4 @@ force_fields=$($HOME/sire.app/bin/python $HOME/BioSimSpace/docker/document-devel
 # We use the source repository since the sire.app installation of BioSimSpace
 # is zipped, i.e. an egg file.
 # This is only run on Linux so the following, non-portable, sed command is fine.
-sed -i "s/__FORCE_FIELDS__/$forcefields/g" $HOME/BioSimSpace/python/BioSimSpace/Parameters/__init__.py
+sed -i "s/__FORCE_FIELDS__/$force_fields/g" $HOME/BioSimSpace/python/BioSimSpace/Parameters/__init__.py
