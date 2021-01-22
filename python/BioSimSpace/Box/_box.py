@@ -39,12 +39,10 @@ from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 
 def generateBoxParameters(box_type, image_distance):
-    """Generate.
+    """Generate parameters for the named box type with specified image distance.
 
        Parameters
        ----------
-
-       Generate parameters for the named box type with specified image distance.
 
        box_type : str
            The name of the box type. Run BioSimSpace.Box.boxTypes() to get a
