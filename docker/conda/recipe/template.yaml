@@ -80,7 +80,7 @@ about:
 
                 `conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace sire`
 
-                Since BioSimSpace has many depdendencies, an install or update
+                Since BioSimSpace has many dependencies, an install or update
                 might not always give you the most recent version. If this is
                 the case, use, e.g.:
 
