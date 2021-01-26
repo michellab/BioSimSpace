@@ -225,7 +225,7 @@ class OpenForceField(_protocol.Protocol):
             parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
             parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
         except Exception as e:
-            raise IOError("Unable to write ParmEd structure to AMBER format!!") from None
+            raise IOError("Unable to write ParmEd structure to AMBER format!") from None
 
         # Load the parameterised molecule. (This could be a system of molecules.)
         try:
