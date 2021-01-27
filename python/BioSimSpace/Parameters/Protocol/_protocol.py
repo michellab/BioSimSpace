@@ -193,6 +193,7 @@ class Protocol():
         except Exception as e:
             msg = "Failed to read molecule from: '%s', '%s'" % (output[0], output[1])
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
@@ -240,6 +241,7 @@ class Protocol():
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
@@ -328,6 +330,7 @@ class Protocol():
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None

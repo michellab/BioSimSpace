@@ -372,6 +372,7 @@ class GAFF(_protocol.Protocol):
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
@@ -478,6 +479,7 @@ class GAFF(_protocol.Protocol):
                     except Exception as e:
                         msg = "Failed to read molecule from: 'leap.top', 'leap.crd'"
                         if _isVerbose():
+                            msg += ": " + getattr(e, "message", repr(e))
                             raise IOError(msg) from e
                         else:
                             raise IOError(msg) from None
