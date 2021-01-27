@@ -71,6 +71,10 @@ class Molecule(_SireWrapper):
         self._molecule0 = None
         self._molecule1 = None
 
+        # Set the water model used to parameterise any structural ions
+        # in the molecule.
+        self._ion_water_model = None
+
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
