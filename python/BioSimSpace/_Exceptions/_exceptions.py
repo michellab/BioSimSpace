@@ -29,7 +29,8 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["AlignmentError",
            "IncompatibleError",
            "MissingSoftwareError",
-           "ParameterisationError"]
+           "ParameterisationError",
+           "ThirdPartyError"]
 
 class AlignmentError(Exception):
     """Exception thrown when molecular alignment fails."""
@@ -46,3 +47,6 @@ class MissingSoftwareError(Exception):
 class ParameterisationError(Exception):
     """Exception thrown when molecular parameterisation fails."""
     pass
+
+class ThirdPartyError(Exception):
+    """Exception thrown by a third party package."""
