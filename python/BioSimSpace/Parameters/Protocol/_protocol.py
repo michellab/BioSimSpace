@@ -118,7 +118,7 @@ class Protocol():
         self._tleap = False
         self._pdb2gmx = False
 
-    def run(self, molecule, work_dir=None, queue=None):
+    def run(self, molecule, water_model, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
            Parameters
@@ -126,6 +126,12 @@ class Protocol():
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            work_dir : str
                The working directory.
@@ -142,6 +148,9 @@ class Protocol():
 
         if type(molecule) is not _Molecule:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
 
         if type(work_dir) is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
@@ -166,7 +175,8 @@ class Protocol():
         # First, try parameterise using tLEaP.
         if self._tleap:
             if _tleap_exe is not None:
-                output = self._run_tleap(molecule, work_dir)
+                output = self._run_tleap(molecule, water_model, work_dir)
+                new_mol._ion_water_model = water_model
             # Otherwise, try using pdb2gmx.
             elif self._pdb2gmx:
                 if _gmx_exe is not None:
@@ -209,7 +219,7 @@ class Protocol():
             queue.put(new_mol)
         return new_mol
 
-    def _run_tleap(self, molecule, work_dir):
+    def _run_tleap(self, molecule, water_model, work_dir):
         """Run using tLEaP.
 
            Parameters
@@ -217,6 +227,12 @@ class Protocol():
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            work_dir : str
                The working directory.
@@ -250,6 +266,11 @@ class Protocol():
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
             file.write("source %s\n" % ff)
+            if water_model is not None:
+                if water_model in ["tip4p", "tip5p"]:
+                    file.write("source leaprc.water.tip4pew\n")
+                else:
+                    file.write("source leaprc.water.%s\n" % water_model)
             file.write("mol = loadPdb leap.pdb\n")
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")

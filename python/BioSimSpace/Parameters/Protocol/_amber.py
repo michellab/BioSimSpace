@@ -260,7 +260,7 @@ class GAFF(_protocol.Protocol):
         """
         return self._net_charge
 
-    def run(self, molecule, work_dir=None, queue=None):
+    def run(self, molecule, water_model=None, work_dir=None, queue=None):
         """Run the parameterisation protocol.
 
            Parameters
@@ -268,6 +268,10 @@ class GAFF(_protocol.Protocol):
 
            molecule : BioSimSpace._SireWrappers.Molecule
                The molecule to apply the parameterisation protocol to.
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               parameter is ignored for this force field.
 
            work_dir : str
                The working directory.
