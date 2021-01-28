@@ -58,9 +58,9 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
 
        water_model : str
            The water model used to parameterise any structural ions. This
-           will be ignored when it is not supported by the chosen force field.
-           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           will be ignored when it is not supported by the chosen force field,
+           or when ions aren't present. Run 'BioSimSpace.Solvent.waterModels()'
+           to see the supported water models.
 
        forcefield : str
            The force field. Run BioSimSpace.Parameters.forceFields() to get a
@@ -109,7 +109,7 @@ def ff99(molecule, work_dir=None, water_model=None, property_map={}):
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -143,6 +143,12 @@ def ff99(molecule, work_dir=None, water_model=None, property_map={}):
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
@@ -166,7 +172,7 @@ def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -200,6 +206,12 @@ def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
@@ -223,7 +235,7 @@ def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -257,6 +269,12 @@ def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
@@ -280,7 +298,7 @@ def ff03(molecule, water_model=None, work_dir=None, property_map={}):
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -314,6 +332,12 @@ def ff03(molecule, water_model=None, work_dir=None, property_map={}):
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
@@ -337,7 +361,7 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models.
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -370,6 +394,12 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
 
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
@@ -711,6 +741,106 @@ def _validate_water_model(water_model):
         return True
     else:
         return False
+
+def _has_ions(molecule):
+    """Internal helper function to check whether a molecule contains ions.
+
+       Parameters
+       ----------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           A molecule object.
+
+       Returns
+       -------
+
+       has_ions : bool
+           Whether the molecule contains ions.
+
+       ions: [str]
+           A list of the ions that were found.
+    """
+
+    # Store a list of ionic elements.
+    # (Taken from an AMBER leaprc.water.* file.)
+
+    elements = ["F",
+                "Cl",
+                "Br",
+                "I",
+                "Li",
+                "Na",
+                "K",
+                "Rb",
+                "Cs",
+                "Mg",
+                "Tl",
+                "Cu",
+                "Ag",
+                "Be",
+                "Cu",
+                "Ni",
+                "Pt",
+                "Zn",
+                "Co",
+                "Pd",
+                "Ag",
+                "Cr",
+                "Fe",
+                "Mg",
+                "V",
+                "Mn",
+                "Hg",
+                "Cd",
+                "Yb",
+                "Ca",
+                "Sn",
+                "Pb",
+                "Eu",
+                "Sr",
+                "Sm",
+                "Ba",
+                "Ra",
+                "Al",
+                "Fe",
+                "Cr",
+                "In",
+                "Tl",
+                "Y",
+                "La",
+                "Ce",
+                "Pr",
+                "Nd",
+                "Sm",
+                "Eu",
+                "Gd",
+                "Tb",
+                "Dy",
+                "Er",
+                "Tm",
+                "Lu",
+                "Hf",
+                "Zr",
+                "Ce",
+                "U",
+                "Pu",
+                "Th"]
+
+    # We need to search for ions individually since Sire can't
+    # handle or'ed search strings beyond a certain size.
+
+    # A list of ions that we've found.
+    ions = []
+
+    for element in elements:
+        if molecule.search(f"element {element}").nResults() > 0:
+            ions.append(element)
+
+    # Check whether we found any ions.
+    if len(ions) > 0:
+        return True, ions
+    else:
+        return False, ions
 
 # Clean up redundant attributes.
 del _base
