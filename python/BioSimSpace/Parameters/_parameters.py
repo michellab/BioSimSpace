@@ -34,6 +34,7 @@ __all__ = ["parameterise",
            "gaff",
            "gaff2",
            "forceFields",
+           "amberForceFields",
            "openForceFields"]
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
@@ -89,7 +90,12 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
         if forcefield not in _forcefields_lower:
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
+    # Check whether the forcefield supports using a water model to parameterise
+    # structural ions.
+    if _requires_water_model[forcefield]:
+        return _forcefield_dict[forcefield](molecule, water_model=water_model, work_dir=work_dir, property_map=property_map)
+    else:
+        return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
 
 def ff99(molecule, work_dir=None, water_model=None, property_map={}):
     """Parameterise using the ff99 force field.
@@ -375,7 +381,7 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
 
-def gaff(molecule, water_model=None, work_dir=None, net_charge=None, property_map={}):
+def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -383,10 +389,6 @@ def gaff(molecule, water_model=None, work_dir=None, net_charge=None, property_ma
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       water_model : str
-           The water model used to parameterise any structural ions. This
-           parameter is ignored for this force field.
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
@@ -438,9 +440,9 @@ def gaff(molecule, water_model=None, work_dir=None, net_charge=None, property_ma
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, water_model=None, work_dir=work_dir, auto_start=True)
 
-def gaff2(molecule, water_model=None, work_dir=None, net_charge=None, property_map={}):
+def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -448,10 +450,6 @@ def gaff2(molecule, water_model=None, work_dir=None, net_charge=None, property_m
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
-
-       water_model : str
-           The water model used to parameterise any structural ions. This
-           parameter is ignored for this force field.
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
@@ -506,7 +504,7 @@ def gaff2(molecule, water_model=None, work_dir=None, net_charge=None, property_m
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, water_model=None, work_dir=work_dir, auto_start=True)
 
 def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
     """Parameterise a molecule using a force field from the Open Force Field
@@ -564,14 +562,22 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
 _forcefields = []           # List of force fields (actual names).
+_amber_forcefields = []     # List of the supported AMBER force fields.
 _forcefields_lower = []     # List of lower case names.
 _forcefield_dict = {}       # Mapping between lower case names and functions.
+_requires_water_model = {}  # Whether a given forcefield requires a water model
+                            # to parameterise structural ions.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
+        _amber_forcefields.append(_var)
         _forcefields_lower.append(_var.lower())
+        if _var not in ["gaff", "gaff2"]:
+            _requires_water_model[_var.lower()] = True
+        else:
+            _requires_water_model[_var.lower()] = False
         _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
 
 # Wrapper function to dynamically generate functions with a given name.
@@ -589,10 +595,6 @@ def _make_function(name):
 
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The molecule to parameterise.
-
-           water_model : str
-               The water model used to parameterise any structural ions. This
-               parameter is ignored for this force field.
 
            forcefield : str
                The force field. Run BioSimSpace.Parameters.forceFields() to get a
@@ -649,6 +651,7 @@ for _dir in _openff_dirs:
         # Convert force field name to lower case and map to its function.
         _forcefields_lower.append(_ff.lower())
         _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+        _requires_water_model[_ff.lower()] = False
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -660,6 +663,17 @@ def forceFields():
            A list of the supported force fields.
     """
     return _forcefields
+
+def amberForceFields():
+    """Return a list of the supported AMBER force fields.
+
+       Returns
+       -------
+
+       force_fields : [str]
+           A list of the supported force fields.
+    """
+    return _amber_forcefields
 
 def openForceFields():
     """Return a list of the supported force fields from the Open Force Field
