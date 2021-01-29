@@ -27,6 +27,7 @@ __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["parameterise",
+           "ff03",
            "ff99",
            "ff99SB",
            "ff99SBildn",
@@ -34,18 +35,20 @@ __all__ = ["parameterise",
            "gaff",
            "gaff2",
            "forceFields",
+           "amberForceFields",
            "openForceFields"]
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace.Solvent import waterModels as _waterModels
 from BioSimSpace.Types import Charge as _Charge
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
 
-def parameterise(molecule, forcefield, work_dir=None, property_map={}):
+def parameterise(molecule, forcefield, water_model=None, work_dir=None, property_map={}):
     """Parameterise a molecule using a specified force field.
 
        Parameters
@@ -53,6 +56,12 @@ def parameterise(molecule, forcefield, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions. This
+           will be ignored when it is not supported by the chosen force field,
+           or when ions aren't present. Run 'BioSimSpace.Solvent.waterModels()'
+           to see the supported water models.
 
        forcefield : str
            The force field. Run BioSimSpace.Parameters.forceFields() to get a
@@ -82,9 +91,14 @@ def parameterise(molecule, forcefield, work_dir=None, property_map={}):
         if forcefield not in _forcefields_lower:
             raise ValueError("Supported force fields are: %s" % forceFields())
 
-    return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
+    # Check whether the forcefield supports using a water model to parameterise
+    # structural ions.
+    if _requires_water_model[forcefield]:
+        return _forcefield_dict[forcefield](molecule, water_model=water_model, work_dir=work_dir, property_map=property_map)
+    else:
+        return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
 
-def ff99(molecule, work_dir=None, property_map={}):
+def ff99(molecule, work_dir=None, water_model=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Parameters
@@ -92,6 +106,11 @@ def ff99(molecule, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions.
+           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -118,17 +137,31 @@ def ff99(molecule, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
+    if water_model is not None and type(water_model) is not str:
+        raise TypeError("'water_model' must be of type 'str'.")
+
+    if water_model is not None:
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99(property_map=property_map)
+    protocol = _Protocol.FF99(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SB(molecule, work_dir=None, property_map={}):
+def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Parameters
@@ -136,6 +169,11 @@ def ff99SB(molecule, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions.
+           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -162,17 +200,31 @@ def ff99SB(molecule, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
+    if water_model is not None and type(water_model) is not str:
+        raise TypeError("'water_model' must be of type 'str'.")
+
+    if water_model is not None:
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SB(property_map=property_map)
+    protocol = _Protocol.FF99SB(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SBildn(molecule, work_dir=None, property_map={}):
+def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
 
        Parameters
@@ -180,6 +232,11 @@ def ff99SBildn(molecule, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions.
+           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -206,17 +263,31 @@ def ff99SBildn(molecule, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
+    if water_model is not None and type(water_model) is not str:
+        raise TypeError("'water_model' must be of type 'str'.")
+
+    if water_model is not None:
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SBILDN(property_map=property_map)
+    protocol = _Protocol.FF99SBILDN(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff03(molecule, work_dir=None, property_map={}):
+def ff03(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Parameters
@@ -224,6 +295,11 @@ def ff03(molecule, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions.
+           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -250,17 +326,31 @@ def ff03(molecule, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
+    if water_model is not None and type(water_model) is not str:
+        raise TypeError("'water_model' must be of type 'str'.")
+
+    if water_model is not None:
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF03(property_map=property_map)
+    protocol = _Protocol.FF03(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff14SB(molecule, work_dir=None, property_map={}):
+def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Parameters
@@ -268,6 +358,11 @@ def ff14SB(molecule, work_dir=None, property_map={}):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The molecule to parameterise.
+
+       water_model : str
+           The water model used to parameterise any structural ions.
+           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+           water models. This is ignored if ions are not present.
 
        work_dir : str
            The working directory for the process.
@@ -293,11 +388,25 @@ def ff14SB(molecule, work_dir=None, property_map={}):
     if type(molecule) is not _Molecule:
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
+    if water_model is not None and type(water_model) is not str:
+        raise TypeError("'water_model' must be of type 'str'.")
+
+    if water_model is not None:
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF14SB(property_map=property_map)
+    protocol = _Protocol.FF14SB(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
@@ -484,14 +593,22 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
 _forcefields = []           # List of force fields (actual names).
+_amber_forcefields = []     # List of the supported AMBER force fields.
 _forcefields_lower = []     # List of lower case names.
 _forcefield_dict = {}       # Mapping between lower case names and functions.
+_requires_water_model = {}  # Whether a given forcefield requires a water model
+                            # to parameterise structural ions.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var[0].upper() != "P":
         _forcefields.append(_var)
+        _amber_forcefields.append(_var)
         _forcefields_lower.append(_var.lower())
+        if _var not in ["gaff", "gaff2"]:
+            _requires_water_model[_var.lower()] = True
+        else:
+            _requires_water_model[_var.lower()] = False
         _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
 
 # Wrapper function to dynamically generate functions with a given name.
@@ -565,6 +682,7 @@ for _dir in _openff_dirs:
         # Convert force field name to lower case and map to its function.
         _forcefields_lower.append(_ff.lower())
         _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+        _requires_water_model[_ff.lower()] = False
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -577,6 +695,17 @@ def forceFields():
     """
     return _forcefields
 
+def amberForceFields():
+    """Return a list of the supported AMBER force fields.
+
+       Returns
+       -------
+
+       force_fields : [str]
+           A list of the supported force fields.
+    """
+    return _amber_forcefields
+
 def openForceFields():
     """Return a list of the supported force fields from the Open Force Field
        Initiative.
@@ -588,6 +717,131 @@ def openForceFields():
            A list of the supported force fields.
     """
     return _open_forcefields
+
+def _validate_water_model(water_model):
+    """Internal helper function used to validate the water model chosen
+       for parameterising structural ions.
+
+       Parameters
+       ----------
+
+       water_model : str
+           The chosen water model.
+
+       Returns
+       -------
+
+       is_valid : bool
+           Whether the water model is supported.
+    """
+    # Srip whitespace and convert to lower case.
+    water_model = water_model.replace(" ", "").lower()
+
+    # Check that we support this water model.
+    if water_model in _waterModels():
+        return True
+    else:
+        return False
+
+def _has_ions(molecule):
+    """Internal helper function to check whether a molecule contains ions.
+
+       Parameters
+       ----------
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           A molecule object.
+
+       Returns
+       -------
+
+       has_ions : bool
+           Whether the molecule contains ions.
+
+       ions: [str]
+           A list of the ions that were found.
+    """
+
+    # Store a list of ionic elements.
+    # (Taken from an AMBER leaprc.water.* file.)
+
+    elements = ["F",
+                "Cl",
+                "Br",
+                "I",
+                "Li",
+                "Na",
+                "K",
+                "Rb",
+                "Cs",
+                "Mg",
+                "Tl",
+                "Cu",
+                "Ag",
+                "Be",
+                "Cu",
+                "Ni",
+                "Pt",
+                "Zn",
+                "Co",
+                "Pd",
+                "Ag",
+                "Cr",
+                "Fe",
+                "Mg",
+                "V",
+                "Mn",
+                "Hg",
+                "Cd",
+                "Yb",
+                "Ca",
+                "Sn",
+                "Pb",
+                "Eu",
+                "Sr",
+                "Sm",
+                "Ba",
+                "Ra",
+                "Al",
+                "Fe",
+                "Cr",
+                "In",
+                "Tl",
+                "Y",
+                "La",
+                "Ce",
+                "Pr",
+                "Nd",
+                "Sm",
+                "Eu",
+                "Gd",
+                "Tb",
+                "Dy",
+                "Er",
+                "Tm",
+                "Lu",
+                "Hf",
+                "Zr",
+                "Ce",
+                "U",
+                "Pu",
+                "Th"]
+
+    # We need to search for ions individually since Sire can't
+    # handle or'ed search strings beyond a certain size.
+
+    # A list of ions that we've found.
+    ions = []
+
+    for element in elements:
+        if molecule.search(f"element {element}").nResults() > 0:
+            ions.append(element)
+
+    # Check whether we found any ions.
+    if len(ions) > 0:
+        return True, ions
+    else:
+        return False, ions
 
 # Clean up redundant attributes.
 del _base

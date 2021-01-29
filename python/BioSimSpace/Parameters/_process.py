@@ -75,7 +75,9 @@ def _wrap_protocol(protocol_function, process):
            A handle to the parent process.
     """
     try:
-        protocol_function(process._molecule, process._work_dir, process._queue)
+        protocol_function(process._molecule,
+                          process._work_dir,
+                          process._queue)
     except Exception as e:
         # Record that an error has been thrown.
         process._is_error = True

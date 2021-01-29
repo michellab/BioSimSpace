@@ -54,11 +54,17 @@ from . import _protocol
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -69,6 +75,12 @@ class FF03(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff03", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
         # Set the compatibility flags.
         self._tleap = True
         self._pdb2gmx = True
@@ -76,11 +88,17 @@ class FF03(_protocol.Protocol):
 class FF99(_protocol.Protocol):
     """A class for handling protocols for the FF99 force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -91,6 +109,12 @@ class FF99(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
         # Set the compatibility flags.
         self._tleap = True
         self._pdb2gmx = True
@@ -98,11 +122,17 @@ class FF99(_protocol.Protocol):
 class FF99SB(_protocol.Protocol):
     """A class for handling protocols for the FF99SB force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -113,17 +143,29 @@ class FF99SB(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SB", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
         # Set the compatibility flags.
         self._tleap = True
 
 class FF99SBILDN(_protocol.Protocol):
     """A class for handling protocols for the FF99SBILDN force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -134,6 +176,12 @@ class FF99SBILDN(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SBildn", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
         # Set the compatibility flags.
         self._tleap = True
         self._pdb2gmx = False
@@ -141,11 +189,17 @@ class FF99SBILDN(_protocol.Protocol):
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -155,6 +209,12 @@ class FF14SB(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff14SB", property_map=property_map)
+
+        # Validate the water model.
+        if water_model is not None and type(water_model) is not str:
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
 
         # Set the compatibility flags.
         self._tleap = True

@@ -166,7 +166,7 @@ def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
 
     # Validate arguments.
     molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+        _validate_input("spc", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, angles, shell, "spc", 3, ion_conc,
@@ -223,7 +223,7 @@ def spce(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
 
     # Validate arguments.
     molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+        _validate_input("spce", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, angles, shell, "spce", 3, ion_conc,
@@ -280,7 +280,7 @@ def tip3p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
 
     # Validate arguments.
     molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+        _validate_input("tip3p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Create the solvated system.
     return _solvate(molecule, box, angles, shell, "tip3p", 3, ion_conc,
@@ -337,7 +337,7 @@ def tip4p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
 
     # Validate arguments.
     molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+        _validate_input("tip4p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
     return _solvate(molecule, box, angles, shell, "tip4p", 4, ion_conc,
@@ -394,17 +394,20 @@ def tip5p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
 
     # Validate arguments.
     molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+        _validate_input("tip5p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
 
     # Return the solvated system.
     return _solvate(molecule, box, angles, shell, "tip5p", 5, ion_conc,
             is_neutral, work_dir=work_dir, property_map=property_map)
 
-def _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map):
+def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map):
     """Internal function to validate function arguments.
 
        Parameters
        ----------
+
+       model : str
+           The name of the water model.
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
                   :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
@@ -474,6 +477,22 @@ def _validate_input(molecule, box, angles, shell, ion_conc, is_neutral, work_dir
         else:
             if box is None and shell is None:
                 raise ValueError("Missing 'box' keyword argument!")
+
+        # Warn the user if any of the molecules contain structural ions
+        # parameterised for a different water model.
+        if type(molecule) is _System:
+            for mol in molecule:
+                ion_water_model = mol._ion_water_model
+                if ion_water_model is not None and ion_water_model != model:
+                    _warnings.warn( "Mismatch with water model used to parameterise "
+                                   f"structural ions: '{ion_water_model}'")
+                    break
+        else:
+            ion_water_model = molecule._ion_water_model
+            if ion_water_model is not None and ion_water_model != model:
+                _warnings.warn( "Mismatch with water model used to parameterise "
+                               f"structural ions: '{ion_water_model}'")
+
     else:
         _molecule = None
 
