@@ -27,6 +27,7 @@ __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["parameterise",
+           "ff03",
            "ff99",
            "ff99SB",
            "ff99SBildn",
