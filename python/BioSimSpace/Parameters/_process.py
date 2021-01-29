@@ -75,7 +75,6 @@ def _wrap_protocol(protocol_function, process):
     """
     try:
         protocol_function(process._molecule,
-                          process._water_model,
                           process._work_dir,
                           process._queue)
     except Exception as e:
@@ -93,7 +92,7 @@ def _wrap_protocol(protocol_function, process):
 class Process():
     """A class for running parameterisation protocols as a background process."""
 
-    def __init__(self, molecule, protocol, water_model=None, work_dir=None, auto_start=False):
+    def __init__(self, molecule, protocol, work_dir=None, auto_start=False):
         """Constructor
 
            Parameters
@@ -104,12 +103,6 @@ class Process():
 
            protocol : BioSimSpace.Parameters.Protocol
                The parameterisation protocol.
-
-           water_model : str
-               The water model used to parameterise any structural ions. This
-               will be ignored when it is not supported by the chosen force field.
-               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-               water models.
 
            work_dir : str
                The working directory for the process.
@@ -126,9 +119,6 @@ class Process():
         if not isinstance(protocol, _Protocol._Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
 
-        if water_model is not None and type(water_model) is not str:
-            raise TypeError("'water_model' must be of type 'str'")
-
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
 
@@ -138,7 +128,6 @@ class Process():
         # Set attributes.
         self._molecule = molecule
         self._protocol = protocol
-        self._water_model = water_model
         self._new_molecule = None
         self._is_error = False
         self._last_error = None

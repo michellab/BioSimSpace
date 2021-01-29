@@ -155,11 +155,11 @@ def ff99(molecule, work_dir=None, water_model=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99(property_map=property_map)
+    protocol = _Protocol.FF99(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
@@ -218,11 +218,11 @@ def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SB(property_map=property_map)
+    protocol = _Protocol.FF99SB(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
@@ -281,11 +281,11 @@ def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SBILDN(property_map=property_map)
+    protocol = _Protocol.FF99SBILDN(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff03(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
@@ -344,11 +344,11 @@ def ff03(molecule, water_model=None, work_dir=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF03(property_map=property_map)
+    protocol = _Protocol.FF03(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
@@ -406,11 +406,11 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF14SB(property_map=property_map)
+    protocol = _Protocol.FF14SB(water_model=water_model, property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
@@ -471,7 +471,7 @@ def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model=None, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
     """Parameterise using the gaff force field.
@@ -535,7 +535,7 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model=None, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
     """Parameterise a molecule using a force field from the Open Force Field
@@ -588,7 +588,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
-    return _Process(molecule, protocol, water_model=None, work_dir=work_dir, auto_start=True)
+    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
 # Create a list of the force field names.
 # This needs to come after all of the force field functions.
