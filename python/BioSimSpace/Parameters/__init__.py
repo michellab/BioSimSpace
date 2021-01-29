@@ -143,8 +143,7 @@ any compatible AMBER force field function, e.g.:
 
    # Create a list of the additional commands for the LEaP program. These will
    # be run before any default commands.
-   leap_commands = ["addPath /home/lester/Downloads/leap_example/phosphate-params",
-                    "source leaprc.phosaa10"]
+   leap_commands = ["addPath phosphate_params", "source leaprc.phosaa10"]
 
    # Initialise the parameterisation process and block until the molecule is
    # ready to be returned.
