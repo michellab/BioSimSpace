@@ -52,6 +52,7 @@ import threading as _threading
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
@@ -211,7 +212,10 @@ class Process():
 
         # If there was an problem, return the last error.
         if self._is_error:
-            raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
+            if _isVerbose():
+                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
+            else:
+                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
 
         return self._new_molecule
 

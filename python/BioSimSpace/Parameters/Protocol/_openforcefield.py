@@ -70,6 +70,7 @@ from Sire import System as _SireSystem
 from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import _protocol
@@ -140,20 +141,18 @@ class OpenForceField(_protocol.Protocol):
         # Create a copy of the molecule.
         new_mol = molecule.copy()
 
-        # Uniquify the atom names.
-        unique_mol = _uniquify_atom_names(new_mol)
-
         # The following is adapted from the Open Force Field examples, where an
         # OpenFF system is converted to AMBER format files using ParmEd:
         # https://github.com/openforcefield/openff-toolkit/blob/master/examples/using_smirnoff_in_amber_or_gromacs/convert_to_amber_gromacs.ipynb
 
         # Write the molecule to a PDB file.
         try:
-            pdb = _SireIO.PDB2(unique_mol.toSystem()._sire_object)
+            pdb = _SireIO.PDB2(new_mol.toSystem()._sire_object)
             pdb.writeToFile(prefix + "molecule.pdb")
         except Exception as e:
             msg = "Failed to write the molecule to 'PDB' format."
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
@@ -162,70 +161,108 @@ class OpenForceField(_protocol.Protocol):
         try:
             rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
         except Exception as e:
-            raise IOError("RDKit was unable to read the molecular PDB file!") from None
+            msg = "RDKit was unable to read the molecular PDB file!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
-        # Use RDKit to write back to PDB format so that we generate a CONECT
-        # record, which is required by OpenFF.
+        # Use RDKit to write back to SDF format.
         try:
-            _Chem.MolToPDBFile(rdmol, prefix + "molecule.pdb")
+            writer = _Chem.SDWriter(prefix + "molecule.sdf")
+            writer.write(rdmol)
+            writer.close()
         except Exception as e:
-            raise IOError("RDKit was unable to write the molecular PDB file!") from None
+            msg = "RDKit was unable to write the molecular SDF file!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
-        # Obtain the OpenMM Topology object from the PDB file.
+        # Create the Open Forcefield Molecule from the intermediate SDF file,
+        # as recommended by @j-wags and @mattwthompson.
         try:
-            pdbfile = _PDBFile(prefix + "molecule.pdb")
-            omm_topology = pdbfile.topology
+            off_molecule = _OpenFFMolecule.from_file(prefix + "molecule.sdf")
         except Exception as e:
-            raise IOError("OpenMM was unable to read the molecular PDB file!") from None
+            msg = "Unable to create OpenFF Molecule!"
+            raise
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
-        # Use RDKit to generate the smiles string for the molecule.
+        # Extract the molecular topology.
         try:
-            # Split on a dot in case multiple molecules were present.
-            smiles = _Chem.MolToSmiles(rdmol).split(".")
+            off_topology = off_molecule.to_topology()
         except Exception as e:
-            raise IOError("RDKit was unable to generate a SMILE string for the molecule!") from None
-
-        # Convert the SMILES string to an OpenFF molecule.
-        try:
-            off_molecules = []
-            for s in smiles:
-                off_molecules.append(_OpenFFMolecule.from_smiles(s))
-            # Convert to a set then back to a list to remove duplicates.
-            off_molecules = list(set(off_molecules))
-        except Exception as e:
-            raise IOError("Unable to convert SMILES to an OpenFF Molecule!") from None
-
-        # Create the Open Forcefield Topology.
-        try:
-            off_topology = _OpenFFTopology.from_openmm(omm_topology, unique_molecules=off_molecules)
-        except Exception as e:
-            raise IOError("Unable to create OpenFF Topology!") from None
+            msg = "Unable to create OpenFF Topology!"
+            raise
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
         # Load the force field.
         try:
             ff = self._forcefield + ".offxml"
             forcefield = _Forcefield(ff)
         except Exception as e:
-            raise IOError(f"Unable to load force field: {ff}") from None
+            msg = f"Unable to load force field: {ff}"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
+
+        # Obtain the OpenMM Topology object from the PDB file.
+        try:
+            pdbfile = _PDBFile(prefix + "molecule.pdb")
+            omm_topology = pdbfile.topology
+        except Exception as e:
+            msg = "OpenMM was unable to read the molecular PDB file!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
         # Create an OpenMM system.
         try:
             omm_system = forcefield.create_openmm_system(off_topology)
         except Exception as e:
-            raise IOError("Unable to create OpenMM System!") from None
+            msg = "Unable to create OpenMM System!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
         # Convert the OpenMM System to a ParmEd structure.
         try:
             parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, pdbfile.positions)
         except Exception as e:
-            raise IOError("Unable to convert OpenMM System to ParmEd structure!") from None
+            msg = "Unable to convert OpenMM System to ParmEd structure!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
         # Export AMBER format files.
         try:
             parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
             parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
         except Exception as e:
-            raise IOError("Unable to write ParmEd structure to AMBER format!") from None
+            msg = "Unable to write ParmEd structure to AMBER format!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _ThirdPartyError(msg) from e
+            else:
+                raise _ThirdPartyError(msg) from None
 
         # Load the parameterised molecule. (This could be a system of molecules.)
         try:
@@ -236,6 +273,7 @@ class OpenForceField(_protocol.Protocol):
         except Exception as e:
             msg = "Failed to read molecule from: 'parmed.prmtop', 'parmed.inpcrd'"
             if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
@@ -249,71 +287,3 @@ class OpenForceField(_protocol.Protocol):
         if queue is not None:
             queue.put(new_mol)
         return new_mol
-
-def _uniquify_atom_names(molecule):
-    """Helper function to genrate unique PDB atom names.
-
-       Parameters
-       ----------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           A molecule object.
-
-       Returns
-       -------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule with unique atom names.
-    """
-
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
-
-    # Generate a dictionary mapping between atom names and the number of times
-    # they occur in the molecule.
-
-    # Initialise dictionaries.
-    name_tally = {}
-    num_named = {}
-
-    # Loop over all atoms in the molecule.
-    for atom in molecule.getAtoms():
-        # Get the atom name.
-        name = atom.name()
-
-        # Update the dictionary.
-        if name in name_tally:
-            name_tally[name] += 1
-        else:
-            name_tally[name] = 1
-
-    # Make sure it's possible to rename the atoms within the PDB specification.
-    for name, tally in name_tally.items():
-        num_named[name] = 1
-        if tally > 1:
-            if len(name) > 2:
-                raise _IncompatibleError(f"Cannot generate unique PDB atom name for atom '{name}'.")
-            else:
-                # Work out the maximum number of atoms we can name.
-                max_num = 10**(3-len(name)) - 1
-                if tally > max_num:
-                    raise _IncompatibleError(f"Cannot generate unique PDB atom name for atom '{name}'.")
-
-    # Get the Sire molecule and make it editable.
-    edit_mol = molecule._sire_object.edit()
-
-    # Loop over all atoms and rename them.
-    for atom in edit_mol.atoms():
-        name = atom.name().value()
-
-        # If there is more than one atom with this name, then rename it.
-        if name_tally[name] > 1:
-            new_name = _SireMol.AtomName(name + str(num_named[name]))
-            edit_mol = edit_mol.atom(atom.index()).rename(new_name).molecule()
-            num_named[name] += 1
-
-    # Commit the changes to the molecule.
-    mol = edit_mol.commit()
-
-    # Return the updated molecule.
-    return _Molecule(mol)
