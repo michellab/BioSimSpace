@@ -98,7 +98,7 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
     else:
         return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map)
 
-def ff99(molecule, work_dir=None, water_model=None, property_map={}):
+def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Parameters
@@ -111,6 +111,12 @@ def ff99(molecule, work_dir=None, water_model=None, property_map={}):
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
            water models. This is ignored if ions are not present.
+
+       leap_commands : [str]
+           An optional list of extra commands for the LEaP program. These
+           will be added before any default commands and can be used to, e.g.,
+           load additional parameter files. When this option is set, we can no
+           longer fall back on GROMACS's pdb2gmx.
 
        work_dir : str
            The working directory for the process.
@@ -151,17 +157,29 @@ def ff99(molecule, work_dir=None, water_model=None, property_map={}):
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
                               "Please choose a 'water_model' for the ion parameters.")
 
+    if leap_commands is not None:
+        if type(leap_commands) is tuple:
+            # Convert tuple to list.
+            leap_commands = list(leap_commands)
+        if type(leap_commands) is not list:
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99(water_model=water_model, property_map=property_map)
+    protocol = _Protocol.FF99(water_model=water_model,
+                              leap_commands=leap_commands,
+                              property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
+def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Parameters
@@ -174,6 +192,12 @@ def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
            water models. This is ignored if ions are not present.
+
+       leap_commands : [str]
+           An optional list of extra commands for the LEaP program. These
+           will be added before any default commands and can be used to, e.g.,
+           load additional parameter files. When this option is set, we can no
+           longer fall back on GROMACS's pdb2gmx.
 
        work_dir : str
            The working directory for the process.
@@ -214,17 +238,29 @@ def ff99SB(molecule, water_model=None, work_dir=None, property_map={}):
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
                               "Please choose a 'water_model' for the ion parameters.")
 
+    if leap_commands is not None:
+        if type(leap_commands) is tuple:
+            # Convert tuple to list.
+            leap_commands = list(leap_commands)
+        if type(leap_commands) is not list:
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SB(water_model=water_model, property_map=property_map)
+    protocol = _Protocol.FF99SB(water_model=water_model,
+                                leap_commands=leap_commands,
+                                property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
+def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
 
        Parameters
@@ -237,6 +273,12 @@ def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
            water models. This is ignored if ions are not present.
+
+       leap_commands : [str]
+           An optional list of extra commands for the LEaP program. These
+           will be added before any default commands and can be used to, e.g.,
+           load additional parameter files. When this option is set, we can no
+           longer fall back on GROMACS's pdb2gmx.
 
        work_dir : str
            The working directory for the process.
@@ -277,17 +319,29 @@ def ff99SBildn(molecule, water_model=None, work_dir=None, property_map={}):
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
                               "Please choose a 'water_model' for the ion parameters.")
 
+    if leap_commands is not None:
+        if type(leap_commands) is tuple:
+            # Convert tuple to list.
+            leap_commands = list(leap_commands)
+        if type(leap_commands) is not list:
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SBILDN(water_model=water_model, property_map=property_map)
+    protocol = _Protocol.FF99SBILDN(water_model=water_model,
+                                    leap_commands=leap_commands,
+                                    property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff03(molecule, water_model=None, work_dir=None, property_map={}):
+def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Parameters
@@ -300,6 +354,12 @@ def ff03(molecule, water_model=None, work_dir=None, property_map={}):
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
            water models. This is ignored if ions are not present.
+
+       leap_commands : [str]
+           An optional list of extra commands for the LEaP program. These
+           will be added before any default commands and can be used to, e.g.,
+           load additional parameter files. When this option is set, we can no
+           longer fall back on GROMACS's pdb2gmx.
 
        work_dir : str
            The working directory for the process.
@@ -340,17 +400,29 @@ def ff03(molecule, water_model=None, work_dir=None, property_map={}):
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
                               "Please choose a 'water_model' for the ion parameters.")
 
+    if leap_commands is not None:
+        if type(leap_commands) is tuple:
+            # Convert tuple to list.
+            leap_commands = list(leap_commands)
+        if type(leap_commands) is not list:
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF03(water_model=water_model, property_map=property_map)
+    protocol = _Protocol.FF03(water_model=water_model,
+                              leap_commands=leap_commands,
+                              property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
+def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Parameters
@@ -363,6 +435,12 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
            water models. This is ignored if ions are not present.
+
+       leap_commands : [str]
+           An optional list of extra commands for the LEaP program. These
+           will be added before any default commands and can be used to, e.g.,
+           load additional parameter files. When this option is set, we can no
+           longer fall back on GROMACS's pdb2gmx.
 
        work_dir : str
            The working directory for the process.
@@ -402,11 +480,23 @@ def ff14SB(molecule, water_model=None, work_dir=None, property_map={}):
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
                               "Please choose a 'water_model' for the ion parameters.")
 
+    if leap_commands is not None:
+        if type(leap_commands) is tuple:
+            # Convert tuple to list.
+            leap_commands = list(leap_commands)
+        if type(leap_commands) is not list:
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.FF14SB(water_model=water_model, property_map=property_map)
+    protocol = _Protocol.FF14SB(water_model=water_model,
+                                leap_commands=leap_commands,
+                                property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.

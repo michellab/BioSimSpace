@@ -255,6 +255,10 @@ class Protocol():
 
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
+            # Write extra user commands.
+            if self._leap_commands is not None:
+                for command in self._leap_commands:
+                    file.write("%s\n" % command)
             file.write("source %s\n" % ff)
             if self._water_model is not None:
                 if self._water_model in ["tip4p", "tip5p"]:

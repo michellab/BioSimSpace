@@ -130,6 +130,25 @@ for the ion parameters, e.g:
    # Initialise the parameterisation process and block until the molecule is
    # ready to be returned.
    molecule = BSS.Parameters.ff14SB(molecule, water_model="tip3p").getMolecule()
+
+Additional parameters can be loaded by passing the 'leap_commands' option to
+any compatible AMBER force field function, e.g.:
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/peptide.pdb")
+
+   # Create a list of the additional commands for the LEaP program. These will
+   # be run before any default commands.
+   leap_commands = ["addPath /home/lester/Downloads/leap_example/phosphate-params",
+                    "source leaprc.phosaa10"]
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.ff14SB(molecule, leap_commands=leap_commands).getMolecule()
 """
 
 from ._parameters import *

@@ -54,7 +54,7 @@ from . import _protocol
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self, water_model=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -65,6 +65,12 @@ class FF03(_protocol.Protocol):
                will be ignored when it is not supported by the chosen force field.
                Run 'BioSimSpace.Solvent.waterModels()' to see the supported
                water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added before any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -81,14 +87,27 @@ class FF03(_protocol.Protocol):
         else:
             self._water_model = water_model
 
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if type(leap_commands) is tuple:
+                # Convert tuple to list.
+                leap_commands = list(leap_commands)
+            if type(leap_commands) is not list:
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = True
+        if self._leap_commands is None:
+            self._pdb2gmx = True
 
 class FF99(_protocol.Protocol):
     """A class for handling protocols for the FF99 force field model."""
 
-    def __init__(self, water_model=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -99,6 +118,12 @@ class FF99(_protocol.Protocol):
                will be ignored when it is not supported by the chosen force field.
                Run 'BioSimSpace.Solvent.waterModels()' to see the supported
                water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added before any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -115,14 +140,27 @@ class FF99(_protocol.Protocol):
         else:
             self._water_model = water_model
 
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if type(leap_commands) is tuple:
+                # Convert tuple to list.
+                leap_commands = list(leap_commands)
+            if type(leap_commands) is not list:
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = True
+        if self._leap_commands is None:
+            self._pdb2gmx = True
 
 class FF99SB(_protocol.Protocol):
     """A class for handling protocols for the FF99SB force field model."""
 
-    def __init__(self, water_model=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -133,6 +171,12 @@ class FF99SB(_protocol.Protocol):
                will be ignored when it is not supported by the chosen force field.
                Run 'BioSimSpace.Solvent.waterModels()' to see the supported
                water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added before any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -149,13 +193,25 @@ class FF99SB(_protocol.Protocol):
         else:
             self._water_model = water_model
 
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if type(leap_commands) is tuple:
+                # Convert tuple to list.
+                leap_commands = list(leap_commands)
+            if type(leap_commands) is not list:
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
 
 class FF99SBILDN(_protocol.Protocol):
     """A class for handling protocols for the FF99SBILDN force field model."""
 
-    def __init__(self, water_model=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -166,6 +222,12 @@ class FF99SBILDN(_protocol.Protocol):
                will be ignored when it is not supported by the chosen force field.
                Run 'BioSimSpace.Solvent.waterModels()' to see the supported
                water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added before any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -182,14 +244,25 @@ class FF99SBILDN(_protocol.Protocol):
         else:
             self._water_model = water_model
 
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if type(leap_commands) is tuple:
+                # Convert tuple to list.
+                leap_commands = list(leap_commands)
+            if type(leap_commands) is not list:
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = False
 
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self, water_model=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -200,6 +273,12 @@ class FF14SB(_protocol.Protocol):
                will be ignored when it is not supported by the chosen force field.
                Run 'BioSimSpace.Solvent.waterModels()' to see the supported
                water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added before any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -215,6 +294,18 @@ class FF14SB(_protocol.Protocol):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if type(leap_commands) is tuple:
+                # Convert tuple to list.
+                leap_commands = list(leap_commands)
+            if type(leap_commands) is not list:
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
 
         # Set the compatibility flags.
         self._tleap = True
