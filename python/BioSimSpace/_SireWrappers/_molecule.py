@@ -513,7 +513,8 @@ class Molecule(_SireWrapper):
     def makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
             rename_atoms=False, verbose=False):
         """Make this molecule compatible with passed one, i.e. match atoms and
-           add all additional properties from the passed molecule.
+           add all additional properties from the passed molecule while preserving
+           the topology and naming/numbering convention of this molecule.
 
            Parameters
            ----------
@@ -848,12 +849,12 @@ class Molecule(_SireWrapper):
                 info = mol.info()
 
                 # An inverse mapping for indices in mol1 to those in mol0.
-                inv_mapping = {}
+                inv_matches = {}
 
                 # Loop over all matching atom pairs for this molecule.
                 for idx0, idx1 in matches[idx].items():
                     # Add indices to the inverse mapping.
-                    inv_mapping[idx1] = idx0
+                    inv_matches[idx1] = idx0
 
                     # Check the atom names and see if they need updating.
                     if rename_atoms:
@@ -904,7 +905,7 @@ class Molecule(_SireWrapper):
                         # Try making the property compatible with the original molecule.
                         if hasattr(propty, "makeCompatibleWith"):
                             try:
-                                propty = propty.makeCompatibleWith(mol0, matches[idx])
+                                propty = propty.makeCompatibleWith(mol0, inv_matches)
                             except Exception as e:
                                 msg = "Incompatible property: %s" % prop
                                 if _isVerbose():
@@ -929,8 +930,8 @@ class Molecule(_SireWrapper):
                         exprn = bond.function()
 
                         # Map the atom indices to their position in the merged molecule.
-                        atom0 = inv_mapping[atom0]
-                        atom1 = inv_mapping[atom1]
+                        atom0 = inv_matches[atom0]
+                        atom1 = inv_matches[atom1]
 
                         # Set the new bond.
                         bonds.set(atom0, atom1, exprn)
@@ -948,9 +949,9 @@ class Molecule(_SireWrapper):
                         exprn = angle.function()
 
                         # Map the atom indices to their position in the merged molecule.
-                        atom0 = inv_mapping[atom0]
-                        atom1 = inv_mapping[atom1]
-                        atom2 = inv_mapping[atom2]
+                        atom0 = inv_matches[atom0]
+                        atom1 = inv_matches[atom1]
+                        atom2 = inv_matches[atom2]
 
                         # Set the new angle.
                         angles.set(atom0, atom1, atom2, exprn)
@@ -969,10 +970,10 @@ class Molecule(_SireWrapper):
                         exprn = dihedral.function()
 
                         # Map the atom indices to their position in the merged molecule.
-                        atom0 = inv_mapping[atom0]
-                        atom1 = inv_mapping[atom1]
-                        atom2 = inv_mapping[atom2]
-                        atom3 = inv_mapping[atom3]
+                        atom0 = inv_matches[atom0]
+                        atom1 = inv_matches[atom1]
+                        atom2 = inv_matches[atom2]
+                        atom3 = inv_matches[atom3]
 
                         # Set the new dihedral.
                         dihedrals.set(atom0, atom1, atom2, atom3, exprn)
@@ -991,10 +992,10 @@ class Molecule(_SireWrapper):
                         exprn = improper.function()
 
                         # Map the atom indices to their position in the merged molecule.
-                        atom0 = inv_mapping[atom0]
-                        atom1 = inv_mapping[atom1]
-                        atom2 = inv_mapping[atom2]
-                        atom3 = inv_mapping[atom3]
+                        atom0 = inv_matches[atom0]
+                        atom1 = inv_matches[atom1]
+                        atom2 = inv_matches[atom2]
+                        atom3 = inv_matches[atom3]
 
                         # Set the new improper.
                         impropers.set(atom0, atom1, atom2, atom3, exprn)
