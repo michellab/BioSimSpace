@@ -115,6 +115,21 @@ incorrect formal charge information.
    # Get the parameterised molecule. This will now block until the
    # parameterisation is finished.
    molecule = process.getMolecule()
+
+When parameterising a molecule containing a structural ion with an AMBER force
+field then it is necessary to pass the name of a water model that will be used
+for the ion parameters, e.g:
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/4V2Y_A.pdb")
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.ff14SB(molecule, water_model="tip3p").getMolecule()
 """
 
 from ._parameters import *
