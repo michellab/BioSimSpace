@@ -1335,9 +1335,9 @@ class System(_SireWrapper):
                 water_model = self._sire_object.property("water_model").toString()
 
                 if format == "AMBER":
-                    waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
                 else:
-                    waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
+                    new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 
             # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
             # to guess the water model from the topology.
@@ -1354,16 +1354,22 @@ class System(_SireWrapper):
                     water_model = "TIP5P"
 
                 if format == "AMBER":
-                    waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
                 else:
-                    waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
+                    new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 
             # Loop over all of the renamed water molecules, delete the old one
             # from the system, then add the renamed one back in.
             # TODO: This is a hack since the "update" method of Sire.System
             # doesn't work properly at present.
             self.removeWaterMolecules()
-            for wat in waters:
+            for idx, wat in enumerate(new_waters):
+                # Renumber the new molecule to match the original.
+                edit_mol = wat.edit()
+                edit_mol.renumber(waters[idx]._sire_object.number())
+                wat = edit_mol.commit()
+
+                # Re-add the water to the system.
                 self._sire_object.add(wat, _SireMol.MGName("all"))
 
             # Reset the index mappings.
