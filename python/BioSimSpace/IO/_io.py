@@ -538,6 +538,25 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         # Add the file format to the property map.
         _property_map["fileformat"] = _SireBase.wrap(format)
 
+        # Warn the user if any molecules are parameterised with a force field
+        # that uses geometric combining rules. While we can write this to file
+        # the information is lost on read.
+        if format == "PRM7":
+
+            # Get the name of the "forcefield" property.
+            forcefield = _property_map.get("forcefield", "forcefield")
+
+            # Loop over all molecules in the system.
+            for mol in system.getMolecules():
+                if mol._sire_object.hasProperty(forcefield):
+                    if mol._sire_object.property(forcefield).combiningRules() == "geometric":
+                        _warnings.warn("AMBER topology files do not support force fields that "
+                                       "use geometric combining rules, as this cannot be specified "
+                                       "in the file. When this file is re-read, then arithmetic "
+                                       "combining rules will be assumed.")
+                        # Exit after the first non-arithmetic molecule we encounter.
+                        break
+
         # Write the file.
         try:
             # Make sure AMBER and GROMACS files have the expected water topology.
