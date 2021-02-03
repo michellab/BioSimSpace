@@ -1366,6 +1366,13 @@ class System(_SireWrapper):
             for wat in waters:
                 self._sire_object.add(wat, _SireMol.MGName("all"))
 
+            # Reset the index mappings.
+            self._reset_mappings()
+
+            # Update the molecule numbers.
+            self._mol_nums = self._sire_object.molNums()
+            self._mol_nums.sort()
+
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
