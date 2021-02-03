@@ -114,7 +114,7 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
        leap_commands : [str]
            An optional list of extra commands for the LEaP program. These
-           will be added before any default commands and can be used to, e.g.,
+           will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
 
@@ -195,7 +195,7 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
        leap_commands : [str]
            An optional list of extra commands for the LEaP program. These
-           will be added before any default commands and can be used to, e.g.,
+           will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
 
@@ -276,7 +276,7 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
 
        leap_commands : [str]
            An optional list of extra commands for the LEaP program. These
-           will be added before any default commands and can be used to, e.g.,
+           will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
 
@@ -357,7 +357,7 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
        leap_commands : [str]
            An optional list of extra commands for the LEaP program. These
-           will be added before any default commands and can be used to, e.g.,
+           will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
 
@@ -438,7 +438,7 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
        leap_commands : [str]
            An optional list of extra commands for the LEaP program. These
-           will be added before any default commands and can be used to, e.g.,
+           will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
 

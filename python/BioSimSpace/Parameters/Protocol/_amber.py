@@ -68,7 +68,7 @@ class FF03(_protocol.Protocol):
 
            leap_commands : [str]
                An optional list of extra commands for the LEaP program. These
-               will be added before any default commands and can be used to, e.g.,
+               will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 
@@ -121,7 +121,7 @@ class FF99(_protocol.Protocol):
 
            leap_commands : [str]
                An optional list of extra commands for the LEaP program. These
-               will be added before any default commands and can be used to, e.g.,
+               will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 
@@ -174,7 +174,7 @@ class FF99SB(_protocol.Protocol):
 
            leap_commands : [str]
                An optional list of extra commands for the LEaP program. These
-               will be added before any default commands and can be used to, e.g.,
+               will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 
@@ -225,7 +225,7 @@ class FF99SBILDN(_protocol.Protocol):
 
            leap_commands : [str]
                An optional list of extra commands for the LEaP program. These
-               will be added before any default commands and can be used to, e.g.,
+               will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 
@@ -276,7 +276,7 @@ class FF14SB(_protocol.Protocol):
 
            leap_commands : [str]
                An optional list of extra commands for the LEaP program. These
-               will be added before any default commands and can be used to, e.g.,
+               will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 

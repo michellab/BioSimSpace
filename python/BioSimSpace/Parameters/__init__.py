@@ -142,7 +142,7 @@ any compatible AMBER force field function, e.g.:
    molecule = BSS.IO.readMolecules("molecules/peptide.pdb")
 
    # Create a list of the additional commands for the LEaP program. These will
-   # be run before any default commands.
+   # be run after any default commands.
    leap_commands = ["addPath phosphate_params", "source leaprc.phosaa10"]
 
    # Initialise the parameterisation process and block until the molecule is
