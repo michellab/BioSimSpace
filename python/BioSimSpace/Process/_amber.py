@@ -86,12 +86,6 @@ class _Handler(_PatternMatchingEventHandler):
        the log file is changed.
     """
 
-    # Overwrite defaults.
-    case_sensitive = False
-    ignore_directories = False
-    ignore_patterns = []
-    patterns = "*.nrg"
-
     def __init__(self, proc):
         """Constructor.
 
@@ -102,6 +96,11 @@ class _Handler(_PatternMatchingEventHandler):
                The Amber Process object.
         """
         self._process = proc
+
+        super(_Handler, self).__init__(case_sensitive=False,
+                                       ignore_directories=True,
+                                       ignore_patterns=[],
+                                       patterns="*.nrg")
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified.
@@ -131,8 +130,10 @@ class _Handler(_PatternMatchingEventHandler):
                 self._process._stdout_dict = _process._MultiDict()
                 self._process._is_watching = True
 
-            # Now update the dictionary with any new records.
-            self._process._update_energy_dict()
+            # Make sure the file exists.
+            if _os.path.isfile(self._process._nrg_file):
+                # Now update the dictionary with any new records.
+                self._process._update_energy_dict()
 
 class Amber(_process.Process):
     """A class for running simulations using AMBER."""
@@ -1505,6 +1506,10 @@ class Amber(_process.Process):
 
     def _update_energy_dict(self):
         """Read the energy info file and update the dictionary."""
+
+        # Return if the file doesn't exist, e.g. it could have been deleted.
+        if not _os.path.isfile(self._nrg_file):
+            return
 
         # Flag that this isn't a header line.
         is_header = False
