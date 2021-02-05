@@ -134,7 +134,7 @@ class FreeEnergy(_Protocol):
             return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, timestep=%s, "
                     "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d)"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._report_interval, restart_interval)
+                        self._temperature, self._pressure, self._report_interval, self._restart_interval)
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
