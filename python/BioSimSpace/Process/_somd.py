@@ -520,7 +520,7 @@ class Somd(_process.Process):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
-            self.addToConfig("nmoves = %d" % report_interval._num_moves)            # The number of moves per cycle.
+            self.addToConfig("nmoves = %d" % report_interval)                       # The number of moves per cycle.
             self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
