@@ -502,7 +502,7 @@ class FreeEnergy():
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.
-        self._runner = _Process.ProcessRunner(leg0 + leg1, work_dir=self._work_dir, nest_dirs=False)
+        self._runner = _Process.ProcessRunner(leg0 + leg1)
 
     def _update_run_args(self, args):
         """Internal function to update run arguments for all subprocesses.

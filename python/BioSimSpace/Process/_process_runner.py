@@ -39,7 +39,7 @@ class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.
        a free energy simulation at multiple lambda values."""
 
-    def __init__(self, processes, name="runner", work_dir=None, nest_dirs=True):
+    def __init__(self, processes, name="runner", work_dir=None):
         """Constructor.
 
            Parameters
@@ -53,10 +53,6 @@ class ProcessRunner():
 
            work_dir : str
                The working directory for the processes.
-
-           nest_dirs : bool
-               Whether to nest the working directory of the processes inside
-               the process runner top-level directory.
         """
 
         # Check that the list of processes is valid.
@@ -71,11 +67,6 @@ class ProcessRunner():
         if work_dir is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
 
-        # Check that the nest_dirs flag is valid.
-        if type(nest_dirs) is not bool:
-            raise TypeError("'nest_dirs' must be of type 'bool'")
-        self._nest_dirs = nest_dirs
-
         # Set the list of processes.
         self._processes = processes
 
@@ -85,21 +76,11 @@ class ProcessRunner():
         else:
             self.setName(name)
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
         # User specified working directory.
-        else:
+        if work_dir is not None:
             self._work_dir = work_dir
 
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
-
-        # Nest all of the process working directories inside the runner directory.
-        if nest_dirs:
+            # Nest all of the process working directories inside the runner directory.
             self._processes = self._nest_directories(self._processes)
 
     def __str__(self):
@@ -503,7 +484,7 @@ class ProcessRunner():
         # Loop over each process.
         for process in processes:
             # Create the new working directory name.
-            new_dir = "%s/%s" % (self._work_dir, process._work_dir)
+            new_dir = "%s/%s" % (self._work_dir, _os.path.basename(process._work_dir))
 
             # Create a new process object using the nested directory.
             if process._package_name == "SOMD":
