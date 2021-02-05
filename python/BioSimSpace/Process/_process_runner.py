@@ -421,8 +421,8 @@ class ProcessRunner():
         if batch_size is not None:
             if type(batch_size) is not int:
                 raise TypeError("'batch_size' must be of type 'int'.")
-            if batch_size < 1 or batch_size > self.nProcesses():
-                raise ValueError(f"'batch_size' must be in range 1 to {self.nProcesses()}.")
+            if batch_size < 1:
+                raise ValueError("'batch_size' must be > 1.")
         else:
             from multiprocessing import cpu_count
             batch_size = cpu_count()
