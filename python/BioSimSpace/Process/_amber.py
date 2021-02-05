@@ -541,7 +541,7 @@ class Amber(_process.Process):
             self._process = _SireBase.Process.run(self._exe, args,
                 "%s.out"  % self._name, "%s.err"  % self._name)
 
-	# Watch the energy info file for changes.
+        # Watch the energy info file for changes.
         self._watcher = _Watcher(self)
         self._watcher.start()
 
