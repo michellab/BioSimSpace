@@ -88,7 +88,7 @@ class _Handler(_PatternMatchingEventHandler):
 
     # Overwrite defaults.
     case_sensitive = False
-    ignore_directories = True
+    ignore_directories = False
     ignore_patterns = []
     patterns = "*.nrg"
 
