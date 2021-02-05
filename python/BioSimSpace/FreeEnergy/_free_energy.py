@@ -141,7 +141,7 @@ class FreeEnergy():
 
     def run(self):
         """Run the simulation."""
-        self._runner.startAll()
+        self._runner.startAll(serial=True)
 
     def _analyse_gromacs(self):
         """Analyse the GROMACS free energy data.
