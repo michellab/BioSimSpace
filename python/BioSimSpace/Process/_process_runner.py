@@ -387,32 +387,143 @@ class ProcessRunner():
         except IndexError:
             raise("'index' is out of range: [0-%d]" % len(self._processes))
 
-    def startAll(self):
-        """Start all of the processes."""
+    def startAll(self, serial=False, batch_size=None, max_retries=5):
+        """Start all of the processes.
 
-        for p in self._processes:
-            # Initialise the error state.
-            is_error = True
+           Parameters
+           ----------
 
-            # Zero the tally of failed processes.
-            num_failed = 0
+           serial : bool
+               Whether to start the processes in serial, i.e. wait for a
+               process to finish before starting the next. When running
+               in parallel (serial=False) care should be taken to ensure
+               that each process doesn't consume too many resources. We
+               normally indend for the ProcessRunner to be used to manage
+               single core processes.
 
-            # Retry failed processes up to a maximum of 5 times.
-            while is_error:
-                # Start the process and wait for it to finish.
-                p.start()
-                p.wait()
+           batch_size : int
+               When running in parallel, how many processes to run at any
+               one time. If set to None, then the batch size will be set
+               to the output of multiprocess.cpu_count().
 
-                # Check the error state.
-                is_error = p.isError()
+           max_retries : int
+               How many times to retry a process if it fails.
+        """
 
-                # Increment the number of failures.
-                if is_error:
-                    num_failed += 1
+        if self.nProcesses() == 0:
+            raise ValueError("The ProcessRunner contains no processes!")
 
-                    # Maximum retries reached, move to the next process.
-                    if num_failed == 5:
-                        break
+        # Validate input.
+
+        if type(serial) is not bool:
+            raise TypeError("'serial' must be of type 'bool'.")
+
+        if batch_size is not None:
+            if type(batch_size) is not int:
+                raise TypeError("'batch_size' must be of type 'int'.")
+            if batch_size < 1 or batch_size > self.nProcesses():
+                raise ValueError(f"'batch_size' must be in range 1 to {self.nProcesses()}.")
+        else:
+            from multiprocessing import cpu_count
+            batch_size = cpu_count()
+
+        if type(max_retries) is not int:
+            raise TypeError("'max_retries' must be of type 'int'.")
+
+        if max_retries < 1:
+            raise ValueError("'max_retries' must be > 0.")
+
+        # Run processes in serial.
+        if serial:
+            for x in self._processes:
+                # Initialise the error state.
+                is_error = True
+
+                # Zero the tally of failed processes.
+                num_failed = 0
+
+                # Retry failed processes up to a maximum of 5 times.
+                while is_error:
+                    # Start the process and wait for it to finish.
+                    p.start()
+                    p.wait()
+
+                    # Check the error state.
+                    is_error = p.isError()
+
+                    # Increment the number of failures.
+                    if is_error:
+                        num_failed += 1
+
+                        # Maximum retries reached, move to the next process.
+                        if num_failed == max_retries:
+                            break
+
+        # Run in parallel.
+        else:
+            # First, set all processes as queued and set the number of
+            # failures to zero.
+            for p in self._processes:
+                p._is_queued = True
+                p._is_finished = False
+                p._num_failed = 0
+
+            # The total number of finished processes.
+            num_finished = 0
+
+            # A list to hold the indices of the processes that have been run.
+            # (Not those that are actually still running.)
+            run_idxs = []
+
+            # Loop until all processes have finished.
+            while num_finished < self.nProcesses():
+
+                # Only submit more processes if we're below the batch size.
+                if self.nRunning() < batch_size:
+
+                    # Loop over all queued processes until we've submitted batch_size.
+                    queued = self.queued()
+                    for idx in queued:
+                        p = self._processes[idx]
+                        p._is_queued = False
+
+                        # Start the process and mark it as no-longer queued.
+                        p.start()
+
+                        # Record that we've run this process.
+                        run_idxs.append(idx)
+
+                        # We've hit the batch size, exit.
+                        if self.nRunning() == batch_size:
+                            break
+
+                # Copy the indices of the run jobs.
+                run_idxs_copy = run_idxs.copy()
+
+                # Loop over all the jobs that we've run.
+                for idx in run_idxs_copy:
+                    # The process is no longer running.
+                    p = self._processes[idx]
+                    if not p.isRunning():
+                        # There was an error.
+                        if p.isError():
+                            # We haven't yet reached the retry limit. Add this
+                            # process back to the queue and delete it from the
+                            # run list.
+                            if p._num_failed < max_retries:
+                                p._is_queued = True
+                                p._num_failed += 1
+                                run_idxs.remove(idx)
+                            else:
+                                # Record the the proceess has finished.
+                                if not p._is_finished:
+                                    p._is_finished = True
+                                    num_finished += 1
+                        else:
+                            # Record the the proceess has finished.
+                            if not p._is_finished:
+                                p._is_finished = True
+                                num_finished += 1
 
     def kill(self, index):
         """Kill a specific process. The same can be achieved using:
