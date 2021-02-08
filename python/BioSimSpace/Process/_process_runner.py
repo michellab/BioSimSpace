@@ -57,6 +57,10 @@ class ProcessRunner():
                The working directory for the processes.
         """
 
+        # Convert to a list.
+        if type(processes) is not list:
+            processes = [processes]
+
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
             raise TypeError("'processes' must be a list of 'BioSimSpace.Process' types.")
@@ -72,6 +76,9 @@ class ProcessRunner():
         # Set the list of processes.
         self._processes = processes
 
+        # Set the working directory.
+        self._work_dir = work_dir
+
         # Inititialise a null thread to run the processes.
         self._thread = None
 
@@ -84,12 +91,15 @@ class ProcessRunner():
         else:
             self.setName(name)
 
-        # User specified working directory.
-        if work_dir is not None:
-            self._work_dir = work_dir
-
-            # Nest all of the process working directories inside the runner directory.
+        # Nest all of the process working directories inside the runner directory.
+        if self._work_dir is not None:
             self._processes = self._nest_directories(self._processes)
+
+        # Initalise the state for each process.
+        for p in self._processes:
+            p._is_queued = True
+            p._is_finished = False
+            p._num_failed = 0
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -164,7 +174,9 @@ class ProcessRunner():
 
         # Convert to a list.
         if type(process) is not list:
-            processes = [ process ]
+            processes = [process]
+        else:
+            processes = process
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
@@ -174,10 +186,18 @@ class ProcessRunner():
         if not all(process.isRunning() == False for process in processes):
             raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
 
-        # Nest the directories inside the process runner's working directory.
-        if self._nest_dirs:
-            # Extend the list of procesess.
-            self._processes.extend(self._nest_directories(processes, len(self._processes)))
+        if self._work_dir is None:
+            self._processes.extend(self._nest_directories(processes))
+        else:
+            self._processes.extend(processes)
+
+        # Initalise the state for each process.
+        num_processes = self.nProcesses()
+        for x in range(0, len(processes)):
+            idx = num_processes - x - 1
+            self._processes[idx]._is_queued = True
+            self._processes[idx]._is_finished = False
+            self._processes[idx]._num_failed = 0
 
     def removeProcess(self, index):
         """Remove a process from the runner.
@@ -190,14 +210,28 @@ class ProcessRunner():
         """
 
         try:
-            # Pop the chosen process from the list.
-            process = self._processes.pop(index)
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-            # Kill the process.
-            process.kill()
+            if index < -self.nProcesses() or index > self.nProcesses() -1:
+                raise IndexError("'index' is out of range.")
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+            if index < 0:
+                index = index + self.nProcesses()
+
+        if self._thread is None or not self._thread.is_alive():
+            try:
+                # Pop the chosen process from the list.
+                process = self._processes.pop(index)
+
+                # Kill the process.
+                process.kill()
+
+            except IndexError:
+                raise IndexError("'index' is out of range: [0-%d]" % (self.nProcesses() - 1))
+        else:
+            print("ProcessRunner has started. Kill all processes before removing.")
 
     def nProcesses(self):
         """Return the number of processes.
