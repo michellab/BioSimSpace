@@ -460,7 +460,7 @@ class ProcessRunner():
                process to finish before starting the next. When running
                in parallel (serial=False) care should be taken to ensure
                that each process doesn't consume too many resources. We
-               normally indend for the ProcessRunner to be used to manage
+               normally intend for the ProcessRunner to be used to manage
                single core processes.
 
            batch_size : int
