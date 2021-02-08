@@ -436,7 +436,9 @@ class ProcessRunner():
         return bool_list
 
     def start(self, index):
-        """Start a specific process. The same can be achieved using:
+        """Start a specific process.
+
+           The same can be achieved using:
                runner.processes()[index].start()
 
            Parameters
