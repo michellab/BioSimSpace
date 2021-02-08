@@ -30,6 +30,8 @@ __all__ = ["ProcessRunner"]
 
 import os as _os
 import tempfile as _tempfile
+import threading as _threading
+import time as _time
 
 from BioSimSpace._SireWrappers import System as _System
 
@@ -69,6 +71,12 @@ class ProcessRunner():
 
         # Set the list of processes.
         self._processes = processes
+
+        # Inititialise a null thread to run the processes.
+        self._thread = None
+
+        # Flag that the runner hasn't been killed.
+        self._is_killed = False
 
         # Set the name
         if name is None:
@@ -387,8 +395,74 @@ class ProcessRunner():
         except IndexError:
             raise("'index' is out of range: [0-%d]" % len(self._processes))
 
+
     def startAll(self, serial=False, batch_size=None, max_retries=5):
         """Start all of the processes.
+
+           Parameters
+           ----------
+
+           serial : bool
+               Whether to start the processes in serial, i.e. wait for a
+               process to finish before starting the next. When running
+               in parallel (serial=False) care should be taken to ensure
+               that each process doesn't consume too many resources. We
+               normally indend for the ProcessRunner to be used to manage
+               single core processes.
+
+           batch_size : int
+               When running in parallel, how many processes to run at any
+               one time. If set to None, then the batch size will be set
+               to the output of multiprocess.cpu_count().
+
+           max_retries : int
+               How many times to retry a process if it fails.
+        """
+
+        if self.nProcesses() == 0:
+            raise ValueError("The ProcessRunner contains no processes!")
+
+        # Validate input.
+
+        if type(serial) is not bool:
+            raise TypeError("'serial' must be of type 'bool'.")
+
+        if batch_size is not None:
+            if type(batch_size) is not int:
+                raise TypeError("'batch_size' must be of type 'int'.")
+            if batch_size < 1:
+                raise ValueError("'batch_size' must be > 1.")
+        else:
+            from multiprocessing import cpu_count
+            batch_size = cpu_count()
+
+        if type(max_retries) is not int:
+            raise TypeError("'max_retries' must be of type 'int'.")
+
+        if max_retries < 1:
+            raise ValueError("'max_retries' must be > 0.")
+
+        # Set up the background thread.
+        if self._thread is None or not self._thread.is_alive():
+
+            # Flag that the runner is alive.
+            self._is_killed = False
+
+            # Create the thread.
+            self._thread = _threading.Thread(target=self._run_processes,
+                                             args=[serial, batch_size, max_retries])
+
+            # Deamonize the thread.
+            self._thread.daemon = True
+
+            # Start the thread.
+            self._thread.start()
+
+        else:
+            print("ProcessRunner already started!")
+
+    def _run_processes(self, serial=False, batch_size=None, max_retries=5):
+        """Helper function to run all of the processes in a background thread.
 
            Parameters
            ----------
@@ -443,7 +517,7 @@ class ProcessRunner():
                 num_failed = 0
 
                 # Retry failed processes up to a maximum of 5 times.
-                while is_error:
+                while is_error and not self._is_killed:
                     # Start the process and wait for it to finish.
                     p.start()
                     p.wait()
@@ -476,7 +550,7 @@ class ProcessRunner():
             run_idxs = []
 
             # Loop until all processes have finished.
-            while num_finished < self.nProcesses():
+            while num_finished < self.nProcesses() and not self._is_killed:
 
                 # Only submit more processes if we're below the batch size.
                 if self.nRunning() < batch_size:
@@ -525,6 +599,9 @@ class ProcessRunner():
                                 p._is_finished = True
                                 num_finished += 1
 
+                # Sleep for 5 seconds.
+                _time.sleep(5)
+
     def kill(self, index):
         """Kill a specific process. The same can be achieved using:
                runner.processes()[index].kill()
@@ -544,6 +621,8 @@ class ProcessRunner():
 
     def killAll(self):
         """Kill all of the processes."""
+
+        self._is_killed = True
 
         for p in self._processes:
             p.kill()
