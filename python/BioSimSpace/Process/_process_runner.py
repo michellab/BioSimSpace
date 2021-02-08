@@ -429,7 +429,6 @@ class ProcessRunner():
         except IndexError:
             raise("'index' is out of range: [0-%d]" % len(self._processes))
 
-
     def startAll(self, serial=False, batch_size=None, max_retries=5):
         """Start all of the processes.
 
@@ -635,6 +634,15 @@ class ProcessRunner():
 
                 # Sleep for 5 seconds.
                 _time.sleep(5)
+
+    def wait(self):
+        """Wait for any running processes to finish."""
+
+        if self._thread is not None and not self._thread.is_alive():
+            self._thread.join()
+        else:
+            for p in self._processes:
+                p.wait()
 
     def kill(self, index):
         """Kill a specific process. The same can be achieved using:
