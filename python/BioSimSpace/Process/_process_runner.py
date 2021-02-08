@@ -214,12 +214,16 @@ class ProcessRunner():
         except:
             raise TypeError("'index' must be of type 'int'")
 
-            if index < -self.nProcesses() or index > self.nProcesses() -1:
-                raise IndexError("'index' is out of range.")
+        num_processes = self.nProcesses()
 
-            if index < 0:
-                index = index + self.nProcesses()
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
 
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
+
+        # Only remove process if the runner is stopped.
         if self._thread is None or not self._thread.is_alive():
             try:
                 # Pop the chosen process from the list.
@@ -424,10 +428,26 @@ class ProcessRunner():
         """
 
         try:
-            self._processes[index].start()
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+        num_processes = self.nProcesses()
+
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processess-1}]")
+
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
+
+        # Reset the process state
+        self._processes[index]._is_queued = False
+        self._processes[index]._is_error = False
+        self._processes[index]._num_failed = 0
+
+        # Start the process.
+        self._processes[index].start()
 
     def startAll(self, serial=False, batch_size=None, max_retries=5):
         """Start all of the processes.
@@ -656,10 +676,20 @@ class ProcessRunner():
         """
 
         try:
-            self._processes[index].kill()
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+        num_processes = self.nProcesses()
+
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
+
+        self._processes[index].kill()
 
     def killAll(self):
         """Kill all of the processes."""
@@ -674,7 +704,16 @@ class ProcessRunner():
 
         for p in self._processes:
             if p.isError():
-                p.start()
+                # Reset the process state.
+                p._is_queued = False
+                p._is_error = False
+                p._num_failed = 0
+
+                # Only directly start the process if the runner is not active.
+                # Otherwise, it will be picked up by virtue of its state being
+                # reset to queued.
+                if self._thread is None or not self._thread.is_active():
+                    p.start()
 
     def runTime(self):
         """Return the run time for each process.
