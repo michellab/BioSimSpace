@@ -39,7 +39,26 @@ from ._process import Process as _Process
 
 class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.
-       a free energy simulation at multiple lambda values."""
+       a free energy simulation at multiple lambda values.
+
+       Since BioSimSpace handles its own background processes it is unsuitable
+       for use with Python modules such as concurrent.futures, where use of
+       objects like a ProcessPoolExecutor would lead to redundant processes,
+       i.e. a process would be created, from which BioSimSpace would fork its
+       own background process. Instead, we recommend using a ProcessRunner,
+       which can handle the running of processes for you, both in serial and
+       parallel.
+
+       At present there is no way to allocate specific compute resources to
+       individual processes. As such, unless you have access to a large amount
+       of compute, when executing the runner in parallel we recommend that the
+       individual processes are serial in nature. BioSimSpace is not intended
+       to be a workflow manager and the ProcessRunner is only meant to help
+       facilitate running of more complex, multi-leg simulation processes. If
+       you desire more fine-grained resource control we recommend breaking your
+       workflow into separate :class:`nodes <BioSimSpace.Gateway.Node>`, which
+       can be run independently and allocated their own specific resources.
+    """
 
     def __init__(self, processes, name="runner", work_dir=None):
         """Constructor.
