@@ -100,7 +100,7 @@ class _Handler(_PatternMatchingEventHandler):
         super(_Handler, self).__init__(case_sensitive=False,
                                        ignore_directories=True,
                                        ignore_patterns=[],
-                                       patterns="*.nrg")
+                                       patterns=["*.nrg"])
 
     def on_any_event(self, event):
         """Update the dictionary when the file is modified.
