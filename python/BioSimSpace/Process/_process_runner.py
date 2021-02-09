@@ -104,11 +104,8 @@ class ProcessRunner():
         # Flag that the runner hasn't been killed.
         self._is_killed = False
 
-        # Set the name
-        if name is None:
-            self._name = None
-        else:
-            self.setName(name)
+        # Set the name.
+        self.setName(name)
 
         # Nest all of the process working directories inside the runner directory.
         if self._work_dir is not None:
