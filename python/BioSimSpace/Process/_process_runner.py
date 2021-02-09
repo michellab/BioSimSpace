@@ -436,9 +436,8 @@ class ProcessRunner():
         return bool_list
 
     def start(self, index):
-        """Start a specific process.
+        """Start a specific process. The same can be achieved using:\n
 
-           The same can be achieved using:
                runner.processes()[index].start()
 
            Parameters
@@ -686,7 +685,8 @@ class ProcessRunner():
                 p.wait()
 
     def kill(self, index):
-        """Kill a specific process. The same can be achieved using:
+        """Kill a specific process. The same can be achieved using:\n
+
                runner.processes()[index].kill()
 
            Parameters
