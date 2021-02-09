@@ -229,6 +229,11 @@ recommended installation instructions.
 * `Gromacs <http://www.gromacs.org>`__ -- *Dynamics / Parameterisation / Solvation*
 * `Namd <http://www.ks.uiuc.edu/Research/namd>`__ -- *Dynamics*
 
+For `Amber / AmberTools <http://ambermd.org>`__, we also recommend adding
+``${AMBERHOME}/bin`` to your ``PATH`` to ensure that its binaries are
+visible to third-party libraries, such as
+`openff-toolkit <https://github.com/openforcefield/openff-toolkit>`__.
+
 Please visit our :ref:`compatibility <ref_compatibility>` page to see which
 versions of the external dependencies BioSimSpace has currently been tested
 against.

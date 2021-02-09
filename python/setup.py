@@ -59,7 +59,7 @@ finally:
                       "mdanalysis",
                       "mdtraj",
                       "nglview",
-                      "openforcefield",
+                      "openff-toolkit-base",
                       "parmed",
                       "pygtail",
                       "pymbar",
@@ -68,10 +68,6 @@ finally:
                       "pyyaml",
                       "rdkit",
                       "watchdog"]
-
-        print("Adding omnia channel")
-        command = "%s/conda config --system --prepend channels omnia" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
