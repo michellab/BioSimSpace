@@ -656,10 +656,15 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
            The parameterised molecule.
     """
 
-    if _amber_home is None:
+    from Sire.Base import findExe as _findExe
+
+    try:
+        _findExe("antechamber")
+    except:
         raise _MissingSoftwareError(f"'{forcefield}' is not supported. AmberTools "
                                      "(http://ambermd.org) is needed for charge "
-                                     "calculation.")
+                                     "calculation and 'antechamber' executable "
+                                     "must be in your PATH.")
 
     # Validate arguments.
 
