@@ -82,8 +82,8 @@ Binary install
 The self-extracting binary for the 2020.1.0 release of BioSimSpace
 can be downloaded from one of the following links:
 
-* Linux: `biosimspace_2020_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/Dts9ugpsZfs_GjZJDnN7lhBw1TEBOb3dr4vcVrc-3V8/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_linux.run>`__
-* macOS: `biosimspace_2020_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/XbI8C51d7y3WjoDZU7R0xC0wsBuvxWw7GZ9sazht_fc/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_osx.run>`__
+* Linux: `biosimspace_2020_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YMYAJMERzLE_6keRKHQMHypXqilpDkOVyQgpxdQ9HfxHrhgdxg9uDFRiBwfiwPM9/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_linux.run>`__
+* macOS: `biosimspace_2020_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/leVE5J5dLoyAE999I0tkoCouI8Mqr1l4NsWYNiBisrSwnmYwAd8hSPlrPN1JN1zH/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_osx.run>`__
 
 For older releases, please visit our :ref:`binaries <ref_binaries>` page.
 
