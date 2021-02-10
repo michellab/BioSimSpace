@@ -57,7 +57,7 @@ USER $NB_USER
 WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
-RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace && \
+RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace --all && \
     conda install -y -c conda-forge libgfortran=3 nodejs openmpi-mpicxx openssh patch
 
 RUN pip install --upgrade pip && \
