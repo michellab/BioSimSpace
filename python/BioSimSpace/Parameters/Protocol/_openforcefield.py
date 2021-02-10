@@ -41,6 +41,7 @@ import subprocess as _subprocess
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
 _warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+_warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
 _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
