@@ -29,7 +29,7 @@ RUN apt-get update && \
 ENV SIRE_SILENT_PHONEHOME=1 \
     SIRE=/opt/conda \
     AMBERHOME=/home/amber \
-    PATH=/home/gromacs/bin:/home/plumed/bin:$PATH \
+    PATH=/home/amber/bin:/home/gromacs/bin:/home/plumed/bin:$PATH \
     LD_LIBRARY_PATH=/home/plumed/lib:/opt/conda/lib:$LD_LIBRARY_PATH \
     PLUMED_KERNEL=/home/plumed/lib/libplumedKernel.so
 
