@@ -90,7 +90,7 @@ class Gromacs(_process.Process):
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file.
 
-           show_warnings : bool
+           show_errors : bool
                Whether to show warning/error messages when generating the binary
                run file.
         """
