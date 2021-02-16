@@ -41,7 +41,8 @@ class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
     def __init__(self, system, protocol=None, box=None, angles=3*[_Types.Angle(90, "degrees")],
-            free_leg=True, work_dir=None, engine=None, property_map={}):
+            free_leg=True, work_dir=None, engine=None, property_map={}, ignore_warnings=False,
+            show_errors=True):
         """Constructor.
 
            Parameters
@@ -77,10 +78,21 @@ class Binding(_free_energy.FreeEnergy):
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+           ignore_warnings : bool
+               Whether to ignore warnings when generating the binary run file.
+               This option is specific to GROMACS and will be ignored when a
+               different molecular dynamics engine is chosen.
+
+           show_errors : bool
+               Whether to show warning/error messages when generating the binary
+               run file. This option is specific to GROMACS and will be ignored
+               when a different molecular dynamics engine is chosen.
         """
 
         # Call the base class constructor.
-        super().__init__(protocol, work_dir, engine)
+        super().__init__(protocol, work_dir, engine,
+            ignore_warnings=ignore_warnings, show_errors=show_errors)
 
         # Validate the input.
 

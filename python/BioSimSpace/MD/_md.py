@@ -159,7 +159,8 @@ def _find_md_package(system, protocol, gpu_support=False):
     raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
 
 def run(system, protocol, gpu_support=False, auto_start=True,
-        name="md", work_dir=None, seed=None, property_map={}):
+        name="md", work_dir=None, seed=None, property_map={},
+        ignore_warnings=False, show_errors=True):
     """Auto-configure and run a molecular dynamics process.
 
        Parameters
@@ -190,6 +191,16 @@ def run(system, protocol, gpu_support=False, auto_start=True,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
+
+       ignore_warnings : bool
+           Whether to ignore warnings when generating the binary run file.
+           This option is specific to GROMACS and will be ignored when a
+           different molecular dynamics engine is chosen.
+
+       show_errors : bool
+           Whether to show warning/error messages when generating the binary
+           run file. This option is specific to GROMACS and will be ignored
+           when a different molecular dynamics engine is chosen.
 
        Returns
        -------
@@ -238,6 +249,12 @@ def run(system, protocol, gpu_support=False, auto_start=True,
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
+    if type(ignore_warnings) is not bool:
+        raise ValueError("'ignore_warnings' must be of type 'bool.")
+
+    if type(show_errors) is not bool:
+        raise ValueError("'show_errors' must be of type 'bool.")
+
     # Find a molecular dynamics package and executable.
     package, exe = _find_md_package(system, protocol, gpu_support)
 
@@ -251,7 +268,8 @@ def run(system, protocol, gpu_support=False, auto_start=True,
     # GROMACS.
     elif package == "GROMACS":
         process = _Process.Gromacs(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+            work_dir=work_dir, seed=seed, property_map=property_map,
+            ignore_warnings=ignore_warnings, show_errors=show_errors)
 
     # NAMD.
     elif package == "NAMD":

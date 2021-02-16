@@ -33,7 +33,7 @@ from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 
 def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
-     seed=None, property_map={}):
+     seed=None, property_map={}, ignore_warnings=False, show_errors=True):
     """Auto-configure and run a metadynamics process.
 
        Parameters
@@ -61,6 +61,16 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
+
+       ignore_warnings : bool
+           Whether to ignore warnings when generating the binary run file.
+           This option is specific to GROMACS and will be ignored when a
+           different molecular dynamics engine is chosen.
+
+       show_errors : bool
+           Whether to show warning/error messages when generating the binary
+           run file. This option is specific to GROMACS and will be ignored
+           when a different molecular dynamics engine is chosen.
 
        Returns
        -------
@@ -96,10 +106,17 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
+    if type(ignore_warnings) is not bool:
+        raise ValueError("'ignore_warnings' must be of type 'bool.")
+
+    if type(show_errors) is not bool:
+        raise ValueError("'show_errors' must be of type 'bool.")
+
     # Create the process object.
 
     process = _Process.Gromacs(system, protocol, name=name,
-        work_dir=work_dir, seed=seed, property_map=property_map)
+        work_dir=work_dir, seed=seed, property_map=property_map,
+        ignore_warnings=ignore_warnings, show_errors=show_errors)
 
     # Start the process.
     if auto_start:

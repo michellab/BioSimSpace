@@ -67,7 +67,8 @@ class FreeEnergy():
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
 
-    def __init__(self, protocol=None, work_dir=None, engine=None):
+    def __init__(self, protocol=None, work_dir=None, engine=None,
+            ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -83,9 +84,19 @@ class FreeEnergy():
                The molecular dynamics engine used to run the simulation. Available
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
+
+          ignore_warnings : bool
+              Whether to ignore warnings when generating the binary run file.
+              This option is specific to GROMACS and will be ignored when a
+              different molecular dynamics engine is chosen.
+
+          show_errors : bool
+              Whether to show warning/error messages when generating the binary
+              run file. This option is specific to GROMACS and will be ignored
+              when a different molecular dynamics engine is chosen.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is FreeEnergy:
             raise Exception("<FreeEnergy> must be subclassed.")
 
@@ -138,6 +149,14 @@ class FreeEnergy():
 
         # Set the engine.
         self._engine = engine
+
+        if type(ignore_warnings) is not bool:
+            raise ValueError("'ignore_warnings' must be of type 'bool.")
+        self._ignore_warnings = ignore_warnings
+
+        if type(show_errors) is not bool:
+            raise ValueError("'show_errors' must be of type 'bool.")
+        self._show_errors = show_errors
 
     def run(self):
         """Run the simulation."""
@@ -494,11 +513,15 @@ class FreeEnergy():
             # GROMACS.
             elif self._engine == "GROMACS":
                 leg0.append(_Process.Gromacs(system0, self._protocol,
-                    work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
+                    work_dir="%s/lambda_%5.4f" % (self._dir0, lam),
+                    ignore_warnings=self._ignore_warnings,
+                    show_errors=self._show_errors))
 
                 if self._is_dual:
                     leg1.append(_Process.Gromacs(system1, self._protocol,
-                        work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                        work_dir="%s/lambda_%5.4f" % (self._dir1, lam),
+                        ignore_warnings=self._ignore_warnings,
+                        show_errors=self._show_errors))
 
         # Initialise the process runner. All processes have already been nested
         # inside the working directory so no need to re-nest.
