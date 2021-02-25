@@ -40,6 +40,8 @@ __all__ = ["parameterise",
 
 from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
 
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace.Solvent import waterModels as _waterModels
@@ -665,6 +667,48 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
                                      "(http://ambermd.org) is needed for charge "
                                      "calculation and 'antechamber' executable "
                                      "must be in your PATH.")
+
+    # Check the Antechamber version. Open Force Field requires Antechamber >= 20.0.
+    try:
+        # Antechamber returns an exit code of 1 when requesting version information.
+        # As such, we wrap the call within a try-except block in case it fails.
+
+        import subprocess
+
+        # Generate the command-line string. (Antechamber must be in the PATH,
+        # so no need to use AMBERHOME.
+        command = "antechamber -v"
+
+        # Run the command as a subprocess.
+        proc = subprocess.run(command, shell=True, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        # Get stdout and split into lines.
+        lines = proc.stdout.split("\n")
+
+        # If present, version information is on line 1.
+        string = lines[1]
+
+        # Delelete the welcome message.
+        string = string.replace("Welcome to antechamber", "")
+
+        # Extract the version and convert to float.
+        version = float(string.split(":")[0])
+
+        # The version is okay, enable Open Force Field support.
+        if version >= 20:
+            is_openff = True
+        # Disable Open Force Field support.
+        else:
+            is_openff = False
+
+    # Something went wrong, disable Open Force Field support.
+    except:
+        is_openff = False
+        raise
+
+    if not is_openff:
+        raise _IncompatibleError(f"'{forcefield}' requires Antechamber >= 20.0")
 
     # Validate arguments.
 
