@@ -689,7 +689,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         # If present, version information is on line 1.
         string = lines[1]
 
-        # Delelete the welcome message.
+        # Delete the welcome message.
         string = string.replace("Welcome to antechamber", "")
 
         # Extract the version and convert to float.
