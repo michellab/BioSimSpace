@@ -697,17 +697,17 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 
         # The version is okay, enable Open Force Field support.
         if version >= 20:
-            is_openff = True
+            is_compatible = True
         # Disable Open Force Field support.
         else:
-            is_openff = False
+            is_compatible = False
 
     # Something went wrong, disable Open Force Field support.
     except:
-        is_openff = False
+        is_compatible = False
         raise
 
-    if not is_openff:
+    if not is_compatible:
         raise _IncompatibleError(f"'{forcefield}' requires Antechamber >= 20.0")
 
     # Validate arguments.
