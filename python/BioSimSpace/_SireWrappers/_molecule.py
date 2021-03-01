@@ -2717,25 +2717,28 @@ class Molecule(_SireWrapper):
             bonds0 = molecule0.property(prop0)
             bonds1 = molecule1.property(prop1)
 
-            # Get the molInfo object for molecule1.
-            info = molecule1.info()
+            # Get the molInfo object for each molecule.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
 
             # Create the new set of bonds.
             bonds = _SireMM.TwoAtomFunctions(edit_mol.info())
 
             # Add all of the bonds from molecule0.
             for bond in bonds0.potentials():
-                bonds.set(bond.atom0(), bond.atom1(), bond.function())
+                atom0 = info0.atomIdx(bond.atom0())
+                atom1 = info0.atomIdx(bond.atom1())
+                bonds.set(atom0, atom1, bond.function())
 
             # Loop over all bonds in molecule1.
             for bond in bonds1.potentials():
                 # This bond contains an atom that is unique to molecule1.
-                if info.atomIdx(bond.atom0()) in atoms1_idx or \
-                   info.atomIdx(bond.atom1()) in atoms1_idx:
+                if info1.atomIdx(bond.atom0()) in atoms1_idx or \
+                   info1.atomIdx(bond.atom1()) in atoms1_idx:
 
                     # Extract the bond information.
-                    atom0 = info.atomIdx(bond.atom0())
-                    atom1 = info.atomIdx(bond.atom1())
+                    atom0 = info1.atomIdx(bond.atom0())
+                    atom1 = info1.atomIdx(bond.atom1())
                     exprn = bond.function()
 
                     # Map the atom indices to their position in the merged molecule.
@@ -2758,27 +2761,31 @@ class Molecule(_SireWrapper):
             angles0 = molecule0.property(prop0)
             angles1 = molecule1.property(prop1)
 
-            # Get the molInfo object for molecule1.
-            info = molecule1.info()
+            # Get the molInfo object for each molecule.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
 
             # Create the new set of angles.
             angles = _SireMM.ThreeAtomFunctions(edit_mol.info())
 
             # Add all of the angles from molecule0.
             for angle in angles0.potentials():
-                angles.set(angle.atom0(), angle.atom1(), angle.atom2(), angle.function())
+                atom0 = info0.atomIdx(angle.atom0())
+                atom1 = info0.atomIdx(angle.atom1())
+                atom2 = info0.atomIdx(angle.atom2())
+                angles.set(atom0, atom1, atom2, angle.function())
 
             # Loop over all angles in molecule1.
             for angle in angles1.potentials():
                 # This angle contains an atom that is unique to molecule1.
-                if info.atomIdx(angle.atom0()) in atoms1_idx or \
-                   info.atomIdx(angle.atom1()) in atoms1_idx or \
-                   info.atomIdx(angle.atom2()) in atoms1_idx:
+                if info1.atomIdx(angle.atom0()) in atoms1_idx or \
+                   info1.atomIdx(angle.atom1()) in atoms1_idx or \
+                   info1.atomIdx(angle.atom2()) in atoms1_idx:
 
                        # Extract the angle information.
-                       atom0 = info.atomIdx(angle.atom0())
-                       atom1 = info.atomIdx(angle.atom1())
-                       atom2 = info.atomIdx(angle.atom2())
+                       atom0 = info1.atomIdx(angle.atom0())
+                       atom1 = info1.atomIdx(angle.atom1())
+                       atom2 = info1.atomIdx(angle.atom2())
                        exprn = angle.function()
 
                        # Map the atom indices to their position in the merged molecule.
@@ -2802,30 +2809,34 @@ class Molecule(_SireWrapper):
             dihedrals0 = molecule0.property(prop0)
             dihedrals1 = molecule1.property(prop1)
 
-            # Get the molInfo object for molecule1.
-            info = molecule1.info()
+            # Get the molInfo object for each molecule.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
 
             # Create the new set of dihedrals.
             dihedrals = _SireMM.FourAtomFunctions(edit_mol.info())
 
             # Add all of the dihedrals from molecule0.
             for dihedral in dihedrals0.potentials():
-                dihedrals.set(dihedral.atom0(), dihedral.atom1(),
-                    dihedral.atom2(), dihedral.atom3(), dihedral.function())
+                atom0 = info0.atomIdx(dihedral.atom0())
+                atom1 = info0.atomIdx(dihedral.atom1())
+                atom2 = info0.atomIdx(dihedral.atom2())
+                atom3 = info0.atomIdx(dihedral.atom3())
+                dihedrals.set(atom0, atom1, atom2, atom3, dihedral.function())
 
             # Loop over all dihedrals in molecule1.
             for dihedral in dihedrals1.potentials():
                 # This dihedral contains an atom that is unique to molecule1.
-                if info.atomIdx(dihedral.atom0()) in atoms1_idx or \
-                   info.atomIdx(dihedral.atom1()) in atoms1_idx or \
-                   info.atomIdx(dihedral.atom2()) in atoms1_idx or \
-                   info.atomIdx(dihedral.atom3()) in atoms1_idx:
+                if info1.atomIdx(dihedral.atom0()) in atoms1_idx or \
+                   info1.atomIdx(dihedral.atom1()) in atoms1_idx or \
+                   info1.atomIdx(dihedral.atom2()) in atoms1_idx or \
+                   info1.atomIdx(dihedral.atom3()) in atoms1_idx:
 
                        # Extract the dihedral information.
-                       atom0 = info.atomIdx(dihedral.atom0())
-                       atom1 = info.atomIdx(dihedral.atom1())
-                       atom2 = info.atomIdx(dihedral.atom2())
-                       atom3 = info.atomIdx(dihedral.atom3())
+                       atom0 = info1.atomIdx(dihedral.atom0())
+                       atom1 = info1.atomIdx(dihedral.atom1())
+                       atom2 = info1.atomIdx(dihedral.atom2())
+                       atom3 = info1.atomIdx(dihedral.atom3())
                        exprn = dihedral.function()
 
                        # Map the atom indices to their position in the merged molecule.
@@ -2850,30 +2861,34 @@ class Molecule(_SireWrapper):
             impropers0 = molecule0.property(prop0)
             impropers1 = molecule1.property(prop1)
 
-            # Get the molInfo object for molecule1.
-            info = molecule1.info()
+            # Get the molInfo object for each molecule.
+            info0 = molecule0.info()
+            info1 = molecule1.info()
 
             # Create the new set of impropers.
             impropers = _SireMM.FourAtomFunctions(edit_mol.info())
 
             # Add all of the impropers from molecule0.
             for improper in impropers0.potentials():
-                impropers.set(improper.atom0(), improper.atom1(),
-                    improper.atom2(), improper.atom3(), improper.function())
+                atom0 = info0.atomIdx(improper.atom0())
+                atom1 = info0.atomIdx(improper.atom1())
+                atom2 = info0.atomIdx(improper.atom2())
+                atom3 = info0.atomIdx(improper.atom3())
+                impropers.set(atom0, atom1, atom2, atom3, improper.function())
 
             # Loop over all impropers in molecule1.
             for improper in impropers1.potentials():
                 # This improper contains an atom that is unique to molecule1.
-                if info.atomIdx(improper.atom0()) in atoms1_idx or \
-                   info.atomIdx(improper.atom1()) in atoms1_idx or \
-                   info.atomIdx(improper.atom2()) in atoms1_idx or \
-                   info.atomIdx(improper.atom3()) in atoms1_idx:
+                if info1.atomIdx(improper.atom0()) in atoms1_idx or \
+                   info1.atomIdx(improper.atom1()) in atoms1_idx or \
+                   info1.atomIdx(improper.atom2()) in atoms1_idx or \
+                   info1.atomIdx(improper.atom3()) in atoms1_idx:
 
                        # Extract the improper information.
-                       atom0 = info.atomIdx(improper.atom0())
-                       atom1 = info.atomIdx(improper.atom1())
-                       atom2 = info.atomIdx(improper.atom2())
-                       atom3 = info.atomIdx(improper.atom3())
+                       atom0 = info1.atomIdx(improper.atom0())
+                       atom1 = info1.atomIdx(improper.atom1())
+                       atom2 = info1.atomIdx(improper.atom2())
+                       atom3 = info1.atomIdx(improper.atom3())
                        exprn = improper.function()
 
                        # Map the atom indices to their position in the merged molecule.
