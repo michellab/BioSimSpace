@@ -188,7 +188,6 @@ class OpenForceField(_protocol.Protocol):
             off_molecule = _OpenFFMolecule.from_file(prefix + "molecule.sdf")
         except Exception as e:
             msg = "Unable to create OpenFF Molecule!"
-            raise
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -200,7 +199,6 @@ class OpenForceField(_protocol.Protocol):
             off_topology = off_molecule.to_topology()
         except Exception as e:
             msg = "Unable to create OpenFF Topology!"
-            raise
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
