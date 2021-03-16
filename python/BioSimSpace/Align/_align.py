@@ -26,10 +26,12 @@ Functionality for aligning molecules.
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
+__all__ = ["generateNetwork", "matchAtoms", "rmsdAlign", "flexAlign", "merge"]
 
+import csv as _csv
 import os as _os
 import subprocess as _subprocess
+import sys as _sys
 import tempfile as _tempfile
 
 import warnings as _warnings
@@ -67,6 +69,121 @@ try:
     _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
 except:
     _fkcombu_exe = None
+
+def generateNetwork(molecules, work_dir=None):
+    """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
+
+       Parameters
+       ----------
+
+       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+           A list of molecules.
+
+       work_dir : str
+           The working directory for the LOMAP process.
+
+       Returns
+       -------
+
+       edges : [(int, int)]
+           A tuple containing the edges of the network. Each edge is itself
+           a tuple, containing the indices of the molecules that are
+           connected by the edge.
+
+       scores : [float]
+           The LOMAP score for each edge. The higher the score implies that a
+           perturbation between molecules along an edge is likely to be more
+           accurate.
+    """
+
+    # Convert tuple to list.
+    if type(molecules) is tuple:
+        molecules = list(molecules)
+
+    # Validate the molecules.
+    if not all(isinstance(x, _Molecule) for x in molecules):
+        raise TypeError("'molecules' must be a list of "
+                        "'BioSimSpace._SireWrappers.Molecule' objects.")
+
+    # Validate the working directory.
+    if work_dir is not None:
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+
+    # Create a temporary working directory and store the directory name.
+    if work_dir is None:
+        tmp_dir = _tempfile.TemporaryDirectory()
+        work_dir = tmp_dir.name
+
+    # User specified working directory.
+    else:
+        # Use full path.
+        if work_dir[0] != "/":
+            work_dir = _os.getcwd() + "/" + work_dir
+
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(work_dir):
+            _os.makedirs(work_dir, exist_ok=True)
+
+    # Make the LOMAP input and output directories.
+    _os.makedirs(work_dir + "/input", exist_ok=True)
+    _os.makedirs(work_dir + "/output", exist_ok=True)
+
+    # Write all of the molecules to disk.
+    for x, molecule in enumerate(molecules):
+        _IO.saveMolecules(work_dir + f"/input/{x:03d}", molecule, "pdb")
+
+    # Get the name of the LOMAP script.
+    lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
+
+    # Generate the command-line string.
+    command = f"{_sys.executable} {lomap_script} " \
+            + f"{work_dir}/input -n {work_dir}/output/lomap"
+
+    # Create files for stdout/stderr.
+    stdout = open(work_dir + "/lomap.out", "w")
+    stderr = open(work_dir + "/lomap.err", "w")
+
+    # Run LOMAP as a subprocess.
+    proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+    stdout.close()
+    stderr.close()
+
+    # LOMAP failed.
+    if proc.returncode != 0:
+        raise _AlignmentError("LOMAP failed!")
+
+    # Store the name to the LOMAP output file.
+    lomap_file = work_dir + "/output/lomap_score_with_connection.txt"
+
+    # Check that it exists.
+    if not _os.path.isfile(lomap_file):
+        raise _AlignmentError("LOMAP output file doesn't exist!")
+
+    # Read the file to get the edges and scores.
+    edges = []
+    scores = []
+    with open(lomap_file, "r") as csv_file:
+        # Load as a CSV file.
+        csv_reader = _csv.reader(csv_file)
+
+        # Loop over all rows of the CSV file.
+        for row in csv_reader:
+            # If the file contains all possible edges, then only take edges
+            # that LOMAP indicates should be drawn.
+            if row[7].strip() == "Yes":
+                # Extract the nodes (molecules) connected by the edge.
+                mol0 = int(row[2].rsplit(".")[0])
+                mol1 = int(row[3].rsplit(".")[0])
+
+                # Extract the score and convert to a float.
+                score = float(row[4])
+
+                # Update the lists.
+                edges.append((mol0, mol1))
+                scores.append(score)
+
+    return edges, scores
 
 def matchAtoms(molecule0,
                molecule1,
