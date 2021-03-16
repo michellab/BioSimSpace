@@ -55,7 +55,7 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
-from BioSimSpace import _isVerbose
+from BioSimSpace import _is_notebook, _isVerbose
 from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
@@ -70,7 +70,7 @@ try:
 except:
     _fkcombu_exe = None
 
-def generateNetwork(molecules, work_dir=None):
+def generateNetwork(molecules, names=None, work_dir=None):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -78,6 +78,10 @@ def generateNetwork(molecules, work_dir=None):
 
        molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
            A list of molecules.
+
+       names : [str]
+           A list of names for the molecules. If None, then the index of each
+           molecule will be used.
 
        work_dir : str
            The working directory for the LOMAP process.
@@ -96,14 +100,25 @@ def generateNetwork(molecules, work_dir=None):
            accurate.
     """
 
+    # Adapted from code by Jenke Scheen (@JenkeScheen).
+
     # Convert tuple to list.
     if type(molecules) is tuple:
         molecules = list(molecules)
+    if type(names) is tuple:
+        names = list(names)
 
     # Validate the molecules.
     if not all(isinstance(x, _Molecule) for x in molecules):
         raise TypeError("'molecules' must be a list of "
                         "'BioSimSpace._SireWrappers.Molecule' objects.")
+
+    # Validate the names.
+    if names is not None:
+        if not all(isinstance(x, str) for x in names):
+            raise TypeError("'names' must be a list of 'str' types.")
+        if len(names) != len(molecules):
+            raise ValueError("There must be one name for each molecule!")
 
     # Validate the working directory.
     if work_dir is not None:
@@ -126,19 +141,19 @@ def generateNetwork(molecules, work_dir=None):
             _os.makedirs(work_dir, exist_ok=True)
 
     # Make the LOMAP input and output directories.
-    _os.makedirs(work_dir + "/input", exist_ok=True)
-    _os.makedirs(work_dir + "/output", exist_ok=True)
+    _os.makedirs(work_dir + "/inputs", exist_ok=True)
+    _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
     # Write all of the molecules to disk.
     for x, molecule in enumerate(molecules):
-        _IO.saveMolecules(work_dir + f"/input/{x:03d}", molecule, "pdb")
+        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}", molecule, "pdb")
 
     # Get the name of the LOMAP script.
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
 
     # Generate the command-line string.
     command = f"{_sys.executable} {lomap_script} " \
-            + f"{work_dir}/input -n {work_dir}/output/lomap"
+            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
@@ -154,7 +169,7 @@ def generateNetwork(molecules, work_dir=None):
         raise _AlignmentError("LOMAP failed!")
 
     # Store the name to the LOMAP output file.
-    lomap_file = work_dir + "/output/lomap_score_with_connection.txt"
+    lomap_file = work_dir + "/outputs/lomap_score_with_connection.txt"
 
     # Check that it exists.
     if not _os.path.isfile(lomap_file):
@@ -162,6 +177,7 @@ def generateNetwork(molecules, work_dir=None):
 
     # Read the file to get the edges and scores.
     edges = []
+    nodes = []
     scores = []
     with open(lomap_file, "r") as csv_file:
         # Load as a CSV file.
@@ -181,7 +197,146 @@ def generateNetwork(molecules, work_dir=None):
 
                 # Update the lists.
                 edges.append((mol0, mol1))
+                nodes.append(mol0)
+                nodes.append(mol1)
                 scores.append(score)
+
+    # Convert nodes to a set to remove duplicates.
+    nodes = set(nodes)
+
+    # Plot the LOMAP network.
+    if _is_notebook:
+        # Conditional imports.
+        import matplotlib.image as _mpimg
+        import matplotlib.pyplot as _plt
+        import networkx as _nx
+        from rdkit.Chem import AllChem as _AllChem
+        from rdkit.Chem import Draw as _Draw
+
+        # Set the DPI to make the network look nice.
+        _plt.rcParams["figure.dpi"]= 150
+
+        # Make directory for output images.
+        _os.makedirs(work_dir + "/images", exist_ok=True)
+
+        # 1) Loop over each molecule and load into RDKit.
+        try:
+            rdmols = []
+            for x in range(0, len(molecules)):
+                file = f"{work_dir}/inputs/{x:03d}.pdb"
+                rdmols.append(_Chem.MolFromPDBFile(file, sanitize=False, removeHs=False))
+
+        except Exception as e:
+            msg = "Unable to load molecule into RDKit!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 2) Find the MCS of the molecules to use as a template.
+        try:
+            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols).smartsString)
+            _AllChem.Compute2DCoords(template)
+
+        except Exception as e:
+            msg = "Unable to compute MCS of molecules!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 3) Load all ligands, make 2D depiction aligned to the template and save to file.
+        try:
+            for x, mol in enumerate(rdmols):
+                _AllChem.Compute2DCoords(mol)
+                _AllChem.GenerateDepictionMatching2DStructure(mol, template)
+                _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
+
+        except Exception as e:
+            msg = "Unable to make 2D depiction of molecules!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 4) Create the NetworkX graph.
+        try:
+            graph = _nx.Graph()
+
+            # Loop over the nodes and add to the graph.
+            if names is None:
+                names = [x for x in range(1, len(molecules)+1)]
+            for node in nodes:
+                img = _mpimg.imread(f"{work_dir}/images/{node:03d}.png")
+                graph.add_node(names[node], image=img)
+
+            # Loop over the edges and add to the graph.
+            for edge in edges:
+                graph.add_edge(names[edge[0]], names[edge[1]])
+
+        except Exception as e:
+            msg = "Unable to generate network representation!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 5) Create and display the plot.
+        try:
+            # Generate a layout for the graph.
+            layout = _nx.circular_layout(graph)
+
+            # Initalise the figure and get axes for a single sub-plot.
+            fig = _plt.figure(figsize=(15, 15))
+            ax = _plt.subplot(111)
+
+            # Make the plot square.
+            ax.set_aspect("equal")
+
+            # Create a dictionary mapping the edges to their scores.
+            edge_dict = {}
+            for x, (node0, node1) in enumerate(edges):
+                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
+
+            # Draw and label the edges.
+            _nx.draw_networkx_edges(graph, layout, ax=ax)
+            _nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_dict)
+
+            # Set the axis limits.
+            _plt.xlim(-1.5, 1.5)
+            _plt.ylim(-1.5, 1.5)
+
+            # Transform the axes.
+            trans = ax.transData.transform
+            trans2 = fig.transFigure.inverted().transform
+
+            piesize = 0.15              # This is the image size.
+            p2 = piesize/2.0
+            for n, ligand_name in zip(graph, layout.keys()):
+                xx, yy=trans(layout[n])  # Figure coordinates.
+                xa, ya=trans2((xx,yy))   # Axes coordinates.
+                a = _plt.axes([xa-p2,ya-p2, piesize, piesize])
+                a.set_aspect("equal")
+                a.imshow(graph.nodes[n]["image"])
+                # Label each node using these adjusted coordinates.
+                a.text(s=ligand_name, x=xa*2, y=ya)
+                a.axis("off")
+            ax.axis("off")
+
+            # Display the plot.
+            _plt.show()
+
+        except Exception as e:
+            msg = "Unable to create network plot!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
 
     return edges, scores
 
