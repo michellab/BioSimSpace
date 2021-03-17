@@ -148,8 +148,7 @@ class OpenForceField(_protocol.Protocol):
 
         # Write the molecule to a PDB file.
         try:
-            pdb = _SireIO.PDB2(new_mol.toSystem()._sire_object)
-            pdb.writeToFile(prefix + "molecule.pdb")
+            _IO.saveMolecules(prefix + "molecule", new_mol, "pdb")
         except Exception as e:
             msg = "Failed to write the molecule to 'PDB' format."
             if _isVerbose():
