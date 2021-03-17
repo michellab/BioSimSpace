@@ -70,7 +70,7 @@ try:
 except:
     _fkcombu_exe = None
 
-def generateNetwork(molecules, names=None, work_dir=None):
+def generateNetwork(molecules, names=None, work_dir=None, plot_network=True):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -85,6 +85,9 @@ def generateNetwork(molecules, names=None, work_dir=None):
 
        work_dir : str
            The working directory for the LOMAP process.
+
+       plot_network : bool
+           Whether to plot the network when running from within a notebook.
 
        Returns
        -------
@@ -124,6 +127,10 @@ def generateNetwork(molecules, names=None, work_dir=None):
     if work_dir is not None:
         if type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'.")
+
+    # Validate the plotting flag.
+    if type(plot_network) is not bool:
+        raise TypeError("'plot_network' must be of type 'bool'.")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -205,7 +212,7 @@ def generateNetwork(molecules, names=None, work_dir=None):
     nodes = set(nodes)
 
     # Plot the LOMAP network.
-    if _is_notebook:
+    if _is_notebook and plot_network:
         # Conditional imports.
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
