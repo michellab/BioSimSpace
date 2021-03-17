@@ -288,7 +288,7 @@ def generateNetwork(molecules, names=None, work_dir=None):
         # 5) Create and display the plot.
         try:
             # Generate a layout for the graph.
-            layout = _nx.spring_layout(graph, k=3)
+            pos = _nx.spring_layout(graph, k=3)
 
             # Initalise the figure and get axes for a single sub-plot.
             fig = _plt.figure(figsize=(15, 15))
@@ -303,8 +303,8 @@ def generateNetwork(molecules, names=None, work_dir=None):
                 edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
 
             # Draw and label the edges.
-            _nx.draw_networkx_edges(graph, layout, ax=ax)
-            _nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_dict)
+            _nx.draw_networkx_edges(graph, pos, ax=ax)
+            _nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_dict)
 
             # Set the axis limits.
             _plt.xlim(-1.5, 1.5)
@@ -316,9 +316,9 @@ def generateNetwork(molecules, names=None, work_dir=None):
 
             piesize = 0.15              # This is the image size.
             p2 = piesize/2.0
-            for n, ligand_name in zip(graph, layout.keys()):
-                xx, yy=trans(layout[n])  # Figure coordinates.
-                xa, ya=trans2((xx,yy))   # Axes coordinates.
+            for n, ligand_name in zip(graph, pos.keys()):
+                xx, yy=trans(pos[n])    # Figure coordinates.
+                xa, ya=trans2((xx,yy))  # Axes coordinates.
                 a = _plt.axes([xa-p2,ya-p2, piesize, piesize])
                 a.set_aspect("equal")
                 a.imshow(graph.nodes[n]["image"])
