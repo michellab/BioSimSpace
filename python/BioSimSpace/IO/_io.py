@@ -559,15 +559,41 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            # Make sure AMBER and GROMACS files have the expected water topology.
-            if format == "PRM7":
-                system = system.copy()
-                system._set_water_topology("AMBER")
-            elif format == "GROTOP":
-                system = system.copy()
-                system._set_water_topology("GROMACS")
-            file = _SireIO.MoleculeParser.save(system._getSireObject(), filebase, _property_map)
+            # Add CONECT record for single molecule PDB files.
+            if format == "PDB" and system.nMolecules() == 1:
+                # Generate a PDB parser object.
+                pdb = _SireIO.PDB2(system._sire_object, _property_map)
+
+                # Get the lines.
+                lines = pdb.toLines()
+
+                # Create a connectivty object and generate the CONECT record.
+                conect = _SireMol.Connectivity(system[0]._sire_object).toCONECT()
+
+                # Create the updated PDB file.
+                pdb_records = "\n".join(lines[:-2]) \
+                            + "\n" + conect + "\n"  \
+                            + "\n".join(lines[-2:])
+
+                # Write the default file to get the full path.
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+
+                # Now overwite the file the PDB file with the updated records.
+                with open(file[0], "w") as pdb_file:
+                    pdb_file.write(pdb_records)
+
+            else:
+                # Make sure AMBER and GROMACS files have the expected water topology.
+                if format == "PRM7":
+                    system = system.copy()
+                    system._set_water_topology("AMBER")
+                elif format == "GROTOP":
+                    system = system.copy()
+                    system._set_water_topology("GROMACS")
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+
             files += file
+
         except Exception as e:
             if dirname != "":
                 _os.chdir(dir)
