@@ -288,7 +288,7 @@ def generateNetwork(molecules, names=None, work_dir=None):
         # 5) Create and display the plot.
         try:
             # Generate a layout for the graph.
-            layout = _nx.circular_layout(graph)
+            layout = _nx.spring_layout(graph, k=3)
 
             # Initalise the figure and get axes for a single sub-plot.
             fig = _plt.figure(figsize=(15, 15))
