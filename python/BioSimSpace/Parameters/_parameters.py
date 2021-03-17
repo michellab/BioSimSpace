@@ -666,7 +666,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         raise _MissingSoftwareError(f"'{forcefield}' is not supported. AmberTools "
                                      "(http://ambermd.org) is needed for charge "
                                      "calculation and 'antechamber' executable "
-                                     "must be in your PATH.")
+                                     "must be in your PATH.") from None
 
     # Check the Antechamber version. Open Force Field requires Antechamber >= 20.0.
     try:
