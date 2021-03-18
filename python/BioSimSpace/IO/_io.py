@@ -29,6 +29,7 @@ __email_ = "lester.hedges@gmail.com"
 __all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
 
 from collections import OrderedDict as _OrderedDict
+from glob import glob as _glob
 from io import StringIO as _StringIO
 
 import os as _os
@@ -337,9 +338,9 @@ def readMolecules(files, property_map={}):
                        "for GROMACS topology file support.")
         _has_gmx_warned = True
 
-    # Convert to a list.
+    # Glob string to catch wildcards and convert to list.
     if type(files) is str:
-        files = [files]
+        files = _glob(files)
 
     # Check that all arguments are of type 'str'.
     if type(files) is list:
