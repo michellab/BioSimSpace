@@ -42,10 +42,10 @@ from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Trajectory import Trajectory as _Trajectory
 from BioSimSpace.Types._type import Type as _Type
 
 from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
@@ -670,7 +670,6 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                return _System(_SireIO.MoleculeParser.read(files, self._property_map))
                 # Read the molecular system.
                 new_system = _System(_SireIO.MoleculeParser.read(files, self._property_map))
 
@@ -730,7 +729,53 @@ class Namd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
-            return _Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self)
+
+        except:
+            return None
+
+    def getFrame(self, index):
+        """Return a specific trajectory frame.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the frame.
+
+          Returns
+          -------
+
+          frame : :class:`System <BioSimSpace._SireWrappers.System>`
+              The System object of the corresponding frame.
+        """
+
+        if type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
+
+        max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
+                  / self._protocol.getRestartInterval())
+
+        if index < 0 or index > max_index:
+            raise ValueError(f"'index' must be in range [0, {max_index}].")
+
+        try:
+            new_system =  _Trajectory.getFrame(self._traj_file,
+                                               self._top_file,
+                                               index)
+
+            # Copy the new coordinates back into the original system.
+            old_system = self._system.copy()
+            old_system._updateCoordinates(new_system,
+                                          self._property_map,
+                                          self._property_map)
+
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
 
         except:
             return None

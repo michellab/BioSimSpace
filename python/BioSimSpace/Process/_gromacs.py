@@ -42,11 +42,11 @@ from Sire import IO as _SireIO
 from BioSimSpace import _gmx_exe
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Trajectory import Trajectory as _Trajectory
 from BioSimSpace.Types._type import Type as _Type
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Types as _Types
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
@@ -950,7 +950,44 @@ class Gromacs(_process.Process):
             else:
                 self._traj_file = traj_file
 
-            return _Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self)
+
+        except:
+            return None
+
+    def getFrame(self, index):
+        """Return a specific trajectory frame.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the frame.
+
+          Returns
+          -------
+
+          frame : :class:`System <BioSimSpace._SireWrappers.System>`
+              The System object of the corresponding frame.
+        """
+
+        if type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
+
+        max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
+                  / self._protocol.getRestartInterval())
+
+        if index < 0 or index > max_index:
+            raise ValueError(f"'index' must be in range [0, {max_index}].")
+
+        try:
+            time = index * self._protocol.getRestartInterval() \
+                * self._protocol.getTimeStep()
+
+            with _warnings.catch_warnings():
+                system = self._getFrame(time)
+
+            return self._getFrame(time)
 
         except:
             return None
