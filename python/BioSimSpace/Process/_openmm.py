@@ -1145,7 +1145,7 @@ class OpenMM(_process.Process):
         return getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
-        """Get the time (in nanoseconds).
+        """Get the simulation time.
 
            Parameters
            ----------
@@ -1165,7 +1165,7 @@ class OpenMM(_process.Process):
         return self.getRecord("TIME(PS)", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
-        """Get the current time (in nanoseconds).
+        """Get the current simulation time.
 
            Parameters
            ----------
@@ -1666,7 +1666,7 @@ class OpenMM(_process.Process):
                 if unit is None:
                     return [float(x) for x in self._stdout_dict[key]]
                 else:
-                    return [float(x) * unit for x in self._stdout_dict[key]]
+                    return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1677,7 +1677,7 @@ class OpenMM(_process.Process):
                 if unit is None:
                     return float(self._stdout_dict[key][-1])
                 else:
-                    return float(self._stdout_dict[key][-1]) * unit
+                    return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
 
             except KeyError:
                 return None
