@@ -1054,8 +1054,7 @@ def startup():
 # Command line user interface
 # ----------------------------------------------------------------
 parser = argparse.ArgumentParser(description='Lead Optimization Mapper 2. A program to plan alchemical relative '
-                                             'binding affinity calculations',
-                                 prog='LOMAP v. %s' % "poep")
+                                             'binding affinity calculations', prog='')
 parser.add_argument('directory', action=CheckDir, \
                     help='The mol2/sdf file directory')
 # parser.add_argument('-t', '--time', default=20, action=check_int,type=int,\
