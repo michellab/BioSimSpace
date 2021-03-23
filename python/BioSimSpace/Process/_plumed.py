@@ -78,9 +78,9 @@ class Plumed():
 
         # Run a PLUMED as a background process to query the version number.
         process = _subprocess.run("%s info --version" % self._exe, shell=True, stdout=_subprocess.PIPE)
-        plumed_version = float(process.stdout.decode("ascii").strip())
+        self._plumed_version = float(process.stdout.decode("ascii").strip())
 
-        if plumed_version < 2.5:
+        if self._plumed_version < 2.5:
             raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
 
         # Set the working directory of the process.
@@ -265,11 +265,13 @@ class Plumed():
             # Store the indices of the largest and second largest molecules.
             molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
 
-            # The funnel collective variable requires an auxillary file.
-            aux_file = "ProjectionOnAxis.cpp"
-            self._config.append(f"LOAD FILE={aux_file}")
-            aux_file = _os.path.dirname(_CollectiveVariable.__file__) + "/" + aux_file
-            self._aux_files.append(aux_file)
+            # The funnel collective variable requires an auxillary file for
+            # PLUMED versions < 2.7.
+            if self._plumed_version < 2.7:
+                aux_file = "ProjectionOnAxis.cpp"
+                self._config.append(f"LOAD FILE={aux_file}")
+                aux_file = _os.path.dirname(_CollectiveVariable.__file__) + "/" + aux_file
+                self._aux_files.append(aux_file)
 
         # Initialise the configuration string.
         string = "WHOLEMOLECULES"
