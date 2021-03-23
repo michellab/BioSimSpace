@@ -26,13 +26,14 @@ Functionality for distance based collective variables.
 __author__ = "Lester Hedges"
 __email_ = "lester.hedges@gmail.com"
 
-__all__ = ["Funnel", "makeFunnel"]
+__all__ = ["Funnel", "makeFunnel", "viewFunnel"]
 
 from math import ceil as _ceil
 
 from Sire.Maths import Vector as _SireVector
-from Sire.Mol import Evaluator as _Evaluator
+import Sire.Mol as _SireMol
 
+from BioSimSpace import _is_notebook
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
@@ -590,6 +591,9 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     else:
         raise TypeError("'protein' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'None'.")
 
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'.")
+
     # Get the "coordinates" property from the user mapping.
     coordinates = property_map.get("coordinates", "coordinates")
     if not protein._sire_object.hasProperty(coordinates):
@@ -643,7 +647,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # If the ligand is a Molecule, then assume the binding site is the ligand
     # center of mass.
     if type(ligand) is _Molecule:
-        com = _Evaluator(ligand._sire_object).centerOfMass()
+        com = _SireMol.Evaluator(ligand._sire_object).centerOfMass()
         binding_site = _Coordinate(_Length(com.x(), "A"),
                                    _Length(com.y(), "A"),
                                    _Length(com.z(), "A"))
@@ -754,3 +758,175 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
         atoms0.append(system.getIndex(atom))
 
     return atoms0, atoms1
+
+def viewFunnel(system, collective_variable, property_map={}):
+    """Constructor.
+
+       Parameters
+       ----------
+
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
+           The system of interest. This is assumed to be a solvated
+           protein-ligand system.
+
+       collective_variable : :class:`Funnel <BioSimSpace.Metadynamics.CollectiveVariable.Funnel>`
+           The funnel collective variable.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+       Returns
+       -------
+
+       view : :class:`View <BioSimSpace.Notebook.View>`
+           A view object showing the system and funnel.
+    """
+
+    # The following is adapted from funnel_maker.py by Dominykas Lukauskis.
+
+    # Don't do anything if this isn't called from within a notebook.
+    if not _is_notebook:
+        return None
+
+    # Validate the input.
+
+    if type(system) is not _System:
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
+
+    if type(collective_variable) is not Funnel:
+        raise TypeError("'collective_variable' must be of type "
+                        "'BioSimSpace.Metadynamics.CollectiveVariable.Funnel'")
+
+    # Store the number of atoms in each molecule.
+    atom_nums = []
+    for mol in system:
+        atom_nums.append(mol.nAtoms())
+
+    # Sort the molecule indices by the number of atoms they contain.
+    sorted_nums = sorted((value, idx) for idx, value in enumerate(atom_nums))
+
+    # Set the protein to the largest molecule.
+    protein = system[sorted_nums[-1][1]]
+
+    # Get the "coordinates" property from the user mapping.
+    coordinates = property_map.get("coordinates", "coordinates")
+    if not protein._sire_object.hasProperty(coordinates):
+        raise ValueError(f"The 'protein' molecule doesn't have a {coordinates} property!")
+
+
+    # Get the atoms that define the origin and inflection point of the funnel.
+    atoms0 = collective_variable.getAtoms0()
+    atoms1 = collective_variable.getAtoms1()
+
+    # Store the protein atoms.
+    atoms = protein.getAtoms()
+
+    # Work out the center-of-mass of each set of atoms.
+    com0 = _SireVector()
+    com1 = _SireVector()
+
+    for atom in atoms0:
+        try:
+            com0 += atoms[atom]._sire_object.property(coordinates)
+        except:
+            raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
+    com0 /= len(atoms0)
+
+    for atom in atoms1:
+        try:
+            com1 += atoms[atom]._sire_object.property(coordinates)
+        except:
+            raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
+    com1 /= len(atoms1)
+
+    # Create a new molecule to hold the funnel.
+    funnel_mol = _SireMol.Molecule("Funnel")
+
+    # Add a single residue called FUN.
+    res = funnel_mol.edit().add(_SireMol.ResNum(1))
+    res.rename(_SireMol.ResName("FUN"))
+
+    # Create a single cut-group.
+    cg = res.molecule().add(_SireMol.CGName("1"))
+
+    # Counter for the number of atoms.
+    num = 1
+
+    # Funnel plot variables.
+    vec_step = 2
+    n_angle_samples = 8
+
+    # Extract collective variable data.
+    lower_wall = collective_variable.getLowerBound().getValue().angstroms().magnitude()
+    upper_wall = collective_variable.getUpperBound().getValue().angstroms().magnitude()
+    wall_width = collective_variable.getWidth().angstroms().magnitude()
+    beta_cent = collective_variable.getSteepness()
+    s_cent = collective_variable.getInflection().angstroms().magnitude()
+    wall_buffer = collective_variable.getBuffer().angstroms().magnitude()
+
+    # Get the element property from the map.
+    element = property_map.get("element", "element")
+
+    import numpy as _np
+
+    # Calculate the vector defined by points p0 and p1.
+    vec = _np.array(com1, dtype=float) - _np.array(com0, dtype=float)
+
+    # BEWARE: inconsistency with linalg, if vec is a list and not an array!!!
+    # Make it a unit vector.
+    unit_vec = vec / _np.linalg.norm(vec)
+
+    # Now to get orthogonal vectors:
+    # https://math.stackexchange.com/questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
+
+    # Determine 1st orthogonal vector
+    a0 = _np.random.randint(1, 10)
+    a1 = _np.random.randint(1, 10)
+    a2 = -(a0*vec[0] + a1*vec[1])/vec[2]
+    a = _np.asarray([a0, a1, a2])
+    unit_a = a / _np.linalg.norm(a)
+
+    # Determine 2nd orthogonal vector
+
+    unit_b = _np.cross(unit_a, unit_vec)
+    # Iterate along the selected vector
+    funnel_coords = []
+    for step in _np.arange(lower_wall, upper_wall+vec_step, vec_step):
+        # iterate around a circle with its radius defined by the sigmoid function
+        radius = (wall_width / (1 + _np.exp(beta_cent * (step - s_cent)))) + wall_buffer
+        for angle in _np.arange(-_np.pi, _np.pi, 2 * _np.pi / n_angle_samples):
+            # Calculate parametric functions for this specific case
+            # https://math.stackexchange.com/questions/73237/parametric-equation-of-a-circle-in-3d-space
+            # Generate pseudoatoms along the axis.
+            coord = com0 + unit_vec*step + radius*(_np.cos(angle)*unit_a + _np.sin(angle)*unit_b)
+            funnel_coords.append(_SireVector(coord))
+
+            # Add the pseudoatom.
+            added = cg.add(_SireMol.AtomName("HE"))
+            added.renumber(_SireMol.AtomNum(num))
+            added.reparent(_SireMol.ResIdx(0))
+            num += 1
+
+    # Recreate the funnel molecule and make it editable.
+    funnel_mol = cg.molecule().commit().edit()
+
+    # Create a Helium element.
+    helium = _SireMol.Element("He")
+
+    # Add the coordinaates and element property.
+    for x in range(0, funnel_mol.nAtoms()):
+        idx = _SireMol.AtomIdx(x)
+        funnel_mol = funnel_mol.atom(idx).setProperty(coordinates, funnel_coords[x]).molecule()
+        funnel_mol = funnel_mol.atom(idx).setProperty(element, helium).molecule()
+
+    # Add the funnel pseudoatoms to the system.
+    new_system = system + _Molecule(funnel_mol.commit())
+
+    from ...Notebook import View as _View
+
+    # Create a BioSimSpace notebook View.
+    view = _View(new_system)
+
+    return view

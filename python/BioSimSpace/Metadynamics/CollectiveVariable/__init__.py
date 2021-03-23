@@ -30,6 +30,7 @@ Functions
 
     list
     makeFunnel
+    viewFunnel
 
 Classes
 =======
