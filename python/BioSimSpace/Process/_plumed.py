@@ -599,9 +599,17 @@ class Plumed():
 
         # Hill width.
         metad_string += " SIGMA="
-        for idx, colvar in enumerate(colvars):
-            metad_string += "%s" % colvar.getHillWidth().magnitude()
-            if idx < self._num_colvar - 1:
+        for idx0, colvar in enumerate(colvars):
+            hill_width = colvar.getHillWidth()
+            if type(hill_width) is tuple:
+                last_hill = len(hill_width) - 1
+                for idx1, width in enumerate(hill_width):
+                    metad_string += "%s" % width.magnitude()
+                    if idx1 < last_hill:
+                        metad_string += ","
+            else:
+                metad_string += "%s" % hill_width.magnitude()
+            if idx0 < self._num_colvar - 1:
                 metad_string += ","
 
         # Hill height.

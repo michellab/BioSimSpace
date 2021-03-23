@@ -44,7 +44,8 @@ from ...Types import Length as _Length
 class Funnel(_CollectiveVariable):
     """A class for a funnel collective variable."""
 
-    def __init__(self, atoms0, atoms1, hill_width=_Length(0.025, "nanometer"),
+    def __init__(self, atoms0, atoms1,
+            hill_width=(_Length(0.025, "nanometer"), _Length(0.05, "nanometer")),
             width=_Length(0.6, "nanometers"), buffer=_Length(0.15, "nanometers"),
             steepness=1.5, inflection=_Length(2.0, "nanometers"),
             lower_bound=_Bound(_Length(0.5, "nanometers"), force_constant=2000),
@@ -75,8 +76,9 @@ class Funnel(_CollectiveVariable):
                The inflection point as a value of the projection along the
                funnel axis.
 
-           hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill used to sample this variable.
+           hill_width : (:class:`Length <BioSimSpace.Types.Length>`, "class:`Length <BioSimSpace.Types.Length>`)
+               The width of the Gaussian hill used to sample each component
+               of the collective variable.
 
            lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
                A lower bound on the value of the collective variable. This is
@@ -146,7 +148,7 @@ class Funnel(_CollectiveVariable):
         string += ", buffer=%s" % self._buffer
         string += ", steepness=%s" % self._steepness
         string += ", inflection=%s" % self._inflection
-        string += ", hill_width=%s" % self._hill_width
+        string += ", hill_width=%s" % (self._hill_width,)
         if self._lower_bound is not None:
             string += ", lower_bound=%s" % self._lower_bound
         if self._upper_bound is not None:
@@ -371,16 +373,25 @@ class Funnel(_CollectiveVariable):
            ----------
 
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill.
+               The width of the Gaussian hill for the two commponents of the
+               collective variable: the distance along the funnel projection
+               axis, and the orthogonal extent from the axis.
         """
-        if type(hill_width) is not _Length:
-            raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
 
-        if hill_width.magnitude() < 0:
-            raise ValueError("'hill_width' must have a magnitude of > 0")
+        # Convert list to tuple.
+        if type(hill_width) is list:
+            hill_width = tuple(hill_width)
+
+        if type(hill_width) is tuple:
+            if len(hill_width) != 2 or not all(isinstance(x, _Length) for x in hill_width):
+                raise ValueError("'hill_width' must be a two-component tuple of of type 'BioSimSpace.Metadynamics.Length'")
+
+        for width in hill_width:
+            if width.magnitude() < 0:
+                raise ValueError("'hill_width' must have a magnitude of > 0")
 
         # Convert to the internal unit.
-        self._hill_width = hill_width.nanometers()
+        self._hill_width = tuple(x.nanometers() for x in hill_width)
 
     def getHillWidth(self):
         """Return the width of the Gaussian hill used to bias this collective
@@ -389,8 +400,9 @@ class Funnel(_CollectiveVariable):
            Returns
            -------
 
-           hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill.
+           hill_width : (:class:`Length <BioSimSpace.Types.Length>`, "class:`Length <BioSimSpace.Types.Length>`)
+               The width of the Gaussian hill for each component of the
+               collective variable.
         """
         return self._hill_width
 
