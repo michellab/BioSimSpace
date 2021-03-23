@@ -191,6 +191,8 @@ class View():
 
         # Loop over all of the indices.
         for index in indices:
+            if index < 0:
+                index += len(molnums)
             if index < 0 or index > len(molnums):
                 raise ValueError("Molecule index is out of range!")
 
@@ -238,6 +240,8 @@ class View():
         molnums = system.molNums()
 
         # Make sure the index is valid.
+        if index < 0:
+            index += len(molnums)
         if index < 0 or index > len(molnums):
             raise ValueError("Molecule index is out of range!")
 
