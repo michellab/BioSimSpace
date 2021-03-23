@@ -42,7 +42,8 @@ class ResourceManager():
         self._gpus = None
 
         # Create the argument parser.
-        self._parser = _argparse.ArgumentParser(description="Command-line parser for hardware resources",
+        self._parser = _argparse.ArgumentParser(prog="BioSimSpace",
+                                                description="Command-line parser for hardware resources",
                                                 add_help=False, allow_abbrev=False)
 
         # Add the arguments.
