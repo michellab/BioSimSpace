@@ -511,7 +511,8 @@ class Funnel(_CollectiveVariable):
                 self._grid[1].setBins(num_bins)
 
 def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
-    """Constructor.
+    """Calculate the two sets of atom indices, atoms0 and atoms1, that are used
+       to define the funnel collective variable.
 
        Parameters
        ----------
@@ -760,7 +761,11 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     return atoms0, atoms1
 
 def viewFunnel(system, collective_variable, property_map={}):
-    """Constructor.
+    """Visualise the shape of the funnel defined by the collective variable.
+       This is useful for checking that the funnel configuration is sane
+       prior to running any metadynamics simulations. The function returns a
+       BioSimSpace.Notebook.View object, allowing the user to customise the
+       visulisation.
 
        Parameters
        ----------
