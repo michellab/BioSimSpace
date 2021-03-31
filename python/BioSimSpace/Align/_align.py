@@ -160,7 +160,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=True):
 
     # Generate the command-line string.
     command = f"{_sys.executable} {lomap_script} " \
-            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap"
+            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
+            + "--threed --max3d 3.0"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
