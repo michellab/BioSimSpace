@@ -917,18 +917,30 @@ class OpenMM(_process.Process):
 
         # Try to get the most recent trajectory frame.
         try:
-            # Work out the total number of trajectory frames.
-            num_frames = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
-                  / self._protocol.getRestartInterval())
+            # Handle minimisation protocols separately.
+            if type(self._protocol) is _Protocol.Minimisation:
+                traj = self.getTrajectory()
 
-            # Work out the fraction of the simulation that has been completed.
-            frac_complete = self._protocol.getRunTime() / self.getTime()
+                # If there is no trajectory, simply return None.
+                if traj is None:
+                    return None
 
-            # Work out the trajectory frame index, rounding down.
-            index = int(frac_complete * num_frames)
+                # Get the last frame.
+                new_system = traj.getFrames(-1)[0]
 
-            # Get the most recent frame.
-            new_system = self.getFrame(index)
+            else:
+                # Work out the total number of trajectory frames.
+                num_frames = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
+                    / self._protocol.getRestartInterval())
+
+                # Work out the fraction of the simulation that has been completed.
+                frac_complete = self._protocol.getRunTime() / self.getTime()
+
+                # Work out the trajectory frame index, rounding down.
+                index = int(frac_complete * num_frames)
+
+                # Get the most recent frame.
+                new_system = self.getFrame(index)
 
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
