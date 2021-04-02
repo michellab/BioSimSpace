@@ -282,7 +282,10 @@ class OpenMM(_process.Process):
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=100, traj_interval=100)
+            if self._protocol.getSteps() < 100:
+                self._add_config_reporters(state_interval=1, traj_interval=1)
+            else:
+                self._add_config_reporters(state_interval=100, traj_interval=100)
 
             # Now run the simulation.
             self.addToConfig("\n# Run the simulation.")
