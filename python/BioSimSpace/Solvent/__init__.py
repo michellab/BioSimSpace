@@ -59,7 +59,7 @@ periodic box of TIP3P water with an ion concentration of 0.1 mol per litre.
 
    # Solvate the molecule.
    solvated = BSS.Solvent.tip3p(molecule=molecule,
-                                box=3*[5*BSS.Units.length.nanometer],
+                                box=3*[5*BSS.Units.Length.nanometer],
                                 ion_conc=0.1)
 
 The same as above, but instead passing "TIP3P" as an argument to the
@@ -76,7 +76,7 @@ where the water model is specified as an input requirement by the user.
 
    # Solvate the molecule.
    solvated = BSS.Solvent.solvate("tip3p", molecule=molecule,
-                                  box=3*[5*BSS.Units.length.nanometer],
+                                  box=3*[5*BSS.Units.Length.nanometer],
                                   ion_conc=0.1)
 
 Solvate the molecule with a shell of at least 2 nanometers of SPC water.
@@ -90,7 +90,7 @@ Solvate the molecule with a shell of at least 2 nanometers of SPC water.
 
    # Solvate the molecule.
    solvated = BSS.Solvent.spc("tip3p", molecule=molecule,
-                              shell=2*BSS.Units.length.nanometer)
+                              shell=2*BSS.Units.Length.nanometer)
 
 Create a 50 :class:`angstrom <BioSimSpace.Units.Length.angstrom>` periodic
 box of pure SPC/E water.
