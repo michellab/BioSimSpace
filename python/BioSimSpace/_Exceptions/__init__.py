@@ -28,9 +28,11 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    AlignmentError
     IncompatibleError
     MissingSoftwareError
     ParameterisationError
+    ThirdPartyError
 """
 
 from ._exceptions import *
