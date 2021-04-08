@@ -10,7 +10,7 @@ ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/HmW0
 ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/peJ15kXeAtNpRbgNvAcjpyx04qLKd4GsbEzuL5VNbSM/n/hugs/b/notebook/o/plumed.tar.bz2
 
 # Not used here, but maybe somewhere else?
-ENV KCOMBU_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/lRplAwerQbpz3PFPhVtkc7O_Tj9RENtj4KS8MW54OGA/n/hugs/b/notebook/o/kcombu-src-20190208.tar.gz
+ENV KCOMBU_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/XG5XPIRcsIZsxzwzbrLKuTfJ5Ow6r4AU0YxbU6_Lnl31BrwTFlvToXOOjpbheK2R/n/hugs/b/notebook/o/kcombu-src-20200414.tar.gz
 
 USER root
 WORKDIR /home

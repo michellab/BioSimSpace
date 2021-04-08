@@ -64,7 +64,7 @@ from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
-# Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
+# Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
     _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
 except:
@@ -387,7 +387,7 @@ def matchAtoms(molecule0,
              - "rmsd_flex_align"
                  Flexibly align molecule0 to molecule1 based on the mapping
                  before computing the above RMSD score. (Requires the
-                 'fkcombu'. package: http://strcomp.protein.osaka-u.ac.jp/kcombu)
+                 'fkcombu'. package: https://pdbj.org/kcombu)
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
@@ -484,7 +484,7 @@ def matchAtoms(molecule0,
 
     if _scoring_function == "RMSDFLEXALIGN" and _fkcombu_exe is None:
         raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
-                                    "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+                                    "https://pdbj.org/kcombu")
 
     if type(matches) is not int:
         raise TypeError("'matches' must be of type 'int'")
@@ -763,7 +763,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     if fkcombu_exe is None:
         if _fkcombu_exe is None:
             raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
-                                        "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+                                        "https://pdbj.org/kcombu")
         else:
             fkcombu_exe = _fkcombu_exe
     # Check that the user supplied executable exists.

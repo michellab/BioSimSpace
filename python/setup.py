@@ -113,4 +113,4 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
-        print("FKCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu")
+        print("FKCOMBU: https://pdbj.org/kcombu")
