@@ -579,7 +579,7 @@ class ProcessRunner():
 
         # Run processes in serial.
         if serial:
-            for x in self._processes:
+            for p in self._processes:
                 # Initialise the error state.
                 is_error = True
 
