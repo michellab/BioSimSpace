@@ -161,7 +161,7 @@ class RMSD(_CollectiveVariable):
         # We need to match all of the atoms in the reference.
         if len(matches) < reference.nAtoms():
             raise _IncompatibleError("Didn't match all of the atoms in the reference molecule: "
-                                    f"found {len(matches)}, expected {reference.nAtoms()}.")
+                                    f"Found {len(matches)}, expected {reference.nAtoms()}.")
 
         # Get the indices of the matching atoms.
         idx_matches = matches.keys()
