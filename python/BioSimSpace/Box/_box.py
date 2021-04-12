@@ -28,6 +28,7 @@ __email_ = "lester.hedges@gmail.com"
 
 __all__ = ["boxTypes",
            "generateBoxParameters",
+           "cubic",
            "rhombicDodecahedronSquare",
            "rhombicDodecahedronHexagon",
            "truncatedOctahedron"]
@@ -72,6 +73,37 @@ def generateBoxParameters(box_type, image_distance):
 
     return _box_type_dict[box_type](image_distance)
 
+def cubic(image_distance):
+    """Generate paramters for a cubic box.
+
+       Parameters
+       ----------
+
+       image_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The image distance.
+
+       Returns
+       -------
+
+       box : [:class:`Length <BioSimSpace.Types.Length>`]
+           The box vector magnitudes.
+
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+    """
+
+    # Validate arguments.
+
+    if type(image_distance) is not _Length:
+        raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
+
+    if image_distance.magnitude() <=0:
+        raise ValueError("'image_distance' must be greater than zero.")
+
+    box = 3*[image_distance]
+    angles = 3*[_Angle(90, "degrees")]
+
+    return box, angles
+
 def rhombicDodecahedronSquare(image_distance):
     """Generate parameters for a square rhombic dodecahedron.
 
@@ -90,7 +122,6 @@ def rhombicDodecahedronSquare(image_distance):
        angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            The box vector angles: yz, xz, and xy.
     """
-
 
     # Validate arguments.
 
@@ -125,7 +156,6 @@ def rhombicDodecahedronHexagon(image_distance):
            The box vector angles: yz, xz, and xy.
     """
 
-
     # Validate arguments.
 
     if type(image_distance) is not _Length:
@@ -158,7 +188,6 @@ def truncatedOctahedron(image_distance):
        angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            The box vector angles: yz, xz, and xy.
     """
-
 
     # Validate arguments.
 

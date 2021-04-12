@@ -28,11 +28,12 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    boxTypes
     generateBoxParameters
+    cubic
     rhombicDodecahedronSquare
     rhombicDodecahedronHexagon
     truncatedOctahedron
-    boxTypes
 
 Examples
 ========
