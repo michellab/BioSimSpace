@@ -472,7 +472,7 @@ class Plumed():
                 num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
                 # Create the ligand record. Rember to one-index the atoms.
-                colvar_string = "lig: COM=%d-%d" % (idx+1, idx+num_atoms)
+                colvar_string = "lig: COM ATOMS=%d-%d" % (idx+1, idx+num_atoms)
                 self._config.append(colvar_string)
 
                 # Create the center-of-mass record for the atoms that are used
