@@ -294,6 +294,7 @@ class Plumed():
         # Intialise tally counters.
         num_distance = 0
         num_torsion = 0
+        num_rmsd = 0
         num_center = 0
         num_fixed = 0
 
@@ -439,6 +440,34 @@ class Plumed():
                 # Store the collective variable name and its unit.
                 self._colvar_name.append(arg_name)
                 self._colvar_unit[arg_name] = _Units.Angle.radian
+
+                # Disable periodic boundaries.
+                if not colvar.getPeriodicBoundaries():
+                    colvar_string += " NOPBC"
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
+                self._config.append(colvar_string)
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # RMSD.
+            elif type(colvar) is _CollectiveVariable.RMSD:
+                num_rmsd += 1
+                arg_name = "r%d" % num_rmsd
+                colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
+                colvar_string += " TYPE %s" % colvar.getAlignmentType().upper()
+
+                # Write the reference PDB file.
+                with open("%s/reference.pdb" % self._work_dir, "w") as file:
+                    for line in colvar.getReferencePDB():
+                        file.write(line + "\n")
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = None
 
                 # Disable periodic boundaries.
                 if not colvar.getPeriodicBoundaries():
@@ -610,7 +639,11 @@ class Plumed():
                     if idx1 < last_hill:
                         metad_string += ","
             else:
-                metad_string += "%s" % hill_width.magnitude()
+                # Handle dimensionless collective variables.
+                try:
+                    metad_string += "%s" % hill_width.magnitude()
+                except:
+                    metad_string += "%s" % hill_width
             if idx0 < self._num_colvar - 1:
                 metad_string += ","
 
