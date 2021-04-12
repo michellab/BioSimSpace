@@ -464,7 +464,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
                             "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
-        if type(molecule) is _System and box is None and shell is None:
+        if type(_molecule) is _System and box is None and shell is None:
             try:
                 check_box = False
                 prop = property_map.get("space", "space")
@@ -480,15 +480,15 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
         # Warn the user if any of the molecules contain structural ions
         # parameterised for a different water model.
-        if type(molecule) is _System:
-            for mol in molecule:
+        if type(_molecule) is _System:
+            for mol in _molecule:
                 ion_water_model = mol._ion_water_model
                 if ion_water_model is not None and ion_water_model != model:
                     _warnings.warn( "Mismatch with water model used to parameterise "
                                    f"structural ions: '{ion_water_model}'")
                     break
         else:
-            ion_water_model = molecule._ion_water_model
+            ion_water_model = _molecule._ion_water_model
             if ion_water_model is not None and ion_water_model != model:
                 _warnings.warn( "Mismatch with water model used to parameterise "
                                f"structural ions: '{ion_water_model}'")
