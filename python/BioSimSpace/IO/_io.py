@@ -24,7 +24,7 @@ Functionality for reading/writing molecular systems.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
 

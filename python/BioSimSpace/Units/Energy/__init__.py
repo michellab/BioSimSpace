@@ -24,7 +24,7 @@ Energy units.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["kcal_per_mol", "kj_per_mol", "kt"]
 

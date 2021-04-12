@@ -24,7 +24,7 @@ Functionality for running simulations with SOMD.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 

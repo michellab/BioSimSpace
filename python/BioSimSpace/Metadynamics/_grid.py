@@ -24,7 +24,7 @@ Functionality for configuring grids for metadynamics simulation.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Grid"]
 

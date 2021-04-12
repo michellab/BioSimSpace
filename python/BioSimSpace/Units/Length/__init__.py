@@ -24,7 +24,7 @@ Length units.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["meter", "centimeter", "millimeter",
            "nanometer", "angstrom", "picometer"]

@@ -24,7 +24,7 @@ Functionality for solvating molecular systems.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 

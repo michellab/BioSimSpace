@@ -24,7 +24,7 @@ A coordinate (position vector) type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Coordinate"]
 

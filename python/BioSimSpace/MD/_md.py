@@ -24,7 +24,7 @@ Functionality for configuring and driving molecular dynamics simulations.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["run"]
 
