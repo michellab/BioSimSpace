@@ -186,12 +186,12 @@ class RMSD(_CollectiveVariable):
                 # Set occupancy and beta factor.
                 if matches[idx] in rmsd_indices:
                     # This atom is used to compute the RMSD.
-                    edit_mol = edit_mol.atom(idx).setProperty("occupancy", 1.0).molecule()
-                    edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 0.0).molecule()
-                else:
-                    # This atom is used for alignment.
                     edit_mol = edit_mol.atom(idx).setProperty("occupancy", 0.0).molecule()
                     edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 1.0).molecule()
+                else:
+                    # This atom is used for alignment.
+                    edit_mol = edit_mol.atom(idx).setProperty("occupancy", 1.0).molecule()
+                    edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 0.0).molecule()
 
         # Commit the changes.
         new_molecule = edit_mol.commit()
