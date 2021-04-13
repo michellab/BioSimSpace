@@ -468,9 +468,9 @@ class MCS(object):
 
         # Local pointers to the passed molecules
         self.moli = moli
-        sanity_check_on_molecule(self.moli)
+        #sanity_check_on_molecule(self.moli)
         self.molj = molj
-        sanity_check_on_molecule(self.molj)
+        #sanity_check_on_molecule(self.molj)
 
         # Sanitize input molecules
         Chem.SanitizeMol(self.moli)
