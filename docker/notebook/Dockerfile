@@ -28,15 +28,15 @@ RUN apt-get update && \
 # Configure environment.
 ENV SIRE_SILENT_PHONEHOME=1 \
     SIRE=/opt/conda \
-    AMBERHOME=/home/amber \
+    AMBERHOME=/opt/conda \
     PATH=/home/amber/bin:/home/gromacs/bin:/home/plumed/bin:$PATH \
     LD_LIBRARY_PATH=/home/plumed/lib:/opt/conda/lib:$LD_LIBRARY_PATH \
     PLUMED_KERNEL=/home/plumed/lib/libplumedKernel.so
 
 # Download and install AmberTools into /home using wget.
-RUN wget $AMBER_DOWNLOAD -O amber.tar.bz2 && \
-    tar -jxvf amber.tar.bz2 && \
-    rm amber.tar.bz2
+#RUN wget $AMBER_DOWNLOAD -O amber.tar.bz2 && \
+#    tar -jxvf amber.tar.bz2 && \
+#    rm amber.tar.bz2
 
 # Download and install GROMACS into /home using wget.
 RUN wget $GROMACS_DOWNLOAD -O gromacs.tar.bz2 && \
@@ -57,7 +57,7 @@ USER $NB_USER
 WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
-RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev biosimspace --all && \
+RUN conda install -y -c conda-forge -c omnia -c michellab/label/dev ambertools=20 sire=2021.1.0 biosimspace=2020.1.0 && \
     conda install -y -c conda-forge libgfortran=3 nodejs openmpi-mpicxx openssh patch
 
 RUN pip install --upgrade pip && \
@@ -66,9 +66,7 @@ RUN pip install --upgrade pip && \
 # Install and enable nglview.
 RUN jupyter-nbextension install nglview --py --sys-prefix && \
     jupyter-nbextension enable nglview --py --sys-prefix && \
-    jupyter serverextension enable jupyterlab && \
-    jupyter-labextension install @jupyter-widgets/jupyterlab-manager && \
-    jupyter labextension install nglview-js-widgets
+    jupyter serverextension enable jupyterlab
 
 # Clean up after conda, including clearing the cache.
 RUN conda clean -tipsy && \
