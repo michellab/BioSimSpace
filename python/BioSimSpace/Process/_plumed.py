@@ -270,7 +270,7 @@ class Plumed():
             if self._plumed_version < 2.7:
                 aux_file = "ProjectionOnAxis.cpp"
                 self._config.append(f"LOAD FILE={aux_file}")
-                aux_file = _os.path.dirname(_CollectiveVariable.__file__) + "/" + aux_file
+                aux_file = _os.path.dirname(_CollectiveVariable.__file__).replace("CollectiveVariable", "_aux") + "/" + aux_file
                 self._aux_files.append(aux_file)
 
         # Initialise the configuration string.
