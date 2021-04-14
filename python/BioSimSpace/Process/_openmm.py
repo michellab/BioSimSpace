@@ -774,6 +774,7 @@ class OpenMM(_process.Process):
             self.addToConfig( "    current_steps = int(sim_log_file[-1].split(',')[1])")
             self.addToConfig( "    steps -= current_steps")
             self.addToConfig( "    shutil.copy('COLVAR.npy','old_COLVAR.npy')")
+            self.addToConfig( "    shutil.copy('HILLS','old_HILLS')")
             self.addToConfig(f"    shutil.copy('{self._name}.dcd','old_{self._name}.dcd')")
 
             # Add the reporters.
