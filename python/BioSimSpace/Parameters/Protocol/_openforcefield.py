@@ -107,8 +107,9 @@ class OpenForceField(_protocol.Protocol):
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            work_dir : str
                The working directory.
@@ -123,8 +124,8 @@ class OpenForceField(_protocol.Protocol):
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if type(molecule) is not _Molecule and type(molecule) is not str:
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
         if type(work_dir) is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
@@ -139,59 +140,85 @@ class OpenForceField(_protocol.Protocol):
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a copy of the molecule.
-        new_mol = molecule.copy()
+        # Flag whether the molecule is a SMILES string.
+        if type(molecule) is str:
+            is_smiles = True
+        else:
+            is_smiles = False
 
         # The following is adapted from the Open Force Field examples, where an
         # OpenFF system is converted to AMBER format files using ParmEd:
         # https://github.com/openforcefield/openff-toolkit/blob/master/examples/using_smirnoff_in_amber_or_gromacs/convert_to_amber_gromacs.ipynb
 
-        # Write the molecule to a PDB file.
-        try:
-            _IO.saveMolecules(prefix + "molecule", new_mol, "pdb")
-        except Exception as e:
-            msg = "Failed to write the molecule to 'PDB' format."
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+        if is_smiles:
+            # Convert SMILES string to an OpenFF molecule.
+            try:
+                off_molecule = _OpenFFMolecule.from_smiles(molecule)
+            except Exception as e:
+                msg = "Failed to convert SMILES to Open Force Field Molecule."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
 
-        # Create an RDKit molecule from the PDB file.
-        try:
-            rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
-        except Exception as e:
-            msg = "RDKit was unable to read the molecular PDB file!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
+            # Generate a single conformer.
+            try:
+                off_molecule.generate_conformers(n_conformers=1)
+            except Exception as e:
+                msg = "Unable to generate conformer from Open Force Field molecule."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+        else:
+            # Write the molecule to a PDB file.
+            try:
+                _IO.saveMolecules(prefix + "molecule", molecule, "pdb")
+            except Exception as e:
+                msg = "Failed to write the molecule to 'PDB' format."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
 
-        # Use RDKit to write back to SDF format.
-        try:
-            writer = _Chem.SDWriter(prefix + "molecule.sdf")
-            writer.write(rdmol)
-            writer.close()
-        except Exception as e:
-            msg = "RDKit was unable to write the molecular SDF file!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
+            # Create an RDKit molecule from the PDB file.
+            try:
+                rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
+            except Exception as e:
+                msg = "RDKit was unable to read the molecular PDB file!"
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
 
-        # Create the Open Forcefield Molecule from the intermediate SDF file,
-        # as recommended by @j-wags and @mattwthompson.
-        try:
-            off_molecule = _OpenFFMolecule.from_file(prefix + "molecule.sdf")
-        except Exception as e:
-            msg = "Unable to create OpenFF Molecule!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
+            # Use RDKit to write back to SDF format.
+            try:
+                writer = _Chem.SDWriter(prefix + "molecule.sdf")
+                writer.write(rdmol)
+                writer.close()
+            except Exception as e:
+                msg = "RDKit was unable to write the molecular SDF file!"
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
+
+            # Create the Open Forcefield Molecule from the intermediate SDF file,
+            # as recommended by @j-wags and @mattwthompson.
+            try:
+                off_molecule = _OpenFFMolecule.from_file(prefix + "molecule.sdf")
+            except Exception as e:
+                msg = "Unable to create OpenFF Molecule!"
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
 
         # Extract the molecular topology.
         try:
@@ -216,12 +243,11 @@ class OpenForceField(_protocol.Protocol):
             else:
                 raise _ThirdPartyError(msg) from None
 
-        # Obtain the OpenMM Topology object from the PDB file.
+        # Obtain the OpenMM Topology object from the OpenFF topology.
         try:
-            pdbfile = _PDBFile(prefix + "molecule.pdb")
-            omm_topology = pdbfile.topology
+            omm_topology = off_topology.to_openmm()
         except Exception as e:
-            msg = "OpenMM was unable to read the molecular PDB file!"
+            msg = "Unable to convert Open Force Field topology to OpenMM topology!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -241,7 +267,11 @@ class OpenForceField(_protocol.Protocol):
 
         # Convert the OpenMM System to a ParmEd structure.
         try:
-            parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, pdbfile.positions)
+            if is_smiles:
+                parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, off_molecule.conformers[0])
+            else:
+                pdbfile = _PDBFile(prefix + "molecule.pdb")
+                parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, pdbfile.positions)
         except Exception as e:
             msg = "Unable to convert OpenMM System to ParmEd structure!"
             if _isVerbose():
@@ -277,7 +307,11 @@ class OpenForceField(_protocol.Protocol):
                 raise IOError(msg) from None
 
         # Make the parameterised molecule compatible with the original topology.
-        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+        if is_smiles:
+            new_mol = par_mol
+        else:
+            new_mol = molecule.copy()
+            new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield

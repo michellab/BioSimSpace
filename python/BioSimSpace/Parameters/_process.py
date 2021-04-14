@@ -99,8 +99,9 @@ class Process():
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to parameterise.
+           molecule : BioSimSpace._SireWrappers.Molecule, str
+               The molecule to parameterise, either as a Molecule object, or
+               SMILES string.
 
            protocol : BioSimSpace.Parameters.Protocol
                The parameterisation protocol.
@@ -114,8 +115,8 @@ class Process():
 
         # Validate arguments.
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if type(molecule) is not _Molecule and type(molecule) is not str:
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
         if not isinstance(protocol, _Protocol._Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
