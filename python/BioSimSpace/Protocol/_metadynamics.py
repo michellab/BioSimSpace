@@ -230,7 +230,7 @@ class Metadynamics(_Protocol):
 
         # Convert tuple to list.
         if type(collective_variable) is tuple:
-            collective_variable = tuple(collective_variable)
+            collective_variable = list(collective_variable)
 
         if type(collective_variable) is list:
             if not all(isinstance(x, _colvar_type) for x in collective_variable):
