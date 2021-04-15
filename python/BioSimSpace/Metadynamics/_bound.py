@@ -34,7 +34,7 @@ class Bound():
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
         """Constructor.
 
-           Set a bound on the value of a the collective variable along with the
+           Set a bound on the value of a collective variable along with the
            parameters used to define the bias potential.
 
            The expression for the bias is:
