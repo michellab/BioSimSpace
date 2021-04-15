@@ -38,10 +38,12 @@ Classes
 
     Bound
     Grid
+    Restraint
 """
 
 from ._bound import *
 from ._grid import *
 from ._metadynamics import *
+from ._restraint import *
 
 from . import CollectiveVariable
