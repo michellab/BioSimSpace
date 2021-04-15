@@ -28,7 +28,6 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Metadynamics"]
 
-import math as _math
 import os as _os
 
 from BioSimSpace import Types as _Types
