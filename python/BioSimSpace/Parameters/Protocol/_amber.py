@@ -616,8 +616,8 @@ class GAFF(_protocol.Protocol):
                     file.write("%s\n" % command)
 
                 # Create files for stdout/stderr.
-                stdout = open(prefix + "tleap.out", "w")
-                stderr = open(prefix + "tleap.err", "w")
+                stdout = open(prefix + "leap.out", "w")
+                stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
                 proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
@@ -627,6 +627,13 @@ class GAFF(_protocol.Protocol):
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
                 if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+                    # Check the output of tLEaP for missing atoms.
+                    if self._has_missing_atoms(prefix + "leap.out"):
+                        raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
+                                                     "inconsistent with the original molecule. Please "
+                                                     "make sure that your initial molecule has a "
+                                                     "complete topology.")
+
                     # If the original molecule was comprised of multiple chains, then we need
                     # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
                     # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
