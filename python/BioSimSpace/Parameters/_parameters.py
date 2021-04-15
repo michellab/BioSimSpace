@@ -56,8 +56,9 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions. This
@@ -106,8 +107,9 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -142,8 +144,8 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if water_model is not None and type(water_model) is not str:
         raise TypeError("'water_model' must be of type 'str'.")
@@ -187,8 +189,9 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -223,8 +226,8 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if water_model is not None and type(water_model) is not str:
         raise TypeError("'water_model' must be of type 'str'.")
@@ -268,8 +271,9 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -304,8 +308,8 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if water_model is not None and type(water_model) is not str:
         raise TypeError("'water_model' must be of type 'str'.")
@@ -349,8 +353,9 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -385,8 +390,8 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if water_model is not None and type(water_model) is not str:
         raise TypeError("'water_model' must be of type 'str'.")
@@ -430,8 +435,9 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -465,8 +471,8 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if water_model is not None and type(water_model) is not str:
         raise TypeError("'water_model' must be of type 'str'.")
@@ -510,8 +516,9 @@ def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
@@ -537,8 +544,8 @@ def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if net_charge is not None:
         # Get the magnitude of the charge.
@@ -571,8 +578,9 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
@@ -598,8 +606,8 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if net_charge is not None:
         # Get the magnitude of the charge.
@@ -636,8 +644,9 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to parameterise.
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        forcefield : str
            The force field. Run BioSimSpace.Parameters.openForceFields() to get a
@@ -712,8 +721,8 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+    if type(molecule) is not _Molecule and type(molecule) is not str:
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
     if type(forcefield) is not str:
         raise TypeError("'forcefield' must be of type 'str'")
@@ -768,8 +777,9 @@ def _make_function(name):
            Parameters
            ----------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The molecule to parameterise.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            forcefield : str
                The force field. Run BioSimSpace.Parameters.forceFields() to get a

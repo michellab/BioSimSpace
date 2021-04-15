@@ -45,6 +45,7 @@ from Sire import System as _SireSystem
 from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
 from BioSimSpace.Types import Charge as _Charge
@@ -417,8 +418,9 @@ class GAFF(_protocol.Protocol):
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            work_dir : str
                The working directory.
@@ -433,8 +435,8 @@ class GAFF(_protocol.Protocol):
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if type(molecule) is not _Molecule and type(molecule) is not str:
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
         if type(work_dir) is not None and type(work_dir) is not str:
             raise TypeError("'work_dir' must be of type 'str'")
@@ -449,8 +451,21 @@ class GAFF(_protocol.Protocol):
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a copy of the molecule.
-        new_mol = molecule.copy()
+        # Convert SMILES to a molecule.
+        if type(molecule) is str:
+            is_smiles = True
+            try:
+                new_mol = self._smiles_to_molecule(molecule, work_dir)
+            except Exception as e:
+                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
+        else:
+            is_smiles = False
+            new_mol = molecule.copy()
 
         # Use the net molecular charge passed as an option.
         if self._net_charge is not None:
@@ -496,7 +511,7 @@ class GAFF(_protocol.Protocol):
                     charge = new_mol.charge(property_map=_property_map).magnitude()
 
                     # Compute the formal charge ourselves to check that it is consistent.
-                    formal_charge = _formalCharge(molecule).magnitude()
+                    formal_charge = _formalCharge(new_mol).magnitude()
 
                     if charge != formal_charge:
                         _warnings.warn("The formal charge on the molecule is %d "
@@ -601,8 +616,8 @@ class GAFF(_protocol.Protocol):
                     file.write("%s\n" % command)
 
                 # Create files for stdout/stderr.
-                stdout = open(prefix + "tleap.out", "w")
-                stderr = open(prefix + "tleap.err", "w")
+                stdout = open(prefix + "leap.out", "w")
+                stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
                 proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
@@ -612,6 +627,13 @@ class GAFF(_protocol.Protocol):
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
                 if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+                    # Check the output of tLEaP for missing atoms.
+                    if self._has_missing_atoms(prefix + "leap.out"):
+                        raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
+                                                     "inconsistent with the original molecule. Please "
+                                                     "make sure that your initial molecule has a "
+                                                     "complete topology.")
+
                     # If the original molecule was comprised of multiple chains, then we need
                     # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
                     # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
@@ -638,7 +660,10 @@ class GAFF(_protocol.Protocol):
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of
                     # the new properties from 'par_mol' to 'mol'.
-                    new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+                    if is_smiles:
+                        new_mol = par_mol
+                    else:
+                        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
                     # Record the forcefield used to parameterise the molecule.
                     new_mol._forcefield = ff

@@ -32,6 +32,7 @@ import math as _math
 import os as _os
 import pygtail as _pygtail
 import sys as _sys
+import shutil as _shutil
 import timeit as _timeit
 import warnings as _warnings
 
@@ -544,6 +545,13 @@ class OpenMM(_process.Process):
                 raise _IncompatibleError("We currently only support '%s' collective variables for '%s' protocols"
                         % (_CollectiveVariable.Funnel.__name__, self._protocol.__class__.__name__))
 
+            # Create the path to the patched OpenMM metadynamics module.
+            aux_file = "metadynamics.py"
+            path = _os.path.dirname(_CollectiveVariable.__file__).replace("CollectiveVariable", "_aux") + "/" + aux_file
+
+            # Copy the file into the working directory.
+            _shutil.copyfile(path, self._work_dir + f"/{aux_file}")
+
             # The following OpenMM native implementation of the funnel metadynamics protocol
             # is adapted from funnel_maker.py by Dominykas Lukauskis.
 
@@ -552,7 +560,7 @@ class OpenMM(_process.Process):
 
             # Write the OpenMM import statements.
             self._add_config_imports()
-            self.addToConfig("from simtk.openmm.app.metadynamics import *")
+            self.addToConfig("from metadynamics import *")    # Use local patched metadynamics module.
             self.addToConfig("from glob import glob")
             self.addToConfig("import os")
             self.addToConfig("import shutil")
@@ -620,14 +628,15 @@ class OpenMM(_process.Process):
             self.addToConfig(f"p2 = [{p2_string}]")
             self.addToConfig(f"lig = [x for x in range({idx_start}, {idx_end})]")
 
-            self.addToConfig("\n# Create the bias variable for the funnel projection.")
-            self.addToConfig("projection = CustomCentroidBondForce(3, 'distance(g1,g2)*cos(angle(g1,g2,g3))')")
-            self.addToConfig("projection.addGroup(lig)")
-            self.addToConfig("projection.addGroup(p1)")
-            self.addToConfig("projection.addGroup(p2)")
-            self.addToConfig("projection.addBond([0,1,2])")
-            self.addToConfig("projection.setUsesPeriodicBoundaryConditions(True)")
-            hill_width = colvar.getHillWidth().nanometers().magnitude()
+            sigma_proj = colvar.getHillWidth()[0].nanometers().magnitude()
+            self.addToConfig( "\n# Create the bias variable for the funnel projection.")
+            self.addToConfig( "projection = CustomCentroidBondForce(3, 'distance(g1,g2)*cos(angle(g1,g2,g3))')")
+            self.addToConfig( "projection.addGroup(lig)")
+            self.addToConfig( "projection.addGroup(p1)")
+            self.addToConfig( "projection.addGroup(p2)")
+            self.addToConfig( "projection.addBond([0,1,2])")
+            self.addToConfig( "projection.setUsesPeriodicBoundaryConditions(True)")
+            self.addToConfig(f"sigma_proj = {sigma_proj}")
             if colvar.getLowerBound() is None and colvar.getUpperBound() is None:
                 # Sane defaults if no bounds are set.
                 lower_wall = 0.5
@@ -635,8 +644,9 @@ class OpenMM(_process.Process):
             else:
                 lower_wall = colvar.getLowerBound().getValue().nanometers().magnitude()
                 upper_wall = colvar.getUpperBound().getValue().nanometers().magnitude()
-            self.addToConfig(f"proj = BiasVariable(projection, {lower_wall-0.2}, {upper_wall+0.2}, {hill_width}, False, gridWidth=200)")
+            self.addToConfig(f"proj = BiasVariable(projection, {lower_wall-0.2}, {upper_wall+0.2}, {sigma_proj}, False, gridWidth=200)")
 
+            sigma_ext = colvar.getHillWidth()[1].nanometers().magnitude()
             self.addToConfig("\n# Create the bias variable for the funnel extent.")
             self.addToConfig("extent = CustomCentroidBondForce(3, 'distance(g1,g2)*sin(angle(g1,g2,g3))')")
             self.addToConfig("extent.addGroup(lig)")
@@ -647,7 +657,8 @@ class OpenMM(_process.Process):
             extent_max = colvar.getWidth().nanometers().magnitude()  \
                        + colvar.getBuffer().nanometers().magnitude() \
                        + 0.2
-            self.addToConfig(f"ext = BiasVariable(extent, 0.0, {extent_max}, 0.05, False, gridWidth=200)")
+            self.addToConfig(f"sigma_ext = {sigma_ext}")
+            self.addToConfig(f"ext = BiasVariable(extent, 0.0, {extent_max}, {sigma_ext}, False, gridWidth=200)")
 
             # Add restraints.
             self.addToConfig("\n# Add restraints.")
@@ -703,10 +714,11 @@ class OpenMM(_process.Process):
                 bias = 1.0
             else:
                 bias = self._protocol.getBiasFactor()
+            self.addToConfig(f"bias = {bias}")
             height = self._protocol.getHillHeight().kj_per_mol().magnitude()
             freq = self._protocol.getHillFrequency()
 
-            # Work out the number of integration.
+            # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
             # Get the report and restart intervals.
@@ -722,7 +734,7 @@ class OpenMM(_process.Process):
             # Work out the number of cycles.
             cycles = _math.ceil(steps / report_interval)
 
-            self.addToConfig(f"meta = Metadynamics(system, [proj,ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
+            self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
@@ -762,6 +774,7 @@ class OpenMM(_process.Process):
             self.addToConfig( "    current_steps = int(sim_log_file[-1].split(',')[1])")
             self.addToConfig( "    steps -= current_steps")
             self.addToConfig( "    shutil.copy('COLVAR.npy','old_COLVAR.npy')")
+            self.addToConfig( "    shutil.copy('HILLS','old_HILLS')")
             self.addToConfig(f"    shutil.copy('{self._name}.dcd','old_{self._name}.dcd')")
 
             # Add the reporters.
@@ -769,21 +782,35 @@ class OpenMM(_process.Process):
             self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
             self.addToConfig(f"simulation.reporters.append(CheckpointReporter('{self._name}.chk', {report_interval}))")
 
+            # Create the HILLS file.
+            self.addToConfig("\n# Create PLUMED compatible HILLS file.")
+            self.addToConfig("file = open('HILLS','w')")
+            self.addToConfig("file.write('#! FIELDS time pp.proj pp.ext sigma_pp.proj sigma_pp.ext height biasf\\n')")
+            self.addToConfig("file.write('#! SET multivariate false\\n')")
+            self.addToConfig("file.write('#! SET kerneltype gaussian\\n')")
+
+            # Get the initial collective variables.
+            self.addToConfig("\n# Initialise the collective variable array.")
+            self.addToConfig("current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
+            self.addToConfig("colvar_array = np.array([current_cvs])")
+
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"steps = {steps}")
             self.addToConfig(f"cycles = {cycles}")
-            self.addToConfig( "colvar = np.array([meta.getCollectiveVariables(simulation)])")
             self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
+            self.addToConfig( "last_index = 0")
             self.addToConfig( "for x in range(0, cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
-            self.addToConfig( "    current_colvar = np.array([meta.getCollectiveVariables(simulation)])")
-            self.addToConfig( "    colvar = np.append(colvar, [current_colvar], axis=0)")
-            self.addToConfig( "    np.save('COLVAR.np', colvar)")
-            self.addToConfig( "    bias_files = glob('bias_*')")
-            self.addToConfig( "    latest_bias_file = max(bias_files, key=os.path.getctime)")
-            self.addToConfig( "    bias_backup = '_' + latest_bias_file")
-            self.addToConfig(f"    shutil.copyfile(latest_bias_file, bias_backup)")
+            self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
+            self.addToConfig( "    colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
+            self.addToConfig( "    np.save('COLVAR.npy', colvar_array)")
+            self.addToConfig( "    for index in range(last_index, np.shape(colvar_array)[0]):")
+            self.addToConfig( "        line = colvar_array[index]")
+            self.addToConfig( "        time = int(record_colvar_every.value_in_unit(picoseconds) * index)")
+            self.addToConfig( "        write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            self.addToConfig( "        file.write(write_line)")
+            self.addToConfig( "    last_index = index")
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
