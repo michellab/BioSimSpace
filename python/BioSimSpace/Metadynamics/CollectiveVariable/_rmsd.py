@@ -361,23 +361,19 @@ class RMSD(_CollectiveVariable):
         """Internal function to check that the object is in a consistent state."""
 
         if self._lower_bound is not None:
-            if type(self._lower_bound.getValue()) is not int and \
-               type(self._lower_bound.getValue()) is not float:
+            if type(self._lower_bound.getValue()) not in self._types:
                 raise TypeError("'lower_bound' must be of type 'int' or 'float'")
         if self._upper_bound is not None:
-            if type(self._upper_bound.getValue()) is not int and \
-               type(self._upper_bound.getValue()) is not float:
+            if type(self._upper_bound.getValue()) not in self._types:
                 raise TypeError("'upper_bound' must be of type 'int' or 'float'")
         if self._lower_bound is not None and self._upper_bound is not None:
             if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
-            if type(self._grid.getMinimum()) is not int and \
-               type(self._grid.getMinimum()) is not float:
+            if type(self._grid.getMinimum()) not in self._types:
                 raise TypeError("'grid' minimum must be of type 'int' or 'float'")
-            if type(self._grid.getMaximum()) is not int and \
-               type(self._grid.getMaximum()) is not float:
+            if type(self._grid.getMaximum()) not in self._types:
                 raise TypeError("Grid 'maximum' must be of type 'int' or 'float'")
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")

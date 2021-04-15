@@ -42,6 +42,9 @@ class CollectiveVariable():
         if type(self) is CollectiveVariable:
             raise Exception("<CollectiveVariable> must be subclassed.")
 
+        # Default to non-unit based types.
+        self._types = [int, float]
+
         # Default to single-component collective variable.
         self._num_components = 1
 

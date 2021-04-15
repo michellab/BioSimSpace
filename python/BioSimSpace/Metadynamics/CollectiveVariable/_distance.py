@@ -103,6 +103,9 @@ class Distance(_CollectiveVariable):
         # Call the base class constructor.
         super().__init__()
 
+        # Set the types associated with this collective variable.
+        self._types = [_Length]
+
         # Initialise member data.
         self._atom0 = None
         self._atom1 = None
