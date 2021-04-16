@@ -113,6 +113,7 @@ class RMSD(_CollectiveVariable):
         if reference_index is not None:
             if type(reference_index) is not int:
                 raise TypeError("'reference_index' must be of type 'int'.")
+            self._reference_index = reference_index
             molecule = system[reference_index]
 
         # Match to the molecule with the closest number of residues.
@@ -129,6 +130,7 @@ class RMSD(_CollectiveVariable):
             idx = min(enumerate(num_res_system), key=lambda x: abs(x[1]-num_res_ref))[0]
 
             # Extract the molecule from the system.
+            self._reference_index = idx
             molecule = system[idx]
 
         if rmsd_indices is not None:
@@ -330,6 +332,18 @@ class RMSD(_CollectiveVariable):
                The RMSD alignment type.
         """
         return self._alignment_type
+
+    def getReferenceIndex(self):
+        """Return the index of the molecule in the system that corresponds
+           to the reference.
+
+           Returns
+
+           reference_index : int
+               The index of the molecule in the system that corresponds to
+               the reference.
+        """
+        return self._reference_index
 
     def setPeriodicBoundaries(self, pbc):
         """Set whether to use periodic_boundaries when calculating the
