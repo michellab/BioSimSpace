@@ -511,6 +511,12 @@ class Somd(_process.Process):
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 100 steps. Round down
+            # to the closest multiple.
+            if buffer_freq > 0:
+                buffer_freq = 100 * _math.floor(buffer_freq / 100)
+
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
 
@@ -521,7 +527,7 @@ class Somd(_process.Process):
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
             self.addToConfig("nmoves = %d" % report_interval)                       # The number of moves per cycle.
-            self.addToConfig("energy frequency = %d" % buffer_freq)                 # Frequency of free energy gradient evaluation.
+            self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
