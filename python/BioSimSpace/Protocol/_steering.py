@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Steering"]
 
 import math as _math
+import os as _os
 
 from BioSimSpace import Types as _Types
 from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
@@ -52,7 +53,8 @@ class Steering(_Protocol):
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
                  report_interval=1000,
-                 restart_interval=1000
+                 restart_interval=1000,
+                 colvar_file=None
                 ):
         """Constructor.
 
@@ -91,6 +93,11 @@ class Steering(_Protocol):
            restart_interval : int
                The frequency at which restart configurations and trajectory
                frames are saved. (In integration steps.)
+
+           colvar_file : str
+               The path to a COLVAR file from a previous simulation. The
+               information in the file must be consistent with the
+               'collective_variable' argument.
         """
 
         # Call the base class constructor.
@@ -132,6 +139,11 @@ class Steering(_Protocol):
         else:
             self._pressure = None
 
+        if colvar_file is not None:
+            self.setColvarFile(colvar_file)
+        else:
+            self._colvar_file = None
+
         # Flag that the object has been created.
         self._is_new_object = False
 
@@ -150,6 +162,8 @@ class Steering(_Protocol):
             string += ", temperature=%s" % self._temperature
             if self._pressure is not None:
                 string += ", pressure=%s" % self._pressure
+            if self._colvar_file is not None:
+                string += ", colvar_file=%r" % self._colvar_file
             string += ", report_interval=%d" % self._report_interval
             string += ", restart_interval=%d" % self._restart_interval
             string += ">"
@@ -358,23 +372,35 @@ class Steering(_Protocol):
            Parameters
            ----------
 
-           verse : str
+           verse : str, [str]
                Whether the restraint is acting for values of the collective
                variable "larger" or "smaller" than the restraint, or acting
                on "both" sides (default).
         """
 
-        if type(verse) is not str:
-            raise TypeError("'verse' must be of type 'str'.")
+        # Convert tuple to list.
+        if type(verse) is tuple:
+            verse = list(verse)
+        elif type(verse) is str:
+            verse = [verse]
 
-        # Convert to lower case and strip whitespace.
-        verse = verse.lower().replace(" ", "")
+        if type(verse) is list:
+            if not all(isinstance(x, str) for x in verse):
+                raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
 
+        new_verse = []
         allowed = ["both", "larger", "smaller"]
-        if verse not in allowed:
-            raise ValueError(f"'verse' must be one of: {allowed}")
 
-        self._verse = verse
+        for v in verse:
+            # Convert to lower case and strip whitespace.
+            v = v.lower().replace(" ", "")
+
+            if v not in allowed:
+                raise ValueError(f"'verse' must be one of: {allowed}")
+            else:
+                new_verse.append(v)
+
+        self._verse = new_verse
 
     def getTimeStep(self):
         """Return the time step.
@@ -547,3 +573,31 @@ class Steering(_Protocol):
             restart_interval = 500
 
         self._restart_interval = restart_interval
+
+    def getColvarFile(self):
+        """Return the path to the COLVAR file.
+
+           Returns
+           -------
+
+           colvar_file : str
+               The path to the COLVAR file.
+        """
+        return self._colvar_file
+
+    def setColvarFile(self, colvar_file):
+        """Set the location of an existing COLVAR file.
+
+           Parameters
+           ----------
+
+           colvar_file : str
+               The path to an existing COLVAR file.
+        """
+        if type(colvar_file) is not str:
+            raise ValueError("'colvar_file' must be of type 'str'")
+
+        if not _os.path.isfile(colvar_file):
+            raise ValueError("'colvar_file' doesn't exist: %s" % colvar_file)
+
+        self._colvar_file = colvar_file
