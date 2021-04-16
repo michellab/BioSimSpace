@@ -184,6 +184,12 @@ class OpenMM(_process.Process):
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # Convert the water model topology so that it matches the GROMACS naming convention.
+        system._set_water_topology("AMBER")
+
         # Create the input files...
 
         # RST file (coordinates).
