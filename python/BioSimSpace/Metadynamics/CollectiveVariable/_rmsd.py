@@ -40,13 +40,14 @@ from BioSimSpace._SireWrappers import System as _System
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
+from ...Types import Length as _Length
 
 class RMSD(_CollectiveVariable):
     """A class for a root-mean-square deviation (RMSD) collective variable."""
 
     def __init__(self, system, reference, reference_index=None, rmsd_indices=None,
-            hill_width=0.1, lower_bound=None, upper_bound=None, grid=None,
-            alignment_type="optimal", pbc=True):
+            hill_width=_Length(0.1, "nanometer"), lower_bound=None, upper_bound=None,
+            grid=None, alignment_type="optimal", pbc=True):
         """Constructor.
 
            Parameters
@@ -74,7 +75,7 @@ class RMSD(_CollectiveVariable):
                the reference will be used. Atoms from the reference that are
                not in rmsd_indices will instead be used for alignment.
 
-           hill_width : float
+           hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill used to sample this variable.
 
            lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
@@ -99,6 +100,9 @@ class RMSD(_CollectiveVariable):
 
         # Call the base class constructor.
         super().__init__()
+
+        # Set the types associated with this collective variable.
+        self._types = [_Length]
 
         # Validate input.
 
@@ -164,6 +168,10 @@ class RMSD(_CollectiveVariable):
         if len(matches) < reference.nAtoms():
             raise _IncompatibleError("Didn't match all of the atoms in the reference molecule: "
                                     f"Found {len(matches)}, expected {reference.nAtoms()}.")
+
+        # Work out the value of the RMSD.
+        rmsd = reference._sire_object.evaluate().rmsd(molecule._sire_object, _SireMol.AtomResultMatcher(matches))
+        self._initial_value = _Length(rmsd.value(), "angstrom")
 
         # Invert the matches so that we map from the system to the reference.
         matches = { v:k for k,v in matches.items() }
@@ -280,6 +288,17 @@ class RMSD(_CollectiveVariable):
         """
         return self._reference_pdb
 
+    def getInitialValue(self):
+        """Return the initial value of the collective variable.
+
+           Returns
+           -------
+
+           rmsd : :class:`Length <BioSimSpace.Types.Length>`
+               The initial value of the collective variable.
+        """
+        return self._initial_value
+
     def setHillWidth(self, hill_width):
         """Set the width of the Gaussian hills used to bias this collective
            variable.
@@ -287,13 +306,14 @@ class RMSD(_CollectiveVariable):
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill.
         """
-        if type(hill_width) is not float:
-            raise TypeError("'hill_width' must be of type 'float'")
+        if type(hill_width) is not _Length:
+            raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
 
-        if hill_width < 0:
-            raise ValueError("'hill_width' must be > 0")
+        if hill_width.magnitude() < 0:
+            raise ValueError("'hill_width' must have a magnitude of > 0")
 
-        self._hill_width = hill_width
+        # Convert to the internal unit.
+        self._hill_width = hill_width.nanometers()
 
     def getHillWidth(self):
         """Return the width of the Gaussian hill used to bias this collective
@@ -302,7 +322,7 @@ class RMSD(_CollectiveVariable):
            Returns
            -------
 
-           hill_width : float
+           hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill.
         """
         return self._hill_width
@@ -379,19 +399,19 @@ class RMSD(_CollectiveVariable):
 
         if self._lower_bound is not None:
             if type(self._lower_bound.getValue()) not in self._types:
-                raise TypeError("'lower_bound' must be of type 'int' or 'float'")
+                raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
         if self._upper_bound is not None:
             if type(self._upper_bound.getValue()) not in self._types:
-                raise TypeError("'upper_bound' must be of type 'int' or 'float'")
+                raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
         if self._lower_bound is not None and self._upper_bound is not None:
             if self._lower_bound.getValue() >= self._upper_bound.getValue():
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
             if type(self._grid.getMinimum()) not in self._types:
-                raise TypeError("'grid' minimum must be of type 'int' or 'float'")
+                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
             if type(self._grid.getMaximum()) not in self._types:
-                raise TypeError("Grid 'maximum' must be of type 'int' or 'float'")
+                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
             if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
@@ -399,6 +419,6 @@ class RMSD(_CollectiveVariable):
 
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid.getBins() is None:
-                grid_range = self._grid.getMaximum() - self._grid.getMinimum()
-                num_bins = _ceil(5.0 * (grid_range / self._hill_width))
+                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).magnitude()
+                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
                 self._grid.setBins(num_bins)
