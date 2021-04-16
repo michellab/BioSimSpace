@@ -158,12 +158,15 @@ class RMSD(_CollectiveVariable):
         matcher = _SireMol.ResNumAtomNameMatcher()
 
         # Match the atoms by residue number and name.
-        matches = matcher.match(molecule._sire_object, reference._sire_object)
+        matches = matcher.match(reference._sire_object, molecule._sire_object)
 
         # We need to match all of the atoms in the reference.
         if len(matches) < reference.nAtoms():
             raise _IncompatibleError("Didn't match all of the atoms in the reference molecule: "
                                     f"Found {len(matches)}, expected {reference.nAtoms()}.")
+
+        # Invert the matches so that we map from the system to the reference.
+        matches = { v:k for k,v in matches.items() }
 
         # Get the indices of the matching atoms.
         idx_matches = matches.keys()
