@@ -1045,11 +1045,11 @@ class OpenMM(_process.Process):
            index : int
                The index of the frame.
 
-          Returns
-          -------
+           Returns
+           -------
 
-          frame : :class:`System <BioSimSpace._SireWrappers.System>`
-              The System object of the corresponding frame.
+           frame : :class:`System <BioSimSpace._SireWrappers.System>`
+               The System object of the corresponding frame.
         """
 
         if type(index) is not int:
