@@ -964,6 +964,19 @@ class OpenMM(_process.Process):
                 # Get the last frame.
                 new_system = traj.getFrames(-1)[0]
 
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system,
+                                            self._property_map,
+                                            self._property_map)
+
+                # Update the box information in the original system.
+                if "space" in new_system._sire_object.propertyKeys():
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+                return old_system
+
             else:
                 # Work out the total number of trajectory frames.
                 num_frames = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -972,24 +985,18 @@ class OpenMM(_process.Process):
                 # Work out the fraction of the simulation that has been completed.
                 frac_complete = self._protocol.getRunTime() / self.getTime()
 
+                # Make sure the fraction doesn't exceed one. OpenMM can report
+                # time values that are larger than the number of integration steps
+                # multiplied by the time step.
+                if frac_complete > 1:
+                    frac_complete = 1
+
                 # Work out the trajectory frame index, rounding down.
-                index = int(frac_complete * num_frames)
+                # Remember that frames in MDTraj are zero indexed, like Python.
+                index = int(frac_complete * num_frames) - 1
 
-                # Get the most recent frame.
-                new_system = self.getFrame(index)
-
-            # Copy the new coordinates back into the original system.
-            old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
-
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
-                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-
-            return old_system
+                # Return the most recent frame.
+                return self.getFrame(index)
 
         except:
             return None
