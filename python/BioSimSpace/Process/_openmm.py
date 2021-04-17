@@ -1498,6 +1498,23 @@ class OpenMM(_process.Process):
         self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
         self.addToConfig("properties = {}")
 
+        if self._platform == "CPU":
+            self.addToConfig("properties = {}")
+        elif self._platform == "CUDA":
+            cuda_devices = _os.environ.get("CUDA_VISIBLE_DEVICES")
+            if cuda_devices is None:
+                raise EnvironmentError("'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                                        "environment variable is unset.")
+            else:
+                self.addToConfig(f"properties = {{'CudaDeviceIndex': '{cuda_devices}'}}")
+        elif self._platform == "OPENCL":
+            opencl_devices = _os.environ.get("OPENCL_VISIBLE_DEVICES")
+            if opencl_devices is None:
+                raise EnvironmentError("'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                                        "environment variable is unset.")
+            else:
+                self.addToConfig(f"properties = {{'OpenCLDeviceIndex': '{opencl_devices}'}}")
+
     def _add_config_monkey_patches(self):
         """Helper function to write any monkey-patches to the OpenMM Python
            script (config file).
