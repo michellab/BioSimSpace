@@ -1496,7 +1496,6 @@ class OpenMM(_process.Process):
         # Set the simulation platform.
         self.addToConfig("\n# Set the simulation platform.")
         self.addToConfig(f"platform = Platform.getPlatformByName('{self._platform}')")
-        self.addToConfig("properties = {}")
 
         if self._platform == "CPU":
             self.addToConfig("properties = {}")
