@@ -672,7 +672,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         if molecule is not None:
             # Write the molecule/system to a GRO files.
             _IO.saveMolecules("input", molecule, "gro87")
-            _os.rename("input.gro87", "input.gro")
 
         # We need to create a dummy input file with no molecule in it.
         else:
@@ -813,8 +812,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             # Write the molecule + water system to file.
             _IO.saveMolecules("solvated", system, "gro87")
             _IO.saveMolecules("solvated", system, "grotop")
-            _os.rename("solvated.gro87", "solvated.gro")
-            _os.rename("solvated.grotop", "solvated.top")
 
             # First write an mdp file.
             with open("ions.mdp", "w") as file:
