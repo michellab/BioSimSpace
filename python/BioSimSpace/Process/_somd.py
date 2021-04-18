@@ -744,7 +744,7 @@ class Somd(_process.Process):
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
-                  / self._protocol.getRestartInterval())
+                  / self._protocol.getRestartInterval()) - 1
 
         if index < 0 or index > max_index:
             raise ValueError(f"'index' must be in range [0, {max_index}].")
