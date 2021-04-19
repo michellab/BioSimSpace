@@ -998,68 +998,40 @@ class System(_SireWrapper):
         # Get the element property.
         element = property_map.get("element", "element")
 
-        # A list of ion elements.
-        ions = ["F",
-                "Cl",
-                "Br",
-                "I",
-                "Li",
-                "Na",
-                "K",
-                "Rb",
-                "Cs",
-                "Mg",
-                "Tl",
-                "Cu",
-                "Ag",
-                "Be",
-                "Cu",
-                "Ni",
-                "Pt",
-                "Zn",
-                "Co",
-                "Pd",
-                "Ag",
-                "Cr",
-                "Fe",
-                "Mg",
-                "V",
-                "Mn",
-                "Hg",
-                "Cd",
-                "Yb",
-                "Ca",
-                "Sn",
-                "Pb",
-                "Eu",
-                "Sr",
-                "Sm",
-                "Ba",
-                "Ra",
-                "Al",
-                "Fe",
-                "Cr",
-                "In",
-                "Tl",
-                "Y",
-                "La",
-                "Ce",
-                "Pr",
-                "Nd",
-                "Sm",
-                "Eu",
-                "Gd",
-                "Tb",
-                "Dy",
-                "Er",
-                "Tm",
-                "Lu",
-                "Hf",
-                "Zr",
-                "Ce",
-                "U",
-                "Pu",
-                "Th"]
+        # A set of protein residues. Taken from MDAnalysis.
+        prot_res = {
+            # CHARMM top_all27_prot_lipid.rtf
+            "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HSD",
+            "HSE", "HSP", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR",
+            "TRP", "TYR", "VAL", "ALAD",
+            ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
+            # PDB
+            "HIS", "MSE",
+            # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
+            "ARGN", "ASPH", "CYS2", "CYSH", "QLN", "PGLU", "GLUH", "HIS1", "HISD",
+            "HISE", "HISH", "LYSH",
+            # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
+            "ASN1", "CYS1", "HISA", "HISB", "HIS2",
+            # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
+            "HID", "HIE", "HIP", "ORN", "DAB", "LYN", "HYP", "CYM", "CYX", "ASH",
+            "GLH", "ACE", "NME",
+            # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
+            "NALA", "NGLY", "NSER", "NTHR", "NLEU", "NILE", "NVAL", "NASN", "NGLN",
+            "NARG", "NHID", "NHIE", "NHIP", "NTRP", "NPHE", "NTYR", "NGLU", "NASP",
+            "NLYS", "NPRO", "NCYS", "NCYX", "NMET", "CALA", "CGLY", "CSER", "CTHR",
+            "CLEU", "CILE", "CVAL", "CASF", "CASN", "CGLN", "CARG", "CHID", "CHIE",
+            "CHIP", "CTRP", "CPHE", "CTYR", "CGLU", "CASP", "CLYS", "CPRO", "CCYS",
+            "CCYX", "CMET", "CME", "ASF",
+        }
+
+        # A set of ion elements.
+        ions = {
+            "F", "Cl", "Br", "I", "Li", "Na", "K", "Rb", "Cs", "Mg", "Tl", "Cu", "Ag",
+            "Be", "Cu", "Ni", "Pt", "Zn", "Co", "Pd", "Ag", "Cr", "Fe", "Mg", "V", "Mn",
+            "Hg", "Cd", "Yb", "Ca", "Sn", "Pb", "Eu", "Sr", "Sm", "Ba", "Ra", "Al", "Fe",
+            "Cr", "In", "Tl", "Y", "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
+            "Er", "Tm", "Lu", "Hf", "Zr", "Ce", "U", "Pu", "Th",
+        }
 
         # Search the entire system.
         if mol_index is None:
@@ -1073,14 +1045,9 @@ class System(_SireWrapper):
                     except:
                         pass
 
-                    # Find all C, CA, N, and O atoms.
-
-                    # First search for atoms by element.
-                    search = mol.search(f"{element} C,N,O")
-
-                    # Now search for the required names within these results.
-                    if search.nResults() > 0:
-                        search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                    search = mol.search(string)
 
             elif restraint == "heavy":
                 # Convert to a formatted string for the search.
