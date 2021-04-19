@@ -957,7 +957,7 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
-    def _getRestraintAtoms(self, restraint, is_relative=True, property_map={}):
+    def _getRestraintAtoms(self, restraint, mol_index=None, is_relative=True, property_map={}):
         """Get the indices of atoms involved in a restraint.
 
            Parameters
@@ -965,6 +965,10 @@ class System(_SireWrapper):
 
            restraint : str
                The type of restraint.
+
+           mol_index : int
+               The index of the molecule of interest. If None, then the
+               entire system is searched.
 
            is_relative : bool
                Whether the indices are relative to the entire system.
@@ -979,6 +983,9 @@ class System(_SireWrapper):
            indices : [int]
                A list of the backbone atom indices.
         """
+
+        if mol_index is not None and type(mol_index) is not int:
+            raise TypeError("'mol_index' must be of type 'int'.")
 
         if type(is_relative) is not bool:
             raise TypeError("'is_relative' must be of type 'bool'.")
@@ -1054,38 +1061,79 @@ class System(_SireWrapper):
                 "Pu",
                 "Th"]
 
-        # Backbone restraints.
-        if restraint == "backbone":
-            # Loop over all non-water molecules.
-            for mol in self.search("not water"):
-                # Convert all search results to a molecule.
-                try:
-                    mol = mol.toMolecule()
-                except:
-                    pass
+        # Search the entire system.
+        if mol_index is None:
+            # Backbone restraints.
+            if restraint == "backbone":
+                # Loop over all non-water molecules.
+                for mol in self.search("not water"):
+                    # Convert all search results to a molecule.
+                    try:
+                        mol = mol.toMolecule()
+                    except:
+                        pass
 
-                # Find all C, CA, N, and O atoms.
+                    # Find all C, CA, N, and O atoms.
 
-                # First search for atoms by element.
-                search = mol.search(f"{element} C,N,O")
+                    # First search for atoms by element.
+                    search = mol.search(f"{element} C,N,O")
 
-                # Now search for the required names within these results.
-                if search.nResults() > 0:
-                    search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+                    # Now search for the required names within these results.
+                    if search.nResults() > 0:
+                        search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
 
-        elif restraint == "heavy":
-            # Convert to a formatted string for the search.
-            ion_string = ",".join(ions + ["H"])
-            # Find all non-water, non-hydrogen, non-ion elements.
-            string = f"(atoms in not water) and not element {ion_string}"
-            search = self.search(string)
+            elif restraint == "heavy":
+                # Convert to a formatted string for the search.
+                ion_string = ",".join(ions + ["H"])
+                # Find all non-water, non-hydrogen, non-ion elements.
+                string = f"(atoms in not water) and not element {ion_string}"
+                search = self.search(string)
 
-        elif restraint == "all":
-            # Convert to a formatted string for the search.
-            ion_string = ",".join(ions)
-            # Find all non-water, non-ion elements.
-            string = f"(atoms in not water) and not element {ion_string}"
-            search = self.search(string)
+            elif restraint == "all":
+                # Convert to a formatted string for the search.
+                ion_string = ",".join(ions)
+                # Find all non-water, non-ion elements.
+                string = f"(atoms in not water) and not element {ion_string}"
+                search = self.search(string)
+
+        # Search the chosen molecule.
+        else:
+            if restraint == "backbone":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+
+                else:
+                    # Find all C, CA, N, and O atoms.
+
+                    # First search for atoms by element.
+                    search = self[mol_index].search(f"{element} C,N,O")
+
+                    # Now search for the required names within these results.
+                    if search.nResults() > 0:
+                        search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+
+            elif restraint == "heavy":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+                else:
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions + ["H"])
+                    # Find all non-water, non-hydrogen, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string)
+
+            elif restraint == "all":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+                else:
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions)
+                    # Find all non-water, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string)
 
         # Now loop over all matching atoms and get their indices.
         for atom in search:
