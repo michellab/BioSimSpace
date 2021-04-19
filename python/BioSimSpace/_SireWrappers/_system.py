@@ -1024,14 +1024,14 @@ class System(_SireWrapper):
             "CCYX", "CMET", "CME", "ASF",
         }
 
-        # A set of ion elements.
-        ions = {
+        # A list of ion elements.
+        ions = [
             "F", "Cl", "Br", "I", "Li", "Na", "K", "Rb", "Cs", "Mg", "Tl", "Cu", "Ag",
             "Be", "Cu", "Ni", "Pt", "Zn", "Co", "Pd", "Ag", "Cr", "Fe", "Mg", "V", "Mn",
             "Hg", "Cd", "Yb", "Ca", "Sn", "Pb", "Eu", "Sr", "Sm", "Ba", "Ra", "Al", "Fe",
             "Cr", "In", "Tl", "Y", "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
             "Er", "Tm", "Lu", "Hf", "Zr", "Ce", "U", "Pu", "Th",
-        }
+        ]
 
         # Search the entire system.
         if mol_index is None:
