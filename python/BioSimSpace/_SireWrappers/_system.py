@@ -957,6 +957,145 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
+    def _getRestraintAtoms(self, restraint, is_relative=True, property_map={}):
+        """Get the indices of atoms involved in a restraint.
+
+           Parameters
+           ----------
+
+           restraint : str
+               The type of restraint.
+
+           is_relative : bool
+               Whether the indices are relative to the entire system.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           indices : [int]
+               A list of the backbone atom indices.
+        """
+
+        if type(is_relative) is not bool:
+            raise TypeError("'is_relative' must be of type 'bool'.")
+
+        # Other have been validated elsewhere.
+
+        # Initalise the list of indices.
+        indices = []
+
+        # Get the element property.
+        element = property_map.get("element", "element")
+
+        # A list of ion elements.
+        ions = ["F",
+                "Cl",
+                "Br",
+                "I",
+                "Li",
+                "Na",
+                "K",
+                "Rb",
+                "Cs",
+                "Mg",
+                "Tl",
+                "Cu",
+                "Ag",
+                "Be",
+                "Cu",
+                "Ni",
+                "Pt",
+                "Zn",
+                "Co",
+                "Pd",
+                "Ag",
+                "Cr",
+                "Fe",
+                "Mg",
+                "V",
+                "Mn",
+                "Hg",
+                "Cd",
+                "Yb",
+                "Ca",
+                "Sn",
+                "Pb",
+                "Eu",
+                "Sr",
+                "Sm",
+                "Ba",
+                "Ra",
+                "Al",
+                "Fe",
+                "Cr",
+                "In",
+                "Tl",
+                "Y",
+                "La",
+                "Ce",
+                "Pr",
+                "Nd",
+                "Sm",
+                "Eu",
+                "Gd",
+                "Tb",
+                "Dy",
+                "Er",
+                "Tm",
+                "Lu",
+                "Hf",
+                "Zr",
+                "Ce",
+                "U",
+                "Pu",
+                "Th"]
+
+        # Backbone restraints.
+        if restraint == "backbone":
+            # Loop over all non-water molecules.
+            for mol in self.search("not water"):
+                # Convert all search results to a molecule.
+                try:
+                    mol = mol.toMolecule()
+                except:
+                    pass
+
+                # Find all C, CA, N, and O atoms.
+
+                # First search for atoms by element.
+                search = mol.search(f"{element} C,N,O")
+
+                # Now search for the required names within these results.
+                if search.nResults() > 0:
+                    search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+
+        elif restraint == "heavy":
+            # Convert to a formatted string for the search.
+            ion_string = ",".join(ions + ["H"])
+            # Find all non-water, non-hydrogen, non-ion elements.
+            string = f"(atoms in not water) and not element {ion_string}"
+            search = self.search(string)
+
+        elif restraint == "all":
+            # Convert to a formatted string for the search.
+            ion_string = ",".join(ions)
+            # Find all non-water, non-ion elements.
+            string = f"(atoms in not water) and not element {ion_string}"
+            search = self.search(string)
+
+        # Now loop over all matching atoms and get their indices.
+        for atom in search:
+            if is_relative:
+                indices.append(self.getIndex(atom))
+            else:
+                indices.append(atom.index())
+
+        return indices
+
     def _getBackBoneAtoms(self, property_map={}):
         """Get the indices of backbone atoms.
 

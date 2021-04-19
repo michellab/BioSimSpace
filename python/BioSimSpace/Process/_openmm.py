@@ -349,7 +349,7 @@ class OpenMM(_process.Process):
             # issues with position rescaling during barostat updates.
             if self._protocol.isRestrained():
                 # Get the list of backbone atom indices.
-                restrained_atoms = self._system._getBackBoneAtoms()
+                restrained_atoms = self._system._getRestraintAtoms("backbone")
 
                 self.addToConfig("\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
                 self.addToConfig("restraint = HarmonicBondForce()")
