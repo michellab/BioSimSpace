@@ -499,7 +499,7 @@ class Plumed():
                 num_rmsd += 1
                 arg_name = "r%d" % num_rmsd
                 colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
-                colvar_string += " TYPE %s" % colvar.getAlignmentType().upper()
+                colvar_string += " TYPE=%s" % colvar.getAlignmentType().upper()
 
                 # Write the reference PDB file.
                 with open("%s/reference.pdb" % self._work_dir, "w") as file:
@@ -1033,7 +1033,7 @@ class Plumed():
                 num_rmsd += 1
                 arg_name = "r%d" % num_rmsd
                 colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
-                colvar_string += " TYPE %s" % colvar.getAlignmentType().upper()
+                colvar_string += " TYPE=%s" % colvar.getAlignmentType().upper()
 
                 # Write the reference PDB file.
                 with open("%s/reference.pdb" % self._work_dir, "w") as file:
