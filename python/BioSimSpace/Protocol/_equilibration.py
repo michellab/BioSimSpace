@@ -369,16 +369,16 @@ class Equilibration(_Protocol):
 
         self._restart_interval = restart_interval
 
-    def isRestrained(self):
-        """Return whether the backbone is restrained.
+    def getRestraint(self):
+        """Return the type of restraint..
 
            Returns
            -------
 
-           is_restrained : bool
-               Whether the backbone is restrained.
+           restraint : str, [int]
+               The type of restraint.
         """
-        return self._is_restrained
+        return self._restraint
 
     def setRestraint(self, restraint):
         """Set the type of restraint.
