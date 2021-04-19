@@ -800,23 +800,27 @@ class OpenMM(_process.Process):
             self.addToConfig("current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
             self.addToConfig("colvar_array = np.array([current_cvs])")
 
+            # Write the initial record.
+            self.addToConfig("\n# Write the inital collective variable record.")
+            self.addToConfig("line = colvar_array[0]")
+            self.addToConfig("time = 0")
+            self.addToConfig("write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            file.write(write_line)
+
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"steps = {steps}")
             self.addToConfig(f"cycles = {cycles}")
             self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
-            self.addToConfig( "last_index = 0")
             self.addToConfig( "for x in range(0, cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
             self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
             self.addToConfig( "    colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
             self.addToConfig( "    np.save('COLVAR.npy', colvar_array)")
-            self.addToConfig( "    for index in range(last_index, np.shape(colvar_array)[0]):")
-            self.addToConfig( "        line = colvar_array[index]")
-            self.addToConfig( "        time = int(record_colvar_every.value_in_unit(picoseconds) * index)")
-            self.addToConfig( "        write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
-            self.addToConfig( "        file.write(write_line)")
-            self.addToConfig( "    last_index = index")
+            self.addToConfig( "    line = colvar_array[x+1]")
+            self.addToConfig(f"    time = {(x+1) * timestep}")
+            self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            self.addToConfig( "    file.write(write_line)")
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
