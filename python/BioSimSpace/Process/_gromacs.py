@@ -769,8 +769,9 @@ class Gromacs(_process.Process):
             self.setArg("-ntomp", 1)        # Single OMP thread.
             self.setArg("-ntmpi", 1)        # Single MPI thread.
 
-        # Metadynamics arguments.
-        if type(self._protocol) is _Protocol.Metadynamics:
+        # Metadynamics and steered MD arguments.
+        if type(self._protocol) is _Protocol.Metadynamics or \
+           type(self._protocol) is _Protocol.Steering:
             self.setArg("-plumed", "plumed.dat")
 
     def _generate_binary_run_file(self):
