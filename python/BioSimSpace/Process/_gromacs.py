@@ -386,7 +386,7 @@ class Gromacs(_process.Process):
                             raise RuntimeError("Unable to generate GROMACS restraint file.")
 
                         # Include the position restraint file in the correct place within
-                        # the topology file. We put the additional include directove at the
+                        # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
                         new_top_lines = top_lines[:moleculetypes_idx[idx+1]-1]
