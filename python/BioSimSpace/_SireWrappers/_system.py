@@ -957,7 +957,7 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
-    def _getRestraintAtoms(self, restraint, mol_index=None, is_relative=True, property_map={}):
+    def _getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True, property_map={}):
         """Get the indices of atoms involved in a restraint.
 
            Parameters
@@ -970,8 +970,10 @@ class System(_SireWrapper):
                The index of the molecule of interest. If None, then the
                entire system is searched.
 
-           is_relative : bool
-               Whether the indices are relative to the entire system.
+           is_absolute : bool
+               Whether the indices are absolute, i.e. indexed within the
+               entire system. If False, then indices are relative to the
+               molecule in which the atom is found.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1427,6 +1429,52 @@ class System(_SireWrapper):
         system.add(molgrp)
 
         return system
+
+    def _getRelativeIndices(self, abs_index):
+        """Given an absolute index, get the number of the molecule to which it
+           belongs and the relative index within that molecule.
+
+           Parameters
+           ----------
+
+           abs_index : int
+               The absoulute index of the atom in the system.
+
+           Returns
+           -------
+
+           mol_num : Sire.Mol.MolNum
+               The molecule number to which the atom belongs.
+
+           rel_index : Sire.Mol.AtomIdx.
+               The relative index of the atom in the molecule to which it
+               belongs.
+        """
+        # Make sure the atom index tally has been created.
+        self.getIndex(self[0].getAtoms()[0])
+
+        # Set tally counters for the total number of atoms to date
+        # and the total up to the previous molecule.
+        tally = 0
+        tally_last = 0
+
+        # Set the current and previous MolNum.
+        mol_num = self._mol_nums[0]
+        mol_num_last = self._mol_nums[0]
+
+        # Loop over each molecule until the total atom number is equal
+        # to or greater than the absolute index. When it is, return the
+        # absolute index minus the tally up to the previous molecule.
+        for num, num_atoms in self._atom_index_tally.items():
+            if abs_index >= tally:
+                tally_last = tally
+                tally = num_atoms
+                mol_num_last = mol_num
+                mol_num = num
+            else:
+                return mol_num_last, _SireMol.AtomIdx(abs_index - tally_last)
+
+        raise ValueError("'abs_index' exceeded system atom tally!")
 
     def _reset_mappings(self):
         """Internal function to reset index mapping dictionaries."""
