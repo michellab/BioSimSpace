@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["RMSD"]
 
 from math import ceil as _ceil
+from math import sqrt as _sqrt
 
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
@@ -36,6 +37,7 @@ from Sire import Mol as _SireMol
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace.Align import rmsdAlign as _rmsdAlign
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
@@ -47,7 +49,7 @@ class RMSD(_CollectiveVariable):
 
     def __init__(self, system, reference, reference_index=None, rmsd_indices=None,
             hill_width=_Length(0.1, "nanometer"), lower_bound=None, upper_bound=None,
-            grid=None, alignment_type="optimal", pbc=True):
+            grid=None, alignment_type="optimal", pbc=True, property_map={}):
         """Constructor.
 
            Parameters
@@ -96,6 +98,11 @@ class RMSD(_CollectiveVariable):
            pbc : bool
                Whether to use periodic boundary conditions when computing the
                collective variable.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -112,6 +119,10 @@ class RMSD(_CollectiveVariable):
         if type(reference) is not _Molecule:
             raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
         self._reference = reference.copy()
+
+        # Check that the map is valid.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Extract the corresponding molecule from the system by index.
         if reference_index is not None:
@@ -131,11 +142,11 @@ class RMSD(_CollectiveVariable):
                 num_res_system.append(mol.nResidues())
 
             # Find the index of the molecule with the closest number of residues.
-            idx = min(enumerate(num_res_system), key=lambda x: abs(x[1]-num_res_ref))[0]
+            reference_index = min(enumerate(num_res_system), key=lambda x: abs(x[1]-num_res_ref))[0]
 
             # Extract the molecule from the system.
-            self._reference_index = idx
-            molecule = system[idx]
+            self._reference_index = reference_index
+            molecule = system[reference_index]
 
         if rmsd_indices is not None:
             # Convert tuple to list.
@@ -169,10 +180,6 @@ class RMSD(_CollectiveVariable):
             raise _IncompatibleError("Didn't match all of the atoms in the reference molecule: "
                                     f"Found {len(matches)}, expected {reference.nAtoms()}.")
 
-        # Work out the value of the RMSD.
-        rmsd = reference._sire_object.evaluate().rmsd(molecule._sire_object, _SireMol.AtomResultMatcher(matches))
-        self._initial_value = _Length(rmsd.value(), "angstrom")
-
         # Invert the matches so that we map from the system to the reference.
         matches = { v:k for k,v in matches.items() }
 
@@ -185,6 +192,13 @@ class RMSD(_CollectiveVariable):
         # A list of atoms to select.
         selected = []
 
+        # Create a mapping dictionary for the atoms involved in the RMSD and alignment.
+        rmsd_mapping = {}
+        align_mapping = {}
+
+        # Get the coordinates property from the user mapping.
+        coord_prop = property_map.get("coordinates", "coordinates")
+
         # Loop over all atoms in the molecule.
         for x in range(0, molecule.nAtoms()):
             # Convert to an AtomIdx.
@@ -194,17 +208,24 @@ class RMSD(_CollectiveVariable):
                 # Append to the list of atoms to select.
                 selected.append(idx)
                 # Copy across the coordinates.
-                edit_mol = edit_mol.atom(idx).setProperty("coordinates",
+                edit_mol = edit_mol.atom(idx).setProperty(coord_prop,
                     reference._sire_object.atom(matches[idx]).property("coordinates")).molecule()
                 # Set occupancy and beta factor.
                 if matches[idx] in rmsd_indices:
                     # This atom is used to compute the RMSD.
                     edit_mol = edit_mol.atom(idx).setProperty("occupancy", 0.0).molecule()
                     edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 1.0).molecule()
+                    rmsd_mapping[idx] = matches[idx]
                 else:
                     # This atom is used for alignment.
                     edit_mol = edit_mol.atom(idx).setProperty("occupancy", 1.0).molecule()
                     edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 0.0).molecule()
+                    align_mapping[idx.value()] = matches[idx].value()
+
+        # Store the intial value of the RMSD. This is useful to use as a starting
+        # point for the restraint when performing steered molecular dynamics.
+        self._initial_value = self._compute_initial_rmsd(system, reference,
+            reference_index, rmsd_mapping, align_mapping, property_map)
 
         # Commit the changes.
         new_molecule = edit_mol.commit()
@@ -393,6 +414,115 @@ class RMSD(_CollectiveVariable):
                Whether to use periodic boundaries conditions.
         """
         return self._pbc
+
+    def _compute_initial_rmsd(self, system, reference,
+            reference_index, rmsd_mapping, align_mapping, property_map={}):
+        """Compute the initial value of the RMSD collective variable.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system of interest.
+
+           reference : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The reference molecule, against which the RMSD will be measured.
+               This molecule should match with a single molecule from the
+               system, i.e. contain the same residues as the matching molecule
+               in the same order.
+
+           reference_index : int
+               The index of the molecule in the system that matches the
+               reference.
+
+           rmsd_mapping : {Sire.Mol.AtomIdx : Sire.Mol.AtomIdx, ...}
+                A dictionary mapping atoms in the system to those in the
+                reference molecule.
+
+           align_mapping : { int: int, ...}
+                A dictionary mapping atoms in the system to those in the
+                reference molecule that will be used for alignment prior
+                to computing the RMSD.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+            Returns
+            -------
+
+            rmsd : :class:`Length <BioSimSpace.Types.Length>`
+                The initial value of the RMSD.
+        """
+
+        # Note that we need to do this manually, since Sire.Mol.Evaluator doesn't
+        # work correctly for molecules with different numbers of coordinate groups.
+
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
+
+        if type(reference) is not _Molecule:
+            raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
+
+        if type(reference_index) is not int:
+            raise TypeError("'reference_index' must be of type 'int'.")
+
+        if type(rmsd_mapping) is not dict:
+            raise TypeError("'rmsd_mapping' must be of type 'dict'.")
+
+        for k, v in rmsd_mapping.items():
+            if type(k) is not _SireMol.AtomIdx or type(v) is not _SireMol.AtomIdx:
+                raise TypeError("'mapping' must contain 'Sire.Mol.AtomIdx' key-value pairs!")
+
+        if type(align_mapping) is not dict:
+            raise TypeError("'align_mapping' must be of type 'dict'.")
+
+        for k, v in align_mapping.items():
+            if type(k) is not int or type(v) is not int:
+                raise TypeError("'align_mapping' must contain 'int' key-value pairs!")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        try:
+            molecule = system[reference_index]
+        except:
+            raise ValueError("Molecule at 'reference_index' not found in 'system'!")
+
+        # Get the 'space' property from the system.
+        try:
+            space_prop = property_map.get("space", "space")
+            space = system._sire_object.property(space_prop)
+        except:
+            raise ValueError(f"'system' has no '{space_prop}' property. Unable to compute RMSD!")
+
+        # Align the molecule to the reference using the alignment mapping.
+        if len(align_mapping) > 0:
+            try:
+                molecule = _rmsdAlign(molecule, reference, align_mapping,
+                    property_map0=property_map, property_map1=property_map)
+            except:
+                ValueError("Unable to align 'molecule' to 'reference' based on 'align_mapping'.")
+
+        # Set the user-define coordinates property.
+        coord_prop = property_map.get("coordinates", "coordinates")
+
+        # Loop over all atom matches and compute the squared distance.
+        dist2 = 0
+        for idx0, idx1 in rmsd_mapping.items():
+            try:
+                coord0 = molecule._sire_object.atom(idx0).property(coord_prop)
+                coord1 = reference._sire_object.atom(idx1).property(coord_prop)
+            except:
+                raise ValueError("Could not calculate initial RMSD due to missing coordinates!")
+            dist2 += space.calcDist2(coord0, coord1)
+
+        # Compute the RMSD.
+        dist2 /= len(rmsd_mapping)
+        rmsd = _sqrt(dist2)
+
+        return _Length(rmsd, "Angstrom")
 
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
