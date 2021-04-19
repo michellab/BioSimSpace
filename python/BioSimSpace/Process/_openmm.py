@@ -818,7 +818,7 @@ class OpenMM(_process.Process):
             self.addToConfig( "    colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
             self.addToConfig( "    np.save('COLVAR.npy', colvar_array)")
             self.addToConfig( "    line = colvar_array[x+1]")
-            self.addToConfig(f"    time = {(x+1) * timestep}")
+            self.addToConfig(f"    time = int((x+1) * {timestep}*steps_per_cycle)")
             self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
             self.addToConfig( "    file.write(write_line)")
 
