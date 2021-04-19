@@ -106,6 +106,9 @@ class Funnel(_CollectiveVariable):
         # Call the base class constructor.
         super().__init__()
 
+        # Set the types associated with this collective variable.
+        self._types = [_Length]
+
         # This collective variable has two components: the projection along
         # the funnel axis and the extension orthogonal to it.
         self._num_components = 2

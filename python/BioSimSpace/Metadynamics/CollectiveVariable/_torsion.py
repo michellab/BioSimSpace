@@ -70,6 +70,9 @@ class Torsion(_CollectiveVariable):
         # Call the base class constructor.
         super().__init__()
 
+        # Set the types associated with this collective variable.
+        self._types = [_Angle]
+
         # Initialise optional member data.
         self._lower_bound = None
         self._upper_bound = None

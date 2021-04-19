@@ -184,6 +184,12 @@ class OpenMM(_process.Process):
     def _setup(self):
         """Setup the input files and working directory ready for simulation."""
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # Convert the water model topology so that it matches the GROMACS naming convention.
+        system._set_water_topology("AMBER")
+
         # Create the input files...
 
         # RST file (coordinates).
@@ -794,23 +800,27 @@ class OpenMM(_process.Process):
             self.addToConfig("current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
             self.addToConfig("colvar_array = np.array([current_cvs])")
 
+            # Write the initial record.
+            self.addToConfig("\n# Write the inital collective variable record.")
+            self.addToConfig("line = colvar_array[0]")
+            self.addToConfig("time = 0")
+            self.addToConfig("write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            file.write(write_line)
+
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"steps = {steps}")
             self.addToConfig(f"cycles = {cycles}")
             self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
-            self.addToConfig( "last_index = 0")
             self.addToConfig( "for x in range(0, cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
             self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
             self.addToConfig( "    colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
             self.addToConfig( "    np.save('COLVAR.npy', colvar_array)")
-            self.addToConfig( "    for index in range(last_index, np.shape(colvar_array)[0]):")
-            self.addToConfig( "        line = colvar_array[index]")
-            self.addToConfig( "        time = int(record_colvar_every.value_in_unit(picoseconds) * index)")
-            self.addToConfig( "        write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
-            self.addToConfig( "        file.write(write_line)")
-            self.addToConfig( "    last_index = index")
+            self.addToConfig( "    line = colvar_array[x+1]")
+            self.addToConfig(f"    time = int((x+1) * {timestep}*steps_per_cycle)")
+            self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            self.addToConfig( "    file.write(write_line)")
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
@@ -958,6 +968,19 @@ class OpenMM(_process.Process):
                 # Get the last frame.
                 new_system = traj.getFrames(-1)[0]
 
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinates(new_system,
+                                            self._property_map,
+                                            self._property_map)
+
+                # Update the box information in the original system.
+                if "space" in new_system._sire_object.propertyKeys():
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+                return old_system
+
             else:
                 # Work out the total number of trajectory frames.
                 num_frames = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -966,24 +989,20 @@ class OpenMM(_process.Process):
                 # Work out the fraction of the simulation that has been completed.
                 frac_complete = self._protocol.getRunTime() / self.getTime()
 
+                # Make sure the fraction doesn't exceed one. OpenMM can report
+                # time values that are larger than the number of integration steps
+                # multiplied by the time step.
+                if frac_complete > 1:
+                    frac_complete = 1
+
                 # Work out the trajectory frame index, rounding down.
+                # Remember that frames in MDTraj are zero indexed, like Python.
                 index = int(frac_complete * num_frames)
+                if index > 0:
+                    index -= 1
 
-                # Get the most recent frame.
-                new_system = self.getFrame(index)
-
-            # Copy the new coordinates back into the original system.
-            old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
-
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
-                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-
-            return old_system
+                # Return the most recent frame.
+                return self.getFrame(index)
 
         except:
             return None
@@ -1039,18 +1058,18 @@ class OpenMM(_process.Process):
            index : int
                The index of the frame.
 
-          Returns
-          -------
+           Returns
+           -------
 
-          frame : :class:`System <BioSimSpace._SireWrappers.System>`
-              The System object of the corresponding frame.
+           frame : :class:`System <BioSimSpace._SireWrappers.System>`
+               The System object of the corresponding frame.
         """
 
         if type(index) is not int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
-                  / self._protocol.getRestartInterval())
+                  / self._protocol.getRestartInterval()) - 1
 
         if index < 0 or index > max_index:
             raise ValueError(f"'index' must be in range [0, {max_index}].")

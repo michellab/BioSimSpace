@@ -511,6 +511,12 @@ class Somd(_process.Process):
             else:
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 100 steps. Round down
+            # to the closest multiple.
+            if buffer_freq > 0:
+                buffer_freq = 100 * _math.floor(buffer_freq / 100)
+
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
 
@@ -738,7 +744,7 @@ class Somd(_process.Process):
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
-                  / self._protocol.getRestartInterval())
+                  / self._protocol.getRestartInterval()) - 1
 
         if index < 0 or index > max_index:
             raise ValueError(f"'index' must be in range [0, {max_index}].")

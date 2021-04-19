@@ -20,55 +20,52 @@
 #####################################################################
 
 """
-Functionality for configuring bounds on collective variables.
+Functionality for configuring restraints on collective variables.
 """
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Bound"]
+__all__ = ["Restraint"]
 
 from BioSimSpace.Types._type import Type as _Type
 
-class Bound():
-    def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
+class Restraint():
+    def __init__(self, value, force_constant=100.0, slope=0.0):
         """Constructor.
 
-           Set a bound on the value of a collective variable along with the
-           parameters used to define the bias potential.
+           Set a restraint on the value of a collective variable.
 
            The expression for the bias is:
 
            .. math::
 
-               k ((x - a)/s)^e
+               k/2 (x - a)^2 + m (x - a)
+
+           The default restraint is purely harmonic.
 
            Parameters
            ----------
 
            value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound. Use 'int' or 'float' for dimensionless
+               The value of the restraint. Use 'int' or 'float' for dimensionless
                collective variables.
 
            force_constant : float
-               The force constant (k) for the bias potential.
+               The force constant (k) for the harmonic term of the restraint.
 
-           exponent : float
-               The exponent (e) for the bias potential.
-
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
+           slope : float
+               The slope (m) for the linar term of the restraint.
         """
 
         self.setValue(value)
         self.setForceConstant(force_constant)
-        self.setExponent(exponent)
-        self.setEpsilon(epsilon)
+        self.setSlope(slope)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Metadynamics.Bound: value=%s, force_constant=%s, exponent=%s, epsilon=%s>" \
-            % (self._value, self._force_constant, self._exponent, self._epsilon)
+        return "<BioSimSpace.Metadynamics.Restraint: value=%s, force_constant=%s, slope=%s>" \
+            % (self._value, self._force_constant, self._slope)
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
@@ -101,13 +98,13 @@ class Bound():
         return self._value
 
     def setForceConstant(self, force_constant):
-        """Set the force constant (k) for the bias potential.
+        """Set the force constant (k) for the harmonic term of the restraint.
 
            Parameters
            ----------
 
            force_constant : float
-               The force constant for the bias potential.
+               The force constant for the harmonic term of the restraint.
         """
         try:
             self._force_constant = float(force_constant)
@@ -115,62 +112,37 @@ class Bound():
             raise TypeError("'force_constant' must be of type 'float'")
 
     def getForceConstant(self):
-        """Get the force constant (k) for the bias potential.
+        """Get the force constant (k) for the harmonic term of the restraint.
 
            Returns
            -------
 
            force_constant : float
-               The force constant for the bias potential.
+               The force constant for the harmonic term of the restraint.
         """
         return self._force_constant
 
-    def setExponent(self, exponent):
-        """Set the exponent (e) for the bias potential.
+    def setSlope(self, slope):
+        """Set the slope (m) for the linear term of the restraint.
 
            Parameters
            ----------
 
-           exponent : float
-               The exponent for the bias potential.
+           slope : float
+               The slope for the linear term of the restraint.
         """
         try:
-            self._exponent = float(exponent)
+            self._slope = float(slope)
         except:
-            raise TypeError("'exponent' must be of type 'float'")
+            raise TypeError("'slope' must be of type 'float'")
 
-    def getExponent(self):
-        """Get the exponent (e) for the bias potential.
+    def getSlope(self):
+        """Get the slope (m) for the linear term of the restraint.
 
            Returns
            -------
 
-           exponent : float
-               The exponent for the bias potential.
+           slope : float
+               The slope for the linear term of the restraint.
         """
-        return self._exponent
-
-    def setEpsilon(self, epsilon):
-        """Set the rescaling factor (s) for the bias potential.
-
-           Parameters
-           ----------
-
-           epsilon : float
-               The rescaling factor for the bias potential.
-        """
-        try:
-            self._epsilon = float(epsilon)
-        except:
-            raise TypeError("'epsilon' must be of type 'float'")
-
-    def getEpsilon(self):
-        """Get the rescaling factor (s) for the bias potential.
-
-           Returns
-           -------
-
-           epsilon : float
-               The rescaling factor for the bias potential.
-        """
-        return self._epsilon
+        return self._slope

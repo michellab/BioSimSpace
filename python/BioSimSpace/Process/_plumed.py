@@ -41,6 +41,7 @@ from Sire.Mol import MolNum as _MolNum
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
 from BioSimSpace.Protocol import Metadynamics as _Metadynamics
+from BioSimSpace.Protocol import Steering as _Steering
 from BioSimSpace.Types import Coordinate as _Coordinate
 
 from BioSimSpace import _Exceptions as _Exceptions
@@ -120,6 +121,42 @@ class Plumed():
 
     def createConfig(self, system, protocol, is_restart=False):
         """Create a PLUMED configuration file.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               A BioSimSpace system object.
+
+           protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`, \
+                      :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`, \
+               The metadynamics or steered molecular dynamics protocol.
+
+           Returns
+           -------
+
+           config, auxillary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxillary
+               files required by the collective variables.
+        """
+
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # Create a metadynamics protocol.
+        if type(protocol) is _Metadynamics:
+            return self._createMetadynamicsConfig(system, protocol, is_restart)
+
+        # Create a steered molecular dynamics protocol.
+        if type(protocol) is _Steering:
+            return self._createSteeringConfig(system, protocol, is_restart)
+
+        else:
+            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics' "
+                            " or 'BioSimSpace.Protocol.Steering'")
+
+    def _createMetadynamicsConfig(self, system, protocol, is_restart=False):
+        """Create a PLUMED metadynamics configuration file.
 
            Parameters
            ----------
@@ -224,6 +261,35 @@ class Plumed():
             elif type(colvar) is _CollectiveVariable.Torsion:
                 atoms = colvar.getAtoms()
 
+            # Funnel.
+            elif type(colvar) is _CollectiveVariable.Funnel:
+                # Here we assume that we have a solvated protein/ligand
+                # (or host/guest). The largest molecule in the system
+                # will be the protein, the second largest the ligand.
+
+                # Store the number of atoms in each molecule.
+                atom_nums = []
+                for mol in system:
+                    atom_nums.append(mol.nAtoms())
+
+                # Sort the molecule indices by the number of atoms they contain.
+                sorted_nums = sorted((value, num) for value, num in zip(atom_nums, system._mol_nums))
+
+                # Store the indices of the largest and second largest molecules.
+                molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
+
+                # The funnel collective variable requires an auxillary file for
+                # PLUMED versions < 2.7.
+                if self._plumed_version < 2.7:
+                    aux_file = "ProjectionOnAxis.cpp"
+                    self._config.append(f"LOAD FILE={aux_file}")
+                    aux_file = _os.path.dirname(_CollectiveVariable.__file__).replace("CollectiveVariable", "_aux") + "/" + aux_file
+                    self._aux_files.append(aux_file)
+
+            # RMSD.
+            elif type(colvar) is _CollectiveVariable.RMSD:
+                molecules = [system._mol_nums[colvar.getReferenceIndex()]]
+
             # Loop over all of the atoms. Make sure the index is valid and
             # check if we need to create an entity for the molecule containing
             # the atom.
@@ -248,31 +314,6 @@ class Plumed():
                 if num not in molecules:
                     molecules.append(num)
 
-        # Funnel.
-        if type(colvar) is _CollectiveVariable.Funnel:
-            # Here we assume that we have a solvated protein/ligand
-            # (or host/guest). The largest molecule in the system
-            # will be the protein, the second largest the ligand.
-
-            # Store the number of atoms in each molecule.
-            atom_nums = []
-            for mol in system:
-                atom_nums.append(mol.nAtoms())
-
-            # Sort the molecule indices by the number of atoms they contain.
-            sorted_nums = sorted((value, num) for value, num in zip(atom_nums, system._mol_nums))
-
-            # Store the indices of the largest and second largest molecules.
-            molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
-
-            # The funnel collective variable requires an auxillary file for
-            # PLUMED versions < 2.7.
-            if self._plumed_version < 2.7:
-                aux_file = "ProjectionOnAxis.cpp"
-                self._config.append(f"LOAD FILE={aux_file}")
-                aux_file = _os.path.dirname(_CollectiveVariable.__file__).replace("CollectiveVariable", "_aux") + "/" + aux_file
-                self._aux_files.append(aux_file)
-
         # Initialise the configuration string.
         string = "WHOLEMOLECULES"
 
@@ -294,6 +335,7 @@ class Plumed():
         # Intialise tally counters.
         num_distance = 0
         num_torsion = 0
+        num_rmsd = 0
         num_center = 0
         num_fixed = 0
 
@@ -310,7 +352,7 @@ class Plumed():
             upper_wall = colvar.getUpperBound()
             grid = colvar.getGrid()
 
-            # Whether the collective variable is a torsion.
+            # Whether the collective variable is a torsion or funnel.
             is_torsion = False
             is_funnel = False
 
@@ -439,6 +481,34 @@ class Plumed():
                 # Store the collective variable name and its unit.
                 self._colvar_name.append(arg_name)
                 self._colvar_unit[arg_name] = _Units.Angle.radian
+
+                # Disable periodic boundaries.
+                if not colvar.getPeriodicBoundaries():
+                    colvar_string += " NOPBC"
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
+                self._config.append(colvar_string)
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # RMSD.
+            elif type(colvar) is _CollectiveVariable.RMSD:
+                num_rmsd += 1
+                arg_name = "r%d" % num_rmsd
+                colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
+                colvar_string += " TYPE=%s" % colvar.getAlignmentType().upper()
+
+                # Write the reference PDB file.
+                with open("%s/reference.pdb" % self._work_dir, "w") as file:
+                    for line in colvar.getReferencePDB():
+                        file.write(line + "\n")
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = None
 
                 # Disable periodic boundaries.
                 if not colvar.getPeriodicBoundaries():
@@ -610,7 +680,11 @@ class Plumed():
                     if idx1 < last_hill:
                         metad_string += ","
             else:
-                metad_string += "%s" % hill_width.magnitude()
+                # Handle dimensionless collective variables.
+                try:
+                    metad_string += "%s" % hill_width.magnitude()
+                except:
+                    metad_string += "%s" % hill_width
             if idx0 < self._num_colvar - 1:
                 metad_string += ","
 
@@ -652,6 +726,393 @@ class Plumed():
 
         # Print all record data to the COLVAR file.
         print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getHillFrequency()
+        self._config.append(print_string)
+
+        return self._config, self._aux_files
+
+    def _createSteeringConfig(self, system, protocol, is_restart=False):
+        """Create a PLUMED steering molecular dynamics configuration file.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               A BioSimSpace system object.
+
+           protocol : :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`
+               The metadynamics protocol.
+
+           Returns
+           -------
+
+           config, auxillary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxillary
+               files required by the collective variables.
+        """
+
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        if type(protocol) is not _Steering:
+            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Steering'")
+
+        # Clear data.
+        self._num_colvar = 0
+        self._colvar_name = []
+        self._colvar_unit = {}
+        self._config = []
+        self._aux_files = []
+
+        # Check for restart files.
+        is_restart = False
+        if protocol.getColvarFile() is not None:
+            is_restart = True
+            _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
+
+        # Is the simulation a restart?
+        if is_restart:
+            self._config.append("RESTART")
+        else:
+            self._config.append("RESTART NO")
+
+            # Delete any existing COLVAR, HILLS, and GRID files.
+            try:
+                _os.remove("%s/COLVAR" % self._work_dir)
+                _os.remove("%s/COLVAR.offset" % self._work_dir)
+            except:
+                pass
+
+        # Intialise molecule number to atom tally lookup dictionary in the system.
+        try:
+            system.getIndex(system[0].getAtoms()[0])
+        except:
+            raise ValueError("The system contains no molecules?")
+
+        # Store the collective variable(s).
+        colvars = protocol.getCollectiveVariable()
+        self._num_colvar = len(colvars)
+        for cv in colvars:
+            self._num_components += cv.nComponents()
+
+        # Loop over each collective variable and create WHOLEMOLECULES entities
+        # for any molecule that involve atoms in a collective variable. We only
+        # want to record each molecule once, so keep a list of the molecules
+        # that we've already seen.
+
+        molecules = []
+
+        for colvar in colvars:
+
+            # Store all of the atoms to which the collective variable applies.
+            atoms = []
+
+            # Distance.
+            if type(colvar) is _CollectiveVariable.Distance:
+                atom0 = colvar.getAtom0()
+                atom1 = colvar.getAtom1()
+
+                if type(atom0) is int:
+                    atoms.append(atom0)
+                elif type(atom0) is list:
+                    atoms.extend(atom0)
+
+                if type(atom1) is int:
+                    atoms.append(atom1)
+                elif type(atom1) is list:
+                    atoms.extend(atom1)
+
+            # Torsion.
+            elif type(colvar) is _CollectiveVariable.Torsion:
+                atoms = colvar.getAtoms()
+
+            # Funnel.
+            if type(colvar) is _CollectiveVariable.Funnel:
+                raise ValueError("'CollectiveVariable.Funnel' is not supported for steered molecular dynamics.")
+
+            # RMSD.
+            elif type(colvar) is _CollectiveVariable.RMSD:
+                molecules = [system._mol_nums[colvar.getReferenceIndex()]]
+
+            # Loop over all of the atoms. Make sure the index is valid and
+            # check if we need to create an entity for the molecule containing
+            # the atom.
+
+            for idx in atoms:
+                # The atom index is invalid.
+                if idx >= system.nAtoms():
+                    raise __Exceptions.IncompatibleError("The collective variable is incompatible with the "
+                        "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
+
+                # Get the molecule numbers in this system.
+                mol_nums = system._sire_object.molNums()
+
+                # Loop over each molecule and find the one that contains this atom.
+                for x, num in enumerate(mol_nums):
+                    # The atom was in the previous molecule.
+                    if system._atom_index_tally[num] > idx:
+                        num = mol_nums[x-1]
+                        break
+
+                # This is a new molecule.
+                if num not in molecules:
+                    molecules.append(num)
+
+        # Initialise the configuration string.
+        string = "WHOLEMOLECULES"
+
+        # Create an entity for each unique molecule.
+        for x, molecule in enumerate(molecules):
+            # Get the start index.
+            idx = system._atom_index_tally[molecule]
+
+            # Get the number of atoms in the molecule.
+            num_atoms = system._sire_object.molecule(molecule).nAtoms()
+
+            # Create the entity record. Rember to one-index the atoms.
+            string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
+
+        # Append the string to the configuration list.
+        self._config.append("\n# Define the molecular entities.")
+        self._config.append(string)
+
+        # Intialise tally counters.
+        num_distance = 0
+        num_torsion = 0
+        num_rmsd = 0
+        num_center = 0
+        num_fixed = 0
+
+        # Initialise the ARG string.
+        arg_string = "ARG="
+
+        for idx, colvar in enumerate(colvars):
+
+            # Whether the collective variable is a torsion.
+            is_torsion = False
+
+            # Distance.
+            if type(colvar) is _CollectiveVariable.Distance:
+                num_distance += 1
+
+                # Create the argument name.
+                arg_name = "d%d" % num_distance
+
+                # Get the atoms between which the distance is measured.
+                # Also get the weights, and the center of mass flag.
+
+                # Start.
+                atom0 = colvar.getAtom0()
+                weights0 = colvar.getWeights0()
+                is_com0 = colvar.getCoM0()
+
+                # End.
+                atom1 = colvar.getAtom1()
+                weights1 = colvar.getWeights1()
+                is_com1 = colvar.getCoM1()
+
+                # Initialise the collective variable string.
+                colvar_string = "d%d: DISTANCE ATOMS=" % num_distance
+
+                # Process the first atom(s) or fixed coordinate.
+
+                # A single atom.
+                if type(atom0) is int:
+                    colvar_string += "%d" % (atom0 + 1)
+
+                # A list of atom indices.
+                elif type(atom0) is list:
+                    num_center += 1
+                    colvar_string += "c%d" % num_center
+
+                    center_string = "c%d: CENTER ATOMS=%s" \
+                        % (num_center, ",".join([str(x+1) for x in atom0]))
+
+                    # Center of mass weighting takes precendence.
+                    if is_com0:
+                        center_string += " MASS"
+
+                    # User weights.
+                    elif weights0 is not None:
+                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights0])
+
+                    self._config.append(center_string)
+
+                # A coordinate of a fixed point.
+                elif type(atom0) is _Coordinate:
+                    # Convert to nanometers.
+                    x = atom0.x().nanometers().magnitude()
+                    y = atom0.y().nanometers().magnitude()
+                    z = atom0.z().nanometers().magnitude()
+
+                    num_fixed += 1
+                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    colvar_string += "f%d" % num_fixed
+
+                # Process the second atom(s) or fixed coordinate.
+
+                # A single atom.
+                if type(atom1) is int:
+                    colvar_string += ",%d" % (atom1 + 1)
+
+                # A list of atom indices.
+                elif type(atom1) is list:
+                    num_center += 1
+                    colvar_string += ",c%d" % num_center
+
+                    center_string = "c%d: CENTER ATOMS=%s" \
+                        % (num_center, ",".join([str(x+1) for x in atom1]))
+
+                    # Center of mass weighting takes precendence.
+                    if is_com1:
+                        center_string += " MASS"
+
+                    # User weights.
+                    elif weights1 is not None:
+                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights1])
+
+                    self._config.append(center_string)
+
+                # A coordinate of a fixed point.
+                elif type(atom1) is _Coordinate:
+                    # Convert to nanometers.
+                    x = atom1.x().nanometers().magnitude()
+                    y = atom1.y().nanometers().magnitude()
+                    z = atom1.z().nanometers().magnitude()
+
+                    num_fixed += 1
+                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    colvar_string += ",f%d" % num_fixed
+
+                # Disable periodic boundaries.
+                if not colvar.getPeriodicBoundaries():
+                    colvar_string += " NOPBC"
+
+                # Measure the x, y, and z distance components.
+                if colvar.getComponent() is not None:
+                    colvar_string += " COMPONENT"
+                    arg_name += ".%s" % colvar.getComponent()
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
+                self._config.append(colvar_string)
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = _Units.Length.nanometer
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # Torsion.
+            elif type(colvar) is _CollectiveVariable.Torsion:
+                is_torsion = True
+                num_torsion += 1
+                arg_name = "t%d" % num_torsion
+                colvar_string = "%s: TORSION ATOMS=%s" \
+                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms()]))
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = _Units.Angle.radian
+
+                # Disable periodic boundaries.
+                if not colvar.getPeriodicBoundaries():
+                    colvar_string += " NOPBC"
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
+                self._config.append(colvar_string)
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # RMSD.
+            elif type(colvar) is _CollectiveVariable.RMSD:
+                num_rmsd += 1
+                arg_name = "r%d" % num_rmsd
+                colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
+                colvar_string += " TYPE=%s" % colvar.getAlignmentType().upper()
+
+                # Write the reference PDB file.
+                with open("%s/reference.pdb" % self._work_dir, "w") as file:
+                    for line in colvar.getReferencePDB():
+                        file.write(line + "\n")
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = None
+
+                # Disable periodic boundaries.
+                if not colvar.getPeriodicBoundaries():
+                    colvar_string += " NOPBC"
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the collective variable.")
+                self._config.append(colvar_string)
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
+
+            # Add the argument to the ARG record. We join argument names with
+            # a "," to handle multi-component collective variables.
+            arg_string += "%s" % ",".join(arg_name)
+
+            # Update the ARG record to separate the collective variable arguments.
+            if idx < self._num_colvar - 1:
+                metad_string += ","
+
+        # Get the steering schedule and restraints.
+        schedule = protocol.getSchedule()
+        restraints = protocol.getRestraints()
+
+        # Define the MOVINGRESTRAINT record.
+        self._config.append("\n#Define the moving restraint.")
+        self._config.append("MOVINGRESTRAINT ...")
+        self._config.append(f"  {arg_string}")
+
+        # Create the VERSE record.
+        verse_string = "  VERSE="
+        mapping = {"both"    : "B",
+                   "larger"  : "U",
+                   "smaller" : "L"}
+        verse = protocol.getVerse()
+        mapped_verse = [mapping[v] for v in verse]
+        verse_string += ",".join(mapped_verse)
+        self._config.append(verse_string)
+
+        # Add all the stages of the schedule.
+        for x in range(0, len(schedule)):
+            # Initialise the strings.
+            step  = f"STEP{x}={schedule[x]}"
+            at    = f"AT{x}="
+            kappa = f"KAPPA{x}="
+
+            # Loop over all restraints for this stage.
+            for idx, r in enumerate(restraints[x]):
+                # Get the value of the restraint.
+                val = r.getValue()
+                # Convert to correct unit and take magnitude.
+                if type(val) is _Types.Length:
+                    val = val.nanometers().magnitude()
+                elif type(val) is _Types.Angle:
+                    val = val.radians().magnitude()
+                at    += str(val)
+                kappa += str(r.getForceConstant())
+                if idx < self._num_colvar - 1:
+                    at    += ","
+                    kappa += ","
+
+            # Add the stage to the config.
+            self._config.append(f"  {step}\t{at}\t{kappa}")
+
+        # End the MOVINGRESTRAINT record.
+        self._config.append("... MOVINGRESTRAINT")
+
+        # Add PRINT record.
+        print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getReportInterval()
         self._config.append(print_string)
 
         return self._config, self._aux_files
