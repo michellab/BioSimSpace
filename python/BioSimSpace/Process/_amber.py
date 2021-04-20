@@ -379,10 +379,22 @@ class Amber(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
 
             # Restrain the backbone.
-            if self._protocol.isRestrained():
-                self.addToConfig("  ntr=1,")
-                self.addToConfig("  restraint_wt=2,")
-                self.addToConfig("  restraintmask='@CA,C,O,N',")
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Get the indices of the atoms that are restrained.
+                if type(restraint) is str:
+                    atom_idxs = self._system._getRestraintAtoms(restraint)
+                else:
+                    atom_idxs = restraint
+                # Initialise the restraintmask string.
+                restraintmask = f"{atom_idxs[0]+1}"
+                # Add all the remaining atoms to the mask.
+                for idx in atom_idxs[1:]:
+                    restraintmask += f",{idx+1}"
+
+                self.addToConfig( "  ntr=1,")
+                self.addToConfig( "  restraint_wt=10,")
+                self.addToConfig(f"  restraintmask='@{restraintmask}',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -649,9 +661,9 @@ class Amber(_process.Process):
         # Skip if the user has passed a custom protocol.
         if type(self._protocol) is not _Protocol.Custom:
 
-            # Append a reference file if this a constrained equilibration.
+            # Append a reference file if this a restrained equilibration.
             if type(self._protocol) is _Protocol.Equilibration:
-                if self._protocol.isRestrained():
+                if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is an equilibration or production run.
