@@ -989,8 +989,8 @@ class System(_SireWrapper):
         if mol_index is not None and type(mol_index) is not int:
             raise TypeError("'mol_index' must be of type 'int'.")
 
-        if type(is_relative) is not bool:
-            raise TypeError("'is_relative' must be of type 'bool'.")
+        if type(is_absolute) is not bool:
+            raise TypeError("'is_absolute' must be of type 'bool'.")
 
         # Other have been validated elsewhere.
 
@@ -1106,7 +1106,7 @@ class System(_SireWrapper):
 
         # Now loop over all matching atoms and get their indices.
         for atom in search:
-            if is_relative:
+            if is_absolute:
                 indices.append(self.getIndex(atom))
             else:
                 indices.append(atom.index())
