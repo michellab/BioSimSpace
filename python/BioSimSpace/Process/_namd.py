@@ -1864,7 +1864,9 @@ class Namd(_process.Process):
             # Now work out which MolNum corresponds to each atom in the restraint.
             for idx in restraint:
                 try:
-                    mol_num, atom_idx = s._getRelativeIndices(idx)
+                    mol_idx, atom_idx = s._getRelativeIndices(idx)
+                    mol_num = s._mol_nums[mol_idx]
+                    atom_idx = _SireMol.AtomIdx(atom_idx)
                     mol_atoms[mol_num].append(atom_idx)
                 except Exception as e:
                     msg = "Unable to find restrained atom in the system?"

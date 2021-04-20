@@ -125,6 +125,11 @@ class System(_SireWrapper):
         self._mol_nums = self._sire_object.molNums()
         self._mol_nums.sort()
 
+        # Store a mapping from MolNum to index.
+        self._mol_num_to_idx = {}
+        for idx, num in enumerate(self._mol_nums):
+            self._mol_num_to_idx[num] = idx
+
         # Intialise the iterator counter.
         self._iter_count = 0
 
@@ -1443,10 +1448,10 @@ class System(_SireWrapper):
            Returns
            -------
 
-           mol_num : Sire.Mol.MolNum
-               The molecule number to which the atom belongs.
+           mol_index : int
+               The molecule index to which the atom belongs.
 
-           rel_index : Sire.Mol.AtomIdx.
+           rel_index : int
                The relative index of the atom in the molecule to which it
                belongs.
         """
@@ -1472,7 +1477,8 @@ class System(_SireWrapper):
                 mol_num_last = mol_num
                 mol_num = num
             else:
-                return mol_num_last, _SireMol.AtomIdx(abs_index - tally_last)
+                mol_idx = self._mol_num_to_idx[mol_num_last]
+                return mol_idx, abs_index - tally_last
 
         raise ValueError("'abs_index' exceeded system atom tally!")
 
