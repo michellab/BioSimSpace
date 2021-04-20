@@ -328,7 +328,8 @@ class Gromacs(_process.Process):
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Restrain backbone atoms in all non-water or ion molecules.
-            if self._protocol.isRestrained():
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
 
                 # Scale reference coordinates with the scaling matrix of the pressure coupling.
                 config.append("refcoord-scaling = all")
@@ -355,66 +356,66 @@ class Gromacs(_process.Process):
                     if "[ moleculetype ]" in line:
                         moleculetypes_idx.append(idx)
 
-                # The number of restraint files.
-                num_restraint = 1
+                # A keyword restraint.
+                if type(restraint) is str:
 
-                # Loop over all of the molecules and create a constraint file for
-                # each, excluding any water molecules or ions.
-                for idx, mol in enumerate(self._system):
-                    if not mol.isWater() and mol.nAtoms() > 1:
-                        # Create a GRO file from the molecule.
-                        gro = _SireIO.Gro87(mol.toSystem()._sire_object)
+                    # The number of restraint files.
+                    num_restraint = 1
 
-                        # Create the name of the temporary gro file.
-                        gro_file = "%s/tmp.gro" % self._work_dir
+                    # Loop over all of the molecules and create a constraint file for
+                    # each, excluding any water molecules or ions.
+                    for mol_idx, mol in enumerate(self._system):
 
-                        # Write to a temporary file.
-                        gro.writeToFile(gro_file)
+                        # Get the indices of any restrained atoms in this molecule,
+                        # making sure that indices are relative to the molecule.
+                        restrained_atoms = self._system._getRestraintAtoms(restraint,
+                                                                        mol_index=mol_idx,
+                                                                        is_absolute=False)
 
-                        # Create the name of the restrant file.
-                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+                        # Write the position restraint file for this molecule.
+                        if len(restrained_atoms) > 0:
+                            # Create the file name.
+                            restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
 
-                        # Use genrestr to generate a restraint file for the molecule.
-                        command = "echo Backbone | %s genrestr -f %s -o %s" % (self._exe, gro_file, restraint_file)
+                            with open(restraint_file, "w") as file:
+                                # Write the header.
+                                file.write("[ position_restraints ]\n")
+                                file.write(";  i funct       fcx        fcy        fcz\n")
 
-                        # Run the command.
-                        proc = _subprocess.run(command, shell=True,
-                            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                                # Write restraints for each atom.
+                                for atom_idx in restrained_atoms:
+                                    file.write(f"{atom_idx+1:4}    1       1000       1000       1000\n")
 
-                        # Check that grompp ran successfully.
-                        if proc.returncode != 0:
-                            raise RuntimeError("Unable to generate GROMACS restraint file.")
+                            # Include the position restraint file in the correct place within
+                            # the topology file. We put the additional include directive at the
+                            # end of the block so we move to the line before the next moleculetype
+                            # record.
+                            new_top_lines = top_lines[:moleculetypes_idx[mol_idx+1]-1]
 
-                        # Include the position restraint file in the correct place within
-                        # the topology file. We put the additional include directive at the
-                        # end of the block so we move to the line before the next moleculetype
-                        # record.
-                        new_top_lines = top_lines[:moleculetypes_idx[idx+1]-1]
+                            # Append the additional information.
+                            new_top_lines.append('#include "%s"' % restraint_file)
+                            new_top_lines.append("")
 
-                        # Append the additional information.
-                        new_top_lines.append('#include "%s"' % restraint_file)
-                        new_top_lines.append("")
+                            # Now extend with the remainder of the file.
+                            new_top_lines.extend(top_lines[moleculetypes_idx[mol_idx+1]:])
 
-                        # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moleculetypes_idx[idx+1]:])
+                            # Overwrite the topology file lines.
+                            top_lines = new_top_lines
 
-                        # Overwrite the topology file lines.
-                        top_lines = new_top_lines
+                            # Increment the number of restraint files.
+                            num_restraint += 1
 
-                        # Increment the number of restraint files.
-                        num_restraint += 1
+                            # Append the restraint file to the list of autogenerated inputs.
+                            self._input_files.append(restraint_file)
 
-                        # Append the restraint file to the list of autogenerated inputs.
-                        self._input_files.append(restraint_file)
+                    # Write the updated topology to file.
+                    with open(self._top_file, "w") as file:
+                        for line in top_lines:
+                            file.write("%s\n" % line)
 
-                # Write the updated topology to file.
-                with open(self._top_file, "w") as file:
-                    for line in top_lines:
-                        file.write("%s\n" % line)
-
-                # Remove the temporary gro file.
-                if _os.path.isfile(gro_file):
-                    _os.remove(gro_file)
+            # A user-define list of atoms indices.
+            else:
+                pass
 
         # Add configuration variables for a production simulation.
         elif type(self._protocol) is _Protocol.Production:
