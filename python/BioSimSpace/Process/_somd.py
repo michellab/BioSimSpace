@@ -355,9 +355,9 @@ class Somd(_process.Process):
             if not self._protocol.isConstantTemp():
                 raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
 
-            # Backbone restraints aren't supported.
-            if self._protocol.isRestrained():
-                raise _IncompatibleError("SOMD doesn't support backbone atom restraints.")
+            # Restraints aren't supported.
+            if self._protocol.getRestraint() is not None:
+                raise _IncompatibleError("We currently don't support restraints with SOMD.")
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
