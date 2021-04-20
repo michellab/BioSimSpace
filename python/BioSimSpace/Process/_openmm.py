@@ -347,9 +347,14 @@ class OpenMM(_process.Process):
             # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
             # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
             # issues with position rescaling during barostat updates.
-            if self._protocol.isRestrained():
-                # Get the list of backbone atom indices.
-                restrained_atoms = self._system._getRestraintAtoms("backbone")
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Search for the atoms to restrain by keyword.
+                if type(restraint) is str:
+                    restrained_atoms = self._system._getRestraintAtoms(restraint)
+                # Use the user-defined list of indices.
+                else:
+                    restrained_atoms = restraint
 
                 self.addToConfig("\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
                 self.addToConfig("restraint = HarmonicBondForce()")
