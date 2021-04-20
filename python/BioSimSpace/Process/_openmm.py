@@ -393,7 +393,7 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            if self._protocol.isRestrained():
+            if self._protocol.getRestraint() is not None:
                 self.addToConfig("simulation.context.setPositions(positions)")
             else:
                 self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
