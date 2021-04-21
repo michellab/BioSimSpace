@@ -558,7 +558,9 @@ class Gromacs(_process.Process):
 
             # Create the PLUMED input file and copy auxillary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system, self._protocol)
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+                                                                       self._protocol,
+                                                                       self._property_map)
             self._setPlumedConfig(plumed_config)
             if auxillary_files is not None:
                 for file in auxillary_files:
@@ -646,7 +648,9 @@ class Gromacs(_process.Process):
 
             # Create the PLUMED input file and copy auxillary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system, self._protocol)
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+                                                                       self._protocol,
+                                                                       self._property_map)
             self._setPlumedConfig(plumed_config)
             if auxillary_files is not None:
                 for file in auxillary_files:
