@@ -805,7 +805,7 @@ class OpenMM(_process.Process):
             self.addToConfig("line = colvar_array[0]")
             self.addToConfig("time = 0")
             self.addToConfig("write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
-            file.write(write_line)
+            self.addToConfig("file.write(write_line)")
 
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
@@ -1599,6 +1599,8 @@ class OpenMM(_process.Process):
         self.addToConfig( "                                              volume=True,")
         self.addToConfig( "                                              temperature=True,")
         self.addToConfig( "                                              totalSteps=True,")
+	self.addToConfig( "                                              speed=True,")
+	self.addToConfig( "                                              remainingTime=True,")
         self.addToConfig( "                                              separator=' '))")
 
     def _update_stdout_dict(self):
