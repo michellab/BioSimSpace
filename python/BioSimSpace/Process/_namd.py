@@ -36,6 +36,7 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 from Sire.Maths import Vector as _Vector
 
 from BioSimSpace import _isVerbose
@@ -446,15 +447,16 @@ class Namd(_process.Process):
                 self.addToConfig("useConstantArea       no")
 
             # Restrain the backbone.
-            if self._protocol.isRestrained():
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
                 # Create a restrained system.
-                restrained = _process._restrain_backbone(self._system._sire_object)
+                restrained = self._createRestrainedSystem(self._system, restraint)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
                 prop = self._property_map.get("occupancy", "occupancy")
 
                 try:
-                    p = _SireIO.PDB2(restrained, {prop : "restrained"})
+                    p = _SireIO.PDB2(restrained._sire_object, {prop : "restrained"})
 
                     # File name for the restraint file.
                     self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
@@ -464,7 +466,7 @@ class Namd(_process.Process):
 
                 except:
                     _warnings.warn("Failed to add restraints to PDB file. "
-                                   "Perhaps there are no backbone atoms?")
+                                   "Perhaps there are no atoms matching the restraint?")
 
                 # Update the configuration file.
                 self.addToConfig("fixedAtoms            yes")
@@ -1805,6 +1807,93 @@ class Namd(_process.Process):
         # Print the lines.
         for x in range(start, num_lines):
             print(self._stdout[x])
+
+    def _createRestrainedSystem(self, system, restraint):
+        """Restrain protein backbone atoms.
+
+            Parameters
+            ----------
+
+            system : :class:`System <BioSimSpace._SireWrappers.System>`
+                The molecular system.
+
+            restraint : str, [int]
+                The type of restraint.
+
+            Returns
+            -------
+
+            system : :class:`System <BioSimSpace._SireWrappers.System>`
+                The molecular system with an added 'restrained' property.
+        """
+
+        # Copy the original system.
+        s = system.copy()
+
+        # Keyword restraint.
+        if type(restraint) is str:
+
+            # Loop over all molecules by number.
+            for x, mol in enumerate(s):
+
+                # Get the indices of the restrained atoms for this molecule.
+                atoms = s._getRestraintAtoms(restraint, x, is_relative=False)
+
+                # Extract the molecule and make it editable.
+                edit_mol = mol._sire_object.edit()
+
+                # First set all restraints to zero.
+                for atom in edit_mol.atoms():
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
+
+                # Now apply restraints to the selected atoms.
+                for idx in atoms:
+                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 1.0).molecule()
+
+                # Update the system.
+                s._sire_object.update(edit_mol.commit())
+
+        # A user-defined list of atoms.
+        elif type(restraint) is list:
+
+            # Create an empty multi dict for each MolNum.
+            mol_atoms = {}
+            for num in s._mol_nums:
+                mol_atoms[num] = []
+
+            # Now work out which MolNum corresponds to each atom in the restraint.
+            for idx in restraint:
+                try:
+                    mol_idx, atom_idx = s._getRelativeIndices(idx)
+                    mol_num = s._mol_nums[mol_idx]
+                    atom_idx = _SireMol.AtomIdx(atom_idx)
+                    mol_atoms[mol_num].append(atom_idx)
+                except Exception as e:
+                    msg = "Unable to find restrained atom in the system?"
+                    if _isVerbose():
+                        raise ValueError(msg) from e
+                    else:
+                        raise ValueError(msg) from None
+
+            # Now loop over the multi-dict.
+            for num, idxs in mol_atoms.items():
+
+                # Extract the molecule and make it editable.
+                edit_mol = s._sire_object[num].edit()
+
+                # First set all restraints to zero.
+                for atom in edit_mol.atoms():
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
+
+                # Now apply restraints to the selected atoms.
+                for idx in idxs:
+                    edit_mol = edit_mol.atom(idx).setProperty("restrained", 1.0).molecule()
+
+                # Update the system.
+                s._sire_object.update(edit_mol.commit())
+
+        # Return the new system.
+        return s
 
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.

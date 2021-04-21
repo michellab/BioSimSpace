@@ -347,9 +347,14 @@ class OpenMM(_process.Process):
             # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
             # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
             # issues with position rescaling during barostat updates.
-            if self._protocol.isRestrained():
-                # Get the list of backbone atom indices.
-                restrained_atoms = self._system._getBackBoneAtoms()
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Search for the atoms to restrain by keyword.
+                if type(restraint) is str:
+                    restrained_atoms = self._system._getRestraintAtoms(restraint)
+                # Use the user-defined list of indices.
+                else:
+                    restrained_atoms = restraint
 
                 self.addToConfig("\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
                 self.addToConfig("restraint = HarmonicBondForce()")
@@ -388,7 +393,7 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            if self._protocol.isRestrained():
+            if self._protocol.getRestraint() is not None:
                 self.addToConfig("simulation.context.setPositions(positions)")
             else:
                 self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
@@ -805,7 +810,7 @@ class OpenMM(_process.Process):
             self.addToConfig("line = colvar_array[0]")
             self.addToConfig("time = 0")
             self.addToConfig("write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
-            file.write(write_line)
+            self.addToConfig("file.write(write_line)")
 
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
@@ -1599,6 +1604,8 @@ class OpenMM(_process.Process):
         self.addToConfig( "                                              volume=True,")
         self.addToConfig( "                                              temperature=True,")
         self.addToConfig( "                                              totalSteps=True,")
+        self.addToConfig( "                                              speed=True,")
+        self.addToConfig( "                                              remainingTime=True,")
         self.addToConfig( "                                              separator=' '))")
 
     def _update_stdout_dict(self):

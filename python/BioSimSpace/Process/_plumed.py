@@ -36,7 +36,9 @@ import subprocess as _subprocess
 import warnings as _warnings
 
 from Sire.Base import findExe as _findExe
+from Sire.Maths import Vector as _Vector
 from Sire.Mol import MolNum as _MolNum
+import Sire.Vol as _SireVol
 
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
@@ -119,7 +121,7 @@ class Plumed():
         self._colvar_keys = []
         self._hills_keys = []
 
-    def createConfig(self, system, protocol, is_restart=False):
+    def createConfig(self, system, protocol, is_restart=False, property_map={}):
         """Create a PLUMED configuration file.
 
            Parameters
@@ -131,6 +133,14 @@ class Plumed():
            protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`, \
                       :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`, \
                The metadynamics or steered molecular dynamics protocol.
+
+           is_restart : bool
+               Whether the simulation is a restart.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -145,17 +155,17 @@ class Plumed():
 
         # Create a metadynamics protocol.
         if type(protocol) is _Metadynamics:
-            return self._createMetadynamicsConfig(system, protocol, is_restart)
+            return self._createMetadynamicsConfig(system, protocol, is_restart, property_map)
 
         # Create a steered molecular dynamics protocol.
         if type(protocol) is _Steering:
-            return self._createSteeringConfig(system, protocol, is_restart)
+            return self._createSteeringConfig(system, protocol, is_restart, property_map)
 
         else:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics' "
                             " or 'BioSimSpace.Protocol.Steering'")
 
-    def _createMetadynamicsConfig(self, system, protocol, is_restart=False):
+    def _createMetadynamicsConfig(self, system, protocol, is_restart=False, property_map={}):
         """Create a PLUMED metadynamics configuration file.
 
            Parameters
@@ -166,6 +176,11 @@ class Plumed():
 
            protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`
                The metadynamics protocol.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -180,6 +195,9 @@ class Plumed():
 
         if type(protocol) is not _Metadynamics:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Clear data.
         self._num_colvar = 0
@@ -263,6 +281,55 @@ class Plumed():
 
             # Funnel.
             elif type(colvar) is _CollectiveVariable.Funnel:
+                # First we need to check that the funnel length is less
+                # than half the simulation box base length in any dimension.
+
+                # Get the upper bound on the collective variable.
+                upper_bound = colvar.getUpperBound()
+
+                if upper_bound is not None:
+                    # Store the value of the bound in angstrom.
+                    value = upper_bound.getValue().angstroms().magnitude()
+
+                    # Get the user-defined "space" property.
+                    space_prop = property_map.get("space", "space")
+
+                    # Check whether the system has a space. If not, vacuum
+                    # simulations are okay.
+                    if space_prop in system._sire_object.propertyKeys():
+
+                        # Get the space property.
+                        space = system._sire_object.property(space_prop)
+
+                        # Handle PeriodicBox.
+                        if type(space) is _SireVol.PeriodicBox:
+                            # Get the x,y,z dimensions of th box in angstrom.
+                            dimensions = space.dimensions()
+
+                            # Check the upper bound is greater than dim/2 for
+                            # each dimension.
+                            for dim in dimensions:
+                                if value >= 0.5*dim:
+                                    message = ("The simulation box is too small for the funnel. "
+                                               "Try reducing the upper bound of the collective "
+                                               "variable or increasing the box size.")
+                                    raise _Exceptions.IncompatibleError(message)
+
+                        # Handle TriclinicBox.
+                        else:
+                            # Get the magnitude of each box vector in angstrom.
+                            m0 = _Vector.magnitude(space.vector0())
+                            m1 = _Vector.magnitude(space.vector1())
+                            m2 = _Vector.magnitude(space.vector2())
+
+                            # Check the upper bound is greater than mag/2 for
+                            for mag in [m0, m1, m2]:
+                                if value >= 0.5*mag:
+                                    message = ("The simulation box is too small for the funnel. "
+                                               "Try reducing the upper bound of the collective "
+                                               "variable or increasing the box size.")
+                                    raise _Exceptions.IncompatibleError(message)
+
                 # Here we assume that we have a solvated protein/ligand
                 # (or host/guest). The largest molecule in the system
                 # will be the protein, the second largest the ligand.
@@ -730,7 +797,7 @@ class Plumed():
 
         return self._config, self._aux_files
 
-    def _createSteeringConfig(self, system, protocol, is_restart=False):
+    def _createSteeringConfig(self, system, protocol, is_restart=False, property_map={}):
         """Create a PLUMED steering molecular dynamics configuration file.
 
            Parameters
@@ -741,6 +808,11 @@ class Plumed():
 
            protocol : :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`
                The metadynamics protocol.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -755,6 +827,9 @@ class Plumed():
 
         if type(protocol) is not _Steering:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Steering'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Clear data.
         self._num_colvar = 0

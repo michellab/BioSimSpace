@@ -1402,69 +1402,6 @@ class Process():
         """Generate the dictionary of command-line arguments."""
         self.clearArgs()
 
-def _restrain_backbone(system):
-    """Restrain protein backbone atoms.
-
-        Parameters
-        ----------
-
-        system : Sire.System.System
-            A Sire molecular system.
-    """
-
-    # Copy the original system.
-    s = system
-
-    # A list of amino acid name abbreviations.
-    # Since we only want to restrain atoms in protein backbones, we compare
-    # molecule residue names against this list in order to determine whether
-    # the molecule is a protein.
-    amino_acids = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE",
-        "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "SEC",
-        "VAL", "TRP", "TYR"]
-
-    # Loop over all molecules by number.
-    for n in s.molNums():
-
-        # Extract the molecule and make it editable.
-        m = s.molecule(n).edit()
-
-        # Initialise a list of protein residues.
-        protein_residues = []
-
-        # Compare each residue name against the amino acid list.
-        for res in m.residues():
-
-            # This residue is an amino acid.
-            if res.name().value().upper() in amino_acids:
-                protein_residues.append(res.index())
-
-        # Loop over all of the protein residues.
-        for residx in protein_residues:
-
-            # Loop over all of the atoms in the residue.
-            for atom in m.residue(residx).atoms():
-
-                # Try to compare the atom element property against the list of
-                # backbone atoms and set the "restrained" property if a match
-                # is found.
-                try:
-                    element = atom.property("element")
-                    if element == _SireMol.Element("CA") or \
-                       element == _SireMol.Element("N")  or \
-                       element == _SireMol.Element("C")  or \
-                       element == _SireMol.Element("O"):
-                           m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
-
-                except:
-                    pass
-
-        # Update the system.
-        s.update(m.commit())
-
-    # Return the new system.
-    return s
-
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
     if lst and isinstance(lst, list):

@@ -54,6 +54,7 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
+from ._plumed import Plumed as _Plumed
 
 class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -378,10 +379,22 @@ class Amber(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
 
             # Restrain the backbone.
-            if self._protocol.isRestrained():
-                self.addToConfig("  ntr=1,")
-                self.addToConfig("  restraint_wt=2,")
-                self.addToConfig("  restraintmask='@CA,C,O,N',")
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Get the indices of the atoms that are restrained.
+                if type(restraint) is str:
+                    atom_idxs = self._system._getRestraintAtoms(restraint)
+                else:
+                    atom_idxs = restraint
+                # Initialise the restraintmask string.
+                restraintmask = f"{atom_idxs[0]+1}"
+                # Add all the remaining atoms to the mask.
+                for idx in atom_idxs[1:]:
+                    restraintmask += f",{idx+1}"
+
+                self.addToConfig( "  ntr=1,")
+                self.addToConfig( "  restraint_wt=10,")
+                self.addToConfig(f"  restraintmask='@{restraintmask}',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -464,6 +477,170 @@ class Amber(_process.Process):
 
             self.addToConfig(" /")
 
+        # Add configuration variables for a metadynamics simulation.
+        elif type(self._protocol) is _Protocol.Metadynamics:
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Set the random number seed.
+            if self._seed is None:
+                seed = -1
+            else:
+                seed = self._seed
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            self.addToConfig("Production.")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  ig=%d," % seed)                 # Random number seed.
+            self.addToConfig("  ntx=1,")                        # Only read coordinates.
+            self.addToConfig("  ntxo=1,")                       # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=%d," % report_interval)    # Interval between reporting energies.
+            self.addToConfig("  ntwr=%d," % restart_interval)   # Interval between saving restart files.
+            self.addToConfig("  ntwx=%d," % restart_interval)   # Trajectory sampling frequency.
+            self.addToConfig("  irest=0,")                      # Don't restart.
+            self.addToConfig("  dt=%.3f," % timestep)           # Time step.
+            self.addToConfig("  nstlim=%d," % steps)            # Number of integration steps.
+            self.addToConfig("  ntc=2,")                        # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                        # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                        # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")                   # Collision frequency (ps).
+            if not has_box or not self._has_water:
+                self.addToConfig("  ntb=0,")                    # No periodic box.
+                self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+            else:
+                self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
+                % self._protocol.getTemperature().kelvin().magnitude())
+            self.addToConfig("  temp0=%.2f,"                    # Target temperature.
+                % self._protocol.getTemperature().kelvin().magnitude())
+
+            # Constant pressure control.
+            if self._protocol.getPressure() is not None:
+                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
+                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
+
+            # Activate PLUMED and locate the plumed.dat file.
+            self.addToConfig("  plumed=1,")
+            self.addToConfig("  plumedfile='plumed.dat',")
+
+            self.addToConfig(" /")
+
+            # Create the PLUMED input file and copy auxillary files to the working directory.
+            self._plumed = _Plumed(self._work_dir)
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+                                                                       self._protocol,
+                                                                       self._property_map)
+            self._setPlumedConfig(plumed_config)
+            if auxillary_files is not None:
+                for file in auxillary_files:
+                    file_name = _os.path.basename(file)
+                    _shutil.copyfile(file, self._work_dir + f"/{file_name}")
+            self._input_files.append(self._plumed_config_file)
+
+            # Expose the PLUMED specific member functions.
+            setattr(self, "getPlumedConfig", self._getPlumedConfig)
+            setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
+            setattr(self, "setPlumedConfig", self._setPlumedConfig)
+            setattr(self, "getFreeEnergy", self._getFreeEnergy)
+            setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "sampleConfigurations", self._sampleConfigurations)
+            setattr(self, "getTime", self._getTime)
+
+        # Add configuration variables for a steered molecular dynamics simulation.
+        elif type(self._protocol) is _Protocol.Steering:
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Set the random number seed.
+            if self._seed is None:
+                seed = -1
+            else:
+                seed = self._seed
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+
+            self.addToConfig("Production.")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  ig=%d," % seed)                 # Random number seed.
+            self.addToConfig("  ntx=1,")                        # Only read coordinates.
+            self.addToConfig("  ntxo=1,")                       # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=%d," % report_interval)    # Interval between reporting energies.
+            self.addToConfig("  ntwr=%d," % restart_interval)   # Interval between saving restart files.
+            self.addToConfig("  ntwx=%d," % restart_interval)   # Trajectory sampling frequency.
+            self.addToConfig("  irest=0,")                      # Don't restart.
+            self.addToConfig("  dt=%.3f," % timestep)           # Time step.
+            self.addToConfig("  nstlim=%d," % steps)            # Number of integration steps.
+            self.addToConfig("  ntc=2,")                        # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                        # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                        # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")                   # Collision frequency (ps).
+            if not has_box or not self._has_water:
+                self.addToConfig("  ntb=0,")                    # No periodic box.
+                self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+            else:
+                self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
+                % self._protocol.getTemperature().kelvin().magnitude())
+            self.addToConfig("  temp0=%.2f,"                    # Target temperature.
+                % self._protocol.getTemperature().kelvin().magnitude())
+
+            # Constant pressure control.
+            if self._protocol.getPressure() is not None:
+                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
+                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
+                    % self._protocol.getPressure().bar().magnitude())
+
+            # Activate PLUMED and locate the plumed.dat file.
+            self.addToConfig("  plumed=1,")
+            self.addToConfig("  plumedfile='plumed.dat',")
+
+            self.addToConfig(" /")
+
+            # Create the PLUMED input file and copy auxillary files to the working directory.
+            self._plumed = _Plumed(self._work_dir)
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+                                                                       self._protocol,
+                                                                       self._property_map)
+            self._setPlumedConfig(plumed_config)
+            if auxillary_files is not None:
+                for file in auxillary_files:
+                    file_name = _os.path.basename(file)
+                    _shutil.copyfile(file, self._work_dir + f"/{file_name}")
+            self._input_files.append(self._plumed_config_file)
+
+            # Expose the PLUMED specific member functions.
+            setattr(self, "getPlumedConfig", self._getPlumedConfig)
+            setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
+            setattr(self, "setPlumedConfig", self._setPlumedConfig)
+            setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "getTime", self._getTime)
+
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
@@ -488,9 +665,9 @@ class Amber(_process.Process):
         # Skip if the user has passed a custom protocol.
         if type(self._protocol) is not _Protocol.Custom:
 
-            # Append a reference file if this a constrained equilibration.
+            # Append a reference file if this a restrained equilibration.
             if type(self._protocol) is _Protocol.Equilibration:
-                if self._protocol.isRestrained():
+                if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this is an equilibration or production run.

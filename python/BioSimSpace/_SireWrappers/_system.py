@@ -125,6 +125,11 @@ class System(_SireWrapper):
         self._mol_nums = self._sire_object.molNums()
         self._mol_nums.sort()
 
+        # Store a mapping from MolNum to index.
+        self._mol_num_to_idx = {}
+        for idx, num in enumerate(self._mol_nums):
+            self._mol_num_to_idx[num] = idx
+
         # Intialise the iterator counter.
         self._iter_count = 0
 
@@ -957,6 +962,162 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
+    def _getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True, property_map={}):
+        """Get the indices of atoms involved in a restraint.
+
+           Parameters
+           ----------
+
+           restraint : str
+               The type of restraint.
+
+           mol_index : int
+               The index of the molecule of interest. If None, then the
+               entire system is searched.
+
+           is_absolute : bool
+               Whether the indices are absolute, i.e. indexed within the
+               entire system. If False, then indices are relative to the
+               molecule in which the atom is found.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           indices : [int]
+               A list of the backbone atom indices.
+        """
+
+        if mol_index is not None and type(mol_index) is not int:
+            raise TypeError("'mol_index' must be of type 'int'.")
+
+        if type(is_absolute) is not bool:
+            raise TypeError("'is_absolute' must be of type 'bool'.")
+
+        # Other have been validated elsewhere.
+
+        # Initalise the list of indices.
+        indices = []
+
+        # Get the element property.
+        element = property_map.get("element", "element")
+
+        # A set of protein residues. Taken from MDAnalysis.
+        prot_res = {
+            # CHARMM top_all27_prot_lipid.rtf
+            "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HSD",
+            "HSE", "HSP", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR",
+            "TRP", "TYR", "VAL", "ALAD",
+            ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
+            # PDB
+            "HIS", "MSE",
+            # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
+            "ARGN", "ASPH", "CYS2", "CYSH", "QLN", "PGLU", "GLUH", "HIS1", "HISD",
+            "HISE", "HISH", "LYSH",
+            # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
+            "ASN1", "CYS1", "HISA", "HISB", "HIS2",
+            # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
+            "HID", "HIE", "HIP", "ORN", "DAB", "LYN", "HYP", "CYM", "CYX", "ASH",
+            "GLH", "ACE", "NME",
+            # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
+            "NALA", "NGLY", "NSER", "NTHR", "NLEU", "NILE", "NVAL", "NASN", "NGLN",
+            "NARG", "NHID", "NHIE", "NHIP", "NTRP", "NPHE", "NTYR", "NGLU", "NASP",
+            "NLYS", "NPRO", "NCYS", "NCYX", "NMET", "CALA", "CGLY", "CSER", "CTHR",
+            "CLEU", "CILE", "CVAL", "CASF", "CASN", "CGLN", "CARG", "CHID", "CHIE",
+            "CHIP", "CTRP", "CPHE", "CTYR", "CGLU", "CASP", "CLYS", "CPRO", "CCYS",
+            "CCYX", "CMET", "CME", "ASF",
+        }
+
+        # A list of ion elements.
+        ions = [
+            "F", "Cl", "Br", "I", "Li", "Na", "K", "Rb", "Cs", "Mg", "Tl", "Cu", "Ag",
+            "Be", "Cu", "Ni", "Pt", "Zn", "Co", "Pd", "Ag", "Cr", "Fe", "Mg", "V", "Mn",
+            "Hg", "Cd", "Yb", "Ca", "Sn", "Pb", "Eu", "Sr", "Sm", "Ba", "Ra", "Al", "Fe",
+            "Cr", "In", "Tl", "Y", "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
+            "Er", "Tm", "Lu", "Hf", "Zr", "Ce", "U", "Pu", "Th",
+        ]
+
+        # Search the entire system.
+        if mol_index is None:
+            # Backbone restraints.
+            if restraint == "backbone":
+                # Loop over all non-water molecules.
+                for mol in self.search("not water"):
+                    # Convert all search results to a molecule.
+                    try:
+                        mol = mol.toMolecule()
+                    except:
+                        pass
+
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                    search = mol.search(string)
+
+            elif restraint == "heavy":
+                # Convert to a formatted string for the search.
+                ion_string = ",".join(ions + ["H"])
+                # Find all non-water, non-hydrogen, non-ion elements.
+                string = f"(atoms in not water) and not element {ion_string}"
+                search = self.search(string)
+
+            elif restraint == "all":
+                # Convert to a formatted string for the search.
+                ion_string = ",".join(ions)
+                # Find all non-water, non-ion elements.
+                string = f"(atoms in not water) and not element {ion_string}"
+                search = self.search(string)
+
+        # Search the chosen molecule.
+        else:
+            if restraint == "backbone":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+
+                else:
+                    # Find all C, CA, N, and O atoms.
+
+                    # First search for atoms by element.
+                    search = self[mol_index].search(f"{element} C,N,O")
+
+                    # Now search for the required names within these results.
+                    if search.nResults() > 0:
+                        search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+
+            elif restraint == "heavy":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+                else:
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions + ["H"])
+                    # Find all non-water, non-hydrogen, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string)
+
+            elif restraint == "all":
+                mol = self[mol_index]
+                if mol.isWater():
+                    search = []
+                else:
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions)
+                    # Find all non-water, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string)
+
+        # Now loop over all matching atoms and get their indices.
+        for atom in search:
+            if is_absolute:
+                indices.append(self.getIndex(atom))
+            else:
+                indices.append(atom.index())
+
+        return indices
+
     def _getBackBoneAtoms(self, property_map={}):
         """Get the indices of backbone atoms.
 
@@ -1273,6 +1434,53 @@ class System(_SireWrapper):
         system.add(molgrp)
 
         return system
+
+    def _getRelativeIndices(self, abs_index):
+        """Given an absolute index, get the number of the molecule to which it
+           belongs and the relative index within that molecule.
+
+           Parameters
+           ----------
+
+           abs_index : int
+               The absoulute index of the atom in the system.
+
+           Returns
+           -------
+
+           mol_index : int
+               The molecule index to which the atom belongs.
+
+           rel_index : int
+               The relative index of the atom in the molecule to which it
+               belongs.
+        """
+        # Make sure the atom index tally has been created.
+        self.getIndex(self[0].getAtoms()[0])
+
+        # Set tally counters for the total number of atoms to date
+        # and the total up to the previous molecule.
+        tally = 0
+        tally_last = 0
+
+        # Set the current and previous MolNum.
+        mol_num = self._mol_nums[0]
+        mol_num_last = self._mol_nums[0]
+
+        # Loop over each molecule until the total atom number is equal
+        # to or greater than the absolute index. When it is, return the
+        # absolute index minus the tally up to the previous molecule.
+        for num, num_atoms in self._atom_index_tally.items():
+            if abs_index >= tally:
+                tally_last = tally
+                tally = num_atoms
+                mol_num_last = mol_num
+                mol_num = num
+            else:
+                mol_idx = self._mol_num_to_idx[mol_num_last]
+                return mol_idx, abs_index - tally_last
+
+        raise ValueError("'abs_index' exceeded system atom tally!")
 
     def _reset_mappings(self):
         """Internal function to reset index mapping dictionaries."""
