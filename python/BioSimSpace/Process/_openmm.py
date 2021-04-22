@@ -285,6 +285,8 @@ class OpenMM(_process.Process):
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
             self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig("if inpcrd.boxVectors is not None:")
+            self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
             self.addToConfig("simulation.minimizeEnergy()")
 
             # Add the reporters.
@@ -397,6 +399,8 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(positions)")
             else:
                 self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig("if inpcrd.boxVectors is not None:")
+            self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -524,6 +528,8 @@ class OpenMM(_process.Process):
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
             self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig("if inpcrd.boxVectors is not None:")
+            self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -769,6 +775,8 @@ class OpenMM(_process.Process):
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
             self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig("if inpcrd.boxVectors is not None:")
+            self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Work out the number of integration.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
