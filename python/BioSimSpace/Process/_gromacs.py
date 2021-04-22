@@ -89,7 +89,9 @@ class Gromacs(_process.Process):
                own naming scheme, e.g. { "charge" : "my-charge" }
 
            ignore_warnings : bool
-               Whether to ignore warnings when generating the binary run file.
+               Whether to ignore warnings when generating the binary run file
+               with 'gmx grompp'. By default, these warnings are elevated to
+               errors and will halt the program.
 
            show_errors : bool
                Whether to show warning/error messages when generating the binary
