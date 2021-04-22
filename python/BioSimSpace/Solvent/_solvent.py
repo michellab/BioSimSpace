@@ -848,8 +848,8 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             # Check for the tpr output file.
             if not _os.path.isfile("ions.tpr"):
                 if shell is None:
-                    raise RuntimeError("'gmx grommp' failed to generate output! "
-                                       "Perhaps your box is too small?")
+                    raise RuntimeError("'gmx grommp' failed to generate the required output for "
+                                       "'gmx genion'. Perhaps your box is too small?")
                 else:
                     is_break = True
                     _warnings.warn("Unable to achieve target ion concentration, try using "
