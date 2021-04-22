@@ -711,7 +711,7 @@ class Gromacs(_process.Process):
 
         # Run the command.
         proc = _subprocess.run(command, shell=True, text=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
@@ -726,20 +726,11 @@ class Gromacs(_process.Process):
             if type(self._protocol) is _Protocol.Equilibration and \
                self._protocol.getRestraint() is not None:
                    is_non_matching_names = False
-                   is_warn = False
-                   lines = proc.stdout.split("\n")
+                   lines = proc.stderr.split("\n")
                    for line in lines:
-                       if is_non_matching_names:
+                       if "non-matching atom names" in line:
+                           is_non_matching_names = True
                            break
-                       line = line.strip()
-                       if line[0:7] == "WARNING" or is_warn:
-                           if line == "":
-                               is_warnings = False
-                               break
-                           if "non-matching atom names" in line:
-                               is_non_matching_names = True
-                               break
-                           is_warn = True
 
                    if is_non_matching_names:
                        # Allow a single warning.
@@ -762,19 +753,19 @@ class Gromacs(_process.Process):
                     warnings = []
                     is_error = False
                     is_warn = False
-                    lines = proc.stdout.split("\n")
+                    lines = proc.stderr.split("\n")
                     for line in lines:
                         line = line.strip()
                         if line[0:5] == "ERROR" or is_error:
                             if line == "":
                                 is_error = False
-                                break
+                                continue
                             errors.append(line)
                             is_error = True
                         elif line[0:7] == "WARNING" or is_warn:
                             if line == "":
-                                is_warnings = False
-                                break
+                                is_warn = False
+                                continue
                             warnings.append(line)
                             is_warn = True
 
