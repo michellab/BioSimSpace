@@ -715,76 +715,45 @@ class Gromacs(_process.Process):
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
-            # Whether we can safely ignore this error.
-            can_ignore = False
-
-            # Special handling for equlibration protocols with restraints.
-            # GROMACS requires matching atom naming between gro and top files
-            # for restrained atoms, which will not be the case if we have
-            # converted from a non-GROMACS format. As such, we catch this
-            # warning and re-run gmx grompp with --maxwarn 1.
-            if type(self._protocol) is _Protocol.Equilibration and \
-               self._protocol.getRestraint() is not None:
-                   is_non_matching_names = False
-                   lines = proc.stderr.split("\n")
-                   for line in lines:
-                       if "non-matching atom names" in line:
-                           is_non_matching_names = True
-                           break
-
-                   if is_non_matching_names:
-                       # Allow a single warning.
-                       command += " --maxwarn 1"
-
-                       # Run the command.
-                       proc = _subprocess.run(command, shell=True, text=True,
-                           stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
-
-                       # Check whether grompp worked second around.
-                       # If so, flag that we can ignore the error.
-                       if proc.returncode == 0:
-                           can_ignore = True
-
             # Handle errors and warnings.
-            if not can_ignore:
-                if self._show_errors:
-                    # Capture errors and warnings from the grompp output.
-                    errors = []
-                    warnings = []
-                    is_error = False
-                    is_warn = False
-                    lines = proc.stderr.split("\n")
-                    for line in lines:
-                        line = line.strip()
-                        if line[0:5] == "ERROR" or is_error:
-                            if line == "":
-                                is_error = False
-                                continue
-                            errors.append(line)
-                            is_error = True
-                        elif line[0:7] == "WARNING" or is_warn:
-                            if line == "":
-                                is_warn = False
-                                continue
-                            warnings.append(line)
-                            is_warn = True
+            if self._show_errors:
+                # Capture errors and warnings from the grompp output.
+                errors = []
+                warnings = []
+                is_error = False
+                is_warn = False
+                lines = proc.stderr.split("\n")
+                for line in lines:
+                    line = line.strip()
+                    if line[0:5] == "ERROR" or is_error:
+                        if line == "":
+                            is_error = False
+                            continue
+                        errors.append(line)
+                        is_error = True
+                    elif line[0:7] == "WARNING" or is_warn:
+                        if line == "":
+                            is_warn = False
+                            continue
+                        warnings.append(line)
+                        is_warn = True
 
-                    error_string = "\n  ".join(errors)
-                    warning_string = "\n  ".join(warnings)
+                error_string = "\n  ".join(errors)
+                warning_string = "\n  ".join(warnings)
 
-                    exception_string = "Unable to generate GROMACS binary run input file.\n"
-                    if len(errors) > 0:
-                        exception_string += "\n'gmx grompp' reported the following errors:\n"   \
-                                        + f"{error_string}\n"
-                    if len(warnings) > 0:
-                        exception_string += "\n'gmx grompp' reported the following warnings:\n" \
-                                        + f"{warning_string}\n"                                \
-                                        +  "\nUse 'ignore_warnings' to ignore warnings."
+                exception_string = "Unable to generate GROMACS binary run input file.\n"
+                if len(errors) > 0:
+                    exception_string += "\n'gmx grompp' reported the following errors:\n"   \
+                                    + f"{error_string}\n"
+                if len(warnings) > 0:
+                    exception_string += "\n'gmx grompp' reported the following warnings:\n" \
+                                    + f"{warning_string}\n"                                \
+                                    +  "\nUse 'ignore_warnings' to ignore warnings."
 
-                    raise RuntimeError(exception_string)
+                raise RuntimeError(exception_string)
 
-                else:
-                    raise RuntimeError("Unable to generate GROMACS binary run input file.")
+            else:
+                raise RuntimeError("Unable to generate GROMACS binary run input file.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list.
@@ -1980,8 +1949,14 @@ class Gromacs(_process.Process):
             property_map["parallel"] = _SireBase.wrap(False)
             property_map["sort"] = _SireBase.wrap(False)
 
+            # Create a copy of the system.
+            system = self._system.copy()
+
+            # Convert the water model topology so that it matches the GROMACS naming convention.
+            system._set_water_topology("GROMACS")
+
             # Create a GROMACS topology object.
-            top = _SireIO.GroTop(self._system._sire_object, property_map)
+            top = _SireIO.GroTop(system._sire_object, property_map)
 
             # Get the top file as a list of lines.
             top_lines = top.lines()
