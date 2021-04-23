@@ -1104,12 +1104,22 @@ class System(_SireWrapper):
                     string = f"not element {ion_string}"
                     search = mol.search(string)
 
+        # Raise an exception if no atoms match the restraint.
+        if len(search) == 0:
+            msg = "No atoms matched the restraint!"
+            if restraint == "backbone":
+                msg += " Backbone restraints only apply to atoms in protein residues."
+            raise _IncompatibleError(msg)
+
         # Now loop over all matching atoms and get their indices.
         for atom in search:
             if is_absolute:
                 indices.append(self.getIndex(atom))
             else:
                 indices.append(atom.index())
+
+        # The indices should be sorted, but do so just in case.
+        indices.sort()
 
         return indices
 
