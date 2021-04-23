@@ -962,7 +962,7 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
-    def _getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True, property_map={}):
+    def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True, property_map={}):
         """Get the indices of atoms involved in a restraint.
 
            Parameters

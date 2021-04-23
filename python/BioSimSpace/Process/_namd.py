@@ -1837,7 +1837,7 @@ class Namd(_process.Process):
             for x, mol in enumerate(s):
 
                 # Get the indices of the restrained atoms for this molecule.
-                atoms = s._getRestraintAtoms(restraint, x, is_relative=False)
+                atoms = s.getRestraintAtoms(restraint, x, is_relative=False)
 
                 # Extract the molecule and make it editable.
                 edit_mol = mol._sire_object.edit()

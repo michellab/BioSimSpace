@@ -383,7 +383,7 @@ class Amber(_process.Process):
             if restraint is not None:
                 # Get the indices of the atoms that are restrained.
                 if type(restraint) is str:
-                    atom_idxs = self._system._getRestraintAtoms(restraint)
+                    atom_idxs = self._system.getRestraintAtoms(restraint)
                 else:
                     atom_idxs = restraint
 

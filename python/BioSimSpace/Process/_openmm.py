@@ -353,7 +353,7 @@ class OpenMM(_process.Process):
             if restraint is not None:
                 # Search for the atoms to restrain by keyword.
                 if type(restraint) is str:
-                    restrained_atoms = self._system._getRestraintAtoms(restraint)
+                    restrained_atoms = self._system.getRestraintAtoms(restraint)
                 # Use the user-defined list of indices.
                 else:
                     restrained_atoms = restraint
