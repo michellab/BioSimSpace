@@ -670,8 +670,8 @@ class Amber(_process.Process):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
-            # Append a trajectory file if this is an equilibration or production run.
-            if type(self._protocol) is _Protocol.Equilibration or type(self._protocol) is _Protocol.Production:
+            # Append a trajectory file if this anything other than a minimisation.
+            if type(self._protocol) is not _Protocol.Minimisation:
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
