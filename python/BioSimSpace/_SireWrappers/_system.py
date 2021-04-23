@@ -1059,17 +1059,9 @@ class System(_SireWrapper):
         if mol_index is None:
             # Backbone restraints.
             if restraint == "backbone":
-                # Loop over all non-water molecules.
-                for mol in self.search("not water"):
-                    # Convert all search results to a molecule.
-                    try:
-                        mol = mol.toMolecule()
-                    except:
-                        pass
-
-                    # Find all N, CA, C, and O atoms in protein residues.
-                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                    search = mol.search(string)
+                # Find all N, CA, C, and O atoms in protein residues.
+                string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
+                search = self.search(string)
 
             elif restraint == "heavy":
                 # Convert to a formatted string for the search.
