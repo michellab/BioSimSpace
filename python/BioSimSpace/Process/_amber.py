@@ -386,15 +386,13 @@ class Amber(_process.Process):
                     atom_idxs = self._system._getRestraintAtoms(restraint)
                 else:
                     atom_idxs = restraint
-                # Initialise the restraintmask string.
-                restraintmask = f"{atom_idxs[0]+1}"
-                # Add all the remaining atoms to the mask.
-                for idx in atom_idxs[1:]:
-                    restraintmask += f",{idx+1}"
 
-                self.addToConfig( "  ntr=1,")
-                self.addToConfig( "  restraint_wt=10,")
-                self.addToConfig(f"  restraintmask='@{restraintmask}',")
+                # Don't add restraints if there are no atoms to restrain.
+                if len(atom_idxs) > 0:
+                    restraint_mask = self._create_restraint_mask(atom_idxs)
+                    self.addToConfig( "  ntr=1,")
+                    self.addToConfig( "  restraint_wt=10,")
+                    self.addToConfig(f"  restraintmask='@{restraint_mask}',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -1921,3 +1919,79 @@ class Amber(_process.Process):
 
             except KeyError:
                 return None
+
+    def _create_restraint_mask(self, atom_idxs):
+        """Internal helper function to create an AMBER restraint mask from a
+           list of atom indices.
+
+           Parameters
+           ----------
+
+           atom_idxs : [int]
+               A list of atom indices.
+
+           Returns
+           -------
+
+           restraint_mask : str
+               The AMBER restraint mask.
+        """
+
+        if type(atom_idxs) is tuple:
+            atom_idxs = list(atom_idxs)
+
+        if type(atom_idxs) is not list:
+            raise TypeError("'atom_idxs' must be a list of 'int' types.")
+
+        if not all(isinstance(x, int) for x in atom_idxs):
+            raise TypeError("'atom_idxs' must be a list of 'int' types.")
+
+        # AMBER has a restriction on the number of characters in the restraint
+        # mask (not documented) so we can't just use comma-separated atom
+        # indices. Instead we loop through the indices and use hyphens to
+        # separate contiguous blocks of indices, e.g. 1-23,34-47,...
+
+        # Create a set to sort and ensure no duplicates, then convert back to a list.
+        # This should already by done, but do so again in case the user is accessing
+        # the method directly.
+        atom_idxs = list(set(atom_idxs))
+        atom_idxs.sort()
+
+        # Handle single atom restraints differently.
+        if len(atom_idxs) == 1:
+            restraint_mask =  f"{atom_idxs[0]+1}"
+
+        else:
+            # Start the mask with the first atom index. (AMBER is 1 indexed.)
+            restraint_mask = f"{atom_idxs[0]+1}"
+
+            # Store the current index.
+            prev_idx = atom_idxs[0]
+
+            # Store the lead index for this block.
+            lead_idx = prev_idx
+
+            # Loop over all other indices.
+            for idx in atom_idxs[1:]:
+                # There is a gap in the indices.
+                if idx - prev_idx > 1:
+                    if prev_idx != lead_idx:
+                        restraint_mask += f"{prev_idx+1},{idx+1}"
+                    else:
+                        restraint_mask += f",{idx+1}"
+                    lead_idx = idx
+                else:
+                    # This is the first index beyond the lead.
+                    if idx - lead_idx == 1:
+                        restraint_mask += "-"
+                # Set the value of the previous index.
+                prev_idx = idx
+
+            # Add the final atom to the mask.
+            if idx - atom_idxs[-2] == 1:
+                restraint_mask += f"{idx+1}"
+            else:
+                if idx != lead_idx:
+                    restraint_mask += f",{idx+1}"
+
+        return restraint_mask
