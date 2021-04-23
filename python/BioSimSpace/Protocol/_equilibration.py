@@ -416,7 +416,8 @@ class Equilibration(_Protocol):
         elif type(restraint) is list:
             if not all(isinstance(x, int) for x in restraint):
                 raise ValueError("'restraint' must be a list of 'int' types!")
-            # Sort the list of indices.
+            # Create a set to sort and ensure no duplicates, then convert back to a list.
+            restraint = list(set(restraint))
             restraint.sort()
 
         else:
