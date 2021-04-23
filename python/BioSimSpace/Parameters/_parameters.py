@@ -987,9 +987,20 @@ def _has_ions(molecule):
     # A list of ions that we've found.
     ions = []
 
+    # Whether the molecule is a string.
+    if type(molecule) is str:
+        is_string = True
+        molecule = molecule.upper()
+    else:
+        is_string = False
+
     for element in elements:
-        if molecule.search(f"element {element}").nResults() > 0:
-            ions.append(element)
+        if is_string:
+            if element.upper() in molecule:
+                ions.append(element)
+        else:
+            if molecule.search(f"element {element}").nResults() > 0:
+                ions.append(element)
 
     # Check whether we found any ions.
     if len(ions) > 0:
