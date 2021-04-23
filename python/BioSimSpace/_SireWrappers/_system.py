@@ -991,13 +991,28 @@ class System(_SireWrapper):
                A list of the backbone atom indices.
         """
 
+        if type(restraint) is not str:
+            raise TypeError("'restraint' must be of type 'str'.")
+
+        # Allowed keyword options.
+        allowed = ["backbone", "heavy", "all"]
+
+        if type(restraint) is str:
+            # Convert to lower case and strip whitespace.
+            restraint = restraint.lower().replace(" ", "")
+            if restraint not in allowed:
+                raise ValueError(f"'restraint' must be one of: {allowed}")
+        else:
+            raise TypeError("'restraint' must be of type 'str'.")
+
         if mol_index is not None and type(mol_index) is not int:
             raise TypeError("'mol_index' must be of type 'int'.")
 
         if type(is_absolute) is not bool:
             raise TypeError("'is_absolute' must be of type 'bool'.")
 
-        # Other have been validated elsewhere.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'.")
 
         # Initalise the list of indices.
         indices = []
