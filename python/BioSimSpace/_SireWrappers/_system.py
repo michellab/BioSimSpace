@@ -1078,14 +1078,9 @@ class System(_SireWrapper):
                     search = []
 
                 else:
-                    # Find all C, CA, N, and O atoms.
-
-                    # First search for atoms by element.
-                    search = self[mol_index].search(f"{element} C,N,O")
-
-                    # Now search for the required names within these results.
-                    if search.nResults() > 0:
-                        search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                    search = mol.search(string)
 
             elif restraint == "heavy":
                 mol = self[mol_index]
