@@ -1118,51 +1118,6 @@ class System(_SireWrapper):
 
         return indices
 
-    def _getBackBoneAtoms(self, property_map={}):
-        """Get the indices of backbone atoms.
-
-           Parameters
-           ----------
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-
-           Returns
-           -------
-
-           indices : [int]
-               A list of the backbone atom indices.
-        """
-
-        indices = []
-
-        # Get the element property.
-        element = property_map.get("element", "element")
-
-        # Loop over all non-water molecules.
-        for mol in self.search("not water"):
-            # Convert all search results to a molecule.
-            try:
-                mol = mol.toMolecule()
-            except:
-                pass
-
-            # Find all C, CA, N, and O atoms.
-
-            # First search for atoms by element.
-            search = mol.search(f"{element} C,N,O")
-
-            # Now search for the required names within these results.
-            if search.nResults() > 0:
-                search = _SearchResult(search._sire_object.search("atomname C,CA,N,O"))
-
-            # Loop over all matching atoms and get their indices.
-            for atom in search:
-                indices.append(self.getIndex(atom))
-
-        return indices
-
     def _isParameterised(self, property_map={}):
         """Whether the system is parameterised, i.e. can we run a simulation
            using this system. Essentially we check whether every molecule in
