@@ -34,6 +34,7 @@ Functions
 
     generateNetwork
     matchAtoms
+    drawMapping
     rmsdAlign
     flexAlign
     merge

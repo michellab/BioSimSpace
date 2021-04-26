@@ -26,7 +26,12 @@ Functionality for aligning molecules.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["generateNetwork", "matchAtoms", "rmsdAlign", "flexAlign", "merge"]
+__all__ = ["generateNetwork",
+           "matchAtoms",
+           "drawMapping",
+           "rmsdAlign",
+           "flexAlign",
+           "merge"]
 
 import csv as _csv
 import os as _os
@@ -91,6 +96,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
            If using a 'work_dir', then a PNG image will be located in
            'work_dir/images/network.png'.
 
+       property_map : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
        Returns
        -------
 
@@ -134,6 +144,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
     if type(plot_network) is not bool:
         raise TypeError("'plot_network' must be of type 'bool'.")
 
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
+
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
         tmp_dir = _tempfile.TemporaryDirectory()
@@ -155,7 +168,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
 
     # Write all of the molecules to disk.
     for x, molecule in enumerate(molecules):
-        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}", molecule, "pdb")
+        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+            molecule, "pdb", property_map=property_map)
 
     # Get the name of the LOMAP script.
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
@@ -905,7 +919,8 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0, property_map1=property_map1)
+        mapping = matchAtoms(molecule0, molecule1,
+            property_map0=property_map0, property_map1=property_map1)
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Convert the mapping to AtomIdx key:value pairs.
@@ -913,7 +928,102 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
     # Create and return the merged molecule.
     return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            allow_ring_size_change=allow_ring_size_change, property_map0=property_map0, property_map1=property_map1)
+            allow_ring_size_change=allow_ring_size_change,
+            property_map0=property_map0, property_map1=property_map1)
+
+def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+    """Visualise the mapping between molecule0 and molecule1. This draws a 2D
+       depiction of the two molecules side-by-side, with the mapped atoms from
+       each molecule highlighted.
+
+       Parameters
+       ----------
+
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule of interest. This is the molecule that will be
+           drawn.
+
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The reference molecule against which the mapping is made.
+
+       mapping : dict
+           A dictionary mapping atoms in molecule0 to those in molecule1.
+
+       property_map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       property_map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+
+       Returns
+       -------
+
+       image : IPython.core.display.Image
+           An image of molecule0 with the mapping atoms highlighted.
+    """
+
+    # Only draw within a notebook.
+    if not _is_notebook:
+        return None
+
+    if type(molecule0) is not _Molecule:
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(molecule1) is not _Molecule:
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if type(property_map0) is not dict:
+        raise TypeError("'property_map0' must be of type 'dict'")
+
+    if type(property_map1) is not dict:
+        raise TypeError("'property_map1' must be of type 'dict'")
+
+    # The user has passed an atom mapping.
+    if mapping is not None:
+        if type(mapping) is not dict:
+            raise TypeError("'mapping' must be of type 'dict'.")
+        else:
+            _validate_mapping(molecule0, molecule1, mapping, "mapping")
+
+    # Get the best atom mapping and align molecule0 to molecule1 based on the
+    # mapping.
+    else:
+        mapping = matchAtoms(molecule0, molecule1,
+            property_map0=property_map0, property_map1=property_map1)
+        molecule0 = rmsdAlign(molecule0, molecule1, mapping)
+
+    # Create a temporary working directory and store the directory name.
+    tmp_dir = _tempfile.TemporaryDirectory()
+    work_dir = tmp_dir.name
+
+    # Write the first molecule to PDB format.
+    _IO.saveMolecules(work_dir + "/molecule",
+        molecule0, "pdb", property_map=property_map0)
+
+    from rdkit.Chem import AllChem as _AllChem
+    from rdkit.Chem.Draw import IPythonConsole as _IPythonConsole
+
+    # Set image properties.
+    _IPythonConsole.drawOptions.addAtomIndices = True
+    _IPythonConsole.molSize = 1200, 400
+
+    # Load the molecules into RDKit.
+    rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
+        sanitize=False, removeHs=False)
+
+    # Higlight atoms from the mapping.
+    rdmol.__sssAtoms = mapping.keys()
+
+    # Convert to 2D.
+    _AllChem.Compute2DCoords(rdmol)
+
+    # Convert to PNG bytes.
+    png = _IPythonConsole._toPNG(rdmol)
+
+    return _IPythonConsole.display.Image(png)
 
 def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
         mcs_smarts, prematch, scoring_function, property_map0, property_map1):
