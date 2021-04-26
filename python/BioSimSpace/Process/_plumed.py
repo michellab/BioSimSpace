@@ -121,6 +121,10 @@ class Plumed():
         self._colvar_keys = []
         self._hills_keys = []
 
+        # Whether this was an OpenMM metadyamics simulation. If so, a COLVAR.npy
+        # file will be present in the work_dir.
+        self._is_openmm = False
+
     def createConfig(self, system, protocol, is_restart=False, property_map={}):
         """Create a PLUMED configuration file.
 
@@ -1386,20 +1390,41 @@ class Plumed():
 
         # Exit if the COLVAR file hasn't been created.
         if not _os.path.isfile(self._colvar_file):
-            return
+            # Check whether there is a COLVAR.npy file, which is used by OpenMM.
+            if not _os.path.isfile(self._colvar_file + ".npy"):
+                return
+            else:
+                self._colvar_file = self._colvar_file + ".npy"
+                self._is_openmm = True
 
-        # Loop over all new lines in the file.
-        for line in _pygtail.Pygtail(self._colvar_file):
+        # Parse the HILLS file for OpenMM.
+        if self._is_openmm:
+            # Loop over all new lines in the file.
+            for line in _pygtail.Pygtail(self._hills_file):
 
-            # Is this a header line. If so, store the keys.
-            if line[3:9] == "FIELDS":
-                self._colvar_keys = line[10:].split()
+                # Is this a header line. If so, store the keys.
+                if line[3:9] == "FIELDS":
+                    self._colvar_keys = line[10:].split()[:self._num_components+1]
 
-            # This is an actual data record. Update the multi-dictionary.
-            elif line[0] != "#":
-                data = [float(x) for x in line.split()]
-                for key, value in zip(self._colvar_keys, data):
-                    self._colvar_dict[key] = value
+                # This is an actual data record. Update the multi-dictionary.
+                elif line[0] != "#":
+                    data = [float(x) for x in line.split()]
+                    for key, value in zip(self._colvar_keys, data):
+                        self._colvar_dict[key] = value
+
+        else:
+            # Loop over all new lines in the file.
+            for line in _pygtail.Pygtail(self._colvar_file):
+
+                # Is this a header line. If so, store the keys.
+                if line[3:9] == "FIELDS":
+                    self._colvar_keys = line[10:].split()
+
+                # This is an actual data record. Update the multi-dictionary.
+                elif line[0] != "#":
+                    data = [float(x) for x in line.split()]
+                    for key, value in zip(self._colvar_keys, data):
+                        self._colvar_dict[key] = value
 
     def _update_hills_dict(self):
         """Read the HILLS file and update any records."""
