@@ -1240,8 +1240,8 @@ class Plumed():
         """
         if type(index) is not int:
             raise TypeError("'index' must be of type 'int'")
-        if index > self._num_colvar - 1 or index < -self._num_colvar:
-            raise IndexError("'index' must be in range -%d to %d" % (self._num_colvar, self._num_colvar-1))
+        if index > self._num_components - 1 or index < -self._num_components:
+            raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
 
         # Get the latest records.
         self._update_colvar_dict()
@@ -1280,8 +1280,8 @@ class Plumed():
         if index is not None:
             if type(index) is not int:
                 raise TypeError("'index' must be of type 'int'")
-            if index > self._num_colvar - 1 or index < -self._num_colvar:
-                raise IndexError("'index' must be in range -%d to %d" % (self._num_colvar, self._num_colvar-1))
+            if index > self._num_components - 1 or index < -self._num_components:
+                raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
 
         if stride is not None:
             if type(stride) is not int:
@@ -1337,7 +1337,7 @@ class Plumed():
 
                 if index is None:
                     # Create lists for each the collective variable data point.
-                    for x in range(0, self._num_colvar):
+                    for x in range(0, self._num_components):
                         free_energy.append([])
                 else:
                     free_energy.append([])
@@ -1362,10 +1362,10 @@ class Plumed():
 
                                 # Store data for each of the collective variables.
                                 if index is None:
-                                    for x in range(0, self._num_colvar):
+                                    for x in range(0, self._num_components):
                                         name = self._colvar_name[x]
                                         free_energy[x].append(data[x] * self._colvar_unit[name])
-                                    free_energy[self._num_colvar].append(data[self._num_colvar] * _Units.Energy.kj_per_mol)
+                                    free_energy[self._num_components].append(data[self._num_components] * _Units.Energy.kj_per_mol)
                                 else:
                                     name = self._colvar_name[0]
                                     free_energy[0].append(data[0] * self._colvar_unit[name])
