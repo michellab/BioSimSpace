@@ -106,6 +106,12 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
        logy : bool
            Whether the y axis is logarithmic.
+
+       Returns
+       -------
+
+       plot : matplotlib.image.AxesImage
+           The matplot image plot.
     """
 
     # Make sure were running interactively.
@@ -303,6 +309,12 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
        zlabel : str
            The z axis label string.
+
+       Returns
+       -------
+
+       plot : matplotlib.image.AxesImage
+           The matplot image plot.
     """
 
     import numpy as _np
