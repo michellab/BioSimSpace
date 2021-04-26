@@ -29,6 +29,7 @@ Functions
     :toctree: generated/
 
     plot
+    plotContour
 
 Examples
 ========
