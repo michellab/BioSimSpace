@@ -93,6 +93,7 @@ from ._amber import *
 from ._gromacs import *
 from ._namd import *
 from ._openmm import *
+from ._plumed import *
 from ._process_runner import *
 from ._somd import *
 from ._utils import *
