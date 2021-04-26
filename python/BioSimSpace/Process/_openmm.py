@@ -54,6 +54,7 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
+from ._plumed import Plumed as _Plumed
 
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
@@ -834,6 +835,19 @@ class OpenMM(_process.Process):
             self.addToConfig(f"    time = int((x+1) * {timestep}*steps_per_cycle)")
             self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
             self.addToConfig( "    file.write(write_line)")
+
+            # Create a dummy PLUMED input file so that we can bind PLUMED
+            # analysis functions to this process.
+            self._plumed = _Plumed(self._work_dir, is_analysis=False)
+            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+                                                                       self._protocol,
+                                                                       self._property_map)
+
+            # Expose the PLUMED specific member functions.
+            setattr(self, "getFreeEnergy", self._getFreeEnergy)
+            setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
+            setattr(self, "sampleConfigurations", self._sampleConfigurations)
+            setattr(self, "getTime", self._getTime)
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
