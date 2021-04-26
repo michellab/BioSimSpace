@@ -927,7 +927,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     with open("solvated_ions.gro", "r") as file:
                         # Only loop over lines that don't include the original
                         # system/molecule, since that might also include ions.
-                        lines = file.readlines()[molecule.nAtoms()+2:]
+                        if molecule is None:
+                            lines = file.readlines()
+                        else:
+                            lines = file.readlines()[molecule.nAtoms()+2:]
                         for line in lines:
                             # This is a Sodium atom.
                             if _re.search("NA", line):
