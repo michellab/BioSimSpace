@@ -88,6 +88,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
 
        plot_network : bool
            Whether to plot the network when running from within a notebook.
+           If using a 'work_dir', then a PNG image will be located in
+           'work_dir/images/network.png'.
 
        Returns
        -------
@@ -218,6 +220,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
         import networkx as _nx
+        import pydot as _pydot
         from rdkit.Chem import AllChem as _AllChem
         from rdkit.Chem import Draw as _Draw
 
@@ -272,18 +275,26 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
 
         # 4) Create the NetworkX graph.
         try:
+            # Generate the graph.
             graph = _nx.Graph()
+
+            # Create a dictionary mapping the edges to their scores.
+            edge_dict = {}
+            for x, (node0, node1) in enumerate(edges):
+                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
 
             # Loop over the nodes and add to the graph.
             if names is None:
                 names = [x for x in range(1, len(molecules)+1)]
             for node in nodes:
-                img = _mpimg.imread(f"{work_dir}/images/{node:03d}.png")
-                graph.add_node(names[node], image=img)
+                img = f"{work_dir}/images/{node:03d}.png"
+                graph.add_node(names[node], image=img, label=names[node], labelloc="t")
 
             # Loop over the edges and add to the graph.
             for edge in edges:
-                graph.add_edge(names[edge[0]], names[edge[1]])
+                graph.add_edge(names[edge[0]],
+                               names[edge[1]],
+                               label=edge_dict[(names[node0], names[node1])])
 
         except Exception as e:
             msg = "Unable to generate network representation!"
@@ -295,48 +306,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
 
         # 5) Create and display the plot.
         try:
-            # Generate a layout for the graph.
-            pos = _nx.spring_layout(graph, k=3)
+            # Convert to a dot graph.
+            dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
 
-            # Initalise the figure and get axes for a single sub-plot.
-            fig = _plt.figure(figsize=(15, 15))
-            ax = _plt.subplot(111)
+            # Write to a PNG.
+            network_plot = f"{work_dir}/images/network.png"
+            dot_graph.write_png(network_plot)
 
-            # Make the plot square.
-            ax.set_aspect("equal")
-
-            # Create a dictionary mapping the edges to their scores.
-            edge_dict = {}
-            for x, (node0, node1) in enumerate(edges):
-                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
-
-            # Draw and label the edges.
-            _nx.draw_networkx_edges(graph, pos, ax=ax)
-            _nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_dict)
-
-            # Set the axis limits.
-            _plt.xlim(-1.5, 1.5)
-            _plt.ylim(-1.5, 1.5)
-
-            # Transform the axes.
-            trans = ax.transData.transform
-            trans2 = fig.transFigure.inverted().transform
-
-            piesize = 0.15              # This is the image size.
-            p2 = piesize/2.0
-            for n, ligand_name in zip(graph, pos.keys()):
-                xx, yy=trans(pos[n])    # Figure coordinates.
-                xa, ya=trans2((xx,yy))  # Axes coordinates.
-                a = _plt.axes([xa-p2,ya-p2, piesize, piesize])
-                a.set_aspect("equal")
-                a.imshow(graph.nodes[n]["image"])
-                # Label each node using these adjusted coordinates.
-                a.text(s=ligand_name, x=xa*2, y=ya)
-                a.axis("off")
-            ax.axis("off")
-
-            # Display the plot.
-            _plt.show()
+            # Create a plot of the network.
+            img = _mpimg.imread(network_plot)
+            _plt.figure(figsize=(20, 20))
+            _plt.axis("off")
+            _plt.imshow(img)
 
         except Exception as e:
             msg = "Unable to create network plot!"

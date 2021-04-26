@@ -22,6 +22,7 @@ requirements:
     - nglview
     - openff-toolkit-base
     - parmed
+    - pydot
     - pygtail
     - pymbar
     - pypdb
@@ -38,6 +39,7 @@ requirements:
     - {{ pin_compatible('nglview') }}
     - {{ pin_compatible('openff-toolkit-base') }}
     - {{ pin_compatible('parmed') }}
+    - {{ pin_compatible('pydot') }}
     - {{ pin_compatible('pygtail') }}
     - {{ pin_compatible('pymbar') }}
     - {{ pin_compatible('pypdb') }}

@@ -61,6 +61,7 @@ finally:
                       "nglview",
                       "openff-toolkit-base",
                       "parmed",
+                      "pydot",
                       "pygtail",
                       "pymbar",
                       "pypdb",
