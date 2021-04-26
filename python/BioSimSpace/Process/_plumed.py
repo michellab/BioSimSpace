@@ -54,7 +54,7 @@ from BioSimSpace import Units as _Units
 from ._process import _MultiDict
 
 class Plumed():
-    def __init__(self, work_dir):
+    def __init__(self, work_dir, is_analysis=True):
         """Constructor.
 
            Parameters
@@ -63,6 +63,11 @@ class Plumed():
            work_dir : str
                The working directory of the process that is interfacing
                with PLUMED.
+
+           is_analysis : bool
+               Whether this process is being created to anaylse existing
+               data. If not, then output files will be wiped when creating
+               the configuration file.
         """
 
         # Check that the working directory is valid.
@@ -71,6 +76,9 @@ class Plumed():
         else:
             if not _os.path.isdir(work_dir):
                 raise ValueError("'work_dir' doesn't exist: %s" % work_dir)
+
+        if type(is_analysis) is not bool:
+            raise TypeError("'is_analysis' must be of type 'bool'")
 
         # Try to locate the PLUMED executable.
         try:
@@ -88,6 +96,9 @@ class Plumed():
 
         # Set the working directory of the process.
         self._work_dir = work_dir
+
+        # Set whether this process is being used to analyse existing data.
+        self._is_analysis = True
 
         # Set the location of the HILLS and COLVAR files.
         self._hills_file = "%s/HILLS" % self._work_dir
@@ -121,9 +132,11 @@ class Plumed():
         self._colvar_keys = []
         self._hills_keys = []
 
-        # Whether this was an OpenMM metadyamics simulation. If so, a COLVAR.npy
-        # file will be present in the work_dir.
-        self._is_openmm = False
+        # Whether to use the HILLS file to get COLVAR information.
+        self._use_hills = False
+
+        # Flag that we haven't yet got a valid config.
+        self._has_config = False
 
     def createConfig(self, system, protocol, is_restart=False, property_map={}):
         """Create a PLUMED configuration file.
@@ -224,6 +237,16 @@ class Plumed():
             is_restart = True
             _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
 
+        # Always remove pygtail offset files.
+        try:
+            _os.remove("%s/COLVAR.offset" % self._work_dir)
+        except:
+            pass
+        try:
+            _os.remove("%s/HILLS.offset" % self._work_dir)
+        except:
+            pass
+
         # Is the simulation a restart?
         if is_restart:
             self._config.append("RESTART")
@@ -231,14 +254,23 @@ class Plumed():
             self._config.append("RESTART NO")
 
             # Delete any existing COLVAR, HILLS, and GRID files.
-            try:
-                _os.remove("%s/COLVAR" % self._work_dir)
-                _os.remove("%s/COLVAR.offset" % self._work_dir)
-                _os.remove("%s/HILLS" % self._work_dir)
-                _os.remove("%s/HILLS.offset" % self._work_dir)
-                _os.remove("%s/GRID" % self._work_dir)
-            except:
-                pass
+            if not self._is_analysis:
+                try:
+                    _os.remove("%s/COLVAR" % self._work_dir)
+                except:
+                    pass
+                try:
+                    _os.remove("%s/COLVAR.npy" % self._work_dir)
+                except:
+                    pass
+                try:
+                    _os.remove("%s/HILLS" % self._work_dir)
+                except:
+                    pass
+                try:
+                    _os.remove("%s/GRID" % self._work_dir)
+                except:
+                    pass
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
@@ -799,6 +831,9 @@ class Plumed():
         print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getHillFrequency()
         self._config.append(print_string)
 
+        # Flag that we have a valid config.
+        self._has_config = True
+
         return self._config, self._aux_files
 
     def _createSteeringConfig(self, system, protocol, is_restart=False, property_map={}):
@@ -1194,6 +1229,9 @@ class Plumed():
         print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getReportInterval()
         self._config.append(print_string)
 
+        # Flag that we have a valid config.
+        self._has_config = True
+
         return self._config, self._aux_files
 
     def getTime(self, time_series=False):
@@ -1211,6 +1249,13 @@ class Plumed():
            time : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
+
+        # We need to have generated a valid config before being able to parse
+        # the COLVAR records.
+        if not self._has_config:
+            msg = "No PLUMED configuration found! Please run 'createConfig' first."
+            raise _Exceptions.IncompatibleError(msg)
+
         # Get the latest records.
         self._update_colvar_dict()
 
@@ -1242,6 +1287,13 @@ class Plumed():
            collective_variable : :class:`Type <BioSimSpace.Types>`
                The value of the collective variable.
         """
+
+        # We need to have generated a valid config before being able to parse
+        # the COLVAR records.
+        if not self._has_config:
+            msg = "No PLUMED configuration found! Please run 'createConfig' first."
+            raise _Exceptions.IncompatibleError(msg)
+
         if type(index) is not int:
             raise TypeError("'index' must be of type 'int'")
         if index > self._num_components - 1 or index < -self._num_components:
@@ -1281,6 +1333,13 @@ class Plumed():
                            [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
                The free energy estimate for the chosen collective variables.
         """
+
+        # We need to have generated a valid config before being able to compute
+        # free energies.
+        if not self._has_config:
+            msg = "No PLUMED configuration found! Please run 'createConfig' first."
+            raise _Exceptions.IncompatibleError(msg)
+
         if index is not None:
             if type(index) is not int:
                 raise TypeError("'index' must be of type 'int'")
@@ -1390,15 +1449,15 @@ class Plumed():
 
         # Exit if the COLVAR file hasn't been created.
         if not _os.path.isfile(self._colvar_file):
-            # Check whether there is a COLVAR.npy file, which is used by OpenMM.
-            if not _os.path.isfile(self._colvar_file + ".npy"):
+            # We can use the hills file to get the same information.
+            if not _os.path.isfile(self._hills_file):
                 return
             else:
-                self._colvar_file = self._colvar_file + ".npy"
-                self._is_openmm = True
+                self._colvar_file = self._hills_file
+                self._use_hills = True
 
         # Parse the HILLS file for OpenMM.
-        if self._is_openmm:
+        if self._use_hills:
             # Loop over all new lines in the file.
             for line in _pygtail.Pygtail(self._hills_file):
 
