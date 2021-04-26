@@ -389,10 +389,32 @@ class Amber(_process.Process):
 
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
+                    # Generate the restraint mask based on atom indices.
                     restraint_mask = self._create_restraint_mask(atom_idxs)
+
+                    # The restraintmask cannot be more than 256 characters.
+                    if len(restraint_mask) > 256:
+
+                        # AMBER has a limit on the length of the restraintmask
+                        # so it's easy to overflow if we are matching by index
+                        # on a large protein. As such, handle "backbone" and
+                        # "heavy" restraints using a non-interoperable name mask.
+                        if type(restraint) is str:
+                            if restraint == "backbone":
+                                restraint_mask = "@CA,C,O,N"
+                            elif restraint == "heavy":
+                                restraint_mask = "!:WAT & !@H"
+                            elif restraint == "all":
+                                restraint_mask = "!:WAT"
+
+                        # We can't do anything about a custom restraint, since we don't
+                        # know anything about the atoms.
+                        else:
+                            raise ValueError("AMBER atom 'restraintmask' exceeds 256 character limit!")
+
                     self.addToConfig( "  ntr=1,")
                     self.addToConfig( "  restraint_wt=10,")
-                    self.addToConfig(f"  restraintmask='@{restraint_mask}',")
+                    self.addToConfig(f"  restraintmask='{restraint_mask}',")
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -1959,11 +1981,11 @@ class Amber(_process.Process):
 
         # Handle single atom restraints differently.
         if len(atom_idxs) == 1:
-            restraint_mask =  f"{atom_idxs[0]+1}"
+            restraint_mask =  f"@{atom_idxs[0]+1}"
 
         else:
             # Start the mask with the first atom index. (AMBER is 1 indexed.)
-            restraint_mask = f"{atom_idxs[0]+1}"
+            restraint_mask = f"@{atom_idxs[0]+1}"
 
             # Store the current index.
             prev_idx = atom_idxs[0]
