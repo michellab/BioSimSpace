@@ -43,6 +43,7 @@ from Sire.Vol import TriclinicBox as _TriclinicBox
 from Sire.Units import degree as _degree
 
 from BioSimSpace import _gmx_exe, _gromacs_path
+from BioSimSpace import _isVerbose
 
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
@@ -671,7 +672,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
-            _IO.saveMolecules("input", molecule, "gro87")
+            _IO.saveMolecules("input", molecule, "gro87", property_map=property_map)
 
         # We need to create a dummy input file with no molecule in it.
         else:
@@ -782,7 +783,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
 
         # Load the water box.
-        water = _IO.readMolecules(["water.gro", "water_ions.top"])
+        water = _IO.readMolecules(["water.gro", "water_ions.top"], property_map=property_map)
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
@@ -809,9 +810,17 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # Now we add ions to the system and neutralise the charge.
         if ion_conc > 0 or is_neutral:
 
-            # Write the molecule + water system to file.
-            _IO.saveMolecules("solvated", system, "gro87")
-            _IO.saveMolecules("solvated", system, "grotop")
+            try:
+                # Write the molecule + water system to file.
+                _IO.saveMolecules("solvated", system, "gro87", property_map=property_map)
+                _IO.saveMolecules("solvated", system, "grotop", property_map=property_map)
+            except Exception as e:
+                msg = ("Failed to write GROMACS topology file. "
+                       "Is your molecule parameterised?")
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
 
             # First write an mdp file.
             with open("ions.mdp", "w") as file:
