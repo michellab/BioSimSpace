@@ -27,6 +27,7 @@ __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["AlignmentError",
+           "AnalysisError",
            "IncompatibleError",
            "MissingSoftwareError",
            "ParameterisationError",
@@ -35,6 +36,9 @@ __all__ = ["AlignmentError",
 class AlignmentError(Exception):
     """Exception thrown when molecular alignment fails."""
     pass
+
+class AnalysisError(Exception):
+    """Exception thrown when analysis on existing simulation data fails."""
 
 class IncompatibleError(Exception):
     """Exception thrown when objects are incompatible with each other."""

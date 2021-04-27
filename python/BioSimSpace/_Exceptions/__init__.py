@@ -29,6 +29,7 @@ Classes
     :toctree: generated/
 
     AlignmentError
+    AnalysisError
     IncompatibleError
     MissingSoftwareError
     ParameterisationError
