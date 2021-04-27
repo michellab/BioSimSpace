@@ -227,6 +227,6 @@ class Binding(_free_energy.FreeEnergy):
         # strings. We just call the base class method, which is aware of
         # the simulation type.
         if self._engine == "SOMD":
-            return super()._analyse_somd()
+            return super()._analyse_somd(self._work_dir, self._dir0, self._dir1, self._is_dual)
         elif self._engine == "GROMACS":
-            return super()._analyse_gromacs()
+            return super()._analyse_gromacs(self._work_dir, self._dir0, self._dir1, self._is_dual)

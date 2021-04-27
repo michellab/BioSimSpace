@@ -30,7 +30,16 @@ Classes
 
     Binding
     Solvation
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    analyse
 """
 
+from ._free_energy import analyse
 from ._binding import *
 from ._solvation import *

@@ -26,9 +26,10 @@ Base class for free energy simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["FreeEnergy"]
+__all__ = ["FreeEnergy", "analyse"]
 
 from collections import OrderedDict as _OrderedDict
+from glob import glob as _glob
 
 import math as _math
 import sys as _sys
@@ -44,6 +45,7 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
+from BioSimSpace._Exceptions import AnalysisError as _AnalysisError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
@@ -162,8 +164,99 @@ class FreeEnergy():
         """Run the simulation."""
         self._runner.startAll(serial=True)
 
-    def _analyse_gromacs(self):
+    @staticmethod
+    def analyse(work_dir):
+        """Analyse existing free-energy data from a simulation working directory.
+
+           Returns
+           -------
+
+           pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) for the first leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) for the second leg of the
+               simulation. The data is a list of tuples, where each tuple
+               contains the lambda value, the PMF, and the standard error.
+
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+               The solvation free energy difference and its associated error.
+
+           overlap0 : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the first leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
+
+           overlap1 : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the second leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
+        """
+
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        # Whether this is a dual-leg simulation.
+        is_dual = False
+
+        # First work out whether this is a binding or solvation simulation.
+
+        # Binding.
+        if _os.path.isdir(work_dir + "/bound"):
+            dir0 = work_dir + "/bound"
+            dir1 = work_dir + "/free"
+            if _os.path.isdir(dir1):
+                is_dual = True
+
+        # Solvation..
+        elif _os.path.isdir(work_dir + "/free"):
+            dir0 = work_dir + "/free"
+            dir1 = work_dir + "/vacuum"
+            if _os.path.isdir(dir1):
+                is_dual = True
+
+        # Invalid directory structure.
+        else:
+            msg = (f"Could not find '{work_dir}/bound' or "
+                   f"'{work_dir}/free'?")
+            raise ValueError(msg)
+
+        # First test for SOMD files.
+        data = _glob(dir0 + "/lambda_*/gradients.dat")
+
+        # SOMD.
+        if len(data) > 0:
+            return FreeEnergy._analyse_somd(work_dir, dir0, dir1, is_dual)
+
+        # Now check for GROMACS output.
+        else:
+            data = _glob(dir0 + "/lambda_*/gromacs.xvg")
+            if len(data) == 0:
+                raise ValueError("Couldn't find any SOMD or GROMACS free-energy output?")
+            return FreeEnergy._analyse_gromacs(work_dir, dir0, dir1, is_dual)
+
+    @staticmethod
+    def _analyse_gromacs(work_dir=None, dir0=None, dir1=None, is_dual=True):
         """Analyse the GROMACS free energy data.
+
+           Parameters
+           ----------
+
+           work_dir : str
+               The path to the working directory.
+
+           dir0 : str
+               The path to the directory of the first leg.
+
+           dir1 : str
+               The path to the directory of the second leg.
+
+           is_dual : bool
+               Whether this is a dual-leg simulation.
 
            Returns
            -------
@@ -182,20 +275,39 @@ class FreeEnergy():
                The free energy difference and its associated error.
         """
 
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        if type(is_dual) is not bool:
+            raise TypeError("'is_dual' must be of type 'bool'.")
+
+        if type(dir0) is not str:
+            raise TypeError("'dir0' must be of type 'str'.")
+        if not _os.path.isdir(dir0):
+            raise ValueError("'dir0' doesn't exist!")
+
+        if is_dual:
+            if type(dir1) is not str:
+                raise TypeError("'dir1' must be of type 'str'.")
+            if not _os.path.isdir(dir1):
+                raise ValueError("'dir1' doesn't exist!")
+
         # Create the commands for the two legs.
-        command0 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg0.xvg" % (_gmx_exe, self._dir0, self._work_dir)
-        command1 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg1.xvg" % (_gmx_exe, self._dir1, self._work_dir)
+        command0 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg0.xvg" % (_gmx_exe, dir0, work_dir)
+        command1 = "%s bar -f %s/lambda_*/*.xvg -o %s/bar_leg1.xvg" % (_gmx_exe, dir1, work_dir)
 
         # Run the first command.
         proc = _subprocess.run(command0, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
-            return None
+            raise _AnalysisError("GROMACS free-energy analysis failed!")
 
         # Run the second command.
-        if self._is_dual:
+        if is_dual:
             proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
-                return None
+                raise _AnalysisError("GROMACS free-energy analysis failed!")
 
         # Initialise lists to hold the data from each leg.
         leg0 = []
@@ -204,7 +316,7 @@ class FreeEnergy():
         # Extract the data from the output files.
 
         # First leg.
-        with open("%s/bar_leg0.xvg" % self._work_dir) as file:
+        with open("%s/bar_leg0.xvg" % work_dir) as file:
 
             # Read all of the lines into a list.
             lines = []
@@ -244,8 +356,8 @@ class FreeEnergy():
                              (total_error * _Units.Energy.kt).kcal_per_mol()))
 
         # Second leg.
-        if self._is_dual:
-            with open("%s/bar_leg1.xvg" % self._work_dir) as file:
+        if is_dual:
+            with open("%s/bar_leg1.xvg" % work_dir) as file:
 
                 # Read all of the lines into a list.
                 lines = []
@@ -285,7 +397,7 @@ class FreeEnergy():
                                 (total_error * _Units.Energy.kt).kcal_per_mol()))
 
         # Work out the difference in free energy.
-        if self._is_dual:
+        if is_dual:
             free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
         else:
             free_energy = leg0[-1][1] - leg0[0][1]
@@ -297,7 +409,7 @@ class FreeEnergy():
                             (leg0[0][2].magnitude()  * leg0[0][2].magnitude()))
 
         # Second leg.
-        if self._is_dual:
+        if is_dual:
             error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
                                 (leg1[0][2].magnitude()  * leg1[0][2].magnitude()))
         else:
@@ -311,8 +423,24 @@ class FreeEnergy():
 
         return (leg0, leg1, free_energy, None, None)
 
-    def _analyse_somd(self):
+    @classmethod
+    def _analyse_somd(cls, work_dir=None, dir0=None, dir1=None, is_dual=True):
         """Analyse the SOMD free energy data.
+
+           Parameters
+           ----------
+
+           work_dir : str
+               The path to the working directory.
+
+           dir0 : str
+               The path to the directory of the first leg.
+
+           dir1 : str
+               The path to the directory of the second leg.
+
+           is_dual : bool
+               Whether this is a dual-leg simulation.
 
            Returns
            -------
@@ -341,20 +469,39 @@ class FreeEnergy():
                engine and will be None when GROMACS is used.
         """
 
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        if type(is_dual) is not bool:
+            raise TypeError("'is_dual' must be of type 'bool'.")
+
+        if type(dir0) is not str:
+            raise TypeError("'dir0' must be of type 'str'.")
+        if not _os.path.isdir(dir0):
+            raise ValueError("'dir0' doesn't exist!")
+
+        if is_dual:
+            if type(dir1) is not str:
+                raise TypeError("'dir1' must be of type 'str'.")
+            if not _os.path.isdir(dir1):
+                raise ValueError("'dir1' doesn't exist!")
+
         # Create the commands for the two legs.
-        command0 = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar_leg0.txt" % (self._analyse_freenrg, self._dir0, self._work_dir)
-        command1 = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar_leg1.txt" % (self._analyse_freenrg, self._dir1, self._work_dir)
+        command0 = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar_leg0.txt --overlap --subsampling" % (cls._analyse_freenrg, dir0, work_dir)
+        command1 = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar_leg1.txt --overlap --subsampling" % (cls._analyse_freenrg, dir1, work_dir)
 
         # Run the first command.
         proc = _subprocess.run(command0, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
-            return None
+            raise _AnalysisError("SOMD free-energy analysis failed!")
 
         # Run the second command.
-        if self._is_dual:
-            proc = _subprocess.run(command1, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        if is_dual:
+            proc = _subprocess.run(command1, shell=True, text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
-                return None
+                raise _AnalysisError("SOMD free-energy analysis failed!")
 
         # Initialise lists to hold the data from each leg.
         leg0 = []
@@ -367,7 +514,7 @@ class FreeEnergy():
         # Extract the data from the output files.
 
         # First leg.
-        with open("%s/mbar_leg0.txt" % self._work_dir) as file:
+        with open("%s/mbar_leg0.txt" % work_dir) as file:
 
             # Process the MBAR data.
             for line in file:
@@ -408,8 +555,8 @@ class FreeEnergy():
 
 
         # Second leg.
-        if self._is_dual:
-            with open("%s/mbar_leg1.txt" % self._work_dir) as file:
+        if is_dual:
+            with open("%s/mbar_leg1.txt" % work_dir) as file:
                 # Process the MBAR data.
                 for line in file:
                     # Process the overlap matrix.
@@ -448,7 +595,7 @@ class FreeEnergy():
                             row = next(file)
 
         # Work out the difference in free energy.
-        if self._is_dual:
+        if is_dual:
             free_energy = (leg0[-1][1] - leg0[0][1]) - (leg1[-1][1] - leg1[0][1])
         else:
             free_energy = leg0[-1][1] - leg0[0][1]
@@ -460,7 +607,7 @@ class FreeEnergy():
                             (leg0[0][2].magnitude()*leg0[0][2].magnitude()))
 
         # Second leg.
-        if self._is_dual:
+        if is_dual:
             error1 = _math.sqrt((leg1[-1][2].magnitude() * leg1[-1][2].magnitude()) +
                                 (leg1[0][2].magnitude() * leg1[0][2].magnitude()))
         else:
@@ -579,3 +726,35 @@ class FreeEnergy():
 
         for process in self._runner.processes():
             process.setArgs(args)
+
+def analyse(work_dir):
+    """Analyse existing free-energy data from a simulation working directory.
+
+       Returns
+       -------
+
+       pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           The potential of mean force (PMF) for the first leg of the
+           simulation. The data is a list of tuples, where each tuple
+           contains the lambda value, the PMF, and the standard error.
+
+       pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           The potential of mean force (PMF) for the second leg of the
+           simulation. The data is a list of tuples, where each tuple
+           contains the lambda value, the PMF, and the standard error.
+
+       free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+           The solvation free energy difference and its associated error.
+
+       overlap0 : [ [ float, float, ... ] ]
+           The overlap matrix. This gives the overlap between each window
+           of the first leg. This parameter is only computed for the SOMD
+           engine and will be None when GROMACS is used.
+
+       overlap1 : [ [ float, float, ... ] ]
+           The overlap matrix. This gives the overlap between each window
+           of the second leg. This parameter is only computed for the SOMD
+           engine and will be None when GROMACS is used.
+    """
+
+    return FreeEnergy.analyse(work_dir)
