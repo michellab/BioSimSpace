@@ -1326,7 +1326,7 @@ class Plumed():
                The stride for integrating the free energy. This can be used to
                check for convergence.
 
-           kt : BioSimSpace.Types.Energy
+           kt : :class:`Energy <BioSimSpace.Types.Energy>`
                The temperature in energy units for intergrating out variables.
 
            free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
