@@ -542,8 +542,14 @@ def plotOverlapMatrix(overlap):
             text = ax.text(y, x, f"{overlap[x][y]:.2f}", ha="center", color="k")
 
     # Set the axis labels.
-    _plt.xlabel(r"$\lambda$")
-    _plt.ylabel(r"$\lambda$")
+    _plt.xlabel(r"$\lambda$ window")
+    _plt.ylabel(r"$\lambda$ window")
+
+    ticks = [x for x in range(0, num_rows)]
+
+    # Set ticks every lambda window.
+    _plt.xticks(ticks)
+    _plt.yticks(ticks)
 
     # Create a tight layout to trim whitespace.
     fig.tight_layout()
