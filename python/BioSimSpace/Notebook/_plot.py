@@ -26,7 +26,7 @@ Tools for plotting data.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["plot", "plotContour"]
+__all__ = ["plot", "plotContour", "plotOverlapMatrix"]
 
 from warnings import warn as _warn
 from os import environ as _environ
@@ -45,6 +45,7 @@ if _display is not None:
     _has_display = True
     try:
         import matplotlib.pyplot as _plt
+        import matplotlib.colors as _colors
         _has_matplotlib = True
     except ImportError:
         _has_matplotlib = False
@@ -52,6 +53,7 @@ else:
     if _is_notebook:
         try:
             import matplotlib.pyplot as _plt
+            import matplotlib.colors as _colors
             _has_matplotlib = True
         except ImportError:
             _has_matplotlib = False
@@ -122,7 +124,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-            "to load. Please check your matplotlib installation.")
+              "to load. Please check your matplotlib installation.")
         return None
 
     # Convert tuple to a list.
@@ -330,7 +332,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-            "to load. Please check your matplotlib installation.")
+              "to load. Please check your matplotlib installation.")
         return None
 
     # Convert tuple to a list.
@@ -479,5 +481,71 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     cbar = _plt.colorbar(cp, cax=cax)
     if zlabel is not None:
         cbar.set_label(zlabel)
+
+    return _plt.show()
+
+def plotOverlapMatrix(overlap):
+    """Plot the overlap matrix from a free-energy perturbation analysis.
+
+       Parameters
+       ----------
+
+       overlap : [ [ float, float, ... ] ]
+           The overlap matrix.
+
+       Returns
+       -------
+
+       plot : matplotlib.image.AxesImage
+           The matplot image plot.
+    """
+
+    # Make sure were running interactively.
+    if not _is_interactive:
+        _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
+        return None
+
+    # Matplotlib failed to import.
+    if not _has_matplotlib and _has_display:
+        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+              "to load. Please check your matplotlib installation.")
+        return None
+
+    # Validate the input.
+
+    # Convert tuple to list.
+    if type(overlap) is tuple:
+        overlap = list(overlap)
+
+    # Store the number of rows.
+    num_rows = len(overlap)
+
+    # Check the data in each row.
+    for row in overlap:
+        if len(row) != num_rows:
+            raise ValueError("The 'overlap' matrix must be square!")
+        if not all(isinstance(x, float) for x in row):
+            raise TypeError("The 'overlap' matrix must contain 'float' types!")
+
+    # Set the colour map.
+    cmap = _colors.ListedColormap(["#FBE8EB","#88CCEE","#78C592", "#117733"])
+
+    # Create the figure and axis.
+    fig, ax = _plt.subplots()
+
+    # Create the image.
+    im = ax.imshow(overlap, origin="lower", cmap=cmap)
+
+    # Annotate the cells with the value of the overlap.
+    for x in range(0, num_rows):
+        for y in range(0, num_rows):
+            text = ax.text(y, x, f"{overlap[x][y]:.2f}", ha="center", color="k")
+
+    # Set the axis labels.
+    _plt.xlabel(r"$\lambda$")
+    _plt.ylabel(r"$\lambda$")
+
+    # Create a tight layout to trim whitespace.
+    fig.tight_layout()
 
     return _plt.show()

@@ -30,6 +30,7 @@ Functions
 
     plot
     plotContour
+    plotOverlapMatrix
 
 Examples
 ========
