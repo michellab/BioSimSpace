@@ -244,6 +244,12 @@ class FreeEnergy():
     def analyse(work_dir):
         """Analyse existing free-energy data from a simulation working directory.
 
+           Parameters
+           ----------
+
+           work_dir : str
+               The working directory for the simulation.
+
            Returns
            -------
 
@@ -805,6 +811,12 @@ class FreeEnergy():
 
 def analyse(work_dir):
     """Analyse existing free-energy data from a simulation working directory.
+
+       Parameters
+       ----------
+
+       work_dir : str
+           The working directory for the simulation.
 
        Returns
        -------
