@@ -211,7 +211,7 @@ class FreeEnergy():
         cwd = _os.getcwd()
 
         # Change into the working directory.
-        with cd(self._work_dir):
+        with _cd(self._work_dir):
             # Glob all of the analysis files for the engine.
             if self._engine == "SOMD":
                 files = glob("*/*/gradients.dat")
