@@ -40,7 +40,9 @@ from .._grid import Grid as _Grid
 from ..._SireWrappers import Molecule as _Molecule
 from ..._SireWrappers import System as _System
 from ...Types import Coordinate as _Coordinate
+from ...Types import Energy as _Energy
 from ...Types import Length as _Length
+from ...Types import Volume as _Volume
 
 class Funnel(_CollectiveVariable):
     """A class for a funnel collective variable."""
@@ -461,6 +463,100 @@ class Funnel(_CollectiveVariable):
                the distance along the funnel projection axis, and the
         """
         return self._grid
+
+    def getCorrection(self, x_min=None, x_max=None,
+            delta=_Length(0.01, "nanometers"), kt=_Energy(1.0, "kt")):
+        """Get the funnel correction term. This is the correction factor for
+           free-energy estimates that takes into account the reduction in
+           entropy caused by the funnel restraint.
+
+           Parameters
+           ----------
+
+           x_min : :class:`Length <BioSimSpace.Types.Length>`
+               The minimum coordinate along the projection axis of the funnel.
+
+           x_max : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum coordinate along the projection axis of the funnel.
+
+           delta : :class:`Length <BioSimSpace.Types.Length>`
+               The delta for integrating the volume.
+
+           kt : :class:`Energy <BioSimSpace.Types.Energy>`
+               The Boltzmann factor.
+
+           Returns
+           -------
+
+           correction : :class:`Energy <BioSimSpace.Types.Energy>`
+               The funnel correction.
+        """
+
+        if x_min is None:
+            if x_max is None:
+                x_max = self._upper_bound.getValue()
+            else:
+                if type(x_max) is not _Length:
+                    raise TypeError("'x_max' must be of type 'BioSimSpace.Types.Length'.")
+
+            # Default to the last 5 nanometers.
+            x_min = x_max - _Length(5, "nanometers")
+
+        else:
+            if type(x_min) is not _Length:
+                raise TypeError("'x_min' must be of type 'BioSimSpace.Types.Length'.")
+
+        if x_max is None:
+            # Default to the upper bound.
+            x_max = self._upper_bound.getValue()
+
+        else:
+            if type(x_max) is not _Length:
+                raise TypeError("'x_max' must be of type 'BioSimSpace.Types.Length'.")
+
+        if x_min >= x_max:
+            raise ValueError("'x_min' must be less than 'x_max'.")
+
+        if type(delta) is not _Length:
+            raise TypeError("'delta' must be of type 'BioSimSpace.Types.Length'.")
+
+        if delta >= (x_max - x_min):
+            raise ValueError("'delta' must be larger than 'x_max' - 'x_min'.")
+
+        import numpy as _np
+
+        # Create a 0.01 nm spaced points between the lower and upper bounds.
+        coords = _np.arange(x_min.nanometers().magnitude(),
+                            x_max.nanometers().magnitude(),
+                            delta.nanometers().magnitude())
+
+
+        # Helper function to compute the funnel extent at a given value of
+        # the projection.
+        def funnel(x):
+            return self.getWidth().nanometers().magnitude() \
+                / (1 + _np.exp(self.getSteepness() * (x - self.getInflection().nanometers().magnitude()))) \
+                + self.getBuffer().nanometers().magnitude()
+
+        # Get the extent values.
+        funnel = [funnel(x) for x in coords]
+
+        # Now intergrate the data.
+        result = 0
+        delta = delta.nanometers().magnitude()
+        for x, y in zip(funnel[:-1], funnel[1:]):
+            result += (x**2 + y) * delta * 0.5
+
+        # Work out the volume of the unbound area.
+        volume = _Volume(float(_np.pi*result), "nanometers cubed")
+
+        # Estimate the average area of the restraint.
+        area = volume / x_max
+
+        # Compute the correction.
+        correction = _Energy(float(_np.log((volume / 1600).magnitude())), "kt")
+
+        return correction
 
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
