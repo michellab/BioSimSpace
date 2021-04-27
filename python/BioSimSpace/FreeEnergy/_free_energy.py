@@ -37,6 +37,7 @@ import os as _os
 import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
+import zipfile as _zipfile
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -45,13 +46,18 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
+from BioSimSpace import _is_notebook
 from BioSimSpace._Exceptions import AnalysisError as _AnalysisError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace._Utils import cd as _cd
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Units as _Units
+
+if _is_notebook:
+    from IPython.display import FileLink as _FileLink
 
 class FreeEnergy():
     """Base class for configuring and running free energy simulations."""
@@ -160,9 +166,79 @@ class FreeEnergy():
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
 
-    def run(self):
-        """Run the simulation."""
-        self._runner.startAll(serial=True)
+    def run(self, serial=True):
+        """Run the simulation.
+
+           Parameters
+           ----------
+
+           serial : bool
+               Whether to run the individual processes for the lambda windows
+               in serial.
+        """
+        if type(serial) is not bool:
+            raise TypeError("'serial' must be of type 'bool'.")
+
+        self._runner.startAll(serial=serial)
+
+    def getData(self, name="data", file_link=False):
+        """Return a link to a zip file containing the data files required for
+           post-simulation analysis.
+
+           Parameters
+           ----------
+
+           name : str
+               The name of the zip file.
+
+           file_link : bool
+               Whether to return a FileLink when working in Jupyter.
+
+           Returns
+           -------
+
+           ouput : str, IPython.display.FileLink
+               A path, or file link, to an archive of the process input.
+        """
+
+        if type(name) is not str:
+            raise TypeError("'name' must be of type 'str'")
+
+        # Generate the zip file name.
+        zipname = "%s.zip" % name
+
+        # Get the current working directory.
+        cwd = _os.getcwd()
+
+        # Change into the working directory.
+        with cd(self._work_dir):
+            # Glob all of the analysis files for the engine.
+            if self._engine == "SOMD":
+                files = glob("*/*/gradients.dat")
+            elif self._engine == "GROMACS":
+                files = glob("*/*/gromacs.xvg")
+
+            # Write to the zip file.
+            with zipfile.ZipFile(cwd + f"/{zipname}", "w") as zip:
+                for file in files:
+                    zip.write(file)
+
+        # Return a link to the archive.
+        if _is_notebook:
+            if file_link:
+                # Create a FileLink to the archive.
+                f_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
+                # Return a link to the archive.
+                return f_link
+            else:
+                return zipname
+        # Return the path to the archive.
+        else:
+            return zipname
 
     @staticmethod
     def analyse(work_dir):
