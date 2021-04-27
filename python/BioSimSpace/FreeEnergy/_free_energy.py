@@ -26,7 +26,7 @@ Base class for free energy simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["FreeEnergy", "analyse"]
+__all__ = ["FreeEnergy", "analyse", "getData"]
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
@@ -181,7 +181,8 @@ class FreeEnergy():
 
         self._runner.startAll(serial=serial)
 
-    def getData(self, name="data", file_link=False):
+    @classmethod
+    def getData(cls, name="data", file_link=False, work_dir=None):
         """Return a link to a zip file containing the data files required for
            post-simulation analysis.
 
@@ -194,12 +195,25 @@ class FreeEnergy():
            file_link : bool
                Whether to return a FileLink when working in Jupyter.
 
+           work_dir : str
+               The working directory for the simulation.
+
            Returns
            -------
 
            ouput : str, IPython.display.FileLink
                A path, or file link, to an archive of the process input.
         """
+
+        if work_dir is None and cls._work_dir is None:
+            raise ValueError("'work_dir' must be set!")
+        elif work_dir is None:
+            work_dir = cls._work_dir
+        else:
+            if type(work_dir) is not str:
+                raise TypeError("'work_dir' must be of type 'str'.")
+            if not _os.path.isdir(work_dir):
+                raise ValueError("'work_dir' doesn't exist!")
 
         if type(name) is not str:
             raise TypeError("'name' must be of type 'str'")
@@ -211,15 +225,20 @@ class FreeEnergy():
         cwd = _os.getcwd()
 
         # Change into the working directory.
-        with _cd(self._work_dir):
-            # Glob all of the analysis files for the engine.
-            if self._engine == "SOMD":
-                files = glob("*/*/gradients.dat")
-            elif self._engine == "GROMACS":
-                files = glob("*/*/gromacs.xvg")
+        with _cd(work_dir):
+            # Glob all of the analysis files.
+
+            # First try SOMD data.
+            files = _glob("*/*/gradients.dat")
+
+            if len(files) == 0:
+                files = _glob("*/*/gromacs.xvg")
+
+                if len(files) == 0:
+                    raise ValueError(f"Couldn't find any analysis files in '{work_dir}'")
 
             # Write to the zip file.
-            with zipfile.ZipFile(cwd + f"/{zipname}", "w") as zip:
+            with _zipfile.ZipFile(cwd + f"/{zipname}", "w") as zip:
                 for file in files:
                     zip.write(file)
 
@@ -846,3 +865,27 @@ def analyse(work_dir):
     """
 
     return FreeEnergy.analyse(work_dir)
+
+def getData(name="data", file_link=False, work_dir=None):
+    """Return a link to a zip file containing the data files required for
+       post-simulation analysis.
+
+       Parameters
+       ----------
+
+       name : str
+           The name of the zip file.
+
+       file_link : bool
+           Whether to return a FileLink when working in Jupyter.
+
+       work_dir : str
+           The working directory for the simulation.
+
+       Returns
+       -------
+
+       ouput : str, IPython.display.FileLink
+           A path, or file link, to an archive of the process input.
+    """
+    return FreeEnergy.getData(name=name, file_link=file_link, work_dir=work_dir)

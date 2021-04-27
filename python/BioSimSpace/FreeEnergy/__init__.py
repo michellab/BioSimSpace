@@ -38,8 +38,10 @@ Functions
     :toctree: generated/
 
     analyse
+    getData
 """
 
 from ._free_energy import analyse
+from ._free_energy import getData
 from ._binding import *
 from ._solvation import *
