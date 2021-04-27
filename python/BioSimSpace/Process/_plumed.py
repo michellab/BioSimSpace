@@ -1307,7 +1307,7 @@ class Plumed():
                                        time_series=time_series,
                                        unit=self._colvar_unit[self._colvar_name[index]])
 
-    def getFreeEnergy(self, index=None, stride=None, kt=None):
+    def getFreeEnergy(self, index=None, stride=None, kt=_Types.Energy(1.0, "kt")):
         """Get the current free energy estimate.
 
            Parameters
@@ -1352,18 +1352,14 @@ class Plumed():
             if stride < 0:
                 raise ValueError("'stride' must be >= 0")
 
-        if kt is not None:
-            if type(kt) is not _Types.Energy:
-                raise TypeError("'kt' must be of type 'BioSimSpace.Type.Energy'")
+        if type(kt) is not _Types.Energy:
+            raise TypeError("'kt' must be of type 'BioSimSpace.Type.Energy'")
 
-            # Convert to kt and get the magnitude.
-            kt = kt.kt().magnitude()
+        # Convert to default PLUMED unit and get the magnitude.
+        kt = kt.kj_per_mol().magnitude()
 
-            if kt <= 0:
-                raise ValueError("'kt' must have magnitude > 0")
-        else:
-            if index is not None:
-                raise ValueError("You must specify 'kt' when making a dimensionality reduction.")
+        if kt <= 0:
+            raise ValueError("'kt' must have magnitude > 0")
 
         # Create the command string.
         command = "%s sum_hills --hills HILLS --mintozero" % self._exe
