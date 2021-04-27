@@ -87,15 +87,15 @@ class FreeEnergy():
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
 
-          ignore_warnings : bool
-              Whether to ignore warnings when generating the binary run file.
-              This option is specific to GROMACS and will be ignored when a
-              different molecular dynamics engine is chosen.
+           ignore_warnings : bool
+               Whether to ignore warnings when generating the binary run file.
+               This option is specific to GROMACS and will be ignored when a
+               different molecular dynamics engine is chosen.
 
-          show_errors : bool
-              Whether to show warning/error messages when generating the binary
-              run file. This option is specific to GROMACS and will be ignored
-              when a different molecular dynamics engine is chosen.
+           show_errors : bool
+               Whether to show warning/error messages when generating the binary
+               run file. This option is specific to GROMACS and will be ignored
+               when a different molecular dynamics engine is chosen.
         """
 
         # Don't allow user to create an instance of this base class.
