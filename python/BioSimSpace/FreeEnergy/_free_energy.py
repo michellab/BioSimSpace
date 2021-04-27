@@ -309,7 +309,7 @@ class FreeEnergy():
         # Bundle the free energy and its associated error.
         free_energy = (free_energy, error)
 
-        return (leg0, leg1, free_energy)
+        return (leg0, leg1, free_energy, None, None)
 
     def _analyse_somd(self):
         """Analyse the SOMD free energy data.
@@ -329,6 +329,16 @@ class FreeEnergy():
 
            free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
                The free energy difference and its associated error.
+
+           overlap0 : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the first leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
+
+           overlap1 : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the second leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
         """
 
         # Create the commands for the two legs.
@@ -350,66 +360,92 @@ class FreeEnergy():
         leg0 = []
         leg1 = []
 
+        # Initialise lists to hold the overlap matrix for each leg.
+        overlap0 = []
+        overlap1 = []
+
         # Extract the data from the output files.
 
         # First leg.
         with open("%s/mbar_leg0.txt" % self._work_dir) as file:
 
-            # Read all of the lines into a list.
-            lines = []
+            # Process the MBAR data.
             for line in file:
-                lines.append(line.rstrip())
+                # Process the overlap matrix.
+                if "#Overlap matrix" in line:
 
-            # Find the MBAR data.
-            for x, line in enumerate(lines):
-                if "PMF from MBAR" in line:
-                    # Increment the line index.
-                    x += 1
+                    # Get the next row.
+                    row = next(file)
 
-                    # Loop until we hit the next comment.
-                    while lines[x][0] != "#":
+                    # Loop until we hit the next section.
+                    while not row.startswith("#DG"):
+                        # Extract the data for this row.
+                        data = [float(x) for x in row.split()]
+
+                        # Append to the overlap matrix.
+                        overlap0.append(data)
+
+                        # Get the next line.
+                        row = next(file)
+
+                # Process the PMF.
+                elif "PMF from MBAR" in line:
+                    # Get the next row.
+                    row = next(file)
+
+                    # Loop until we hit the next section.
+                    while not row.startswith("#TI"):
                         # Split the line.
-                        data = lines[x].split()
+                        data = row.split()
 
                         # Append the data.
                         leg0.append((float(data[0]),
                                      float(data[1]) * _Units.Energy.kcal_per_mol,
                                      float(data[2]) * _Units.Energy.kcal_per_mol))
 
-                        # Increment the line index.
-                        x += 1
+                        # Get the next line.
+                        row = next(file)
 
-                    break
 
         # Second leg.
         if self._is_dual:
             with open("%s/mbar_leg1.txt" % self._work_dir) as file:
-
-                # Read all of the lines into a list.
-                lines = []
+                # Process the MBAR data.
                 for line in file:
-                    lines.append(line.rstrip())
+                    # Process the overlap matrix.
+                    if "#Overlap matrix" in line:
 
-                # Find the MBAR data.
-                for x, line in enumerate(lines):
-                    if "PMF from MBAR" in line:
-                        # Increment the line index.
-                        x += 1
+                        # Get the next row.
+                        row = next(file)
 
-                        # Loop until we hit the next comment.
-                        while lines[x][0] != "#":
+                        # Loop until we hit the next section.
+                        while not row.startswith("#DG"):
+                            # Extract the data for this row.
+                            data = [float(x) for x in row.split()]
+
+                            # Append to the overlap matrix.
+                            overlap1.append(data)
+
+                            # Get the next line.
+                            row = next(file)
+
+                    # Process the PMF.
+                    elif "PMF from MBAR" in line:
+                        # Get the next row.
+                        row = next(file)
+
+                        # Loop until we hit the next section.
+                        while not row.startswith("#TI"):
                             # Split the line.
-                            data = lines[x].split()
+                            data = row.split()
 
                             # Append the data.
                             leg1.append((float(data[0]),
                                         float(data[1]) * _Units.Energy.kcal_per_mol,
                                         float(data[2]) * _Units.Energy.kcal_per_mol))
 
-                            # Increment the line index.
-                            x += 1
-
-                        break
+                            # Get the next line.
+                            row = next(file)
 
         # Work out the difference in free energy.
         if self._is_dual:
@@ -436,7 +472,7 @@ class FreeEnergy():
         # Bundle the free energy and its associated error.
         free_energy = (free_energy, error)
 
-        return (leg0, leg1, free_energy)
+        return (leg0, leg1, free_energy, overlap0, overlap1)
 
     def _initialise_runner(self, system0, system1):
         """Internal helper function to initialise the process runner.

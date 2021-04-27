@@ -127,6 +127,16 @@ class Solvation(_free_energy.FreeEnergy):
 
            free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
                The solvation free energy difference and its associated error.
+
+           overlap_free : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the free leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
+
+           overlap_vacuum : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the vacuum leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
         """
 
         # This method is just a wrapper to provide simulation specific doc

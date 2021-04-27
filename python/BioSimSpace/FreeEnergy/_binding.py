@@ -204,13 +204,23 @@ class Binding(_free_energy.FreeEnergy):
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
-           pmf_vacuum : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF) for the vacuum leg of the
+           pmf_bound : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) for the bound leg of the
                simulation. The data is a list of tuples, where each tuple
                contains the lambda value, the PMF, and the standard error.
 
            free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
                The binding free energy difference and its associated error.
+
+           overlap_free : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the free leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
+
+           overlap_bound : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each window
+               of the bound leg. This parameter is only computed for the SOMD
+               engine and will be None when GROMACS is used.
         """
 
         # This method is just a wrapper to provide simulation specific doc
