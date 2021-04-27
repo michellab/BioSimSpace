@@ -464,8 +464,7 @@ class Funnel(_CollectiveVariable):
         """
         return self._grid
 
-    def getCorrection(self, x_min=None, x_max=None,
-            delta=_Length(0.01, "nanometers"), kt=_Energy(1.0, "kt")):
+    def getCorrection(self, x_min=None, x_max=None, delta=_Length(0.01, "nanometers")):
         """Get the funnel correction term. This is the correction factor for
            free-energy estimates that takes into account the reduction in
            entropy caused by the funnel restraint.
@@ -481,9 +480,6 @@ class Funnel(_CollectiveVariable):
 
            delta : :class:`Length <BioSimSpace.Types.Length>`
                The delta for integrating the volume.
-
-           kt : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Boltzmann factor.
 
            Returns
            -------
