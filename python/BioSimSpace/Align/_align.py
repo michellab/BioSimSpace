@@ -75,7 +75,8 @@ try:
 except:
     _fkcombu_exe = None
 
-def generateNetwork(molecules, names=None, work_dir=None, plot_network=False):
+def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
+        property_map={}):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
