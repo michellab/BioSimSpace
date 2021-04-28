@@ -124,16 +124,20 @@ class Molecules(_SireWrapper):
 
         # A Molecule object.
         elif type(other) is _Molecule:
-            molecules.add(other._sire_object)
+            mol = other.copy()
+            mol._renumber(_SireMol.MolNum.getUniqueNumber())
+            molecules.add(mol._sire_object)
 
         # A Molecules object.
         elif type(other) is Molecules:
             molecules.add(other._sire_object)
 
         # A list of Molecule objects.
-        elif type(other) is list and all(isinstance(x, Molecule) for x in other):
+        elif type(other) is list and all(isinstance(x, _Molecule) for x in other):
             for molecule in other:
-                molecules.add(molecule._sire_object)
+                mol = molecule.copy()
+                mol._renumber(_SireMol.MolNum.getUniqueNumber())
+                molecules.add(mol._sire_object)
 
         # Unsupported.
         else:
