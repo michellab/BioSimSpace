@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Funnel", "makeFunnel", "viewFunnel"]
 
-from math import ceil as _ceil
+import math as _math
 
 from Sire.Maths import Vector as _SireVector
 import Sire.Mol as _SireMol
@@ -464,7 +464,7 @@ class Funnel(_CollectiveVariable):
         """
         return self._grid
 
-    def getCorrection(self, x_min=None, x_max=None, delta=_Length(0.01, "nanometers")):
+    def getCorrection(self, proj_min=None, proj_max=None, delta=_Length(0.01, "nanometers")):
         """Get the funnel correction term. This is the correction factor for
            free-energy estimates that takes into account the reduction in
            entropy caused by the funnel restraint.
@@ -472,10 +472,10 @@ class Funnel(_CollectiveVariable):
            Parameters
            ----------
 
-           x_min : :class:`Length <BioSimSpace.Types.Length>`
+           proj_min : :class:`Length <BioSimSpace.Types.Length>`
                The minimum coordinate along the projection axis of the funnel.
 
-           x_max : :class:`Length <BioSimSpace.Types.Length>`
+           proj_max : :class:`Length <BioSimSpace.Types.Length>`
                The maximum coordinate along the projection axis of the funnel.
 
            delta : :class:`Length <BioSimSpace.Types.Length>`
@@ -488,54 +488,46 @@ class Funnel(_CollectiveVariable):
                The funnel correction.
         """
 
-        if x_min is None:
-            if x_max is None:
-                x_max = self._upper_bound.getValue()
+        if proj_min is None:
+            if proj_max is None:
+                proj_max = self._upper_bound.getValue()
             else:
-                if type(x_max) is not _Length:
-                    raise TypeError("'x_max' must be of type 'BioSimSpace.Types.Length'.")
+                if type(proj_max) is not _Length:
+                    raise TypeError("'proj_max' must be of type 'BioSimSpace.Types.Length'.")
 
             # Default to the last 5 nanometers.
-            x_min = x_max - _Length(5, "nanometers")
+            proj_min = proj_max - _Length(5, "nanometers")
 
         else:
-            if type(x_min) is not _Length:
-                raise TypeError("'x_min' must be of type 'BioSimSpace.Types.Length'.")
+            if type(proj_min) is not _Length:
+                raise TypeError("'proj_min' must be of type 'BioSimSpace.Types.Length'.")
 
-        if x_max is None:
+        if proj_max is None:
             # Default to the upper bound.
-            x_max = self._upper_bound.getValue()
+            proj_max = self._upper_bound.getValue()
 
         else:
-            if type(x_max) is not _Length:
-                raise TypeError("'x_max' must be of type 'BioSimSpace.Types.Length'.")
+            if type(proj_max) is not _Length:
+                raise TypeError("'proj_max' must be of type 'BioSimSpace.Types.Length'.")
 
-        if x_min >= x_max:
-            raise ValueError("'x_min' must be less than 'x_max'.")
+        if proj_min >= proj_max:
+            raise ValueError("'proj_min' must be less than 'proj_max'.")
 
         if type(delta) is not _Length:
             raise TypeError("'delta' must be of type 'BioSimSpace.Types.Length'.")
 
-        if delta >= (x_max - x_min):
-            raise ValueError("'delta' must be larger than 'x_max' - 'x_min'.")
+        if delta >= (proj_max - proj_min):
+            raise ValueError("'delta' must be larger than 'proj_max' - 'proj_min'.")
 
         import numpy as _np
 
         # Create a 0.01 nm spaced points between the lower and upper bounds.
-        coords = _np.arange(x_min.nanometers().magnitude(),
-                            x_max.nanometers().magnitude(),
-                            delta.nanometers().magnitude())
-
-
-        # Helper function to compute the funnel extent at a given value of
-        # the projection.
-        def funnel(x):
-            return self.getWidth().nanometers().magnitude() \
-                / (1 + _np.exp(self.getSteepness() * (x - self.getInflection().nanometers().magnitude()))) \
-                + self.getBuffer().nanometers().magnitude()
+        coords = _np.arange(proj_min.nanometers().magnitude(),
+                            proj_max.nanometers().magnitude(),
+                            delta.nanometers().magnitude()).tolist()
 
         # Get the extent values.
-        funnel = [funnel(x) for x in coords]
+        funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().magnitude() for x in coords]
 
         # Now intergrate the data.
         result = 0
@@ -544,15 +536,41 @@ class Funnel(_CollectiveVariable):
             result += (x**2 + y) * delta * 0.5
 
         # Work out the volume of the unbound area.
-        volume = _Volume(float(_np.pi*result), "nanometers cubed")
+        volume = _Volume(_math.pi*result, "nanometers cubed")
 
         # Estimate the average area of the restraint.
-        area = volume / x_max
+        area = volume / proj_max
 
         # Compute the correction.
-        correction = _Energy(float(_np.log((volume / 1600).magnitude())), "kt")
+        correction = _Energy(_math.log((volume / 1600).magnitude()), "kt")
 
         return correction
+
+    def getExtent(self, projection):
+        """Return a value of the funnel extent for a given distance along
+           the projection axis.
+
+           Parameters
+           ----------
+
+           proj : :class:`Length <BioSimSpace.Types.Length>`
+               The distance along the projection axis.
+
+           Returns
+           -------
+
+           extent : :class:`Length <BioSimSpace.Types.Length>`
+               The distance along the extent axis.
+        """
+
+        if type(projection) is not _Length:
+            raise TypeError("'projection' must be of type 'BioSimSpace.Types.Length'.")
+
+        extent = self.getWidth().nanometers().magnitude() \
+            / (1 + _math.exp(self.getSteepness() * (projection - self.getInflection()).nanometers().magnitude())) \
+            + self.getBuffer().nanometers().magnitude()
+
+        return _Length(extent, "nanometers")
 
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
@@ -598,11 +616,11 @@ class Funnel(_CollectiveVariable):
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid[0].getBins() is None:
                 grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).magnitude()
-                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
                 self._grid[0].setBins(num_bins)
             if self._grid[1].getBins() is None:
                 grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).magnitude()
-                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
                 self._grid[1].setBins(num_bins)
 
 def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
