@@ -108,12 +108,6 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
        logy : bool
            Whether the y axis is logarithmic.
-
-       Returns
-       -------
-
-       plot : matplotlib.image.AxesImage
-           The matplot image plot.
     """
 
     # Make sure were running interactively.
@@ -126,6 +120,11 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
               "to load. Please check your matplotlib installation.")
         return None
+
+    if type(logx) is not bool:
+        raise TypeError("'logx' must be of type 'bool'.")
+    if type(logy) is not bool:
+        raise TypeError("'logy' must be of type 'bool'.")
 
     # Convert tuple to a list.
     if type(x) is tuple:
@@ -311,12 +310,6 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
        zlabel : str
            The z axis label string.
-
-       Returns
-       -------
-
-       plot : matplotlib.image.AxesImage
-           The matplot image plot.
     """
 
     import numpy as _np
@@ -492,12 +485,6 @@ def plotOverlapMatrix(overlap):
 
        overlap : [ [ float, float, ... ] ]
            The overlap matrix.
-
-       Returns
-       -------
-
-       plot : matplotlib.image.AxesImage
-           The matplot image plot.
     """
 
     # Make sure were running interactively.
