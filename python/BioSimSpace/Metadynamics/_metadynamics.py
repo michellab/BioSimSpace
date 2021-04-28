@@ -32,7 +32,10 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 
-def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
+# Import common objects from BioSimSpace.MD._md
+from BioSimSpace.MD._md import _file_extensions, _md_packages, _find_md_packages
+
+def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", work_dir=None,
      seed=None, property_map={}, ignore_warnings=False, show_errors=True):
     """Auto-configure and run a metadynamics process.
 
@@ -44,6 +47,9 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
 
        protocol : :class:`Protocol <BioSimSpace.Protocol.Metadynamics>`
            The metadynamics protocol.
+
+       gpu_support : bool
+           Whether to choose a package with GPU support.
 
        auto_start : bool
            Whether to start the process automatically.
@@ -89,6 +95,9 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
 
     # Validate optional arguments.
 
+    if type(gpu_support) is not bool:
+        raise TypeError("'gpu_support' must be of type 'bool'")
+
     if type(auto_start) is not bool:
         raise TypeError("'auto_start' must be of type 'bool'")
 
@@ -112,14 +121,43 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
     if type(show_errors) is not bool:
         raise ValueError("'show_errors' must be of type 'bool.")
 
-    # Create the process object.
+    # Find a molecular dynamics package and executable.
+    packages, exes = _find_md_packages(system, protocol, gpu_support)
 
-    process = _Process.Gromacs(system, protocol, name=name,
-        work_dir=work_dir, seed=seed, property_map=property_map,
-        ignore_warnings=ignore_warnings, show_errors=show_errors)
+    # Create the process object, return the first supported package that can
+    # instantiate a process.
 
-    # Start the process.
-    if auto_start:
-        return process.start()
-    else:
-        return process
+    for package, exe in zip(packages, exes):
+        try:
+            # AMBER.
+            if package == "AMBER":
+                process = _Process.Amber(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
+
+            # GROMACS.
+            elif package == "GROMACS":
+                process = _Process.Gromacs(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map,
+                    ignore_warnings=ignore_warnings, show_errors=show_errors)
+
+            # OPENMM.
+            elif package == "OPENMM":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.OpenMM(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+
+            # Start the process.
+            if auto_start:
+                return process.start()
+            else:
+                return process
+
+        except:
+            pass
+
+    # If we got here, then we couldn't create a process.
+    raise Exception(f"Unable to create a process using any supported package: {packages}")

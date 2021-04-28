@@ -72,9 +72,27 @@ _free_energy = { "AMBER"   : False,
                  "SOMD"    : True
                 }
 
-def _find_md_package(system, protocol, gpu_support=False):
-    """Find a molecular dynamics package on the system and return
-       a handle to it as a MDPackage object.
+# Whether each package supports metadynamics simulations. This dictionary needs to
+# be updated as support for different packages is added.
+_metadynamics = { "AMBER"   : True,
+                  "GROMACS" : True,
+                  "NAMD"    : False,
+                  "OPENMM"  : True,
+                  "SOMD"    : False
+                }
+
+# Whether each package supports steered molecular dynamics simulations. This
+# dictionary needs to # be updated as support for different packages is added.
+_steering = { "AMBER"   : True,
+              "GROMACS" : True,
+              "NAMD"    : False,
+              "OPENMM"  : False,
+              "SOMD"    : False
+            }
+
+def _find_md_packages(system, protocol, gpu_support=False):
+    """Find molecular dynamics packages on the system that
+       support the given protocol and GPU requirements.
 
        Parameters
        ----------
@@ -91,8 +109,8 @@ def _find_md_package(system, protocol, gpu_support=False):
        Returns
        -------
 
-       (package, exe) : (str, str)
-           The name of the MD package and a path to its executable.
+       packages, exes : [ str ], [ str ]
+          Lists containing the supported MD packages and executables.
     """
 
     # The input has already been validated in the run method, so no need
@@ -107,16 +125,27 @@ def _find_md_package(system, protocol, gpu_support=False):
     else:
         packages = _file_extensions[fileformat]
 
-    # Is this a free energy protocol.
+    is_free_energy = False
+    is_metadynamics = False
+    is_steering = False
+
     if type(protocol) is _Protocol.FreeEnergy:
         is_free_energy = True
-    else:
-        is_free_energy = False
+    elif type(protocol) is _Protocol.Metadynamics:
+        is_metadynamics = True
+    elif type(protocol) is _Protocol.Steering:
+        is_steering = True
+
+    # Create a list to store all of the packages and executables.
+    found_packages = []
+    found_exes = []
 
     # Loop over each package that supports the file format.
     for package in packages:
-        # If this is free energy protocol, then check that the package has support.
-        if not is_free_energy or _free_energy[package]:
+        # Don't continue if the package doesn't support the protocol.
+        if (not is_free_energy or _free_energy[package]) and \
+           (not is_metadynamics or _metadynamics[package]) and \
+           (not is_steering or _steering[package]):
             # Check whether this package exists on the system and has the desired
             # GPU support.
             for exe, gpu in _md_packages[package].items():
@@ -129,34 +158,46 @@ def _find_md_package(system, protocol, gpu_support=False):
                         if _amber_home is not None:
                             _exe = "%s/bin/%s" % (_amber_home, exe)
                             if _os.path.isfile(_exe):
-                                return (package, _exe)
+                                found_packages.append(package)
+                                found_exes.append(_exe)
                         # Search system PATH.
                         else:
                             try:
                                 exe = _SireBase.findExe(exe).absoluteFilePath()
-                                return (package, exe)
+                                found_packages.append(package)
+                                found_exes.append(exe)
                             except:
                                 pass
                     # GROMACS
                     elif package == "GROMACS":
-                        if _gmx_exe is not None:
-                            return (package, _gmx_exe)
+                        if _gmx_exe is not None and _os.path.basename(_gmx_exe) == exe:
+                            found_packages.append(package)
+                            found_exes.append(_gmx_exe)
                     # OPENMM
                     elif package == "OPENMM":
-                        return (package, _SireBase.getBinDir() + "/sire_python")
+                        found_packages.append(package)
+                        found_exes.append(_SireBase.getBinDir() + "/sire_python")
                     # SOMD
                     elif package == "SOMD":
-                        return (package, _SireBase.getBinDir() + "/somd")
+                        found_packages.append(package)
+                        if is_free_energy:
+                            found_exes.append(_SireBase.getBinDir() + "/somd-freenrg")
+                        else:
+                            found_exes.append(_SireBase.getBinDir() + "/somd")
                     # Search system PATH.
                     else:
                         try:
                             exe = _SireBase.findExe(exe).absoluteFilePath()
-                            return (package, exe)
+                            found_packages.append(package)
+                            found_exes.append(exe)
                         except:
                             pass
 
-    # If we get this far, then no package was found.
-    raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
+    # No package was found.
+    if len(found_packages) == 0:
+        raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
+
+    return found_packages, found_exes
 
 def run(system, protocol, gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={},
@@ -256,48 +297,57 @@ def run(system, protocol, gpu_support=False, auto_start=True,
         raise ValueError("'show_errors' must be of type 'bool.")
 
     # Find a molecular dynamics package and executable.
-    package, exe = _find_md_package(system, protocol, gpu_support)
+    packages, exes = _find_md_packages(system, protocol, gpu_support)
 
-    # Create the process object.
+    # Create the process object, return the first supported package that can
+    # instantiate a process.
 
-    # AMBER.
-    if package == "AMBER":
-        process = _Process.Amber(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+    for package, exe in zip(packages, exes):
+        try:
+            # AMBER.
+            if package == "AMBER":
+                process = _Process.Amber(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
 
-    # GROMACS.
-    elif package == "GROMACS":
-        process = _Process.Gromacs(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map,
-            ignore_warnings=ignore_warnings, show_errors=show_errors)
+            # GROMACS.
+            elif package == "GROMACS":
+                process = _Process.Gromacs(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map,
+                    ignore_warnings=ignore_warnings, show_errors=show_errors)
 
-    # NAMD.
-    elif package == "NAMD":
-        process = _Process.Namd(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+            # NAMD.
+            elif package == "NAMD":
+                process = _Process.Namd(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
 
-    # OPENMM.
-    elif package == "OPENMM":
-        if gpu_support:
-            platform = "CUDA"
-        else:
-            platform = "CPU"
-        # Don't pass the executable name through so that this works on Windows too.
-        process = _Process.OpenMM(system, protocol, exe=None, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+            # OPENMM.
+            elif package == "OPENMM":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.OpenMM(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
 
-    # SOMD.
-    elif package == "SOMD":
-        if gpu_support:
-            platform = "CUDA"
-        else:
-            platform = "CPU"
-        # Don't pass the executable name through so that this works on Windows too.
-        process = _Process.Somd(system, protocol, exe=None, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+            # SOMD.
+            elif package == "SOMD":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.Somd(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
 
-    # Start the process.
-    if auto_start:
-        return process.start()
-    else:
-        return process
+            # Start the process.
+            if auto_start:
+                return process.start()
+            else:
+                return process
+
+        except:
+            pass
+
+    # If we got here, then we couldn't create a process.
+    raise Exception(f"Unable to create a process using any supported package: {packages}")
