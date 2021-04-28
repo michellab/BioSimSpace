@@ -309,7 +309,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for edge in edges:
                 graph.add_edge(names[edge[0]],
                                names[edge[1]],
-                               label=edge_dict[(names[node0], names[node1])])
+                               label=(edge_dict[(names[edge[0]], names[edge[1]])]))
 
         except Exception as e:
             msg = "Unable to generate network representation!"
