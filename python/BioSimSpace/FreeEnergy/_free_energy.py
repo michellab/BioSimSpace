@@ -260,7 +260,7 @@ class FreeEnergy():
             return zipname
 
     @staticmethod
-    def analyse(work_dir):
+    def analyse(work_dir, simulation_type=None):
         """Analyse existing free-energy data from a simulation working directory.
 
            Parameters
@@ -268,6 +268,10 @@ class FreeEnergy():
 
            work_dir : str
                The working directory for the simulation.
+
+           simulation_type : str
+               The type of free-energy perturbation simulation_type. Options are:
+               "solvation", or "binding".
 
            Returns
            -------
@@ -301,30 +305,64 @@ class FreeEnergy():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
+        if simulation_type is not None:
+            if type(simulation_type) is not str:
+                raise TypeError("'simulation_type' must be of type 'str'.")
+            # Strip whitespace and convert to lower case.
+            simulation_type = simulation_type.lower().replace(" ", "")
+            if simulation_type not in ["solvation", "binding"]:
+                raise ValueError("'simulation_type' must be either 'solvation' or 'binding'.")
+
         # Whether this is a dual-leg simulation.
         is_dual = False
 
         # First work out whether this is a binding or solvation simulation.
 
-        # Binding.
-        if _os.path.isdir(work_dir + "/bound"):
-            dir0 = work_dir + "/bound"
-            dir1 = work_dir + "/free"
-            if _os.path.isdir(dir1):
-                is_dual = True
+        if simulation_type is None:
+            # Binding.
+            if _os.path.isdir(work_dir + "/bound"):
+                dir0 = work_dir + "/bound"
+                dir1 = work_dir + "/free"
+                if _os.path.isdir(dir1):
+                    is_dual = True
 
-        # Solvation..
-        elif _os.path.isdir(work_dir + "/free"):
-            dir0 = work_dir + "/free"
-            dir1 = work_dir + "/vacuum"
-            if _os.path.isdir(dir1):
-                is_dual = True
+            # Solvation..
+            elif _os.path.isdir(work_dir + "/free"):
+                dir0 = work_dir + "/free"
+                dir1 = work_dir + "/vacuum"
+                if _os.path.isdir(dir1):
+                    is_dual = True
 
-        # Invalid directory structure.
+            # Invalid directory structure.
+            else:
+                msg = (f"Could not find '{work_dir}/bound' or "
+                       f"'{work_dir}/free'?")
+                raise ValueError(msg)
+
         else:
-            msg = (f"Could not find '{work_dir}/bound' or "
-                   f"'{work_dir}/free'?")
-            raise ValueError(msg)
+            if simulation_type == "binding":
+                if _os.path.isdir(work_dir + "/bound"):
+                    dir0 = work_dir + "/bound"
+                    dir1 = work_dir + "/free"
+                    if _os.path.isdir(dir1):
+                        is_dual = True
+
+                # Invalid directory structure.
+                else:
+                    msg = (f"Could not find '{work_dir}/bound'")
+                    raise ValueError(msg)
+
+            elif simulation_type == "solvation":
+                if _os.path.isdir(work_dir + "/free"):
+                    dir0 = work_dir + "/free"
+                    dir1 = work_dir + "/vacuum"
+                    if _os.path.isdir(dir1):
+                        is_dual = True
+
+                # Invalid directory structure.
+                else:
+                    msg = (f"Could not find '{work_dir}/free'")
+                    raise ValueError(msg)
 
         # First test for SOMD files.
         data = _glob(dir0 + "/lambda_*/gradients.dat")
@@ -828,7 +866,7 @@ class FreeEnergy():
         for process in self._runner.processes():
             process.setArgs(args)
 
-def analyse(work_dir):
+def analyse(work_dir, simulation_type=None):
     """Analyse existing free-energy data from a simulation working directory.
 
        Parameters
@@ -836,6 +874,10 @@ def analyse(work_dir):
 
        work_dir : str
            The working directory for the simulation.
+
+       simulation_type : str
+           The type of free-energy perturbation simulation_type. Options are:
+           "solvation", or "binding".
 
        Returns
        -------
@@ -864,7 +906,7 @@ def analyse(work_dir):
            engine and will be None when GROMACS is used.
     """
 
-    return FreeEnergy.analyse(work_dir)
+    return FreeEnergy.analyse(work_dir, simulation_type)
 
 def getData(name="data", file_link=False, work_dir=None):
     """Return a link to a zip file containing the data files required for
