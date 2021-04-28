@@ -283,7 +283,7 @@ class FreeEnergy():
                contains the lambda value, the PMF, and the standard error.
 
            free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-               The solvation free energy difference and its associated error.
+               The free energy difference and its associated error.
 
            overlap0 : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each window
@@ -851,7 +851,7 @@ def analyse(work_dir):
            contains the lambda value, the PMF, and the standard error.
 
        free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-           The solvation free energy difference and its associated error.
+           The free energy difference and its associated error.
 
        overlap0 : [ [ float, float, ... ] ]
            The overlap matrix. This gives the overlap between each window
