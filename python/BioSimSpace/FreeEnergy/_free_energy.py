@@ -271,7 +271,10 @@ class FreeEnergy():
 
            simulation_type : str
                The type of free-energy perturbation simulation_type. Options are:
-               "solvation", or "binding".
+               "solvation", or "binding". This allows use of a single "work_dir"
+               for combined "solvation" and "binding" free-energy simulations.
+               If None, then BioSimSpace will attempt to figure out the simulation
+               type from the directory structure within "work_dir".
 
            Returns
            -------
@@ -877,7 +880,10 @@ def analyse(work_dir, simulation_type=None):
 
        simulation_type : str
            The type of free-energy perturbation simulation_type. Options are:
-           "solvation", or "binding".
+           "solvation", or "binding". This allows use of a single "work_dir"
+           for combined "solvation" and "binding" free-energy simulations.
+           If None, then BioSimSpace will attempt to figure out the simulation
+           type from the directory structure within "work_dir".
 
        Returns
        -------
