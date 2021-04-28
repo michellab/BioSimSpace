@@ -28,6 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    engines
     run
 
 Examples
@@ -55,3 +56,15 @@ Examples
 """
 
 from ._md import *
+
+def engines():
+    """List the supported molecular dynamics engines.
+
+       Returns
+       -------
+
+       engines : [str]
+           The list of supported engines.
+    """
+    from BioSimSpace.Process import packages as _packages
+    return _packages()

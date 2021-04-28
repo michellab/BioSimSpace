@@ -28,6 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    engines
     run
 
 Classes
@@ -47,3 +48,14 @@ from ._metadynamics import *
 from ._restraint import *
 
 from . import CollectiveVariable
+
+def engines():
+    """List the supported metadynamics engines.
+
+       Returns
+       -------
+
+       engines : [str]
+           The list of supported engines.
+    """
+    return ["Amber", "Gromacs", "OpenMM"]
