@@ -54,6 +54,8 @@ from BioSimSpace import Units as _Units
 from ._process import _MultiDict
 
 class Plumed():
+    """A class for interfacing with PLUMED."""
+
     def __init__(self, work_dir, is_analysis=True):
         """Constructor.
 
