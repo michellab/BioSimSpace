@@ -377,7 +377,7 @@ class Process():
         # Use the PLUMED interface to get the required data.
         return self._plumed.getCollectiveVariable(index, time_series)
 
-    def _getFreeEnergy(self, index=None, stride=None, kt=None, block="AUTO"):
+    def _getFreeEnergy(self, index=None, stride=None, kt=_Units.Energy.kt, block="AUTO"):
         """Get the current free energy estimate.
 
            Parameters
