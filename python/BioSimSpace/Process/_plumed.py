@@ -1361,8 +1361,12 @@ class Plumed():
         if kt <= 0:
             raise ValueError("'kt' must have magnitude > 0")
 
+        # Delete any existing FES directotry and create a new one.
+        _shutil.rmtree(f"{self._work_dir}/fes", ignore_errors=True)
+        _os.makedirs(f"{self._work_dir}/fes")
+
         # Create the command string.
-        command = "%s sum_hills --hills HILLS --mintozero" % self._exe
+        command = "%s sum_hills --hills ../HILLS --mintozero" % self._exe
 
         # Append additional arguments.
         if index is not None:
@@ -1375,7 +1379,7 @@ class Plumed():
         free_energies = []
 
         # Move to the working directory.
-        with _Utils.cd(self._work_dir):
+        with _Utils.cd(self._work_dir + "/fes"):
 
             # Run the sum_hills command as a background process.
             proc = _subprocess.run(command, shell=True, text=True,
@@ -1387,7 +1391,22 @@ class Plumed():
 
             # Get a sorted list of all the fes*.dat files.
             fes_files = _glob.glob("fes*.dat")
-            fes_files.sort()
+
+            if len(fes_files) > 1:
+                # Plumed doesn't zero-pad the files, so we need to work out their
+                # indices and sort them ourselves.
+                idxs = []
+                idx_to_fes = {}
+                for x, fes in enumerate(fes_files):
+                    idx = int(fes.split("_")[1].split(".dat")[0])
+                    idxs.append(idx)
+                    idx_to_fes[idx] = fes
+
+                # Sort the indices.
+                idxs.sort()
+
+                # Now sort the files.
+                fes_files = [idx_to_fes[x] for x in idxs]
 
             # Process each of the files.
             for fes in fes_files:
@@ -1437,6 +1456,9 @@ class Plumed():
 
                 # Remove the file.
                 _os.remove(fes)
+
+        # Remove the FES output directory.
+        _shutil.rmtree(f"{self._work_dir}/fes", ignore_errors=True)
 
         return tuple(free_energies)
 
