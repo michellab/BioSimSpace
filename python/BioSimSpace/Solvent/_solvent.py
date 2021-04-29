@@ -789,7 +789,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         if molecule is not None:
             if type(molecule) is _System:
                 # Extract the non-water molecules from the original system.
-                non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
+                non_waters = _Molecules(molecule.search("not water")._sire_object.toGroup())
 
                 # Create a system by adding these to the water molecules from
                 # gmx solvate, which will include the original waters.
@@ -987,7 +987,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     if molecule is not None:
                         if type(molecule) is _System:
                             # Extract the non-water molecules from the original system.
-                            non_waters = _Molecules(molecule.search("not water")._sire_object.toMolecules())
+                            non_waters = _Molecules(molecule.search("not water")._sire_object.toGroup())
 
                             # Create a system by adding these to the water and ion
                             # molecules from gmx solvate, which will include the

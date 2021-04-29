@@ -131,11 +131,6 @@ class Molecule(_SireWrapper):
 
         # A single Molecule object.
         elif type(other) is Molecule:
-            mol = self.copy()
-            mol._renumber(_SireMol.MolNum.getUniqueNumber())
-            molecules[0] = mol
-            other = other.copy()
-            other._renumber(_SireMol.MolNum.getUniqueNumber())
             molecules.append(other)
 
         # A Molecules object.
@@ -144,12 +139,7 @@ class Molecule(_SireWrapper):
 
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
-            mol = self.copy()
-            mol._renumber(_SireMol.MolNum.getUniqueNumber())
-            molecules[0] = mol
             for mol in other:
-                mol = mol.copy()
-                mol._renumber(_SireMol.MolNum.getUniqueNumber())
                 molecules.append(mol)
 
         # Unsupported.
@@ -170,7 +160,7 @@ class Molecule(_SireWrapper):
             for molecule in molecules:
                 molgrp.add(molecule._sire_object)
 
-            return _Molecules(molgrp.molecules())
+            return _Molecules(molgrp)
 
     def number(self):
         """Return the number of the molecule. Each molecule has a unique
@@ -1121,22 +1111,6 @@ class Molecule(_SireWrapper):
 
             # Finally, commit the changes to the internal object.
             self._sire_object = edit_mol.commit()
-
-    def _renumber(self, mol_num):
-        """Renumber the molecule with a unique MolNum.
-
-           Parameters
-           ----------
-
-           mol_num : Sire.Mol.MolNum
-               The molecule number.
-        """
-        if type(mol_num) is not _SireMol.MolNum:
-            raise TypeError("'mol_num' must be of type 'Sire.Mol.MolNum'")
-
-        edit_mol = self._sire_object.edit()
-        edit_mol.renumber(mol_num)
-        self._sire_object = edit_mol.commit()
 
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""

@@ -20,8 +20,8 @@
 #####################################################################
 
 """
-A thin wrapper around Sire.Mol.Molecules. This is an internal package and should
-not be directly exposed to the user.
+A thin wrapper around Sire.Mol.MoleculeGroup. This is an internal package and
+should not be directly exposed to the user.
 """
 
 __author__ = "Lester Hedges"
@@ -48,7 +48,7 @@ class Molecules(_SireWrapper):
            Parameters
            ----------
 
-           molecules : Sire.Mol.Molecules, Sire.System.System, \
+           molecules : Sire.Mol.MoleculeGroup, Sire.System.System, \
                        :class:`System <BioSimSpace._SireWrappers.System>` \
                        [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A Sire Molecues object, a Sire or BioSimSpace System object,
@@ -62,7 +62,7 @@ class Molecules(_SireWrapper):
             molecules = list(molecules)
 
         # A Sire Molecules object.
-        if type(molecules) is _SireMol.Molecules:
+        if type(molecules) is _SireMol.MoleculeGroup:
             super().__init__(molecules)
 
         # A Sire System object.
@@ -71,26 +71,20 @@ class Molecules(_SireWrapper):
 
         # A BioSimSpace System object.
         elif type(molecules) is _System:
-            super().__init__(molecules._sire_object.molecules())
+            super().__init__(molecules._sire_object.group(_SireMol.MGName("all")))
 
         # Another BioSimSpace Molecule object.
         elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
-            mols = _SireMol.Molecules()
+            molgrp = _SireMol.MoleculeGroup("all")
             for molecule in molecules:
-                mols.add(molecule._sire_object)
-                super().__init__(mols)
+                molgrp.add(molecule._sire_object)
+                super().__init__(molgrp)
 
         # Invalid type.
         else:
-            raise TypeError("'molecules' must be of type 'Sire.Mol.Molecules' "
+            raise TypeError("'molecules' must be of type 'Sire.Mol.MoleculeGroup' "
                             "'Sire.System.System', 'BioSimSpace._SireWrappers.System', "
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
-
-        # Store the list of MolNums.
-        self._mol_nums = self._sire_object.molNums()
-
-        # Sort the molecule numbers.
-        self._mol_nums.sort()
 
         # Store the number of molecules.
         self._num_mols = self._sire_object.nMolecules()
@@ -124,8 +118,6 @@ class Molecules(_SireWrapper):
 
         # A Molecule object.
         elif type(other) is _Molecule:
-            mol = other.copy()
-            mol._renumber(_SireMol.MolNum.getUniqueNumber())
             molecules.add(mol._sire_object)
 
         # A Molecules object.
@@ -135,8 +127,8 @@ class Molecules(_SireWrapper):
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, _Molecule) for x in other):
             for molecule in other:
-                mol = molecule.copy()
-                mol._renumber(_SireMol.MolNum.getUniqueNumber())
+                #mol = molecule.copy()
+                #mol._renumber(_SireMol.MolNum.getUniqueNumber())
                 molecules.add(mol._sire_object)
 
         # Unsupported.
@@ -178,7 +170,7 @@ class Molecules(_SireWrapper):
                 key = key + self._num_mols
 
             # Extract and return the corresponding molecule.
-            return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
+            return _Molecule(self._sire_object[_SireMol.MolIdx(key)])
 
     def __setitem__(self, key, value):
         """Set a molecule in the container."""

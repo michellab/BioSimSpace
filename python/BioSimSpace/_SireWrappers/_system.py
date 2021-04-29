@@ -42,10 +42,6 @@ from BioSimSpace import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
-class _MolWithResName(_SireMol.MolWithResID):
-    def __init__(self, resname):
-        super().__init__(_SireMol.ResName(resname))
-
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
 
@@ -121,14 +117,8 @@ class System(_SireWrapper):
         # Initialise dictionary to map MolNum to MolIdx.
         self._molecule_index = {}
 
-        # Store the sorted molecule numbers.
+        # Store the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
-
-        # Store a mapping from MolNum to index.
-        self._mol_num_to_idx = {}
-        for idx, num in enumerate(self._mol_nums):
-            self._mol_num_to_idx[num] = idx
 
         # Intialise the iterator counter.
         self._iter_count = 0
@@ -198,7 +188,7 @@ class System(_SireWrapper):
                 key = key + self.nMolecules()
 
             # Extract and return the corresponding molecule.
-            return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
+            return _Molecule(self._sire_object[_SireMol.MolIdx(key)])
 
     def __setitem__(self, key, value):
         """Set a molecule in the container."""
@@ -417,7 +407,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -467,7 +456,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def removeWaterMolecules(self):
         """Remove all of the water molecules from the system."""
@@ -483,7 +471,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def updateMolecule(self, index, molecule):
         """Updated the molecule at the given index.
@@ -497,6 +484,9 @@ class System(_SireWrapper):
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The updated (or replacement) molecule.
         """
+
+        if type(index) is not int:
+            raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
             raise IndexError("The molecule 'index' is out of range.")
@@ -533,7 +523,6 @@ class System(_SireWrapper):
 
             # Update the molecule numbers.
             self._mol_nums = self._sire_object.molNums()
-            self._mol_nums.sort()
 
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
@@ -579,7 +568,6 @@ class System(_SireWrapper):
 
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
-        self._mol_nums.sort()
 
     def getMolecule(self, index):
         """Return the molecule at the given index.
@@ -624,7 +612,7 @@ class System(_SireWrapper):
             raise ValueError("No molecules in group '%s'" % group)
 
         # Return a molecules container.
-        return _Molecules(molgrp.molecules())
+        return _Molecules(molgrp)
 
     def getWaterMolecules(self):
         """Return a list containing all of the water molecules in the system.
@@ -636,7 +624,7 @@ class System(_SireWrapper):
                A container of water molecule objects.
         """
 
-        return _Molecules(self._sire_object.search("water").toMolecules())
+        return _Molecules(self._sire_object.search("water").toGroup())
 
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
@@ -1360,8 +1348,12 @@ class System(_SireWrapper):
             # Try to update the coordinates property.
             try:
                 mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
-            except:
-                raise _IncompatibleError("Unable to update 'coordinates' for molecule index '%d'" % idx)
+            except Exception as e:
+                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
 
             # Update the molecule in the original system.
             self._sire_object.update(mol0)
@@ -1444,7 +1436,7 @@ class System(_SireWrapper):
                 mol_num_last = mol_num
                 mol_num = num
             else:
-                mol_idx = self._mol_num_to_idx[mol_num_last]
+                mol_idx = self._molecule_index[mol_num_last]
                 return mol_idx, abs_index - tally_last
 
         raise ValueError("'abs_index' exceeded system atom tally!")
@@ -1533,26 +1525,40 @@ class System(_SireWrapper):
                 else:
                     new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 
-            # Loop over all of the renamed water molecules, delete the old one
-            # from the system, then add the renamed one back in.
-            # TODO: This is a hack since the "update" method of Sire.System
-            # doesn't work properly at present.
-            self.removeWaterMolecules()
-            for idx, wat in enumerate(new_waters):
-                # Renumber the new molecule to match the original.
-                edit_mol = wat.edit()
-                edit_mol.renumber(waters[idx]._sire_object.number())
-                wat = edit_mol.commit()
+            # Create a new system and molecule group.
+            system = _SireSystem.System("BioSimSpace System")
+            molgrp = _SireMol.MoleculeGroup("all")
 
-                # Re-add the water to the system.
-                self._sire_object.add(wat, _SireMol.MGName("all"))
+            # Create a dictionary of water molecule numbers to list index.
+            wat_num_to_idx = {}
+            for idx, wat in enumerate(waters):
+                wat_num_to_idx[wat.number()] = idx
+
+            # Add all moleclules from the original system into the new one,
+            # preserving the order.
+            for mol in self.getMolecules():
+                try:
+                    # Water molecule.
+                    molgrp.add(new_waters[wat_num_to_idx[mol.number()]])
+                except:
+                    # Non-water molecule.
+                    molgrp.add(mol._sire_object)
+
+            # Add the group to the system.
+            system.add(molgrp)
+
+            # Copy across system properties.
+            for prop in self._sire_object.propertyKeys():
+                system.setProperty(prop, self._sire_object.property(prop))
+
+            # Set the system.
+            self._sire_object = system
 
             # Reset the index mappings.
             self._reset_mappings()
 
             # Update the molecule numbers.
             self._mol_nums = self._sire_object.molNums()
-            self._mol_nums.sort()
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
