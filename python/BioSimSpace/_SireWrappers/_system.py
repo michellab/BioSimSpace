@@ -1335,7 +1335,7 @@ class System(_SireWrapper):
         for idx in range(0, self.nMolecules()):
             # Extract the number of atoms in the molecules.
             num_atoms0 = self._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
-            num_atoms1 = self._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
+            num_atoms1 = system._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
 
             if num_atoms0 != num_atoms1:
                 raise _IncompatibleError("Mismatch in atom count for molecule '%d': "
