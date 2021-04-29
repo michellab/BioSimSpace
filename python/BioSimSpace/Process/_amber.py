@@ -374,9 +374,13 @@ class Amber(_process.Process):
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                # Don't use barostat for vacuum simulations.
+                if has_box and self._has_water:
+                    self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                    self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                        % self._protocol.getPressure().bar().magnitude())
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
             # Restrain the backbone.
             restraint = self._protocol.getRestraint()
@@ -491,9 +495,13 @@ class Amber(_process.Process):
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                # Don't use barostat for vacuum simulations.
+                if has_box and self._has_water:
+                    self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                    self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                        % self._protocol.getPressure().bar().magnitude())
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
             self.addToConfig(" /")
 
@@ -549,9 +557,13 @@ class Amber(_process.Process):
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                # Don't use barostat for vacuum simulations.
+                if has_box and self._has_water:
+                    self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                    self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                        % self._protocol.getPressure().bar().magnitude())
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
             # Activate PLUMED and locate the plumed.dat file.
             self.addToConfig("  plumed=1,")
@@ -632,9 +644,13 @@ class Amber(_process.Process):
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
-                self.addToConfig("  ntp=1,")                    # Isotropic pressure scaling.
-                self.addToConfig("  pres0=%.5f,"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                # Don't use barostat for vacuum simulations.
+                if has_box and self._has_water:
+                    self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                    self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                        % self._protocol.getPressure().bar().magnitude())
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
             # Activate PLUMED and locate the plumed.dat file.
             self.addToConfig("  plumed=1,")
