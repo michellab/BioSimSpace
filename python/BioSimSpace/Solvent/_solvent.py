@@ -746,7 +746,8 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # Extract the water lines from the GRO file.
         water_lines = []
         with open("output.gro", "r") as file:
-            for line in file:
+            # Only search lines that weren't part of the existing molecule.
+            for line in file.readlines()[molecule.nAtoms()+2:]:
                 if _re.search("SOL", line):
                     # Store the SOL atom record.
                     water_lines.append(line)
@@ -788,13 +789,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
             if type(molecule) is _System:
-                # Extract the non-water molecules from the original system.
-                non_waters = _Molecules(molecule.search("not water")._sire_object.toGroup())
-
-                # Create a system by adding these to the water molecules from
-                # gmx solvate, which will include the original waters.
-                system = non_waters.toSystem() + water
-
+                system = molecule + water
             else:
                 system = molecule.toSystem() + water
 
@@ -925,20 +920,15 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     water_ion_lines = []
 
                     with open("solvated_ions.gro", "r") as file:
-                        # Only loop over lines that don't include the original
-                        # system/molecule, since that might also include ions.
-                        if molecule is None:
-                            lines = file.readlines()
-                        else:
-                            lines = file.readlines()[molecule.nAtoms()+2:]
-                        for line in lines:
+                        # Don't  for ions within the original system.
+                        for line in file.readlines()[molecule.nAtoms()+2:]:
                             # This is a Sodium atom.
                             if _re.search("NA", line):
                                 water_ion_lines.append(line)
                                 num_na += 1
 
                             # This is a Chlorine atom.
-                            if _re.search("CL", line):
+                            elif _re.search("CL", line):
                                 water_ion_lines.append(line)
                                 num_cl += 1
 
@@ -986,13 +976,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     # Create a new system by adding the water to the original molecule.
                     if molecule is not None:
                         if type(molecule) is _System:
-                            # Extract the non-water molecules from the original system.
-                            non_waters = _Molecules(molecule.search("not water")._sire_object.toGroup())
-
-                            # Create a system by adding these to the water and ion
-                            # molecules from gmx solvate, which will include the
-                            # original waters.
-                            system = non_waters.toSystem() + water_ions
+                            system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions
 
