@@ -41,6 +41,7 @@ MD driver classes
     Gromacs
     Namd
     OpenMM
+    Plumed
     Somd
 
 Multi process simulation tools
