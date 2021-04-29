@@ -263,6 +263,11 @@ class FreeEnergy():
     def analyse(work_dir, simulation_type=None):
         """Analyse existing free-energy data from a simulation working directory.
 
+           For the return values, leg0 refers to the simulation leg with the
+           larger number of molecules, i.e. the "bound" leg for a "binding"
+           free-energy simulation, or the "free" leg for a "solvation"
+           free-energy simulation.
+
            Parameters
            ----------
 
@@ -871,6 +876,11 @@ class FreeEnergy():
 
 def analyse(work_dir, simulation_type=None):
     """Analyse existing free-energy data from a simulation working directory.
+
+       For the return values, leg0 refers to the simulation leg with the
+       larger number of molecules, i.e. the "bound" leg for a "binding"
+       free-energy simulation, or the "free" leg for a "solvation"
+       free-energy simulation.
 
        Parameters
        ----------
