@@ -89,6 +89,7 @@ def cubic(image_distance):
            The box vector magnitudes.
 
        angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+           The box vector angles: yz, xz, and xy.
     """
 
     # Validate arguments.
