@@ -33,10 +33,12 @@ from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
+from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
@@ -851,14 +853,17 @@ class System(_SireWrapper):
         else:
             return indices
 
-    def setBox(self, size, property_map={}):
+    def setBox(self, box, angles=3*[_Angle(90, "degree")], property_map={}):
         """Set the size of the periodic simulation box.
 
            Parameters
            ----------
 
-           size : [:class:`Length <BioSimSpace.Types.Length>`]
-               The size of the box in each dimension.
+           box : [:class:`Length <BioSimSpace.Types.Length>`]
+               The box vector magnitudes in each dimension.
+
+           angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               The box vector angles: yz, xz, and xy.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -867,25 +872,51 @@ class System(_SireWrapper):
 
         """
 
-        # Convert tuple to list.
-        if type(size) is tuple:
-            size = list(size)
+        # Convert tuples to lists.
+        if type(box) is tuple:
+            box = list(box)
+        if type(angles) is tuple:
+            angles = list(angles)
 
         # Validate input.
-        if type(size) is not list or not all(isinstance(x, _Length) for x in size):
-            raise TypeError("'size' must be a list of 'BioSimSpace.Types.Length' objects.")
+        if type(box) is not list or not all(isinstance(x, _Length) for x in box):
+            raise TypeError("'box' must be a list of 'BioSimSpace.Types.Length' objects.")
 
-        if len(size) != 3:
-            raise ValueError("'size' must contain three items.")
+        if type(angles) is not list or not all(isinstance(x, _Angle) for x in angles):
+            raise TypeError("'angles' must be a list of 'BioSimSpace.Types.Angle' objects.")
+
+        if len(box) != 3:
+            raise ValueError("'box' must contain three items.")
+
+        if len(box) != 3:
+            raise ValueError("'angles' must contain three items.")
 
         # Convert sizes to Anstrom.
-        vec = [x.angstroms().magnitude() for x in size]
+        vec = [x.angstroms().magnitude() for x in box]
 
-        # Create a periodic box object.
-        box = _SireVol.PeriodicBox(_SireMaths.Vector(vec))
+        # Whether the box is triclinic.
+        is_triclinic = False
+
+        # If any angle isn't 90 degrees, then the box is triclinic.
+        for x in angles:
+            if abs(x.degrees().magnitude() - 90) > 1e-6:
+                is_triclinic = True
+                break
+
+        if is_triclinic:
+            # Convert angles to Sire units.
+            ang = [x.degrees().magnitude()*_SireUnits.degree for x in angles]
+
+            # Create a triclinic box object.
+            space = _SireVol.TriclinicBox(vec[0], vec[1], vec[2],
+                                        ang[0], ang[1], ang[2])
+
+        else:
+            # Create a periodic box object.
+            space = _SireVol.PeriodicBox(_SireMaths.Vector(vec))
 
         # Set the "space" property.
-        self._sire_object.setProperty(property_map.get("space", "space"), box)
+        self._sire_object.setProperty(property_map.get("space", "space"), space)
 
     def getBox(self, property_map={}):
         """Get the size of the periodic simulation box.
@@ -902,18 +933,35 @@ class System(_SireWrapper):
            -------
 
            box_size : [:class:`Length <BioSimSpace.Types.Length>`]
-               The size of the box in each dimension.
+               The box vector magnitudes in each dimension.
+
+           angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               The box vector angles: yz, xz, and xy.
        """
 
         # Get the "space" property and convert to a list of BioSimSpace.Type.Length
         # objects.
         try:
-            box = self._sire_object.property(property_map.get("space", "space"))
-            box = [ _Length(x, "Angstrom") for x in box.dimensions() ]
+            space = self._sire_object.property(property_map.get("space", "space"))
+
+            # Periodic box.
+            if type(space) is _SireVol.PeriodicBox:
+                box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
+                angles = 3*[_Angle(90, "degrees")]
+
+            # TriclinicBox box.
+            elif type(space) is _SireVol.TriclinicBox:
+                box = [_Length(space.vector0().magnitude(), "Angstrom"),
+                       _Length(space.vector1().magnitude(), "Angstrom"),
+                       _Length(space.vector2().magnitude(), "Angstrom")]
+                angles = [_Angle(space.alpha(), "degree"),
+                          _Angle(space.beta(), "degree"),
+                          _Angle(space.gamma(), "degree")]
         except:
             box = None
+            angles = None
 
-        return box
+        return box, angles
 
     def translate(self, vector, property_map={}):
         """Translate the system.
