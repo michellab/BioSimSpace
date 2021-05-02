@@ -139,8 +139,8 @@ class Molecule(_SireWrapper):
 
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, Molecule) for x in other):
-            for mol in other:
-                molecules.append(mol)
+            for molecule in other:
+                molecules.append(molecule)
 
         # Unsupported.
         else:
