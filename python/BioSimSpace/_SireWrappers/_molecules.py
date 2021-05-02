@@ -118,7 +118,7 @@ class Molecules(_SireWrapper):
 
         # A Molecule object.
         elif type(other) is _Molecule:
-            molecules.add(mol._sire_object)
+            molecules.add(other._sire_object)
 
         # A Molecules object.
         elif type(other) is Molecules:
@@ -127,9 +127,7 @@ class Molecules(_SireWrapper):
         # A list of Molecule objects.
         elif type(other) is list and all(isinstance(x, _Molecule) for x in other):
             for molecule in other:
-                #mol = molecule.copy()
-                #mol._renumber(_SireMol.MolNum.getUniqueNumber())
-                molecules.add(mol._sire_object)
+                molecules.add(molecule._sire_object)
 
         # Unsupported.
         else:
