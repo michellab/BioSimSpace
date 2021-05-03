@@ -34,6 +34,7 @@ from ._free_energy import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
+from ._steering import *
 
 _protocols = []         # List of protocols (actual name).
 _protocols_lower = []   # List of lower case names.
