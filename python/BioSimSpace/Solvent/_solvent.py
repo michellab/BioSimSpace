@@ -74,7 +74,7 @@ def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension: x, y, and z.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -131,7 +131,7 @@ def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -188,7 +188,7 @@ def spce(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -245,7 +245,7 @@ def tip3p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -302,7 +302,7 @@ def tip4p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -359,7 +359,7 @@ def tip5p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -418,7 +418,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
@@ -597,7 +597,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
        box : [:class:`Length <BioSimSpace.Types.Length>`]
            A list containing the box size in each dimension.
 
-       angles : [:class:`Length <BioSimSpace.Types.Angle>`]
+       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
            A list containing the angles between the box vectors: yz, xz, and xy.
 
        shell : :class:`Length` <BioSimSpace.Types.Length>`
