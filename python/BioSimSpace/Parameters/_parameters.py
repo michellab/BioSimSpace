@@ -817,26 +817,33 @@ for _dir in _openff_dirs:
         # Get the force field name (base name minus extension).
         _base = _os.path.basename(_ff)
         _ff = _os.path.splitext(_base)[0]
-        # Append to the list of available force fields.
-        _forcefields.append(_ff)
-        _open_forcefields.append(_ff)
 
-        # Create a sane function name, i.e. replace "-" and "."
-        # characters with "_".
-        _func_name = _ff.replace("-", "_")
-        _func_name = _func_name.replace(".", "_")
+        # Only include unconstrained force-fields since we need to go via
+        # an intermediate ParmEd conversion. This means ParmEd must receive
+        # bond parameters. We can then choose to constrain later, if required.
+        # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
 
-        # Generate the function and bind it to the namespace.
-        _function = _make_function(_ff)
-        setattr(_namespace, _func_name, _function)
+        if "unconstrained" in _ff:
+            # Append to the list of available force fields.
+            _forcefields.append(_ff)
+            _open_forcefields.append(_ff)
 
-        # Expose the function to the user.
-        __all__.append(_func_name)
+            # Create a sane function name, i.e. replace "-" and "."
+            # characters with "_".
+            _func_name = _ff.replace("-", "_")
+            _func_name = _func_name.replace(".", "_")
 
-        # Convert force field name to lower case and map to its function.
-        _forcefields_lower.append(_ff.lower())
-        _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
-        _requires_water_model[_ff.lower()] = False
+            # Generate the function and bind it to the namespace.
+            _function = _make_function(_ff)
+            setattr(_namespace, _func_name, _function)
+
+            # Expose the function to the user.
+            __all__.append(_func_name)
+
+            # Convert force field name to lower case and map to its function.
+            _forcefields_lower.append(_ff.lower())
+            _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+            _requires_water_model[_ff.lower()] = False
 
 def forceFields():
     """Return a list of the supported force fields.
