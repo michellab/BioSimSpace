@@ -86,7 +86,7 @@ class Requirement():
                Whether the requirement is optional.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Requirement:
             raise Exception("<Requirement> must be subclassed.")
 
