@@ -2011,7 +2011,8 @@ class Gromacs(_process.Process):
                         # making sure that indices are relative to the molecule.
                         atom_idxs = self._system.getRestraintAtoms(restraint,
                                                                    mol_index=mol_idx,
-                                                                   is_absolute=False)
+                                                                   is_absolute=False,
+                                                                   allow_zero_matches=True)
 
                         # Store the atom index if it hasn't already been recorded.
                         for atom_idx in atom_idxs:

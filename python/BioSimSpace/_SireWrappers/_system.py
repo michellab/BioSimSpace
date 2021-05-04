@@ -1013,7 +1013,8 @@ class System(_SireWrapper):
             mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
             self._sire_object.update(mol)
 
-    def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True, property_map={}):
+    def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True,
+            allow_zero_matches=False, property_map={}):
         """Get the indices of atoms involved in a restraint.
 
            Parameters
@@ -1030,6 +1031,12 @@ class System(_SireWrapper):
                Whether the indices are absolute, i.e. indexed within the
                entire system. If False, then indices are relative to the
                molecule in which the atom is found.
+
+           allow_zero_matches : bool
+               Whether to raise an exception when no atoms match the restraint.
+               Setting to false is useful if you need to determine restraints
+               on a per-molecule basis, i.e. so molecules won't contain atoms
+               matching the restraint, but the entire system will.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1163,7 +1170,7 @@ class System(_SireWrapper):
                     search = mol.search(string)
 
         # Raise an exception if no atoms match the restraint.
-        if len(search) == 0:
+        if len(search) == 0 and not allow_zero_matches:
             msg = "No atoms matched the restraint!"
             if restraint == "backbone":
                 msg += " Backbone restraints only apply to atoms in protein residues."
