@@ -39,6 +39,9 @@ from ._protocol import Protocol as _Protocol
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
+    # Supported restraint keywords.
+    _restraints = ["backbone", "heavy", "all", "none"]
+
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(0.2, "nanoseconds"),
@@ -404,14 +407,15 @@ class Equilibration(_Protocol):
         if type(restraint) is tuple:
             restraint = list(restraint)
 
-        # Allowed keyword options.
-        allowed = ["backbone", "heavy", "all"]
-
         if type(restraint) is str:
             # Convert to lower case and strip whitespace.
             restraint = restraint.lower().replace(" ", "")
-            if restraint not in allowed:
+            if restraint not in self._restraints:
                 raise ValueError(f"'restraint' must be one of: {allowed}")
+            # Set to NoneType if equal to "none", since this makes checking
+            # whether a restraint is set elsewhere much easier.
+            if restraint == "none":
+                restraint = None
 
         elif type(restraint) is list:
             if not all(isinstance(x, int) for x in restraint):
@@ -435,3 +439,15 @@ class Equilibration(_Protocol):
                Whether the temperature is fixed.
         """
         return self._temperature_start == self._temperature_end
+
+    @classmethod
+    def restraints(cls):
+        """Return a list of the supported restraint keywords.
+
+           Returns
+           -------
+
+           restraints : [str]
+               A list of the supported restraint keywords.
+        """
+        return cls._restraints.copy()
