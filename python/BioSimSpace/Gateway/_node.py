@@ -497,7 +497,6 @@ class Node():
                 description=name,
                 tooltip=input.getHelp(),
                 button_style="",
-                icon="check",
                 disabled=False
             )
 
