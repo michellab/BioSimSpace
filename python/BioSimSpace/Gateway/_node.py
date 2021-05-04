@@ -678,7 +678,7 @@ class Node():
                             continuous_update=False,
                             orientation="horizontal",
                             readout=True,
-                            readout_format=".1f",
+                            readout_format=".2f",
                             disabled=False
                         )
 
