@@ -71,7 +71,7 @@ def generateBoxParameters(box_type, image_distance):
         if box_type not in _box_types_lower:
             raise ValueError("Supported box types are: %s" % boxTypes())
 
-    return _box_type_dict[box_type](image_distance)
+    return _box_types_dict[box_type](image_distance)
 
 def cubic(image_distance):
     """Generate paramters for a cubic box.
