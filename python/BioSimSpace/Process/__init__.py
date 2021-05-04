@@ -28,7 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    packages
+    engines
     createProcess
 
 MD driver classes
@@ -55,13 +55,13 @@ Multi process simulation tools
 Examples
 ========
 
-Print the list of supported molecular dynamics packages.
+Print the list of supported molecular dynamics engines.
 
 .. code-block:: python
 
    import BioSimSpace as BSS
 
-   print(BSS.Process.packages())
+   print(BSS.Process.engines())
 
 Create a process to apply a minimisation protocol to a molecular system
 using the `AMBER <http://ambermd.org>`_ package. Execute the process and

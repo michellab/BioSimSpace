@@ -33,7 +33,7 @@ from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 
 # Import common objects from BioSimSpace.MD._md
-from BioSimSpace.MD._md import _file_extensions, _md_packages, _find_md_packages
+from BioSimSpace.MD._md import _file_extensions, _md_engines, _find_md_engines
 
 def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", work_dir=None,
      seed=None, property_map={}, ignore_warnings=False, show_errors=True):
@@ -49,7 +49,7 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
            The metadynamics protocol.
 
        gpu_support : bool
-           Whether to choose a package with GPU support.
+           Whether to choose an engine with GPU support.
 
        auto_start : bool
            Whether to start the process automatically.
@@ -121,27 +121,27 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
     if type(show_errors) is not bool:
         raise ValueError("'show_errors' must be of type 'bool.")
 
-    # Find a molecular dynamics package and executable.
-    packages, exes = _find_md_packages(system, protocol, gpu_support)
+    # Find a molecular dynamics engine and executable.
+    engines, exes = _find_md_engines(system, protocol, gpu_support)
 
-    # Create the process object, return the first supported package that can
+    # Create the process object, return the first supported engine that can
     # instantiate a process.
 
-    for package, exe in zip(packages, exes):
+    for engine, exe in zip(engines, exes):
         try:
             # AMBER.
-            if package == "AMBER":
+            if engine == "AMBER":
                 process = _Process.Amber(system, protocol, exe=exe, name=name,
                     work_dir=work_dir, seed=seed, property_map=property_map)
 
             # GROMACS.
-            elif package == "GROMACS":
+            elif engine == "GROMACS":
                 process = _Process.Gromacs(system, protocol, exe=exe, name=name,
                     work_dir=work_dir, seed=seed, property_map=property_map,
                     ignore_warnings=ignore_warnings, show_errors=show_errors)
 
             # OPENMM.
-            elif package == "OPENMM":
+            elif engine == "OPENMM":
                 if gpu_support:
                     platform = "CUDA"
                 else:
@@ -160,4 +160,4 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
             pass
 
     # If we got here, then we couldn't create a process.
-    raise Exception(f"Unable to create a process using any supported package: {packages}")
+    raise Exception(f"Unable to create a process using any supported engine: {engines}")

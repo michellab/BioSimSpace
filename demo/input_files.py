@@ -6,7 +6,7 @@
 # 
 # # Input files
 # 
-# In this notebook you'll learn how to use BioSimSpace to generate input files for different molecular dynamics packages.
+# In this notebook you'll learn how to use BioSimSpace to generate input files for different molecular dynamics engines.
 # 
 # First we'll need to import BioSimSpace:
 
@@ -43,7 +43,7 @@ node.addInput("protocol", BSS.Gateway.String(help="The molecular simulation prot
                                              allowed=BSS.Protocol.protocols(),
                                              default="Minimisation"))
 node.addInput("package", BSS.Gateway.String(help="The molecular dynamics package.",
-                                            allowed=BSS.Process.packages(),
+                                            allowed=BSS.Process.engines(),
                                             default="Amber"))
 
 

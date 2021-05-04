@@ -26,7 +26,7 @@ Utility functions.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["packages", "createProcess"]
+__all__ = ["engines", "createProcess"]
 
 from ._amber import *
 from ._gromacs import *
@@ -35,32 +35,32 @@ from ._openmm import *
 from ._process_runner import *
 from ._somd import *
 
-_packages = []         # List of supported packages (actual name).
-_packages_lower = []   # List of lower case package names.
-_package_dict = {}     # Mapping between lower case name and class.
+_engines = []         # List of supported engines (actual name).
+_engines_lower = []   # List of lower case engine names.
+_engine_dict = {}     # Mapping between lower case name and class.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "ProcessRunner":
-        _packages.append(_var)
-        _packages_lower.append(_var.lower())
-        _package_dict[_var.lower()] = getattr(_namespace, _var)
+        _engines.append(_var)
+        _engines_lower.append(_var.lower())
+        _engine_dict[_var.lower()] = getattr(_namespace, _var)
 del _namespace
 del _sys
 del _var
 
-def packages():
-    """Return a list of the supported Molecular Dynamics packages.
+def engines():
+    """Return a list of the supported Molecular Dynamics engines.
 
        Returns
        -------
 
-       packages : [str]
-           The list of supported Molecular Dynamics packages.
+       engines : [str]
+           The list of supported Molecular Dynamics engines.
     """
-    return _packages
+    return _engines
 
-def createProcess(system, protocol, package):
+def createProcess(system, protocol, engine):
     """Create a simulation process.
 
        Parameters
@@ -72,20 +72,20 @@ def createProcess(system, protocol, package):
        protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The protocol for the process.
 
-       package : str
-           The name of the simulation package.
+       engine : str
+           The name of the simulation engine.
 
        Returns
        -------
 
        process : :class:`Process <BioSimSpace.Process>`
-           The process object for the specific simulation package.
+           The process object for the specific simulation engine.
     """
 
     # Strip whitespace and convert to lower case.
-    _package = package.replace(" ", "").lower()
+    _engine = engine.replace(" ", "").lower()
 
-    if _package not in _packages_lower:
-        raise KeyError("Unsupported package '%s', supported packages are %s" % (package, _packages))
+    if _engine not in _engines_lower:
+        raise KeyError("Unsupported engine '%s', supported engines are %s" % (engine, _engines))
 
-    return _package_dict[_package](system, protocol)
+    return _engine_dict[_engine](system, protocol)
