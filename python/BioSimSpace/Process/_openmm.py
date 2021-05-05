@@ -235,9 +235,6 @@ class OpenMM(_process.Process):
         # Clear the existing configuration list.
         self._config = []
 
-        # Flag that this isn't a custom protocol.
-        self._protocol._setCustomised(False)
-
         # Get the "space" property from the user mapping.
         prop = self._property_map.get("space", "space")
 
@@ -851,6 +848,9 @@ class OpenMM(_process.Process):
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
+
+        # Flag that this isn't a custom protocol.
+        self._protocol._setCustomised(False)
 
     def getConfig(self):
         """Get the list of strings defining the OpenMM Python script.
