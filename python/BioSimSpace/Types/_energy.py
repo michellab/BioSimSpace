@@ -56,7 +56,7 @@ class Energy(_Type):
                      "KT"                    : "An energy in KT." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "KLO CALORIES PER MOL"
+    _null_unit = "KILO CALORIES PER MOL"
 
     def __init__(self, *args):
         """Constructor.
