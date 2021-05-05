@@ -35,8 +35,9 @@ from BioSimSpace import Protocol as _Protocol
 # Import common objects from BioSimSpace.MD._md
 from BioSimSpace.MD._md import _file_extensions, _md_engines, _find_md_engines
 
-def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", work_dir=None,
-     seed=None, property_map={}, ignore_warnings=False, show_errors=True):
+def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+    name="metamd", work_dir=None, seed=None, property_map={},
+    ignore_warnings=False, show_errors=True):
     """Auto-configure and run a metadynamics process.
 
        Parameters
@@ -47,6 +48,11 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
 
        protocol : :class:`Protocol <BioSimSpace.Protocol.Metadynamics>`
            The metadynamics protocol.
+
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen. Supported engines can be
+           found using 'BioSimSpace.Metadynamics.engines()'.
 
        gpu_support : bool
            Whether to choose an engine with GPU support.
@@ -95,6 +101,10 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
 
     # Validate optional arguments.
 
+    if type(engine) is not str:
+        raise TypeError("'engine' must be of type 'str'.")
+    md_engine = engine.upper().replace(" ", "")
+
     if type(gpu_support) is not bool:
         raise TypeError("'gpu_support' must be of type 'bool'")
 
@@ -122,7 +132,7 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
         raise ValueError("'show_errors' must be of type 'bool.")
 
     # Find a molecular dynamics engine and executable.
-    engines, exes = _find_md_engines(system, protocol, gpu_support)
+    engines, exes = _find_md_engines(system, protocol, md_engine, gpu_support)
 
     # Create the process object, return the first supported engine that can
     # instantiate a process.
@@ -160,4 +170,7 @@ def run(system, protocol, gpu_support=False, auto_start=True, name="metamd", wor
             pass
 
     # If we got here, then we couldn't create a process.
-    raise Exception(f"Unable to create a process using any supported engine: {engines}")
+    if md_engine == "AUTO":
+        raise Exception(f"Unable to create a process using any supported engine: {engines}")
+    else:
+        raise Exception(f"Unable to create a process using the chosen engine: {md_engine}")

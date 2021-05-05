@@ -90,7 +90,7 @@ _steering = { "AMBER"   : True,
               "SOMD"    : False
             }
 
-def _find_md_engines(system, protocol, gpu_support=False):
+def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
     """Find molecular dynamics engines on the system that
        support the given protocol and GPU requirements.
 
@@ -102,6 +102,10 @@ def _find_md_engines(system, protocol, gpu_support=False):
 
        protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
+
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen.
 
        gpu_support : bool
            Whether the engine must have GPU support.
@@ -124,6 +128,18 @@ def _find_md_engines(system, protocol, gpu_support=False):
         raise ValueError("Cannot find an MD engine that supports format: %s" % fileformat)
     else:
         engines = _file_extensions[fileformat]
+
+    # If engine != "auto", then check the chosen engine supports the file
+    # format.
+    md_engine = engine
+    if md_engine != "AUTO":
+        if md_engine not in _md_engines.keys():
+            raise ValueError(f"The {engine} MD engine isn't supported!")
+        if md_engine not in engines:
+            raise ValueError(f"The {engine} MD engine doesn't format {fileformat}")
+        else:
+            # Just search for the chosen engine.
+            engines = [md_engine]
 
     is_free_energy = False
     is_metadynamics = False
@@ -195,11 +211,14 @@ def _find_md_engines(system, protocol, gpu_support=False):
 
     # No engine was found.
     if len(found_engines) == 0:
-        raise _MissingSoftwareError("Couldn't find engine to support format: %s" % fileformat)
+        if md_engine == "AUTO":
+            raise _MissingSoftwareError("Couldn't find an engine that supports the protocol!")
+        else:
+            raise _MissingSoftwareError("The chosen engine doesn't support the protocol!")
 
     return found_engines, found_exes
 
-def run(system, protocol, gpu_support=False, auto_start=True,
+def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={},
         ignore_warnings=False, show_errors=True):
     """Auto-configure and run a molecular dynamics process.
@@ -212,6 +231,11 @@ def run(system, protocol, gpu_support=False, auto_start=True,
 
        protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
+
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen. Supported engines can be
+           found using 'BioSimSpace.MD.engines()'.
 
        gpu_support : bool
            Whether to choose an engine with GPU support.
@@ -270,6 +294,10 @@ def run(system, protocol, gpu_support=False, auto_start=True,
 
     # Validate optional arguments.
 
+    if type(engine) is not str:
+        raise TypeError("'engine' must be of type 'str'.")
+    md_engine = engine.upper().replace(" ", "")
+
     if type(gpu_support) is not bool:
         raise TypeError("'gpu_support' must be of type 'bool'")
 
@@ -297,7 +325,7 @@ def run(system, protocol, gpu_support=False, auto_start=True,
         raise ValueError("'show_errors' must be of type 'bool.")
 
     # Find a molecular dynamics engine and executable.
-    engines, exes = _find_md_engines(system, protocol, gpu_support)
+    engines, exes = _find_md_engines(system, protocol, md_engine, gpu_support)
 
     # Create the process object, return the first supported engine that can
     # instantiate a process.
@@ -350,4 +378,7 @@ def run(system, protocol, gpu_support=False, auto_start=True,
             pass
 
     # If we got here, then we couldn't create a process.
-    raise Exception(f"Unable to create a process using any supported engine: {engines}")
+    if md_engine == "AUTO":
+        raise Exception(f"Unable to create a process using any supported engine: {engines}")
+    else:
+        raise Exception(f"Unable to create a process using the chosen engine: {md_engine}")
