@@ -58,4 +58,4 @@ def engines():
        engines : [str]
            The list of supported engines.
     """
-    return ["Amber", "Gromacs", "OpenMM"]
+    return ["Amber", "Gromacs", "OpenMM", "auto"]
