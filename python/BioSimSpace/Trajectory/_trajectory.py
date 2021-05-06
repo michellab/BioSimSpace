@@ -45,6 +45,7 @@ from BioSimSpace.Types import Time as _Time
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import _SireWrappers as _SireWrappers
+from BioSimSpace import Units as _Units
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",
@@ -468,5 +469,7 @@ class Trajectory():
             else:
                 raise ValueError(msg) from None
 
-        # Convert to a list and return.
-        return list(rmsd)
+        # Convert to a list and add units.
+        rmsd = [_Units.Length.nanometer * float(x) for x in rmsd]
+
+        return rmsd
