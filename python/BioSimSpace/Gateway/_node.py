@@ -132,6 +132,9 @@ class CwlAction(_argparse.Action):
                 elif type(value) is _Float:
                     cwl_type = "float"
 
+                elif type(value) is _String:
+                    cwl_type = "string"
+
                 elif type(value) is _File:
                     cwl_type = "File"
 
