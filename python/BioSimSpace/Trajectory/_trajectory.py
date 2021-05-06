@@ -434,7 +434,7 @@ class Trajectory():
            Returns
            -------
 
-           rmsd : [float]
+           rmsd : [:class:`Length <BioSimSpace.Types.Length>`]
                A list containing the RMSD value at each time point.
         """
 
