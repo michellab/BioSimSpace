@@ -76,7 +76,7 @@ except:
     _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
-        property_map={}):
+        input_scores=None, property_map={}):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -96,6 +96,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            Whether to plot the network when running from within a notebook.
            If using a 'work_dir', then a PNG image will be located in
            'work_dir/images/network.png'.
+
+       input_scores : [float]
+           A list of float values (0.0-0.1) for the molecules. If defined, LOMAP will 
+           use these values to score molecular transformations instead of using its
+           own LOMAP score.
 
        property_map : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -145,8 +150,21 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     if type(plot_network) is not bool:
         raise TypeError("'plot_network' must be of type 'bool'.")
 
+    # Validate the propert map.
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
+
+    # Validate the input scores.
+    if input_scores is not None:
+      if type(input_scores) is not list:
+          raise TypeError("'input_scores' must be of type 'list'")
+      else:
+          # Check that all values in the list are floats.
+          if not all(isinstance(i, float) for i in input_scores):
+              raise ValueError("'input_scores' values must be of type float.")
+          # Check that all values in list are floats between 0 and 1.
+          if not all(0 <= i <= 1 for i in input_scores):
+              raise ValueError("'input_scores' values must be between 0 and 1.")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -168,17 +186,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
     # Write all of the molecules to disk.
-    for x, molecule in enumerate(molecules):
-        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-            molecule, "pdb", property_map=property_map)
+    for x, (molecule, name) in enumerate(zip(molecules, names)):
+        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+            molecule, "mol2", property_map=property_map)
 
     # Get the name of the LOMAP script.
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
 
     # Generate the command-line string.
     command = f"{_sys.executable} {lomap_script} " \
-            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
-            + "--threed --max3d 3.0"
+      + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
+      + "--threed --max3d 3.0 -f"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
