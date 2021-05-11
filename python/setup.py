@@ -37,7 +37,7 @@ try:
           license='GPLv2',
           packages=find_packages(),
           include_package_data=True,
-          zip_safe=True
+          zip_safe=False
         )
 
 # Post setup configuration.
