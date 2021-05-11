@@ -232,8 +232,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # that LOMAP indicates should be drawn.
             if row[7].strip() == "Yes":
                 # Extract the nodes (molecules) connected by the edge.
-                mol0 = int(row[2].rsplit(".")[0])
-                mol1 = int(row[3].rsplit(".")[0])
+                mol0 = int(row[2].rsplit(".")[0].rsplit("_")[0])
+                mol1 = int(row[3].rsplit(".")[0].rsplit("_")[0])
 
                 # Extract the score and convert to a float.
                 score = float(row[4])
