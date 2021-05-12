@@ -104,7 +104,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            ..
            lig_ lig_,score
            , where score is a float that is fed into LOMAP for edge scoring
-           (instead of the default LOMAP score based on MCSS).
+           (instead of the default LOMAP score based on Maximum Common Substructure (MCS)).
 
        property_map : dict
            A dictionary that maps "properties" in molecule0 to their user
