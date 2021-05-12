@@ -115,6 +115,8 @@ class DBMolecules(object):
            the maximum distance used to cluster the graph nodes
         cutoff : float
            the Minimum Similarity Score (MSS) used to build the graph
+        ml_pd : str
+            the name of a file containing links with edge scorings to use instead of LOMAP score
         linksfile : str
            the name of a file containing links to seed the graph with
 
@@ -158,6 +160,7 @@ class DBMolecules(object):
             fingerprint_str = ''
             fast_str = ''
             threed_str = ''
+            ml_pd_str = ''
             linksfile_str = ''
 
             parser.set_defaults(output=output)
@@ -166,7 +169,6 @@ class DBMolecules(object):
             parser.set_defaults(display=display)
             parser.set_defaults(radial=radial)
             parser.set_defaults(fingerprint=fingerprint)
-            parser.set_defaults(ml_pd=ml_pd)
             parser.set_defaults(fast=fast)
             parser.set_defaults(threed=threed)
             if output:
@@ -199,7 +201,7 @@ class DBMolecules(object):
             names_str = '%s --parallel %s --verbose %s --time %s --ecrscore %s --max3d %s --name %s --max %s --cutoff %s --hub %s %s %s %s %s %s %s %s %s %s' \
                         % (
                         directory, parallel, verbose, time, ecrscore, max3d, name, max, cutoff, hub, output_str, display_str, output_no_images_str, output_no_graph_str,
-                        radial_str, fingerprint_str, fast_str, threed_str, linksfile_str)
+                        radial_str, fingerprint_str, fast_str, threed_str, ml_pd_str, linksfile_str)
 
             #print("ARGS:",names_str)
             self.options = parser.parse_args(names_str.split())
@@ -534,15 +536,32 @@ class DBMolecules(object):
 
                     if not fingerprint:
                         if ml_pd:
-                            # get the value from a file in work_dir?
-                            ml_pd_val = np.random.uniform(0, 5)
+                            # this breaks when user uses "." in ligand name.
+                            lig1_name = self[i].getName().split(".")[0][4:]
+                            lig2_name = self[j].getName().split(".")[0][4:]
 
-                            # Use pre-computed perturbation difficulty values.
-                            # Because the ML predictor predicts SEM values, we need to invert such that
+                            # Use pre-computed perturbation difficulty values. Find the value in the file.
+                            ml_pd_val = None
+                            with open(ml_pd) as ml_pd_file:
+                                for line in ml_pd_file:
+                                    if line.rstrip().startswith(f"{lig1_name},{lig2_name}"):
+                                        ml_pd_val = line.rstrip().split(",")[2]
+
+                            # if not found, then the inverse should be present.
+                            if ml_pd_val is None:
+                                with open(ml_pd) as ml_pd_file: 
+                                    for line in ml_pd_file:
+                                        if line.rstrip().startswith(f"{lig2_name},{lig1_name}"):
+                                            ml_pd_val = line.rstrip().split(",")[2]
+
+                            if ml_pd_val is None:
+                                raise IOError(f"The perturbation {lig1_name},{lig2_name} was not found in {ml_pd}.")
+                            # Because the current ML predictor predicts SEM values, we need to invert such that
                             # perturbations with low predicted SEM are favoured by LOMAP.
-                            ml_pd_val = 1/ml_pd_val
+                            ml_pd_val = 1/float(ml_pd_val)
                         else:
                             # Maximum Common Subgraph (MCS) calculation
+                            # this is the standard route in LOMAP.
                             MC = mcs.MCS(moli, molj, options=self.options)
                             ml=MC.all_atom_match_list()
                             self.set_MCSmap(i,j,ml)
@@ -1120,7 +1139,7 @@ graph_group.add_argument('-r', '--radial', default=False, action='store_true', \
                          help='Using the radial option to build the graph')
 graph_group.add_argument('-b', '--hub', default=None, type=str, \
                          help='Using a radial graph approach with a manually specified hub compound')
-graph_group.add_argument('-ml', '--ml_pd', default=False, action='store_true', \
+graph_group.add_argument('-z', '--ml_pd', type=str, default='', \
                          help='Using the machine-learning perturbation difficulty option to build similarity matrices')
 graph_group.add_argument('-f', '--fingerprint', default=False, action='store_true', \
                          help='Using the fingerprint option to build similarity matrices')
