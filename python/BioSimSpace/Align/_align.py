@@ -171,14 +171,27 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # check if all the molecule transformations are in the passed file.
         perturbations = _itertools.combinations(names, 2)
-        with open(scores_file) as scores_file_:
-          contents = repr(scores_file_.read())
+        with open(scores_file, "r") as scores_file_:
+          contents = []
+          for line in scores_file_:
+            # check that str,str,float. Because of how file is parsed, 
+            # lig1_name and lig2_name are always str.
+            lig1_name, lig2_name, score = line.rstrip().split(",")
+            try: 
+              float(score)
+            except ValueError:
+              raise ValueError(f"{scores_file} contains a non-numerical value on third "\
+                                +f"column ({line.rstrip()}). Make sure that each line "\
+                                +"in the file is formatted as str,str,value.")
+            contents.append(line.rstrip())
 
+          # check that all possible perturbations in the ligand series are accounted for in
+          # the scores_file.
           for pert in perturbations:
-            if not f"{pert[0]},{pert[1]}" in contents:
+            if not f"{pert[0]},{pert[1]}" in ",".join(contents):
 
               # check the opposite direction as well.
-              if not f"{pert[1]},{pert[0]}" in contents:
+              if not f"{pert[1]},{pert[0]}" in ",".join(contents):
 
                 raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "+\
                   f"in {scores_file}. Make sure your input file contains all possible transformations.")
