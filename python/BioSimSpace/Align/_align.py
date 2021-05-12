@@ -235,14 +235,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
 
     # Generate the command-line string.
+    command = f"{_sys.executable} {lomap_script} " \
+            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
+            +  "--threed --max3d 3.0"
     if scores_file is not None:
-      command = f"{_sys.executable} {lomap_script} " \
-        + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
-        + f"--threed --max3d 3.0 --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
-    else:
-      command = f"{_sys.executable} {lomap_script} " \
-        + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
-        + "--threed --max3d 3.0"
+        command += " --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
