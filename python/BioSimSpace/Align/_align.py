@@ -38,7 +38,7 @@ import os as _os
 import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
-import itertools
+import itertools as _itertools
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
@@ -166,7 +166,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
           raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
 
       # check if all the molecule transformations are in the passed file.
-      perturbations = itertools.combinations(names, 2)
+      perturbations = _itertools.combinations(names, 2)
       with open(scores_file) as scores_file_:
         contents = repr(scores_file_.read())
 
