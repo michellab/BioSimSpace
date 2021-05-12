@@ -34,11 +34,11 @@ __all__ = ["generateNetwork",
            "merge"]
 
 import csv as _csv
+import itertools as _itertools
 import os as _os
 import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
-import itertools as _itertools
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
@@ -100,10 +100,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
        scores_file : str
            Path to a CSV file in the form:
-           lig1,lig2,score
-           ..
-           lig_ lig_,score
-           , where score is a float that is fed into LOMAP for edge scoring
+             lig1,lig2,score
+             ...
+             lig_ lig_,score
+           where score is a float that is fed into LOMAP for edge scoring
            (instead of the default LOMAP score based on Maximum Common Substructure (MCS)).
 
        property_map : dict
@@ -161,45 +161,46 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     # Validate the scores file.
     if scores_file is not None:
 
-      # check that it exists.
-      if _os.path.isfile(scores_file):
-
         if type(scores_file) is not str:
-            raise TypeError("'input_scores' must be of type 'str'")
-        if names is None:
-            raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
+            raise TypeError("'scores_file' must be of type 'str'")
 
-        # check if all the molecule transformations are in the passed file.
-        perturbations = _itertools.combinations(names, 2)
-        with open(scores_file, "r") as scores_file_:
-          contents = []
-          for line in scores_file_:
-            # check that str,str,float,x. Because of how file is parsed, 
-            # lig1_name and lig2_name are always str.
-            records = line.rstrip().split(",")
-            if len(records) < 3:
-              raise ValueError(f"{scores_file} should have at least three entries per line (str,str,value). Failed line is {line.rstrip()}")
-            try: 
-              float(records[2])
-            except ValueError:
-              raise ValueError(f"{scores_file} contains a non-numerical value on third "\
-                                +f"column ({line.rstrip()}). Make sure that each line "\
-                                +"in the file is formatted as str,str,value.")
+        # Check that it exists.
+        if _os.path.isfile(scores_file):
+            # Must have names to match against.
+            if names is None:
+                raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
 
-            contents.append(line.rstrip())
+            # Check if all the molecule transformations are in the passed file.
+            perturbations = _itertools.combinations(names, 2)
+            with open(scores_file, "r") as scores_file_:
+                contents = []
+                for line in scores_file_:
+                    # Check that str,str,float,x. Because of how file is parsed,
+                    # lig1_name and lig2_name are always str.
+                    records = line.rstrip().split(",")
+                    if len(records) < 3:
+                        raise ValueError(f"{scores_file} should have at least three entries "
+                                         f"per line (str,str,value). Failed line is {line.rstrip()}")
+                    try:
+                        float(records[2])
+                    except ValueError:
+                        raise ValueError(f"{scores_file} contains a non-numerical value on third "
+                                         f"column ({line.rstrip()}). Make sure that each line "
+                                          "in the file is formatted as str,str,value.")
 
-          # check that all possible perturbations in the ligand series are accounted for in
-          # the scores_file.
-          for pert in perturbations:
-            if not f"{pert[0]},{pert[1]}" in ",".join(contents):
+                    contents.append(line.rstrip())
 
-              # check the opposite direction as well.
-              if not f"{pert[1]},{pert[0]}" in ",".join(contents):
-
-                raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "+\
-                  f"in {scores_file}. Make sure your input file contains all possible transformations.")
-      else:
-        raise IOError(f"The scores file didn't exist: {scores_file}")
+                # Check that all possible perturbations in the ligand series are
+                # accounted for in the scores_file.
+                for pert in perturbations:
+                    if not f"{pert[0]},{pert[1]}" in ",".join(contents):
+                        # Check the opposite direction as well.
+                        if not f"{pert[1]},{pert[0]}" in ",".join(contents):
+                            raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "
+                                             f"in {scores_file}. Make sure your input file contains "
+                                              "all possible transformations.")
+        else:
+            raise IOError(f"The scores file doesn't exist: {scores_file}")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -340,7 +341,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, mol in enumerate(rdmols):
                 _AllChem.Compute2DCoords(mol)
                 _AllChem.GenerateDepictionMatching2DStructure(mol, template)
-                
+
                 mol = _Chem.RemoveHs(mol)
                 _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
 
