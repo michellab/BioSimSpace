@@ -37,6 +37,7 @@ import csv as _csv
 import itertools as _itertools
 import os as _os
 import subprocess as _subprocess
+import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
 
@@ -228,7 +229,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Write the scores file to disk (if defined).
     if scores_file:
-      _os.popen(f"cp {scores_file} {work_dir}/inputs/lomap_input_edge_scores.csv")
+        _shutil.copyfile(scores_file, f"{work_dir}/inputs/lomap_input_edge_scores.csv")
 
     # Get the name of the LOMAP script.
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
