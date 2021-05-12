@@ -79,7 +79,7 @@ class DBMolecules(object):
     def __init__(self, directory, parallel=1, verbose='off',
                  time=20, ecrscore=0.0, threed=False, max3d=1000.0, output=False,
                  name='out', output_no_images=False, output_no_graph=False, display=False,
-                 max=6, cutoff=0.4, radial=False, hub=None, fingerprint=False, fast=False, linksfile=None):
+                 max=6, cutoff=0.4, radial=False, hub=None, fingerprint=False, ml_pd=False, fast=False, linksfile=None):
 
         """
         Initialization of  the Molecule Database Class
@@ -115,6 +115,8 @@ class DBMolecules(object):
            the maximum distance used to cluster the graph nodes
         cutoff : float
            the Minimum Similarity Score (MSS) used to build the graph
+        ml_pd : str
+            the name of a file containing links with edge scorings to use instead of LOMAP score
         linksfile : str
            the name of a file containing links to seed the graph with
 
@@ -158,6 +160,7 @@ class DBMolecules(object):
             fingerprint_str = ''
             fast_str = ''
             threed_str = ''
+            ml_pd_str = ''
             linksfile_str = ''
 
             parser.set_defaults(output=output)
@@ -198,7 +201,7 @@ class DBMolecules(object):
             names_str = '%s --parallel %s --verbose %s --time %s --ecrscore %s --max3d %s --name %s --max %s --cutoff %s --hub %s %s %s %s %s %s %s %s %s %s' \
                         % (
                         directory, parallel, verbose, time, ecrscore, max3d, name, max, cutoff, hub, output_str, display_str, output_no_images_str, output_no_graph_str,
-                        radial_str, fingerprint_str, fast_str, threed_str, linksfile_str)
+                        radial_str, fingerprint_str, fast_str, threed_str, ml_pd_str, linksfile_str)
 
             #print("ARGS:",names_str)
             self.options = parser.parse_args(names_str.split())
@@ -409,7 +412,7 @@ class DBMolecules(object):
             return self.mcs_map_store[idx]
         return None
 
-    def compute_mtx(self, a, b, strict_mtx, loose_mtx, ecr_mtx, MCS_map, fingerprint=False):
+    def compute_mtx(self, a, b, strict_mtx, loose_mtx, ecr_mtx, MCS_map, ml_pd=False, fingerprint=False):
         """
         Compute a chunk of the similarity score matrices. The chunk is selected
         by the start index a and the final index b. The matrices are indeed
@@ -440,6 +443,8 @@ class DBMolecules(object):
         MCS_map: dict (multiprocessing)
             Holds a dict of (index tuple) -> string with the strings being the
             MCS atom index map between the two molecules
+        
+        ml_pd: ...
 
         fingerprint: boolean
            using the structural fingerprint as the similarity matrix,
@@ -530,11 +535,37 @@ class DBMolecules(object):
                         logging.info('MCS molecules: %s - %s' % (self[i].getName(), self[j].getName()))
 
                     if not fingerprint:
-                        # Maximum Common Subgraph (MCS) calculation
-                        MC = mcs.MCS(moli, molj, options=self.options)
-                        ml=MC.all_atom_match_list()
-                        self.set_MCSmap(i,j,ml)
-                        MCS_map[(i,j)]=ml
+                        if ml_pd:
+                            # this breaks when user uses "." in ligand name.
+                            lig1_name = self[i].getName().split(".")[0][4:]
+                            lig2_name = self[j].getName().split(".")[0][4:]
+
+                            # Use pre-computed perturbation difficulty values. Find the value in the file.
+                            ml_pd_val = None
+                            with open(ml_pd) as ml_pd_file:
+                                for line in ml_pd_file:
+                                    if line.rstrip().startswith(f"{lig1_name},{lig2_name}"):
+                                        ml_pd_val = line.rstrip().split(",")[2]
+
+                            # if not found, then the inverse should be present.
+                            if ml_pd_val is None:
+                                with open(ml_pd) as ml_pd_file: 
+                                    for line in ml_pd_file:
+                                        if line.rstrip().startswith(f"{lig2_name},{lig1_name}"):
+                                            ml_pd_val = line.rstrip().split(",")[2]
+
+                            if ml_pd_val is None:
+                                raise IOError(f"The perturbation {lig1_name},{lig2_name} was not found in {ml_pd}.")
+                            # Because the current ML predictor predicts SEM values, we need to invert such that
+                            # perturbations with low predicted SEM are favoured by LOMAP.
+                            ml_pd_val = 1/float(ml_pd_val)
+                        else:
+                            # Maximum Common Subgraph (MCS) calculation
+                            # this is the standard route in LOMAP.
+                            MC = mcs.MCS(moli, molj, options=self.options)
+                            ml=MC.all_atom_match_list()
+                            self.set_MCSmap(i,j,ml)
+                            MCS_map[(i,j)]=ml
                     else:
                         # use the fingerprint as similarity calculation
                         fps_moli = FingerprintMols.FingerprintMol(moli)
@@ -556,19 +587,29 @@ class DBMolecules(object):
             # The scoring between the two molecules is performed by using different rules.
             # The total score will be the product of all the single rules
             if not fingerprint:
-                tmp_scr = ecr_score * MC.mncar() * MC.mcsr() * MC.atomic_number_rule() * MC.hybridization_rule()
-                tmp_scr *= MC.sulfonamides_rule() * MC.heterocycles_rule() * MC.transmuting_methyl_into_ring_rule()
-                tmp_scr *= MC.transmuting_ring_sizes_rule()
-                # Note - no longer using tmcsr rule!
-                strict_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=True)
-                loose_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=False)
-                strict_mtx[k] = strict_scr
-                loose_mtx[k] = loose_scr
-                ecr_mtx[k] = strict_scr
-                logging.info(
-                    'MCS molecules: %s - %s final score %s from ecr %s mncar %s mcsr %s tmcsr %s anum %s sulf %s het %s RingMe %s' %
-                      (self[i].getName(), self[j].getName(), strict_scr, ecr_score, MC.mncar(),MC.mcsr(),MC.tmcsr(strict_flag=True),
-                        MC.atomic_number_rule(),MC.sulfonamides_rule(),MC.heterocycles_rule(),MC.transmuting_methyl_into_ring_rule()))
+                if ml_pd:
+                    # for the ml_pd option, currently just use the identical strict and loose mtx
+                    strict_scr = ml_pd_val
+                    loose_scr = ml_pd_val
+                    strict_mtx[k] = strict_scr
+                    loose_mtx[k] = loose_scr
+                    ecr_mtx[k] = strict_scr
+                    logging.info(
+                        'MCS molecules: %s - %s the strict scr is %s' % (self[i].getName(), self[j].getName(), strict_scr))
+                else:
+                    tmp_scr = ecr_score * MC.mncar() * MC.mcsr() * MC.atomic_number_rule() * MC.hybridization_rule()
+                    tmp_scr *= MC.sulfonamides_rule() * MC.heterocycles_rule() * MC.transmuting_methyl_into_ring_rule()
+                    tmp_scr *= MC.transmuting_ring_sizes_rule()
+                    # Note - no longer using tmcsr rule!
+                    strict_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=True)
+                    loose_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=False)
+                    strict_mtx[k] = strict_scr
+                    loose_mtx[k] = loose_scr
+                    ecr_mtx[k] = strict_scr
+                    logging.info(
+                        'MCS molecules: %s - %s final score %s from ecr %s mncar %s mcsr %s tmcsr %s anum %s sulf %s het %s RingMe %s' %
+                          (self[i].getName(), self[j].getName(), strict_scr, ecr_score, MC.mncar(),MC.mcsr(),MC.tmcsr(strict_flag=True),
+                            MC.atomic_number_rule(),MC.sulfonamides_rule(),MC.heterocycles_rule(),MC.transmuting_methyl_into_ring_rule()))
             else:
                 # for the fingerprint option, currently just use the identical strict and loose mtx
                 strict_scr = fps_tan
@@ -608,13 +649,14 @@ class DBMolecules(object):
 
         if self.options.parallel == 1:  # Serial execution
             MCS_map = {}
-            self.compute_mtx(0, l - 1, self.strict_mtx, self.loose_mtx, self.ecr_mtx, MCS_map, self.options.fingerprint)
+            self.compute_mtx(0, l - 1, self.strict_mtx, self.loose_mtx, self.ecr_mtx, MCS_map, self.options.ml_pd, self.options.fingerprint)
             for idx in MCS_map:
               self.set_MCSmap(idx[0],idx[1],MCS_map[idx])
         else:
             # Parallel execution
-            # add the fingerprint option
+            # add the fingerprint and ml_pd option
             fingerprint = self.options.fingerprint
+            ml_pd = self.options.ml_pd
 
             logging.info('Parallel mode is on')
 
@@ -656,7 +698,7 @@ class DBMolecules(object):
 
                   # Python multiprocessing allocation
                   p = multiprocessing.Process(target=self.compute_mtx,
-                                              args=(i, j, strict_mtx, loose_mtx, ecr_mtx, MCS_map, fingerprint,))
+                                              args=(i, j, strict_mtx, loose_mtx, ecr_mtx, MCS_map, ml_pd, fingerprint))
                   p.start()
                   proc.append(p)
               # End parallel execution
@@ -1036,7 +1078,7 @@ def startup():
     # Molecule DataBase initialized with the passed user options
     db_mol = DBMolecules(ops.directory, ops.parallel, ops.verbose, ops.time, ops.ecrscore, ops.threed, ops.max3d,
                          ops.output, ops.name, ops.output_no_images, ops.output_no_graph, ops.display,
-                         ops.max, ops.cutoff, ops.radial, ops.hub, ops.fingerprint, ops.fast, ops.linksfile)
+                         ops.max, ops.cutoff, ops.radial, ops.hub, ops.ml_pd, ops.fingerprint, ops.fast, ops.linksfile)
     # Similarity score linear array generation
     strict, loose = db_mol.build_matrices()
 
@@ -1079,7 +1121,7 @@ out_group = parser.add_argument_group('Output setting')
 out_group.add_argument('-o', '--output', default=True, action='store_true', \
                        help='Generates output files')
 out_group.add_argument('-n', '--name', type=str, default='out', \
-                       help='File name prefix used to generate the output files')
+                       help='File name prefix used to generafte the output files')
 out_group.add_argument('--output-no-images', default=False, action='store_true', \
                        help='Disable the generation on the image files, removed the dependency on Pillow')
 out_group.add_argument('--output-no-graph', default=False, action='store_true', \
@@ -1097,6 +1139,8 @@ graph_group.add_argument('-r', '--radial', default=False, action='store_true', \
                          help='Using the radial option to build the graph')
 graph_group.add_argument('-b', '--hub', default=None, type=str, \
                          help='Using a radial graph approach with a manually specified hub compound')
+graph_group.add_argument('-z', '--ml_pd', type=str, default='', \
+                         help='Using the machine-learning perturbation difficulty option to build similarity matrices')
 graph_group.add_argument('-f', '--fingerprint', default=False, action='store_true', \
                          help='Using the fingerprint option to build similarity matrices')
 graph_group.add_argument('-a', '--fast', default=False, action='store_true', \
