@@ -160,25 +160,30 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Validate the scores file.
     if scores_file is not None:
-      if type(scores_file) is not str:
-          raise TypeError("'input_scores' must be of type 'str'")
-      if names is None:
-          raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
 
-      # check if all the molecule transformations are in the passed file.
-      perturbations = _itertools.combinations(names, 2)
-      with open(scores_file) as scores_file_:
-        contents = repr(scores_file_.read())
+      # check that it exists.
+      if _os.path.isfile(scores_file):
 
-        for pert in perturbations:
-          if not f"{pert[0]},{pert[1]}" in contents:
+        if type(scores_file) is not str:
+            raise TypeError("'input_scores' must be of type 'str'")
+        if names is None:
+            raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
 
-            # check the opposite direction as well.
-            if not f"{pert[1]},{pert[0]}" in contents:
+        # check if all the molecule transformations are in the passed file.
+        perturbations = _itertools.combinations(names, 2)
+        with open(scores_file) as scores_file_:
+          contents = repr(scores_file_.read())
 
-              raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "+\
-                f"in {scores_file}. Make sure your input file contains all possible transformations.")
+          for pert in perturbations:
+            if not f"{pert[0]},{pert[1]}" in contents:
 
+              # check the opposite direction as well.
+              if not f"{pert[1]},{pert[0]}" in contents:
+
+                raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "+\
+                  f"in {scores_file}. Make sure your input file contains all possible transformations.")
+      else:
+        raise IOError(f"The scores file didn't exist: {scores_file}")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
