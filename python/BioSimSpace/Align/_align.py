@@ -174,15 +174,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         with open(scores_file, "r") as scores_file_:
           contents = []
           for line in scores_file_:
-            # check that str,str,float. Because of how file is parsed, 
+            # check that str,str,float,x. Because of how file is parsed, 
             # lig1_name and lig2_name are always str.
-            lig1_name, lig2_name, score = line.rstrip().split(",")
+            records = line.rstrip().split(",")
+            if len(records) < 3:
+              raise ValueError(f"{scores_file} should have at least three entries per line (str,str,value). Failed line is {line.rstrip()}")
             try: 
-              float(score)
+              float(records[2])
             except ValueError:
               raise ValueError(f"{scores_file} contains a non-numerical value on third "\
                                 +f"column ({line.rstrip()}). Make sure that each line "\
                                 +"in the file is formatted as str,str,value.")
+
             contents.append(line.rstrip())
 
           # check that all possible perturbations in the ligand series are accounted for in
