@@ -38,6 +38,7 @@ import os as _os
 import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
+import itertools
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
@@ -76,7 +77,7 @@ except:
     _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
-        input_scores=None, property_map={}):
+        scores_file=None, property_map={}):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -97,10 +98,13 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            If using a 'work_dir', then a PNG image will be located in
            'work_dir/images/network.png'.
 
-       input_scores : [float]
-           A list of float values (0.0-0.1) for the molecules. If defined, LOMAP will 
-           use these values to score molecular transformations instead of using its
-           own LOMAP score.
+       scores_file : str
+           Path to a CSV file in the form:
+           lig1,lig2,score
+           ..
+           lig_ lig_,score
+           , where score is a float that is fed into LOMAP for edge scoring
+           (instead of the default LOMAP score based on MCSS).
 
        property_map : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -154,17 +158,27 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
-    # Validate the input scores.
-    if input_scores is not None:
-      if type(input_scores) is not list:
-          raise TypeError("'input_scores' must be of type 'list'")
-      else:
-          # Check that all values in the list are floats.
-          if not all(isinstance(i, float) for i in input_scores):
-              raise ValueError("'input_scores' values must be of type float.")
-          # Check that all values in list are floats between 0 and 1.
-          if not all(0 <= i <= 1 for i in input_scores):
-              raise ValueError("'input_scores' values must be between 0 and 1.")
+    # Validate the scores file.
+    if scores_file is not None:
+      if type(scores_file) is not str:
+          raise TypeError("'input_scores' must be of type 'str'")
+      if names is None:
+          raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
+
+      # check if all the molecule transformations are in the passed file.
+      perturbations = itertools.combinations(names, 2)
+      with open(scores_file) as scores_file_:
+        contents = repr(scores_file_.read())
+
+        for pert in perturbations:
+          if not f"{pert[0]},{pert[1]}" in contents:
+
+            # check the opposite direction as well.
+            if not f"{pert[1]},{pert[0]}" in contents:
+
+              raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "+\
+                f"in {scores_file}. Make sure your input file contains all possible transformations.")
+
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -190,13 +204,22 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
             molecule, "mol2", property_map=property_map)
 
+    # Write the scores file to disk (if defined).
+    if scores_file:
+      _os.popen(f"cp {scores_file} {work_dir}/inputs/lomap_input_edge_scores.csv")
+
     # Get the name of the LOMAP script.
     lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
 
     # Generate the command-line string.
-    command = f"{_sys.executable} {lomap_script} " \
-      + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
-      + "--threed --max3d 3.0 -f"
+    if scores_file is not None:
+      command = f"{_sys.executable} {lomap_script} " \
+        + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
+        + f"--threed --max3d 3.0 --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
+    else:
+      command = f"{_sys.executable} {lomap_script} " \
+        + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
+        + "--threed --max3d 3.0"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
@@ -265,10 +288,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 1) Loop over each molecule and load into RDKit.
         try:
-            rdmols = []
-            for x in range(0, len(molecules)):
-                file = f"{work_dir}/inputs/{x:03d}.pdb"
-                rdmols.append(_Chem.MolFromPDBFile(file, sanitize=False, removeHs=False))
+          rdmols = []
+          for x, name in zip(range(0, len(molecules)), names):
+              file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+              rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -296,6 +319,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, mol in enumerate(rdmols):
                 _AllChem.Compute2DCoords(mol)
                 _AllChem.GenerateDepictionMatching2DStructure(mol, template)
+                
+                mol = _Chem.RemoveHs(mol)
                 _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
 
         except Exception as e:
@@ -339,18 +364,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 5) Create and display the plot.
         try:
-            # Convert to a dot graph.
-            dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
+          # Convert to a dot graph.
+          dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
 
-            # Write to a PNG.
-            network_plot = f"{work_dir}/images/network.png"
-            dot_graph.write_png(network_plot)
+          # Write to a PNG.
+          network_plot = f"{work_dir}/images/network.png"
+          dot_graph.write_png(network_plot)
 
-            # Create a plot of the network.
-            img = _mpimg.imread(network_plot)
-            _plt.figure(figsize=(20, 20))
-            _plt.axis("off")
-            _plt.imshow(img)
+          # Create a plot of the network.
+          img = _mpimg.imread(network_plot)
+          _plt.figure(figsize=(20, 20))
+          _plt.axis("off")
+          _plt.imshow(img)
 
         except Exception as e:
             msg = "Unable to create network plot!"
