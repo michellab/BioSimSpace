@@ -412,8 +412,13 @@ class Metadynamics(_Protocol):
         except:
             raise TypeError("'bias_factor' must be of type 'float'")
 
-        if bias_factor <= 0:
-            raise ValueError("'bias_factor' must be > 0")
+        if bias_factor < 1.0:
+            raise ValueError("'bias_factor' must be > 1.0")
+
+        # OpenMM crashes when the bias factor is exactly one, so add a delta.
+        delta = 1e-6
+        if abs(bias_factor - 1.0) < delta:
+            bias_factor += delta
 
         self._bias_factor = bias_factor
 
