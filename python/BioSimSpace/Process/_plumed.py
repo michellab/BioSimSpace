@@ -56,7 +56,7 @@ from ._process import _MultiDict
 class Plumed():
     """A class for interfacing with PLUMED."""
 
-    def __init__(self, work_dir, is_analysis=True):
+    def __init__(self, work_dir):
         """Constructor.
 
            Parameters
@@ -65,11 +65,6 @@ class Plumed():
            work_dir : str
                The working directory of the process that is interfacing
                with PLUMED.
-
-           is_analysis : bool
-               Whether this process is being created to anaylse existing
-               data. If not, then output files will be wiped when creating
-               the configuration file.
         """
 
         # Check that the working directory is valid.
@@ -78,9 +73,6 @@ class Plumed():
         else:
             if not _os.path.isdir(work_dir):
                 raise ValueError("'work_dir' doesn't exist: %s" % work_dir)
-
-        if type(is_analysis) is not bool:
-            raise TypeError("'is_analysis' must be of type 'bool'")
 
         # Try to locate the PLUMED executable.
         try:
@@ -98,9 +90,6 @@ class Plumed():
 
         # Set the working directory of the process.
         self._work_dir = work_dir
-
-        # Set whether this process is being used to analyse existing data.
-        self._is_analysis = True
 
         # Set the location of the HILLS and COLVAR files.
         self._hills_file = "%s/HILLS" % self._work_dir
@@ -140,7 +129,7 @@ class Plumed():
         # Flag that we haven't yet got a valid config.
         self._has_config = False
 
-    def createConfig(self, system, protocol, is_restart=False, property_map={}):
+    def createConfig(self, system, protocol, property_map={}):
         """Create a PLUMED configuration file.
 
            Parameters
@@ -152,9 +141,6 @@ class Plumed():
            protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`, \
                       :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`, \
                The metadynamics or steered molecular dynamics protocol.
-
-           is_restart : bool
-               Whether the simulation is a restart.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -174,17 +160,17 @@ class Plumed():
 
         # Create a metadynamics protocol.
         if type(protocol) is _Metadynamics:
-            return self._createMetadynamicsConfig(system, protocol, is_restart, property_map)
+            return self._createMetadynamicsConfig(system, protocol, property_map)
 
         # Create a steered molecular dynamics protocol.
         if type(protocol) is _Steering:
-            return self._createSteeringConfig(system, protocol, is_restart, property_map)
+            return self._createSteeringConfig(system, protocol, property_map)
 
         else:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics' "
                             " or 'BioSimSpace.Protocol.Steering'")
 
-    def _createMetadynamicsConfig(self, system, protocol, is_restart=False, property_map={}):
+    def _createMetadynamicsConfig(self, system, protocol, property_map={}):
         """Create a PLUMED metadynamics configuration file.
 
            Parameters
@@ -227,18 +213,6 @@ class Plumed():
         self._config = []
         self._aux_files = []
 
-        # Check for restart files.
-        is_restart = False
-        if protocol.getHillsFile() is not None:
-            is_restart = True
-            _shutil.copyfile(protocol.getHillsFile(), "%s/HILLS" % self._work_dir)
-        if protocol.getGridFile() is not None:
-            is_restart = True
-            _shutil.copyfile(protocol.getGridFile(), "%s/GRID" % self._work_dir)
-        if protocol.getColvarFile() is not None:
-            is_restart = True
-            _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
-
         # Always remove pygtail offset files.
         try:
             _os.remove("%s/COLVAR.offset" % self._work_dir)
@@ -249,30 +223,11 @@ class Plumed():
         except:
             pass
 
-        # Is the simulation a restart?
-        if is_restart:
+        # Restart if existing HILLS and COLVAR files are present.
+        if _os.path.isfile(self._colvar_file) and _os.path.isfile(self._hills_file):
             self._config.append("RESTART")
         else:
             self._config.append("RESTART NO")
-
-            # Delete any existing COLVAR, HILLS, and GRID files.
-            if not self._is_analysis:
-                try:
-                    _os.remove("%s/COLVAR" % self._work_dir)
-                except:
-                    pass
-                try:
-                    _os.remove("%s/COLVAR.npy" % self._work_dir)
-                except:
-                    pass
-                try:
-                    _os.remove("%s/HILLS" % self._work_dir)
-                except:
-                    pass
-                try:
-                    _os.remove("%s/GRID" % self._work_dir)
-                except:
-                    pass
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
@@ -838,7 +793,7 @@ class Plumed():
 
         return self._config, self._aux_files
 
-    def _createSteeringConfig(self, system, protocol, is_restart=False, property_map={}):
+    def _createSteeringConfig(self, system, protocol, property_map={}):
         """Create a PLUMED steering molecular dynamics configuration file.
 
            Parameters
@@ -879,24 +834,17 @@ class Plumed():
         self._config = []
         self._aux_files = []
 
-        # Check for restart files.
-        is_restart = False
-        if protocol.getColvarFile() is not None:
-            is_restart = True
-            _shutil.copyfile(protocol.getColvarFile(), "%s/COLVAR" % self._work_dir)
+        # Always remove pygtail offset files.
+        try:
+            _os.remove("%s/COLVAR.offset" % self._work_dir)
+        except:
+            pass
 
-        # Is the simulation a restart?
-        if is_restart:
+        # Restart if an existing COLVAR files is present.
+        if _os.path.isfile(self._colvar_file):
             self._config.append("RESTART")
         else:
             self._config.append("RESTART NO")
-
-            # Delete any existing COLVAR, HILLS, and GRID files.
-            try:
-                _os.remove("%s/COLVAR" % self._work_dir)
-                _os.remove("%s/COLVAR.offset" % self._work_dir)
-            except:
-                pass
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
         try:
