@@ -874,6 +874,7 @@ class OpenMM(_process.Process):
             self.addToConfig(f"remaining_steps = {remaining_steps}")
             self.addToConfig( "steps_per_cycle = math.ceil(total_steps / total_cycles)")
             self.addToConfig( "remaining_cycles = math.ceil(remaining_steps / steps_per_cycle)")
+            self.addToConfig( "checkpoint = 100")
             self.addToConfig(f"start_cycles = total_cycles - remaining_cycles")
             self.addToConfig( "for x in range(start_cycles, total_cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
@@ -884,9 +885,11 @@ class OpenMM(_process.Process):
             self.addToConfig(f"    time = int((x+1) * {timestep}*steps_per_cycle)")
             self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
             self.addToConfig( "    file.write(write_line)")
-            self.addToConfig( "    # Record state every 100 picoseconds.")
-            self.addToConfig( "    if int(x*steps_per_cycle) % 50000 == 0:")
+            self.addToConfig( "    # Save the simulation state every 100 picoseconds.")
+            self.addToConfig( "    if time >= checkpoint:")
             self.addToConfig(f"        simulation.saveState('{self._name}.xml')")
+            self.addToConfig( "        while time >= checkpoint:")
+            self.addToConfig( "            checkpoint += 100")
 
             # Create a dummy PLUMED input file so that we can bind PLUMED
             # analysis functions to this process.
