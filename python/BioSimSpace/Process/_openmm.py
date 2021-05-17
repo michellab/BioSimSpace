@@ -165,6 +165,9 @@ class OpenMM(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
+        # Initialise the log file header.
+        self._header = None
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -400,6 +403,10 @@ class OpenMM(_process.Process):
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
+            # Set initial velocities from temperature distribution.
+            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
@@ -415,11 +422,9 @@ class OpenMM(_process.Process):
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
-
-            # Set initial velocities from temperature distribution.
-            self.addToConfig("\n# Setting intial system velocities.")
-            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+            self._add_config_reporters(state_interval=report_interval,
+                                       traj_interval=restart_interval,
+                                       is_restart=False)
 
             # Now run the simulation.
             self.addToConfig("\n# Run the simulation.")
@@ -463,6 +468,9 @@ class OpenMM(_process.Process):
         elif type(self._protocol) is _Protocol.Production:
             # Write the OpenMM import statements.
             self._add_config_imports()
+
+            # Production specific import.
+            self.addToConfig("import os")
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -529,8 +537,23 @@ class OpenMM(_process.Process):
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
+            # Set initial velocities from temperature distribution.
+            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+
+            # Check for a restart file and load the simulation state.
+            is_restart, step = self._add_config_restart()
+
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Subtract the current number of steps.
+            steps -= step
+
+            # Exit if the simulation has already finished.
+            if steps <= 0:
+                print("The simulation has already finished!")
+                return
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -544,15 +567,24 @@ class OpenMM(_process.Process):
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
+            self._add_config_reporters(state_interval=report_interval,
+                                       traj_interval=restart_interval,
+                                       is_restart=is_restart)
 
-            # Set initial velocities from temperature distribution.
-            self.addToConfig("\n# Setting intial system velocities.")
-            self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
+            # Work out the total simulation time in picoseconds.
+            run_time = steps * timestep
+
+            # Work out the number of cycles in 100 picosecond intervals.
+            cycles = _math.ceil(run_time / 100)
+
+            # Work out the number of steps per cycle.
+            steps_per_cycle = int(steps / cycles)
 
             # Now run the simulation.
-            self.addToConfig("\n# Run the simulation.")
-            self.addToConfig(f"simulation.step({steps})")
+            self.addToConfig("\n# Run the simulation in 100 picosecond cycles.")
+            self.addToConfig(f"for x in range(0, {cycles}):")
+            self.addToConfig(f"    simulation.step({steps_per_cycle})")
+            self.addToConfig(f"    simulation.saveState('{self._name}.xml')")
 
         elif type(self._protocol) is _Protocol.Metadynamics:
             colvar = self._protocol.getCollectiveVariable()
@@ -577,6 +609,7 @@ class OpenMM(_process.Process):
             self._add_config_imports()
             self.addToConfig("from metadynamics import *")    # Use local patched metadynamics module.
             self.addToConfig("from glob import glob")
+            self.addToConfig("import math")
             self.addToConfig("import os")
             self.addToConfig("import shutil")
 
@@ -724,32 +757,51 @@ class OpenMM(_process.Process):
             self.addToConfig("lower_wall_rest.setUsesPeriodicBoundaryConditions(True)")
             self.addToConfig("system.addForce(lower_wall_rest)")
 
+            # Get the number of steps to date.
+            step = 0
+            if _os.path.isfile(f"{self._work_dir}/{self._name}.xml"):
+                if _os.path.isfile(f"{self._work_dir}/{self._name}.log"):
+                    with open(f"{self._work_dir}/{self._name}.log", "r") as f:
+                        lines = f.readlines()
+                        last_line = lines[-1].split()
+                        step = int(last_line[0])
+                else:
+                    raise IOError(f"Missing log file: '{self._name}.log'")
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Work out the number of integration steps.
+            total_steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Work out the number of cycles.
+            total_cycles = _math.ceil(total_steps / report_interval)
+
+            # Subtract the current number of steps.
+            remaining_steps = total_steps - step
+
+            # Exit if the simulation has already finished.
+            if remaining_steps <= 0:
+                print("The simulation has already finished!")
+                return
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > remaining_steps:
+                report_interval = remaining_steps
+            if restart_interval > remaining_steps:
+                restart_interval = remaining_steps
+
             self.addToConfig("\n# Initialise the metadynamics object.")
             if self._protocol.getBiasFactor() is None:
-                bias = 1.0
+                bias = 1.0000001
             else:
                 bias = self._protocol.getBiasFactor()
             self.addToConfig(f"bias = {bias}")
             height = self._protocol.getHillHeight().kj_per_mol().magnitude()
             freq = self._protocol.getHillFrequency()
 
-            # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Work out the number of cycles.
-            cycles = _math.ceil(steps / report_interval)
-
-            self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, {bias}, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
+            self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, bias, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
@@ -776,32 +828,22 @@ class OpenMM(_process.Process):
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
-            # Work out the number of integration.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
             # Set initial velocities from temperature distribution.
             self.addToConfig("\n# Setting intial system velocities.")
             self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
 
-            self.addToConfig("\n# Look for a restart file.")
-            self.addToConfig(f"if os.path.isfile('{self._name}.chk'):")
-            self.addToConfig(f"    simulation.loadCheckpoint('{self._name}.chk')")
-            self.addToConfig(f"    shutil.copy('{self._name}.out','old_{self._name}.out')")
-            self.addToConfig(f"    sim_log_file = [ line[:-2] for line in open('{self._name}.out').readlines()]")
-            self.addToConfig( "    current_steps = int(sim_log_file[-1].split(',')[1])")
-            self.addToConfig( "    steps -= current_steps")
-            self.addToConfig( "    shutil.copy('COLVAR.npy','old_COLVAR.npy')")
-            self.addToConfig( "    shutil.copy('HILLS','old_HILLS')")
-            self.addToConfig(f"    shutil.copy('{self._name}.dcd','old_{self._name}.dcd')")
+            # Check for a restart file and load the simulation state.
+            is_restart, step = self._add_config_restart()
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            self._add_config_reporters(state_interval=report_interval, traj_interval=restart_interval)
-            self.addToConfig(f"simulation.reporters.append(CheckpointReporter('{self._name}.chk', {report_interval}))")
+            self._add_config_reporters(state_interval=report_interval,
+                                       traj_interval=restart_interval,
+                                       is_restart=is_restart)
 
             # Create the HILLS file.
             self.addToConfig("\n# Create PLUMED compatible HILLS file.")
-            self.addToConfig("file = open('HILLS','w')")
+            self.addToConfig("file = open('HILLS','a')")
             self.addToConfig("file.write('#! FIELDS time pp.proj pp.ext sigma_pp.proj sigma_pp.ext height biasf\\n')")
             self.addToConfig("file.write('#! SET multivariate false\\n')")
             self.addToConfig("file.write('#! SET kerneltype gaussian\\n')")
@@ -809,21 +851,31 @@ class OpenMM(_process.Process):
             # Get the initial collective variables.
             self.addToConfig("\n# Initialise the collective variable array.")
             self.addToConfig("current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
-            self.addToConfig("colvar_array = np.array([current_cvs])")
 
             # Write the initial record.
             self.addToConfig("\n# Write the inital collective variable record.")
-            self.addToConfig("line = colvar_array[0]")
-            self.addToConfig("time = 0")
-            self.addToConfig("write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
-            self.addToConfig("file.write(write_line)")
+            self.addToConfig("if is_restart:")
+            self.addToConfig("    if os.path.isfile('COLVAR.npy'):")
+            self.addToConfig("        colvar_array = np.load('COLVAR.npy')")
+            self.addToConfig("        colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
+            self.addToConfig("    else:")
+            self.addToConfig("        raise IOError('Missing COLVAR file: COLVAR.npy')")
+            self.addToConfig("else:")
+            self.addToConfig("    colvar_array = np.array([current_cvs])")
+            self.addToConfig("    line = colvar_array[0]")
+            self.addToConfig("    time = 0")
+            self.addToConfig("    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
+            self.addToConfig("    file.write(write_line)")
 
             # Run the metadynamics simulation.
             self.addToConfig("\n# Run the simulation.")
-            self.addToConfig(f"steps = {steps}")
-            self.addToConfig(f"cycles = {cycles}")
-            self.addToConfig(f"steps_per_cycle = int({steps}/cycles)")
-            self.addToConfig( "for x in range(0, cycles):")
+            self.addToConfig(f"total_steps = {total_steps}")
+            self.addToConfig(f"total_cycles = {total_cycles}")
+            self.addToConfig(f"remaining_steps = {remaining_steps}")
+            self.addToConfig( "steps_per_cycle = math.ceil(total_steps / total_cycles)")
+            self.addToConfig( "remaining_cycles = math.ceil(remaining_steps / steps_per_cycle)")
+            self.addToConfig(f"start_cycles = total_cycles - remaining_cycles")
+            self.addToConfig( "for x in range(start_cycles, total_cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
             self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
             self.addToConfig( "    colvar_array = np.append(colvar_array, [current_cvs], axis=0)")
@@ -832,10 +884,13 @@ class OpenMM(_process.Process):
             self.addToConfig(f"    time = int((x+1) * {timestep}*steps_per_cycle)")
             self.addToConfig( "    write_line = f'{time:15} {line[0]:20.16f} {line[1]:20.16f}          {sigma_proj}           {sigma_ext} {line[2]:20.16f}            {bias}\\n'")
             self.addToConfig( "    file.write(write_line)")
+            self.addToConfig( "    # Record state every 100 picoseconds.")
+            self.addToConfig( "    if int(x*steps_per_cycle) % 50000 == 0:")
+            self.addToConfig(f"        simulation.saveState('{self._name}.xml')")
 
             # Create a dummy PLUMED input file so that we can bind PLUMED
             # analysis functions to this process.
-            self._plumed = _Plumed(self._work_dir, is_analysis=False)
+            self._plumed = _Plumed(self._work_dir)
             plumed_config, auxillary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
                                                                        self._property_map)
@@ -1560,6 +1615,32 @@ class OpenMM(_process.Process):
             else:
                 self.addToConfig("properties = {'OpenCLDeviceIndex': '%s'}" % opencl_devices)
 
+    def _add_config_restart(self):
+        """Helper function to check for a restart file and load state information."""
+
+        self.addToConfig( "\n# Check for a restart file.")
+        self.addToConfig(f"if os.path.isfile('{self._name}.xml'):")
+        self.addToConfig( "    is_restart = True")
+        self.addToConfig(f"    simulation.loadState('{self._name}.xml')")
+        self.addToConfig(f"    if not os.path.isfile('{self._name}.log'):")
+        self.addToConfig(f"        raise IOError('Missing log file: {self._name}.log')")
+        self.addToConfig(f"    with open('{self._name}.log', 'r') as f:")
+        self.addToConfig( "        lines = f.readlines()")
+        self.addToConfig( "        last_line = lines[-1].split()")
+        self.addToConfig( "        step = int(last_line[0])")
+        self.addToConfig( "        simulation.currentStep = step")
+        self.addToConfig( "else:")
+        self.addToConfig( "    is_restart = False")
+
+        if _os.path.isfile(f"{self._work_dir}/{self._name}.xml"):
+            with open(f"{self._work_dir}/{self._name}.log", "r") as f:
+                lines = f.readlines()
+                last_line = lines[-1].split()
+                step = int(last_line[0])
+            return True, step
+        else:
+            return False, 0
+
     def _add_config_monkey_patches(self):
         """Helper function to write any monkey-patches to the OpenMM Python
            script (config file).
@@ -1588,7 +1669,7 @@ class OpenMM(_process.Process):
         # Replace the writeModel method with the monkey-patch.
         self.addToConfig("DCDFile.writeModel = writeModelPatched")
 
-    def _add_config_reporters(self, state_interval=100, traj_interval=500):
+    def _add_config_reporters(self, state_interval=100, traj_interval=500, is_restart=False):
         """Helper function to write the reporter (output statements) section
            to the OpenMM Python script (config file).
 
@@ -1602,6 +1683,9 @@ class OpenMM(_process.Process):
            traj_interval : int
                The frequency at which to write trajectory frames in
                integration steps.
+
+           is_restart : bool
+               Whether the simulation is a restart.
         """
         if type(state_interval) is not int:
             raise TypeError("'state_interval' must be of type 'int'.")
@@ -1611,12 +1695,15 @@ class OpenMM(_process.Process):
             raise TypeError("'traj_interval' must be of type 'int'.")
         if traj_interval <= 0:
             raise ValueError("'traj_interval' must be a positive integer.")
+        if type(is_restart) is not bool:
+            raise TypeError("'is_restart' must be of type 'bool'.")
 
 		# Append to a trajectory file every 500 steps.
-        self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', {traj_interval}))")
+        self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', {traj_interval}, append={is_restart}))")
 
 		# Write state information to file every 100 steps.
-        self.addToConfig(f"simulation.reporters.append(StateDataReporter('{self._name}.log',")
+        self.addToConfig(f"log_file = open('{self._name}.log', 'a')")
+        self.addToConfig(f"simulation.reporters.append(StateDataReporter(log_file,")
         self.addToConfig(f"                                              {state_interval},")
         self.addToConfig( "                                              step=True,")
         self.addToConfig( "                                              time=True,")
@@ -1652,6 +1739,17 @@ class OpenMM(_process.Process):
 
             # This is the header record.
             if line[0] == "#":
+                if self._header is None:
+                    # Store the header.
+                    self._header = line
+                else:
+                    # If this is a restart, make sure the information in the file
+                    # is consistent.
+                    if line != self._header:
+                        raise _IncompatibleError("Mismatch in the log file header.! "
+                                                f"Original header: '{self._header}', "
+                                                f"Current header: '{line}'")
+
                 # Work out what records are in the file and the separator
                 # that is used. While we use a standard format, this makes
                 # sure that we can still parse the log file if the user
