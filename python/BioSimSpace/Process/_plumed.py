@@ -225,8 +225,10 @@ class Plumed():
 
         # Restart if existing HILLS and COLVAR files are present.
         if _os.path.isfile(self._colvar_file) and _os.path.isfile(self._hills_file):
+            is_restart = True
             self._config.append("RESTART")
         else:
+            is_restart = False
             self._config.append("RESTART NO")
 
         # Intialise molecule number to atom tally lookup dictionary in the system.
@@ -771,7 +773,7 @@ class Plumed():
 
             metad_string += grid_min_string + grid_max_string + grid_bin_string
             metad_string += " GRID_WFILE=GRID GRID_WSTRIDE=%s" % protocol.getHillFrequency()
-            if protocol.getGridFile() is not None:
+            if is_restart and _os.path.isfile(f"{self._work_dir}/GRID"):
                 metad_string += " GRID_RFILE=GRID"
             metad_string += " CALC_RCT"
 
