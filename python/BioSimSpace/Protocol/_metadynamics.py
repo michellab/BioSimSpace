@@ -51,10 +51,7 @@ class Metadynamics(_Protocol):
                  hill_frequency=1000,
                  report_interval=1000,
                  restart_interval=1000,
-                 bias_factor=None,
-                 hills_file=None,
-                 grid_file=None,
-                 colvar_file=None
+                 bias_factor=None
                 ):
         """Constructor.
 
@@ -92,23 +89,6 @@ class Metadynamics(_Protocol):
 
            bias_factor : float
                The bias factor for well tempered metadynamics.
-
-           hills_file : str
-               The path to a HILLS file from a previous simulation. This can
-               be used to restart in order to contiune sampling. The information
-               in the file must be consistent with the 'collective_variable'
-               argument.
-
-           grid_file : str
-               The path to a GRID file from a previous simulation. This can
-               be used to restart in order to continue sampling. The information
-               in the file must be consistent with the 'collective_variable'
-               argument.
-
-           colvar_file : str
-               The path to a COLVAR file from a previous simulation. The
-               information in the file must be consistent with the
-               'collective_variable' argument.
         """
 
         # Call the base class constructor.
@@ -151,20 +131,6 @@ class Metadynamics(_Protocol):
         else:
             self._bias_factor = None
 
-        # Set the restart files.
-        if hills_file is not None:
-            self.setHillsFile(hills_file)
-        else:
-            self._hills_file = None
-        if grid_file is not None:
-            self.setGridFile(grid_file)
-        else:
-            self._grid_file = None
-        if colvar_file is not None:
-            self.setColvarFile(colvar_file)
-        else:
-            self._colvar_file = None
-
         # Flag that the object has been created.
         self._is_new_object = False
 
@@ -184,12 +150,6 @@ class Metadynamics(_Protocol):
             string += ", hill_frequency=%s" % self._hill_frequency
             if self._bias_factor is not None:
                 string += ", bias_factor=%s" % self._bias_factor
-            if self._hills_file is not None:
-                string += ", hills_file=%r" % self._hills_file
-            if self._grid_file is not None:
-                string += ", grid_file=%r" % self._grid_file
-            if self._colvar_file is not None:
-                string += ", colvar_file=%r" % self._colvar_file
             string += ", report_interval=%d" % self._report_interval
             string += ", restart_interval=%d" % self._restart_interval
             string += ">"
@@ -456,152 +416,6 @@ class Metadynamics(_Protocol):
             raise ValueError("'bias_factor' must be > 0")
 
         self._bias_factor = bias_factor
-
-    def getHillsFile(self):
-        """Return the path to the HILLS file.
-
-           Returns
-           -------
-
-           hills_file : str
-               The path to the HILLS file.
-        """
-        return self._hills_file
-
-    def setHillsFile(self, hills_file):
-        """Set the location of an existing HILLS file.
-
-           Parameters
-           ----------
-
-           hills_file : str
-               The path to an existing HILLS file.
-        """
-        if type(hills_file) is not str:
-            raise ValueError("'hills_file' must be of type 'str'")
-
-        if not _os.path.isfile(hills_file):
-            raise ValueError("'hills_file' doesn't exist: %s" % hills_file)
-
-        # Read the header and make sure that it is consistent with the
-        # collective variables.
-        with open(hills_file, "r") as file:
-            # Read the header record.
-            header = file.readline()
-
-            # Split on whitespace to get the records.
-            records = header.split()
-
-            # Make sure this is a valid header.
-            if records[0] != "#!" or records[1] != "FIELDS" or records[2] != "time":
-                raise ValueError("'hills_file' doesn't contain valid header information!")
-
-            # Make sure there are the right number of collective variables.
-            num_colvar = 0
-            for x in range(3, len(records)):
-                # We've incremented past the collective variable records.
-                if "sigma" in records[x]:
-                    break
-                else:
-                    num_colvar += 1
-
-            try:
-                if num_colvar != len(self._collective_variable):
-                    raise ValueError("'hills_file' contains %d collective variable records, "
-                                     "should have %d" % (num_colvar, len(collective_variable)))
-            except:
-                if num_colvar != 1:
-                    raise ValueError("'hills_file' contains %d collective variable records, "
-                                     "should have 1" % num_colvar)
-
-        self._hills_file = hills_file
-
-    def getGridFile(self):
-        """Return the path to the GRID file.
-
-           Returns
-           -------
-
-           grid_file : str
-               The path to the GRID file.
-        """
-        return self._grid_file
-
-    def setGridFile(self, grid_file):
-        """Set the location of an existing GRID file.
-
-           Parameters
-           ----------
-
-           grid_file : str
-               The path to an existing GRID file.
-        """
-        if type(grid_file) is not str:
-            raise ValueError("'grid_file' must be of type 'str'")
-
-        if not _os.path.isfile(grid_file):
-            raise ValueError("'grid_file' doesn't exist: %s" % grid_file)
-
-        # Read the header and make sure that it is consistent with the
-        # collective variables.
-        with open(grid_file, "r") as file:
-            # Read the header record.
-            header = file.readline()
-
-            # Split on whitespace to get the records.
-            records = header.split()
-
-            # Make sure this is a valid header.
-            if records[0] != "#!" or records[1] != "FIELDS":
-                raise ValueError("'grid_file' doesn't contain valid header information!")
-
-            # Make sure there are the right number of collective variables.
-            num_colvar = 0
-            for x in range(2, len(records)):
-                # We've incremented past the collective variable records.
-                if "bias" in records[x]:
-                    break
-                else:
-                    num_colvar += 1
-
-            try:
-                if num_colvar != len(self._collective_variable):
-                    raise ValueError("'grid_file' contains %d collective variable records, "
-                                     "should have %d" % (num_colvar, len(collective_variable)))
-            except:
-                if num_colvar != 1:
-                    raise ValueError("'grid_file' contains %d collective variable records, "
-                                     "should have 1" % num_colvar)
-
-        self._grid_file = grid_file
-
-    def getColvarFile(self):
-        """Return the path to the COLVAR file.
-
-           Returns
-           -------
-
-           colvar_file : str
-               The path to the COLVAR file.
-        """
-        return self._colvar_file
-
-    def setColvarFile(self, colvar_file):
-        """Set the location of an existing COLVAR file.
-
-           Parameters
-           ----------
-
-           colvar_file : str
-               The path to an existing COLVAR file.
-        """
-        if type(colvar_file) is not str:
-            raise ValueError("'colvar_file' must be of type 'str'")
-
-        if not _os.path.isfile(colvar_file):
-            raise ValueError("'colvar_file' doesn't exist: %s" % colvar_file)
-
-        self._colvar_file = colvar_file
 
     def getReportInterval(self):
         """Return the interval between reporting statistics. (In integration steps.)
