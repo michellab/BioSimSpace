@@ -855,10 +855,13 @@ class OpenMM(_process.Process):
 
             # Create the HILLS file.
             self.addToConfig("\n# Create PLUMED compatible HILLS file.")
-            self.addToConfig("file = open('HILLS','a')")
-            self.addToConfig("file.write('#! FIELDS time pp.proj pp.ext sigma_pp.proj sigma_pp.ext height biasf\\n')")
-            self.addToConfig("file.write('#! SET multivariate false\\n')")
-            self.addToConfig("file.write('#! SET kerneltype gaussian\\n')")
+            self.addToConfig("if is_restart:")
+            self.addToConfig("    file = open('HILLS','a')")
+            self.addToConfig("else:")
+            self.addToConfig("    file = open('HILLS','w')")
+            self.addToConfig("    file.write('#! FIELDS time pp.proj pp.ext sigma_pp.proj sigma_pp.ext height biasf\\n')")
+            self.addToConfig("    file.write('#! SET multivariate false\\n')")
+            self.addToConfig("    file.write('#! SET kerneltype gaussian\\n')")
 
             # Get the initial collective variables.
             self.addToConfig("\n# Initialise the collective variable array.")
