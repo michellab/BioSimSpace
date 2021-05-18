@@ -157,7 +157,7 @@ class RMSD(_CollectiveVariable):
 
             if len(rmsd_indices) == 0:
                 raise ValueError("'rmsd_indices' contains no items?")
-            elif len(rmsd_indices) == reference.nAtoms():
+            elif len(rmsd_indices) >= reference.nAtoms():
                 raise ValueError("'rmsd_indices' must refer to a subset of the "
                                  "atoms from the reference molecule.")
 
