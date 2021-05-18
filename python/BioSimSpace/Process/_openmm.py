@@ -545,15 +545,23 @@ class OpenMM(_process.Process):
             is_restart, step = self._add_config_restart()
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            total_steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
             # Subtract the current number of steps.
-            steps -= step
+            steps = total_steps - step
 
             # Exit if the simulation has already finished.
             if steps <= 0:
                 print("The simulation has already finished!")
                 return
+
+            # Inform user that a restart was loaded.
+            self.addToConfig( "\n# Print restart information.")
+            self.addToConfig( "if is_restart:")
+            self.addToConfig(f"    steps = {total_steps}")
+            self.addToConfig( "    percent_complete = 100 * (step / steps)")
+            self.addToConfig( "    print('Loaded state from an existing simulation.')")
+            self.addToConfig( "    print(f'Simulation is {percent_complete}% complete.')")
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -874,8 +882,12 @@ class OpenMM(_process.Process):
             self.addToConfig(f"remaining_steps = {remaining_steps}")
             self.addToConfig( "steps_per_cycle = math.ceil(total_steps / total_cycles)")
             self.addToConfig( "remaining_cycles = math.ceil(remaining_steps / steps_per_cycle)")
-            self.addToConfig( "checkpoint = 100")
             self.addToConfig(f"start_cycles = total_cycles - remaining_cycles")
+            self.addToConfig( "checkpoint = 100")
+            self.addToConfig( "if is_restart:")
+            self.addToConfig( "    percent_complete = 100 * (step / total_steps)")
+            self.addToConfig( "    print('Loaded state from an existing simulation.')")
+            self.addToConfig( "    print(f'Simulation is {percent_complete}% complete.')")
             self.addToConfig( "for x in range(start_cycles, total_cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
             self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
