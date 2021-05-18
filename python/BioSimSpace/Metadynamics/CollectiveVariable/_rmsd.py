@@ -47,7 +47,7 @@ from ...Types import Length as _Length
 class RMSD(_CollectiveVariable):
     """A class for a root-mean-square deviation (RMSD) collective variable."""
 
-    def __init__(self, system, reference, reference_index=None, rmsd_indices=None,
+    def __init__(self, system, reference, rmsd_indices, reference_index=None,
             hill_width=_Length(0.1, "nanometer"), lower_bound=None, upper_bound=None,
             grid=None, alignment_type="optimal", pbc=True, property_map={}):
         """Constructor.
@@ -64,18 +64,17 @@ class RMSD(_CollectiveVariable):
                system, i.e. contain the same residues as the matching molecule
                in the same order.
 
+           rmsd_indices : [int]
+               The indices of the atoms within the reference that should be
+               used when calculating the RMSD. Atoms from the reference that
+               are not in rmsd_indices will instead be used for alignment.
+
            reference_index : int
                The index of the molecule in the system that matches the
                reference. If none, then we will assume that the molecule with
                the closest number of residues is the match. If not all atoms
                from the reference are matched in the system, then an exception
                will be thrown.
-
-           rmsd_indices : None
-               The indices of the atoms within the reference that should be
-               used when calculating the RMSD. If None, then all atoms from
-               the reference will be used. Atoms from the reference that are
-               not in rmsd_indices will instead be used for alignment.
 
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill used to sample this variable.
@@ -148,10 +147,19 @@ class RMSD(_CollectiveVariable):
             self._reference_index = reference_index
             molecule = system[reference_index]
 
-        if rmsd_indices is not None:
-            # Convert tuple to list.
-            if type(rmsd_indices) is tuple:
-                rmsd_indices = list(rmsd_indices)
+        # Convert tuple to list.
+        if type(rmsd_indices) is tuple:
+            rmsd_indices = list(rmsd_indices)
+
+        if type(rmsd_indices) is list:
+            # Make sure the indices are unique.
+            rmsd_indices = list(set(rmsd_indices))
+
+            if len(rmsd_indices) == 0:
+                raise ValueError("'rmsd_indices' contains no items?")
+            elif len(rmsd_indices) == reference.nAtoms():
+                raise ValueError("'rmsd_indices' must refer to a subset of the "
+                                 "atoms from the reference molecule.")
 
             for idx in rmsd_indices:
                 if type(idx) is not int:
@@ -161,13 +169,8 @@ class RMSD(_CollectiveVariable):
                 if idx < 0 or idx >= reference.nAtoms():
                     raise ValueError("'rmsd_indices' is out of range: "
                                     f"{-reference.nAtoms()}:{reference.nAtoms()-1}")
-
-            # Convert to AtomIdx.
-            rmsd_indices = [_SireMol.AtomIdx(x) for x in rmsd_indices]
-
         else:
-            # All indices are used for RMSD by default.
-            rmsd_indices = [_SireMol.AtomIdx(x) for x in range(0, reference.nAtoms())]
+            raise TypeError("'rmsd_indices' must be a list of 'int' types.")
 
         # Create the matcher.
         matcher = _SireMol.ResNumAtomNameMatcher()
@@ -211,7 +214,7 @@ class RMSD(_CollectiveVariable):
                 edit_mol = edit_mol.atom(idx).setProperty(coord_prop,
                     reference._sire_object.atom(matches[idx]).property("coordinates")).molecule()
                 # Set occupancy and beta factor.
-                if matches[idx] in rmsd_indices:
+                if matches[idx].value() in rmsd_indices:
                     # This atom is used to compute the RMSD.
                     edit_mol = edit_mol.atom(idx).setProperty("occupancy", 0.0).molecule()
                     edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 1.0).molecule()
