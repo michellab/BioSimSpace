@@ -772,7 +772,11 @@ class OpenMM(_process.Process):
                     with open(f"{self._work_dir}/{self._name}.log", "r") as f:
                         lines = f.readlines()
                         last_line = lines[-1].split()
-                        step = int(last_line[0])
+                        try:
+                            step = int(last_line[0])
+                        except:
+                            raise _IncompatibleError( "Failed to read current integration "
+                                                     f"step from '{self._name}.log'")
                 else:
                     raise IOError(f"Missing log file: '{self._name}.log'")
 
@@ -1642,7 +1646,10 @@ class OpenMM(_process.Process):
         self.addToConfig(f"    with open('{self._name}.log', 'r') as f:")
         self.addToConfig( "        lines = f.readlines()")
         self.addToConfig( "        last_line = lines[-1].split()")
-        self.addToConfig( "        step = int(last_line[0])")
+        self.addToConfig( "        try:")
+        self.addToConfig( "            step = int(last_line[0])")
+        self.addToConfig( "        except:")
+        self.addToConfig(f"            raise IOError('Failed to read current integration step from {self._name}.log')")
         self.addToConfig( "        simulation.currentStep = step")
         self.addToConfig( "else:")
         self.addToConfig( "    is_restart = False")
