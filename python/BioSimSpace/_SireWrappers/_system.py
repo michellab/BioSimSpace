@@ -682,7 +682,7 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def search(self, query):
+    def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule
            containing a single residue will be returned as a residue.
@@ -692,6 +692,11 @@ class System(_SireWrapper):
 
            query : str
                The search query.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -728,12 +733,15 @@ class System(_SireWrapper):
         if type(query) is not str:
             raise TypeError("'query' must be of type 'str'")
 
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
         # Intialise a list to hold the search results.
         results = []
 
         try:
             # Query the Sire system.
-            search_result = self._sire_object.search(query)
+            search_result = _SireMol.Select(query)(self._sire_object, property_map)
 
         except Exception as e:
             msg = "'Invalid search query: %r" % query

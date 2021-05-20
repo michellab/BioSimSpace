@@ -253,7 +253,7 @@ class Residue(_SireWrapper):
         """
         return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
 
-    def search(self, query):
+    def search(self, query, property_map={}):
         """Search the residue for atoms and residues.
 
            Parameters
@@ -261,6 +261,11 @@ class Residue(_SireWrapper):
 
            query : str
                The search query.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -283,12 +288,15 @@ class Residue(_SireWrapper):
         if type(query) is not str:
             raise TypeError("'query' must be of type 'str'")
 
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
         # Intialise a list to hold the search results.
         results = []
 
         try:
-            # Query the Sire system.
-            search_result = self._sire_object.search(query)
+            # Query the Sire residue.
+            search_result = _SireMol.Select(query)(self._sire_object, property_map)
 
         except Exception as e:
             msg = "'Invalid search query: %r" % query
