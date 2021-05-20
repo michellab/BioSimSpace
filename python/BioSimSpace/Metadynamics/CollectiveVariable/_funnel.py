@@ -802,7 +802,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
             # Get the coordinate and add to the reference coord using the
             # its distance from the reference in the minimum image convention.
             coord = atom._sire_object.property(coord_prop)
-            coord = ref_coord - _SireVector(space.calcDistVector(coord, ref_coord))
+            coord = ref_coord + _SireVector(space.calcDistVector(ref_coord, coord))
 
             # Update the center of mass.
             com += mass * coord
@@ -875,7 +875,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
 
     # Perform the search.
-    search = system.search(string)
+    search = system.search(string, property_map=search_map)
 
     # Raise exception if no atoms were found.
     if search.nResults() == 0:
