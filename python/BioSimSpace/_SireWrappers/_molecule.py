@@ -1270,6 +1270,11 @@ class Molecule(_SireWrapper):
 
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
+
+        # Seed the random number generator so that we get reproducible atom names.
+        # This is helpful when debugging since we can directly compare pert files.
+        _random.seed(42)        
+
         if pert_type:
           if type(pert_type) is not str:
               raise TypeError("'pert_type' must be of type 'str'")
@@ -1426,10 +1431,58 @@ class Molecule(_SireWrapper):
                         atom.property("charge0").value(),
                         atom.property("charge1").value())
             if pert_type == "standard":
+                if print_all_atoms:
+                  for atom in sorted(mol.atoms(), key=lambda atom: atom_sorting_criteria(atom)):
+                      # Start atom record.
+                      file.write("    atom\n")
+
+                      # Get the initial/final Lennard-Jones properties.
+                      LJ0 = atom.property("LJ0");
+                      LJ1 = atom.property("LJ1");
+
+                      # Atom data.
+                      file.write("        name           %s\n" % atom.name().value())
+                      file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                      file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                      file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                      file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                      file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                      file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+
+                      # End atom record.
+                      file.write("    endatom\n")
+
+                # Only print records for the atoms that are perturbed.  
+                else:
+                  for idx in sorted(pert_idxs, key=lambda idx: atom_sorting_criteria(mol.atom(idx))):
+                      # Get the perturbed atom.
+                      atom = mol.atom(idx)
+
+                      # Start atom record.
+                      file.write("    atom\n")
+
+                      # Get the initial/final Lennard-Jones properties.
+                      LJ0 = atom.property("LJ0");
+                      LJ1 = atom.property("LJ1");
+
+                      # Atom data.
+                      file.write("        name           %s\n" % atom.name().value())
+                      file.write("        initial_type   %s\n" % atom.property("ambertype0"))
+                      file.write("        final_type     %s\n" % atom.property("ambertype1"))
+                      file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
+                      file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
+                      file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
+                      file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
+
+                      # End atom record.
+                      file.write("    endatom\n")
+            else:        
+                # Given multistep protocol:
+                if print_all_atoms:
+                    raise NotImplementedError("print_all_atoms in multistep approach is not yet implemented.")
                 for idx in sorted(pert_idxs, key=lambda idx: atom_sorting_criteria(mol.atom(idx))):
                     # Get the perturbed atom.
                     atom = mol.atom(idx)
-
                     # Start atom record.
                     file.write("    atom\n")
 
@@ -1438,28 +1491,6 @@ class Molecule(_SireWrapper):
                     LJ1 = atom.property("LJ1");
 
                     # Atom data.
-                    file.write("        name           %s\n" % atom.name().value())
-                    file.write("        initial_type   %s\n" % atom.property("ambertype0"))
-                    file.write("        final_type     %s\n" % atom.property("ambertype1"))
-                    file.write("        initial_LJ     %.5f %.5f\n" % (LJ0.sigma().value(), LJ0.epsilon().value()))
-                    file.write("        final_LJ       %.5f %.5f\n" % (LJ1.sigma().value(), LJ1.epsilon().value()))
-                    file.write("        initial_charge %.5f\n" % atom.property("charge0").value())
-                    file.write("        final_charge   %.5f\n" % atom.property("charge1").value())
-
-                    # End atom record.
-                    file.write("    endatom\n")
-            else:        
-                # Given multistep protocol:
-                for idx in sorted(pert_idxs, key=lambda idx: atom_sorting_criteria(mol.atom(idx))):
-                    # Get the perturbed atom.
-                    atom = mol.atom(idx)
-                    # Start atom record.
-                    file.write("    atom\n")
-
-                    # Get the initial/final Lennard-Jones properties.
-                    LJ0 = atom.property("LJ0");
-                    LJ1 = atom.property("LJ1");
-
                     # Get the atom types:
                     atom_type0 = atom.property("ambertype0")
                     atom_type1 = atom.property("ambertype1")
@@ -1488,8 +1519,6 @@ class Molecule(_SireWrapper):
                                 atom_type1 = atom_type0
                                 LJ0_value = LJ1_value = LJ0.sigma().value(), LJ0.epsilon().value()
                                 charge0_value = charge1_value = atom.property("charge0").value()
-
-
 
                         else:
                             # If only hard atoms in perturbation, hold parameters.
