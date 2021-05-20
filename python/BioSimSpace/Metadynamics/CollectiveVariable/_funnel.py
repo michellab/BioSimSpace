@@ -37,6 +37,7 @@ from BioSimSpace import _is_notebook
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
+from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._SireWrappers import Molecule as _Molecule
 from ..._SireWrappers import System as _System
 from ...Types import Coordinate as _Coordinate
@@ -751,6 +752,14 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     if type(alpha_carbon_name) is not str:
         raise TypeError("'alpha_carbon_name' must be of type 'str'.")
 
+    # Get the "space" propety from the user map.
+    space_prop = property_map.get("space", "space")
+    if space_prop not in system._sire_object.propertyKeys():
+        raise _IncompatibleError("The system contains no simulation box property!")
+
+    # Store the space.
+    space = system._sire_object.property("space")
+
     # The following is adapted from funnel_maker.py by Dominykas Lukauskis.
 
     # To compute the funnel vector we project a grid on the binding site and
@@ -759,9 +768,48 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # for solvent molecules directly, since it allows for dry binding sites.
 
     # If the ligand is a Molecule, then assume the binding site is the ligand
-    # center of mass.
+    # center of mass. We do this manually since Sire's built-in evaluator doesn't
+    # take into consideration molecules spanning the periodic boundary.
     if type(ligand) is _Molecule:
-        com = _SireMol.Evaluator(ligand._sire_object).centerOfMass()
+        # Get the "mass" property from the user map.
+        mass_prop = property_map.get("mass", "mass")
+        if mass_prop not in ligand._sire_object.propertyKeys():
+            raise _IncompatibleError("The system contains no atomic mass information!")
+
+        # Get the "coordinate" property from the user map.
+        coord_prop = property_map.get("coordinates", "coordinates")
+        if coord_prop not in ligand._sire_object.propertyKeys():
+            raise _IncompatibleError("The system contains no atomic coordinates!")
+
+        # Get the first atom in the ligand.
+        atom = ligand.getAtoms()[0]
+
+        # The sum of the atom masses.
+        total_mass = atom._sire_object.property(mass_prop).value()
+
+        # Reference coordinate.
+        ref_coord = atom._sire_object.property(coord_prop)
+
+        # Initialise the center-of-mass.
+        com = total_mass * atom._sire_object.property(coord_prop)
+
+        # Sum over the rest of the atoms.
+        for atom in ligand.getAtoms()[1:]:
+            # Get the mass and update the total.
+            mass = atom._sire_object.property(mass_prop).value()
+            total_mass += mass
+
+            # Get the coordinate and add to the reference coord using the
+            # its distance from the reference in the minimum image convention.
+            coord = atom._sire_object.property(coord_prop)
+            coord = ref_coord - _SireVector(space.calcDistVector(coord, ref_coord))
+
+            # Update the center of mass.
+            com += mass * coord
+
+        # Normalise.
+        com /= total_mass
+
         binding_site = _Coordinate(_Length(com.x(), "A"),
                                    _Length(com.y(), "A"),
                                    _Length(com.z(), "A"))
@@ -785,6 +833,9 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     non_protein = _SireVector()
     num_non_protein = 0
 
+    # Create a property map to use for the search.
+    search_map = {"space" : space}
+
     import numpy as _np
     # Loop over x grid points.
     for x in _np.linspace(grid_min.x().angstroms().magnitude(),
@@ -803,7 +854,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
 
                 # Search the protein for atoms with the search radius of the
                 # point x,y,z.
-                search = protein.search(string)
+                search = protein.search(string, property_map=search_map)
 
                 # If there are no protein atoms then add the grid coordinate
                 # to our running total.
