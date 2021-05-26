@@ -784,11 +784,15 @@ class OpenMM(_process.Process):
             report_interval = self._protocol.getReportInterval()
             restart_interval = self._protocol.getRestartInterval()
 
+            # Get the hill deposition frequency.
+            hill_freq = self._protocol.getHillFrequency()
+
             # Work out the number of integration steps.
             total_steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
             # Work out the number of cycles.
-            total_cycles = _math.ceil(total_steps / report_interval)
+            # (Record COLVAR and HILLS at hill deposition frequency.)
+            total_cycles = _math.ceil(total_steps / hill_freq)
 
             # Subtract the current number of steps.
             remaining_steps = total_steps - step
@@ -811,9 +815,8 @@ class OpenMM(_process.Process):
                 bias = self._protocol.getBiasFactor()
             self.addToConfig(f"bias = {bias}")
             height = self._protocol.getHillHeight().kj_per_mol().magnitude()
-            freq = self._protocol.getHillFrequency()
 
-            self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, bias, {height}*kilojoules_per_mole, {freq}, biasDir = '.', saveFrequency = {report_interval})")
+            self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, bias, {height}*kilojoules_per_mole, {hill_freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().magnitude()
