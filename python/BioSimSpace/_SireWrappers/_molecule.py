@@ -1215,7 +1215,7 @@ class Molecule(_SireWrapper):
         if not _path.isfile(filename):
             raise IOError("Perturbation file doesn't exist: '%s'" % filename)
 
-    def _toPertFile(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
+    def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
             zero_dummy_impropers=False, print_all_atoms=False, property_map={},
             pert_type="standard"):
         """Write the merged molecule to a perturbation file.
@@ -1253,10 +1253,10 @@ class Molecule(_SireWrapper):
            molecule : Sire.Mol.Molecule
                The molecule with properties corresponding to the lamda = 0 state.
         """
-        if not molecule._is_merged:
+        if not self._is_merged:
             raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
 
-        if not molecule._sire_object.property("forcefield0").isAmberStyle():
+        if not self._sire_object.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
         if type(zero_dummy_dihedrals) is not bool:
@@ -1290,7 +1290,7 @@ class Molecule(_SireWrapper):
             raise ValueError("'pert_type' must be any of: "+str(allowed_pert_types), pert_type)
 
         # Extract and copy the Sire molecule.
-        mol = molecule._sire_object.__deepcopy__()
+        mol = self._sire_object.__deepcopy__()
 
         # First work out the indices of atoms that are perturbed.
         pert_idxs = []
