@@ -239,7 +239,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
             +  "--threed --max3d 3.0"
     if scores_file is not None:
-        command += " --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
+        command += f" --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
 
     # Create files for stdout/stderr.
     stdout = open(work_dir + "/lomap.out", "w")
