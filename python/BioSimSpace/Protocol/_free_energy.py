@@ -91,11 +91,11 @@ class FreeEnergy(_Protocol):
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 'standard' : A full perturbation of all terms (default option).
-                '1_discharge_soft' : perturb all discharging soft atom charge terms (i.e. value->0.0).
-                '2_vanish_soft' : perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-                '3_flip' : perturb all hard atom terms as well as bonds/angles.
-                '4_grow_soft' : perturb all growing soft atom LJ terms (i.e. 0.0->value).
-                '5_charge_soft' : perturb all charging soft atom LJ terms (i.e. 0.0->value).
+                'discharge_soft' : perturb all discharging soft atom charge terms (i.e. value->0.0).
+                'vanish_soft' : perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                'flip' : perturb all hard atom terms as well as bonds/angles.
+                'grow_soft' : perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                'charge_soft' : perturb all charging soft atom LJ terms (i.e. 0.0->value).
         """
 
         # Call the base class constructor.
@@ -169,17 +169,17 @@ class FreeEnergy(_Protocol):
                The perturbation type.
         """
         perturbation_type = perturbation_type.lower().replace(" ", "")
-        
+
         if type(perturbation_type) is not str:
             raise TypeError("'perturbation_type' must be of type 'str'")
 
         allowed_perturbation_types = [  
                               "standard",
-                              "1_discharge_soft",
-                              "2_vanish_soft",
-                              "3_flip",
-                              "4_grow_soft",
-                              "5_charge_soft"]
+                              "discharge_soft",
+                              "vanish_soft",
+                              "flip",
+                              "grow_soft",
+                              "charge_soft"]
         if perturbation_type not in allowed_perturbation_types:
           raise ValueError("'perturbation_type' must be any of: "+str(allowed_perturbation_types), perturbation_type)
 
