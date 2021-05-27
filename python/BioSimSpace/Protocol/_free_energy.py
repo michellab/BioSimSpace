@@ -89,8 +89,13 @@ class FreeEnergy(_Protocol):
            restart_interval : int
                The frequency at which restart configurations and trajectory
            perturbation_type : str
-                Which type of perturbation to create a multistep free energy work_dir with. 
-                Defaults to standard, i.e. onestep.
+               The type of perturbation to perform. Options are:
+                'standard' : A full perturbation of all terms (default option).
+                '1_discharge_soft' : perturb all discharging soft atom charge terms (i.e. value->0.0).
+                '2_vanish_soft' : perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                '3_flip' : perturb all hard atom terms as well as bonds/angles.
+                '4_grow_soft' : perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                '5_charge_soft' : perturb all charging soft atom LJ terms (i.e. 0.0->value).
         """
 
         # Call the base class constructor.
