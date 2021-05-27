@@ -1217,7 +1217,7 @@ class Molecule(_SireWrapper):
 
     def _toPertFile(self, filename="MORPH.pert", zero_dummy_dihedrals=False,
             zero_dummy_impropers=False, print_all_atoms=False, property_map={},
-            perturbation_type="standard"):
+            perturbation_type="full"):
         """Write the merged molecule to a perturbation file.
 
            Parameters
@@ -1244,7 +1244,7 @@ class Molecule(_SireWrapper):
                own naming scheme, e.g. { "charge" : "my-charge" }
 
            perturbation_type : str
-               String that specifies whether to use the 'standard' or 'multistep'
+               String that specifies whether to use the 'full' or 'multistep'
                approach in perturbing the LJ, bond and angle terms.
 
            Returns
@@ -1280,7 +1280,7 @@ class Molecule(_SireWrapper):
               raise TypeError("'perturbation_type' must be of type 'str'")
 
           allowed_perturbation_types = [  
-                                "standard",
+                                "full",
                                 "discharge_soft",
                                 "vanish_soft",
                                 "flip",
@@ -1430,7 +1430,7 @@ class Molecule(_SireWrapper):
                         LJ1.epsilon().value(),
                         atom.property("charge0").value(),
                         atom.property("charge1").value())
-            if perturbation_type == "standard":
+            if perturbation_type == "full":
                 if print_all_atoms:
                   for atom in sorted(mol.atoms(), key=lambda atom: atom_sorting_criteria(atom)):
                       # Start atom record.
@@ -1793,7 +1793,7 @@ class Molecule(_SireWrapper):
                     file.write("        final_force    %.5f\n" % 0.0)
                     file.write("        final_equil    %.5f\n" % amber_bond.r0())
 
-                elif perturbation_type == "flip" or perturbation_type == "standard":
+                elif perturbation_type == "flip" or perturbation_type == "full":
                     # bonds are perturbed.
                     file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                     file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
@@ -1872,7 +1872,7 @@ class Molecule(_SireWrapper):
                             file.write("        initial_equil  %.5f\n" % amber_bond0.r0())
                             file.write("        final_force    %.5f\n" % amber_bond0.k())
                             file.write("        final_equil    %.5f\n" % amber_bond0.r0())
-                        elif perturbation_type == "flip" or perturbation_type == "standard":
+                        elif perturbation_type == "flip" or perturbation_type == "full":
                             # Bonds are perturbed.
                             file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                             file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
@@ -1987,7 +1987,7 @@ class Molecule(_SireWrapper):
                 # Start angle record.
                 file.write("    angle\n")
 
-                if perturbation_type in ["standard", "flip"]:
+                if perturbation_type in ["full", "flip"]:
                     # Angle data.
                     file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                     file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
@@ -2038,7 +2038,7 @@ class Molecule(_SireWrapper):
                 # Start angle record.
                 file.write("    angle\n")
 
-                if perturbation_type in ["standard", "flip"]:
+                if perturbation_type in ["full", "flip"]:
                     # Angle data.
                     file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                     file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
@@ -2117,7 +2117,7 @@ class Molecule(_SireWrapper):
                         # Start angle record.
                         file.write("    angle\n")
                         
-                        if perturbation_type in ["standard", "flip"]:
+                        if perturbation_type in ["full", "flip"]:
                             # Angle data.
                             file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
                             file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
@@ -2261,7 +2261,7 @@ class Molecule(_SireWrapper):
                         "discharge_soft",
                         "vanish_soft",
                         "flip",
-                        "standard"]:
+                        "full"]:
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                     else: 
                         file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
@@ -2311,7 +2311,7 @@ class Molecule(_SireWrapper):
                         "discharge_soft",
                         "vanish_soft",
                         "flip",
-                        "standard"]:
+                        "full"]:
                         file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                     else: 
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -2409,8 +2409,8 @@ class Molecule(_SireWrapper):
                             file.write("        initial_form  ")
 
 
-                            if perturbation_type in ["standard", "flip"]:
-                                # do the standard approach.      
+                            if perturbation_type in ["full", "flip"]:
+                                # do the full approach.      
                                 for term in sorted(amber_dihedral0.terms(),
                                                    key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                     if zero_k and has_dummy_initial:
@@ -2583,7 +2583,7 @@ class Molecule(_SireWrapper):
                         "discharge_soft",
                         "vanish_soft",
                         "flip",
-                        "standard"]:
+                        "full"]:
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
                     else:
                         file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
@@ -2632,7 +2632,7 @@ class Molecule(_SireWrapper):
                         "discharge_soft",
                         "vanish_soft",
                         "flip",
-                        "standard"]:
+                        "full"]:
                         file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
                     else:
                         file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
@@ -2726,8 +2726,8 @@ class Molecule(_SireWrapper):
                             file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
                             file.write("        initial_form  ")
 
-                            if perturbation_type in ["standard", "flip"]:
-                                # do the standard approach.      
+                            if perturbation_type in ["full", "flip"]:
+                                # do the full approach.      
                                 for term in sorted(amber_dihedral0.terms(),
                                                    key=lambda t: (t.k(), t.periodicity(), t.phase())):
                                     if zero_k and has_dummy_initial:

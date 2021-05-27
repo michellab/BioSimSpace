@@ -49,7 +49,7 @@ class FreeEnergy(_Protocol):
                  pressure=_Types.Pressure(1, "atmosphere"),
                  report_interval=100,
                  restart_interval=500,
-                 perturbation_type="standard"
+                 perturbation_type="full"
                 ):
         """Constructor.
 
@@ -90,7 +90,7 @@ class FreeEnergy(_Protocol):
                The frequency at which restart configurations and trajectory
            perturbation_type : str
                The type of perturbation to perform. Options are:
-                'standard' : A full perturbation of all terms (default option).
+                'full' : A full perturbation of all terms (default option).
                 'discharge_soft' : perturb all discharging soft atom charge terms (i.e. value->0.0).
                 'vanish_soft' : perturb all vanishing soft atom LJ terms (i.e. value->0.0).
                 'flip' : perturb all hard atom terms as well as bonds/angles.
@@ -125,7 +125,7 @@ class FreeEnergy(_Protocol):
         # Set the restart interval.
         self.setRestartInterval(restart_interval)
 
-        # Set the perturbation type. Default is "standard", i.e. onestep protocol.
+        # Set the perturbation type. Default is "full", i.e. onestep protocol.
         self.setPertType(perturbation_type)
 
     def __str__(self):
@@ -149,7 +149,7 @@ class FreeEnergy(_Protocol):
                         self._temperature, self._pressure, self._report_interval, self._restart_interval)
 
     def getPertType(self):
-        """Get the type of step of the multistep approach to write. Default ("standard") is onestep.
+        """Get the type of step of the multistep approach to write. Default ("full") is onestep.
 
            Returns
            -------
@@ -174,7 +174,7 @@ class FreeEnergy(_Protocol):
             raise TypeError("'perturbation_type' must be of type 'str'")
 
         allowed_perturbation_types = [  
-                              "standard",
+                              "full",
                               "discharge_soft",
                               "vanish_soft",
                               "flip",
