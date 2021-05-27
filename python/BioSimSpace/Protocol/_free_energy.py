@@ -96,6 +96,8 @@ class FreeEnergy(_Protocol):
                 'flip' : perturb all hard atom terms as well as bonds/angles.
                 'grow_soft' : perturb all growing soft atom LJ terms (i.e. 0.0->value).
                 'charge_soft' : perturb all charging soft atom LJ terms (i.e. 0.0->value).
+
+                Currently GROMACS only supports perturbation_type=full.
         """
 
         # Call the base class constructor.
