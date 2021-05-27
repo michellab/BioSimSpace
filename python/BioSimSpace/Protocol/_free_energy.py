@@ -168,10 +168,22 @@ class FreeEnergy(_Protocol):
            perturbation_type : str
                The perturbation type.
         """
-        if type(perturbation_type) is str:
-            self._perturbation_type = perturbation_type
-        else:
-            raise TypeError("'perturbation_type' must be of type str")
+        perturbation_type = perturbation_type.lower().replace(" ", "")
+        
+        if type(perturbation_type) is not str:
+            raise TypeError("'perturbation_type' must be of type 'str'")
+
+        allowed_perturbation_types = [  
+                              "standard",
+                              "1_discharge_soft",
+                              "2_vanish_soft",
+                              "3_flip",
+                              "4_grow_soft",
+                              "5_charge_soft"]
+        if perturbation_type not in allowed_perturbation_types:
+          raise ValueError("'perturbation_type' must be any of: "+str(allowed_perturbation_types), perturbation_type)
+
+        self._perturbation_type = perturbation_type
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
