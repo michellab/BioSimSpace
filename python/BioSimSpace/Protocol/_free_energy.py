@@ -49,7 +49,7 @@ class FreeEnergy(_Protocol):
                  pressure=_Types.Pressure(1, "atmosphere"),
                  report_interval=100,
                  restart_interval=500,
-                 pert_type="standard"
+                 perturbation_type="standard"
                 ):
         """Constructor.
 
@@ -88,7 +88,7 @@ class FreeEnergy(_Protocol):
 
            restart_interval : int
                The frequency at which restart configurations and trajectory
-           pert_type : str
+           perturbation_type : str
                 Which type of perturbation to create a multistep free energy work_dir with. 
                 Defaults to standard, i.e. onestep.
         """
@@ -121,7 +121,7 @@ class FreeEnergy(_Protocol):
         self.setRestartInterval(restart_interval)
 
         # Set the perturbation type. Default is "standard", i.e. onestep protocol.
-        self.setPertType(pert_type)
+        self.setPertType(perturbation_type)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -149,24 +149,24 @@ class FreeEnergy(_Protocol):
            Returns
            -------
 
-           pert_type : str
+           perturbation_type : str
                The perturbation type.
         """
-        return self._pert_type
+        return self._perturbation_type
 
-    def setPertType(self, pert_type):
+    def setPertType(self, perturbation_type):
         """Set the time step.
 
            Parameters
            ----------
 
-           pert_type : str
+           perturbation_type : str
                The perturbation type.
         """
-        if type(pert_type) is str:
-            self._pert_type = pert_type
+        if type(perturbation_type) is str:
+            self._perturbation_type = perturbation_type
         else:
-            raise TypeError("'pert_type' must be of type str")
+            raise TypeError("'perturbation_type' must be of type str")
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
