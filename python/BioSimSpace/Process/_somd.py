@@ -207,7 +207,9 @@ class Somd(_process.Process):
 
                 # Write the perturbation file and get the molecule corresponding
                 # to the lambda = 0 state.
-                pert_mol = pert_mol._toPertFile(self._pert_file, property_map=self._property_map)
+                pert_mol = pert_mol._toPertFile(self._pert_file, property_map=self._property_map,
+                                                perturbation_type=self._protocol.getPertType())
+
                 self._input_files.append(self._pert_file)
 
                 # Remove the perturbable molecule.
