@@ -88,16 +88,18 @@ class FreeEnergy(_Protocol):
 
            restart_interval : int
                The frequency at which restart configurations and trajectory
+
            perturbation_type : str
                The type of perturbation to perform. Options are:
-                'full' : A full perturbation of all terms (default option).
-                'discharge_soft' : perturb all discharging soft atom charge terms (i.e. value->0.0).
-                'vanish_soft' : perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-                'flip' : perturb all hard atom terms as well as bonds/angles.
-                'grow_soft' : perturb all growing soft atom LJ terms (i.e. 0.0->value).
-                'charge_soft' : perturb all charging soft atom LJ terms (i.e. 0.0->value).
+                "full" : A full perturbation of all terms (default option).
+                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                "flip" : Perturb all hard atom terms as well as bonds/angles.
+                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
 
-                Currently GROMACS only supports perturbation_type=full.
+                Currently perturubation_type != "full" is only supported by
+                BioSimSpace.Process.Somd.
         """
 
         # Call the base class constructor.
@@ -128,7 +130,7 @@ class FreeEnergy(_Protocol):
         self.setRestartInterval(restart_interval)
 
         # Set the perturbation type. Default is "full", i.e. onestep protocol.
-        self.setPertType(perturbation_type)
+        self.setPerturbationType(perturbation_type)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -150,8 +152,8 @@ class FreeEnergy(_Protocol):
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                         self._temperature, self._pressure, self._report_interval, self._restart_interval)
 
-    def getPertType(self):
-        """Get the type of step of the multistep approach to write. Default ("full") is onestep.
+    def getPerturbationType(self):
+        """Get the perturbation type.
 
            Returns
            -------
@@ -161,29 +163,36 @@ class FreeEnergy(_Protocol):
         """
         return self._perturbation_type
 
-    def setPertType(self, perturbation_type):
-        """Set the time step.
+    def setPerturbationType(self, perturbation_type):
+        """Set the perturbation type.
 
            Parameters
            ----------
 
            perturbation_type : str
-               The perturbation type.
+               The type of perturbation to perform. Options are:
+                "full" : A full perturbation of all terms (default option).
+                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                "flip" : Perturb all hard atom terms as well as bonds/angles.
+                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
         """
-        perturbation_type = perturbation_type.lower().replace(" ", "")
-
         if type(perturbation_type) is not str:
             raise TypeError("'perturbation_type' must be of type 'str'")
 
-        allowed_perturbation_types = [  
-                              "full",
-                              "discharge_soft",
-                              "vanish_soft",
-                              "flip",
-                              "grow_soft",
-                              "charge_soft"]
+        # Convert to lower case and strip whitespace.
+        perturbation_type = perturbation_type.lower().replace(" ", "")
+
+        allowed_perturbation_types = ["full",
+                                      "discharge_soft",
+                                      "vanish_soft",
+                                      "flip",
+                                      "grow_soft",
+                                      "charge_soft"]
+
         if perturbation_type not in allowed_perturbation_types:
-          raise ValueError("'perturbation_type' must be any of: "+str(allowed_perturbation_types), perturbation_type)
+            raise ValueError(f"'perturbation_type' must be one of: {allowed_perturbation_types}")
 
         self._perturbation_type = perturbation_type
 

@@ -158,18 +158,19 @@ class Gromacs(_process.Process):
 
         # Create the input files...
 
-        # If the we are performing a free energy simulation, then check that
-        # the system contains a single perturbable molecule.
         if type(self._protocol) is _Protocol.FreeEnergy:
-            if self._protocol.getPerturbationType() != "full":
-                raise NotImplementedError("GROMACS currently only support a 'full' perturbation"\
-                    +" type. Please use SOMD when running multistep perturbation types.")
-
+            # Check that the system contains a single perturbable molecule.
             if self._system.nPerturbableMolecules() != 1:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
                                  "perturbable molecule. The system has %d" \
                                   % system.nPerturbableMolecules())
 
+            # Check that the perturbation type is supported..
+            if self._protocol.getPerturbationType() != "full":
+                msg = ("'BioSimSpace.Process.Gromacs' currently only supports the 'full' "
+                       "perturbation type. Please use 'BioSimSpace.Process.Somd' "
+                       "for multistep perturbation types.")
+                raise NotImplementedError(msg)
 
         # Create a copy of the system.
         system = self._system.copy()

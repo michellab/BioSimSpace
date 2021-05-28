@@ -152,10 +152,11 @@ class FreeEnergy():
             if engine == "GROMACS":
               if _gmx_exe is None:
                 raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
-                
+
               if self._protocol.getPerturbationType() != "full":
-                raise NotImplementedError("GROMACS currently only support a 'full' perturbation"\
-                    +" type. Please use SOMD when running multistep perturbation types.")
+                raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
+                                          "type. Please use engine='SOMD' when running multistep "
+                                          "perturbation types.")
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -185,6 +186,17 @@ class FreeEnergy():
             raise TypeError("'serial' must be of type 'bool'.")
 
         self._runner.startAll(serial=serial)
+
+    def workDir(self):
+        """Return the working directory.
+
+           Returns
+           -------
+
+           work_dir : str
+               The path of the working directory.
+        """
+        return self._work_dir
 
     @classmethod
     def getData(cls, name="data", file_link=False, work_dir=None):
