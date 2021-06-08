@@ -44,13 +44,13 @@ need to add them when updating, e.g., for the development package:
     conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
 If you find that Conda is particularly slow to install or upgrade BioSimSpace,
-then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__::
+then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
 
 .. code-block:: bash
 
     conda install -c conda-forge mamba
 
-You can then replace all ``conda`` commands with ``mamba``, e.g.::
+You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
