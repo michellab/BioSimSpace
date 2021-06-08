@@ -38,6 +38,8 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire import Maths as _SireMaths
+from Sire import Vol as _SireVol
 
 from BioSimSpace import _gmx_exe
 from BioSimSpace import _isVerbose
@@ -245,12 +247,27 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                   # No boundary conditions.
-                config.append("cutoff-scheme = group")      # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                  # Zero short-range cutoff.
-                config.append("rvdw = 0")                   # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")               # Zero Coulomb cutoff.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
 
@@ -296,13 +313,28 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                       # No boundary conditions.
-                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                      # Zero short-range cutoff.
-                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")          # Plain cut-off.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")              # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
@@ -384,13 +416,28 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                       # No boundary conditions.
-                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                      # Zero short-range cutoff.
-                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")          # Plain cut-off.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")              # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
@@ -452,13 +499,28 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                       # No boundary conditions.
-                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                      # Zero short-range cutoff.
-                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")          # Plain cut-off.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")              # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
@@ -538,13 +600,28 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                       # No boundary conditions.
-                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                      # Zero short-range cutoff.
-                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")          # Plain cut-off.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")              # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
@@ -628,13 +705,28 @@ class Gromacs(_process.Process):
                 config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
                 config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
             else:
-                config.append("pbc = no")                       # No boundary conditions.
-                config.append("cutoff-scheme = group")          # Generate pair lists for groups of atoms.
-                config.append("nstlist = 0")                    # Single neighbour list (all particles interact).
-                config.append("rlist = 0")                      # Zero short-range cutoff.
-                config.append("rvdw = 0")                       # Zero van der Waals cutoff.
-                config.append("rcoulomb = 0")                   # Zero Coulomb cutoff.
-                config.append("coulombtype = Cut-off")          # Plain cut-off.
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
             config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
             config.append("constraints = h-bonds")              # Rigid water molecules.
             config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
@@ -689,12 +781,6 @@ class Gromacs(_process.Process):
         self.setArg("mdrun", True)          # Use mdrun.
         self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
-
-        # Is this a vacuum simulation? If so, run in single-threaded mode to
-        # avoid domain decomposition.
-        if _is_vacuum(self._config):
-            self.setArg("-ntomp", 1)        # Single OMP thread.
-            self.setArg("-ntmpi", 1)        # Single MPI thread.
 
         # Metadynamics and steered MD arguments.
         if type(self._protocol) is _Protocol.Metadynamics or \
