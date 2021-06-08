@@ -335,9 +335,9 @@ class Gromacs(_process.Process):
                 config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
                 config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")              # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -438,9 +438,9 @@ class Gromacs(_process.Process):
                 config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
                 config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")              # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -521,9 +521,9 @@ class Gromacs(_process.Process):
                 config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
                 config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")              # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -622,9 +622,9 @@ class Gromacs(_process.Process):
                 config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
                 config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")              # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
@@ -727,9 +727,9 @@ class Gromacs(_process.Process):
                 config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
                 config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
                 config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")                  # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")              # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")       # Linear constraint solver.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")          # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
