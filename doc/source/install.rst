@@ -7,24 +7,27 @@ Installation
 Conda install
 =============
 
-The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__.
+To create a new environment:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab biosimspace
+    conda create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
+    conda activate biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda create -n biosimspace-dev -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda activate biosimspace-dev
 
 When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
 at the same time:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace sire
+    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace sire
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
@@ -40,41 +43,18 @@ need to add them when updating, e.g., for the development package:
 
     conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
 
-Note that because of Conda's peculiar scoring metrics you might not end up with
-the latest version of BioSimSpace when performing a fresh install or update.
-(It tries to minimise various things, such as the number of dependencies
-installed, which is difficult when your package depends on many other packages.)
-To see what packages are available, run:
-
-.. code-block:: bash
-
-    conda search -c michellab/label/dev biosimspace
-
-You can then install the latest version by explicitly stating the full package
-name, e.g.:
-
-.. code-block:: bash
-
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
-
-.. code-block:: bash
-
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace --all
-
-If you find that Conda is particularly slow to install or upgrade BioSimSpace, particularly
-on macOS, then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
+If you find that Conda is particularly slow to install or upgrade BioSimSpace,
+then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__::
 
 .. code-block:: bash
 
     conda install -c conda-forge mamba
 
-You can then replace all installation/upgrade commands with ``mamba``, e.g.:
+You can then replace all ``conda`` commands with ``mamba``, e.g.::
 
 .. code-block:: bash
 
-    mamba install -c conda-forge -c omnia -c michellab/label/dev biosimspace
-
-(Mamba also always installs/ugrades the most recent version.)
+    mamba create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
 
 Binary install
 ==============
