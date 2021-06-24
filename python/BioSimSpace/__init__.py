@@ -160,18 +160,22 @@ if not _path.isdir(_gromacs_path):
 
         import subprocess as _subprocess
 
-        # Generate the shell command.
-        _command = "%s -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % _gmx_exe
+        # Generate the shell command. (Run gmx -h.)
+        _command = "%s -h 2>&1" % _gmx_exe
 
         # Run the command.
-        _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
+        _proc = _subprocess.run(_command, shell=True, text=True, stdout=_subprocess.PIPE)
 
         del _command
 
         # Get the data prefix.
         if _proc.returncode == 0:
-            _gromacs_path = _proc.stdout.decode("ascii").strip() + "/share/gromacs/top"
-            # Check for the topology file directory.
+            # Extract the "Data prefix" from the output.
+            for line in _proc.stdout.split("\n"):
+                if "Data prefix" in line:
+                    _gromacs_path = line.split(":")[1].strip() + "/share/gromacs/top"
+                    break
+            # Check that the topology file directory exists.
             if not _path.isdir(_gromacs_path):
                 _gromacs_path = None
 
