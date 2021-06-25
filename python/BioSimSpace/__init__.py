@@ -58,25 +58,27 @@ except ModuleNotFoundError:
 
 # Determine whether we're being imported from a Jupyter notebook.
 try:
-    shell = get_ipython().__class__.__name__
-    if shell == 'ZMQInteractiveShell':
+    _shell = get_ipython().__class__.__name__
+    if _shell == 'ZMQInteractiveShell':
         _is_notebook = True   # Jupyter notebook or qtconsole
-    elif shell == 'TerminalInteractiveShell':
+    elif _shell == 'TerminalInteractiveShell':
         _is_notebook = False  # Terminal running IPython
     else:
         _is_notebook = False  # Other type (?)
+    del _shell
 except NameError:
     _is_notebook = False      # Probably standard Python interpreter
 
 # Determine whether we're being run interactively.
 try:
-    shell = get_ipython().__class__.__name__
-    if shell == 'ZMQInteractiveShell':
+    _shell = get_ipython().__class__.__name__
+    if _shell == 'ZMQInteractiveShell':
         _is_interactive = True   # Jupyter notebook or qtconsole
-    elif shell == 'TerminalInteractiveShell':
+    elif _shell == 'TerminalInteractiveShell':
         _is_interactive = True   # Terminal running IPython
     else:
         _is_interactive = False  # Other type (?)
+    del _shell
 except NameError:
     _is_interactive = False      # Probably standard Python interpreter
 
@@ -171,10 +173,11 @@ if not _path.isdir(_gromacs_path):
         # Get the data prefix.
         if _proc.returncode == 0:
             # Extract the "Data prefix" from the output.
-            for line in _proc.stdout.split("\n"):
-                if "Data prefix" in line:
-                    _gromacs_path = line.split(":")[1].strip() + "/share/gromacs/top"
+            for _line in _proc.stdout.split("\n"):
+                if "Data prefix" in _line:
+                    _gromacs_path = _line.split(":")[1].strip() + "/share/gromacs/top"
                     break
+            del _line
             # Check that the topology file directory exists.
             if not _path.isdir(_gromacs_path):
                 _gromacs_path = None
