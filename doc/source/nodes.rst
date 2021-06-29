@@ -79,7 +79,7 @@ script representation of the node, which could be re-converted to a notebook
 using, e.g., `p2j <https://pypi.org/project/p2j>`__.) Any purely interactive
 elements included in the node, e.g. visualisations and plots, are simply
 ignored when the script is run in a non-interactive mode. To facilitate this
-dual-use the node.addInput method generates a custom
+dual-use the ``node.addInput`` method generates a custom
 `ipywidgets <https://ipywidgets.readthedocs.io/en/latest/>`__ based graphical
 user interface for interative use in Jupyter, or a custom
 `argparse <https://docs.python.org/3/library/argparse.html>`__ parser for
