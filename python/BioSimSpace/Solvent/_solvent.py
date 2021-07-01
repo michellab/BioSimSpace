@@ -661,6 +661,12 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             # expected GROMACS topology template.
             molecule._set_water_topology("GROMACS")
 
+            # Make sure the water molecules are at the end of the topology
+            # since gmx genion requires that they are contiguous.
+            waters = molecule.getWaterMolecules()
+            molecule.removeWaterMolecules()
+            molecule = molecule + waters
+
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
         tmp_dir = _tempfile.TemporaryDirectory()
