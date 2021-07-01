@@ -138,6 +138,12 @@ class Namd(_process.Process):
 
         # Create the input files...
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # Check for perturbable molecules and convert to the chosen end state.
+        system = self._checkPerturbable(system)
+
         # PSF and parameter files.
         try:
             psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)

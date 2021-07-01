@@ -576,6 +576,54 @@ class Process():
 
         return configs, colvar_vals
 
+    def _checkPerturbable(self, system):
+        """Helper function to check for perturble molecules and convert to the
+           desired end state.
+
+           Parameters
+           ---------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system at a given end state.
+        """
+
+        # Check that the system is valid.
+        if type(system) is not _System:
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # If the system contains a perturbable molecule, then we'll warn the user
+        # and simulate the lambda = 0 state.
+        if system.nPerturbableMolecules() > 0:
+            if not "is_lambda1" in self._property_map:
+                is_lambda1 = False
+                _warnings.warn("The system contains a perturbable molecule ."
+                                "We will assume that you intend to simulate the "
+                                "lambda = 0 state. If you want to simulate the "
+                                "lambda = 1 state, then pass {'is_lambda1' : True} "
+                                "in the 'property_map' argument.")
+            else:
+                is_lambda1 = self._property_map["is_lambda1"]
+                self._property_map.pop("is_lambda1")
+
+            # Loop over all perturbable molecules in the system and replace them
+            # with a regular molecule and the chosen end state.
+            for mol in system.getPerturbableMolecules():
+                system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
+                                                                is_lambda1=is_lambda1))
+
+            # Copy across the properties from the original system.
+            for prop in self._system._sire_object.propertyKeys():
+                system._sire_object.setProperty(prop, self._system._sire_object.property(prop))
+
+        return system
+
     def start(self):
         """Start the process.
 

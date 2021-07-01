@@ -239,6 +239,9 @@ class Amber(_process.Process):
         # Convert the water model topology so that it matches the AMBER naming convention.
         system._set_water_topology("AMBER")
 
+        # Check for perturbable molecules and convert to the chosen end state.
+        system = self._checkPerturbable(system)
+
         # RST file (coordinates).
         try:
             rst = _SireIO.AmberRst7(system._sire_object, self._property_map)

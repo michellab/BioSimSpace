@@ -160,6 +160,9 @@ class Gromacs(_process.Process):
 
         # Create the input files...
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
         if type(self._protocol) is _Protocol.FreeEnergy:
             # Check that the system contains a single perturbable molecule.
             if self._system.nPerturbableMolecules() != 1:
@@ -174,8 +177,9 @@ class Gromacs(_process.Process):
                        "for multistep perturbation types.")
                 raise NotImplementedError(msg)
 
-        # Create a copy of the system.
-        system = self._system.copy()
+        else:
+            # Check for perturbable molecules and convert to the chosen end state.
+            system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
         system._set_water_topology("GROMACS")

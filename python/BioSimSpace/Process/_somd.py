@@ -235,28 +235,10 @@ class Somd(_process.Process):
         # perturbable molecule, then we'll warn the user and simulate the
         # lambda = 0 state.
         else:
-            if system.nPerturbableMolecules() > 0:
-                if not "is_lambda1" in self._property_map:
-                    is_lambda1 = False
-                    _warnings.warn("The system contains a perturbable molecule but "
-                                   "this isn't a 'FreeEnergy' protocol. We will assume "
-                                   "that you intend to simulate the lambda = 0 state. "
-                                   "If you want to simulate the lambda = 1 state, then "
-                                   "pass {'is_lambda1' : True} in the 'property_map' "
-                                   "argument.")
-                else:
-                    is_lambda1 = self._property_map["is_lambda1"]
-                    self._property_map.pop("is_lambda1")
+            system = self._checkPerturbable(system)
 
-                # Loop over all perturbable molecules in the system and replace them
-                # with a regular molecule and the chosen end state.
-                for mol in system.getPerturbableMolecules():
-                    system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
-                                                                  is_lambda1=is_lambda1))
-
-                # Copy across the properties from the original system.
-                for prop in self._system._sire_object.propertyKeys():
-                    system._sire_object.setProperty(prop, self._system._sire_object.property(prop))
+        # Convert the water model topology so that it matches the AMBER naming convention.
+        system._set_water_topology("AMBER")
 
         # RST file (coordinates).
         try:
