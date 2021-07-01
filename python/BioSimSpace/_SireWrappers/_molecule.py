@@ -2883,7 +2883,7 @@ class Molecule(_SireWrapper):
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
-        # Rename all properties in the molecule for the corrsponding end state,
+        # Rename all properties in the molecule for the corresponding end state,
         # e.g.: "prop0" --> "prop". Then delete all properties named "prop0"
         # and "prop1".
         for prop in mol.propertyKeys():
