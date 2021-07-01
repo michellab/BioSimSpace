@@ -388,6 +388,7 @@ class System(_SireWrapper):
 
         # A System object.
         elif type(molecules) is System:
+            molecules = molecules.getMolecules()
             is_sire_container = True
 
         # A list of Molecule objects.
