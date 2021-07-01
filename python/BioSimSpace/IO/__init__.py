@@ -32,7 +32,9 @@ Functions
     formatInfo
     readMolecules
     readPDB
+    readPerturbableSystem
     saveMolecules
+    savePerturbableSystem
 """
 
 from glob import glob

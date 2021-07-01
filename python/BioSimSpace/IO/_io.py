@@ -24,9 +24,15 @@ Functionality for reading/writing molecular systems.
 """
 
 __author__ = "Lester Hedges"
-__email__ = "lester.hedges@gmail.com"
+__email__  = "lester.hedges@gmail.com"
 
-__all__ = ["fileFormats", "formatInfo", "readMolecules", "readPDB", "saveMolecules"]
+__all__ = ["fileFormats",
+           "formatInfo",
+           "readMolecules",
+           "readPDB",
+           "readPerturbableSystem",
+           "saveMolecules",
+           "savePerturbableSystem"]
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
@@ -399,7 +405,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
        ----------
 
        filebase : str
-           The base name of the output file.
+           The base name of the output files.
 
        system : :class:`System <BioSimSpace._SireWrappers.System>`, \
                 :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
@@ -623,3 +629,176 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Return the list of files.
     return files
+
+def savePerturbableSystem(filebase, system, property_map={}):
+    """Save a system containing a perturbable molecule. This will be written in
+       AMBER format, with a topology file for each end state of the perturbation,
+       i.e. 'filebase0.prm7' and 'filebase1.prm7'. Coordinates for the lambda=0
+       end state are written to 'filebase.rst7'.
+
+       Parameters
+       ----------
+
+       filebase : str
+           The base name of the output files.
+
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
+           The molecular system.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+    """
+
+    # Check that the filebase is a string.
+    if type(filebase) is not str:
+        raise TypeError("'filebase' must be of type 'str'")
+
+    # Check that the system is valid.
+    if type(system) is _System:
+        pass
+    # A Molecule object.
+    elif type(system) is _Molecule:
+        system = _System(system)
+    # A Molecules object.
+    elif type(system) is _Molecules:
+        system = system.toSystem()
+    # A list of Molecule objects.
+    elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
+        system = _System(system)
+    # Invalid type.
+    else:
+        raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
+                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
+
+    # Validate the map.
+    if type(property_map) is not dict:
+        raise TypeError("'property_map' must be of type 'dict'")
+
+    # Validate that there is a single perturbable molecule in the system.
+    pert_mol = system.getPerturbableMolecules()
+    if system.nPerturbableMolecules() != 1:
+        raise ValueError("The 'system' must contain a single perturbable molecule. "
+                        f"Found {len(pert_mols)}!")
+    # Extract the molecule
+    pert_mol = system.getPerturbableMolecules()[0]
+
+    # Create a copy of the system for the lambda=0 and lambda=1 end states.
+    system0 = system.copy()
+    system1 = system.copy()
+
+    # Update the perturbable molecule in each system.
+    system0.updateMolecules(pert_mol._toRegularMolecule(property_map=property_map,
+                                                        is_lambda1=False))
+    system1.updateMolecules(pert_mol._toRegularMolecule(property_map=property_map,
+                                                        is_lambda1=True))
+
+    # Save the topology files.
+    saveMolecules(filebase + "0", system0, "prm7")
+    saveMolecules(filebase + "1", system1, "prm7")
+
+    # Save the lambda = 0 coordinates.
+    saveMolecules(filebase, system0, "rst7")
+
+def readPerturbableSystem(coords, top0, top1, property_map={}):
+    """Read a perturbable system from file.
+
+       Parameters
+       ----------
+
+       coords : str
+           The path to the coordinate file.
+
+       top0 : str
+           The path to the topology file for the lambda=0 end state.
+
+       top1 : str
+           The path to the topology file for the lambda=1 end state.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+       Returns
+       -------
+
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
+           A molecular system.
+    """
+
+    # Try loading the two end states.
+    system0 = readMolecules([coords, top0], property_map=property_map)
+    system1 = readMolecules([coords, top1], property_map=property_map)
+
+    # Make sure the systems have the same number of molecules.
+    if system0.nMolecules() != system1.nMolecules():
+        raise ValueError("The two topologies contain a different number of molecules!")
+
+    # Now loop through the molecules in each system to work out which
+    # is the perturbable molecule. This will differ in the  'ambertype'
+    # 'LJ' or 'charge' property.
+    ambertype = property_map.get("ambertype", "ambertype")
+    LJ = property_map.get("LJ", "LJ")
+    charge = property_map.get("charge", "charge")
+    has_pert = False
+    for idx, (mol0, mol1) in enumerate(zip(system0.getMolecules(), system1.getMolecules())):
+        for atom0, atom1 in zip(mol0.getAtoms(), mol1.getAtoms()):
+            if atom0._sire_object.property(ambertype) != atom1._sire_object.property(ambertype) or \
+               atom0._sire_object.property(LJ)        != atom1._sire_object.property(LJ)        or \
+               atom0._sire_object.property(charge)    != atom1._sire_object.property(charge):
+                   has_pert = True
+                   break
+        if has_pert:
+            break
+
+    if not has_pert:
+        raise ValueError("No perturbable molecule was found?")
+
+    # Extract the perturbable molecule.
+    pert_mol = system0[idx]
+
+    # Extract and copy the Sire molecule.
+    mol = pert_mol._sire_object.__deepcopy__()
+
+    # Make the molecule editable.
+    mol = mol.edit()
+
+    # Rename all properties in the molecule for the lambda=0 end state,
+    # e.g.: "prop" --> "prop0". Then delete all properties named "prop"
+    # and "prop1".
+    for prop in mol.propertyKeys():
+        # See if this property exists in the user map.
+        new_prop = property_map.get(prop, prop) + "0"
+
+        # Copy the property using the updated name.
+        mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
+
+        # Delete the redundant property.
+        mol = mol.removeProperty(prop).molecule()
+
+    # Now add the properties for the lambda=1 end state.
+    mol1 = system1[idx]._sire_object
+    for prop in mol1.propertyKeys():
+        # See if this property exists in the user map.
+        new_prop = property_map.get(prop, prop) + "1"
+
+        # Copy the property using the updated name.
+        mol = mol.setProperty(new_prop, mol1.property(prop)).molecule()
+
+    # Flag that the molecule is perturbable.
+    mol.setProperty("is_perturbable", _SireBase.wrap(True))
+
+    # Add the molecule0 and molecule1 properties.
+    mol.setProperty("molecule0", system0[idx]._sire_object)
+    mol.setProperty("molecule1", system1[idx]._sire_object)
+
+    # Commit the changes.
+    mol = _Molecule(mol.commit())
+
+    # Update the molecule in the original system.
+    system0.updateMolecules(mol)
+
+    return system0
