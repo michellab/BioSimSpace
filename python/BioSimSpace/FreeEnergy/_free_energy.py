@@ -187,6 +187,10 @@ class FreeEnergy():
 
         self._runner.startAll(serial=serial)
 
+    def wait(self):
+        """Wait for the simulation to finish."""
+        self._runner.wait()
+
     def workDir(self):
         """Return the working directory.
 
