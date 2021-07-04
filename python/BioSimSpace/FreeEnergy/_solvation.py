@@ -47,8 +47,13 @@ class Solvation(_free_energy.FreeEnergy):
            system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
 
-           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
-               The simulation protocol.
+           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+                     [:class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`,
+                      :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`]
+               The simulation protocol. If one obect is passed, then the same
+               protocol will be used for both legs of the simulation. Passing
+               two objects enables a different protocol for each leg, e.g. a
+               different lambda schedule, or run time.
 
            vacuum_leg : bool
                Whether to simulation the vacuum leg of the simulation. Set to False

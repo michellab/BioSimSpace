@@ -82,8 +82,13 @@ class FreeEnergy():
            Parameters
            ----------
 
-           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`
-               The simulation protocol.
+           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+                     [:class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`,
+                      :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`]
+               The simulation protocol. If one obect is passed, then the same
+               protocol will be used for both legs of the simulation. Passing
+               two objects enables a different protocol for each leg, e.g. a
+               different lambda schedule, or run time.
 
            work_dir : str
                The working directory for the simulation.
@@ -114,13 +119,32 @@ class FreeEnergy():
         # Validate the input.
 
         if protocol is not None:
-            if type(protocol) is not _Protocol.FreeEnergy:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
+            # Convert tuple to list.
+            if type(protocol) is tuple:
+                protocol = list(protocol)
+
+            if type(protocol) is _Protocol.FreeEnergy:
+                self._protocol0 = protocol
+                self._protocol1 = protocol
+            elif type(protocol) is list:
+                if not(all(isinstance(x, _Protocol.FreeEnergy) for x in protocol)):
+                    raise TypeError("'protocol' must be a list of 'BioSimSpace.Protocol.FreeEnergy' types")
+                # Same protocol for both legs.
+                if len(protocol) == 1:
+                    self._protocol0 = protocol[0]
+                    self._protocol1 = protocol[0]
+                elif len(protocol) == 2:
+                    self._protocol0 = protocol[0]
+                    self._protocol1 = protocol[1]
+                else:
+                    raise TypeError("'protocol' can only contain a maxmimum of two items, one for each leg.")
             else:
-                self._protocol = protocol
+                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy' "
+                                "or a list of 'BioSimSpace.Protocol.FreeEnergy' types." )
         else:
             # Use a default protocol.
-            self._protocol = _FreeEnergy()
+            self._protocol0 = _FreeEnergy()
+            self._protocol1 = _FreeEnergy()
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
@@ -153,10 +177,11 @@ class FreeEnergy():
               if _gmx_exe is None:
                 raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
 
-              if self._protocol.getPerturbationType() != "full":
-                raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
-                                          "type. Please use engine='SOMD' when running multistep "
-                                          "perturbation types.")
+              if self._protocol0.getPerturbationType() != "full" or \
+                 self._protocol1.getPerturbationType() != "full":
+                    raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
+                                              "type. Please use engine='SOMD' when running multistep "
+                                              "perturbation types.")
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -835,13 +860,13 @@ class FreeEnergy():
             if self._is_dual:
                 system1._set_water_topology("AMBER")
 
-        # Get the lambda values from the protocol.
-        lam_vals = self._protocol.getLambdaValues()
+        # Get the lambda values from the protocol for the first leg.
+        lam_vals = self._protocol0.getLambdaValues()
 
         # Loop over all of the lambda values.
         for lam in lam_vals:
             # Update the protocol lambda values.
-            self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
+            self._protocol0.setLambdaValues(lam=lam, lam_vals=lam_vals)
 
             # Create and append the required processes for each leg.
             # Nest the working directories inside self._work_dir.
@@ -854,22 +879,43 @@ class FreeEnergy():
                 else:
                     platform = "CPU"
 
-                leg0.append(_Process.Somd(system0, self._protocol,
+                leg0.append(_Process.Somd(system0, self._protocol0,
                     platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
-
-                if self._is_dual:
-                    leg1.append(_Process.Somd(system1, self._protocol,
-                        platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
 
             # GROMACS.
             elif self._engine == "GROMACS":
-                leg0.append(_Process.Gromacs(system0, self._protocol,
+                leg0.append(_Process.Gromacs(system0, self._protocol0,
                     work_dir="%s/lambda_%5.4f" % (self._dir0, lam),
                     ignore_warnings=self._ignore_warnings,
                     show_errors=self._show_errors))
 
-                if self._is_dual:
-                    leg1.append(_Process.Gromacs(system1, self._protocol,
+        if self._is_dual:
+            # Get the lambda values from the protocol for the second leg.
+            lam_vals = self._protocol1.getLambdaValues()
+
+            # Loop over all of the lambda values.
+            for lam in lam_vals:
+
+                # Update the protocol lambda values.
+                self._protocol1.setLambdaValues(lam=lam, lam_vals=lam_vals)
+
+                # Create and append the required processes for each leg.
+                # Nest the working directories inside self._work_dir.
+
+                # SOMD.
+                if self._engine == "SOMD":
+                    # Check for GPU support.
+                    if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                        platform = "CUDA"
+                    else:
+                        platform = "CPU"
+
+                    leg1.append(_Process.Somd(system1, self._protocol1,
+                        platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+
+                # GROMACS.
+                elif self._engine == "GROMACS":
+                    leg1.append(_Process.Gromacs(system1, self._protocol1,
                         work_dir="%s/lambda_%5.4f" % (self._dir1, lam),
                         ignore_warnings=self._ignore_warnings,
                         show_errors=self._show_errors))
