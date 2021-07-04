@@ -41,8 +41,8 @@ class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
     def __init__(self, system, protocol=None, box=None, angles=3*[_Types.Angle(90, "degrees")],
-            free_leg=True, work_dir=None, engine=None, property_map={}, ignore_warnings=False,
-            show_errors=True):
+            free_leg=True, work_dir=None, engine=None, setup_only=False, property_map={},
+            ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -79,6 +79,13 @@ class Binding(_free_energy.FreeEnergy):
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
 
+           setup_only: bool
+               Whether to only support simulation setup. If True, then no
+               simulation processes objects will be created, only the directory
+               hierarchy and input files to perform run a simulation externally.
+               This can be useful when you don't intend to use BioSimSpace to
+               run the simulation. Note that a 'work_dir' must also be specified.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -96,7 +103,7 @@ class Binding(_free_energy.FreeEnergy):
         """
 
         # Call the base class constructor.
-        super().__init__(protocol, work_dir, engine,
+        super().__init__(protocol, work_dir, engine, setup_only=setup_only,
             ignore_warnings=ignore_warnings, show_errors=show_errors)
 
         # Validate the input.

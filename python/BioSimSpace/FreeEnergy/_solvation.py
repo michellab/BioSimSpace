@@ -37,8 +37,8 @@ class Solvation(_free_energy.FreeEnergy):
     """A class for configuring and running solvation free energy simulations."""
 
     def __init__(self, system, protocol=None, vacuum_leg=True,
-            work_dir=None, engine=None, ignore_warnings=False,
-            show_errors=True):
+            work_dir=None, engine=None, setup_only=False,
+            ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -67,6 +67,13 @@ class Solvation(_free_energy.FreeEnergy):
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
 
+           setup_only: bool
+               Whether to only support simulation setup. If True, then no
+               simulation processes objects will be created, only the directory
+               hierarchy and input files to perform run a simulation externally.
+               This can be useful when you don't intend to use BioSimSpace to
+               run the simulation. Note that a 'work_dir' must also be specified.
+
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file.
                This option is specific to GROMACS and will be ignored when a
@@ -79,7 +86,7 @@ class Solvation(_free_energy.FreeEnergy):
         """
 
         # Call the base class constructor.
-        super().__init__(protocol, work_dir, engine,
+        super().__init__(protocol, work_dir, engine, setup_only=setup_only,
             ignore_warnings=ignore_warnings, show_errors=show_errors)
 
         # Validate the input.

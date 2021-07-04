@@ -34,6 +34,7 @@ from glob import glob as _glob
 import math as _math
 import sys as _sys
 import os as _os
+import shutil as _shutil
 import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
@@ -76,7 +77,7 @@ class FreeEnergy():
     _engines = ["GROMACS", "SOMD"]
 
     def __init__(self, protocol=None, work_dir=None, engine=None,
-            ignore_warnings=False, show_errors=True):
+            setup_only=False, ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -97,6 +98,13 @@ class FreeEnergy():
                The molecular dynamics engine used to run the simulation. Available
                options are "GROMACS", or "SOMD". If this argument is omitted then
                BioSimSpace will choose an appropriate engine for you.
+
+           setup_only: bool
+               Whether to only support simulation setup. If True, then no
+               simulation processes objects will be created, only the directory
+               hierarchy and input files to perform run a simulation externally.
+               This can be useful when you don't intend to use BioSimSpace to
+               run the simulation. Note that a 'work_dir' must also be specified.
 
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file.
@@ -146,8 +154,15 @@ class FreeEnergy():
             self._protocol0 = _FreeEnergy()
             self._protocol1 = _FreeEnergy()
 
+        if type(setup_only) is not bool:
+            raise TypeError("'setup_only' must be of type 'bool'.")
+        else:
+            self._setup_only = setup_only
+
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
+            if setup_only:
+                raise ValueError("A 'work_dir' must be specified when 'setup_only' is True!")
             self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
@@ -210,11 +225,17 @@ class FreeEnergy():
         if type(serial) is not bool:
             raise TypeError("'serial' must be of type 'bool'.")
 
-        self._runner.startAll(serial=serial)
+        if self._setup_only:
+            _warnings.warn("No proceses exist! Object created in 'setup_only' mode.")
+        else:
+            self._runner.startAll(serial=serial)
 
     def wait(self):
         """Wait for the simulation to finish."""
-        self._runner.wait()
+        if self._setup_only:
+            _warnings.warn("No proceses exist! Object created in 'setup_only' mode.")
+        else:
+            self._runner.wait()
 
     def workDir(self):
         """Return the working directory.
@@ -860,44 +881,16 @@ class FreeEnergy():
             if self._is_dual:
                 system1._set_water_topology("AMBER")
 
-        # Get the lambda values from the protocol for the first leg.
-        lam_vals = self._protocol0.getLambdaValues()
+        # Setup all of the simulation processes for each leg.
+        if not self._setup_only:
 
-        # Loop over all of the lambda values.
-        for lam in lam_vals:
-            # Update the protocol lambda values.
-            self._protocol0.setLambdaValues(lam=lam, lam_vals=lam_vals)
-
-            # Create and append the required processes for each leg.
-            # Nest the working directories inside self._work_dir.
-
-            # SOMD.
-            if self._engine == "SOMD":
-                # Check for GPU support.
-                if "CUDA_VISIBLE_DEVICES" in _os.environ:
-                    platform = "CUDA"
-                else:
-                    platform = "CPU"
-
-                leg0.append(_Process.Somd(system0, self._protocol0,
-                    platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
-
-            # GROMACS.
-            elif self._engine == "GROMACS":
-                leg0.append(_Process.Gromacs(system0, self._protocol0,
-                    work_dir="%s/lambda_%5.4f" % (self._dir0, lam),
-                    ignore_warnings=self._ignore_warnings,
-                    show_errors=self._show_errors))
-
-        if self._is_dual:
-            # Get the lambda values from the protocol for the second leg.
-            lam_vals = self._protocol1.getLambdaValues()
+            # Get the lambda values from the protocol for the first leg.
+            lam_vals = self._protocol0.getLambdaValues()
 
             # Loop over all of the lambda values.
             for lam in lam_vals:
-
                 # Update the protocol lambda values.
-                self._protocol1.setLambdaValues(lam=lam, lam_vals=lam_vals)
+                self._protocol0.setLambdaValues(lam=lam, lam_vals=lam_vals)
 
                 # Create and append the required processes for each leg.
                 # Nest the working directories inside self._work_dir.
@@ -910,19 +903,235 @@ class FreeEnergy():
                     else:
                         platform = "CPU"
 
-                    leg1.append(_Process.Somd(system1, self._protocol1,
-                        platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+                    leg0.append(_Process.Somd(system0, self._protocol0,
+                        platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir0, lam)))
 
                 # GROMACS.
                 elif self._engine == "GROMACS":
-                    leg1.append(_Process.Gromacs(system1, self._protocol1,
-                        work_dir="%s/lambda_%5.4f" % (self._dir1, lam),
+                    leg0.append(_Process.Gromacs(system0, self._protocol0,
+                        work_dir="%s/lambda_%5.4f" % (self._dir0, lam),
                         ignore_warnings=self._ignore_warnings,
                         show_errors=self._show_errors))
 
-        # Initialise the process runner. All processes have already been nested
-        # inside the working directory so no need to re-nest.
-        self._runner = _Process.ProcessRunner(leg0 + leg1)
+            if self._is_dual:
+                # Get the lambda values from the protocol for the second leg.
+                lam_vals = self._protocol1.getLambdaValues()
+
+                # Loop over all of the lambda values.
+                for lam in lam_vals:
+
+                    # Update the protocol lambda values.
+                    self._protocol1.setLambdaValues(lam=lam, lam_vals=lam_vals)
+
+                    # Create and append the required processes for each leg.
+                    # Nest the working directories inside self._work_dir.
+
+                    # SOMD.
+                    if self._engine == "SOMD":
+                        # Check for GPU support.
+                        if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                            platform = "CUDA"
+                        else:
+                            platform = "CPU"
+
+                        leg1.append(_Process.Somd(system1, self._protocol1,
+                            platform=platform, work_dir="%s/lambda_%5.4f" % (self._dir1, lam)))
+
+                    # GROMACS.
+                    elif self._engine == "GROMACS":
+                        leg1.append(_Process.Gromacs(system1, self._protocol1,
+                            work_dir="%s/lambda_%5.4f" % (self._dir1, lam),
+                            ignore_warnings=self._ignore_warnings,
+                            show_errors=self._show_errors))
+
+            # Initialise the process runner. All processes have already been nested
+            # inside the working directory so no need to re-nest.
+            self._runner = _Process.ProcessRunner(leg0 + leg1)
+
+        # Just set up the folder hierarchy and input files.
+        else:
+            # Get the lambda values from the protocol for the first leg.
+            lam_vals = self._protocol0.getLambdaValues()
+
+            # Create a process for the first lambda value.
+            lam = lam_vals[0]
+
+            # Update the protocol lambda values.
+            self._protocol0.setLambdaValues(lam=lam, lam_vals=lam_vals)
+
+            # Create and append the required processes for each leg.
+            # Nest the working directories inside self._work_dir.
+
+            # Name the first directory.
+            first_dir = "%s/lambda_%5.4f" % (self._dir0, lam)
+
+            # SOMD.
+            if self._engine == "SOMD":
+                # Check for GPU support.
+                if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+
+                process = _Process.Somd(system0, self._protocol0,
+                    platform=platform, work_dir=first_dir)
+                del(process)
+
+            # GROMACS.
+            elif self._engine == "GROMACS":
+                process = _Process.Gromacs(system0, self._protocol0,
+                    work_dir=first_dir, ignore_warnings=self._ignore_warnings,
+                    show_errors=self._show_errors)
+                del(process)
+
+            # Loop over the rest of the lambda values.
+            for x, lam in enumerate(lam_vals[1:]):
+                # Name the directory.
+                dir = "%s/lambda_%5.4f" % (self._dir0, lam)
+
+                # Delete any existing directories.
+                if _os.path.isdir(dir):
+                    _shutil.rmtree(dir, ignore_errors=True)
+
+                # Copy the first directory to that of the current lambda value.
+                _shutil.copytree(first_dir, dir)
+
+                # Now update the lambda values in the config files.
+
+                # SOMD.
+                if self._engine == "SOMD":
+                    new_config = []
+                    with open(dir + "/somd.cfg", "r") as f:
+                        for line in f:
+                            if "lambda_val" in line:
+                                new_config.append("lambda_val = %s\n" % lam)
+                            else:
+                                new_config.append(line)
+                    with open(dir + "/somd.cfg", "w") as f:
+                        for line in new_config:
+                            f.write(line)
+
+                # GROMACS.
+                elif self._engine == "GROMACS":
+                    # Delete the existing binary run file.
+                    _os.remove(dir + "/gromacs.tpr")
+                    new_config = []
+                    with open(dir + "/gromacs.mdp", "r") as f:
+                        for line in f:
+                            if "init-lambda-state" in line:
+                                new_config.append("init-lambda-state = %d\n" % (x+1))
+                            else:
+                                new_config.append(line)
+                    with open(dir + "/gromacs.mdp", "w") as f:
+                        for line in new_config:
+                            f.write(line)
+
+                    mdp     = dir + "/gromacs.mdp"
+                    mdp_out = dir + "/gromacs.out.mdp"
+                    gro     = dir + "/gromacs.gro"
+                    top     = dir + "/gromacs.top"
+                    tpr     = dir + "/gromacs.tpr"
+
+                    # Use grompp to generate the portable binary run input file.
+                    command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+                        % (_gmx_exe, mdp, mdp_out, gro, top, gro, tpr)
+
+                    # Run the command. If this worked for the first lambda value,
+                    # then it should work for all others.
+                    proc = _subprocess.run(command, shell=True, text=True,
+                        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+            if self._is_dual:
+                # Get the lambda values from the protocol for the first leg.
+                lam_vals = self._protocol1.getLambdaValues()
+
+                # Create a process for the first lambda value.
+                lam = lam_vals[0]
+
+                # Update the protocol lambda values.
+                self._protocol1.setLambdaValues(lam=lam, lam_vals=lam_vals)
+
+                # Create and append the required processes for each leg.
+                # Nest the working directories inside self._work_dir.
+
+                # Name the first directory.
+                first_dir = "%s/lambda_%5.4f" % (self._dir1, lam)
+
+                # SOMD.
+                if self._engine == "SOMD":
+                    # Check for GPU support.
+                    if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                        platform = "CUDA"
+                    else:
+                        platform = "CPU"
+
+                    process = _Process.Somd(system1, self._protocol1,
+                        platform=platform, work_dir=first_dir)
+                    del(process)
+
+                # GROMACS.
+                elif self._engine == "GROMACS":
+                    process = _Process.Gromacs(system1, self._protocol1,
+                        work_dir=first_dir, ignore_warnings=self._ignore_warnings,
+                        show_errors=self._show_errors)
+                    del(process)
+
+                # Loop over the rest of the lambda values.
+                for x, lam in enumerate(lam_vals[1:]):
+                    # Name the directory.
+                    dir = "%s/lambda_%5.4f" % (self._dir1, lam)
+
+                    # Delete any existing directories.
+                    if _os.path.isdir(dir):
+                        _shutil.rmtree(dir, ignore_errors=True)
+
+                    # Copy the first directory to that of the current lambda value.
+                    _shutil.copytree(first_dir, dir)
+
+                    # Now update the lambda values in the config files.
+
+                    # SOMD.
+                    if self._engine == "SOMD":
+                        new_config = []
+                        with open(dir + "/somd.cfg", "r") as f:
+                            for line in f:
+                                if "lambda_val" in line:
+                                    new_config.append("lambda_val = %s\n" % lam)
+                                else:
+                                    new_config.append(line)
+                        with open(dir + "/somd.cfg", "w") as f:
+                            for line in new_config:
+                                f.write(line)
+
+                    # GROMACS.
+                    elif self._engine == "GROMACS":
+                        # Delete the existing binary run file.
+                        _os.remove(dir + "/gromacs.tpr")
+                        new_config = []
+                        with open(dir + "/gromacs.mdp", "r") as f:
+                            for line in f:
+                                if "init-lambda-state" in line:
+                                    new_config.append("init-lambda-state = %d\n" % (x+1))
+                                else:
+                                    new_config.append(line)
+                        with open(dir + "/gromacs.mdp", "w") as f:
+                            for line in new_config:
+                                f.write(line)
+
+                        mdp     = dir + "/gromacs.mdp"
+                        mdp_out = dir + "/gromacs.out.mdp"
+                        gro     = dir + "/gromacs.gro"
+                        top     = dir + "/gromacs.top"
+                        tpr     = dir + "/gromacs.tpr"
+
+                        # Use grompp to generate the portable binary run input file.
+                        command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+                            % (_gmx_exe, mdp, mdp_out, gro, top, gro, tpr)
+
+                        # Run the command. If this worked for the first lambda value,
+                        # then it should work for all others.
+                        proc = _subprocess.run(command, shell=True, text=True,
+                            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
     def _update_run_args(self, args):
         """Internal function to update run arguments for all subprocesses.
