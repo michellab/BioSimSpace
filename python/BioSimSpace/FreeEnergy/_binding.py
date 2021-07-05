@@ -82,9 +82,9 @@ class Binding(_free_energy.FreeEnergy):
            setup_only: bool
                Whether to only support simulation setup. If True, then no
                simulation processes objects will be created, only the directory
-               hierarchy and input files to perform run a simulation externally.
-               This can be useful when you don't intend to use BioSimSpace to
-               run the simulation. Note that a 'work_dir' must also be specified.
+               hierarchy and input files to run a simulation externally. This
+               can be useful when you don't intend to use BioSimSpace to run
+               the simulation. Note that a 'work_dir' must also be specified.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
