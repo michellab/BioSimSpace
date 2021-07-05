@@ -7,11 +7,11 @@
 LOMAP: fingerprint calculations
 =====
 
-Alchemical free energy calculations hold increasing promise as an aid to drug
-discovery efforts. However, applications of these techniques in discovery
-projects have been relatively few, partly because of the difficulty of planning
-and setting up calculations. The Lead Optimization Mapper (LOMAP) is an
-automated algorithm to plan efficient relative free energy calculations between
+Alchemical free energy calculations hold increasing promise as an aid to drug 
+discovery efforts. However, applications of these techniques in discovery 
+projects have been relatively few, partly because of the difficulty of planning 
+and setting up calculations. The Lead Optimization Mapper (LOMAP) is an 
+automated algorithm to plan efficient relative free energy calculations between 
 potential ligands within a substantial of compounds.
 
 """
@@ -21,7 +21,7 @@ potential ligands within a substantial of compounds.
 # Copyright 2015 - 2016  UC Irvine and the Authors
 #
 # Authors: Dr Gaetano Calabro' and Dr David Mobley
-#
+# 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -67,24 +67,24 @@ class Figureprint(object):
     """
 
     This class is used to compute the Maximum Common Subgraph (MCS) between two
-    RDkit molecule objects and to score their similarity by using defined rules
-
+    RDkit molecule objects and to score their similarity by using defined rules 
+    
     """
 
     def __init__(self, moli, molj):
         """
         Inizialization function
-
+    
         Parameters
         ----------
 
-        moli : RDKit molecule object
+        moli : RDKit molecule object 
             the first molecule used to perform the Figureprint calculation
-        molj : RDKit molecule object
+        molj : RDKit molecule object 
             the second molecule used to perform the Figureprint calculation
-        options : argparse python object
-            the list of user options
-
+        options : argparse python object 
+            the list of user options 
+       
         """
 
         # Set logging level and format

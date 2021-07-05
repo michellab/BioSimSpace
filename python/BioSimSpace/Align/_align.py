@@ -71,6 +71,8 @@ from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
+from . import _lomap
+
 # Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
     _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
@@ -231,28 +233,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     if scores_file:
         _shutil.copyfile(scores_file, f"{work_dir}/inputs/lomap_input_edge_scores.csv")
 
-    # Get the name of the LOMAP script.
-    lomap_script = _os.path.dirname(__file__) + "/_lomap/lomap_networkgen.py"
+    # Create the DBMolecules object.
+    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
+                                name=f"{work_dir}/outputs/lomap",
+                                threed=True,
+                                max3d=3.0)
 
-    # Generate the command-line string.
-    command = f"{_sys.executable} {lomap_script} " \
-            + f"{work_dir}/inputs -n {work_dir}/outputs/lomap " \
-            +  "--threed --max3d 3.0"
-    if scores_file is not None:
-        command += f" --ml_pd {work_dir}/inputs/lomap_input_edge_scores.csv"
+    # Create the similarity matrices.
+    strict, loose = db_mol.build_matrices()
 
-    # Create files for stdout/stderr.
-    stdout = open(work_dir + "/lomap.out", "w")
-    stderr = open(work_dir + "/lomap.err", "w")
-
-    # Run LOMAP as a subprocess.
-    proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-    stdout.close()
-    stderr.close()
-
-    # LOMAP failed.
-    if proc.returncode != 0:
-        raise _AlignmentError("LOMAP failed!")
+    # Generate the graph. (Might be able to use this later, rather than
+    # reconstructing it by hand.)
+    nx_graph = db_mol.build_graph()
 
     # Store the name to the LOMAP output file.
     lomap_file = work_dir + "/outputs/lomap_score_with_connection.txt"
