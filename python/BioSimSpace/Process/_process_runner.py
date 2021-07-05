@@ -583,6 +583,9 @@ class ProcessRunner():
                 # Initialise the error state.
                 is_error = True
 
+                # Flag that the process is no longer queued.
+                p._is_queued = False
+
                 # Zero the tally of failed processes.
                 num_failed = 0
 
