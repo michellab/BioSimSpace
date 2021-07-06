@@ -236,6 +236,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     # Create the DBMolecules object.
     db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
                                 name=f"{work_dir}/outputs/lomap",
+                                output_no_graph=True,
+                                output_no_images=True,
                                 threed=True,
                                 max3d=3.0)
 
