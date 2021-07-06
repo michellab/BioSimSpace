@@ -508,14 +508,6 @@ class MCS(object):
                         mol.GetAtomWithIdx(idx).SetProp('rc', str(val))
             return
 
-        def sanity_check_on_molecule(mol):
-            # Sanity check: we require all heavies to be before all hydrogens in the input
-            lasta=mol.GetAtomWithIdx(0)
-            for a in mol.GetAtoms():
-                if (a.GetAtomicNum()>1 and lasta.GetAtomicNum()==1):
-                    raise ValueError('Hydrogens not after all heavy atoms in molecule')
-                lasta=a
-
         # START of __init__ function
         # Set logging level and format
         logging.basicConfig(format='%(levelname)s:\t%(message)s', level=logging.INFO)
@@ -527,9 +519,7 @@ class MCS(object):
 
         # Local pointers to the passed molecules
         self.moli = moli
-        sanity_check_on_molecule(self.moli)
         self.molj = molj
-        sanity_check_on_molecule(self.molj)
 
         # Sanitize input molecules
         Chem.SanitizeMol(self.moli)
