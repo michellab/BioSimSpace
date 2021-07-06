@@ -860,7 +860,8 @@ class GraphGen(object):
                         from rdkit.Chem.Draw.MolDrawing import DrawingOptions
                         DrawingOptions.bondLineWidth = 2.5
                         Draw.MolToFile(mol, fname, size=(200, 200), kekulize=False, fitimage=True, imageType='png',
-                                       options=DrawingOptions)
+                                       #options=DrawingOptions
+                                       )
                     except:
                         ###### need to ask RDKit to fix this if possible, see the code
                         # issue tracker for more details######
@@ -871,7 +872,8 @@ class GraphGen(object):
                         from rdkit.Chem.Draw.MolDrawing import DrawingOptions
                         DrawingOptions.bondLineWidth = 2.5
                         Draw.MolToFile(mol, fname, size=(200, 200), kekulize=False, fitimage=True, imageType='png',
-                                       options=DrawingOptions)
+                                       #options=DrawingOptions
+                                       )
                     temp_graph.nodes[n]['image'] = fname
                     # self.resultGraph.nodes[n]['label'] = ''
                     temp_graph.nodes[n]['labelloc'] = 't'
