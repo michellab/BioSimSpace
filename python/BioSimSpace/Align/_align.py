@@ -34,7 +34,6 @@ __all__ = ["generateNetwork",
            "merge"]
 
 import csv as _csv
-import itertools as _itertools
 import os as _os
 import subprocess as _subprocess
 import shutil as _shutil
@@ -80,7 +79,7 @@ except:
     _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
-        scores_file=None, property_map={}):
+        links_file=None, property_map={}):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -101,13 +100,20 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            If using a 'work_dir', then a PNG image will be located in
            'work_dir/images/network.png'.
 
-       scores_file : str
-           Path to a CSV file in the form:
-             lig1,lig2,score
-             ...
-             lig_ lig_,score
-           where score is a float that is fed into LOMAP for edge scoring
-           (instead of the default LOMAP score based on Maximum Common Substructure (MCS)).
+       links_file : str
+           Path to a file providing links to seed the LOMAP graph with. Each
+           record in the file must contain a minimum of two entries, i.e. the
+           names of the ligands of interest, e.g.
+             ligA ligB
+           The third column can include a pre-computed score for the ligand
+           pair, e.g.
+             ligA ligB score
+           A value of < -1 means 'recompute', but force the link to be included.
+           A negative value (>= -1) means use the absolute value as the score,
+           but force the link to be included. A positive means use this value
+           as the score, but treat the link as normal in the LOMAP graph
+           calculation. Finally, if the fourth column contains the string
+           'force', then the link is included, irrespective of its score.
 
        property_map : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -162,48 +168,41 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Validate the scores file.
-    if scores_file is not None:
+    if links_file is not None:
 
-        if type(scores_file) is not str:
-            raise TypeError("'scores_file' must be of type 'str'")
+        if type(links_file) is not str:
+            raise TypeError("'links_file' must be of type 'str'")
 
         # Check that it exists.
-        if _os.path.isfile(scores_file):
+        if _os.path.isfile(links_file):
             # Must have names to match against.
             if names is None:
-                raise ValueError("'names' must be defined when passing 'scores_file' to LOMAP.")
+                raise ValueError("'names' must be defined when passing 'links_file' to LOMAP.")
 
-            # Check if all the molecule transformations are in the passed file.
-            perturbations = _itertools.combinations(names, 2)
-            with open(scores_file, "r") as scores_file_:
-                contents = []
-                for line in scores_file_:
-                    # Check that str,str,float,x. Because of how file is parsed,
-                    # lig1_name and lig2_name are always str.
-                    records = line.rstrip().split(",")
-                    if len(records) < 3:
-                        raise ValueError(f"{scores_file} should have at least three entries "
-                                         f"per line (str,str,value). Failed line is {line.rstrip()}")
-                    try:
-                        float(records[2])
-                    except ValueError:
-                        raise ValueError(f"{scores_file} contains a non-numerical value on third "
-                                         f"column ({line.rstrip()}). Make sure that each line "
-                                          "in the file is formatted as str,str,value.")
+            # Validate the records in the links file. Must have at least two
+            # entries per line, i.e. ligA ligB, third column must contain a
+            # float type score if present, and fourth column can only contain
+            # 'force' to insist that the link is included irrespective of its
+            # score.
+            with open(links_file, "r") as lf:
+                for line in lf:
+                    records = line.split()
+                    if len(records) < 2:
+                        raise ValueError(f"{links_file} should have at least two entries "
+                                         f"per line. Failed line is {line.rstrip()}")
+                    if len(records) > 2:
+                        try:
+                            float(records[2])
+                        except ValueError:
+                            raise ValueError(f"{links_file} contains a non-numerical value for the "
+                                             f"score in the third column: {line.rstrip()}.")
+                    if len(records) > 3:
+                        if records[3] != "force":
+                            raise ValueError(f"{links_file} can only contain 'force' in the "
+                                             f"fourth column: {line.rstrip()}.")
 
-                    contents.append(line.rstrip())
-
-                # Check that all possible perturbations in the ligand series are
-                # accounted for in the scores_file.
-                for pert in perturbations:
-                    if not f"{pert[0]},{pert[1]}" in ",".join(contents):
-                        # Check the opposite direction as well.
-                        if not f"{pert[1]},{pert[0]}" in ",".join(contents):
-                            raise ValueError(f"Could not find {pert[0]},{pert[1]} (or the inverse) "
-                                             f"in {scores_file}. Make sure your input file contains "
-                                              "all possible transformations.")
         else:
-            raise IOError(f"The scores file doesn't exist: {scores_file}")
+            raise IOError(f"The links file doesn't exist: {links_file}")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -229,13 +228,19 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
             molecule, "mol2", property_map=property_map)
 
-    # Write the scores file to disk (if defined).
-    if scores_file:
-        _shutil.copyfile(scores_file, f"{work_dir}/inputs/lomap_input_edge_scores.csv")
+    # Create a local copy of the links file in the working directory.
+    # This isn't needed, but is useful for debugging and ensuring that
+    # all input/output is self-contained.
+    if links_file:
+        lf = f"{work_dir}/inputs/lomap_links_file.txt"
+        _shutil.copyfile(links_file, lf)
+    else:
+        lf = None
 
     # Create the DBMolecules object.
     db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
                                 name=f"{work_dir}/outputs/lomap",
+                                links_file=lf,
                                 output_no_graph=True,
                                 output_no_images=True,
                                 threed=True,
