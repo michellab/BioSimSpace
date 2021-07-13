@@ -190,11 +190,11 @@ class FreeEnergy():
 
             # Make sure GROMACS is installed if GROMACS engine is selected.
             if engine == "GROMACS":
-              if _gmx_exe is None:
-                raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
+                if _gmx_exe is None:
+                    raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
 
-              if self._protocol0.getPerturbationType() != "full" or \
-                 self._protocol1.getPerturbationType() != "full":
+                if self._protocol0.getPerturbationType() != "full" or \
+                   self._protocol1.getPerturbationType() != "full":
                     raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
                                               "type. Please use engine='SOMD' when running multistep "
                                               "perturbation types.")
