@@ -40,7 +40,7 @@ from . import _free_energy
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system0, system1=None, protocol=None, work_dir=None,
+    def __init__(self, system_bound, system_free=None, protocol=None, work_dir=None,
             engine=None, setup_only=False, property_map={},
             ignore_warnings=False, show_errors=True):
         """Constructor.
@@ -48,10 +48,10 @@ class Binding(_free_energy.FreeEnergy):
            Parameters
            ----------
 
-           system0 : :class:`System <BioSimSpace._SireWrappers.System>`
+           system_bound : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system for the bound leg.
 
-           system1 : :class:`System <BioSimSpace._SireWrappers.System>`
+           system_free : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system for the free leg. If None, then the free
                leg is omitted.
 
@@ -100,45 +100,45 @@ class Binding(_free_energy.FreeEnergy):
 
         # Validate the input.
 
-        if type(system0) is not _System:
-            raise TypeError("'system0' must be of type 'BioSimSpace._SireWrappers.System'")
+        if type(system_bound) is not _System:
+            raise TypeError("'system_bound' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the bound system. (Used for the first leg.)
-            self._system0 = system0.copy()
+            self._system0 = system_bound.copy()
 
             # The system must have a single perturbable molecule.
-            if system0.nPerturbableMolecules() != 1:
+            if system_bound.nPerturbableMolecules() != 1:
                 raise ValueError("The bound system must contain a single perturbable molecule! "
                                  "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
             # The system must be solvated.
-            if system0.nWaterMolecules() == 0:
+            if system_bound.nWaterMolecules() == 0:
                 raise ValueError("The bound system must be solvated! Use the 'BioSimSpace.Solvent' "
                                  "package to solvate your system.")
 
             # There must be at least one additional molecule in the system.
-            if system0.nMolecules() == (system0.nWaterMolecules() + system0.nPerturbableMolecules()):
+            if system_bound.nMolecules() == (system_bound.nWaterMolecules() + system_bound.nPerturbableMolecules()):
                 raise ValueError("The bound system does not contain a protein molecule!")
 
-        if system1 is not None:
-            if type(system1) is not _System:
-                raise TypeError("'system1' must be of type 'BioSimSpace._SireWrappers.System'")
+        if system_free is not None:
+            if type(system_free) is not _System:
+                raise TypeError("'system_free' must be of type 'BioSimSpace._SireWrappers.System'")
             else:
                 # Store a copy of the bound system. (Used for the first leg.)
-                self._system1 = system1.copy()
+                self._system1 = system_free.copy()
 
                 # The system must have a single perturbable molecule.
-                if system1.nPerturbableMolecules() != 1:
+                if system_free.nPerturbableMolecules() != 1:
                     raise ValueError("The free system must contain a single perturbable molecule! "
                                      "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
                 # The system must be solvated.
-                if system1.nWaterMolecules() == 0:
+                if system_free.nWaterMolecules() == 0:
                     raise ValueError("The free system must be solvated! Use the 'BioSimSpace.Solvent' "
                                      "package to solvate your system.")
         else:
             self._is_dual = False
-            self._system1 = system1
+            self._system1 = system_free
 
         # Initialise the process runner with all of the simulations required
         # for each leg.
