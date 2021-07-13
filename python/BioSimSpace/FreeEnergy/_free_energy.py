@@ -402,7 +402,7 @@ class FreeEnergy():
                 if _os.path.isdir(dir1):
                     is_dual = True
 
-            # Solvation..
+            # Solvation.
             elif _os.path.isdir(work_dir + "/free"):
                 dir0 = work_dir + "/free"
                 dir1 = work_dir + "/vacuum"
