@@ -91,6 +91,12 @@ class Solvation(_free_energy.FreeEnergy):
 
         # Validate the input.
 
+        if type(vacuum_leg) is not bool:
+            raise TypeError("'vacuum_leg' must be of type 'bool.")
+        else:
+            if not vacuum_leg:
+                self._is_dual = False
+
         if type(system) is not _System:
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
@@ -108,14 +114,11 @@ class Solvation(_free_energy.FreeEnergy):
                                  "package to solvate your system.")
 
             # Create the vacuum system. (Used for the second leg.)
-            self._system1 = system.copy()
-            self._system1.removeWaterMolecules()
-
-        if type(vacuum_leg) is not bool:
-            raise TypeError("'vacuum_leg' must be of type 'bool.")
-        else:
-            if not vacuum_leg:
-                self._is_dual = False
+            if vacuum_leg:
+                self._system1 = system.copy()
+                self._system1.removeWaterMolecules()
+            else:
+                self._system1 = None
 
         # Initialise the process runner with all of the simulations required
         # for each leg.

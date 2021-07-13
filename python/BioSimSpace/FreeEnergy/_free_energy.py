@@ -836,7 +836,7 @@ class FreeEnergy():
 
         return (leg0, leg1, free_energy, overlap0, overlap1)
 
-    def _initialise_runner(self, system0, system1):
+    def _initialise_runner(self, system0, system1=None):
         """Internal helper function to initialise the process runner.
 
            Parameters
@@ -852,8 +852,12 @@ class FreeEnergy():
         if type(system0) is not _System:
             raise TypeError("'system0' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(system1) is not _System:
-            raise TypeError("'system1' must be of type 'BioSimSpace._SireWrappers.System'")
+        if system1 is None:
+            is_dual = False
+        else:
+            is_dual = True
+            if type(system1) is not _System:
+                raise TypeError("'system1' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Initialise lists to store the processes for each leg.
         leg0 = []
@@ -866,11 +870,11 @@ class FreeEnergy():
 
         if sim_type == "Solvation":
             self._dir0 = "%s/free" % self._work_dir
-            if self._is_dual:
+            if is_dual:
                 self._dir1 = "%s/vacuum" % self._work_dir
         elif sim_type == "Binding":
             self._dir0 = "%s/bound" % self._work_dir
-            if self._is_dual:
+            if is_dual:
                 self._dir1 = "%s/free" % self._work_dir
         else:
             raise TypeError("Unsupported FreeEnergy simulation: '%s'" % sim_type)
@@ -879,7 +883,7 @@ class FreeEnergy():
         # FEP setup.)
         if self._engine == "SOMD":
             system0._set_water_topology("AMBER")
-            if self._is_dual:
+            if is_dual:
                 system1._set_water_topology("AMBER")
 
         # Setup all of the simulation processes for each leg.
@@ -1030,7 +1034,7 @@ class FreeEnergy():
                                                 process._tpr_file]
                     leg0.append(process)
 
-        if self._is_dual:
+        if is_dual:
             # Get the lambda values from the protocol for the first leg.
             lam_vals = self._protocol1.getLambdaValues()
 

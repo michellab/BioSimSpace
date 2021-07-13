@@ -40,16 +40,20 @@ from . import _free_energy
 class Binding(_free_energy.FreeEnergy):
     """A class for configuring and running binding free energy simulations."""
 
-    def __init__(self, system, protocol=None, box=None, angles=3*[_Types.Angle(90, "degrees")],
-            free_leg=True, work_dir=None, engine=None, setup_only=False, property_map={},
+    def __init__(self, system0, system1=None, protocol=None, work_dir=None,
+            engine=None, setup_only=False, property_map={},
             ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
            ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
+           system0 : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system for the bound leg.
+
+           system1 : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system for the free leg. If None, then the free
+               leg is omitted.
 
            protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
                      [:class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`,
@@ -58,18 +62,6 @@ class Binding(_free_energy.FreeEnergy):
                protocol will be used for both legs of the simulation. Passing
                two objects enables a different protocol for each leg, e.g. a
                different lambda schedule, or run time.
-
-           box : [:class:`Length <BioSimSpace.Types.Length>`]
-               A list containing the box size in each dimension: x, y, and z.
-               This box will be used for the "free" leg of the simulation, which typically
-               can be run with a significantly smaller box than the "bound" leg.
-
-           angles : [:class:`Length <BioSimSpace.Types.Angle>`]
-               A list containing the angles between the box vectors: yz, xz, and xy.
-
-           free_leg : bool
-               Whether to simulation the free leg of the simulation. Set to False
-               if you only wish to run the bound leg.
 
            work_dir : str
                The working directory for the simulation.
@@ -108,98 +100,45 @@ class Binding(_free_energy.FreeEnergy):
 
         # Validate the input.
 
-        if type(system) is not _System:
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+        if type(system0) is not _System:
+            raise TypeError("'system0' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of the bound system. (Used for the first leg.)
-            self._system0 = system.copy()
+            self._system0 = system0.copy()
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable molecule! "
+            if system0.nPerturbableMolecules() != 1:
+                raise ValueError("The bound system must contain a single perturbable molecule! "
                                  "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
             # The system must be solvated.
-            if system.nWaterMolecules() == 0:
-                raise ValueError("The system must be solvated! Use the 'BioSimSpace.Solvent' "
+            if system0.nWaterMolecules() == 0:
+                raise ValueError("The bound system must be solvated! Use the 'BioSimSpace.Solvent' "
                                  "package to solvate your system.")
 
             # There must be at least one additional molecule in the system.
-            if system.nMolecules() == (system.nWaterMolecules() + system.nPerturbableMolecules()):
-                raise ValueError("The system does not contain a protein molecule!")
+            if system0.nMolecules() == (system0.nWaterMolecules() + system0.nPerturbableMolecules()):
+                raise ValueError("The bound system does not contain a protein molecule!")
 
-            # Extract the perturbable molecule.
-            molecule = system.getPerturbableMolecules()[0]
-
-            # Use the box size of the original system.
-            if box is None:
-                try:
-                    prop = property_map.get("space", "space")
-                except:
-                    raise ValueError("The solvated protein-ligand system has no box information!")
-
-                # PeriodicBox.
-                try:
-                    box = system._sire_object.property(prop).dimensions()
-                    box = [_Units.Length.angstrom * x for x in box]
-                # TriclinicBox.
-                except:
-                    v0 = system._sire_object.property(prop).vector0()
-                    v1 = system._sire_object.property(prop).vector1()
-                    v2 = system._sire_object.property(prop).vector2()
-                    box = [v0, v1, v2]
-                    box = [_Units.Length.angstrom * x.magnitude() for x in box]
-
-            # Solvate using the user specified box.
+        if system1 is not None:
+            if type(system1) is not _System:
+                raise TypeError("'system1' must be of type 'BioSimSpace._SireWrappers.System'")
             else:
-                if len(box) != 3:
-                    raise ValueError("The 'box' must have x, y, and z size information.")
-                else:
-                    if not all(isinstance(x, _Types.Length) for x in box):
-                        raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
+                # Store a copy of the bound system. (Used for the first leg.)
+                self._system1 = system1.copy()
 
-            if angles is not None:
-                # Convert tuple to list.
-                if type(angles) is tuple:
-                    angles = list(angles)
+                # The system must have a single perturbable molecule.
+                if system1.nPerturbableMolecules() != 1:
+                    raise ValueError("The free system must contain a single perturbable molecule! "
+                                     "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
-                # Validate.
-                if len(angles) != 3:
-                    raise ValueError("'angles' must have three components: yz, xz, and xy.")
-                else:
-                    if not all(isinstance(x, _Types.Angle) for x in angles):
-                        raise ValueError("The angle between box vectors must be of type 'BioSimSpace.Types.Angle'")
-
-            # Try to get the water model used to solvate the system.
-            try:
-                water_model = system._sire_object.property("water_model").toString()
-            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
-            # to guess the water model from the topology.
-            except:
-                num_point = self._system0.getWaterMolecules()[0].nAtoms()
-
-                if num_point == 3:
-                    # TODO: Assume TIP3P. Not sure how to detect SPC/E.
-                    water_model = "tip3p"
-                elif num_point == 4:
-                    water_model = "tip4p"
-                elif num_point == 5:
-                    water_model = "tip5p"
-                else:
-                    raise RuntimeError("Unsupported %d-point water model!" % num_point)
-
-                # Warn the user that we've guessed the water topology.
-                _warnings.warn("Guessed water topology: %r" % water_model)
-
-            # Solvate the perturbable molecule using the same water model as
-            # the original system. (This is used for the second leg.)
-            self._system1 = _Solvent.solvate(water_model, molecule=molecule, box=box, angles=angles)
-
-        if type(free_leg) is not bool:
-            raise TypeError("'free_leg' must be of type 'bool.")
+                # The system must be solvated.
+                if system1.nWaterMolecules() == 0:
+                    raise ValueError("The free system must be solvated! Use the 'BioSimSpace.Solvent' "
+                                     "package to solvate your system.")
         else:
-            if not free_leg:
-                self._is_dual = False
+            self._is_dual = False
+            self._system1 = system1
 
         # Initialise the process runner with all of the simulations required
         # for each leg.
