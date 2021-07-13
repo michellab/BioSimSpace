@@ -152,8 +152,8 @@ class FreeEnergy():
                                 "or a list of 'BioSimSpace.Protocol.FreeEnergy' types." )
         else:
             # Use a default protocol.
-            self._protocol0 = _FreeEnergy()
-            self._protocol1 = _FreeEnergy()
+            self._protocol0 = _Protocol.FreeEnergy()
+            self._protocol1 = _Protocol.FreeEnergy()
 
         if type(setup_only) is not bool:
             raise TypeError("'setup_only' must be of type 'bool'.")
