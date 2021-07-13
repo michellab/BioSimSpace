@@ -1061,10 +1061,6 @@ class OpenMM(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
-        # Warn the user if the process has exited with an error.
-        if self.isError():
-            _warnings.warn("The process exited with an error!")
-
         # Try to get the most recent trajectory frame.
         try:
             # Handle minimisation protocols separately.
@@ -1183,6 +1179,10 @@ class OpenMM(_process.Process):
 
         if index < 0 or index > max_index:
             raise ValueError(f"'index' must be in range [0, {max_index}].")
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         try:
             new_system =  _Trajectory.getFrame(self._traj_file,
