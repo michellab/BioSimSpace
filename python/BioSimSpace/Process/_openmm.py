@@ -201,7 +201,7 @@ class OpenMM(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(self._system._sire_object, self._property_map)
+            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
             rst.writeToFile(self._rst_file)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
@@ -212,7 +212,7 @@ class OpenMM(_process.Process):
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(self._system._sire_object, self._property_map)
+            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
             prm.writeToFile(self._top_file)
 
         except Exception as e:
