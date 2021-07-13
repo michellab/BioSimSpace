@@ -28,8 +28,7 @@ Classes
 .. autosummary::
     :toctree: generated/
 
-    Binding
-    Solvation
+    Relative
 
 Functions
 =========
@@ -37,15 +36,11 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    analyse
     engines
     getData
 """
 
-from ._free_energy import analyse
-from ._free_energy import getData
-from ._binding import *
-from ._solvation import *
+from ._relative import *
 
 def engines():
     """List the supported molecular dynamics engines for running free-energy
