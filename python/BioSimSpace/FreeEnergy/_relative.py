@@ -85,7 +85,9 @@ class Relative():
            ----------
 
            system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
+               The molecular system for the perturbation leg. This must contain
+               a single perturbable molecule and is assumed to have already
+               been equilibrated.
 
            protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
                The simulation protocol.
