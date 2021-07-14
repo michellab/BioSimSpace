@@ -227,6 +227,22 @@ class Relative():
         else:
             self._runner.wait()
 
+    def kill(self, index):
+        """Kill a process for a specific lambda window.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the lambda window.
+        """
+        self._runner.kill(index)
+
+    def killAll(self):
+        """Kill any running processes for all lambda windows."""
+
+        self._runner.killAll()
+
     def workDir(self):
         """Return the working directory.
 
