@@ -26,7 +26,7 @@ Class and functions for relative free-energy simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Relative", "getData"]
+__all__ = ["Relative", "getData", "relativeFreeEnergy"]
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
@@ -56,6 +56,7 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace._Utils import cd as _cd
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Types as _Types
 from BioSimSpace import Units as _Units
 
 if _is_notebook:
@@ -93,7 +94,8 @@ class Relative():
                The simulation protocol.
 
            work_dir : str
-               The working directory for the simulation.
+               The working directory for the free-energy perturbation
+               simulation.
 
            engine: str
                The molecular dynamics engine used to run the simulation. Available
@@ -251,7 +253,8 @@ class Relative():
                Whether to return a FileLink when working in Jupyter.
 
            work_dir : str
-               The working directory for the simulation.
+               The working directory for the free-energy perturbation
+               simulation.
 
            Returns
            -------
@@ -317,11 +320,6 @@ class Relative():
     @staticmethod
     def analyse(work_dir):
         """Analyse existing free-energy data from a simulation working directory.
-
-           For the return values, leg0 refers to the simulation leg with the
-           larger number of molecules, i.e. the "bound" leg for a "binding"
-           free-energy simulation, or the "free" leg for a "solvation"
-           free-energy simulation.
 
            Parameters
            ----------
@@ -740,3 +738,74 @@ def getData(name="data", file_link=False, work_dir=None):
            A path, or file link, to an archive of the process input.
     """
     return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)
+
+def relativeFreeEnergy(pmf0, pmf1):
+    """Compute the relative free-energy difference between two perturbation
+       legs.
+
+       Parameters
+       ----------
+
+       pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           The potential of mean force (PMF) for the first leg. The data
+           is a list of tuples, where each tuple contains the lambda value,
+           the PMF, and the standard error.
+
+       pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+           The potential of mean force (PMF) for the second leg. The data
+           is a list of tuples, where each tuple contains the lambda value,
+           the PMF, and the standard error.
+
+       Returns
+       -------
+
+       free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+           The relative free-energy difference and its associated error.
+    """
+
+    if type(pmf0) is not list:
+        raise TypeError("'pmf0' must be of type 'list'.")
+
+    for pmf in pmf0:
+        if type(pmf) is not tuple:
+            raise TypeError("'pmf0' must contain tuples containing lambda "
+                            "values and the associated free-energy and error.")
+        else:
+            if len(pmf) != 3:
+                raise ValueError("Each tuple in 'pmf0' must contain three items: "
+                                 "a lambda value and the associated free energy "
+                                 "and error.")
+            for val in pmf[1:]:
+                if type(val) is not _Types.Energy:
+                    raise TypeError("'pmf1' must contain 'BioSimSpace.Types.Energy' types.")
+
+    for pmf in pmf1:
+        if type(pmf) is not tuple:
+            raise TypeError("'pmf1' must contain tuples containing lambda "
+                            "values and the associated free-energy and error.")
+        else:
+            if len(pmf) != 3:
+                raise ValueError("Each tuple in 'pmf1' must contain three items: "
+                                 "a lambda value and the associated free energy "
+                                 "and error.")
+            for val in pmf[1:]:
+                if type(val) is not _Types.Energy:
+                    raise TypeError("'pmf1' must contain 'BioSimSpace.Types.Energy' types.")
+
+    # Work out the difference in free energy.
+    free_energy = (pmf0[-1][1] - pmf0[0][1]) - (pmf1[-1][1] - pmf1[0][1])
+
+    # Propagate the errors. (These add in quadrature.)
+
+    # First leg.
+    error0 = _math.sqrt((pmf0[-1][2].magnitude() * pmf0[-1][2].magnitude()) +
+                        (pmf0[ 0][2].magnitude() * pmf0[ 0][2].magnitude()))
+
+    # Second leg.
+    error1 = _math.sqrt((pmf1[-1][2].magnitude() * pmf1[-1][2].magnitude()) +
+                        (pmf1[ 0][2].magnitude() * pmf1[ 0][2].magnitude()))
+
+    # Error for free-energy difference.
+    error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
+
+    return (free_energy, error)
