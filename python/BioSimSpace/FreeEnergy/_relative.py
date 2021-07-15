@@ -62,18 +62,18 @@ from BioSimSpace import Units as _Units
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
+# Check that the analyse_freenrg script exists.
+if _sys.platform != "win32":
+    _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
+else:
+    _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
+if not _os.path.isfile(_analyse_freenrg):
+    raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+if _sys.platform == "win32":
+    _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
+
 class Relative():
     """Class for configuring and running relative free-energy perturbation simulations."""
-
-    # Check that the analyse_freenrg script exists.
-    if _sys.platform != "win32":
-        _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
-    else:
-        _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
-    if not _os.path.isfile(_analyse_freenrg):
-        raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
-    if _sys.platform == "win32":
-        _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
@@ -254,8 +254,7 @@ class Relative():
         """
         return self._work_dir
 
-    @classmethod
-    def getData(cls, name="data", file_link=False, work_dir=None):
+    def getData(self, name="data", file_link=False, work_dir=None):
         """Return a link to a zip file containing the data files required for
            post-simulation analysis.
 
@@ -279,10 +278,8 @@ class Relative():
                A path, or file link, to an archive of the process input.
         """
 
-        if work_dir is None and cls._work_dir is None:
+        if self._work_dir is None:
             raise ValueError("'work_dir' must be set!")
-        elif work_dir is None:
-            work_dir = cls._work_dir
         else:
             if type(work_dir) is not str:
                 raise TypeError("'work_dir' must be of type 'str'.")
@@ -455,8 +452,8 @@ class Relative():
 
         return (data, None)
 
-    @classmethod
-    def _analyse_somd(cls, work_dir=None):
+    @staticmethod
+    def _analyse_somd(work_dir=None):
         """Analyse the SOMD free energy data.
 
            Parameters
@@ -485,7 +482,7 @@ class Relative():
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (cls._analyse_freenrg, work_dir, work_dir)
+        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
         # Run the first command.
         proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
