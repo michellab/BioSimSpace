@@ -38,7 +38,6 @@ Functions
 
     engines
     getData
-    relativeFreeEnergy
 """
 
 from ._relative import *

@@ -26,7 +26,7 @@ Functionality for relative free-energy simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Relative", "getData", "relativeFreeEnergy"]
+__all__ = ["Relative", "getData"]
 
 from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
@@ -198,6 +198,11 @@ class Relative():
         if type(show_errors) is not bool:
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
+
+        # Create fake instance methods for 'analyse' and 'difference'. These
+        # pass instance data through to the staticmethod versions.
+        self.analyse = self._analyse
+        self.difference = self._difference
 
         # Initialise the process runner.
         self._initialise_runner(self._system)
@@ -373,6 +378,27 @@ class Relative():
                 raise ValueError("Couldn't find any SOMD or GROMACS free-energy output?")
             return Relative._analyse_gromacs(work_dir)
 
+    def _analyse(self):
+        """Analyse free-energy data for this object.
+
+           Returns
+           -------
+
+           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF). The data is a list of tuples,
+               where each tuple contains the lambda value, the PMF, and the
+               standard error.
+
+           overlap : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each lambda
+               window.  This parameter is only computed for the SOMD engine and
+               will be None when GROMACS is used.
+        """
+
+        # Return the result of calling the staticmethod, passing in the working
+        # directory of this object.
+        return Relative.analyse(self._work_dir)
+
     @staticmethod
     def _analyse_gromacs(work_dir=None):
         """Analyse the GROMACS free energy data.
@@ -538,6 +564,103 @@ class Relative():
                         row = next(file)
 
         return (data, overlap)
+
+    @staticmethod
+    def difference(pmf_ref, pmf):
+        """Compute the relative free-energy difference between two perturbation
+           legs.
+
+           Parameters
+           ----------
+
+           pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The referecne potential of mean force (PMF). The data is a list
+               of tuples, where each tuple contains the lambda value, the PMF,
+               and the standard error.
+
+           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF) of interest. The data is a list
+               of tuples, where each tuple contains the lambda value, the PMF,
+               and the standard error.
+
+           Returns
+           -------
+
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+               The relative free-energy difference and its associated error.
+        """
+
+        if type(pmf_ref) is not list:
+            raise TypeError("'pmf_ref' must be of type 'list'.")
+
+        for rec in pmf_ref:
+            if type(rec) is not tuple:
+                raise TypeError("'pmf_ref' must contain tuples containing lambda "
+                                "values and the associated free-energy and error.")
+            else:
+                if len(rec) != 3:
+                    raise ValueError("Each tuple in 'pmf_ref' must contain three items: "
+                                    "a lambda value and the associated free energy "
+                                    "and error.")
+                for val in rec[1:]:
+                    if type(val) is not _Types.Energy:
+                        raise TypeError("'pmf_ref' must contain 'BioSimSpace.Types.Energy' types.")
+
+        for rec in pmf:
+            if type(rec) is not tuple:
+                raise TypeError("'pmf1' must contain tuples containing lambda "
+                                "values and the associated free-energy and error.")
+            else:
+                if len(rec) != 3:
+                    raise ValueError("Each tuple in 'pmf1' must contain three items: "
+                                    "a lambda value and the associated free energy "
+                                    "and error.")
+                for val in rec[1:]:
+                    if type(val) is not _Types.Energy:
+                        raise TypeError("'pmf' must contain 'BioSimSpace.Types.Energy' types.")
+
+        # Work out the difference in free energy.
+        free_energy = (pmf_ref[-1][1] - pmf_ref[0][1]) - (pmf[-1][1] - pmf[0][1])
+
+        # Propagate the errors. (These add in quadrature.)
+
+        # First leg.
+        error0 = _math.sqrt((pmf_ref[-1][2].magnitude() * pmf_ref[-1][2].magnitude()) +
+                            (pmf_ref[ 0][2].magnitude() * pmf_ref[ 0][2].magnitude()))
+
+        # Second leg.
+        error1 = _math.sqrt((pmf[-1][2].magnitude() * pmf[-1][2].magnitude()) +
+                            (pmf[ 0][2].magnitude() * pmf[ 0][2].magnitude()))
+
+        # Error for free-energy difference.
+        error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
+
+        return (free_energy, error)
+
+    def _difference(self, pmf_ref):
+        """Compute the relative free-energy difference between two perturbation
+           legs.
+
+           Parameters
+           ----------
+
+           pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The referecne potential of mean force (PMF). The data is a list
+               of tuples, where each tuple contains the lambda value, the PMF,
+               and the standard error.
+
+           Returns
+           -------
+
+           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+               The relative free-energy difference and its associated error.
+        """
+
+        # Calculate the PMF for this object.
+        pmf, _ = self.analyse()
+
+        # Now call the staticmethod passing in both PMFs.
+        return Relative.difference(pmf_ref, pmf)
 
     def _initialise_runner(self, system):
         """Internal helper function to initialise the process runner.
@@ -751,74 +874,3 @@ def getData(name="data", file_link=False, work_dir=None):
            A path, or file link, to an archive of the process input.
     """
     return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)
-
-def relativeFreeEnergy(pmf0, pmf1):
-    """Compute the relative free-energy difference between two perturbation
-       legs.
-
-       Parameters
-       ----------
-
-       pmf0 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-           The potential of mean force (PMF) for the first leg. The data
-           is a list of tuples, where each tuple contains the lambda value,
-           the PMF, and the standard error.
-
-       pmf1 : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-           The potential of mean force (PMF) for the second leg. The data
-           is a list of tuples, where each tuple contains the lambda value,
-           the PMF, and the standard error.
-
-       Returns
-       -------
-
-       free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-           The relative free-energy difference and its associated error.
-    """
-
-    if type(pmf0) is not list:
-        raise TypeError("'pmf0' must be of type 'list'.")
-
-    for pmf in pmf0:
-        if type(pmf) is not tuple:
-            raise TypeError("'pmf0' must contain tuples containing lambda "
-                            "values and the associated free-energy and error.")
-        else:
-            if len(pmf) != 3:
-                raise ValueError("Each tuple in 'pmf0' must contain three items: "
-                                 "a lambda value and the associated free energy "
-                                 "and error.")
-            for val in pmf[1:]:
-                if type(val) is not _Types.Energy:
-                    raise TypeError("'pmf1' must contain 'BioSimSpace.Types.Energy' types.")
-
-    for pmf in pmf1:
-        if type(pmf) is not tuple:
-            raise TypeError("'pmf1' must contain tuples containing lambda "
-                            "values and the associated free-energy and error.")
-        else:
-            if len(pmf) != 3:
-                raise ValueError("Each tuple in 'pmf1' must contain three items: "
-                                 "a lambda value and the associated free energy "
-                                 "and error.")
-            for val in pmf[1:]:
-                if type(val) is not _Types.Energy:
-                    raise TypeError("'pmf1' must contain 'BioSimSpace.Types.Energy' types.")
-
-    # Work out the difference in free energy.
-    free_energy = (pmf0[-1][1] - pmf0[0][1]) - (pmf1[-1][1] - pmf1[0][1])
-
-    # Propagate the errors. (These add in quadrature.)
-
-    # First leg.
-    error0 = _math.sqrt((pmf0[-1][2].magnitude() * pmf0[-1][2].magnitude()) +
-                        (pmf0[ 0][2].magnitude() * pmf0[ 0][2].magnitude()))
-
-    # Second leg.
-    error1 = _math.sqrt((pmf1[-1][2].magnitude() * pmf1[-1][2].magnitude()) +
-                        (pmf1[ 0][2].magnitude() * pmf1[ 0][2].magnitude()))
-
-    # Error for free-energy difference.
-    error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
-
-    return (free_energy, error)
