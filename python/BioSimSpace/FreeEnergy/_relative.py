@@ -20,7 +20,7 @@
 #####################################################################
 
 """
-Class and functions for relative free-energy simulations.
+Functionality for relative free-energy simulations.
 """
 
 __author__ = "Lester Hedges"
