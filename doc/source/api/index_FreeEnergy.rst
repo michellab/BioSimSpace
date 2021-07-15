@@ -68,7 +68,7 @@ To setup, run, and analyse a binding free-energy calculation:
    pmf_free,  overlap_free  = pmf_free.analyse()
 
    # Compute the relative free-energy difference.
-   free_nrg_binding = BSS.FreeEnergy.relativeFreeEnergy(pmf_bound, pmf_free)
+   free_nrg_binding = BSS.FreeEnergy.Relative.difference(pmf_bound, pmf_free)
 
 Similarly, for a solvation free-energy calculation:
 
@@ -94,7 +94,7 @@ Similarly, for a solvation free-energy calculation:
    pmf_vacuum, overlap_vacuum = pmf_vacuum.analyse()
 
    # Compute the relative free-energy difference.
-   free_nrg_solvation = BSS.FreeEnergy.relativeFreeEnergy(pmf_free, pmf_vacuum)
+   free_nrg_solvation = BSS.FreeEnergy.Relative.difference(pmf_free, pmf_vacuum)
 
 Since it is usually preferable to run simulations intensive simulation such as
 these on external HPC resources, the ``BioSimSpace.FreeEnergy`` package also
