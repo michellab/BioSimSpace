@@ -56,15 +56,5 @@ Examples
 """
 
 from ._md import *
+from ._utils import *
 
-def engines():
-    """List the supported molecular dynamics engines.
-
-       Returns
-       -------
-
-       engines : [str]
-           The list of supported engines.
-    """
-    from BioSimSpace.Process import engines as _engines
-    return _engines() + ["auto"]

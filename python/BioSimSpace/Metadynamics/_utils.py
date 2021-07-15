@@ -20,32 +20,21 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace.Metadynamics
-
-Functions
-=========
-
-.. autosummary::
-    :toctree: generated/
-
-    engines
-    run
-
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-
-    Bound
-    Grid
-    Restraint
+Utility functions.
 """
 
-from ._bound import *
-from ._grid import *
-from ._metadynamics import *
-from ._restraint import *
-from ._utils import *
+__author__ = "Lester Hedges"
+__email__ = "lester.hedges@gmail.com"
 
-from . import CollectiveVariable
+__all__ = ["engines"]
+
+def engines():
+    """List the supported metadynamics engines.
+
+       Returns
+       -------
+
+       engines : [str]
+           The list of supported engines.
+    """
+    return ["Amber", "Gromacs", "OpenMM", "auto"]

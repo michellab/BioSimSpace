@@ -65,10 +65,10 @@ class Steering(_Protocol):
                                 [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
                The collective variable (or variables) used to perform the steering.
 
-           schedule : [:class:`Time <BioSimSpace.Types.Time>]
+           schedule : [:class:`Time <BioSimSpace.Types.Time>`]
                The time schedule for the steering.
 
-           restraints : [:class`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
+           restraints : [:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
                         [(:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`)]]
                The position of the restraint on each collective variable for
                each stage of the schedule.

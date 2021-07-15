@@ -42,15 +42,4 @@ Functions
 """
 
 from ._relative import *
-
-def engines():
-    """List the supported molecular dynamics engines for running free-energy
-       perturbation simulations.
-
-       Returns
-       -------
-
-       engines : [str]
-           The list of supported engines.
-    """
-    return ["Somd", "Gromacs"]
+from ._utils import *

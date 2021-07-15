@@ -35,9 +35,6 @@ Some examples:
    # simulations.
    merged = BSS.Align.merge(mol0, mol1, mappings)
 
-API
----
-
 .. automodule:: BioSimSpace.Align
 
 .. toctree::
