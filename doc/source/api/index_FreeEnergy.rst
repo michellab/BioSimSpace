@@ -23,7 +23,7 @@ re-used in different calculations.
 Simulations are typically used to compute solvation (currently hydration only)
 or binding free-energies. In the examples that follow, ``merged`` refers to a
 perturbable molecule created by merging two ligands, ``ligA`` and ``ligB``,
-``merged_sol`` refers to the same perturbable molecule in solvent,
+``merged_sol`` refers to the same perturbable molecule in solvent, and
 ``complex_sol`` is a solvated protein-ligand complex containing the same
 perturbable molecule. We assume that each molecule/system has been
 appropriately minimised and equlibrated.
