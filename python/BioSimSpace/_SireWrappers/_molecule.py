@@ -1180,7 +1180,7 @@ class Molecule(_SireWrapper):
             raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
 
         # Calculate the charge.
-        charge = self.charge().magnitude()
+        charge = self.charge(property_map=property_map).magnitude()
 
         # Calculate the difference from the nearest integer value.
         delta = round(charge) - charge
