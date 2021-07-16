@@ -117,15 +117,23 @@ class SireWrapper():
                The charge.
         """
 
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        if type(is_lambda1) is not bool:
+            raise TypeError("'is_lambda1' must be of type 'bool'.")
+
         # Copy the map.
         _property_map = property_map.copy()
 
-        # This is a merged molecule.
-        if self._is_merged:
-            if is_lambda1:
-                _property_map = { "charge" : "charge1" }
-            else:
-                _property_map = { "charge" : "charge0" }
+        if property_map == {}:
+            # This is a merged molecule.
+            if self._is_merged:
+                # Compute the charge for the chosen end state.
+                if is_lambda1:
+                    _property_map = { "charge" : "charge1" }
+                else:
+                    _property_map = { "charge" : "charge0" }
 
         # Calculate the charge.
         try:
