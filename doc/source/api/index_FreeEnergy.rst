@@ -43,31 +43,31 @@ To setup, run, and analyse a binding free-energy calculation:
 
    # Setup the perturbations for each leg, using the SOMD engine. This will
    # create all of the input files and simulation processes that are required.
-   perturbation_bound = BSS.FreeEnergy.Relative(complex_sol,
-                                                protocol_bound,
-                                                engine="somd",
-                                                work_dir="ligA_ligB/bound")
-   perturbation_free  = BSS.FreeEnergy.Relative(merged_sol,
-                                                protocol_bound,
-                                                engine="somd",
-                                                work_dir="ligA_ligB/free")
+   fep_bound = BSS.FreeEnergy.Relative(complex_sol,
+                                       protocol_bound,
+                                       engine="somd",
+                                       work_dir="ligA_ligB/bound")
+   fep_free  = BSS.FreeEnergy.Relative(merged_sol,
+                                       protocol_bound,
+                                       engine="somd",
+                                       work_dir="ligA_ligB/free")
 
    # Run all simulations for each leg. Note that the lambda windows are run
    # sequentially, so this is a sub-optimal way of executing the simulation
    # if you have access to HPC resources.
 
    # Bound leg.
-   perturbation_bound.run()
-   perturbation_bound.wait()
+   fep_bound.run()
+   fep_bound.wait()
 
    # Free leg.
-   perturbation_fee.run()
-   perturbation_fee.wait()
+   fep_free.run()
+   fep_free.wait()
 
    # Analyse the simulation data from each leg, returning the PMF and overlap
    # matrix.
-   pmf_bound, overlap_bound = pmf_bound.analyse()
-   pmf_free,  overlap_free  = pmf_free.analyse()
+   pmf_bound, overlap_bound = fep_bound.analyse()
+   pmf_free,  overlap_free  = fep_free.analyse()
 
    # Compute the relative free-energy difference.
    free_nrg_binding = BSS.FreeEnergy.Relative.difference(pmf_bound, pmf_free)
@@ -80,16 +80,16 @@ Similarly, for a solvation free-energy calculation:
    # the free leg from the previous example.
 
    # Setup the perturbation for the vacuum leg using a default protocol.
-   perturbation_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
-                                                 engine="somd",
-                                                 work_dir="ligA_ligB/vacuum")
+   fep_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
+                                        engine="somd",
+                                        work_dir="ligA_ligB/vacuum")
 
    # Run the simulations for the perturbation.
-   perturbation_vacuum.run()
-   perturbation_vacuum.wait()
+   fep_vacuum.run()
+   fep_vacuum.wait()
 
    # Analyse the simulation data.
-   pmf_vacuum, overlap_vacuum = pmf_vacuum.analyse()
+   pmf_vacuum, overlap_vacuum = fep_vacuum.analyse()
 
    # Compute the relative free-energy difference.
    free_nrg_solvation = BSS.FreeEnergy.Relative.difference(pmf_free, pmf_vacuum)
@@ -109,10 +109,10 @@ To just setup the vacuum leg input files:
 
    # Setup the input for the vacuum leg. No processes are created so the .run()
    # method won't do anything.
-   perturbation_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
-                                                 engine="somd",
-                                                 work_dir="ligA_ligB/vacuum",
-                                                 setup_only=True)
+   fep_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
+                                        engine="somd",
+                                        work_dir="ligA_ligB/vacuum",
+                                        setup_only=True)
 
 
 It is also possible to analyse existing simulation output directly by passing
