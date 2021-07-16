@@ -682,6 +682,9 @@ class ProcessRunner():
             self._thread.join()
         else:
             for p in self._processes:
+                # Sleep for a second to give the process a chance to start.
+                _time.sleep(1)
+                # Now wait for it to finish.
                 p.wait()
 
     def kill(self, index):

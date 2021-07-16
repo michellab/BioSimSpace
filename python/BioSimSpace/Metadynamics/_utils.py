@@ -20,25 +20,21 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace.FreeEnergy
-
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-
-    Relative
-
-Functions
-=========
-
-.. autosummary::
-    :toctree: generated/
-
-    engines
-    getData
+Utility functions.
 """
 
-from ._relative import *
-from ._utils import *
+__author__ = "Lester Hedges"
+__email__ = "lester.hedges@gmail.com"
+
+__all__ = ["engines"]
+
+def engines():
+    """List the supported metadynamics engines.
+
+       Returns
+       -------
+
+       engines : [str]
+           The list of supported engines.
+    """
+    return ["Amber", "Gromacs", "OpenMM", "auto"]

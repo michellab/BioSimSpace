@@ -89,13 +89,16 @@ class Equilibration(_Protocol):
            restraint : str, [int]
                The type of restraint to perform. This should be one of the
                following options:
-                   "backbone" : Protein backbone atoms. The matching is done
-                                by a name template, so is unreliable on
-                                conversion between molecular file formats.
-                   "heavy"    : All non-hydrogen atoms that aren't part of
-                                water molecules or free ions.
-                   "all"      : All atoms that aren't part of water molecules
-                                or free ions.
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
                Alternatively, the user can pass a list of atom indices for
                more fine-grained control. If None, then no restraints are used.
 
@@ -392,13 +395,16 @@ class Equilibration(_Protocol):
            restraint : str, [int]
                The type of restraint to perform. This should be one of the
                following options:
-                   "backbone" : Protein backbone atoms. The matching is done
-                                by a name template, so is unreliable on
-                                conversion between molecular file formats.
-                   "heavy"    : All non-hydrogen atoms that aren't part of
-                                water molecules or free ions.
-                   "all"      : All atoms that aren't part of water molecules
-                                or free ions.
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
                Alternatively, the user can pass a list of atom indices for
                more fine-grained control.
         """

@@ -46,16 +46,6 @@ from ._bound import *
 from ._grid import *
 from ._metadynamics import *
 from ._restraint import *
+from ._utils import *
 
 from . import CollectiveVariable
-
-def engines():
-    """List the supported metadynamics engines.
-
-       Returns
-       -------
-
-       engines : [str]
-           The list of supported engines.
-    """
-    return ["Amber", "Gromacs", "OpenMM", "auto"]
