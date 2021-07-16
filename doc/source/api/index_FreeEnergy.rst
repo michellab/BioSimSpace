@@ -15,16 +15,18 @@ of an *alchemical potential*. To create merged molecules, please use the
 Relative free-energy calculations require the simulation of two perturbations,
 typically referred to as *legs*. A potential of mean force (PMF) is computed
 for each leg, which can then be used to computed the relative free-energy
-difference between the legs. For generality and flexibility, BioSimSpace
-decouples the two legs, allowing the use of difference molecular simulation
-engines, :class:`protocols <BioSimSpace.Protocol>`, and for legs to be re-used
-in different calculations.
+difference. For generality and flexibility, BioSimSpace decouples the two legs,
+allowing the use of difference molecular simulation engines,
+:class:`protocols <BioSimSpace.Protocol.FreeEnergy>`, and for legs to be
+re-used in different calculations.
 
 Simulations are typically used to compute solvation (currently hydration only)
-or binding free-energies. In the examples that follow, ``merged_sol`` refers to
-a solvated perturbable molecule, ``complex_sol`` is a solvated protein-ligand
-complex, where the ligand is a perturbable. In both cases we assume that the
-system has been appropriately minimised and equlibrated.
+or binding free-energies. In the examples that follow, ``merged`` refers to a
+perturbable molecule created by merging two ligands, ``ligA`` and ``ligB``,
+``merged_sol`` refers to the same perturbable molecule in solvent,
+``complex_sol`` is a solvated protein-ligand complex containing the same
+perturbable molecule. We assume that each molecule/system has been
+appropriately minimised and equlibrated.
 
 To setup, run, and analyse a binding free-energy calculation:
 
@@ -77,12 +79,8 @@ Similarly, for a solvation free-energy calculation:
    # Here we are assuming that we are using the same ligands, so will re-use
    # the free leg from the previous example.
 
-   # We first extract the perturbable molecule from the solvated merged
-   # system and convert to a system so that we have the molecule in vacuum.
-   merged_vac = merged_sol.getPerturbableMolecules()[0].toSystem()
-
    # Setup the perturbation for the vacuum leg using a default protocol.
-   perturbation_vacuum = BSS.FreeEnergy.Relative(merged_vac,
+   perturbation_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
                                                  engine="somd",
                                                  work_dir="ligA_ligB/vacuum")
 
@@ -98,11 +96,12 @@ Similarly, for a solvation free-energy calculation:
 
 Since it is usually preferable to run simulations intensive simulation such as
 these on external HPC resources, the ``BioSimSpace.FreeEnergy`` package also
-provides support for just creating the input files that are needed. This saves
-the overhead of creating :class:`Process <BioSimSpace.Process>` objects. The
-input files can then be copied to a remote server, with the indivual simulations
-curated in a job submission script. (We don't yet provide support for
-configuring and writing submission scripts for you.)
+provides support for only creating the input files that are needed by passing
+the ``setup_only=True`` argument. This saves the overhead of creating
+:class:`Process <BioSimSpace.Process>` objects. The input files can then be
+copied to a remote server, with the indivual simulations curated in a job
+submission script. (We don't yet provide support for configuring and writing
+submission scripts for you.)
 
 To just setup the vacuum leg input files:
 
@@ -110,7 +109,7 @@ To just setup the vacuum leg input files:
 
    # Setup the input for the vacuum leg. No processes are created so the .run()
    # method won't do anything.
-   perturbation_vacuum = BSS.FreeEnergy.Relative(merged_vac,
+   perturbation_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
                                                  engine="somd",
                                                  work_dir="ligA_ligB/vacuum",
                                                  setup_only=True)
