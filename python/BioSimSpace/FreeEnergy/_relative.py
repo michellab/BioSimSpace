@@ -776,9 +776,9 @@ class Relative():
                     process._pert_file      = new_dir + "/somd.pert"
                     process._gradients_file = new_dir + "/gradients.dat"
                     process._input_files    = [process._config_file,
-                                                process._rst_file,
-                                                process._top_file,
-                                                process._pert_file]
+                                               process._rst_file,
+                                               process._top_file,
+                                               process._pert_file]
                     processes.append(process)
 
             # GROMACS.
@@ -826,9 +826,9 @@ class Relative():
                     process._config_file    = new_dir + "/gromacs.mdp"
                     process._tpr_file       = new_dir + "/gromacs.tpr"
                     process._input_files    = [process._config_file,
-                                                process._gro_file,
-                                                process._top_file,
-                                                process._tpr_file]
+                                               process._gro_file,
+                                               process._top_file,
+                                               process._tpr_file]
                     processes.append(process)
 
         if not self._setup_only:
