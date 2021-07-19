@@ -1043,21 +1043,21 @@ def viewFunnel(system, collective_variable, property_map={}):
     # Calculate the vector defined by points p0 and p1.
     vec = _np.array(com1, dtype=float) - _np.array(com0, dtype=float)
 
-    # BEWARE: inconsistency with linalg, if vec is a list and not an array!!!
+    # BEWARE: inconsistency with linalg, if vec is a list and not an array!
     # Make it a unit vector.
     unit_vec = vec / _np.linalg.norm(vec)
 
     # Now to get orthogonal vectors:
     # https://math.stackexchange.com/questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
 
-    # Determine 1st orthogonal vector
+    # Determine 1st orthogonal vector.
     a0 = _np.random.randint(1, 10)
     a1 = _np.random.randint(1, 10)
     a2 = -(a0*vec[0] + a1*vec[1])/vec[2]
     a = _np.asarray([a0, a1, a2])
     unit_a = a / _np.linalg.norm(a)
 
-    # Determine 2nd orthogonal vector
+    # Determine 2nd orthogonal vector.
 
     unit_b = _np.cross(unit_a, unit_vec)
     # Iterate along the selected vector
