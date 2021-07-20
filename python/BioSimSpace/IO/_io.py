@@ -575,7 +575,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 lines = pdb.toLines()
 
                 # Create a connectivty object and generate the CONECT record.
-                conect = _SireMol.Connectivity(system[0]._sire_object).toCONECT()
+                conect = _SireMol.Connectivity(system[0]._sire_object,
+                                               _SireMol.CovalentBondHunter(),
+                                               _property_map).toCONECT()
 
                 # Create the updated PDB file.
                 pdb_records = "\n".join(lines[:-2]) \
