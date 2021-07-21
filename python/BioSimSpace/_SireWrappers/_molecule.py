@@ -2883,6 +2883,10 @@ class Molecule(_SireWrapper):
         # Remove the perturbable molecule flag.
         mol = mol.removeProperty("is_perturbable").molecule()
 
+        # Flag that the molecule was perturbable, so that dummies should be
+        # treated as "normal" atoms.
+        mol = mol.setProperty("was_perturbable", _SireBase.wrap(True)).molecule()
+
         # Rename all properties in the molecule for the corresponding end state,
         # e.g.: "prop0" --> "prop". Then delete all properties named "prop0"
         # and "prop1".
