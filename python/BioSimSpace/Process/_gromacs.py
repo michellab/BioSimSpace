@@ -177,9 +177,9 @@ class Gromacs(_process.Process):
                        "for multistep perturbation types.")
                 raise NotImplementedError(msg)
 
-        # Note that GROMACS can run non-FreeEnergy protocols using an FEP
-        # toplogy file, so there is no need to convert the system to the
-        # lambda=0 state.
+        else:
+            # Check for perturbable molecules and convert to the chosen end state.
+            system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
         system._set_water_topology("GROMACS")
