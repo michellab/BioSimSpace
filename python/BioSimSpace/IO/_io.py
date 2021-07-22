@@ -831,7 +831,7 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
     return system0
 
 def _bond_to_conect(bonds, info):
-    """Helper function to create a PDB CONECT record from bonding
+    """Helper function to create PDB CONECT records from bonding
        information from a molecular potential.
 
        Parameters
@@ -847,13 +847,13 @@ def _bond_to_conect(bonds, info):
        -------
 
        conect : str
-           The PDB CONECT record.
+           The PDB CONECT records.
     """
 
     # Initialise the CONECT dictionary.
     conect_dict = {}
 
-    # Loop over each potential term and and the bonded atoms to the dictionary,
+    # Loop over each potential term and the bonded atoms to the dictionary,
     # remembering that PDB atoms are one-indexed.
     for b in bonds.potentials():
         idx0 = info.atomIdx(b.atom0()).value() + 1
