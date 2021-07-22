@@ -574,10 +574,19 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # Get the lines.
                 lines = pdb.toLines()
 
+                # For molecules that were perturbable, we must create the
+                # CONECT record from the bonding information.
+                if system[0]._sire_object.hasProperty("is_perturbable") or \
+                   system[0]._sire_object.hasProperty("was_perturbable"):
+                    bond = _property_map.get("bond", "bond")
+                    conect = _bond_to_conect(system[0]._sire_object.property(bond),
+                                             system[0]._sire_object.info())
+
                 # Create a connectivty object and generate the CONECT record.
-                conect = _SireMol.Connectivity(system[0]._sire_object,
-                                               _SireMol.CovalentBondHunter(),
-                                               _property_map).toCONECT()
+                else:
+                    conect = _SireMol.Connectivity(system[0]._sire_object,
+                                                   _SireMol.CovalentBondHunter(),
+                                                   _property_map).toCONECT()
 
                 # Create the updated PDB file.
                 pdb_records = "\n".join(lines[:-2]) \
@@ -820,3 +829,61 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
+
+def _bond_to_conect(bonds, info):
+    """Helper function to create a PDB CONECT record from bonding
+       information from a molecular potential.
+
+       Parameters
+       ----------
+
+       bonds : Sire.MM._MM.TwoAtomFunctions
+           The bond potential property.
+
+       info : Sire.Mol._Mol.MoleculeInfo
+           The molecule info object.
+
+       Returns
+       -------
+
+       conect : str
+           The PDB CONECT record.
+    """
+
+    # Initialise the CONECT dictionary.
+    conect_dict = {}
+
+    # Loop over each potential term and and the bonded atoms to the dictionary,
+    # remembering that PDB atoms are one-indexed.
+    for b in bonds.potentials():
+        idx0 = info.atomIdx(b.atom0()).value() + 1
+        idx1 = info.atomIdx(b.atom1()).value() + 1
+        if idx0 in conect_dict:
+            conect_dict[idx0].append(idx1)
+        else:
+            conect_dict[idx0] = [idx1]
+
+    # Now create the CONECT record string.
+
+    # Intialise the string.
+    conect = ""
+
+    # Sort keys in numerical order.
+    k = list(conect_dict.keys())
+    k.sort()
+
+    # Store the number of keys.
+    num_k = len(k)
+
+    # Add a record for each root index.
+    for x, idx0 in enumerate(k):
+        # Add bonds in numerical order.
+        v = conect_dict[idx0]
+        v.sort()
+        conect += f"CONECT{idx0:>5}"
+        for idx1 in v:
+            conect += f"{idx1:>5}"
+        if x < num_k - 1:
+            conect += "\n"
+
+    return conect
