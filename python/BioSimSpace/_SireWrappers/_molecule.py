@@ -2841,7 +2841,8 @@ class Molecule(_SireWrapper):
         # Return the updated molecule.
         return mol.commit()
 
-    def _toRegularMolecule(self, property_map={}, is_lambda1=False):
+    def _toRegularMolecule(self, property_map={},
+            is_lambda1=False, convert_amber_dummies=False):
         """Internal function to convert a merged molecule to a regular molecule.
 
            Parameters
@@ -2856,6 +2857,11 @@ class Molecule(_SireWrapper):
                Whether to use the molecule at the lambda = 1 end state.
                By default, the state at lambda = 0 is used.
 
+           convert_amber_dummies : bool
+               Whether to convert dummies to the correct AMBER formatting for
+               non-FEP simulations. This will replace the "du" ambertype
+               property with "EP".
+
            Returns
            -------
 
@@ -2865,6 +2871,9 @@ class Molecule(_SireWrapper):
 
         if type(is_lambda1) is not bool:
             raise TypeError("'is_lambda1' must be of type 'bool'")
+
+        if type(convert_amber_dummies) is not bool:
+            raise TypeError("'convert_amber_dummies' must be of type 'bool'")
 
         if is_lambda1:
             lam = "1"
@@ -2899,8 +2908,20 @@ class Molecule(_SireWrapper):
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
 
                 # Delete redundant properties.
-                mol = mol.removeProperty(prop[:-1] + "0").molecule()
                 mol = mol.removeProperty(prop[:-1] + "1").molecule()
+                mol = mol.removeProperty(prop[:-1] + "0").molecule()
+
+        # Convert any atoms with "du" ambertype to "EP".
+        if convert_amber_dummies:
+            amber_type = property_map.get("ambertype", "ambertype")
+            if mol.hasProperty(amber_type):
+                # Search for any dummy atoms.
+                search = mol.search("element Xx")
+
+                # Replace the ambertype.
+                for dummy in search:
+                    mol = mol.atom(dummy.index()) \
+                              .setProperty(amber_type, "EP").molecule()
 
         # Return the updated molecule.
         return Molecule(mol.commit())

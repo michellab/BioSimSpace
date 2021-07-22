@@ -616,7 +616,8 @@ class Process():
             # with a regular molecule and the chosen end state.
             for mol in system.getPerturbableMolecules():
                 system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
-                                                                is_lambda1=is_lambda1))
+                                                              is_lambda1=is_lambda1,
+                                                              convert_amber_dummies=True))
 
             # Copy across the properties from the original system.
             for prop in self._system._sire_object.propertyKeys():
