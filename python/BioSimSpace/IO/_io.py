@@ -689,12 +689,13 @@ def savePerturbableSystem(filebase, system, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Validate that there is a single perturbable molecule in the system.
-    pert_mol = system.getPerturbableMolecules()
-    if system.nPerturbableMolecules() != 1:
+    pert_mols = system.getPerturbableMolecules()
+    if len(pert_mols) != 1:
         raise ValueError("The 'system' must contain a single perturbable molecule. "
-                        f"Found {len(pert_mol)}!")
+                        f"Found {len(pert_mols)}!")
+
     # Extract the molecule
-    pert_mol = system.getPerturbableMolecules()[0]
+    pert_mol = pert_mols[0]
 
     # Create a copy of the system for the lambda=0 and lambda=1 end states.
     system0 = system.copy()
