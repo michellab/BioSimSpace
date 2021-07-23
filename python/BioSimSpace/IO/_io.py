@@ -692,7 +692,7 @@ def savePerturbableSystem(filebase, system, property_map={}):
     pert_mol = system.getPerturbableMolecules()
     if system.nPerturbableMolecules() != 1:
         raise ValueError("The 'system' must contain a single perturbable molecule. "
-                        f"Found {len(pert_mols)}!")
+                        f"Found {len(pert_mol)}!")
     # Extract the molecule
     pert_mol = system.getPerturbableMolecules()[0]
 
