@@ -1269,7 +1269,7 @@ class System(_SireWrapper):
                 if "coordinates" in property_map:
                     prop = property_map["coordinates"]
                 else:
-                    if mol.isMerged():
+                    if mol.isPerturbable():
                         prop = "coordinates0"
                     else:
                         prop = "coordinates"

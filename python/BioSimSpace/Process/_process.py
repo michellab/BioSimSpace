@@ -121,7 +121,7 @@ class Process():
         # Make sure that molecules in the system have coordinates.
         prop = property_map.get("coordinates", "coordinates")
         for mol in system.getMolecules():
-            if not mol.isMerged():
+            if not mol.isPerturbable():
                 if not mol._sire_object.hasProperty(prop):
                     raise _IncompatibleError("System object contains molecules without coordinates!")
 

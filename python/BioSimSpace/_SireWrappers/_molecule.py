@@ -91,7 +91,7 @@ class Molecule(_SireWrapper):
             if molecule._molecule1 is not None:
                 self._molecule1 = Molecule(molecule._molecule1)
             self._forcefield = molecule._forcefield
-            self._is_merged = molecule._is_merged
+            self._is_perturbable = molecule._is_perturbable
 
         # Invalid type.
         else:
@@ -292,16 +292,17 @@ class Molecule(_SireWrapper):
         """
         return self._sire_object.nChains()
 
-    def isMerged(self):
-        """Whether this molecule has been merged with another.
+    def isPerturbable(self):
+        """Whether this molecule is perturbable, i.e. it can be used in a
+           free-energy perturbation simulation.
 
            Returns
            -------
 
-           is_merged : bool
-               Whether the molecule has been merged.
+           is_perturbable : bool
+               Whether the molecule is perturbable.
         """
-        return self._is_merged
+        return self._is_perturbable
 
     def isWater(self):
         """Whether this is a water molecule.
@@ -1125,7 +1126,7 @@ class Molecule(_SireWrapper):
 
         property_map = {}
 
-        if self._is_merged:
+        if self._is_perturbable:
             for prop in self._sire_object.propertyKeys():
                 if prop[-1] == "0":
                     property_map[prop[:-1]] = prop
@@ -1137,7 +1138,7 @@ class Molecule(_SireWrapper):
 
         property_map = {}
 
-        if self._is_merged:
+        if self._is_perturbable:
             for prop in self._sire_object.propertyKeys():
                 if prop[-1] == "1":
                     property_map[prop[:-1]] = prop
@@ -1158,8 +1159,8 @@ class Molecule(_SireWrapper):
         self._molecule0 = Molecule(mol0)
         self._molecule1 = Molecule(mol1)
 
-        # Flag that the molecule is merged.
-        self._is_merged = True
+        # Flag that the molecule is perturbable.
+        self._is_perturbable = True
 
     def _fixCharge(self, property_map={}):
         """Make the molecular charge an integer value.
@@ -1266,8 +1267,8 @@ class Molecule(_SireWrapper):
            molecule : Sire.Mol.Molecule
                The molecule with properties corresponding to the lamda = 0 state.
         """
-        if not self._is_merged:
-            raise _IncompatibleError("This isn't a merged molecule. Cannot write perturbation file!")
+        if not self._is_perturbable:
+            raise _IncompatibleError("This isn't a perturbable molecule. Cannot write perturbation file!")
 
         if not self._sire_object.property("forcefield0").isAmberStyle():
             raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
@@ -2880,7 +2881,7 @@ class Molecule(_SireWrapper):
         else:
             lam = "0"
 
-        if not self._is_merged:
+        if not self._is_perturbable:
             return Molecule(self._sire_object)
 
         # Extract and copy the Sire molecule.
@@ -2961,10 +2962,10 @@ class Molecule(_SireWrapper):
                The merged molecule.
         """
 
-        # Cannot merge an already merged molecule.
-        if self._is_merged:
+        # Cannot merge a perturbable molecule.
+        if self._is_perturbable:
             raise IncompatibleError("This molecule has already been merged!")
-        if other._is_merged:
+        if other._is_perturbable:
             raise IncompatibleError("'other' has already been merged!")
 
         # Validate input.
@@ -3876,8 +3877,8 @@ class Molecule(_SireWrapper):
         # Update the Sire molecule object of the new molecule.
         mol._sire_object = edit_mol.commit()
 
-        # Flag that the molecule has been merged.
-        mol._is_merged = True
+        # Flag that the molecule is perturbable.
+        mol._is_perturbable = True
 
         # Store the components of the merged molecule.
         mol._molecule0 = Molecule(molecule0)

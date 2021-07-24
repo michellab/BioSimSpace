@@ -56,7 +56,7 @@ class SireWrapper():
 
         # Intialise flags.
         self._is_multi_atom = False
-        self._is_merged = False
+        self._is_perturbable = False
 
     def __eq__(self, other):
         """Equals to operator."""
@@ -127,8 +127,8 @@ class SireWrapper():
         _property_map = property_map.copy()
 
         if property_map == {}:
-            # This is a merged molecule.
-            if self._is_merged:
+            # This is a perturbable molecule.
+            if self._is_perturbable:
                 # Compute the charge for the chosen end state.
                 if is_lambda1:
                     _property_map = { "charge" : "charge1" }
@@ -186,7 +186,7 @@ class SireWrapper():
             # Make a local copy of the property map.
             _property_map = property_map.copy()
 
-            if "coordinates" not in property_map and self._is_merged:
+            if "coordinates" not in property_map and self._is_perturbable:
                 _property_map["coordinates"] = "coordinates0"
 
             # Perform the translation.
@@ -264,8 +264,8 @@ class SireWrapper():
 
         prop = property_map.get("coordinates", "coordinates")
 
-        # Handle merged molecules.
-        if self._is_merged:
+        # Handle perturbable molecules.
+        if self._is_perturbable:
             prop = "coordinates0"
 
         # Residues need to be converted to molecules to have a
