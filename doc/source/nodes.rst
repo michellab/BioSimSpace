@@ -81,7 +81,7 @@ elements included in the node, e.g. visualisations and plots, are simply
 ignored when the script is run in a non-interactive mode. To facilitate this
 dual-use the ``node.addInput`` method generates a custom
 `ipywidgets <https://ipywidgets.readthedocs.io/en/latest/>`__ based graphical
-user interface for interative use in Jupyter, or a custom
+user interface for interactive use in Jupyter, or a custom
 `argparse <https://docs.python.org/3/library/argparse.html>`__ parser for
 handling command-line arguments. The following figure shows the example node
 above running within a Jupyter notebook (top) and from the command-line (bottom).
@@ -174,7 +174,7 @@ be renamed when a mismatch is found.
 
 Any unit based input requirement, e.g.
 :class:`BioSimSpace.Gateway.Length <BioSimSpace.Gateway.Length>`, should be
-specifing as a CWL ``string`` type to allow for greatest flexibility, e.g.:
+specifying as a CWL ``string`` type to allow for greatest flexibility, e.g.:
 
 .. code-block:: yaml
 

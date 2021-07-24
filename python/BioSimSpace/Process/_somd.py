@@ -166,7 +166,7 @@ class Somd(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
-        # Initalise the number of moves per cycle.
+        # Initialise the number of moves per cycle.
         self._num_moves = 10000
 
         # Initialise the buffering frequency.
@@ -219,7 +219,7 @@ class Somd(_process.Process):
                 # renamed properties first.
                 updated_system = _System(pert_mol) + _System(system)
 
-                # Copy across all of the properties from the orginal system.
+                # Copy across all of the properties from the original system.
                 for prop in system._sire_object.propertyKeys():
                     updated_system._sire_object.setProperty(prop, system._sire_object.property(prop))
 

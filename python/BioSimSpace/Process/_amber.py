@@ -574,14 +574,14 @@ class Amber(_process.Process):
 
             self.addToConfig(" /")
 
-            # Create the PLUMED input file and copy auxillary files to the working directory.
+            # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
                                                                        self._property_map)
             self._setPlumedConfig(plumed_config)
-            if auxillary_files is not None:
-                for file in auxillary_files:
+            if auxiliary_files is not None:
+                for file in auxiliary_files:
                     file_name = _os.path.basename(file)
                     _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
@@ -661,14 +661,14 @@ class Amber(_process.Process):
 
             self.addToConfig(" /")
 
-            # Create the PLUMED input file and copy auxillary files to the working directory.
+            # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
                                                                        self._property_map)
             self._setPlumedConfig(plumed_config)
-            if auxillary_files is not None:
-                for file in auxillary_files:
+            if auxiliary_files is not None:
+                for file in auxiliary_files:
                     file_name = _os.path.basename(file)
                     _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
@@ -1857,7 +1857,7 @@ class Amber(_process.Process):
            ----------
 
            max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
-               The maximimum time to wait (in minutes).
+               The maximum time to wait (in minutes).
         """
 
         # The process isn't running.
@@ -1928,7 +1928,7 @@ class Amber(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")

@@ -76,7 +76,7 @@ node.addOutput("system", BSS.Gateway.FileSet(help="The parameterised and solvate
 node.showControls()
 
 
-# Once all requirements are set then we can acces the values using the `node.getInput` method. The first time this is called the `node` will automatically validate all of the input and report the user if any errors were found.
+# Once all requirements are set then we can access the values using the `node.getInput` method. The first time this is called the `node` will automatically validate all of the input and report the user if any errors were found.
 # 
 # We'll now create a molecular system using the input file uploaded by the user. Note that we don't specify the format of the file, since this is automatically determined by BioSimSpace. (BioSimSpace has support for a wide range of formats and can convert between certain formats too.)
 
@@ -122,7 +122,7 @@ system = BSS.Solvent.solvate(node.getInput("water"), molecule=molecule,
 node.setOutput("system", BSS.IO.saveMolecules("system", system, ["prm7", "rst7"]))
 
 
-# Finally, we validate that the node completed succesfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.
+# Finally, we validate that the node completed successfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.
 # 
 # Note that the validation will fail until the cell above finishes running.
 
@@ -132,7 +132,7 @@ node.setOutput("system", BSS.IO.saveMolecules("system", system, ["prm7", "rst7"]
 node.validate()
 
 
-# Once we are satisfied with our node we can choosed to download it as a regular Python script that can be run from the command-line.
+# Once we are satisfied with our node we can choose to download it as a regular Python script that can be run from the command-line.
 # 
 # In JupyterHub, click on: `File/Download As/Python`\
 # In JupyterLab, click on: `File/Export Notebook As/Export Notebook to Executable Script`

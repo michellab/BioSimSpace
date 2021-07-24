@@ -33,7 +33,7 @@ RUN git clone https://github.com/plumed/plumed2.git && \
     tar -cjf  plumed.tar.bz2 plumed
 
 # Download and build GROMACS, patched with PLUMED.
-# Note tha CMake fails to link against various libraries, hence the use of CMAKE_EXE_LINKER_FLAGS.
+# Note that CMake fails to link against various libraries, hence the use of CMAKE_EXE_LINKER_FLAGS.
 RUN wget http://ftp.gromacs.org/pub/gromacs/gromacs-2019.6.tar.gz -O gromacs-src.tar.gz && \
     mkdir gromacs-build && \
     tar -xzf gromacs-src.tar.gz -C gromacs-build --strip 1 && \

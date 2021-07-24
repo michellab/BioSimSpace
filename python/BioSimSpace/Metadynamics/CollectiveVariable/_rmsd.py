@@ -225,7 +225,7 @@ class RMSD(_CollectiveVariable):
                     edit_mol = edit_mol.atom(idx).setProperty("beta_factor", 0.0).molecule()
                     align_mapping[idx.value()] = matches[idx].value()
 
-        # Store the intial value of the RMSD. This is useful to use as a starting
+        # Store the initial value of the RMSD. This is useful to use as a starting
         # point for the restraint when performing steered molecular dynamics.
         self._initial_value = self._compute_initial_rmsd(system, reference,
             reference_index, rmsd_mapping, align_mapping, property_map)

@@ -163,7 +163,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     if type(plot_network) is not bool:
         raise TypeError("'plot_network' must be of type 'bool'.")
 
-    # Validate the propert map.
+    # Validate the property map.
     if type(property_map) is not dict:
         raise TypeError("'property_map' must be of type 'dict'")
 
@@ -1077,7 +1077,7 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
         sanitize=False, removeHs=False)
 
-    # Higlight atoms from the mapping.
+    # Highlight atoms from the mapping.
     rdmol.__sssAtoms = mapping.keys()
 
     # Convert to 2D.

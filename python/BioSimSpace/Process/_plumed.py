@@ -106,12 +106,12 @@ class Plumed():
         # Initialise a list of the collective variable argument names.
         self._colvar_name = []
 
-        # Initalise a dictionary to map the collective variable names
+        # Initialise a dictionary to map the collective variable names
         # to their unit. This can be used when returning time series
         # records from the log files.
         self._colvar_unit = {}
 
-        # Initalise the list of configuration file strings and auxillary files.
+        # Initialise the list of configuration file strings and auxiliary files.
         self._config = []
         self._aux_files = []
 
@@ -119,7 +119,7 @@ class Plumed():
         self._colvar_dict = _MultiDict()
         self._hills_dict = _MultiDict()
 
-        # Initalise lists to store the keys used to index the above dictionary.
+        # Initialise lists to store the keys used to index the above dictionary.
         self._colvar_keys = []
         self._hills_keys = []
 
@@ -150,8 +150,8 @@ class Plumed():
            Returns
            -------
 
-           config, auxillary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxillary
+           config, auxiliary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxiliary
                files required by the collective variables.
         """
 
@@ -190,8 +190,8 @@ class Plumed():
            Returns
            -------
 
-           config, auxillary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxillary
+           config, auxiliary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxiliary
                files required by the collective variables.
         """
 
@@ -231,7 +231,7 @@ class Plumed():
             is_restart = False
             self._config.append("RESTART NO")
 
-        # Intialise molecule number to atom tally lookup dictionary in the system.
+        # Initialise molecule number to atom tally lookup dictionary in the system.
         try:
             system.getIndex(system[0].getAtoms()[0])
         except:
@@ -340,7 +340,7 @@ class Plumed():
                 # Store the indices of the largest and second largest molecules.
                 molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
 
-                # The funnel collective variable requires an auxillary file for
+                # The funnel collective variable requires an auxiliary file for
                 # PLUMED versions < 2.7.
                 if self._plumed_version < 2.7:
                     aux_file = "ProjectionOnAxis.cpp"
@@ -387,14 +387,14 @@ class Plumed():
             # Get the number of atoms in the molecule.
             num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
-            # Create the entity record. Rember to one-index the atoms.
+            # Create the entity record. Remember to one-index the atoms.
             string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
 
         # Append the string to the configuration list.
         self._config.append("\n# Define the molecular entities.")
         self._config.append(string)
 
-        # Intialise tally counters.
+        # Initialise tally counters.
         num_distance = 0
         num_torsion = 0
         num_rmsd = 0
@@ -455,7 +455,7 @@ class Plumed():
                     center_string = "c%d: CENTER ATOMS=%s" \
                         % (num_center, ",".join([str(x+1) for x in atom0]))
 
-                    # Center of mass weighting takes precendence.
+                    # Center of mass weighting takes precedence.
                     if is_com0:
                         center_string += " MASS"
 
@@ -490,7 +490,7 @@ class Plumed():
                     center_string = "c%d: CENTER ATOMS=%s" \
                         % (num_center, ",".join([str(x+1) for x in atom1]))
 
-                    # Center of mass weighting takes precendence.
+                    # Center of mass weighting takes precedence.
                     if is_com1:
                         center_string += " MASS"
 
@@ -603,7 +603,7 @@ class Plumed():
                 # Get the number of atoms in the ligand.
                 num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
-                # Create the ligand record. Rember to one-index the atoms.
+                # Create the ligand record. Remember to one-index the atoms.
                 colvar_string = "lig: COM ATOMS=%d-%d" % (idx+1, idx+num_atoms)
                 self._config.append(colvar_string)
 
@@ -815,8 +815,8 @@ class Plumed():
            Returns
            -------
 
-           config, auxillary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxillary
+           config, auxiliary_files : [str], [str]
+               The list of PLUMED configuration strings and paths to any auxiliary
                files required by the collective variables.
         """
 
@@ -848,7 +848,7 @@ class Plumed():
         else:
             self._config.append("RESTART NO")
 
-        # Intialise molecule number to atom tally lookup dictionary in the system.
+        # Initialise molecule number to atom tally lookup dictionary in the system.
         try:
             system.getIndex(system[0].getAtoms()[0])
         except:
@@ -934,14 +934,14 @@ class Plumed():
             # Get the number of atoms in the molecule.
             num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
-            # Create the entity record. Rember to one-index the atoms.
+            # Create the entity record. Remember to one-index the atoms.
             string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
 
         # Append the string to the configuration list.
         self._config.append("\n# Define the molecular entities.")
         self._config.append(string)
 
-        # Intialise tally counters.
+        # Initialise tally counters.
         num_distance = 0
         num_torsion = 0
         num_rmsd = 0
@@ -993,7 +993,7 @@ class Plumed():
                     center_string = "c%d: CENTER ATOMS=%s" \
                         % (num_center, ",".join([str(x+1) for x in atom0]))
 
-                    # Center of mass weighting takes precendence.
+                    # Center of mass weighting takes precedence.
                     if is_com0:
                         center_string += " MASS"
 
@@ -1028,7 +1028,7 @@ class Plumed():
                     center_string = "c%d: CENTER ATOMS=%s" \
                         % (num_center, ",".join([str(x+1) for x in atom1]))
 
-                    # Center of mass weighting takes precendence.
+                    # Center of mass weighting takes precedence.
                     if is_com1:
                         center_string += " MASS"
 
@@ -1279,7 +1279,7 @@ class Plumed():
                check for convergence.
 
            kt : :class:`Energy <BioSimSpace.Types.Energy>`
-               The temperature in energy units for intergrating out variables.
+               The temperature in energy units for integrating out variables.
 
            free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
                            [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
@@ -1505,7 +1505,7 @@ class Plumed():
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Types._type.Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
@@ -1568,7 +1568,7 @@ class Plumed():
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Types._type.Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")

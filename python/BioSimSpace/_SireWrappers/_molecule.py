@@ -504,7 +504,7 @@ class Molecule(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        # Intialise a list to hold the search results.
+        # Initialise a list to hold the search results.
         results = []
 
         try:
@@ -774,13 +774,13 @@ class Molecule(_SireWrapper):
         # Atoms from molecule in the passed system (mol1) need to be matched against atoms
         # from the corresponding residue in mol0 and the properties aggregated.
         else:
-            # Initalise a list to hold the matches for each molecule in mol1.
+            # Initialise a list to hold the matches for each molecule in mol1.
             matches = []
 
             # Tally counter for the total number of matches.
             num_matches = 0
 
-            # Initalise the offset.
+            # Initialise the offset.
             offset = 0
 
             # Get the molecule numbers in the system.
@@ -2952,7 +2952,7 @@ class Molecule(_SireWrapper):
                with their own naming scheme, e.g. { "charge" : "my-charge" }
 
            property_map1 : dict
-               A dictionary that maps "properties" in ther other molecule to
+               A dictionary that maps "properties" in there other molecule to
                their user defined values.
 
            Returns
@@ -3682,7 +3682,7 @@ class Molecule(_SireWrapper):
                 # Convert to an AtomIdx.
                 idy = _SireMol.AtomIdx(y)
 
-                # Was a ring openend/closed?
+                # Was a ring opened/closed?
                 is_ring_broken =  _is_ring_broken(c0, conn, idx, idy, idx, idy)
 
                 # A ring was broken and it is not allowed.
@@ -3725,7 +3725,7 @@ class Molecule(_SireWrapper):
                 # Map the index to its position in the merged molecule.
                 idy_map = inv_mapping[idy]
 
-                # Was a ring openend/closed?
+                # Was a ring opened/closed?
                 is_ring_broken =  _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map)
 
                 # A ring was broken and it is not allowed.
@@ -4128,7 +4128,7 @@ def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1, max_ring_size=12
     paths0 = conn0.findPaths(idx0, idy0, max_ring_size)
     paths1 = conn1.findPaths(idx1, idy1, max_ring_size)
 
-    # Initalise the ring size in each end state.
+    # Initialise the ring size in each end state.
     ring0 = None
     ring1 = None
 

@@ -221,14 +221,14 @@ class Relative():
             raise TypeError("'serial' must be of type 'bool'.")
 
         if self._setup_only:
-            _warnings.warn("No proceses exist! Object created in 'setup_only' mode.")
+            _warnings.warn("No processes exist! Object created in 'setup_only' mode.")
         else:
             self._runner.startAll(serial=serial)
 
     def wait(self):
         """Wait for the simulation to finish."""
         if self._setup_only:
-            _warnings.warn("No proceses exist! Object created in 'setup_only' mode.")
+            _warnings.warn("No processes exist! Object created in 'setup_only' mode.")
         else:
             self._runner.wait()
 
@@ -279,7 +279,7 @@ class Relative():
            Returns
            -------
 
-           ouput : str, IPython.display.FileLink
+           output : str, IPython.display.FileLink
                A path, or file link, to an archive of the process input.
         """
 
@@ -872,7 +872,7 @@ def getData(name="data", file_link=False, work_dir=None):
        Returns
        -------
 
-       ouput : str, IPython.display.FileLink
+       output : str, IPython.display.FileLink
            A path, or file link, to an archive of the process input.
     """
     return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)

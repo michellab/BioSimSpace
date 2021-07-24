@@ -866,7 +866,7 @@ def _bond_to_conect(bonds, info):
 
     # Now create the CONECT record string.
 
-    # Intialise the string.
+    # Initialise the string.
     conect = ""
 
     # Sort keys in numerical order.

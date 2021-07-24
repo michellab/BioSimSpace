@@ -122,7 +122,7 @@ class Protocol():
         else:
             self._property_map = property_map.copy()
 
-        # Set default compatability flags for the utility programs.
+        # Set default compatibility flags for the utility programs.
         # These must be overridden in the constructor of any derived classes.
         self._tleap = False
         self._pdb2gmx = False

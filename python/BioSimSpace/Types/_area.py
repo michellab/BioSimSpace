@@ -278,7 +278,7 @@ class Area(_Type):
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
-        # Replace any occurence of squared with 2.
+        # Replace any occurrence of squared with 2.
         unit = unit.replace("SQUARED", "2")
         unit = unit.replace("SQUARE", "2")
 

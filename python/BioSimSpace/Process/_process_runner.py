@@ -111,7 +111,7 @@ class ProcessRunner():
         if self._work_dir is not None:
             self._processes = self._nest_directories(self._processes)
 
-        # Initalise the state for each process.
+        # Initialise the state for each process.
         for p in self._processes:
             p._is_queued = True
             p._is_finished = False
@@ -207,7 +207,7 @@ class ProcessRunner():
         else:
             self._processes.extend(processes)
 
-        # Initalise the state for each process.
+        # Initialise the state for each process.
         num_processes = self.nProcesses()
         for x in range(0, len(processes)):
             idx = num_processes - x - 1
@@ -522,7 +522,7 @@ class ProcessRunner():
             self._thread = _threading.Thread(target=self._run_processes,
                                              args=[serial, batch_size, max_retries])
 
-            # Deamonize the thread.
+            # Daemonize the thread.
             self._thread.daemon = True
 
             # Start the thread.

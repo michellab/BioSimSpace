@@ -394,7 +394,7 @@ Committing
 ----------
 
 If you create new tests, please make sure that they pass locally before
-commiting. When happy, commit your changes, e.g.
+committing. When happy, commit your changes, e.g.
 
 .. code-block:: bash
 
@@ -410,7 +410,7 @@ This will avoid unnecessarily running the
 building a new BioSimSpace binary, updating the website, etc. To this end, we
 have provided a git hook that will append ``***NO_CI***`` if the commit only
 modifies files in a blacklist that is specified in the file ``.ciignore``
-(analagous to the ``.gitignore`` used to ignore untracked files). To enable
+(analogous to the ``.gitignore`` used to ignore untracked files). To enable
 the hook, simply copy it into the ``.git/hooks`` directory:
 
 .. code-block:: bash

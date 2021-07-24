@@ -291,7 +291,7 @@ class Residue(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        # Intialise a list to hold the search results.
+        # Initialise a list to hold the search results.
         results = []
 
         try:

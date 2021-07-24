@@ -74,7 +74,7 @@ def generateBoxParameters(box_type, image_distance):
     return _box_types_dict[box_type](image_distance)
 
 def cubic(image_distance):
-    """Generate paramters for a cubic box.
+    """Generate parameters for a cubic box.
 
        Parameters
        ----------
@@ -205,7 +205,7 @@ def truncatedOctahedron(image_distance):
     return _get_box_parameters(triclinic_box)
 
 def _get_box_parameters(triclinic_box):
-    """Internal helper function to get paramters for the passed triclinic box.
+    """Internal helper function to get parameters for the passed triclinic box.
 
        Parameters
        ----------

@@ -542,7 +542,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
         if box is not None:
-            _warnings.warn("Ignoring 'box' keyword argument as 'shell' takes precendence.")
+            _warnings.warn("Ignoring 'box' keyword argument as 'shell' takes precedence.")
 
         # Work out the box size based on axis-aligned bounding box.
         # We take the maximum dimension as the base length of our box.
@@ -955,7 +955,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                             for line in water_ion_lines:
                                 file.write("%s" % line)
 
-                    # Ions have been added. Update the TOP file fo the water model
+                    # Ions have been added. Update the TOP file for the water model
                     # with the new atom counts.
                     if num_na > 0 or num_cl > 0:
                         with open("water_ions.top", "w") as file:

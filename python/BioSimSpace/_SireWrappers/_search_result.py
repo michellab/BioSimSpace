@@ -60,7 +60,7 @@ class SearchResult():
         # Store the number of results.
         self._num_results = len(self._sire_object)
 
-        # Intialise the iterator count.
+        # Initialise the iterator count.
         self._iter_count = 0
 
     def __str__(self):

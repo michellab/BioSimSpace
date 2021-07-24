@@ -128,7 +128,7 @@ class Temperature(_Type):
                 if not allow_offset:
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
-                    # Left-hand operand takes precendence.
+                    # Left-hand operand takes precedence.
                     mag = self._magnitude + other._convert_to(self._unit).magnitude()
 
                     # Return a new object of the same type with the original unit.
@@ -167,7 +167,7 @@ class Temperature(_Type):
                 if not allow_offset:
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
-                    # Left-hand operand takes precendence.
+                    # Left-hand operand takes precedence.
                     mag = self._magnitude - other._convert_to(self._unit).magnitude()
 
                     # Return a new object of the same type with the original unit.

@@ -111,7 +111,7 @@ class System(_SireWrapper):
         # Flag that this object holds multiple atoms.
         self._is_multi_atom = True
 
-        # Initalise dictionaries mapping MolNums to the number cumulative
+        # Initialise dictionaries mapping MolNums to the number cumulative
         # number of atoms/residues in the system, up to that MolNum.
         self._atom_index_tally = {}
         self._residue_index_tally = {}
@@ -122,7 +122,7 @@ class System(_SireWrapper):
         # Store the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
 
-        # Intialise the iterator counter.
+        # Initialise the iterator counter.
         self._iter_count = 0
 
         # Copy any fileformat property to each molecule.
@@ -737,7 +737,7 @@ class System(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'")
 
-        # Intialise a list to hold the search results.
+        # Initialise a list to hold the search results.
         results = []
 
         try:
@@ -1081,7 +1081,7 @@ class System(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'.")
 
-        # Initalise the list of indices.
+        # Initialise the list of indices.
         indices = []
 
         # Get the element property.
@@ -1481,7 +1481,7 @@ class System(_SireWrapper):
            ----------
 
            abs_index : int
-               The absoulute index of the atom in the system.
+               The absolute index of the atom in the system.
 
            Returns
            -------

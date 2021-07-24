@@ -1755,7 +1755,7 @@ class Namd(_process.Process):
                 if data[0] == "TIMING:":
 
                     # Try to find the "hours" record.
-                    # If found, return the entry preceeding it.
+                    # If found, return the entry precedeing it.
                     try:
                         return (float(data[data.index("hours") - 1]) * 60) * _Units.Time.minutes
 
@@ -1931,7 +1931,7 @@ class Namd(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")

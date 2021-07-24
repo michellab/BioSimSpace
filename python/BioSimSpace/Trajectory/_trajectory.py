@@ -361,7 +361,7 @@ class Trajectory():
                              "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
                              "'BioSimSpace.Types.Time' types.")
 
-        # Intialise the list of frames.
+        # Initialise the list of frames.
         frames = []
 
         # Loop over all indices.

@@ -356,7 +356,7 @@ class Molecules(_SireWrapper):
         if type(query) is not str:
             raise TypeError("'query' must be of type 'str'")
 
-        # Intialise a list to hold the search results.
+        # Initialise a list to hold the search results.
         results = []
 
         try:

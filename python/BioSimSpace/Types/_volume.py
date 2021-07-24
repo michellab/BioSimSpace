@@ -252,7 +252,7 @@ class Volume(_Type):
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
-        # Replace any occurence of cubed with 3.
+        # Replace any occurrence of cubed with 3.
         unit = unit.replace("CUBED", "3")
         unit = unit.replace("CUBE", "3")
 

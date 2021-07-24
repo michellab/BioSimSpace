@@ -54,7 +54,7 @@ class SireWrapper():
         # Store a deep copy of the Sire object.
         self._sire_object = object.__deepcopy__()
 
-        # Intialise flags.
+        # Initialise flags.
         self._is_multi_atom = False
         self._is_perturbable = False
 

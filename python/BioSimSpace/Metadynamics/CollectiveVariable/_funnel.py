@@ -380,7 +380,7 @@ class Funnel(_CollectiveVariable):
            ----------
 
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill for the two commponents of the
+               The width of the Gaussian hill for the two components of the
                collective variable: the distance along the funnel projection
                axis, and the orthogonal extent from the axis.
         """
@@ -421,7 +421,7 @@ class Funnel(_CollectiveVariable):
            ----------
 
            grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`,: class:`Grid <BioSimSpace.Metadynamics.Grid>`)
-               A grid for the two commponents of the collective variable:
+               A grid for the two components of the collective variable:
                the distance along the funnel projection axis, and the
                orthogonal extent from the axis.
         """
@@ -460,7 +460,7 @@ class Funnel(_CollectiveVariable):
 
            grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`,: class:`Grid <BioSimSpace.Metadynamics.Grid>`)
                The grid on which the two-components of the collective variable are sampled.
-               A grid for the two commponents of the collective variable:
+               A grid for the two components of the collective variable:
                the distance along the funnel projection axis, and the
         """
         return self._grid
@@ -752,7 +752,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     if type(alpha_carbon_name) is not str:
         raise TypeError("'alpha_carbon_name' must be of type 'str'.")
 
-    # Get the "space" propety from the user map.
+    # Get the "space" property from the user map.
     space_prop = property_map.get("space", "space")
     if space_prop not in system._sire_object.propertyKeys():
         raise _IncompatibleError("The system contains no simulation box property!")
@@ -829,7 +829,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     grid_min = binding_site - 0.5*grid_length
     grid_max = binding_site + 0.5*grid_length
 
-    # Initalise a vector to store the average non-protein coordinate.
+    # Initialise a vector to store the average non-protein coordinate.
     non_protein = _SireVector()
     num_non_protein = 0
 

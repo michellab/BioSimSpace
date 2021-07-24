@@ -407,7 +407,7 @@ class OpenMM(_process.Process):
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Set initial velocities from temperature distribution.
-            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig("\n# Setting initial system velocities.")
             self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
 
             # Work out the number of integration steps.
@@ -541,7 +541,7 @@ class OpenMM(_process.Process):
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Set initial velocities from temperature distribution.
-            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig("\n# Setting initial system velocities.")
             self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
 
             # Check for a restart file and load the simulation state.
@@ -847,7 +847,7 @@ class OpenMM(_process.Process):
             self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
 
             # Set initial velocities from temperature distribution.
-            self.addToConfig("\n# Setting intial system velocities.")
+            self.addToConfig("\n# Setting initial system velocities.")
             self.addToConfig(f"simulation.context.setVelocitiesToTemperature({temperature})")
 
             # Check for a restart file and load the simulation state.
@@ -874,7 +874,7 @@ class OpenMM(_process.Process):
             self.addToConfig("current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
 
             # Write the initial record.
-            self.addToConfig("\n# Write the inital collective variable record.")
+            self.addToConfig("\n# Write the initial collective variable record.")
             self.addToConfig("if is_restart:")
             self.addToConfig("    if os.path.isfile('COLVAR.npy'):")
             self.addToConfig("        colvar_array = np.load('COLVAR.npy')")
@@ -1587,7 +1587,7 @@ class OpenMM(_process.Process):
                The number of lines to print.
         """
 
-        # Note that thermodynamic records, e.g. energy, pressure, temperture,
+        # Note that thermodynamic records, e.g. energy, pressure, temperature,
         # are redirected to a log file.
 
         # Ensure that the number of lines is positive.
@@ -1749,7 +1749,7 @@ class OpenMM(_process.Process):
         self.addToConfig( "                                              separator=' '))")
 
     def _update_stdout_dict(self):
-        """Update the dictonary of thermodynamic records."""
+        """Update the dictionary of thermodynamic records."""
 
         # Exit if log file hasn't been created.
         if not _os.path.isfile(self._log_file):
@@ -1790,7 +1790,7 @@ class OpenMM(_process.Process):
                 # in the line so far.
                 num_quotes = 0
 
-                # Initalise the separator.
+                # Initialise the separator.
                 sep = ""
 
                 # Loop over the characters in the line.
@@ -1874,7 +1874,7 @@ class OpenMM(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")

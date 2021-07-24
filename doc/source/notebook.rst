@@ -31,6 +31,6 @@ Workshops
 The server also contains several BioSimSpace training workshops. Navigate to
 the ``workshops`` directory from the landing page.
 
-* ``python``: A basic Python programing workshop.
+* ``python``: A basic Python programming workshop.
 * ``introduction``: An introduction to the core concepts of BioSimSpace.
-* ``advanced``: Using BioSimSpace to set up and run advanced sampling simulations, such as free energy pertubation and metadynamics.
+* ``advanced``: Using BioSimSpace to set up and run advanced sampling simulations, such as free energy perturbation and metadynamics.

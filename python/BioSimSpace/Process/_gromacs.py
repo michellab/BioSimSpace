@@ -413,7 +413,7 @@ class Gromacs(_process.Process):
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
                 config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
                 config.append("rlist = 1.2")                    # Set short-range cutoff.
                 config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
@@ -496,7 +496,7 @@ class Gromacs(_process.Process):
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
                 config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
                 config.append("rlist = 1.2")                    # Set short-range cutoff.
                 config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
@@ -597,7 +597,7 @@ class Gromacs(_process.Process):
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
                 config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
                 config.append("rlist = 1.2")                    # Set short-range cutoff.
                 config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
@@ -645,14 +645,14 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Create the PLUMED input file and copy auxillary files to the working directory.
+            # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
                                                                        self._property_map)
             self._setPlumedConfig(plumed_config)
-            if auxillary_files is not None:
-                for file in auxillary_files:
+            if auxiliary_files is not None:
+                for file in auxiliary_files:
                     file_name = _os.path.basename(file)
                     _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
@@ -702,7 +702,7 @@ class Gromacs(_process.Process):
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
                 config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neigbour list every 10 steps.
+                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
                 config.append("rlist = 1.2")                    # Set short-range cutoff.
                 config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
                 config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
@@ -750,14 +750,14 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Create the PLUMED input file and copy auxillary files to the working directory.
+            # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxillary_files = self._plumed.createConfig(self._system,
+            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
                                                                        self._property_map)
             self._setPlumedConfig(plumed_config)
-            if auxillary_files is not None:
-                for file in auxillary_files:
+            if auxiliary_files is not None:
+                for file in auxiliary_files:
                     file_name = _os.path.basename(file)
                     _shutil.copyfile(file, self._work_dir + f"/{file_name}")
             self._input_files.append(self._plumed_config_file)
@@ -1997,7 +1997,7 @@ class Gromacs(_process.Process):
                The number of lines to print.
         """
 
-        # Note that thermodynamic records, e.g. energy, pressure, temperture,
+        # Note that thermodynamic records, e.g. energy, pressure, temperature,
         # are redirected to a log file.
 
         # Ensure that the number of lines is positive.
@@ -2233,7 +2233,7 @@ class Gromacs(_process.Process):
                         file.write("%s\n" % line)
 
     def _update_stdout_dict(self):
-        """Update the dictonary of thermodynamic records."""
+        """Update the dictionary of thermodynamic records."""
 
         # Exit if log file hasn't been created.
         if not _os.path.isfile(self._log_file):
@@ -2394,7 +2394,7 @@ class Gromacs(_process.Process):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
@@ -2559,7 +2559,7 @@ def _is_minimisation(config):
     return False
 
 def _is_vacuum(config):
-    """Helper functin to check whether a configuration corresponds to a
+    """Helper function to check whether a configuration corresponds to a
        vacuum simulation.
 
        Parameters

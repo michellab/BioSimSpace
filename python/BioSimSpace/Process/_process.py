@@ -207,7 +207,7 @@ class Process():
         # Initialise the configuration file string list.
         self._config = []
 
-        # Initalise the command-line argument dictionary.
+        # Initialise the command-line argument dictionary.
         self._args = _collections.OrderedDict()
 
         # Clear any existing output in the current working directory
@@ -392,7 +392,7 @@ class Process():
                check for convergence.
 
            kt : BioSimSpace.Types.Energy
-               The temperature in energy units for intergrating out variables.
+               The temperature in energy units for integrating out variables.
 
            block : bool
                Whether to block until the process has finished running.
@@ -466,7 +466,7 @@ class Process():
         msg = "'bounds' must contain tuples with the lower and upper bound " \
               "for each collective variable."
 
-        # Store the list of collective varaible names and their units.
+        # Store the list of collective variable names and their units.
         names = self._plumed._colvar_name
         units = self._plumed._colvar_unit
 
@@ -762,7 +762,7 @@ class Process():
            ----------
 
            max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
-               The maximimum time to wait (in minutes).
+               The maximum time to wait (in minutes).
         """
 
         # The process isn't running.
@@ -1007,7 +1007,7 @@ class Process():
            Returns
            -------
 
-           ouput : str, IPython.display.FileLink
+           output : str, IPython.display.FileLink
                A path, or file link, to an archive of the process input.
         """
 
@@ -1060,7 +1060,7 @@ class Process():
            Returns
            -------
 
-           ouput : str, IPython.display.FileLink
+           output : str, IPython.display.FileLink
                A path, or file link, to an archive of the process output.
         """
 

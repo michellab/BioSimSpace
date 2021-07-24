@@ -14,7 +14,7 @@ fi
 RECIPE=$CONDA_DIR/meta.yaml
 TEMPLATE=$CONDA_DIR/template.yaml
 
-# Overwite the recipe with the template file.
+# Overwrite the recipe with the template file.
 cp $TEMPLATE $RECIPE
 
 # Get the BioSimSpace version.
@@ -37,7 +37,7 @@ sed -i.bak -e "s/BSS_VERSION/$BSS_VER/" $RECIPE && rm $RECIPE.bak
 echo "Updating BioSimSpace build number: '$BSS_BUILD'"
 sed -i.bak -e "s/BUILD/$BSS_BUILD/" $RECIPE && rm $RECIPE.bak
 
-# Udpate the Sire version number.
+# Update the Sire version number.
 echo "Updating Sire version number: '$SIRE_VER'"
 sed -i.bak -e "s/SIRE_VERSION/$SIRE_VER/" $RECIPE && rm $RECIPE.bak
 

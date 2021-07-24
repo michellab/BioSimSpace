@@ -276,10 +276,10 @@ class Node():
         # Set the node description string.
         self._description = description
 
-        # Initalise the authors.
+        # Initialise the authors.
         self._authors = None
 
-        # Initalise the license.
+        # Initialise the license.
         self._license = None
 
         # Initialise dictionaries for the inputs/outputs.
@@ -302,7 +302,7 @@ class Node():
         self._parser = None
         self._required = None
 
-        # Intialise the Jupyter input panel.
+        # Initialise the Jupyter input panel.
         self._control_panel = None
 
         # Strict file naming is off by default.
@@ -837,7 +837,7 @@ class Node():
         if not isinstance(output, _Requirement):
             raise TypeError("'output' must be of type 'Requirement'.")
 
-        # We already have an ouput requirement with this name.
+        # We already have an output requirement with this name.
         if name in self._outputs:
             _warnings.warn("Duplicate input requirement. Overwriting existing value!")
 
@@ -1064,7 +1064,7 @@ class Node():
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
 
-            # Credate the label string.
+            # Create the label string.
             string = "%s: %s" % (name, self._inputs[name].getHelp())
 
             # Add the unit information.
@@ -1358,7 +1358,7 @@ def _on_value_change(change):
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
 
-    # Intialise the widget label.
+    # Initialise the widget label.
     label = ""
 
     # Initialise file counter.

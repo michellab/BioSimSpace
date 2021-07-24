@@ -99,7 +99,7 @@ class Requirement():
         else:
             self._help = help
 
-        # Optional keywords aguments.
+        # Optional keywords arguments.
 
         if type(optional) is not bool:
             raise TypeError("'optional' keyword argument must be of type 'bool'")
@@ -182,7 +182,7 @@ class Requirement():
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
-            # For String requirements, strip whitespace and ingore case.
+            # For String requirements, strip whitespace and ignore case.
             if type(self) is String:
                 new_value = value.replace(" ", "").upper()
                 allowed = [x.replace(" ", "").upper() for x in self._allowed]
@@ -1652,7 +1652,7 @@ def _unarchive(name):
             # Decompress the archive.
             with _tarfile.open(name) as tar:
                 # We need to call tar.list(), otherwise the tar object will not know
-                # about nested directories, i.e. it will appear as if ther is a single
+                # about nested directories, i.e. it will appear as if there is a single
                 # member.
                 print("Decompressing...")
                 tar.list(verbose=False)
