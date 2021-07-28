@@ -616,6 +616,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                     _os.rename(file, new_file)
                     file = [new_file]
                 elif format == "Gro87":
+                    # Write to 3dp by default, unless greater precision is
+                    # requested by the user.
+                    if "precision" not in _property_map:
+                        _property_map["precision"] = _SireBase.wrap(3)
                     file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
                     new_file = file.replace("gro87", "gro")
                     _os.rename(file, new_file)

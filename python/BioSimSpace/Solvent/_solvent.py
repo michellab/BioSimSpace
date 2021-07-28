@@ -672,13 +672,18 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         tmp_dir = _tempfile.TemporaryDirectory()
         work_dir = tmp_dir.name
 
+    # Write to 6dp, unless precision is specified by use.
+    _property_map = property_map.copy()
+    if "precision" not in _property_map:
+        _property_map["precision"] = _SireBase.wrap(6)
+
     # Run the solvation in the working directory.
     with _Utils.cd(work_dir):
 
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
-            _IO.saveMolecules("input", molecule, "gro87", property_map=property_map)
+            _IO.saveMolecules("input", molecule, "gro87", property_map=_property_map)
 
         # We need to create a dummy input file with no molecule in it.
         else:
@@ -790,7 +795,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
 
         # Load the water box.
-        water = _IO.readMolecules(["water.gro", "water_ions.top"], property_map=property_map)
+        water = _IO.readMolecules(["water.gro", "water_ions.top"], property_map=_property_map)
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
@@ -801,7 +806,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
             # Add all of the water box properties to the new system.
             for prop in water._sire_object.propertyKeys():
-                prop = property_map.get(prop, prop)
+                prop = _property_map.get(prop, prop)
 
                 # Add the space property from the water system.
                 system._sire_object.setProperty(prop, water._sire_object.property(prop))
@@ -813,8 +818,8 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
             try:
                 # Write the molecule + water system to file.
-                _IO.saveMolecules("solvated", system, "gro87", property_map=property_map)
-                _IO.saveMolecules("solvated", system, "grotop", property_map=property_map)
+                _IO.saveMolecules("solvated", system, "gro87", property_map=_property_map)
+                _IO.saveMolecules("solvated", system, "grotop", property_map=_property_map)
             except Exception as e:
                 msg = ("Failed to write GROMACS topology file. "
                        "Is your molecule parameterised?")
@@ -988,7 +993,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                         # Add all of the water molecules' properties to the new system.
                         for prop in water_ions._sire_object.propertyKeys():
-                            prop = property_map.get(prop, prop)
+                            prop = _property_map.get(prop, prop)
 
                             # Add the space property from the water system.
                             system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
