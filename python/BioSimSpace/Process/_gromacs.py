@@ -1082,7 +1082,7 @@ class Gromacs(_process.Process):
 
         try:
             time = index * self._protocol.getRestartInterval() \
-                * self._protocol.getTimeStep()
+                 * self._protocol.getTimeStep()
 
             with _warnings.catch_warnings():
                 system = self._getFrame(time)
