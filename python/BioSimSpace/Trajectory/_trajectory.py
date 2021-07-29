@@ -101,12 +101,12 @@ def getFrame(trajectory, topology, index):
             _shutil.copyfile(topology, top_file)
 
             frame = _mdtraj.load_frame(trajectory, index, top=top_file)
+
+            # Remove the temporary topology file.
+            _os.remove(top_file)
         except:
             _os.remove(top_file)
             raise IOError("MDTraj failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology))
-
-        # Remove the temporary topology file.
-        _os.remove(top_file)
 
     # The name of the frame coordinate file.
     frame_file = ".frame.nc"
