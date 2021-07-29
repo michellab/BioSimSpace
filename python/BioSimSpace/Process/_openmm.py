@@ -192,7 +192,7 @@ class OpenMM(_process.Process):
         system = self._system.copy()
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
-        system._set_water_topology("AMBER")
+        system._set_water_topology("AMBER", self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
         system = self._checkPerturbable(system)

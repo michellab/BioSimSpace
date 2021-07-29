@@ -79,7 +79,8 @@ class Relative():
     _engines = ["GROMACS", "SOMD"]
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            setup_only=False, ignore_warnings=False, show_errors=True):
+            setup_only=False, ignore_warnings=False, show_errors=True,
+            property_map={}):
         """Constructor.
 
            Parameters
@@ -118,6 +119,11 @@ class Relative():
                Whether to show warning/error messages when generating the binary
                run file. This option is specific to GROMACS and will be ignored
                when a different molecular dynamics engine is chosen.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Validate the input.
@@ -198,6 +204,11 @@ class Relative():
         if type(show_errors) is not bool:
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
+
+        # Check that the map is valid.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+        self._property_map = property_map
 
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
@@ -681,7 +692,7 @@ class Relative():
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
         # FEP setup.)
         if self._engine == "SOMD":
-            system._set_water_topology("AMBER")
+            system._set_water_topology("AMBER", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -709,7 +720,8 @@ class Relative():
                 platform = "CPU"
 
             first_process = _Process.Somd(system, self._protocol,
-                platform=platform, work_dir=first_dir)
+                platform=platform, work_dir=first_dir,
+                property_map=self._property_map)
             if self._setup_only:
                 del(first_process)
             else:

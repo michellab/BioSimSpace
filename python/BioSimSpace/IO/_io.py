@@ -604,9 +604,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # Make sure AMBER and GROMACS files have the expected water topology
                 # and save GROMACS files with an extension such that they can be run
                 # directly by GROMACS without needing to be renamed.
-                if format == "PRM7":
+                if format == "PRM7" or format == "RST7":
                     system = system.copy()
-                    system._set_water_topology("AMBER")
+                    system._set_water_topology("AMBER", _property_map)
                     file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
                 elif format == "GroTop":
                     system = system.copy()

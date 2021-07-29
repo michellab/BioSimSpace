@@ -1532,7 +1532,7 @@ class System(_SireWrapper):
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
-    def _set_water_topology(self, format):
+    def _set_water_topology(self, format, property_map={}):
         """Internal function to swap the water topology to AMBER or GROMACS format.
 
             Parameters
@@ -1540,12 +1540,20 @@ class System(_SireWrapper):
 
             format : string
                 The format to convert to: either "AMBER" or "GROMACS".
+
+            property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Validate input.
 
         if type(format) is not str:
             raise TypeError("'format' must be of type 'str'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
 
         # Strip whitespace and convert to upper case.
         format = format.replace(" ", "").upper()
@@ -1581,7 +1589,14 @@ class System(_SireWrapper):
                 water_model = self._sire_object.property("water_model").toString()
 
                 if format == "AMBER":
-                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                    # Add the "space" property to the map so that we can "un-image"
+                    # water hydrogen atoms.
+                    _property_map = {}
+                    space_prop = property_map.get("space", "space")
+                    if space_prop in self._sire_object.propertyKeys():
+                        _property_map["space"] = self._sire_object.property(space_prop)
+                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"),
+                        water_model, _property_map)
                 else:
                     new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 
@@ -1600,7 +1615,14 @@ class System(_SireWrapper):
                     water_model = "TIP5P"
 
                 if format == "AMBER":
-                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                    # Add the "space" property to the map so that we can "un-image"
+                    # water hydrogen atoms.
+                    _property_map = {}
+                    space_prop = property_map.get("space", "space")
+                    if space_prop in self._sire_object.propertyKeys():
+                        _property_map["space"] = self._sire_object.property(space_prop)
+                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"),
+                        water_model, _property_map)
                 else:
                     new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 

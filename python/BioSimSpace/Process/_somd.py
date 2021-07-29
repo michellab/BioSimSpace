@@ -238,7 +238,7 @@ class Somd(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER")
+        system._set_water_topology("AMBER", self._property_map)
 
         # RST file (coordinates).
         try:
