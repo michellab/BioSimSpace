@@ -170,7 +170,10 @@ class Trajectory():
             if isinstance(process, _Process):
                 self._process = process
                 self._process_name = process.__class__.__name__
-                self._top_file = self._process._top_file
+                if self._process_name == "Gromacs":
+                    self._top_file = self._process._gro_file
+                else:
+                    self._top_file = self._process._top_file
 
                 # Check that the process can generate a trajectory.
                 if not self._process._has_trajectory:
