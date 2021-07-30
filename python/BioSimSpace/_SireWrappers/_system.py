@@ -1577,7 +1577,7 @@ class System(_SireWrapper):
                 if waters[0].isAmberWater():
                     return
 
-            if format == "GROMACS":
+            elif format == "GROMACS":
                 if waters[0].isGromacsWater():
                     return
 
