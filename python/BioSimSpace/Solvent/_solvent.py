@@ -758,7 +758,11 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         water_lines = []
         with open("output.gro", "r") as file:
             # Only search lines that weren't part of the existing molecule.
-            for line in file.readlines()[molecule.nAtoms()+2:]:
+            if molecule is None:
+                num_atoms = 0
+            else:
+                num_atoms = molecule.nAtoms()
+            for line in file.readlines()[num_atoms+2:]:
                 if _re.search("SOL", line):
                     # Store the SOL atom record.
                     water_lines.append(line)
@@ -932,7 +936,11 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                     with open("solvated_ions.gro", "r") as file:
                         # Don't  for ions within the original system.
-                        for line in file.readlines()[molecule.nAtoms()+2:]:
+                        if molecule is None:
+                            num_atoms = 0
+                        else:
+                            num_atoms = molecule.nAtoms()
+                        for line in file.readlines()[num_atoms+2:]:
                             # This is a Sodium atom.
                             if _re.search("NA", line):
                                 water_ion_lines.append(line)
