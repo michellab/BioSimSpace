@@ -974,35 +974,15 @@ class Gromacs(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        if type(self._protocol) is _Protocol.Minimisation or \
-          (type(self._protocol) is _Protocol.Custom and _is_minimisation(self.getConfig())):
-            # Create the name of the restart GRO file.
-            restart = "%s/%s.gro" % (self._work_dir, self._name)
-
-            # Check that the file exists.
-            if _os.path.isfile(restart):
-                # Read the molecular system.
-                new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
-
-                # Copy the new coordinates back into the original system.
-                old_system = self._system.copy()
-                old_system._updateCoordinates(new_system,
-                                              self._property_map,
-                                              self._property_map)
-
-                # Update the periodic box information in the original system.
-                if "space" in new_system._sire_object.propertyKeys():
-                    box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-
-                return old_system
-
-            else:
-                return None
-
+        # Minimisation trajectories have a single frame, i.e. the final state.
+        if type(self._protocol) is _Protocol.Minimisation:
+            time = 0*_Units.Time.nanosecond
+        # Get the current simulation time.
         else:
-            # Grab the most recent frame from the trajectory file.
-            return self._getFrame(self.getTime())
+            time = self.getTime()
+
+        # Grab the most recent frame from the trajectory file.
+        return self._getFrame(time)
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
