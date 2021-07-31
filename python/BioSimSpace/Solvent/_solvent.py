@@ -1006,9 +1006,6 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                             # Add the space property from the water system.
                             system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
 
-                        # Shift the system back to recover the original coordinates.
-                        system.translate([-x for x in shift])
-
                     else:
                         system = water_ions
 
