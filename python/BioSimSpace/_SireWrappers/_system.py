@@ -1581,24 +1581,15 @@ class System(_SireWrapper):
                 if waters[0].isGromacsWater():
                     return
 
-            # Store the number of "points" (atoms) in the water model.
-            num_point = waters[0].nAtoms()
-
-            # Try to get the name of the water model.
-            try:
+            # There will be a "water_model" system property if this object was
+            # solvated by BioSimSpace.
+            if "water_model" in self._sire_object.propertyKeys():
                 water_model = self._sire_object.property("water_model").toString()
 
-                if format == "AMBER":
-                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
-                else:
-                    new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
-
-            # If the system wasn't solvated by BioSimSpace, e.g. read from file, then try
-            # to guess the water model from the topology.
-            except:
+            # Otherwise, convert to an appropriate topology.
+            else:
                 num_point = waters[0].nAtoms()
 
-                # Convert to an appropriate topology.
                 if num_point == 3:
                     # TODO: Assume TIP3P. Not sure how to detect SPC/E at present.
                     water_model = "TIP3P"
@@ -1607,10 +1598,17 @@ class System(_SireWrapper):
                 elif num_point == 5:
                     water_model = "TIP5P"
 
-                if format == "AMBER":
-                    new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
-                else:
-                    new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
+            if format == "AMBER":
+                # Add the "space" property to the map so that we can "un-image"
+                # water hydrogen atoms.
+                _property_map = {}
+                space_prop = property_map.get("space", "space")
+                if space_prop in self._sire_object.propertyKeys():
+                    _property_map["space"] = self._sire_object.property(space_prop)
+                new_waters = _SireIO.setAmberWater(self._sire_object.search("water"),
+                    water_model, _property_map)
+            else:
+                new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
 
             # Create a new system and molecule group.
             system = _SireSystem.System("BioSimSpace System")
