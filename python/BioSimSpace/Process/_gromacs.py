@@ -2459,8 +2459,8 @@ class Gromacs(_process.Process):
                     self._traj_file = traj_file
 
                 # Use trjconv to get the frame closest to the current simulation time.
-                command = "echo 0 | %s trjconv -f %s -s %s -dump %f -o frame.gro -ndec 6" \
-                    % (self._exe, self._traj_file, self._gro_file, time.picoseconds().magnitude())
+                command = "echo 0 | %s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
+                    % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().magnitude())
 
                 # Run the command.
                 proc = _subprocess.run(command, shell=True,
