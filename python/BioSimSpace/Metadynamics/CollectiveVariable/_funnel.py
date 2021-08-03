@@ -94,6 +94,7 @@ class Funnel(_CollectiveVariable):
                An upper bound on the value of the collective variable. This is
                used to constrain the "projection on axis" component of the
                collective variable, i.e. the distance from the funnel axis to
+               the origin, along the axis.
 
            grid : (:class:`Grid <BioSimSpace.Metadynamics.Grid>`, :class:`Grid <BioSimSpace.Metadynamics.Grid>`)
                The grid on which the collective variable will be sampled.
