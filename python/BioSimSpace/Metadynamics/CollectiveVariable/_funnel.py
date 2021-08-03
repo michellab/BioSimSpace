@@ -523,7 +523,7 @@ class Funnel(_CollectiveVariable):
 
         import numpy as _np
 
-        # Create a 0.01 nm spaced points between the lower and upper bounds.
+        # Create an array of 0.01 nm spaced points between the lower and upper bounds.
         coords = _np.arange(proj_min.nanometers().magnitude(),
                             proj_max.nanometers().magnitude(),
                             delta.nanometers().magnitude()).tolist()
@@ -531,7 +531,7 @@ class Funnel(_CollectiveVariable):
         # Get the extent values.
         funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().magnitude() for x in coords]
 
-        # Now intergrate the data.
+        # Now integrate the data.
         result = 0
         delta = delta.nanometers().magnitude()
         for x, y in zip(funnel[:-1], funnel[1:]):
