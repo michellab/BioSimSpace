@@ -2861,7 +2861,7 @@ class Molecule(_SireWrapper):
            convert_amber_dummies : bool
                Whether to convert dummies to the correct AMBER formatting for
                non-FEP simulations. This will replace the "du" ambertype
-               property with "EP".
+               and "Xx" element with the properties from the other end state.
 
            Returns
            -------
@@ -2908,21 +2908,45 @@ class Molecule(_SireWrapper):
                 # Copy the property using the updated name.
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
 
-                # Delete redundant properties.
-                mol = mol.removeProperty(prop[:-1] + "1").molecule()
-                mol = mol.removeProperty(prop[:-1] + "0").molecule()
+                # Store the amber types in the opposie end state.
+                if prop[:-1] == "ambertype":
+                    if lam == "0":
+                        amber_types = mol.property("ambertype1").toVector()
+                    else:
+                        amber_types = mol.property("ambertype0").toVector()
 
-        # Convert any atoms with "du" ambertype to "EP".
+                elif prop[:-1] == "element":
+                    if lam == "0":
+                        elements = mol.property("element1").toVector()
+                    else:
+                        elements = mol.property("element0").toVector()
+
+                else:
+                    # Delete redundant properties.
+                    mol = mol.removeProperty(prop[:-1] + "1").molecule()
+                    mol = mol.removeProperty(prop[:-1] + "0").molecule()
+
+        # Convert ambertype and element property of dummies to those of the
+        # other end state.
         if convert_amber_dummies:
             amber_type = property_map.get("ambertype", "ambertype")
-            if mol.hasProperty(amber_type):
+            element = property_map.get("element", "element")
+            if mol.hasProperty(amber_type) and mol.hasProperty(element):
                 # Search for any dummy atoms.
                 search = mol.search("element Xx")
 
                 # Replace the ambertype.
                 for dummy in search:
                     mol = mol.atom(dummy.index()) \
-                              .setProperty(amber_type, "EP").molecule()
+                             .setProperty(amber_type, amber_types[dummy.index().value()]).molecule()
+                    mol = mol.atom(dummy.index()) \
+                             .setProperty(element, elements[dummy.index().value()]).molecule()
+
+                # Delete redundant properties.
+                mol = mol.removeProperty("ambertype0").molecule()
+                mol = mol.removeProperty("ambertype1").molecule()
+                mol = mol.removeProperty("element0").molecule()
+                mol = mol.removeProperty("element1").molecule()
 
         # Return the updated molecule.
         return Molecule(mol.commit())
