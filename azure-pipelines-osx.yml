@@ -13,7 +13,7 @@ jobs:
   - script: |
       # download and install last OSX build of Sire in $HOME/sire.app
       echo "Downloading sire_devel_latest_osx.run..."
-      wget "https://siremol.org/largefiles/sire_releases/download.php?name=sire_devel_latest_osx.run" -O sire_devel_latest_osx.run
+      wget "https://siremol.org/largefiles/sire_releases/download.php?name=sire_devel_latest_osx.run" -O sire_devel_latest_osx.run > /dev/null 2>&1
       chmod +x sire_devel_latest_osx.run
 
       echo "Unpacking sire_devel_latest_osx.run (takes a long time)..."
