@@ -150,8 +150,8 @@ class Somd(_process.Process):
         # The name of the trajectory file.
         self._traj_file = "%s/traj000000001.dcd" % self._work_dir
 
-        # The name of the binary restart file.
-        self._restart_file = "%s/latest.rst" % self._work_dir
+        # The name of the restart file.
+        self._restart_file = "%s/latest.pdb" % self._work_dir
 
         # Set the path for the SOMD configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
@@ -646,7 +646,7 @@ class Somd(_process.Process):
 
         # Try to grab the latest coordinates from the binary restart file.
         try:
-            new_system = _IO.readMolecules([self._restart_file, self._top_file])
+            new_system = _IO.readMolecules(self._restart_file)
 
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
