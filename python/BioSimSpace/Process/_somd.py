@@ -651,9 +651,11 @@ class Somd(_process.Process):
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            old_system = self._updateCoordinates(old_system,
+                                                 new_system,
+                                                 self._property_map,
+                                                 self._property_map)
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -910,3 +912,105 @@ class Somd(_process.Process):
             file = "%s/simfile.dat" % self._work_dir
             if _os.path.isfile(file):
                 _os.remove(file)
+
+    def _updateCoordinates(self, old_system, new_system,
+            property_map0={}, property_map1={}, is_lambda1=False):
+        """Update the coordinates of atoms in the system.
+
+           Parameters
+           ----------
+
+           old_system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The original molecular system.
+
+           new_system : :class:`System <BioSimSpace._SireWrappers.System>`
+               A system containing the updated coordinates.
+
+           property_map0 : dict
+               A dictionary that maps system "properties" to their user defined
+               values in this system.
+
+           property_map1 : dict
+               A dictionary that maps system "properties" to their user defined
+               values in the passed system.
+
+           is_lambda1 : bool
+              Whether to update coordinates of perturbed molecules at lambda = 1.
+              By default, coordinates at lambda = 0 are used.
+        """
+
+        # Rather than using the _updateCoordinates of the system directly,
+        # this is a custom function for SOMD since it doesn't preserve
+        # molecular ordering on startup.
+
+        # Validate the systems.
+
+        if type(old_system) is not _System:
+            raise TypeError("'old_system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        if type(new_system) is not _System:
+            raise TypeError("'new_system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # Check that the two systems contain the same number of molecules.
+        if old_system.nMolecules() != new_system.nMolecules():
+            raise _IncompatibleError("The two systems contains a different number of "
+                                     "molecules. Expected '%d', found '%d'"
+                                     % (old_system.nMolecules(), new_system.nMolecules()))
+
+        if type(property_map0) is not dict:
+            raise TypeError("'property_map0' must be of type 'dict'.")
+
+        if type(property_map1) is not dict:
+            raise TypeError("'property_map1' must be of type 'dict'.")
+
+        if type(is_lambda1) is not bool:
+            raise TypeError("'is_lambda1' must be of type 'bool'.")
+
+        # Work out the name of the "coordinates" property.
+        prop0 = property_map0.get("coordinates0", "coordinates")
+        prop1 = property_map1.get("coordinates1", "coordinates")
+
+        # Loop over all molecules and update the coordinates.
+        for idx, mol0 in enumerate(old_system.getMolecules()):
+            # Get the number of the first atom in the molecule.
+            num = mol0.getAtoms()[0]._sire_object.number().value()
+
+            # Get the underlying Sire object.
+            mol0 = mol0._sire_object
+
+            # Search for the molecule with the same atom number in the new system.
+            search = new_system._sire_object.search(f"mol with atomnum {num}")
+
+            if len(search) != 1:
+                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
+
+            # Extract the matching molecule.
+            mol1 = search[0]
+
+            # Check whether the molecule is perturbable.
+            if mol0.hasProperty("is_perturbable"):
+                if is_lambda1:
+                    prop = "coordinates1"
+                else:
+                    prop = "coordinates0"
+            else:
+                prop = prop0
+
+            # Try to update the coordinates property.
+            try:
+                mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
+            except Exception as e:
+                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
+
+            # Update the molecule in the original system.
+            old_system._sire_object.update(mol0)
+
+        return old_system
