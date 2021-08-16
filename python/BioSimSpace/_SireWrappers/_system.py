@@ -1395,6 +1395,15 @@ class System(_SireWrapper):
                                      "molecules. Expected '%d', found '%d'"
                                      % (self.nMolecules(), system.nMolecules()))
 
+        if type(property_map0) is not dict:
+            raise TypeError("'property_map0' must be of type 'dict'.")
+
+        if type(property_map1) is not dict:
+            raise TypeError("'property_map1' must be of type 'dict'.")
+
+        if type(is_lambda1) is not bool:
+            raise TypeError("'is_lambda1' must be of type 'bool'.")
+
         # Check that each molecule in the system contains the same number of atoms.
         for idx in range(0, self.nMolecules()):
             # Extract the number of atoms in the molecules.
