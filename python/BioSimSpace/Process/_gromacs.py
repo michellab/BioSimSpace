@@ -559,7 +559,8 @@ class Gromacs(_process.Process):
             config.append("couple-lambda0 = vdw-q")         # All interactions on at lambda = 0
             config.append("couple-lambda1 = vdw-q")         # All interactions on at lambda = 1
             config.append("calc-lambda-neighbors = -1")     # Write all lambda values.
-            config.append("nstdhdl = 100")                  # Write gradients every 100 steps.
+            config.append("nstcalcenergy = 250")            # Calculate energies every 250 steps.
+            config.append("nstdhdl = 250")                  # Write gradients every 250 steps.
 
         # Add configuration variables for a metadynamics simulation.
         elif type(self._protocol) is _Protocol.Metadynamics:

@@ -397,8 +397,6 @@ class Somd(_process.Process):
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
-            else:
-                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:
@@ -461,8 +459,6 @@ class Somd(_process.Process):
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
-            else:
-                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:
@@ -514,7 +510,7 @@ class Somd(_process.Process):
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
             self.addToConfig("ncycles = %d" % ncycles)                              # The number of SOMD cycles.
             self.addToConfig("nmoves = %d" % report_interval)                       # The number of moves per cycle.
-            self.addToConfig("energy frequency = 100")                              # Frequency of free energy gradient evaluation.
+            self.addToConfig("energy frequency = 250")                              # Frequency of free energy gradient evaluation.
             self.addToConfig("save coordinates = True")                             # Save molecular coordinates.
             self.addToConfig("ncycles_per_snap = %d" % cycles_per_frame)            # Cycles per trajectory write.
             self.addToConfig("buffered coordinates frequency = %d" % buffer_freq)   # Buffering frequency.
@@ -532,8 +528,6 @@ class Somd(_process.Process):
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
                 self.addToConfig("reaction field dielectric = 78.3")                # Solvated box.
-            else:
-                self.addToConfig("reaction field dielectric = 82.0")                # Vacuum.
             if not has_box or not self._has_water:
                 self.addToConfig("cutoff type = cutoffnonperiodic")                 # No periodic box.
             else:

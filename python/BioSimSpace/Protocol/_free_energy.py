@@ -44,11 +44,11 @@ class FreeEnergy(_Protocol):
                  max_lam=1.0,
                  num_lam=11,
                  timestep=_Types.Time(2, "femtosecond"),
-                 runtime=_Types.Time(1, "nanosecond"),
+                 runtime=_Types.Time(4, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 report_interval=100,
-                 restart_interval=500,
+                 report_interval=200000,
+                 restart_interval=20000,
                  perturbation_type="full"
                 ):
         """Constructor.
