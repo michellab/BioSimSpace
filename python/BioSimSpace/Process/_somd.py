@@ -84,7 +84,10 @@ class Somd(_process.Process):
                The working directory for the process.
 
            seed : int
-               A random number seed.
+               A random number seed. Note that SOMD only uses a seed for
+               FreeEnergy protocols. The seed should only be used for debugging
+               purposes since SOMD uses the same seed for each Monte Carlo
+               cycle.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
