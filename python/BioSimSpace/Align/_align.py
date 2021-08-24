@@ -415,6 +415,7 @@ def matchAtoms(molecule0,
                timeout=5*_Units.Time.second,
                sanitize=False,
                complete_rings_only=True,
+               max_scoring_matches=1000,
                property_map0={},
                property_map1={}):
     """Find mappings between atom indices in molecule0 to those in molecule1.
@@ -466,6 +467,13 @@ def matchAtoms(molecule0,
 
        complete_rings_only : bool
            Whether to only match complete rings during the MCS search. This
+           option is only relevant to MCS performed using RDKit and will be
+           ignored when falling back on Sire.
+
+       max_scoring_matches : int
+           The maximum number of matching MCS substructures to consider when
+           computing mapping scores. Consider reducing this if you find the
+           matchAtoms function to be taking an excessive amount of time. This
            option is only relevant to MCS performed using RDKit and will be
            ignored when falling back on Sire.
 
@@ -561,6 +569,12 @@ def matchAtoms(molecule0,
     if type(timeout) is not _Units.Time._Time:
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
 
+    if type(max_scoring_matches) is not int:
+        raise TypeError("'max_scoring_matches' must be of type 'int'")
+
+    if max_scoring_matches <= 0:
+        raise ValueError("'max_scoring_matches' must be >= 1.")
+
     if type(property_map0) is not dict:
         raise TypeError("'property_map0' must be of type 'dict'")
 
@@ -613,7 +627,8 @@ def matchAtoms(molecule0,
 
     # Score the mappings and return them in sorted order (best to worst).
     mappings, scores = _score_rdkit_mappings(mol0, mol1, mols[0], mols[1],
-        mcs_smarts, prematch, _scoring_function, property_map0, property_map1)
+        mcs_smarts, prematch, _scoring_function, max_scoring_matches,
+        property_map0, property_map1)
 
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
@@ -1089,7 +1104,8 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     return _IPythonConsole.display.Image(png)
 
 def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
-        mcs_smarts, prematch, scoring_function, property_map0, property_map1):
+        mcs_smarts, prematch, scoring_function, max_scoring_matches, property_map0,
+        property_map1):
     """Internal function to score atom mappings based on the root mean squared
        displacement (RMSD) between mapped atoms in two molecules. Optionally,
        molecule0 can first be aligned to molecule1 based on the mapping prior
@@ -1122,6 +1138,11 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
        scoring_function : str
            The RMSD scoring function.
 
+       max_scoring_matches : int
+           The maximum number of matching MCS substructures to consider when
+           computing mapping scores. Consider reducing this if you find the
+           matchAtoms function to be taking an excessive amount of time.
+
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
@@ -1152,10 +1173,12 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
 
     # Get the set of matching substructures in each molecule. For some reason
     # setting uniquify to True removes valid matches, in some cases even the
-    # best match! As such, we set uniquify to False and account ignore duplicate
+    # best match! As such, we set uniquify to False and account for duplicate
     # mappings in the code below.
-    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
-    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
+    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False,
+        maxMatches=max_scoring_matches, useChirality=False)
+    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False,
+        maxMatches=max_scoring_matches, useChirality=False)
 
     # Swap the order of the matches.
     if len(matches0) < len(matches1):
