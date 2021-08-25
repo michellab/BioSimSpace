@@ -353,10 +353,12 @@ class Somd(_process.Process):
             # Work out the number of cycles.
             ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
-            # If there is less than a single cycle, then reduce the number of moves.
-            if ncycles < 1:
-                report_interval = _math.ceil(ncycles * report_interval)
-                ncycles = 1
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                report_interval = _math.ceil((self._protocol.getRunTime()
+                                / self._protocol.getTimeStep()) / ncycles)
 
             # Work out the number of cycles per frame.
             cycles_per_frame = restart_interval / report_interval
@@ -415,10 +417,12 @@ class Somd(_process.Process):
             # Work out the number of cycles.
             ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
-            # If there is less than a single cycle, then reduce the number of moves.
-            if ncycles < 1:
-                report_interval = _math.ceil(ncycles * report_interval)
-                ncycles = 1
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                report_interval = _math.ceil((self._protocol.getRunTime()
+                                / self._protocol.getTimeStep()) / ncycles)
 
             # Work out the number of cycles per frame.
             cycles_per_frame = restart_interval / report_interval
@@ -477,10 +481,17 @@ class Somd(_process.Process):
             # Work out the number of cycles.
             ncycles = (self._protocol.getRunTime() / self._protocol.getTimeStep()) / report_interval
 
-            # If there is less than a single cycle, then reduce the number of moves.
-            if ncycles < 1:
-                report_interval = _math.ceil(ncycles * report_interval)
-                ncycles = 1
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                report_interval = _math.ceil((self._protocol.getRunTime()
+                                / self._protocol.getTimeStep()) / ncycles)
+
+            # The report interval must be a multiple of the energy frequency,
+            # which is 250 steps.
+            if report_interval % 250 != 0:
+                report_interval = 250 * _math.ceil(report_interval / 250)
 
             # Work out the number of cycles per frame.
             cycles_per_frame = restart_interval / report_interval
@@ -495,10 +506,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # The buffer frequency must be an integer multiple of the frequency
-            # at which free energies are written, which is 100 steps. Round down
+            # at which free energies are written, which is 250 steps. Round down
             # to the closest multiple.
             if buffer_freq > 0:
-                buffer_freq = 100 * _math.floor(buffer_freq / 100)
+                buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
             # Convert the timestep to femtoseconds.
             timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
