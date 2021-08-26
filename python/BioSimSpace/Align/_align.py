@@ -913,8 +913,8 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
         allow_ring_size_change=False, property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
-       atom index 'mapping'. The merged molecule can be used in single- and
-       dual-toplogy free energy calculations.
+       atom index 'mapping'. The merged molecule can be used in single topology
+       free-energy simulations.
 
        Parameters
        ----------
