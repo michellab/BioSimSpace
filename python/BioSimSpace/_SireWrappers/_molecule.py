@@ -2952,7 +2952,8 @@ class Molecule(_SireWrapper):
         return Molecule(mol.commit())
 
     def _merge(self, other, mapping, allow_ring_breaking=False,
-            allow_ring_size_change=False, property_map0={}, property_map1={}):
+            allow_ring_size_change=False, force=False,
+            property_map0={}, property_map1={}):
         """Merge this molecule with 'other'.
 
            Parameters
@@ -2969,6 +2970,13 @@ class Molecule(_SireWrapper):
 
            allow_ring_size_change : bool
                Whether to allow changes in ring size.
+
+           force : bool
+               Whether to try to force the merge, even when the molecular
+               connectivity changes not as the result of a ring transformation.
+               This will likely lead to an unstable perturbation. This option
+               takes precedence over 'allow_ring_breaking' and
+               'allow_ring_size_change'.
 
            property_map0 : dict
                A dictionary that maps "properties" in this molecule to their
@@ -3009,6 +3017,9 @@ class Molecule(_SireWrapper):
         if type(allow_ring_size_change) is not bool:
             raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
+        if type(force) is not bool:
+            raise TypeError("'force' must be of type 'bool'")
+
         if type(mapping) is not dict:
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
@@ -3016,6 +3027,13 @@ class Molecule(_SireWrapper):
             for idx0, idx1 in mapping.items():
                 if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
                     raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
+
+        # Set 'allow_ring_breaking' and 'allow_ring_size_change' to true if the
+        # user has requested to 'force' the merge, i.e. the 'force' argument
+        # takes precedence.
+        if force:
+            allow_ring_breaking = True
+            allow_ring_size_change = True
 
         # Create a copy of this molecule.
         mol = Molecule(self)
@@ -3730,10 +3748,12 @@ class Molecule(_SireWrapper):
                 if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
 
                     # The connectivity changed for an unknown reason.
-                    if not (is_ring_broken or is_ring_size_change):
+                    if not (is_ring_broken or is_ring_size_change) and not force:
                         raise _IncompatibleError("The merge has changed the molecular connectivity "
-                                                "but a ring didn't open/close or change size. "
-                                                "Check your atom mapping.")
+                                                 "but a ring didn't open/close or change size. "
+                                                 "If you want to proceed with this mapping pass "
+                                                 "'force=True'. You are warned that the resulting "
+                                                 "perturbation will likely be unstable.")
         # molecule1
         for x in range(0, molecule1.nAtoms()):
             # Convert to an AtomIdx.
@@ -3773,10 +3793,12 @@ class Molecule(_SireWrapper):
                 if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
 
                     # The connectivity changed for an unknown reason.
-                    if not (is_ring_broken or is_ring_size_change):
+                    if not (is_ring_broken or is_ring_size_change) and not force:
                         raise _IncompatibleError("The merge has changed the molecular connectivity "
-                                                "but a ring didn't open/close or change size. "
-                                                "Check your atom mapping.")
+                                                 "but a ring didn't open/close or change size. "
+                                                 "If you want to proceed with this mapping pass "
+                                                 "'force=True'. You are warned that the resulting "
+                                                 "perturbation will likely be unstable.")
 
         # Set the "connectivity" property.
         edit_mol.setProperty("connectivity", conn)

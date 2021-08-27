@@ -911,7 +911,8 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     return _Molecule(molecule0)
 
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        allow_ring_size_change=False, property_map0={}, property_map1={}):
+        allow_ring_size_change=False, force=False,
+        property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single topology
        free-energy simulations.
@@ -936,6 +937,13 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
        allow_ring_size_change : bool
            Whether to allow changes in ring size.
+
+       force : bool
+           Whether to try to force the merge, even when the molecular
+           connectivity changes not as the result of a ring transformation.
+           This will likely lead to an unstable perturbation. This option
+           takes precedence over 'allow_ring_breaking' and
+           'allow_ring_size_change'.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -987,6 +995,9 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     if type(allow_ring_size_change) is not bool:
         raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
+    if type(force) is not bool:
+        raise TypeError("'force' must be of type 'bool'")
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if type(mapping) is not dict:
@@ -1006,7 +1017,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
     # Create and return the merged molecule.
     return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            allow_ring_size_change=allow_ring_size_change,
+            allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
 def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
