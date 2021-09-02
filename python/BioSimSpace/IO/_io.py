@@ -745,7 +745,9 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
            A molecular system.
     """
 
-    # Check that the topology and coordinate files can be parsed.
+    # Check that the coordinate and topology files can be parsed.
+
+    # lamba = 0 coordinates.
     try:
         _SireIO.AmberRst7(coords)
     except Exception as e:
@@ -754,6 +756,8 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
             raise IOError(msg) from e
         else:
             raise IOError(msg) from None
+
+    # lamba = 0 topology.
     try:
         parser = _SireIO.AmberPrm(top0)
     except Exception as e:
@@ -765,6 +769,7 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
     if parser.isEmpty():
         raise ValueError(f"Unable to read topology file for lamba=0 end state: {top0}")
 
+    # lamba = 1 topology.
     try:
         parser = _SireIO.AmberPrm(top1)
     except Exception as e:
