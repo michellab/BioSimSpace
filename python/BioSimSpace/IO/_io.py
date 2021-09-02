@@ -754,10 +754,25 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
             raise IOError(msg) from e
         else:
             raise IOError(msg) from None
-    parser = _SireIO.AmberPrm(top0)
+    try:
+        parser = _SireIO.AmberPrm(top0)
+    except Exception as e:
+        msg = f"Unable to read lambda=0 topology file: {top0}"
+        if _isVerbose():
+            raise IOError(msg) from e
+        else:
+            raise IOError(msg) from None
     if parser.isEmpty():
         raise ValueError(f"Unable to read topology file for lamba=0 end state: {top0}")
-    parser = _SireIO.AmberPrm(top1)
+
+    try:
+        parser = _SireIO.AmberPrm(top1)
+    except Exception as e:
+        msg = f"Unable to read lambda=1 topology file: {top1}"
+        if _isVerbose():
+            raise IOError(msg) from e
+        else:
+            raise IOError(msg) from None
     if parser.isEmpty():
         raise ValueError(f"Unable to read topology file for lamba=1 end state: {top1}")
 
