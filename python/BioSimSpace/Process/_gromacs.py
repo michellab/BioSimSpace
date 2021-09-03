@@ -843,16 +843,17 @@ class Gromacs(_process.Process):
                 exception_string = "Unable to generate GROMACS binary run input file.\n"
                 if len(errors) > 0:
                     exception_string += "\n'gmx grompp' reported the following errors:\n"   \
-                                    + f"{error_string}\n"
+                                     + f"{error_string}\n"
                 if len(warnings) > 0:
                     exception_string += "\n'gmx grompp' reported the following warnings:\n" \
-                                    + f"{warning_string}\n"                                \
-                                    +  "\nUse 'ignore_warnings' to ignore warnings."
+                                     + f"{warning_string}\n"                                \
+                                     +  "\nUse 'ignore_warnings' to ignore warnings."
 
                 raise RuntimeError(exception_string)
 
             else:
-                raise RuntimeError("Unable to generate GROMACS binary run input file.")
+                raise RuntimeError("Unable to generate GROMACS binary run input file. ")
+                                   "Use 'show_errors=True' to display errors/warnings.")
 
     def addToConfig(self, config):
         """Add a string to the configuration list.
