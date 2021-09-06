@@ -11,7 +11,7 @@ ENV GITHUB_TOKEN=$github_token
 ENV GITHUB_EMAIL=$github_email
 
 # Install additional Python dependencies.
-RUN $HOME/sire.app/bin/pip install sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube=0.1.2
+RUN $HOME/sire.app/bin/pip install sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
 
 # Patch the sphinxcontrib.youtube package.
 RUN cp $HOME/BioSimSpace/docker/document-devel/youtube.py $HOME/sire.app/lib/python3.7/site-packages/sphinxcontrib/youtube
