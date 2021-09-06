@@ -852,7 +852,7 @@ class Gromacs(_process.Process):
                 raise RuntimeError(exception_string)
 
             else:
-                raise RuntimeError("Unable to generate GROMACS binary run input file. ")
+                raise RuntimeError("Unable to generate GROMACS binary run input file. "
                                    "Use 'show_errors=True' to display errors/warnings.")
 
     def addToConfig(self, config):
