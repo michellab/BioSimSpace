@@ -71,6 +71,7 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _lomap
+from ._merge import merge as _merge
 
 # Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
@@ -1016,7 +1017,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     sire_mapping = _to_sire_mapping(mapping)
 
     # Create and return the merged molecule.
-    return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
+    return _merge(molecule0, molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
             allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
