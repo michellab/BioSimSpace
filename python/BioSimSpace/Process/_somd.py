@@ -1257,6 +1257,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
                     LJ1.epsilon().value(),
                     atom.property("charge0").value(),
                     atom.property("charge1").value())
+
         if perturbation_type == "full":
             if print_all_atoms:
                 for atom in sorted(mol.atoms(), key=lambda atom: atom_sorting_criteria(atom)):

@@ -1062,10 +1062,10 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     in_ring_idy1 = conn1.inRing(idy1)
 
     # Whether each atom is on a ring in both end states.
-    on_ring_idx0 = _onRing(idx0, conn0)
-    on_ring_idy0 = _onRing(idy0, conn0)
-    on_ring_idx1 = _onRing(idx1, conn1)
-    on_ring_idy1 = _onRing(idy1, conn1)
+    on_ring_idx0 = _is_on_ring(idx0, conn0)
+    on_ring_idy0 = _is_on_ring(idy0, conn0)
+    on_ring_idx1 = _is_on_ring(idx1, conn1)
+    on_ring_idy1 = _is_on_ring(idy1, conn1)
 
     # Both atoms are in a ring in one end state and at least one isn't in the other.
     if (in_ring_idx0 & in_ring_idy0) ^ (in_ring_idx1 & in_ring_idy1):
@@ -1158,7 +1158,7 @@ def _is_ring_size_changed(conn0, conn1, idx0, idy0, idx1, idy1, max_ring_size=12
     else:
         return False
 
-def _onRing(idx, conn):
+def _is_on_ring(idx, conn):
     """Internal function to test whether an atom is adjacent to a ring.
 
        Parameters
