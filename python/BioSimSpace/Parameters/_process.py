@@ -49,6 +49,7 @@ import queue as _queue
 import sys as _sys
 import tempfile as _tempfile
 import threading as _threading
+import warnings as _warnings
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
@@ -126,6 +127,11 @@ class Process():
 
         if type(auto_start) is not bool:
             raise TypeError("'auto_start' must be of type 'bool'")
+
+        # Warn the user if the molecule contains no hydrogens.
+        if type(molecule) is _Molecule:
+            if molecule.search("element H").nResults() == 0:
+                _warnings.warn("Attempting to parameterise a molecule without hydrogen atoms!")
 
         # Set attributes.
         self._molecule = molecule
