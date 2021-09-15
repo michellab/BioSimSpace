@@ -78,7 +78,7 @@ class Molecules(_SireWrapper):
             molgrp = _SireMol.MoleculeGroup("all")
             for molecule in molecules:
                 molgrp.add(molecule._sire_object)
-                super().__init__(molgrp)
+            super().__init__(molgrp)
 
         # Invalid type.
         else:
