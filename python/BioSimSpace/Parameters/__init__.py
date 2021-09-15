@@ -116,6 +116,16 @@ incorrect formal charge information.
    # parameterisation is finished.
    molecule = process.getMolecule()
 
+Parameterise a molecule using GAFF, passing the molecule as a SMILES
+string.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Parameterise directly using a SMILES string.
+   molecule = BSS.Parameters.gaff("C1=CC=CC=C1").getMolecule()
+
 When parameterising a molecule containing a structural ion with an AMBER force
 field then it is necessary to pass the name of a water model that will be used
 for the ion parameters, e.g:
@@ -131,7 +141,7 @@ for the ion parameters, e.g:
    # ready to be returned.
    molecule = BSS.Parameters.ff14SB(molecule, water_model="tip3p").getMolecule()
 
-Additional parameters can be loaded by passing the 'leap_commands' option to
+Additional parameters can be loaded by passing the ``leap_commands`` option to
 any compatible AMBER force field function, e.g.:
 
 .. code-block:: python
