@@ -108,7 +108,7 @@ class Molecules(_SireWrapper):
             other = list(other)
 
         # Extract the molecules.
-        molecules = self._sire_object
+        molecules = self._sire_object.__deepcopy__()
 
         # Validate the input.
 
