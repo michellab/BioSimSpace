@@ -153,6 +153,25 @@ class Molecule(_SireWrapper):
         else:
             return _Molecules(molecules)
 
+    def copy(self):
+        """Return a copy of this Molecule.
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               A copy of the object.
+        """
+        # Copy the Sire object.
+        mol = self._sire_object.__deepcopy__()
+
+        # Give the molecule a unique number.
+        mol = mol.edit() \
+                 .renumber(_SireMol.MolNum.getUniqueNumber()) \
+                 .commit().molecule()
+
+        return Molecule(mol)
+
     def number(self):
         """Return the number of the molecule. Each molecule has a unique
            identification number.
