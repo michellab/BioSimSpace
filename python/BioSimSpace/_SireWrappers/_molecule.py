@@ -149,15 +149,9 @@ class Molecule(_SireWrapper):
         if is_sire_container:
             return other + self
 
-        # Create a new molecule group to store the molecules, then create a
-        # container and return.
+        # Create a new Molecules container.
         else:
-            molgrp = _SireMol.MoleculeGroup("all")
-
-            for molecule in molecules:
-                molgrp.add(molecule._sire_object)
-
-            return _Molecules(molgrp)
+            return _Molecules(molecules)
 
     def number(self):
         """Return the number of the molecule. Each molecule has a unique
