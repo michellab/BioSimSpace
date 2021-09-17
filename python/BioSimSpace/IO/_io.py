@@ -648,8 +648,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 def savePerturbableSystem(filebase, system, property_map={}):
     """Save a system containing a perturbable molecule. This will be written in
        AMBER format, with a topology file for each end state of the perturbation,
-       i.e. 'filebase0.prm7' and 'filebase1.prm7'. Coordinates for the lambda=0
-       end state are written to 'filebase.rst7'.
+       i.e. 'filebase0.prm7' and 'filebase1.prm7'. Coordinates for the end
+       states are written to 'filebase0.rst7' and 'filebase1.rst7'.
 
        Parameters
        ----------
@@ -715,23 +715,27 @@ def savePerturbableSystem(filebase, system, property_map={}):
     saveMolecules(filebase + "0", system0, "prm7")
     saveMolecules(filebase + "1", system1, "prm7")
 
-    # Save the lambda = 0 coordinates.
-    saveMolecules(filebase, system0, "rst7")
+    # Save the coordinate files.
+    saveMolecules(filebase + "0", system0, "rst7")
+    saveMolecules(filebase + "1", system1, "rst7")
 
-def readPerturbableSystem(coords, top0, top1, property_map={}):
+def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     """Read a perturbable system from file.
 
        Parameters
        ----------
 
-       coords : str
-           The path to the coordinate file.
-
        top0 : str
            The path to the topology file for the lambda=0 end state.
 
+       coords0 : str
+           The path to the coordinate file for the lambda=0 end state.
+
        top1 : str
            The path to the topology file for the lambda=1 end state.
+
+       coords1 : str
+           The path to the coordinate file for the lambda=1 end state.
 
        property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -745,13 +749,35 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
            A molecular system.
     """
 
+    if type(top0) is not str:
+        raise TypeError("'top0' must be of type 'str'.")
+
+    if type(coords0) is not str:
+        raise TypeError("'coords0' must be of type 'str'.")
+
+    if type(top1) is not str:
+        raise TypeError("'top1' must be of type 'str'.")
+
+    if type(coords1) is not str:
+        raise TypeError("'coords1' must be of type 'str'.")
+
     # Check that the coordinate and topology files can be parsed.
 
     # lamba = 0 coordinates.
     try:
-        _SireIO.AmberRst7(coords)
+        _SireIO.AmberRst7(coords0)
     except Exception as e:
-        msg = f"Unable to read lambda=0 coordinate file: {coords}"
+        msg = f"Unable to read lambda=0 coordinate file: {coords0}"
+        if _isVerbose():
+            raise IOError(msg) from e
+        else:
+            raise IOError(msg) from None
+
+    # lamba = 1 coordinates.
+    try:
+        _SireIO.AmberRst7(coords1)
+    except Exception as e:
+        msg = f"Unable to read lambda=1 coordinate file: {coords1}"
         if _isVerbose():
             raise IOError(msg) from e
         else:
@@ -782,8 +808,8 @@ def readPerturbableSystem(coords, top0, top1, property_map={}):
         raise ValueError(f"Unable to read topology file for lamba=1 end state: {top1}")
 
     # Try loading the two end states.
-    system0 = readMolecules([coords, top0], property_map=property_map)
-    system1 = readMolecules([coords, top1], property_map=property_map)
+    system0 = readMolecules([coords0, top0], property_map=property_map)
+    system1 = readMolecules([coords1, top1], property_map=property_map)
 
     # Make sure the systems have the same number of molecules.
     if system0.nMolecules() != system1.nMolecules():
