@@ -134,11 +134,6 @@ class Relative():
             # Store a copy of solvated system.
             self._system = system.copy()
 
-            # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable molecule! "
-                                 "Use the 'BioSimSpace.Align' package to map and merge molecules.")
-
         if protocol is not None:
             if type(protocol) is _Protocol.FreeEnergy:
                 self._protocol = protocol
@@ -186,6 +181,11 @@ class Relative():
                 if _gmx_exe is None:
                     raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
 
+                # The system must have a perturbable molecule.
+                if system.nPerturbableMolecules() == 0:
+                    raise ValueError("The system must contain a perturbable molecule! "
+                                     "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+
                 if self._protocol.getPerturbationType() != "full":
                     raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
                                               "type. Please use engine='SOMD' when running multistep "
@@ -193,6 +193,11 @@ class Relative():
         else:
             # Use SOMD as a default.
             engine = "SOMD"
+
+            # The system must have a single perturbable molecule.
+            if system.nPerturbableMolecules() != 1:
+                raise ValueError("The system must contain a single perturbable molecule! "
+                                 "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
         # Set the engine.
         self._engine = engine

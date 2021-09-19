@@ -164,11 +164,10 @@ class Gromacs(_process.Process):
         system = self._system.copy()
 
         if type(self._protocol) is _Protocol.FreeEnergy:
-            # Check that the system contains a single perturbable molecule.
-            if self._system.nPerturbableMolecules() != 1:
-                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
-                                 "perturbable molecule. The system has %d" \
-                                  % system.nPerturbableMolecules())
+            # Check that the system contains a perturbable molecule.
+            if self._system.nPerturbableMolecules() == 0:
+                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
+                                 "perturbable molecule!")
 
             # Check that the perturbation type is supported..
             if self._protocol.getPerturbationType() != "full":
