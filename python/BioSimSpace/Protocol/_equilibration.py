@@ -417,7 +417,7 @@ class Equilibration(_Protocol):
             # Convert to lower case and strip whitespace.
             restraint = restraint.lower().replace(" ", "")
             if restraint not in self._restraints:
-                raise ValueError(f"'restraint' must be one of: {self.restraints()}")
+                raise ValueError(f"'restraint' must be one of: {self._restraints}")
             # Set to NoneType if equal to "none", since this makes checking
             # whether a restraint is set elsewhere much easier.
             if restraint == "none":
