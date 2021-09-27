@@ -418,6 +418,11 @@ class System(_SireWrapper):
                 self._sire_object.add(molecules, _SireMol.MGName("all"))
             else:
                 for mol in molecules:
+                    if mol._sire_object.number() in self._mol_nums:
+                        raise ValueError("'BioSimSpace._SireWrappers.System' can only "
+                                         "contain unique molecules. Use the 'copy' method "
+                                         "of 'BioSimSpace._SireWrappers.Molecule' to "
+                                         "create a new version of a molecule.")
                     self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
         # Reset the index mappings.
