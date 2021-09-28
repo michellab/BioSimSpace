@@ -186,7 +186,8 @@ class SireWrapper():
             # Make a local copy of the property map.
             _property_map = property_map.copy()
 
-            if "coordinates" not in property_map and self._is_perturbable:
+            # This is a perturbable molecule. First translate the lamba = 0 state.
+            if self._is_perturbable:
                 _property_map["coordinates"] = "coordinates0"
 
             # Perform the translation.
@@ -194,6 +195,17 @@ class SireWrapper():
                                     .move()                                           \
                                     .translate(_SireMaths.Vector(vec), _property_map) \
                                     .commit()
+
+            # This is a perturbable molecule. Now translate the lamba = 1 state.
+            if self._is_perturbable:
+                _property_map["coordinates"] = "coordinates1"
+
+                # Perform the translation.
+                self._sire_object = self._sire_object                                     \
+                                        .move()                                           \
+                                        .translate(_SireMaths.Vector(vec), _property_map) \
+                                        .commit()
+
         except UserWarning as e:
             msg = "Cannot compute axis-aligned bounding box " + \
                    "since the object has no 'coordinates' property."
