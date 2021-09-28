@@ -140,6 +140,12 @@ class System(_SireWrapper):
                     self._sire_object.setProperty("fileformat", mol._sire_object.property("fileformat"))
                     break
 
+        # Reset the index mappings.
+        self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.System: nMolecules=%d>" % self.nMolecules()
