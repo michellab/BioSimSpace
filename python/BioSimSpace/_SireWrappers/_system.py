@@ -1095,9 +1095,6 @@ class System(_SireWrapper):
         # Initialise the list of indices.
         indices = []
 
-        # Get the element property.
-        element = property_map.get("element", "element")
-
         # A set of protein residues. Taken from MDAnalysis.
         prot_res = {
             # CHARMM top_all27_prot_lipid.rtf
@@ -1133,75 +1130,157 @@ class System(_SireWrapper):
             "Er", "Tm", "Lu", "Hf", "Zr", "Ce", "U", "Pu", "Th",
         ]
 
+        # Whether we've searched a perturbable system. If so, then we need to process
+        # the search results differently. (There will be one for each molecule.)
+        is_perturbable_system = False
+
         # Search the entire system.
         if mol_index is None:
-            # Backbone restraints.
-            if restraint == "backbone":
-                # Find all N, CA, C, and O atoms in protein residues.
-                string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
-                search = self.search(string)
 
-            elif restraint == "heavy":
-                # Convert to a formatted string for the search.
-                ion_string = ",".join(ions + ["H"])
-                # Find all non-water, non-hydrogen, non-ion elements.
-                string = f"(atoms in not water) and not element {ion_string}"
-                search = self.search(string)
+            # Only search the system directly if there are no perturbable molecules.
+            if self.nPerturbableMolecules() == 0:
 
-            elif restraint == "all":
-                # Convert to a formatted string for the search.
-                ion_string = ",".join(ions)
-                # Find all non-water, non-ion elements.
-                string = f"(atoms in not water) and not element {ion_string}"
-                search = self.search(string)
+                # Backbone restraints.
+                if restraint == "backbone":
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
+                    search = self.search(string, property_map)
+
+                elif restraint == "heavy":
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions + ["H,Xx"])
+                    # Find all non-water, non-hydrogen, non-ion elements.
+                    string = f"(atoms in not water) and not element {ion_string}"
+                    search = self.search(string, property_map)
+
+                elif restraint == "all":
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions)
+                    # Find all non-water, non-ion elements.
+                    string = f"(atoms in not water) and not element {ion_string}"
+                    search = self.search(string, property_map)
+
+            # Search each molecule individually, using the property map to specify the
+            # correct name for the "element" property in any perturble molecules.
+            else:
+                is_perturbable_system = True
+
+                # Initialise a list to hold all of the search results.
+                results = []
+
+                for mol in self.getMolecules():
+                    # Reset the local property map.
+                    _property_map = property_map.copy()
+
+                    # Initialise an empty search.
+                    search = []
+
+                    # If perturbable, use the 'element0' property for the search
+                    # unless it's already been set to the lambda = 1 property.
+                    if mol.isPerturbable():
+                        if _property_map.get("element") != "element1":
+                            _property_map["element"] = "element0"
+
+                    if restraint == "backbone":
+                        if not mol.isWater():
+                            # Find all N, CA, C, and O atoms in protein residues.
+                            string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                            search = mol.search(string, _property_map)
+
+                    elif restraint == "heavy":
+                        if not mol.isWater():
+                            # Convert to a formatted string for the search.
+                            ion_string = ",".join(ions + ["H,Xx"])
+                            # Find all non-water, non-hydrogen, non-ion elements.
+                            string = f"not element {ion_string}"
+                            search = mol.search(string, _property_map)
+
+                    elif restraint == "all":
+                        if not mol.isWater():
+                            # Convert to a formatted string for the search.
+                            ion_string = ",".join(ions)
+                            # Find all non-water, non-ion elements.
+                            string = f"not element {ion_string}"
+                            search = mol.search(string, _property_map)
+
+                    # Append the search result for this molecule.
+                    if len(search) > 0:
+                        results.append(search)
 
         # Search the chosen molecule.
         else:
-            if restraint == "backbone":
-                mol = self[mol_index]
-                if mol.isWater():
-                    search = []
+            # Create a local copy of the property map.
+            _property_map = property_map.copy()
 
-                else:
+            # Initialise an empty search.
+            search = []
+
+            # Extract the molecule.
+            mol = self[mol_index]
+
+            # If perturbable, use the 'element0' property for the search
+            # unless it's already been set to the lambda = 1 property.
+            if mol.isPerturbable():
+                if _property_map.get("element") != "element1":
+                    _property_map["element"] = "element0"
+
+            if restraint == "backbone":
+                if not mol.isWater():
                     # Find all N, CA, C, and O atoms in protein residues.
                     string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                    search = mol.search(string)
+                    search = mol.search(string, _property_map)
 
             elif restraint == "heavy":
-                mol = self[mol_index]
-                if mol.isWater():
-                    search = []
-                else:
+                if not mol.isWater():
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions + ["H"])
+                    ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string)
+                    search = mol.search(string, _property_map)
 
             elif restraint == "all":
-                mol = self[mol_index]
-                if mol.isWater():
-                    search = []
-                else:
+                if not mol.isWater():
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string)
+                    search = mol.search(string, _property_map)
 
-        # Raise an exception if no atoms match the restraint.
-        if len(search) == 0 and not allow_zero_matches:
-            msg = "No atoms matched the restraint!"
-            if restraint == "backbone":
-                msg += " Backbone restraints only apply to atoms in protein residues."
-            raise _IncompatibleError(msg)
+        if is_perturbable_system:
+            # Raise an exception if no atoms match the restraint.
+            if not allow_zero_matches:
+                num_results = 0
+                for search in results:
+                    num_results += len(search)
+                if num_results == 0:
+                    msg = "No atoms matched the restraint!"
+                    if restraint == "backbone":
+                        msg += " Backbone restraints only apply to atoms in protein residues."
+                    raise _IncompatibleError(msg)
 
-        # Now loop over all matching atoms and get their indices.
-        for atom in search:
-            if is_absolute:
-                indices.append(self.getIndex(atom))
-            else:
-                indices.append(atom.index())
+            # Loop over the searches for each molecule.
+            for search in results:
+                # Now loop over all matching atoms and get their indices.
+                for atom in search:
+                    if is_absolute:
+                        indices.append(self.getIndex(atom))
+                    else:
+                        indices.append(atom.index())
+
+        else:
+            # Raise an exception if no atoms match the restraint.
+            if len(search) == 0 and not allow_zero_matches:
+                msg = "No atoms matched the restraint!"
+                if restraint == "backbone":
+                    msg += " Backbone restraints only apply to atoms in protein residues."
+                raise _IncompatibleError(msg)
+
+            # Now loop over all matching atoms and get their indices.
+            for atom in search:
+                if is_absolute:
+                    indices.append(self.getIndex(atom))
+                else:
+                    indices.append(atom.index())
 
         # The indices should be sorted, but do so just in case.
         indices.sort()
