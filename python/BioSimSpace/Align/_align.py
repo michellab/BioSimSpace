@@ -337,6 +337,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         # 3) Load all ligands, make 2D depiction aligned to the template and save to file.
         try:
             for x, mol in enumerate(rdmols):
+                mol.UpdatePropertyCache(strict=False)
                 _AllChem.Compute2DCoords(mol)
                 _AllChem.GenerateDepictionMatching2DStructure(mol, template)
 
