@@ -781,10 +781,6 @@ def _make_function(name):
                The molecule to parameterise, either as a Molecule object or SMILES
                string.
 
-           forcefield : str
-               The force field. Run BioSimSpace.Parameters.forceFields() to get a
-               list of the supported force fields.
-
            work_dir : str
                The working directory for the process.
 
