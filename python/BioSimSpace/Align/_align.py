@@ -51,6 +51,7 @@ with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
     from rdkit import Chem as _Chem
     from rdkit.Chem import rdFMCS as _rdFMCS
+    from rdkit.Chem import rdmolops as _rdmolops
     from rdkit import RDLogger as _RDLogger
 
     # Disable RDKit warnings.
@@ -325,6 +326,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
+            # remove hydrogens to dramatically speed up MCS algorithm.
+            rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
+
             template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols).smartsString)
             _AllChem.Compute2DCoords(template)
 
@@ -344,6 +348,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 _AllChem.GenerateDepictionMatching2DStructure(mol, template)
 
                 mol = _Chem.RemoveHs(mol)
+
+                # remove stereochemistry to simplify depiction in network.
+                _rdmolops.RemoveStereochemistry(mol)
                 _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
 
         except Exception as e:
