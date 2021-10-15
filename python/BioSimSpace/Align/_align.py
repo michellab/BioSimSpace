@@ -246,7 +246,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                                 output_no_images=True,
                                 threed=True,
                                 max3d=3.0,
-                                time=1,
+                                time=3,
                                 parallel=10)
 
     # Create the similarity matrices.
