@@ -329,7 +329,13 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # remove hydrogens to dramatically speed up MCS algorithm.
             rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
 
-            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols).smartsString)
+            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols,
+                                    atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                                    bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                    matchValences=False,
+                                    ringMatchesRingOnly=True,
+                                    completeRingsOnly=True,
+                                    matchChiralTag=False).smartsString)
             _AllChem.Compute2DCoords(template)
 
         except Exception as e:
