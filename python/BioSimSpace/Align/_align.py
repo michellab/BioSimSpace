@@ -51,7 +51,6 @@ with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
     from rdkit import Chem as _Chem
     from rdkit.Chem import rdFMCS as _rdFMCS
-    from rdkit.Chem import rdmolops as _rdmolops
     from rdkit import RDLogger as _RDLogger
 
     # Disable RDKit warnings.
@@ -302,6 +301,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         import pydot as _pydot
         from rdkit.Chem import AllChem as _AllChem
         from rdkit.Chem import Draw as _Draw
+        from rdkit.Chem import rdmolops as _rdmolops
 
         # Set the DPI to make the network look nice.
         _plt.rcParams["figure.dpi"]= 150
