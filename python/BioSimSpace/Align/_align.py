@@ -326,7 +326,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
-            # remove hydrogens to dramatically speed up MCS algorithm.
+            # Remove hydrogens to dramatically speed up MCS algorithm.
             rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
 
             template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols,
@@ -355,7 +355,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
                 mol = _Chem.RemoveHs(mol)
 
-                # remove stereochemistry to simplify depiction in network.
+                # Remove stereochemistry to simplify depiction in network.
                 _rdmolops.RemoveStereochemistry(mol)
                 _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
 
