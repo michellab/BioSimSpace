@@ -28,13 +28,19 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["merge"]
 
+import os as _os
+import tempfile as _tempfile
+
+import parmed as _pmd
 from Sire import Base as _SireBase
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace import IO as _IO
 from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import System as _System
 
 def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         allow_ring_size_change=False, force=False,
@@ -1185,3 +1191,88 @@ def _is_on_ring(idx, conn):
 
     # If we get this far, then the atom is not adjacent to a ring.
     return False
+
+def _reloadThroughParmed(molecule):
+    """Internal function which reloads a BioSimSpace molecule through ParmEd and then back to BioSimSpace. This is
+       used to regenerate the nonbonded exclusions automatically using ParmEd.
+
+       Parameters
+       ----------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule.
+    """
+    # TODO: This function is a hack to fix the nonbonded exclusions. Try to fix it within BSS.
+    # Create a temporary directory
+    tmp_dir = _tempfile.TemporaryDirectory()
+    work_dir = tmp_dir.name
+
+    # Save from BSS, load in ParmEd, save from ParmEd and reload in BSS
+    _IO.saveMolecules(f"{work_dir}/temp", molecule, "prm7,rst7")
+    _os.rename(f"{work_dir}/temp.prm7", f"{work_dir}/temp.parm7")
+    _pmd.load_file(f"{work_dir}/temp.parm7", xyz=f"{work_dir}/temp.rst7").save(f"{work_dir}/temp.parm7", overwrite=True)
+    molecule, = _IO.readMolecules([f"{work_dir}/temp.parm7", f"{work_dir}/temp.rst7"])
+
+    return molecule
+
+def _removeDummies(molecule, is_lambda1):
+    """Internal function which removes the dummy atoms from one of the endstates of a merged molecule.
+
+       Parameters
+       ----------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule.
+
+       is_lambda1 : bool
+          Whether to use the molecule at lambda = 1.
+    """
+    if not molecule._is_perturbable:
+        raise _IncompatibleError("'molecule' is not a perturbable molecule")
+
+    # generate a molecule with all dummies present
+    molecule = molecule.copy()._toRegularMolecule(is_lambda1=is_lambda1)
+
+    # extract all the nondummy indices
+    nondummy_indices = [i for i, atom in enumerate(molecule.getAtoms()) if
+                        "du" not in atom._sire_object.property("ambertype")]
+
+    # create an AtomSelection
+    selection = molecule._sire_object.selection()
+
+    # Unselect all of the atoms.
+    selection.selectNone()
+
+    # Now add all of the nondummy atoms
+    for idx in nondummy_indices:
+        selection.select(_SireMol.AtomIdx(idx))
+
+    # Create a partial molecule and extract the atoms.
+    partial_molecule = _SireMol.PartialMolecule(molecule._sire_object, selection).extract().molecule()
+
+    # Save the changes to the molecule.
+    molecule = _Molecule(partial_molecule)
+
+    # Reload through ParmEd to fix the nonbonded exclusions
+    molecule = _reloadThroughParmed(molecule)
+
+    return molecule
+
+def _squash(system):
+    """Internal function which converts a merged BioSimSpace system into an AMBER-compatible format, where all perturbed
+       molecules are represented sequentially, instead of in a mixed topology, like in GROMACS.
+
+       Parameters
+       ----------
+
+       system : BioSimSpace._SireWrappers.System
+           The system.
+    """
+    all_molecules = []
+    for molecule in system.getMolecules():
+        if not molecule._is_perturbable:
+            all_molecules += [molecule]
+        else:
+            all_molecules += [_removeDummies(molecule, False), _removeDummies(molecule, True)]
+    system = _System(all_molecules)
+    return system
