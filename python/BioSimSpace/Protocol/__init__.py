@@ -90,6 +90,7 @@ while restraining the positions of any backbone atoms.
                                          restrain_backbone=True)
 """
 
+from ._config import *
 from ._custom import *
 from ._equilibration import *
 from ._free_energy import *
