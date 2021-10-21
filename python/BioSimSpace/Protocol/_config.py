@@ -137,10 +137,15 @@ class ConfigFactory:
         # Extract all perturbable molecules from both the squashed and the merged systems.
         perturbable_mol_mask = []
         mols_hybr = []
+        nondummy_indices0, nondummy_indices1 = [], []
         for mol in self.system.getMolecules():
             if mol._is_perturbable:
                 perturbable_mol_mask += [0, 1]
                 mols_hybr += [mol]
+                nondummy_indices0 += [[atom.index() for atom in mol.getAtoms()
+                                       if "du" not in atom._sire_object.property("ambertype0")]]
+                nondummy_indices1 += [[atom.index() for atom in mol.getAtoms()
+                                       if "du" not in atom._sire_object.property("ambertype1")]]
             else:
                 perturbable_mol_mask += [None]
         mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
@@ -154,10 +159,12 @@ class ConfigFactory:
         offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in squashed_system.getMolecules()))
         offsets0 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
         offsets1 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
-        dummy0_indices = [offset + atom.index() + 1 for mol, offset in zip(mols_hybr, offsets0)
+        dummy0_indices = [offset + idx_map.index(atom.index()) + 1
+                          for mol, offset, idx_map in zip(mols_hybr, offsets0, nondummy_indices0)
                           for atom in mol.getAtoms()
                           if "du" in atom._sire_object.property("ambertype1")]
-        dummy1_indices = [offset + atom.index() + 1 for mol, offset in zip(mols_hybr, offsets1)
+        dummy1_indices = [offset + idx_map.index(atom.index()) + 1
+                          for mol, offset, idx_map in zip(mols_hybr, offsets1, nondummy_indices1)
                           for atom in mol.getAtoms()
                           if "du" in atom._sire_object.property("ambertype0")]
 
