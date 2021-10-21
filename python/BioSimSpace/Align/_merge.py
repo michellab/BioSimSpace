@@ -1230,20 +1230,26 @@ def _removeDummies(molecule, is_lambda1):
     if not molecule._is_perturbable:
         raise _IncompatibleError("'molecule' is not a perturbable molecule")
 
-    # generate a molecule with all dummies present
+    # Always use the coordinates at lambda = 0.
+    coordinates = molecule._sire_object.property("coordinates0")
+
+    # Generate a molecule with all dummies present.
     molecule = molecule.copy()._toRegularMolecule(is_lambda1=is_lambda1)
 
-    # extract all the nondummy indices
+    # Set the coordinates to those at lambda = 0
+    molecule._sire_object = molecule._sire_object.edit().setProperty("coordinates", coordinates).commit()
+
+    # Extract all the nondummy indices
     nondummy_indices = [i for i, atom in enumerate(molecule.getAtoms()) if
                         "du" not in atom._sire_object.property("ambertype")]
 
-    # create an AtomSelection
+    # Create an AtomSelection.
     selection = molecule._sire_object.selection()
 
     # Unselect all of the atoms.
     selection.selectNone()
 
-    # Now add all of the nondummy atoms
+    # Now add all of the nondummy atoms.
     for idx in nondummy_indices:
         selection.select(_SireMol.AtomIdx(idx))
 
@@ -1253,7 +1259,7 @@ def _removeDummies(molecule, is_lambda1):
     # Save the changes to the molecule.
     molecule = _Molecule(partial_molecule)
 
-    # Reload through ParmEd to fix the nonbonded exclusions
+    # Reload through ParmEd to fix the nonbonded exclusions.
     molecule = _reloadThroughParmed(molecule)
 
     return molecule
@@ -1268,11 +1274,18 @@ def _squash(system):
        system : BioSimSpace._SireWrappers.System
            The system.
     """
+    # Squash the system.
     all_molecules = []
     for molecule in system.getMolecules():
         if not molecule._is_perturbable:
             all_molecules += [molecule]
         else:
             all_molecules += [_removeDummies(molecule, False), _removeDummies(molecule, True)]
-    system = _System(all_molecules)
-    return system
+
+    # Copy all the properties from the old system.
+    new_system = _System(all_molecules)
+    for prop in system._sire_object.propertyKeys():
+        val = system._sire_object.property(prop)
+        new_system._sire_object.setProperty(prop, val)
+
+    return new_system
