@@ -236,10 +236,6 @@ class Amber(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        # represent the perturbed system in an AMBER-friendly format
-        if type(self._protocol) is _Protocol.FreeEnergy:
-            system = _squash(system)
-
         # Convert the water model topology so that it matches the AMBER naming convention.
         system._set_water_topology("AMBER", self._property_map)
 
