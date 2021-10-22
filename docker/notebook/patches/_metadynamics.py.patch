@@ -2,7 +2,7 @@ diff --git a/python/BioSimSpace/Metadynamics/_metadynamics.py b/python/BioSimSpa
 index 3d429fb..645d349 100644
 --- a/python/BioSimSpace/Metadynamics/_metadynamics.py
 +++ b/python/BioSimSpace/Metadynamics/_metadynamics.py
-@@ -139,17 +139,17 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+@@ -139,17 +139,17 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
  
      for engine, exe in zip(engines, exes):
          try:

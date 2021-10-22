@@ -90,7 +90,7 @@ _steering = { "AMBER"   : True,
               "SOMD"    : False
             }
 
-def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
+def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
     """Find molecular dynamics engines on the system that
        support the given protocol and GPU requirements.
 
@@ -104,7 +104,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
            The simulation protocol.
 
        engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
+           The molecular dynamics engine to use. If "AUTO", then a matching
            engine will automatically be chosen.
 
        gpu_support : bool
@@ -129,7 +129,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
     else:
         engines = _file_extensions[fileformat]
 
-    # If engine != "auto", then check the chosen engine supports the file
+    # If engine != "AUTO", then check the chosen engine supports the file
     # format.
     md_engine = engine
     if md_engine != "AUTO":
@@ -218,7 +218,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
 
     return found_engines, found_exes
 
-def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={},
         ignore_warnings=False, show_errors=True):
     """Auto-configure and run a molecular dynamics process.
@@ -233,7 +233,7 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
            The simulation protocol.
 
        engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
+           The molecular dynamics engine to use. If "AUTO", then a matching
            engine will automatically be chosen. Supported engines can be
            found using 'BioSimSpace.MD.engines()'.
 
