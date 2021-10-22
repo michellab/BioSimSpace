@@ -61,7 +61,9 @@ class _MultiDict(dict):
 class Process():
     """Base class for running different biomolecular simulation processes."""
 
-    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, property_map={}):
+    # TODO: Make the extra options valid for engines other than AMBER
+    def __init__(self, system, protocol, name=None, work_dir=None, seed=None, extra_options=None,
+                 extra_lines=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -81,6 +83,12 @@ class Process():
 
            seed : int
                A random number seed.
+
+           extra_options : dict
+               A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+           extra_lines : list
+               A list of extra lines to be put at the end of the script.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -166,6 +174,10 @@ class Process():
         else:
             self._is_seeded = True
             self.setSeed(seed)
+
+        # Set the extra protocol options
+        self._extra_options = extra_options
+        self._extra_lines = extra_lines
 
         # Set the map.
         self._property_map = property_map.copy()

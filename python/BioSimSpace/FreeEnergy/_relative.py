@@ -83,7 +83,8 @@ class Relative():
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
             gpu_support=False, setup_only=False, ignore_warnings=False,
-            show_errors=True, property_map={}):
+            show_errors=True, extra_options=None, extra_lines=None,
+            property_map={}):
         """Constructor.
 
            Parameters
@@ -126,6 +127,12 @@ class Relative():
                run file. This option is specific to GROMACS and will be ignored
                when a different molecular dynamics engine is chosen.
 
+           extra_options : dict
+               A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+           extra_lines : list
+               A list of extra lines to be put at the end of the script.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -148,6 +155,9 @@ class Relative():
         else:
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
+
+        self._extra_options = extra_options
+        self._extra_lines = extra_lines
 
         if type(setup_only) is not bool:
             raise TypeError("'setup_only' must be of type 'bool'.")
@@ -847,7 +857,8 @@ class Relative():
         # AMBER.
         elif self._engine == "AMBER":
             first_process = _Process.Amber(system, self._protocol, exe=self._exe,
-                work_dir=first_dir)
+                work_dir=first_dir, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
 
         if self._setup_only:
             del(first_process)

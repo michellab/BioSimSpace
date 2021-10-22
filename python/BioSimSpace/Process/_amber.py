@@ -140,7 +140,8 @@ class Amber(_process.Process):
     """A class for running simulations using AMBER."""
 
     def __init__(self, system, protocol, exe=None, name="amber",
-            work_dir=None, seed=None, property_map={}):
+            work_dir=None, seed=None, extra_options=None, extra_lines=None,
+            property_map={}):
         """Constructor.
 
            Parameters
@@ -164,6 +165,12 @@ class Amber(_process.Process):
            seed : int
                A random number seed.
 
+           extra_options : dict
+               A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+           extra_lines : list
+               A list of extra lines to be put at the end of the script.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -171,7 +178,8 @@ class Amber(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines,
+                         property_map)
 
         # Set the package name.
         self._package_name = "AMBER"
@@ -351,7 +359,8 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         config = _Protocol.ConfigFactory(self._system, self._protocol)
-        self.addToConfig(config.generateAmberConfig(extra_options=config_options))
+        self.addToConfig(config.generateAmberConfig(extra_options={**config_options, **self._extra_options},
+                                                    extra_lines=self._extra_lines))
 
         # Flag that this isn't a custom protocol.
         self._protocol._setCustomised(False)
