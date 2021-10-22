@@ -28,18 +28,23 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import OrderedDict as _OrderedDict
-from glob import glob as _glob
-
+from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
+from glob import glob as _glob
 import math as _math
 import sys as _sys
 import os as _os
+import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
+
+import numpy as _np
+from simtk import unit as _unit
+from simtk.unit.constants import MOLAR_GAS_CONSTANT_R as _MOLAR_GAS_CONSTANT_R
+import pymbar as _pymbar
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -401,19 +406,18 @@ class Relative():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # First test for SOMD files.
-        data = _glob(work_dir + "/lambda_*/gradients.dat")
+        function_glob_dict = {
+            "SOMD": (Relative._analyse_somd, "/lambda_*/gradients.dat"),
+            "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
+            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.log")
+        }
 
-        # SOMD.
-        if len(data) > 0:
-            return Relative._analyse_somd(work_dir)
+        for engine, (func, mask) in function_glob_dict.items():
+            data = _glob(work_dir + mask)
+            if data:
+                return func(work_dir)
 
-        # Now check for GROMACS output.
-        else:
-            data = _glob(work_dir + "/lambda_*/gromacs.xvg")
-            if len(data) == 0:
-                raise ValueError("Couldn't find any SOMD or GROMACS free-energy output?")
-            return Relative._analyse_gromacs(work_dir)
+        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
 
     def _analyse(self):
         """Analyse free-energy data for this object.
@@ -435,6 +439,91 @@ class Relative():
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return Relative.analyse(self._work_dir)
+
+    @staticmethod
+    def _analyse_amber(work_dir=None):
+        """Analyse the AMBER free energy data.
+
+           Parameters
+           ----------
+
+           work_dir : str
+               The path to the working directory.
+
+           Returns
+           -------
+
+           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF). The data is a list of tuples,
+               where each tuple contains the lambda value, the PMF, and the
+               standard error.
+        """
+
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        files = _glob(work_dir + "/lambda_*/amber.log")
+        energy_dict = {}
+        n_samples = None
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        temperatures = []
+
+        # Extract the MBAR energies from the files.
+        for file, lambda_ in zip(files, lambdas):
+            current_energy_dict = _defaultdict(list)
+            mbar_section = False
+            found_temperature = False
+            with open(file) as f:
+                for line in f.readlines():
+                    if "MBAR Energy analysis" in line:
+                        mbar_section = True
+                    elif mbar_section and "-----------" in line:
+                        mbar_section = False
+                    elif mbar_section:
+                        split_line = line.split()
+                        eval_lambda = float(split_line[2])
+                        energy = float(split_line[-1])
+                        current_energy_dict[eval_lambda] += [energy]
+                    elif not found_temperature:
+                        match = _re.search("temp0=([\d.]+)", line)
+                        if match is not None:
+                            temperatures += [float(match.group(1))]
+                            found_temperature = True
+
+                if not found_temperature:
+                    raise ValueError("The temperature was not detected in the AMBER output file")
+
+                if set(current_energy_dict.keys()) != set(lambdas):
+                    raise ValueError("MBAR values not generated at the lambda values at which the simulations were run")
+
+                ordered_lambdas = sorted(current_energy_dict.keys())
+                energy_dict[lambda_] = sum([current_energy_dict[x] for x in ordered_lambdas], [])
+
+                if n_samples is None:
+                    n_samples = _np.asarray([len(current_energy_dict[x]) for x in ordered_lambdas])
+                else:
+                    if not _np.array_equal(n_samples, [len(current_energy_dict[x]) for x in ordered_lambdas]):
+                        raise ValueError("The number of samples for each lambda don't match between different "
+                                         "simulations")
+
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError("The temperatures at the endstates don't match")
+
+        # Generate an input for pymbar and return the resulting free energies.
+        lambdas.sort()
+        energy_matrix = _np.asarray([energy_dict[x] for x in lambdas])
+        kTs = _MOLAR_GAS_CONSTANT_R.value_in_unit(_unit.kilocalories_per_mole/_unit.kelvin) * _np.asarray(temperatures)
+        energy_matrix /= kTs[:, None]
+        mbar = _pymbar.MBAR(energy_matrix, n_samples)
+        fes, errors = mbar.getFreeEnergyDifferences()
+        data = [(lambda_,
+                 (fe * kT) * _Units.Energy.kcal_per_mol,
+                 (error * kT) * _Units.Energy.kcal_per_mol)
+                for lambda_, fe, error, kT in zip(lambdas, fes[0], errors[0], kTs)]
+
+        return (data, None)
 
     @staticmethod
     def _analyse_gromacs(work_dir=None):
