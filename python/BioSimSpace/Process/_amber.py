@@ -244,7 +244,12 @@ class Amber(_process.Process):
         system._set_water_topology("AMBER", self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
-        system = self._checkPerturbable(system)
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            # represent the perturbed system in an AMBER-friendly format
+            if type(self._protocol) is _Protocol.FreeEnergy:
+                system = _squash(system)
+        else:
+            system = self._checkPerturbable(system)
 
         # RST file (coordinates).
         try:
@@ -366,7 +371,7 @@ class Amber(_process.Process):
         self.setArg("-i", "%s.cfg" % self._name)            # Input file.
         self.setArg("-p", "%s.prm7" % self._name)           # Topology file.
         self.setArg("-c", "%s.rst7" % self._name)           # Coordinate file.
-        self.setArg("-o", "stdout")                         # Redirect to stdout.
+        self.setArg("-o", "%s.log" % self._name)            # Log file.
         self.setArg("-r", "%s.crd" % self._name)            # Restart file.
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 

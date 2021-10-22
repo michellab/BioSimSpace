@@ -44,6 +44,7 @@ from BioSimSpace import Protocol as _Protocol
 _md_engines = { "AMBER"    : { "pmemd.cuda.MPI" : True,
                                "pmemd.cuda"     : True,
                                "pmemd.MPI"      : False,
+                               "pmemd"          : False,
                                "sander"         : False },
                  "GROMACS" : { "gmx"            : True,
                                "gmx_mpi"        : True },
@@ -65,7 +66,7 @@ _file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
 
 # Whether each engine supports free energy simulations. This dictionary needs to
 # be updated as support for different engines is added.
-_free_energy = { "AMBER"   : False,
+_free_energy = { "AMBER"   : True,
                  "GROMACS" : True,
                  "NAMD"    : False,
                  "OPENMM"  : False,
