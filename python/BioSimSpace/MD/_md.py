@@ -124,7 +124,11 @@ def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
     fileformat = system.fileFormat()
 
     # Make sure that this format is supported.
-    if not fileformat in _file_extensions:
+    if fileformat is None:
+        if engine == "AUTO":
+            raise ValueError("Cannot automatically choose an MD engine")
+        engines = list(_md_engines.keys())
+    elif not fileformat in _file_extensions:
         raise ValueError("Cannot find an MD engine that supports format: %s" % fileformat)
     else:
         engines = _file_extensions[fileformat]
