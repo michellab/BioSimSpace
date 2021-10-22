@@ -476,7 +476,7 @@ class Relative():
 
         files = _glob(work_dir + "/lambda_*/amber.log")
         energy_dict = {}
-        n_samples = None
+        sample_dict = {}
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
         temperatures = []
 
@@ -509,29 +509,23 @@ class Relative():
                     raise ValueError("MBAR values not generated at the lambda values at which the simulations were run")
 
                 ordered_lambdas = sorted(current_energy_dict.keys())
-                energy_dict[lambda_] = sum([current_energy_dict[x] for x in ordered_lambdas], [])
-
-                if n_samples is None:
-                    n_samples = _np.asarray([len(current_energy_dict[x]) for x in ordered_lambdas])
-                else:
-                    if not _np.array_equal(n_samples, [len(current_energy_dict[x]) for x in ordered_lambdas]):
-                        raise ValueError("The number of samples for each lambda don't match between different "
-                                         "simulations")
+                energy_dict[lambda_] = _np.asarray([current_energy_dict[x] for x in ordered_lambdas])
+                sample_dict[lambda_] = len(current_energy_dict[lambda_])
 
         if temperatures[0] != temperatures[-1]:
             raise ValueError("The temperatures at the endstates don't match")
 
         # Generate an input for pymbar and return the resulting free energies.
-        lambdas.sort()
-        energy_matrix = _np.asarray([energy_dict[x] for x in lambdas])
+        energy_matrix = _np.concatenate([energy_dict[x] for x in ordered_lambdas], axis=1)
         kTs = _MOLAR_GAS_CONSTANT_R.value_in_unit(_unit.kilocalories_per_mole/_unit.kelvin) * _np.asarray(temperatures)
         energy_matrix /= kTs[:, None]
+        n_samples = [sample_dict[x] for x in ordered_lambdas]
         mbar = _pymbar.MBAR(energy_matrix, n_samples)
         fes, errors = mbar.getFreeEnergyDifferences()
         data = [(lambda_,
                  (fe * kT) * _Units.Energy.kcal_per_mol,
                  (error * kT) * _Units.Energy.kcal_per_mol)
-                for lambda_, fe, error, kT in zip(lambdas, fes[0], errors[0], kTs)]
+                for lambda_, fe, error, kT in zip(ordered_lambdas, fes[0], errors[0], kTs)]
 
         return (data, None)
 
