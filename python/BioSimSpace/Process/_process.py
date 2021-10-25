@@ -176,8 +176,8 @@ class Process():
             self.setSeed(seed)
 
         # Set the extra protocol options
-        self._extra_options = extra_options
-        self._extra_lines = extra_lines
+        self._extra_options = extra_options if extra_options is not None else {}
+        self._extra_lines = extra_lines if extra_lines is not None else []
 
         # Set the map.
         self._property_map = property_map.copy()

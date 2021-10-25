@@ -156,8 +156,8 @@ class Relative():
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
 
-        self._extra_options = extra_options
-        self._extra_lines = extra_lines
+        self._extra_options = extra_options if extra_options is not None else {}
+        self._extra_lines = extra_lines if extra_lines is not None else []
 
         if type(setup_only) is not bool:
             raise TypeError("'setup_only' must be of type 'bool'.")
