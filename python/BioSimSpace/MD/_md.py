@@ -150,11 +150,11 @@ def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
     is_metadynamics = False
     is_steering = False
 
-    if type(protocol) is _Protocol.FreeEnergy:
+    if isinstance(protocol, _Protocol.FreeEnergy):
         is_free_energy = True
-    elif type(protocol) is _Protocol.Metadynamics:
+    elif isinstance(protocol, _Protocol.Metadynamics):
         is_metadynamics = True
-    elif type(protocol) is _Protocol.Steering:
+    elif isinstance(protocol, _Protocol.Steering):
         is_steering = True
 
     # Create a list to store all of the engines and executables.

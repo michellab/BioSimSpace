@@ -96,7 +96,7 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     # Check that the protocol is valid.
-    if type(protocol) is not _Protocol.Metadynamics:
+    if not isinstance(protocol, _Protocol.Metadynamics):
         raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
     # Validate optional arguments.

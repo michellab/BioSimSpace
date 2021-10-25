@@ -159,11 +159,11 @@ class Plumed():
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Create a metadynamics protocol.
-        if type(protocol) is _Metadynamics:
+        if isinstance(protocol, _Metadynamics):
             return self._createMetadynamicsConfig(system, protocol, property_map)
 
         # Create a steered molecular dynamics protocol.
-        if type(protocol) is _Steering:
+        if isinstance(protocol, _Steering):
             return self._createSteeringConfig(system, protocol, property_map)
 
         else:
@@ -198,7 +198,7 @@ class Plumed():
         if type(system) is not _System:
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(protocol) is not _Metadynamics:
+        if not isinstance(protocol, _Metadynamics):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
         if type(property_map) is not dict:
@@ -823,7 +823,7 @@ class Plumed():
         if type(system) is not _System:
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(protocol) is not _Steering:
+        if not isinstance(protocol, _Steering):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Steering'")
 
         if type(property_map) is not dict:

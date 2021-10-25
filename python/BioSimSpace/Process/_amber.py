@@ -31,7 +31,6 @@ __all__ = ["Amber"]
 from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
 from watchdog.observers import Observer as _Observer
 
-import math as _math
 import os as _os
 import re as _re
 import time as _time
@@ -250,8 +249,7 @@ class Amber(_process.Process):
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol.FreeEnergy):
             # represent the perturbed system in an AMBER-friendly format
-            if type(self._protocol) is _Protocol.FreeEnergy:
-                system = _squash(system)
+            system = _squash(system)
         else:
             system = self._checkPerturbable(system)
 

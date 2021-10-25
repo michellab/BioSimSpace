@@ -148,7 +148,7 @@ class Relative():
             self._system = system.copy()
 
         if protocol is not None:
-            if type(protocol) is _Protocol.FreeEnergy:
+            if isinstance(protocol, _Protocol.FreeEnergy):
                 self._protocol = protocol
             else:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
