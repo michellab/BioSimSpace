@@ -174,6 +174,7 @@ class ConfigFactory:
             "timask2": f"\"{self._amber_mask_from_indices(mols1_indices)}\"",
             "scmask1": f"\"{self._amber_mask_from_indices(dummy0_indices)}\"",
             "scmask2": f"\"{self._amber_mask_from_indices(dummy1_indices)}\"",
+            "noshakemask": f"\"{self._amber_mask_from_indices(mols0_indices + mols1_indices)}\"",
         }
 
         return option_dict
