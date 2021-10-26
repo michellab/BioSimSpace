@@ -694,6 +694,20 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
+    def setHydrogenMass(self, mass=4):
+        """Sets the mass of all hydrogens to a particular value. Useful for hydrogen mass repartitioning.
+
+           Parameters
+           ----------
+
+           mass : float
+               The new hydrogen mass in Da.
+        """
+
+        for i, molecule in enumerate(self.getMolecules()):
+            molecule.setHydrogenMass(mass)
+            self.updateMolecule(i, molecule)
+
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule

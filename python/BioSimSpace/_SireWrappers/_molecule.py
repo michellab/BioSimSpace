@@ -314,6 +314,29 @@ class Molecule(_SireWrapper):
         """
         return self._is_perturbable
 
+    def setHydrogenMass(self, mass=4):
+        """Sets the mass of all hydrogens to a particular value. Useful for hydrogen mass repartitioning.
+
+           Parameters
+           ----------
+
+           mass : float
+               The new hydrogen mass in Da.
+        """
+
+        mol = self._sire_object.edit()
+        for idx in range(0, self._sire_object.nAtoms()):
+            atom = mol.atom(_SireMol.AtomIdx(idx))
+            if self._is_perturbable:
+                if atom.property("element0").symbol() == "H":
+                    mol = atom.setProperty("mass0", mass * _SireUnits.g_per_mol).molecule()
+                if atom.property("element1").symbol() == "H":
+                    mol = atom.setProperty("mass1", mass * _SireUnits.g_per_mol).molecule()
+            else:
+                if atom.property("element").symbol() == "H":
+                    mol = atom.setProperty("mass", mass * _SireUnits.g_per_mol).molecule()
+        self._sire_object = mol.commit()
+
     def isWater(self):
         """Whether this is a water molecule.
 
