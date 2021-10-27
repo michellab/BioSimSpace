@@ -39,6 +39,7 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
 
 from BioSimSpace import _amber_home, _isVerbose
 from BioSimSpace.Align._merge import _squash
@@ -486,7 +487,7 @@ class Amber(_process.Process):
 
                 # Convert the squashed system coordinates into merged system coordinates.
                 mol_idx = 0
-                for molecule in old_system.getMolecules():
+                for i, molecule in enumerate(old_system.getMolecules()):
                     if not molecule._is_perturbable:
                         # Just copy the molecule.
                         molecule._sire_object = old_system_squashed.getMolecules()[mol_idx]._sire_object
@@ -494,18 +495,23 @@ class Amber(_process.Process):
                     else:
                         # Extract the non-dummy atom coordinates from the squashed system.
                         idx0, idx1 = 0, 0
-                        for atom in molecule.getAtoms():
+                        editor = molecule._sire_object.edit()
+                        for j in range(0, molecule._sire_object.nAtoms()):
+                            atom = editor.atom(_SireMol.AtomIdx(j))
                             coordinates = None
-                            if "du" not in atom._sire_object.property("ambertype0"):
+                            if "du" not in atom.property("ambertype0"):
                                 new_atom = old_system_squashed[mol_idx].getAtoms()[idx0]
                                 coordinates = new_atom._sire_object.property("coordinates")
                                 idx0 += 1
-                            if "du" not in atom._sire_object.property("ambertype1"):
+                            if "du" not in atom.property("ambertype1"):
                                 new_atom = old_system_squashed[mol_idx + 1].getAtoms()[idx1]
                                 if coordinates is None:
                                     coordinates = new_atom._sire_object.property("coordinates")
                                 idx1 += 1
-                            atom._sire_object = atom._sire_object.edit().setProperty("coordinates", coordinates)
+                            atom.setProperty("coordinates0", coordinates)
+                            editor = atom.setProperty("coordinates1", coordinates).molecule()
+                        molecule._sire_object = editor.commit()
+                        old_system.updateMolecule(i, molecule)
                         mol_idx += 2
             else:
                 old_system._updateCoordinates(new_system,
