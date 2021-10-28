@@ -1052,8 +1052,7 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
 
     # Have we opened/closed a ring? This means that both atoms are part of a
     # ring in one end state (either in it, or on it), whereas at least one
-    # are the result of changes in ring size, where atoms remain in or on a
-    # ring in both end states.
+    # isn't in the other state.
 
     # Whether each atom is in a ring in both end states.
     in_ring_idx0 = conn0.inRing(idx0)
