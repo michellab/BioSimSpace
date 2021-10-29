@@ -140,6 +140,16 @@ def test_merge():
 
     assert internalff0.energy().value() == pytest.approx(internalff2.energy().value())
 
+    # Extract the AMBER format FEP molecule for the lambda=0 end stae
+    # , i.e. the MCS ordered end state, minus any dummy atoms.
+    amber_mol, _ = m2._toAmberMolecule()
+
+    internalff2 = InternalFF("internal")
+    internalff2.setStrict(True)
+    internalff2.add(amber_mol._sire_object)
+
+    assert internalff0.energy().value() == pytest.approx(internalff2.energy().value())
+
     # Now extract a partial molecule using the atoms from molecule1 in
     # the merged molecule.
     selection = m2._sire_object.selection()
@@ -153,6 +163,16 @@ def test_merge():
     internalff2 = InternalFF("internal")
     internalff2.setStrict(True)
     internalff2.add(partial_mol, pmap1)
+
+    assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
+
+    # Extract the AMBER format FEP molecule for the lambda=1 end stae
+    # , i.e. the MCS ordered end state, minus any dummy atoms.
+    amber_mol, _ = m2._toAmberMolecule(is_lambda1=True)
+
+    internalff2 = InternalFF("internal")
+    internalff2.setStrict(True)
+    internalff2.add(amber_mol._sire_object)
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
 

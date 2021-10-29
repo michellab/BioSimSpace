@@ -245,6 +245,128 @@ class Molecule(_SireWrapper):
             atoms.append(_Atom(atom))
         return atoms
 
+    def extract(self, indices, renumber=False, property_map={}):
+        """Extract atoms at the specified indices from the molecule to create
+           a new molecule.
+
+           Parameters
+           ----------
+
+           indices : [ int ]
+               The indices of the atoms to extract.
+
+           renumber : bool
+               Whether the returned molecule has the same number as the original.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The extracted molecule.
+        """
+
+        # Convert tuple to list.
+        if type(indices) is tuple:
+            indices = list(indices)
+
+        if type(indices) is not list:
+            raise TypeError("'indices' must be a list of 'int' types.")
+
+        # A list to store the indices, mapped back to 0 --> nAtoms() - 1.
+        indices_ = []
+
+        # Store the maximum allowed index.
+        max_index = self.nAtoms() - 1
+
+        for x in indices:
+            # Check type.
+            if type(x) is not int:
+                raise TypeError("'indices' must be a list of 'int' types.")
+
+            # Map index back to range.
+            if x < 0:
+                x += self.nAtoms()
+
+            # Check value.
+            if x < 0 or x > max_index:
+                raise TypeError(f"'indices' must be in range [0, {max_index}].")
+
+            # Append to the updated atom index.
+            indices_.append(_SireMol.AtomIdx(x))
+
+        if renumber:
+            mol = self.copy()
+        else:
+            mol = self
+
+        # Extract a partial molecule.
+        try:
+            # Create an empty atom selection for this molecule.
+            selection = mol._sire_object.selection()
+            selection.selectNone()
+
+            # Add the atom indices to the selection.
+            for idx in indices_:
+                selection.select(idx)
+
+            partial_mol = _SireMol.PartialMolecule(mol._sire_object, selection) \
+                        .extract()                                              \
+                        .molecule()
+        except Exception as e:
+            msg = "Unable to create partial molecule!"
+            if _isVerbose():
+                raise _IncompatibleError(msg) from e
+            else:
+                raise _IncompatibleError(msg) from None
+
+        # Get the "intrascale" property name.
+        intrascale = property_map.get("intrascale", "intrascale")
+
+        # Flag whether the molecule has an intrascale property.
+        has_intrascale = mol._sire_object.hasProperty(intrascale)
+
+        # Remove the "intrascale" property, since this doesn't correspond to the
+        # extracted molecule.
+        if has_intrascale:
+            partial_mol = partial_mol.edit()        \
+                        .removeProperty(intrascale) \
+                        .molecule()                 \
+                        .commit()
+
+            # Recreate the molecule.
+            mol = Molecule(partial_mol)
+
+            # Now parse the molecule as a GROMACS topology to recreate the
+            # intrascale matrix.
+            try:
+                gro_top = _SireIO.GroTop(mol.toSystem()._sire_object)
+            except Exception as e:
+                msg = "Unable to recover non-bonded matrix for the extracted molecule!"
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
+
+            # Convert back to a Sire system.
+            gro_sys = gro_top.toSystem()
+
+            # Add the intrascale property back into the molecule.
+            edit_mol = mol._sire_object.edit()
+            edit_mol.setProperty(intrascale, gro_sys[_SireMol.MolIdx(0)].property("intrascale"))
+
+            # Recreate the molecule.
+            mol = Molecule(edit_mol.commit())
+
+        else:
+            mol = Molecule(partial_mol)
+
+        return mol
+
     def molecule0(self):
         """Return the component of the merged molecule at lambda = 0.
 
@@ -1327,6 +1449,68 @@ class Molecule(_SireWrapper):
 
         # Return the updated molecule.
         return Molecule(mol.commit())
+
+    def _toAmberMolecule(self, property_map={}, is_lambda1=False):
+        """Internal function to convert a merged molecule to the format required
+           by an AMBER free-energy perturbation topology.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+               Whether to use the molecule at the lambda = 1 end state.
+               By default, the state at lambda = 0 is used.
+
+           Returns
+           -------
+
+           molecule : BioSimSpace._SireWrappers.Molecule
+               The molecule at the chosen end state, with dummy atoms removed.
+
+           dummy_indices : [ int ]
+               The indices of any dummy atoms in the original molecule.
+        """
+
+        if type(is_lambda1) is not bool:
+            raise TypeError("'is_lambda1' must be of type 'bool'")
+
+        if not self._is_perturbable:
+            return Molecule(self._sire_object)
+
+        # First extract the required end state.
+        mol = self._toRegularMolecule(property_map=property_map, is_lambda1=is_lambda1)
+
+        # Now find any non-dummy atoms in the molecule.
+        query = "not element Xx"
+        search_result = mol.search(query, property_map)
+
+        # If there are no dummies, then simply return this molecule.
+        if len(search_result) == mol.nAtoms():
+            return mol, []
+
+        else:
+            # Store the indices of the non-dummy atoms.
+            non_dummies = []
+            for atom in search_result:
+                non_dummies.append(atom.index())
+
+            # Now search for the dummy atoms.
+            query = "element Xx"
+            search_result = mol.search(query, property_map)
+
+            # Store the indices of the dummy atoms.
+            dummies = []
+            for atom in search_result:
+                dummies.append(atom.index())
+
+            # Extract the non-dummy atoms from the molecule and return, along
+            # with the indices of the dummy atoms.
+            return mol.extract(non_dummies), dummies
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
