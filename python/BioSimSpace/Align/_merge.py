@@ -28,17 +28,13 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["merge"]
 
-import os as _os
-import tempfile as _tempfile
-
-import parmed as _pmd
 from Sire import Base as _SireBase
+from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace import IO as _IO
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import System as _System
 
@@ -1192,29 +1188,6 @@ def _is_on_ring(idx, conn):
     # If we get this far, then the atom is not adjacent to a ring.
     return False
 
-def _reloadThroughParmed(molecule):
-    """Internal function which reloads a BioSimSpace molecule through ParmEd and then back to BioSimSpace. This is
-       used to regenerate the nonbonded exclusions automatically using ParmEd.
-
-       Parameters
-       ----------
-
-       molecule : BioSimSpace._SireWrappers.Molecule
-           The molecule.
-    """
-    # TODO: This function is a hack to fix the nonbonded exclusions. Try to fix it within BSS.
-    # Create a temporary directory
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
-
-    # Save from BSS, load in ParmEd, save from ParmEd and reload in BSS
-    _IO.saveMolecules(f"{work_dir}/temp", molecule, "prm7,rst7")
-    _os.rename(f"{work_dir}/temp.prm7", f"{work_dir}/temp.parm7")
-    _pmd.load_file(f"{work_dir}/temp.parm7", xyz=f"{work_dir}/temp.rst7").save(f"{work_dir}/temp.parm7", overwrite=True)
-    molecule, = _IO.readMolecules([f"{work_dir}/temp.parm7", f"{work_dir}/temp.rst7"])
-
-    return molecule
-
 def _removeDummies(molecule, is_lambda1):
     """Internal function which removes the dummy atoms from one of the endstates of a merged molecule.
 
@@ -1256,11 +1229,23 @@ def _removeDummies(molecule, is_lambda1):
     # Create a partial molecule and extract the atoms.
     partial_molecule = _SireMol.PartialMolecule(molecule._sire_object, selection).extract().molecule()
 
-    # Save the changes to the molecule.
+    # Remove the incorrect intrascale property.
+    partial_molecule = partial_molecule.edit().removeProperty("intrascale").molecule().commit()
+
+    # Recreate a BioSimSpace molecule object.
     molecule = _Molecule(partial_molecule)
 
-    # Reload through ParmEd to fix the nonbonded exclusions.
-    molecule = _reloadThroughParmed(molecule)
+    # Parse the molecule as a GROMACS topology, which will recover the intrascale
+    # matrix.
+    gro_top = _SireIO.GroTop(molecule.toSystem()._sire_object)
+
+    # Convert back to a Sire system.
+    gro_sys = gro_top.toSystem()
+
+    # Add the intrascale property back into the merged molecule.
+    edit_mol = molecule._sire_object.edit()
+    edit_mol = edit_mol.setProperty("intrascale", gro_sys[_SireMol.MolIdx(0)].property("intrascale"))
+    molecule = _Molecule(edit_mol.commit())
 
     return molecule
 
