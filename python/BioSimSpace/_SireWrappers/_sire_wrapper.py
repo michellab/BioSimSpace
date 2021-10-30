@@ -243,6 +243,20 @@ class SireWrapper():
 
         return box_min, box_max
 
+    def save(self, filebase):
+        """Stream a wrapped Sire object to file.
+
+           Parameters
+           ----------
+
+           sire_object : :class:`System <BioSimSpace._SireWrappers.SireWrapper>`
+               A wrapped Sire object.
+
+           filebase : str
+               The base name of the binary output file.
+        """
+        _save(self, filebase)
+
     def _getSireObject(self):
         """Return the underlying Sire object.
 
@@ -305,3 +319,6 @@ class SireWrapper():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
+
+# Import at bottom of module to avoid circular dependency.
+from BioSimSpace.Stream import save as _save
