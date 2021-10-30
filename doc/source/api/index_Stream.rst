@@ -3,8 +3,8 @@
 BioSimSpace.Stream
 ==================
 
-The *Stream* package contains tools for streaming wrapped Sire objects to and
-from binary file.
+The *Stream* package contains tools for streaming wrapped Sire objects, i.e.
+objects from :ref:`ref-SireWrappers`.
 
 .. automodule:: BioSimSpace.Stream
 
