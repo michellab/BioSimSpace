@@ -41,7 +41,7 @@ file.
 
    import BioSimSpace as BSS
 
-   # Load a molecule system.
+   # Load a molecular system.
    system0 = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
 
    # Stream to file.
