@@ -4,7 +4,7 @@ import os
 import pytest
 
 @pytest.fixture
-def system():
+def system(scope="session"):
     return BSS.IO.readMolecules("test/io/amber/ala/*")
 
 def test_system(system):
