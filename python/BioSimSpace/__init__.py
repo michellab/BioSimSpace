@@ -44,6 +44,7 @@ __all__ = ["Align",
            "Process",
            "Protocol",
            "Solvent",
+           "Stream",
            "Trajectory",
            "Types",
            "Units"]
@@ -199,6 +200,7 @@ from . import Parameters
 from . import Process
 from . import Protocol
 from . import Solvent
+from . import Stream
 from . import Trajectory
 from . import Types
 from . import Units

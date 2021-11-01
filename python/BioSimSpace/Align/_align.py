@@ -245,7 +245,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                                 output_no_graph=True,
                                 output_no_images=True,
                                 threed=True,
-                                max3d=3.0)
+                                max3d=3.0,
+                                time=3,
+                                parallel=10)
 
     # Create the similarity matrices.
     strict, loose = db_mol.build_matrices()
@@ -299,6 +301,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         import pydot as _pydot
         from rdkit.Chem import AllChem as _AllChem
         from rdkit.Chem import Draw as _Draw
+        from rdkit.Chem import rdmolops as _rdmolops
 
         # Set the DPI to make the network look nice.
         _plt.rcParams["figure.dpi"]= 150
@@ -323,7 +326,16 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
-            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols).smartsString)
+            # Remove hydrogens to dramatically speed up MCS algorithm.
+            rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
+
+            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols,
+                                    atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                                    bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                    matchValences=False,
+                                    ringMatchesRingOnly=True,
+                                    completeRingsOnly=True,
+                                    matchChiralTag=False).smartsString)
             _AllChem.Compute2DCoords(template)
 
         except Exception as e:
@@ -342,6 +354,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 _AllChem.GenerateDepictionMatching2DStructure(mol, template)
 
                 mol = _Chem.RemoveHs(mol)
+
+                # Remove stereochemistry to simplify depiction in network.
+                _rdmolops.RemoveStereochemistry(mol)
                 _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
 
         except Exception as e:

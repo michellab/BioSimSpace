@@ -23,6 +23,7 @@ of packages.
    index_Process
    index_Protocol
    index_Solvent
+   index_Stream
    index_Trajectory
    index_Types
    index_Units
