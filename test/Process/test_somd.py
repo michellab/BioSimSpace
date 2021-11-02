@@ -1,51 +1,46 @@
-import os
-import warnings as _warnings
 import BioSimSpace as BSS
 
-def test_minimise():
+import pytest
+import os
+import warnings as _warnings
+
+@pytest.fixture
+def system(scope="session"):
+    """Re-use the same molecuar system for each test."""
+    return BSS.IO.readMolecules("test/io/amber/ala/*")
+
+def test_minimise(system):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_equilibrate():
+def test_equilibrate(system):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
     protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_production():
+def test_production(system):
     """Test a production protocol."""
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def create_process(protocol):
-    """Create a SOMD process for a given prototol."""
-
-    # Glob the input files.
-    files = BSS.IO.glob("test/io/amber/ala/*")
-
-    # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
-
-    # Initialise the SOMD process.
-    return BSS.Process.Somd(system, protocol, name="test", platform="CPU")
-
-def run_process(protocol):
+def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
     # Initialise the SOMD process.
-    process = create_process(protocol)
+    process = BSS.Process.Somd(system, protocol, name="test", platform="CPU")
 
     # Start the SOMD simulation.
     process.start()

@@ -16,14 +16,15 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+@pytest.fixture
+def system(scope="session"):
+    """Re-use the same molecuar system for each test."""
+    return BSS.IO.readMolecules("test/io/amber/ubiquitin/*")
+
 @pytest.mark.skipif(has_amber is False or has_gromacs is False,
     reason="Requires that both AMBER and GROMACS are installed.")
-def test_amber_gromacs():
+def test_amber_gromacs(system):
     """Single point energy comparison between AMBER and GROMACS."""
-
-    # Load the vacuum ubiquitin system.
-    files = BSS.IO.glob("test/io/amber/ubiquitin/*")
-    system = BSS.IO.readMolecules(files)
 
     # Create a single-step minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=1)
@@ -64,12 +65,8 @@ def test_amber_gromacs():
 
 @pytest.mark.skipif(has_amber is False or has_gromacs is False,
     reason="Requires that both AMBER and GROMACS are installed.")
-def test_amber_gromacs_triclinic():
+def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""
-
-    # Load the vacuum ubiquitin system.
-    files = BSS.IO.glob("test/io/amber/ubiquitin/*")
-    system = BSS.IO.readMolecules(files)
 
     # Swap the space for a triclinic cell (truncated octahedron).
     from Sire.Vol import TriclinicBox

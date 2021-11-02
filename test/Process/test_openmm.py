@@ -1,24 +1,31 @@
 import BioSimSpace as BSS
 
-def test_minimise():
+import pytest
+
+@pytest.fixture
+def system(scope="session"):
+    """Re-use the same molecuar system for each test."""
+    return BSS.IO.readMolecules("test/io/amber/ala/*")
+
+def test_minimise(system):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_equilibrate():
+def test_equilibrate(system):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
     protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_heat():
+def test_heat(system):
     """Test a heating protocol."""
 
     # Create a short heating protocol.
@@ -27,9 +34,9 @@ def test_heat():
                                           temperature_end=BSS.Types.Temperature(300, "kelvin"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_cool():
+def test_cool(system):
     """Test a cooling protocol."""
 
     # Create a short heating protocol.
@@ -38,34 +45,22 @@ def test_cool():
                                           temperature_end=BSS.Types.Temperature(0, "kelvin"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_production():
+def test_production(system):
     """Test a production protocol."""
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def create_process(protocol):
-    """Create an OpenMM process for a given prototol."""
-
-    # Glob the input files.
-    files = BSS.IO.glob("test/io/amber/ala/*")
-
-    # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
-
-    # Initialise the OpenMM process.
-    return BSS.Process.OpenMM(system, protocol, name="test")
-
-def run_process(protocol):
+def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
     # Initialise the OpenMM  process.
-    process = create_process(protocol)
+    process = BSS.Process.OpenMM(system, protocol, name="test")
 
     # Start the OpenMM simulation.
     process.start()
