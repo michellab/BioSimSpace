@@ -86,7 +86,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
        Parameters
        ----------
 
-       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`] OR
+                    [class:`rdkit.Chem.rdchem.Mol`]
            A list of molecules.
 
        names : [str]
@@ -144,9 +145,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         names = list(names)
 
     # Validate the molecules.
+    rdkit_input = False
+    _Molecule_rdkit = type(_Chem.MolFromSmiles("c1ccccc1"))
+
     if not all(isinstance(x, _Molecule) for x in molecules):
-        raise TypeError("'molecules' must be a list of "
-                        "'BioSimSpace._SireWrappers.Molecule' objects.")
+      if not all(isinstance(x, _Molecule_rdkit) for x in molecules):
+          raise TypeError("'molecules' must be a list of "
+                          "'BioSimSpace._SireWrappers.Molecule' "
+                          "or 'rdkit.Chem.rdchem.Mol' objects.")
+
+      elif all(isinstance(x, _Molecule_rdkit) for x in molecules):
+        rdkit_input = True
 
     # Validate the names.
     if names is not None:
@@ -225,9 +234,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
     # Write all of the molecules to disk.
-    for x, (molecule, name) in enumerate(zip(molecules, names)):
-        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-            molecule, "mol2", property_map=property_map)
+    if not rdkit_input:
+      for x, (molecule, name) in enumerate(zip(molecules, names)):
+          _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+              molecule, "mol2", property_map=property_map)
+
+    elif rdkit_input:
+      for x, (molecule, name) in enumerate(zip(molecules, names)):
+          writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}_{name}.sdf")
+          writer.write(molecule)
+          writer.close()
+
 
     # Create a local copy of the links file in the working directory.
     # This isn't needed, but is useful for debugging and ensuring that
