@@ -310,7 +310,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     nodes = set(nodes)
 
     # Plot the LOMAP network.
-    if _is_notebook and plot_network:
+    if plot_network:
         # Conditional imports.
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
@@ -330,8 +330,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         try:
           rdmols = []
           for x, name in zip(range(0, len(molecules)), names):
-              file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-              rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+              try:
+                file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+                rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+              except OSError:
+                file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+                rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])                
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -424,11 +428,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
           network_plot = f"{work_dir}/images/network.png"
           dot_graph.write_png(network_plot)
 
-          # Create a plot of the network.
-          img = _mpimg.imread(network_plot)
-          _plt.figure(figsize=(20, 20))
-          _plt.axis("off")
-          _plt.imshow(img)
+          if _is_notebook:
+            # Create a plot of the network.
+            img = _mpimg.imread(network_plot)
+            _plt.figure(figsize=(20, 20))
+            _plt.axis("off")
+            _plt.imshow(img)
 
         except Exception as e:
             msg = "Unable to create network plot!"
@@ -437,7 +442,6 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 raise _AlignmentError(msg) from e
             else:
                 raise _AlignmentError(msg) from None
-
     return edges, scores
 
 def matchAtoms(molecule0,
