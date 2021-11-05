@@ -147,7 +147,6 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Validate the molecules.
     rdkit_input = False
-    _Molecule_rdkit = type(_Chem.MolFromSmiles("c1ccccc1"))
 
     # A list of BioSimSpace molecule objects.
     if all(isinstance(x, _Molecule) for x in molecules):
