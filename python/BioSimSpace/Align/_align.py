@@ -235,17 +235,15 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
     # Write all of the molecules to disk.
-    if not rdkit_input:
-      for x, (molecule, name) in enumerate(zip(molecules, names)):
-          _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-              molecule, "mol2", property_map=property_map)
-
-    elif rdkit_input:
-      for x, (molecule, name) in enumerate(zip(molecules, names)):
-          writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}_{name}.sdf")
-          writer.write(molecule)
-          writer.close()
-
+    if rdkit_input:
+        for x, (molecule, name) in enumerate(zip(molecules, names)):
+            writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}_{name}.sdf")
+            writer.write(molecule)
+            writer.close()
+    else:
+        for x, (molecule, name) in enumerate(zip(molecules, names)):
+            _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                molecule, "mol2", property_map=property_map)
 
     # Create a local copy of the links file in the working directory.
     # This isn't needed, but is useful for debugging and ensuring that
@@ -329,14 +327,14 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 1) Loop over each molecule and load into RDKit.
         try:
-          rdmols = []
-          for x, name in zip(range(0, len(molecules)), names):
-              try:
+        rdmols = []
+            for x, name in zip(range(0, len(molecules)), names):
+                try:
                 file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
                 rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-              except OSError:
-                file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+        except OSError:
+            file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+            rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
