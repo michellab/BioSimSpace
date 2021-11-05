@@ -86,8 +86,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
        Parameters
        ----------
 
-       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-           A list of molecules.
+       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`],
+                    [rdkit.Chem.rdchem.Mol]
+           A list of molecules. (Both BioSimSpace and RDKit molecule objects
+           are supported.)
 
        names : [str]
            A list of names for the molecules. If None, then the index of each
@@ -144,9 +146,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         names = list(names)
 
     # Validate the molecules.
-    if not all(isinstance(x, _Molecule) for x in molecules):
+    rdkit_input = False
+
+    # A list of BioSimSpace molecule objects.
+    if all(isinstance(x, _Molecule) for x in molecules):
+        pass
+    # A list of RDKit molecule objects.
+    elif all(isinstance(x, _Chem.rdchem.Mol) for x in molecules):
+        rdkit_input = True
+    else:
         raise TypeError("'molecules' must be a list of "
-                        "'BioSimSpace._SireWrappers.Molecule' objects.")
+                        "'BioSimSpace._SireWrappers.Molecule' "
+                        "or 'rdkit.Chem.rdchem.Mol' objects.")
 
     # Validate the names.
     if names is not None:
@@ -225,9 +236,15 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
     # Write all of the molecules to disk.
-    for x, (molecule, name) in enumerate(zip(molecules, names)):
-        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-            molecule, "mol2", property_map=property_map)
+    if rdkit_input:
+        for x, (molecule, name) in enumerate(zip(molecules, names)):
+            writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}_{name}.sdf")
+            writer.write(molecule)
+            writer.close()
+    else:
+        for x, (molecule, name) in enumerate(zip(molecules, names)):
+            _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                molecule, "mol2", property_map=property_map)
 
     # Create a local copy of the links file in the working directory.
     # This isn't needed, but is useful for debugging and ensuring that
@@ -293,7 +310,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     nodes = set(nodes)
 
     # Plot the LOMAP network.
-    if _is_notebook and plot_network:
+    if plot_network:
         # Conditional imports.
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
@@ -311,10 +328,14 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 1) Loop over each molecule and load into RDKit.
         try:
-          rdmols = []
-          for x, name in zip(range(0, len(molecules)), names):
-              file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-              rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+            rdmols = []
+            for x, name in zip(range(0, len(molecules)), names):
+                try:
+                    file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+                    rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+                except OSError:
+                    file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+                    rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -400,18 +421,19 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 5) Create and display the plot.
         try:
-          # Convert to a dot graph.
-          dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
+            # Convert to a dot graph.
+            dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
 
-          # Write to a PNG.
-          network_plot = f"{work_dir}/images/network.png"
-          dot_graph.write_png(network_plot)
+            # Write to a PNG.
+            network_plot = f"{work_dir}/images/network.png"
+            dot_graph.write_png(network_plot)
 
-          # Create a plot of the network.
-          img = _mpimg.imread(network_plot)
-          _plt.figure(figsize=(20, 20))
-          _plt.axis("off")
-          _plt.imshow(img)
+            if _is_notebook:
+                # Create a plot of the network.
+                img = _mpimg.imread(network_plot)
+                _plt.figure(figsize=(20, 20))
+                _plt.axis("off")
+                _plt.imshow(img)
 
         except Exception as e:
             msg = "Unable to create network plot!"
