@@ -423,19 +423,19 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         # 5) Create and display the plot.
         try:
-          # Convert to a dot graph.
-          dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
+            # Convert to a dot graph.
+            dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
 
-          # Write to a PNG.
-          network_plot = f"{work_dir}/images/network.png"
-          dot_graph.write_png(network_plot)
+            # Write to a PNG.
+            network_plot = f"{work_dir}/images/network.png"
+            dot_graph.write_png(network_plot)
 
-          if _is_notebook:
-            # Create a plot of the network.
-            img = _mpimg.imread(network_plot)
-            _plt.figure(figsize=(20, 20))
-            _plt.axis("off")
-            _plt.imshow(img)
+            if _is_notebook:
+                # Create a plot of the network.
+                img = _mpimg.imread(network_plot)
+                _plt.figure(figsize=(20, 20))
+                _plt.axis("off")
+                _plt.imshow(img)
 
         except Exception as e:
             msg = "Unable to create network plot!"
@@ -444,6 +444,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 raise _AlignmentError(msg) from e
             else:
                 raise _AlignmentError(msg) from None
+
     return edges, scores
 
 def matchAtoms(molecule0,
