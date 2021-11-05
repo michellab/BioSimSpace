@@ -56,7 +56,7 @@ class ConfigFactory:
         """Return whether this is a restart simulation."""
         if isinstance(self.protocol, (_Protocol.Equilibration, _Protocol.Minimisation)):
             return False
-        elif isinstance(self.protocol, _Protocol.FreeEnergy):
+        elif isinstance(self.protocol, _Protocol.Production):
             return True
         else:
             return self.protocol.isRestart()
@@ -230,6 +230,7 @@ class ConfigFactory:
                     num_steep = 1000
 
             protocol_dict["imin"] = 1               # Minimisation simulation.
+            protocol_dict["ntmin"] = 2              # Set the minimisation method to XMIN
             protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
             protocol_dict["ncyc"] = num_steep       # Set the number of steepest descent steps.
         else:
@@ -322,7 +323,7 @@ class ConfigFactory:
                 protocol_dict["temp0"] = f"{temp:.2f}"      # Final temperature.
 
         # Free energies.
-        if isinstance(self.protocol, _Protocol.FreeEnergy):
+        if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             protocol_dict["icfe"] = 1                                               # Free energy mode.
             protocol_dict["ifsc"] = 1                                               # Use softcore potentials.
             protocol_dict["ntf"] = 1                                                # Remove SHAKE constraints.

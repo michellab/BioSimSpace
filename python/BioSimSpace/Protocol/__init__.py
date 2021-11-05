@@ -93,9 +93,12 @@ while restraining the positions of any backbone atoms.
 from ._config import *
 from ._custom import *
 from ._equilibration import *
-from ._free_energy import *
+from ._free_energy_mixin import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
 from ._steering import *
 from ._utils import *
+from ._free_energy import *
+from ._free_energy_minimisation import *
+from ._free_energy_equilibration import *

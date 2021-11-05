@@ -150,7 +150,7 @@ def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
     is_metadynamics = False
     is_steering = False
 
-    if isinstance(protocol, _Protocol.FreeEnergy):
+    if isinstance(protocol, _Protocol._FreeEnergyMixin):
         is_free_energy = True
     elif isinstance(protocol, _Protocol.Metadynamics):
         is_metadynamics = True

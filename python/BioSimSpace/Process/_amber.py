@@ -248,7 +248,7 @@ class Amber(_process.Process):
         system._set_water_topology("AMBER", self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
-        if isinstance(self._protocol, _Protocol.FreeEnergy):
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # represent the perturbed system in an AMBER-friendly format
             system = _squash(system)
         else:
@@ -299,7 +299,7 @@ class Amber(_process.Process):
 
         config_options = {}
         if not isinstance(self._protocol, (_Protocol.Minimisation, _Protocol.Equilibration, _Protocol.Steering,
-                                           _Protocol.Metadynamics, _Protocol.Production, _Protocol.FreeEnergy)):
+                                           _Protocol.Metadynamics, _Protocol.Production)):
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
         if not isinstance(self._protocol, _Protocol.Minimisation):
@@ -478,7 +478,7 @@ class Amber(_process.Process):
 
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
-            if isinstance(self._protocol, _Protocol.FreeEnergy):
+            if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
                 # Read the coordinates into the squashed system.
                 old_system_squashed = _squash(old_system)
                 old_system_squashed._updateCoordinates(new_system,
