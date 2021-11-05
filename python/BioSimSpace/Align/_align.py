@@ -149,14 +149,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     rdkit_input = False
     _Molecule_rdkit = type(_Chem.MolFromSmiles("c1ccccc1"))
 
-    if not all(isinstance(x, _Molecule) for x in molecules):
-      if not all(isinstance(x, _Molecule_rdkit) for x in molecules):
-          raise TypeError("'molecules' must be a list of "
-                          "'BioSimSpace._SireWrappers.Molecule' "
-                          "or 'rdkit.Chem.rdchem.Mol' objects.")
-
-      elif all(isinstance(x, _Molecule_rdkit) for x in molecules):
+    # A list of BioSimSpace molecule objects.
+    if all(isinstance(x, _Molecule) for x in molecules):
+        pass
+    # A list of RDKit molecule objects.
+    elif all(isinstance(x, _Chem.rdchem.Mol) for x in molecules):
         rdkit_input = True
+
+    else:
+        raise TypeError("'molecules' must be a list of "
+                        "'BioSimSpace._SireWrappers.Molecule' "
+                        "or 'rdkit.Chem.rdchem.Mol' objects.")
 
     # Validate the names.
     if names is not None:
