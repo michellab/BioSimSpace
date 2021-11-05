@@ -155,7 +155,6 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     # A list of RDKit molecule objects.
     elif all(isinstance(x, _Chem.rdchem.Mol) for x in molecules):
         rdkit_input = True
-
     else:
         raise TypeError("'molecules' must be a list of "
                         "'BioSimSpace._SireWrappers.Molecule' "
