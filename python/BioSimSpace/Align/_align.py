@@ -336,7 +336,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
               except OSError:
                 file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])                
+                rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
