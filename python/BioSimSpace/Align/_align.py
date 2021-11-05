@@ -86,9 +86,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
        Parameters
        ----------
 
-       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`] OR
-                    [class:`rdkit.Chem.rdchem.Mol`]
-           A list of molecules.
+       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`],
+                    [rdkit.Chem.rdchem.Mol]
+           A list of molecules. (Both BioSimSpace and RDKit molecule objects
+           are supported.)
 
        names : [str]
            A list of names for the molecules. If None, then the index of each
