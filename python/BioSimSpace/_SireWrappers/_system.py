@@ -694,7 +694,7 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def repartitionHydrogenMass(self, factor=4, property_map={}):
+    def repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -706,6 +706,9 @@ class System(_SireWrapper):
            factor : float
                The repartioning scale factor. Hydrogen masses are scaled by this
                amount.
+
+           ignore_water : bool
+               Whether to ignore water molecules.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -723,13 +726,17 @@ class System(_SireWrapper):
         if factor <= 0:
             raise ValueError("'factor' must be positive!")
 
+        # Check water skip flag.
+        if type(ignore_water) is not bool:
+            raise TypeError("'ignore_water' must be of type 'bool'.")
+
         # Check property map.
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'.")
 
         # Repartion hydrogen masses for all molecules in this system.
         for molecule in self:
-            molecule.repartitionHydrogenMass(factor, property_map)
+            molecule.repartitionHydrogenMass(factor, ignore_water, property_map)
 
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
