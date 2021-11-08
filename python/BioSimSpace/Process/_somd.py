@@ -64,7 +64,8 @@ class Somd(_process.Process):
                    "OPENCL" : "OpenCL" }
 
     def __init__(self, system, protocol, exe=None, name="somd",
-            platform="CPU", work_dir=None, seed=None, property_map={}):
+            platform="CPU", work_dir=None, seed=None, extra_options=None,
+            extra_lines=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -94,6 +95,12 @@ class Somd(_process.Process):
                purposes since SOMD uses the same seed for each Monte Carlo
                cycle.
 
+           extra_options : dict
+               A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+           extra_lines : list
+               A list of extra lines to be put at the end of the script.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -101,7 +108,7 @@ class Somd(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map)
 
         # Set the package name.
         self._package_name = "SOMD"
