@@ -1279,7 +1279,7 @@ class Molecule(_SireWrapper):
         if type(mass) is not float:
             raise TypeError("'mass' must be of type 'float'.")
         if mass <= 0:
-            raise TypeError("'mass' must be positive!")
+            raise ValueError("'mass' must be positive!")
 
         # Convet the mass to the correct unit.
         mass *= _SireUnits.g_per_mol

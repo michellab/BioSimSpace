@@ -720,7 +720,7 @@ class System(_SireWrapper):
         if type(mass) is not float:
             raise TypeError("'mass' must be of type 'float'.")
         if mass <= 0:
-            raise TypeError("'mass' must be positive!")
+            raise ValueError("'mass' must be positive!")
 
         # Check property map.
         if type(property_map) is not dict:
