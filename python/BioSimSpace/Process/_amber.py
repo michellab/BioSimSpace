@@ -33,6 +33,7 @@ from watchdog.observers import Observer as _Observer
 
 import os as _os
 import re as _re
+import shutil as _shutil
 import time as _time
 import timeit as _timeit
 import warnings as _warnings
@@ -249,7 +250,7 @@ class Amber(_process.Process):
 
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-            # represent the perturbed system in an AMBER-friendly format
+            # Represent the perturbed system in an AMBER-friendly format.
             system = _squash(system)
         else:
             system = self._checkPerturbable(system)
@@ -357,6 +358,7 @@ class Amber(_process.Process):
             setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
             setattr(self, "getTime", self._getTime)
 
+        # Set the configuration.
         config = _Protocol.ConfigFactory(self._system, self._protocol)
         self.addToConfig(config.generateAmberConfig(extra_options={**config_options, **self._extra_options},
                                                     extra_lines=self._extra_lines))
@@ -383,12 +385,12 @@ class Amber(_process.Process):
         if type(self._protocol) is not _Protocol.Custom:
 
             # Append a reference file if this a restrained equilibration.
-            if type(self._protocol) is _Protocol.Equilibration:
+            if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this anything other than a minimisation.
-            if type(self._protocol) is not _Protocol.Minimisation:
+            if not isinstance(self._protocol, _Protocol.Minimisation):
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -741,7 +743,7 @@ class Amber(_process.Process):
         """
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         # Get the list of time steps.
@@ -1236,7 +1238,7 @@ class Amber(_process.Process):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The total energy.
         """
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return self.getRecord("ENERGY", time_series, _Units.Energy.kcal_per_mol, block)
         else:
             return self.getRecord("ETOT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1500,7 +1502,7 @@ class Amber(_process.Process):
                 if len(line) > 0 and line[0] is not "|":
 
                     # The output format is different for minimisation protocols.
-                    if type(self._protocol) is _Protocol.Minimisation:
+                    if isinstance(self._protocol, _Protocol.Minimisation):
 
                         # No equals sign in the line.
                         if "=" not in line:
