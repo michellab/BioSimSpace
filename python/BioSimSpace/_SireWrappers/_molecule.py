@@ -1288,7 +1288,7 @@ class Molecule(_SireWrapper):
         if type(property_map) is not dict:
             raise TypeError("'property_map' must be of type 'dict'.")
 
-        # Handle perturbable molcules separately.
+        # Handle perturbable molecules separately.
         if self.isPerturbable():
             # Repartition masses for the lambda=0 state.
             property_map = { "mass"         : "mass0",
