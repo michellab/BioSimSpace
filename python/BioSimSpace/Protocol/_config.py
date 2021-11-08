@@ -344,3 +344,131 @@ class ConfigFactory:
         total_lines = dict_lines + total_lines
 
         return total_lines
+
+    def generateGromacsConfig(self, extra_options=None, extra_lines=None):
+        """Outputs the current protocol in a format compatible with GROMACS.
+
+        Parameters
+        ----------
+
+        extra_options : dict
+            A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+        extra_lines : list
+            A list of extra lines to be put at the end of the script.
+
+        Returns
+        -------
+
+        config : list
+            The generated config list in a GROMACS format.
+        """
+
+        extra_options = extra_options if extra_options is not None else {}
+        extra_lines = extra_lines if extra_lines is not None else []
+
+        # Define some miscellaneous defaults.
+        protocol_dict = {
+            "nstlog": self._report_interval,                                        # Interval between writing to the log file.
+            "nstenergy": self._restart_interval,                                    # Interval between writing to the energy file.
+            "nstxout": self._restart_interval,                                      # Interval between writing to the trajectory file.
+            "gen-vel": "yes" if self._restart else "no"                             # Whether to generate velocities.
+        }
+
+        # Minimisation.
+        if isinstance(self.protocol, _Protocol.Minimisation):
+            protocol_dict["integrator"] = "steep"                                   # Minimisation simulation.
+        else:
+            protocol_dict["dt"] = f"{self.protocol.getTimeStep().picoseconds().magnitude():.3f}"  # Time step.
+        protocol_dict["nsteps"] = self._steps                                       # Number of integration steps.
+
+        # Constraints.
+        if not isinstance(self.protocol, _Protocol.Minimisation):
+            protocol_dict["constraints"] = "h-bonds"                                # Rigid bonded hydrogens.
+            protocol_dict["constraint-algorithm"] = "LINCS"                         # Linear constraint solver.
+
+        # PBC.
+        protocol_dict["pbc"] = "xyz"                                                # Simulate a fully periodic box.
+        protocol_dict["cutoff-scheme"] = "Verlet"                                   # Use Verlet pair lists.
+        if self._has_box and self._has_water:
+            protocol_dict["ns-type"] = "grid"                                       # Use a grid to search for neighbours.
+            protocol_dict["nstlist"] = "10"                                         # Rebuild neighbour list every 10 steps.
+            protocol_dict["rlist"] = "0.8"                                          # Set short-range cutoff.
+            protocol_dict["rvdw"] = "0.8"                                           # Set van der Waals cutoff.
+            protocol_dict["rcoulomb"] = "0.8"                                       # Set Coulomb cutoff.
+            protocol_dict["coulombtype"] = "PME"                                    # Fast smooth Particle-Mesh Ewald.
+            protocol_dict["DispCorr"] = "EnerPres"                                  # Dispersion corrections for energy and pressure.
+        else:
+            # Perform vacuum simulations by implementing pseudo-PBC conditions,
+            # i.e. run calculation in a near-infinite box (333.3 nm).
+            # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+            protocol_dict["nstlist"] = "1"                                          # Single neighbour list (all particles interact).
+            protocol_dict["rlist"] = "333.3"                                        # "Infinite" short-range cutoff.
+            protocol_dict["rvdw"] = "333.3"                                         # "Infinite" van der Waals cutoff.
+            protocol_dict["rcoulomb"] = "333.3"                                     # "Infinite" Coulomb cutoff.
+            protocol_dict["coulombtype"] = "Cut-off"                                # Plain cut-off.
+        protocol_dict["vdwtype"] = "Cut-off"                                        # Twin-range van der Waals cut-off.
+
+        # Restraints.
+        if isinstance(self.protocol, _Protocol.Equilibration):
+            protocol_dict["refcoord-scaling"] = "all"                               # The actual restraints need to be defined elsewhere.
+
+        # Pressure control.
+        if not isinstance(self.protocol, _Protocol.Minimisation):
+            if self.protocol.getPressure() is not None:
+                # Don't use barostat for vacuum simulations.
+                if self._has_box and self._has_water:
+                    if isinstance(self.protocol, _Protocol.Equilibration):
+                        protocol_dict["pcoupl"] = "berendsen"                       # Barostat type.
+                    else:
+                        protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
+                    protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
+                    protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().magnitude():.5f}"  # Pressure in bar.
+                    protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+
+        # Temperature control.
+        if not isinstance(self.protocol, _Protocol.Minimisation):
+            protocol_dict["integrator"] = "sd"                                      # Langevin dynamics.
+            protocol_dict["tc-grps"] = "system"                                     # A single temperature group for the entire system.
+            protocol_dict["tau-t"] = 2                                              # Collision frequency (ps).
+
+            if not isinstance(self.protocol, _Protocol.Equilibration):
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getTemperature().kelvin().magnitude()
+            elif self.protocol.isConstantTemp():
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getStartTemperature().kelvin().magnitude()
+
+            # Heating/cooling protocol.
+            elif not self.protocol.isConstantTemp():
+                # Work out the final time of the simulation.
+                timestep = self.protocol.getTimeStep().picoseconds().magnitude()
+                end_time = _math.floor(timestep * self._steps)
+
+                protocol_dict["annealing"] = "single"                               # Single sequence of annealing points.
+                protocol_dict["annealing-npoints"] = 2                              # Two annealing points for "system" temperature group.
+
+                # Linearly change temperature between start and end times.
+                protocol_dict["annealing-time"] = "0 %d" % end_time
+                protocol_dict["annealing-temp"] = "%.2f %.2f" % (
+                    self.protocol.getStartTemperature().kelvin().magnitude(),
+                    self.protocol.getEndTemperature().kelvin().magnitude(),
+                )
+
+        # Free energies.
+        if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+            protocol_dict["free-energy"] = "yes"                                    # Free energy mode.
+            protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
+            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            protocol_dict["fep-lambdas"] = " ".join(protocol)                       # Lambda values.
+            lam = self.protocol.getLambda()
+            idx = self.protocol.getLambdaValues().index(lam)
+            protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
+            protocol_dict["nstcalcenergy"] = 250                                    # Calculate energies every 250 steps.
+            protocol_dict["nstdhdl"] = 250                                          # Write gradients every 250 steps.
+
+        # Put everything together in a line-by-line format.
+        total_dict = {**protocol_dict, **extra_options}
+        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+
+        return total_lines
