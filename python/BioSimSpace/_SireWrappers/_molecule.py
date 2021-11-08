@@ -1341,23 +1341,16 @@ class Molecule(_SireWrapper):
         if not self._sire_object.hasProperty(mass_prop):
             raise _IncompatibleError(f"This molecule doesn't have a '{mass_prop}' property!")
 
-        # Get the connectivity of the molecule. Use the property if it is
-        # present, or generate it directly if not.
-        conn_prop = property_map.get("connectivity", "connectivity")
-        if self._sire_object.hasProperty(conn_prop):
-            connectivity = self._sire_object.property(conn_prop)
-        else:
-            connectivity = _SireMol.Connectivity(self._sire_object,
-                                                 _SireMol.CovalentBondHunter(),
-                                                 property_map)
+        # Get the connectivity of the molecule. Generate this ourselves since
+        # GROMACS water molecules won't necessarily have explicit hydrogen bonds.
+        connectivity = _SireMol.Connectivity(self._sire_object,
+                                             _SireMol.CovalentBondHunter(),
+                                             property_map)
 
         # Compute the initial mass.
         initial_mass = 0
         for m in self._sire_object.property(mass_prop).toVector():
             initial_mass += m.value()
-
-        # Search for hydrogen atoms in the molecule.
-        hydrogens = self.search("element H", property_map)
 
         # Make the molecule editable.
         edit_mol = self._sire_object.edit()
