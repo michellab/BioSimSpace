@@ -68,10 +68,9 @@ def test_makeCompatibleWith():
     # representation. This maps the coordinates back into the original topology.
     new_system = process0.getSystem()
 
-def test_hydrogen_mass_repartitioning():
-    # Load a system from file.
-    system = BSS.IO.readMolecules("test/io/amber/ala/*")
-
+@pytest.mark.parametrize("system", [BSS.IO.readMolecules("test/io/amber/ala/*"),
+                                    BSS.IO.readMolecules("test/io/gromacs/kigaki/*")])
+def test_hydrogen_mass_repartitioning(system):
     # Work out the initial mass of the system.
     initial_mass = 0
     for molecule in system:
