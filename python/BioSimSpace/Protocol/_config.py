@@ -3,6 +3,7 @@ import math as _math
 import warnings as _warnings
 
 from BioSimSpace.Align._merge import _squash
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 
 from BioSimSpace import Protocol as _Protocol
 
@@ -466,6 +467,124 @@ class ConfigFactory:
             protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
             protocol_dict["nstcalcenergy"] = 250                                    # Calculate energies every 250 steps.
             protocol_dict["nstdhdl"] = 250                                          # Write gradients every 250 steps.
+
+        # Put everything together in a line-by-line format.
+        total_dict = {**protocol_dict, **extra_options}
+        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+
+        return total_lines
+
+    def generateSomdConfig(self, extra_options=None, extra_lines=None):
+        """Outputs the current protocol in a format compatible with SOMD.
+
+        Parameters
+        ----------
+
+        extra_options : dict
+            A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+        extra_lines : list
+            A list of extra lines to be put at the end of the script.
+
+        Returns
+        -------
+
+        config : list
+            The generated config list in a SOMD format.
+        """
+
+        extra_options = extra_options if extra_options is not None else {}
+        extra_lines = extra_lines if extra_lines is not None else []
+
+        # Define some miscellaneous defaults.
+        protocol_dict = {"save coordinates": True}                                  # Save molecular coordinates.
+
+        # Minimisation.
+        if isinstance(self.protocol, _Protocol.Minimisation):
+            protocol_dict["minimise"] = True                                        # Minimisation simulation.
+            protocol_dict["minimise maximum iterations"] = self._steps              # Maximum number of steps.
+            protocol_dict["minimise tolerance"] = 1                                 # Convergence tolerance.
+            protocol_dict["ncycles"] = 1                                            # Perform a single SOMD cycle.
+            protocol_dict["nmoves"] = 1                                             # Perform a single MD move.
+        else:
+            # Get the report and restart intervals.
+            report_interval = self._report_interval
+            restart_interval = self._restart_interval
+
+            # Work out the number of cycles.
+            ncycles = self._steps // report_interval
+
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            report_interval = _math.ceil(self._steps / ncycles)
+
+            # The report interval must be a multiple of the energy frequency,
+            # which is 250 steps.
+            report_interval = 250 * _math.ceil(report_interval / 250)
+
+            # Work out the number of cycles per frame.
+            cycles_per_frame = restart_interval / report_interval
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * restart_interval
+                cycles_per_frame = 1
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
+
+            protocol_dict["ncycles"] = ncycles                                  # The number of SOMD cycles.
+            protocol_dict["nmoves"] = report_interval                           # The number of moves per cycle.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
+            timestep = self.protocol.getTimeStep().femtoseconds().magnitude()
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
+
+        # PBC.
+        if self._has_water:
+            protocol_dict["reaction field dielectric"] = "78.3"                 # Solvated box.
+        if not self._has_box or not self._has_water:
+            protocol_dict["cutoff type"] = "cutoffnonperiodic"                  # No periodic box.
+        else:
+            protocol_dict["cutoff type"] = "cutoffperiodic"                     # Periodic box.
+        protocol_dict["cutoff distance"] = "10 angstrom"                        # Non-bonded cut-off.
+
+        # Restraints.
+        if isinstance(self.protocol, _Protocol.Equilibration) and self.protocol.getRestraint() is not None:
+            raise _IncompatibleError("We currently don't support restraints with SOMD.")
+
+        # Pressure control.
+        protocol_dict["barostat"] = False                                       # Disable barostat (constant volume).
+        if not isinstance(self.protocol, _Protocol.Minimisation):
+            if self.protocol.getPressure() is not None:
+                # Don't use barostat for vacuum simulations.
+                if self._has_box and self._has_water:
+                    protocol_dict["barostat"] = True                            # Enable barostat.
+                    pressure = self.protocol.getPressure().atm().magnitude()
+                    protocol_dict["pressure"] = "%.5f atm" % pressure           # Presure in atmosphere.
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+
+        # Temperature control.
+        if not isinstance(self.protocol, _Protocol.Minimisation):
+            if isinstance(self.protocol, _Protocol.Equilibration) and not self.protocol.isConstantTemp():
+                raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
+
+            protocol_dict["thermostat"] = "True"                                # Turn on the thermostat.
+            if not isinstance(self.protocol, _Protocol.Equilibration):
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature().kelvin().magnitude()
+            else:
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getStartTemperature().kelvin().magnitude()
+
+        # Free energies.
+        if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+            if not isinstance(self.protocol, _Protocol.Minimisation):
+                protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
+                protocol_dict["energy frequency"] = 250                         # Write gradients every 250 steps.
+
+            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            protocol_dict["lambda array"] = ", ".join(protocol)
+            protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
