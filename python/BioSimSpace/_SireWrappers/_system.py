@@ -694,7 +694,7 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def repartitionHydrogenMass(self, mass=4, property_map={}):
+    def repartitionHydrogenMass(self, factor=4, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -703,8 +703,9 @@ class System(_SireWrapper):
            Parameters
            ----------
 
-           mass : float
-               The adjusted mass of bonded hydrogen atoms, in Dalton.
+           factor : float
+               The repartioning scale factor. Hydrogen masses are scaled by this
+               amount.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -713,14 +714,14 @@ class System(_SireWrapper):
         """
 
         # Convert int to float.
-        if type(mass) is int:
-            mass = float(mass)
+        if type(factor) is int:
+            factor = float(factor)
 
-        # Check mass.
-        if type(mass) is not float:
-            raise TypeError("'mass' must be of type 'float'.")
-        if mass <= 0:
-            raise ValueError("'mass' must be positive!")
+        # Check scale factor.
+        if type(factor) is not float:
+            raise TypeError("'factor' must be of type 'float'.")
+        if factor <= 0:
+            raise ValueError("'factor' must be positive!")
 
         # Check property map.
         if type(property_map) is not dict:
@@ -728,7 +729,7 @@ class System(_SireWrapper):
 
         # Repartion hydrogen masses for all molecules in this system.
         for molecule in self:
-            molecule.repartitionHydrogenMass(mass, property_map)
+            molecule.repartitionHydrogenMass(factor, property_map)
 
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results

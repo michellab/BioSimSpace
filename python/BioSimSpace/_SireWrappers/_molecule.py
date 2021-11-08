@@ -1253,7 +1253,7 @@ class Molecule(_SireWrapper):
             # Finally, commit the changes to the internal object.
             self._sire_object = edit_mol.commit()
 
-    def repartitionHydrogenMass(self, mass=4, property_map={}):
+    def repartitionHydrogenMass(self, factor=4, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -1262,8 +1262,9 @@ class Molecule(_SireWrapper):
            Parameters
            ----------
 
-           mass : float
-               The adjusted mass of bonded hydrogen atoms, in Dalton.
+           factor : float
+               The repartioning scale factor. Hydrogen masses are scaled by this
+               amount.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1272,17 +1273,14 @@ class Molecule(_SireWrapper):
         """
 
         # Convert int to float.
-        if type(mass) is int:
-            mass = float(mass)
+        if type(factor) is int:
+            factor = float(factor)
 
-        # Check mass.
-        if type(mass) is not float:
-            raise TypeError("'mass' must be of type 'float'.")
-        if mass <= 0:
-            raise ValueError("'mass' must be positive!")
-
-        # Convet the mass to the correct unit.
-        mass *= _SireUnits.g_per_mol
+        # Check scale factor.
+        if type(factor) is not float:
+            raise TypeError("'factor' must be of type 'float'.")
+        if factor <= 0:
+            raise ValueError("'factor' must be positive!")
 
         # Check property map.
         if type(property_map) is not dict:
@@ -1296,7 +1294,7 @@ class Molecule(_SireWrapper):
                              "connectivity" : "connectivity0",
                              "coordinates"  : "coordinates0"
                            }
-            self._repartitionHydrogenMass(mass, property_map=property_map)
+            self._repartitionHydrogenMass(factor, property_map=property_map)
 
             # Repartition masses for the lambda=1 state.
             property_map = { "mass"         : "mass1",
@@ -1304,12 +1302,12 @@ class Molecule(_SireWrapper):
                              "connectivity" : "connectivity1",
                              "coordinates"  : "coordinates1"
                            }
-            self._repartitionHydrogenMass(mass, property_map=property_map)
+            self._repartitionHydrogenMass(factor, property_map=property_map)
 
         else:
-            self._repartitionHydrogenMass(mass, property_map=property_map)
+            self._repartitionHydrogenMass(factor, property_map=property_map)
 
-    def _repartitionHydrogenMass(self, mass=4, property_map={}):
+    def _repartitionHydrogenMass(self, factor=4, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -1318,8 +1316,9 @@ class Molecule(_SireWrapper):
            Parameters
            ----------
 
-           mass : float
-               The adjusted mass of bonded hydrogen atoms, in Dalton.
+           factor : float
+               The repartioning scale factor. Hydrogen masses are scaled by this
+               amount.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1355,14 +1354,20 @@ class Molecule(_SireWrapper):
         # Make the molecule editable.
         edit_mol = self._sire_object.edit()
 
-        # First adjust the mass of all hydrogen atoms. Also count the
-        # number of unique connections.
+        # First adjust the mass of all hydrogen atoms.
         connections = []
         for hydrogen in hydrogens:
             idx = _SireMol.AtomIdx(hydrogen.index())
+
+            # Compute the scaled mass.
+            mass = factor * edit_mol.atom(idx).property(mass_prop)
+
+            # Set the new mass.
             edit_mol = edit_mol.atom(idx)                    \
                                .setProperty(mass_prop, mass) \
                                .molecule()
+
+            # Store the indices of atoms that are connected to this hydrogen.
             connections.extend(connectivity.connectionsTo(idx))
 
         # Get the unique heavy atom indices.
