@@ -1327,6 +1327,13 @@ class Molecule(_SireWrapper):
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
+        # Search for hydrogen atoms in the molecule.
+        hydrogens = self.search("element H", property_map)
+
+        # Early exit if this molecule contains no hydrogens.
+        if len(hydrogens) == 0:
+            return
+
         # Get the mass and property name.
         mass_prop = property_map.get("mass", "mass")
 
