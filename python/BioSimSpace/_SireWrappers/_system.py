@@ -694,6 +694,42 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
+    def repartitionHydrogenMass(self, mass=4, property_map={}):
+        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
+           the hydrogen atoms. This allows the use of larger simulation
+           integration time steps without encountering instabilities related
+           to high-frequency hydrogen motion.
+
+           Parameters
+           ----------
+
+           mass : float
+               The adjusted mass of bonded hydrogen atoms, in Dalton.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Convert int to float.
+        if type(mass) is int:
+            mass = float(mass)
+
+        # Check mass.
+        if type(mass) is not float:
+            raise TypeError("'mass' must be of type 'float'.")
+        if mass <= 0:
+            raise TypeError("'mass' must be positive!")
+
+        # Check property map.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        # Repartion hydrogen masses for all molecules in this system.
+        for molecule in self:
+            molecule.repartitionHydrogenMass(mass, property_map)
+
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule

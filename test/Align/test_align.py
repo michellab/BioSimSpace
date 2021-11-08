@@ -310,3 +310,44 @@ def test_grow_whole_ring(mapping):
 
     # Check that we can merge without allowing ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping)
+
+def test_hydrogen_mass_repartitioning():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Get the best mapping between the molecules.
+    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second)
+
+    # Align m0 to m1 based on the mapping.
+    m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
+
+    # Create the merged molecule.
+    merged = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
+
+    # Work out the initial mass of the system.
+    initial_mass0 = 0
+    for mass in merged._sire_object.property("mass0").toVector():
+        initial_mass0 += mass.value()
+    initial_mass1 = 0
+    for mass in merged._sire_object.property("mass1").toVector():
+        initial_mass1 += mass.value()
+
+    # Repartition the hydrogen mass.
+    merged.repartitionHydrogenMass()
+
+    # Work out the final mass of the system.
+    final_mass0 = 0
+    for mass in merged._sire_object.property("mass0").toVector():
+        final_mass0 += mass.value()
+    final_mass1 = 0
+    for mass in merged._sire_object.property("mass1").toVector():
+        final_mass1 += mass.value()
+
+    # Assert the the masses are approximately the same.
+    assert final_mass0 == pytest.approx(initial_mass0)
+    assert final_mass1 == pytest.approx(initial_mass1)

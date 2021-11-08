@@ -67,3 +67,25 @@ def test_makeCompatibleWith():
     # Make sure we can load a system from the process for the single-molecule
     # representation. This maps the coordinates back into the original topology.
     new_system = process0.getSystem()
+
+def test_hydrogen_mass_repartitioning():
+    # Load a system from file.
+    system = BSS.IO.readMolecules("test/io/amber/ala/*")
+
+    # Work out the initial mass of the system.
+    initial_mass = 0
+    for molecule in system:
+        for mass in molecule._sire_object.property("mass").toVector():
+            initial_mass += mass.value()
+
+    # Repartition the hydrogen mass.
+    system.repartitionHydrogenMass()
+
+    # Work out the new mass of the system.
+    final_mass = 0
+    for molecule in system:
+        for mass in molecule._sire_object.property("mass").toVector():
+            final_mass += mass.value()
+
+    # Assert the the masses are approximately the same.
+    assert final_mass == pytest.approx(initial_mass)

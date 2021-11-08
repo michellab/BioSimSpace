@@ -1253,6 +1253,155 @@ class Molecule(_SireWrapper):
             # Finally, commit the changes to the internal object.
             self._sire_object = edit_mol.commit()
 
+    def repartitionHydrogenMass(self, mass=4, property_map={}):
+        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
+           the hydrogen atoms. This allows the use of larger simulation
+           integration time steps without encountering instabilities related
+           to high-frequency hydrogen motion.
+
+           Parameters
+           ----------
+
+           mass : float
+               The adjusted mass of bonded hydrogen atoms, in Dalton.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Convert int to float.
+        if type(mass) is int:
+            mass = float(mass)
+
+        # Check mass.
+        if type(mass) is not float:
+            raise TypeError("'mass' must be of type 'float'.")
+        if mass <= 0:
+            raise TypeError("'mass' must be positive!")
+
+        # Convet the mass to the correct unit.
+        mass *= _SireUnits.g_per_mol
+
+        # Check property map.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        # Handle perturbable molcules separately.
+        if self.isPerturbable():
+            # Repartition masses for the lambda=0 state.
+            property_map = { "mass"         : "mass0",
+                             "element"      : "element0",
+                             "connectivity" : "connectivity0",
+                             "coordinates"  : "coordinates0"
+                           }
+            self._repartitionHydrogenMass(mass, property_map=property_map)
+
+            # Repartition masses for the lambda=1 state.
+            property_map = { "mass"         : "mass1",
+                             "element"      : "element1",
+                             "connectivity" : "connectivity1",
+                             "coordinates"  : "coordinates1"
+                           }
+            self._repartitionHydrogenMass(mass, property_map=property_map)
+
+        else:
+            self._repartitionHydrogenMass(mass, property_map=property_map)
+
+    def _repartitionHydrogenMass(self, mass=4, property_map={}):
+        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
+           the hydrogen atoms. This allows the use of larger simulation
+           integration time steps without encountering instabilities related
+           to high-frequency hydrogen motion. (Internal helper function.)
+
+           Parameters
+           ----------
+
+           mass : float
+               The adjusted mass of bonded hydrogen atoms, in Dalton.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Get the mass and property name.
+        mass_prop = property_map.get("mass", "mass")
+
+        # Make sure the molecule has mass information.
+        if not self._sire_object.hasProperty(mass_prop):
+            raise _IncompatibleError(f"This molecule doesn't have a '{mass_prop}' property!")
+
+        # Get the connectivity of the molecule. Use the property if it is
+        # present, or generate it directly if not.
+        conn_prop = property_map.get("connectivity", "connectivity")
+        if self._sire_object.hasProperty(conn_prop):
+            connectivity = self._sire_object.property(conn_prop)
+        else:
+            connectivity = _SireMol.Connectivity(self._sire_object,
+                                                 _SireMol.CovalentBondHunter(),
+                                                 property_map)
+
+        # Compute the initial mass.
+        initial_mass = 0
+        for m in self._sire_object.property(mass_prop).toVector():
+            initial_mass += m.value()
+
+        # Search for hydrogen atoms in the molecule.
+        hydrogens = self.search("element H", property_map)
+
+        # Make the molecule editable.
+        edit_mol = self._sire_object.edit()
+
+        # First adjust the mass of all hydrogen atoms. Also count the
+        # number of unique connections.
+        connections = []
+        for hydrogen in hydrogens:
+            idx = _SireMol.AtomIdx(hydrogen.index())
+            edit_mol = edit_mol.atom(idx)                    \
+                               .setProperty(mass_prop, mass) \
+                               .molecule()
+            connections.extend(connectivity.connectionsTo(idx))
+
+        # Get the unique heavy atom indices.
+        connections = set(connections)
+
+        # Commit the changes.
+        mol = edit_mol.commit()
+
+        # Compute the total adjusted mass.
+        final_mass = 0
+        for m in mol.property(mass_prop).toVector():
+            final_mass += m.value()
+
+        # Work out the delta averaged across the bonded heavy atoms.
+        delta_mass = (final_mass - initial_mass) / len(connections)
+
+        # Make the molecule editable again.
+        edit_mol = mol.edit()
+
+        # Loop over all hydrogen atoms.
+        for hydrogen in hydrogens:
+            idx = _SireMol.AtomIdx(hydrogen.index())
+
+            # Loop over all heavy atoms connected to this hydrogen.
+            for heavy in connectivity.connectionsTo(idx):
+                # Get the existing mass.
+                mass = mol.atom(heavy).property(mass_prop).value()
+
+                # Reduce the mass.
+                mass = (mass - delta_mass) * _SireUnits.g_per_mol
+
+                # Set the mass.
+                edit_mol = edit_mol.atom(heavy)                  \
+                                   .setProperty(mass_prop, mass) \
+                                   .molecule()
+
+        # Commit the changes and store the updated molecule.
+        self._sire_object = edit_mol.commit()
+
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""
 
