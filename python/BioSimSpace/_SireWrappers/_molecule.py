@@ -1394,6 +1394,7 @@ class Molecule(_SireWrapper):
 
         # Work out the delta averaged across the bonded heavy atoms.
         delta_mass = (final_mass - initial_mass) / len(hydrogens)
+        delta_mass *= _SireUnits.g_per_mol
 
         # Make the molecule editable again.
         edit_mol = mol.edit()
@@ -1410,10 +1411,10 @@ class Molecule(_SireWrapper):
                 mass = mass_dict[idx]
             # Use the initial mass.
             else:
-                mass = mol.atom(idx).property(mass_prop).value()
+                mass = mol.atom(idx).property(mass_prop)
 
             # Reduce the mass.
-            mass = (mass - delta_mass) * _SireUnits.g_per_mol
+            mass -= delta_mass
 
             # Set the mass.
             edit_mol = edit_mol.atom(idx)                     \
@@ -1421,7 +1422,7 @@ class Molecule(_SireWrapper):
                                 .molecule()
 
             # Store the updated mass.
-            mass_dict[idx] = mass.value()
+            mass_dict[idx] = mass
 
         # Commit the changes and store the updated molecule.
         self._sire_object = edit_mol.commit()
