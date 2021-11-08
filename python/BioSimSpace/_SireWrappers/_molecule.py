@@ -1384,9 +1384,6 @@ class Molecule(_SireWrapper):
             # Store the indices of atoms that are connected to this hydrogen.
             connections.extend(connectivity.connectionsTo(idx))
 
-        # Get the unique heavy atom indices.
-        connections = set(connections)
-
         # Commit the changes.
         mol = edit_mol.commit()
 
@@ -1396,27 +1393,35 @@ class Molecule(_SireWrapper):
             final_mass += m.value()
 
         # Work out the delta averaged across the bonded heavy atoms.
-        delta_mass = (final_mass - initial_mass) / len(connections)
+        delta_mass = (final_mass - initial_mass) / len(hydrogens)
 
         # Make the molecule editable again.
         edit_mol = mol.edit()
 
-        # Loop over all hydrogen atoms.
-        for hydrogen in hydrogens:
-            idx = _SireMol.AtomIdx(hydrogen.index())
+        # Initalise a dictionary mapping the heavy atom index to its
+        # current mass.
+        mass_dict = {}
 
-            # Loop over all heavy atoms connected to this hydrogen.
-            for heavy in connectivity.connectionsTo(idx):
-                # Get the existing mass.
-                mass = mol.atom(heavy).property(mass_prop).value()
+        # Loop over all connected heavy atoms.
+        for idx in connections:
 
-                # Reduce the mass.
-                mass = (mass - delta_mass) * _SireUnits.g_per_mol
+            # Use the current mass.
+            if idx in mass_dict:
+                mass = mass_dict[idx]
+            # Use the initial mass.
+            else:
+                mass = mol.atom(idx).property(mass_prop).value()
 
-                # Set the mass.
-                edit_mol = edit_mol.atom(heavy)                  \
-                                   .setProperty(mass_prop, mass) \
-                                   .molecule()
+            # Reduce the mass.
+            mass = (mass - delta_mass) * _SireUnits.g_per_mol
+
+            # Set the mass.
+            edit_mol = edit_mol.atom(idx)                     \
+                                .setProperty(mass_prop, mass) \
+                                .molecule()
+
+            # Store the updated mass.
+            mass_dict[idx] = mass.value()
 
         # Commit the changes and store the updated molecule.
         self._sire_object = edit_mol.commit()
