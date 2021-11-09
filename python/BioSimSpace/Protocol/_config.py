@@ -55,12 +55,11 @@ class ConfigFactory:
     @property
     def _restart(self):
         """Return whether this is a restart simulation."""
-        if isinstance(self.protocol, (_Protocol.Equilibration, _Protocol.Minimisation)):
-            return False
-        elif isinstance(self.protocol, _Protocol.Production):
-            return True
-        else:
+        try:
             return self.protocol.isRestart()
+        except:
+            pass
+        return False
 
     @property
     def _restart_interval(self):

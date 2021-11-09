@@ -46,6 +46,7 @@ from BioSimSpace import _amber_home, _isVerbose
 from BioSimSpace.Align._merge import _squash
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Types._type import Type as _Type
 
@@ -487,34 +488,62 @@ class Amber(_process.Process):
                                                        self._property_map,
                                                        self._property_map)
 
+                # Update the velocities.
+                update_velocities = True
+                for idx in range(0, old_system_squashed.nMolecules()):
+                    # Extract the molecules from each system.
+                    mol0 = old_system_squashed._sire_object.molecule(_SireMol.MolIdx(idx))
+                    mol1 = new_system._sire_object.molecule(_SireMol.MolIdx(idx))
+
+                    try:
+                        # Update the velocities.
+                        mol0 = mol0.edit().setProperty("velocity", mol1.property("velocity")).molecule().commit()
+                    except:
+                        # There are actually no velocities.
+                        update_velocities = False
+                        break
+
+                    # Update the molecule.
+                    old_system_squashed._sire_object.update(mol0)
+
                 # Convert the squashed system coordinates into merged system coordinates.
                 mol_idx = 0
                 for i, molecule in enumerate(old_system.getMolecules()):
                     if not molecule._is_perturbable:
                         # Just copy the molecule.
-                        molecule._sire_object = old_system_squashed.getMolecules()[mol_idx]._sire_object
+                        molecule = _Molecule(old_system_squashed[mol_idx])
                         mol_idx += 1
                     else:
-                        # Extract the non-dummy atom coordinates from the squashed system.
+                        # Extract the non-dummy atom coordinates and velocities from the squashed system.
                         idx0, idx1 = 0, 0
                         editor = molecule._sire_object.edit()
                         for j in range(0, molecule._sire_object.nAtoms()):
                             atom = editor.atom(_SireMol.AtomIdx(j))
                             coordinates = None
+                            velocities = None
                             if "du" not in atom.property("ambertype0"):
                                 new_atom = old_system_squashed[mol_idx].getAtoms()[idx0]
                                 coordinates = new_atom._sire_object.property("coordinates")
+                                if update_velocities:
+                                    velocities = new_atom._sire_object.property("velocity")
                                 idx0 += 1
                             if "du" not in atom.property("ambertype1"):
                                 new_atom = old_system_squashed[mol_idx + 1].getAtoms()[idx1]
                                 if coordinates is None:
                                     coordinates = new_atom._sire_object.property("coordinates")
+                                if update_velocities and velocities is None:
+                                    velocities = new_atom._sire_object.property("velocity")
                                 idx1 += 1
+
+                            # Set the properties
+                            if velocities:
+                                atom.setProperty("velocity0", velocities)
+                                atom.setProperty("velocity1", velocities)
                             atom.setProperty("coordinates0", coordinates)
                             editor = atom.setProperty("coordinates1", coordinates).molecule()
                         molecule._sire_object = editor.commit()
-                        old_system.updateMolecule(i, molecule)
                         mol_idx += 2
+                    old_system.updateMolecule(i, molecule)
             else:
                 old_system._updateCoordinates(new_system,
                                               self._property_map,

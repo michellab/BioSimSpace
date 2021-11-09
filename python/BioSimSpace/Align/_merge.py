@@ -1262,7 +1262,7 @@ def _squash(system):
     all_molecules = []
     for molecule in system.getMolecules():
         if not molecule._is_perturbable:
-            all_molecules += [molecule]
+            all_molecules += [_Molecule(molecule)]
         else:
             all_molecules += [_removeDummies(molecule, False), _removeDummies(molecule, True)]
 
