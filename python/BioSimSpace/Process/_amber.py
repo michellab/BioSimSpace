@@ -296,6 +296,12 @@ class Amber(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
+        # Work out whether we're generating a config for PMEMD.
+        if "pmemd" in self._exe.lower():
+            is_pmemd = True
+        else:
+            is_pmemd = False
+
         # While the configuration parameters below share a lot of overlap,
         # we choose the keep them separate so that the user can modify options
         # for a given protocol in a single place.
@@ -325,6 +331,8 @@ class Amber(_process.Process):
             if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                # No periodic box.
                 self.addToConfig("  cut=999.,")             # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")            # Use vacuum generalised Born model.
             else:
                 self.addToConfig("  cut=8.0,")              # Non-bonded cut-off.
             self.addToConfig(" /")
@@ -372,6 +380,8 @@ class Amber(_process.Process):
             if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                    # No periodic box.
                 self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")                # Use vacuum generalised Born model.
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
 
@@ -488,6 +498,8 @@ class Amber(_process.Process):
             if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                    # No periodic box.
                 self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")                # Use vacuum generalised Born model.
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             if not self._protocol.isRestart():
@@ -551,6 +563,8 @@ class Amber(_process.Process):
             if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                    # No periodic box.
                 self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")                # Use vacuum generalised Born model.
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
@@ -638,6 +652,8 @@ class Amber(_process.Process):
             if not has_box or not self._has_water:
                 self.addToConfig("  ntb=0,")                    # No periodic box.
                 self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")                # Use vacuum generalised Born model.
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
