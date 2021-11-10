@@ -267,39 +267,51 @@ def test_ring_size_change(ligands):
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True)
 
 # Parameterise the function with a valid mapping.
-@pytest.mark.parametrize("mapping", [{
-    2 : 21,
-    4 : 23,
-    6 : 25,
-    8 : 27,
-    10 : 18,
-    1 : 19,
-    0 : 20,
-    11 : 16,
-    12 : 17,
-    13 : 14,
-    15 : 13,
-    18 : 11,
-    20 : 9,
-    22 : 8,
-    23 : 5,
-    16 : 6,
-    24 : 3,
-    26 : 1,
-    27 : 0,
-    9 : 28,
-    5 : 24,
-    3 : 22,
-    7 : 26,
-    14 : 15,
-    19 : 12,
-    21 : 10,
-    17 : 7,
-    25 : 4}])
-def test_grow_whole_ring(mapping):
+@pytest.mark.parametrize("ligands, mapping", [(("grow1", "grow2"),
+                                               {2 : 21,
+                                                4 : 23,
+                                                6 : 25,
+                                                8 : 27,
+                                                10 : 18,
+                                                1 : 19,
+                                                0 : 20,
+                                                11 : 16,
+                                                12 : 17,
+                                                13 : 14,
+                                                15 : 13,
+                                                18 : 11,
+                                                20 : 9,
+                                                22 : 8,
+                                                23 : 5,
+                                                16 : 6,
+                                                24 : 3,
+                                                26 : 1,
+                                                27 : 0,
+                                                9 : 28,
+                                                5 : 24,
+                                                3 : 22,
+                                                7 : 26,
+                                                14 : 15,
+                                                19 : 12,
+                                                21 : 10,
+                                                17 : 7,
+                                                25 : 4}),
+                                               (("grow3", "grow4"),
+                                               {1: 6,
+                                                2: 7,
+                                                3: 8,
+                                                4: 9,
+                                                5: 10,
+                                                6: 11,
+                                                14: 21,
+                                                13: 20,
+                                                12: 19,
+                                                11: 18,
+                                                10: 17})])
+def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/grow1*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/grow2*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[0]}*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[1]}*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]

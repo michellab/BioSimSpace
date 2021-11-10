@@ -1073,7 +1073,12 @@ def _is_ring_broken(conn0, conn1, idx0, idy0, idx1, idy1):
     # Both atoms are on a ring in one end state and at least one isn't in the other.
     if ((on_ring_idx0 & on_ring_idy0 & (conn0.connectionType(idx0, idy0) == 4))
         ^ (on_ring_idx1 & on_ring_idy1 & (conn1.connectionType(idx1, idy1) == 4))):
-        return True
+        # Make sure that the change isn't a result of ring growth, i.e. one of
+        # the atoms isn't in a ring in one end state, while its "on" ring status
+        # has changed between states.
+        if not ((in_ring_idx0 | in_ring_idx1) & (on_ring_idx0 ^ on_ring_idx1) or
+                (in_ring_idy0 | in_ring_idy1) & (on_ring_idy0 ^ on_ring_idy1)):
+            return True
 
     # Both atoms are in or on a ring in one state and at least one isn't in the other.
     if (((in_ring_idx0 | on_ring_idx0) & (in_ring_idy0 | on_ring_idy0) & (conn0.connectionType(idx0, idy0) == 3)) ^
