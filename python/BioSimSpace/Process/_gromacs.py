@@ -2448,14 +2448,17 @@ class Gromacs(_process.Process):
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Read the frame file.
-                new_system = _IO.readMolecules(["frame.gro", self._top_file])
+                new_system = _IO.readMolecules(["frame.gro", self._top_file],
+                                               property_map=self._property_map)
 
                 # Delete the frame file.
                 _os.remove("frame.gro")
 
                 # Copy the old system and update the coordinates.
                 old_system = self._system.copy()
-                old_system._updateCoordinates(new_system)
+                old_system._updateCoordinates(new_system,
+                                              self._property_map,
+                                              self._property_map)
 
                 # Update the box information in the original system.
                 try:
