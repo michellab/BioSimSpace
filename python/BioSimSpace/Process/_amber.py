@@ -694,11 +694,11 @@ class Amber(_process.Process):
 
         # Add the default arguments.
         self.setArg("-O", True)                             # Overwrite.
-        self.setArg("-i", "%s.cfg" % self._name)            # Input file.
-        self.setArg("-p", "%s.prm7" % self._name)           # Topology file.
-        self.setArg("-c", "%s.rst7" % self._name)           # Coordinate file.
-        self.setArg("-o", "stdout")                         # Redirect to stdout.
-        self.setArg("-r", "%s.crd" % self._name)            # Restart file.
+        self.setArg("-i", "%s.cfg"   % self._name)          # Input file.
+        self.setArg("-p", "%s.prm7"  % self._name)          # Topology file.
+        self.setArg("-c", "%s.rst7"  % self._name)          # Coordinate file.
+        self.setArg("-o", "%s.out"   % self._name)          # Redirect stdout to file.
+        self.setArg("-r", "%s.crd"   % self._name)          # Restart file.
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
         # Skip if the user has passed a custom protocol.
@@ -754,9 +754,11 @@ class Amber(_process.Process):
             # Start the timer.
             self._timer = _timeit.default_timer()
 
-            # Start the simulation.
+            # Start the simulation. Pass a null string for the stdout file
+            # since we've explicitly redirected AMBER output to file since
+            # pmemd doesn't write to standard output.
             self._process = _SireBase.Process.run(self._exe, args,
-                "%s.out"  % self._name, "%s.err"  % self._name)
+                "", "%s.err"  % self._name)
 
         # Watch the energy info file for changes.
         self._watcher = _Watcher(self)
