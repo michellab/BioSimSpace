@@ -666,10 +666,10 @@ class Somd(_process.Process):
             # coordinates back into the original system.
             old_system = self._system.copy()
 
-            old_system = self._updateCoordinates(old_system,
-                                                 new_system,
-                                                 self._property_map,
-                                                 self._property_map)
+            old_system = self._updateCoordinatesAndVelocities(old_system,
+                                                              new_system,
+                                                              self._property_map,
+                                                              self._property_map)
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -927,9 +927,9 @@ class Somd(_process.Process):
             if _os.path.isfile(file):
                 _os.remove(file)
 
-    def _updateCoordinates(self, old_system, new_system,
+    def _updateCoordinatesAndVelocities(self, old_system, new_system,
             property_map0={}, property_map1={}, is_lambda1=False):
-        """Update the coordinates of atoms in the system.
+        """Update the coordinates and velocities of atoms in the system.
 
            Parameters
            ----------
@@ -981,8 +981,12 @@ class Somd(_process.Process):
             raise TypeError("'is_lambda1' must be of type 'bool'.")
 
         # Work out the name of the "coordinates" property.
-        prop0 = property_map0.get("coordinates0", "coordinates")
-        prop1 = property_map1.get("coordinates1", "coordinates")
+        prop_c0 = property_map0.get("coordinates0", "coordinates")
+        prop_c1 = property_map1.get("coordinates1", "coordinates")
+
+        # Work out the name of the "velocity" property.
+        prop_v0 = property_map0.get("velocity", "coordinates")
+        prop_v1 = property_map1.get("velocity", "coordinates")
 
         # Loop over all molecules and update the coordinates.
         for idx, mol0 in enumerate(old_system.getMolecules()):
@@ -1008,21 +1012,33 @@ class Somd(_process.Process):
             # Check whether the molecule is perturbable.
             if mol0.hasProperty("is_perturbable"):
                 if is_lambda1:
-                    prop = "coordinates1"
+                    prop_c = "coordinates1"
                 else:
-                    prop = "coordinates0"
+                    prop_c = "coordinates0"
             else:
-                prop = prop0
+                prop_c = prop_c0
 
             # Try to update the coordinates property.
             try:
-                mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
+                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
             except Exception as e:
                 msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
                 if _isVerbose():
                     raise _IncompatibleError(msg) from e
                 else:
                     raise _IncompatibleError(msg) from None
+
+            # Try to update the velocity property. This isn't always present so
+            # only try this when the passed system contains the property.
+            if mol1.hasProperty(prop_v1):
+                try:
+                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
+                except Exception as e:
+                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
 
             # Update the molecule in the original system.
             old_system._sire_object.update(mol0)

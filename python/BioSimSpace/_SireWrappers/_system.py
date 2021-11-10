@@ -1496,9 +1496,9 @@ class System(_SireWrapper):
         # Return the renumbered molecules.
         return new_molecules
 
-    def _updateCoordinates(self, system, property_map0={}, property_map1={},
+    def _updateCoordinatesAndVelocities(self, system, property_map0={}, property_map1={},
             is_lambda1=False):
-        """Update the coordinates of atoms in the system.
+        """Update the coordinates and velocities of atoms in the system.
 
            Parameters
            ----------
@@ -1549,8 +1549,12 @@ class System(_SireWrapper):
                                          "Expected '%d', found '%d'" % (num_atoms0, num_atoms1))
 
         # Work out the name of the "coordinates" property.
-        prop0 = property_map0.get("coordinates0", "coordinates")
-        prop1 = property_map1.get("coordinates1", "coordinates")
+        prop_c0 = property_map0.get("coordinates0", "coordinates")
+        prop_c1 = property_map1.get("coordinates1", "coordinates")
+
+        # Work out the name of the "velocity" property.
+        prop_v0 = property_map0.get("velocity", "coordinates")
+        prop_v1 = property_map1.get("velocity", "coordinates")
 
         # Loop over all molecules and update the coordinates.
         for idx in range(0, self.nMolecules()):
@@ -1561,21 +1565,33 @@ class System(_SireWrapper):
             # Check whether the molecule is perturbable.
             if mol0.hasProperty("is_perturbable"):
                 if is_lambda1:
-                    prop = "coordinates1"
+                    prop_c = "coordinates1"
                 else:
-                    prop = "coordinates0"
+                    prop_c = "coordinates0"
             else:
-                prop = prop0
+                prop_c = prop_c0
 
             # Try to update the coordinates property.
             try:
-                mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
+                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
             except Exception as e:
                 msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
                 if _isVerbose():
                     raise _IncompatibleError(msg) from e
                 else:
                     raise _IncompatibleError(msg) from None
+
+            # Try to update the velocity property. This isn't always present so
+            # only try this when the passed system contains the property.
+            if mol1.hasProperty(prop_v1):
+                try:
+                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
+                except Exception as e:
+                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
 
             # Update the molecule in the original system.
             self._sire_object.update(mol0)
