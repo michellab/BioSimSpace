@@ -1119,11 +1119,11 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     perturbation_type = perturbation_type.lower().replace(" ", "")
 
     allowed_perturbation_types = ["full",
-                                    "discharge_soft",
-                                    "vanish_soft",
-                                    "flip",
-                                    "grow_soft",
-                                    "charge_soft"]
+                                  "discharge_soft",
+                                  "vanish_soft",
+                                  "flip",
+                                  "grow_soft",
+                                  "charge_soft"]
 
     if perturbation_type not in allowed_perturbation_types:
         raise ValueError(f"'perturbation_type' must be one of: {allowed_perturbation_types}")
