@@ -1142,7 +1142,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     # "ambertype", "LJ", or "charge".
     for atom in mol.atoms():
         if atom.property("ambertype0") != atom.property("ambertype1") or \
-            atom.property("LJ0") != atom.property("LJ1")               or \
+            atom.property("LJ0") != atom.property("LJ1")              or \
             atom.property("charge0") != atom.property("charge1"):
             pert_idxs.append(atom.index())
 
