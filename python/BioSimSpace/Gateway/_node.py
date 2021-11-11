@@ -74,6 +74,19 @@ _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
 _unit_types = [_Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
 
+class Parser(_argparse.ArgumentParser):
+    # Pass the message straight through to the exit method.
+    def error(self, message):
+        return self.exit(status=1, message=message)
+
+    # Print the full help text, then the message, then exit.
+    def exit(self, status=0, message=None):
+        if message is not None:
+            self.print_help()
+            print("\nArgument parser failed with the following message:")
+            message = "   " + message + "\n"
+        return super().exit(status, message)
+
 class CwlAction(_argparse.Action):
     """Helper class to export CWL wrappers from Node metadata."""
 
@@ -314,7 +327,7 @@ class Node():
             description = self._generate_description()
 
             # Create the parser.
-            self._parser = _argparse.ArgumentParser(description=description,
+            self._parser = Parser(description=description,
                 formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
                 config_file_parser_class=_argparse.YAMLConfigFileParser,
                 add_config_file_help=False)
@@ -1156,7 +1169,8 @@ class Node():
         # Command-line.
         else:
             # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_known_args()[0])
+            args = vars(self._parser.parse_known_args(
+                args=None if _sys.argv[1:] else ['--help'])[0])
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
