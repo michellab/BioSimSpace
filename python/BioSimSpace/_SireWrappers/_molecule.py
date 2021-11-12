@@ -30,6 +30,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Molecule"]
 
 from pytest import approx as _approx
+from warnings import warn as _warn
 
 import os.path as _path
 
@@ -1685,6 +1686,34 @@ class Molecule(_SireWrapper):
             # Extract the non-dummy atoms from the molecule and return, along
             # with the indices of the dummy atoms.
             return mol.extract(non_dummies), dummies
+
+    def _getPerturbationIndices(self):
+        """Return the indices of the atoms that are perturbed, i.e. those
+           that change one of the following properties: "ambertype", "LJ",
+           or "charge".
+
+           Returns
+           -------
+
+           idxs : [int]
+               The indices of the atoms that are perturbed.
+        """
+
+        idxs = []
+
+        if not self._is_perturbable:
+            _warn("You are trying to get the perturbation indices for a "
+                  "molecule that isn't perturbable!")
+            return idxs
+
+        for idx, atom in enumerate(self.getAtoms()):
+            atom = atom._sire_object
+            if atom.property("ambertype0") != atom.property("ambertype1") or \
+               atom.property("LJ0") != atom.property("LJ1")               or \
+               atom.property("charge0") != atom.property("charge1"):
+               idxs.append(idx)
+
+        return idxs
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
