@@ -37,6 +37,7 @@ import os.path as _path
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import MM as _SireMM
+from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 from Sire import Units as _SireUnits
@@ -1253,6 +1254,64 @@ class Molecule(_SireWrapper):
 
             # Finally, commit the changes to the internal object.
             self._sire_object = edit_mol.commit()
+
+    def translate(self, vector, property_map={}):
+        """Translate each molecule in the container.
+
+           Parameters
+           ----------
+
+           vector : [:class:`Length <BioSimSpace.Types.Length>`]
+               The translation vector in Angstroms.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Convert tuple to a list.
+        if type(vector) is tuple:
+            vector = list(vector)
+
+        # Validate input.
+        if type(vector) is list:
+            vec = []
+            for x in vector:
+                if type(x) is int:
+                    vec.append(float(x))
+                elif type(x) is float:
+                    vec.append(x)
+                elif type(x) is _Length:
+                    vec.append(x.angstroms().magnitude())
+                else:
+                    raise TypeError("'vector' must contain 'int', 'float', or "
+                                    "'BioSimSpace.Types.Length' types only!")
+        else:
+            raise TypeError("'vector' must be of type 'list' or 'tuple'")
+
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        # Translate the molecule.
+        # Copy the property map.
+        _property_map = property_map.copy()
+
+        # If this is a perturbable molecule then translate both lambda end states.
+        if self._is_perturbable:
+            # lambda = 0
+            _property_map["coordinates"] = "coordinates0"
+            mol = self._sire_object.move().translate(_SireMaths.Vector(vec), _property_map).commit()
+
+            # lambda = 1
+            _property_map["coordinates"] = "coordinates1"
+            mol = mol.move().translate(_SireMaths.Vector(vec), _property_map).commit()
+
+        else:
+            mol = self._sire_object.move().translate(_SireMaths.Vector(vec), _property_map).commit()
+
+        # Update the internal molecule object.
+        self._sire_object = mol
 
     def repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into

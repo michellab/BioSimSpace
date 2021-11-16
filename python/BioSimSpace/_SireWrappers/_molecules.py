@@ -29,7 +29,6 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecules"]
 
-from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
@@ -329,16 +328,9 @@ class Molecules(_SireWrapper):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the container.
-        for n in self._sire_object.molNums():
-            # Copy the property map.
-            _property_map = property_map.copy()
-
-            # If this is a perturbable molecule, use the coordinates at lambda = 0.
-            if self._sire_object.molecule(n).hasProperty("is_perturbable"):
-                _property_map["coordinates"] = "coordinates0"
-
-            mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
-            self._sire_object.update(mol)
+        for mol in self:
+            mol.translate(vector, property_map)
+            self._sire_object.update(mol._sire_object)
 
     def search(self, query):
         """Search the molecules for atoms and residues. Search results will be

@@ -1066,15 +1066,8 @@ class System(_SireWrapper):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the system.
-        for n in self._sire_object.molNums():
-            # Copy the property map.
-            _property_map = property_map.copy()
-
-            # If this is a perturbable molecule, use the coordinates at lambda = 0.
-            if self._sire_object.molecule(n).hasProperty("is_perturbable"):
-                _property_map["coordinates"] = "coordinates0"
-
-            mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
+        for mol in self.getMolecules():
+            mol.translate(vector, property_map)
             self._sire_object.update(mol)
 
     def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True,
