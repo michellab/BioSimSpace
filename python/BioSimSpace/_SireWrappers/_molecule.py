@@ -81,6 +81,8 @@ class Molecule(_SireWrapper):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
+                self._molecule0, _ = self._extractMolecule()
+                self._molecule1, _ = self._extractMolecule(is_lambda1=True)
 
         # Another BioSimSpace Molecule object.
         elif type(molecule) is Molecule:
@@ -1684,9 +1686,10 @@ class Molecule(_SireWrapper):
         # Return the updated molecule.
         return Molecule(mol.commit())
 
-    def _toAmberMolecule(self, property_map={}, is_lambda1=False):
-        """Internal function to convert a merged molecule to the format required
-           by an AMBER free-energy perturbation topology.
+    def _extractMolecule(self, property_map={}, is_lambda1=False):
+        """Internal function to extract an "original" molecule from a merged
+           molecule, i.e. one of the original molecules that was used to
+           create the merge.
 
            Parameters
            ----------
