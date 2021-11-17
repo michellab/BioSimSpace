@@ -1068,7 +1068,7 @@ class System(_SireWrapper):
         # Translate each of the molecules in the system.
         for mol in self.getMolecules():
             mol.translate(vector, property_map)
-            self._sire_object.update(mol)
+            self._sire_object.update(mol._sire_object)
 
     def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True,
             allow_zero_matches=False, property_map={}):
