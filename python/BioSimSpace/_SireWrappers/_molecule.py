@@ -1288,6 +1288,44 @@ class Molecule(_SireWrapper):
 
         return property_map
 
+    def _renumberConstituents(self, residue_offset, atom_offset):
+        """Internal function to renumber the constituent residues and atoms when
+           this molecule is added to a container.
+
+           Parameters
+           ----------
+
+           residue_offset : int
+               The offset to add to all residue numbers.
+
+           residue_offset : int
+               The offset to add to all atom numbers.
+        """
+        if type(residue_offset) is not int:
+            raise TypeError("'residue_offset' must be of type 'int'.")
+        if residue_offset < 0:
+            raise ValueError("'residue_offset' must be greater than 0.")
+        if type(atom_offset) is not int:
+            raise TypeError("'atom_offset' must be of type 'int'.")
+        if atom_offset < 0:
+            raise ValueError("'atom_offset' must be greater than 0.")
+
+        # Make the molecule editable.
+        edit_mol = self._sire_object.edit()
+
+        # Renumber the residues.
+        for idx, res in enumerate(edit_mol.residues()):
+            num = _SireMol.ResNum(idx + residue_offset)
+            edit_mol = edit_mol.residue(res.index()).renumber(num).molecule()
+
+        # Renumber the atoms.
+        for idx, atom in enumerate(edit_mol.atoms()):
+            num = _SireMol.AtomNum(idx + atom_offset)
+            edit_mol = edit_mol.atom(atom.index()).renumber(num).molecule()
+
+        # Commit the changes and store.
+        self._sire_object = edit_mol.commit()
+
     def _getPropertyMap1(self):
         """Generate a property map for the lambda = 1 state of the merged molecule."""
 
