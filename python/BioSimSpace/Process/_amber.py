@@ -508,10 +508,11 @@ class Amber(_process.Process):
 
                 # Convert the squashed system coordinates into merged system coordinates.
                 mol_idx = 0
+                molecules = []
                 for i, molecule in enumerate(old_system.getMolecules()):
                     if not molecule._is_perturbable:
                         # Just copy the molecule.
-                        molecule = _Molecule(old_system_squashed[mol_idx])
+                        molecules.append(old_system_squashed[mol_idx].copy())
                         mol_idx += 1
                     else:
                         # Extract the non-dummy atom coordinates and velocities from the squashed system.
@@ -542,8 +543,9 @@ class Amber(_process.Process):
                             atom.setProperty("coordinates0", coordinates)
                             editor = atom.setProperty("coordinates1", coordinates).molecule()
                         molecule._sire_object = editor.commit()
+                        molecules.append(molecule)
                         mol_idx += 2
-                    old_system.updateMolecule(i, molecule)
+                old_system = _System(molecules)
             else:
                 old_system._updateCoordinates(new_system,
                                               self._property_map,
