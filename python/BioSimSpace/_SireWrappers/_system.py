@@ -586,13 +586,22 @@ class System(_SireWrapper):
         # Update each of the molecules.
         # TODO: Currently the Sire.System.update method doesn't work correctly
         # for certain changes to the Molecule molInfo object. As such, we remove
-        # the old molecule from the system, then add the new one in.
+        # the old molecule from the system, then add the new one in. Make sure to
+        # operate on a copy of the system since the original will be destroyed if
+        # an exception is thrown.
         for mol in molecules:
-            try:
-                self._sire_object.update(mol._sire_object)
-            except:
-                self._sire_object.remove(mol._sire_object.number())
-                self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            # Only try to update the molecule if it exists in the system.
+            if _SireMol.MolNum(mol.number()) in self._mol_nums:
+                try:
+                    system = self.copy()
+                    system._sire_object.update(mol._sire_object)
+                except:
+                    system = self.copy()
+                    system._sire_object.remove(mol._sire_object.number())
+                    system._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+
+        # Udpate the Sire object.
+        self._sire_object = system._sire_object
 
         # Reset the index mappings.
         self._reset_mappings()
