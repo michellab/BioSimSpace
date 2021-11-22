@@ -288,7 +288,7 @@ class ConfigFactory:
 
                     protocol_dict["ntr"] = 1
                     protocol_dict["restraint_wt"] = 10
-                    protocol_dict["restraintmask"] = restraint_mask
+                    protocol_dict["restraintmask"] = f"\"{restraint_mask}\""
 
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
