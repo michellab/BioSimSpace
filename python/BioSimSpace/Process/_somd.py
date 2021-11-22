@@ -222,18 +222,7 @@ class Somd(_process.Process):
                 self._input_files.append(self._pert_file)
 
                 # Remove the perturbable molecule.
-                system._sire_object.remove(pert_mol.number())
-
-                # Recreate the system, putting the perturbable molecule with
-                # renamed properties first.
-                updated_system = _System(pert_mol) + _System(system)
-
-                # Copy across all of the properties from the original system.
-                for prop in system._sire_object.propertyKeys():
-                    updated_system._sire_object.setProperty(prop, system._sire_object.property(prop))
-
-                # Copy the updated system object across.
-                system = updated_system
+                system.updateMolecules(pert_mol)
 
             else:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
@@ -559,7 +548,10 @@ class Somd(_process.Process):
             self.addToConfig("lambda array = %s" \
                 % ", ".join([str(x) for x in self._protocol.getLambdaValues()]))
             self.addToConfig("lambda_val = %s" \
-                % self._protocol.getLambda())                               # The value of lambda.
+                % self._protocol.getLambda())                                       # The value of lambda.
+
+            res_num = self._system.search("resname LIG")[0]._sire_object.number().value()
+            self.addToConfig("perturbed residue number = %s" % res_num)             # Perturbed residue number.
 
         else:
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
@@ -1053,7 +1045,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         Parameters
         ----------
 
-        molecule : BioSimSpace._SireWrappers.Molecule
+        molecule : :class:`System <BioSimSpace._SireWrappers.Molecule>`
             The perturbable molecule.
 
         filename : str
@@ -1088,7 +1080,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         Returns
         -------
 
-        molecule : Sire.Mol.Molecule
+        molecule : :class:`System <BioSimSpace._SireWrappers.Molecule>`
             The molecule with properties corresponding to the lamda = 0 state.
     """
     if type(molecule) is not _Molecule:
@@ -2666,7 +2658,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             mol = mol.removeProperty(prop[:-1] + "1").molecule()
 
     # Return the updated molecule.
-    return mol.commit()
+    return _Molecule(mol.commit())
 
 def _has_pert_atom(idxs, pert_idxs):
     """Internal function to check whether a potential contains perturbed atoms.
