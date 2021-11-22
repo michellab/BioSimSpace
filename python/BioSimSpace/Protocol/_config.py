@@ -264,7 +264,7 @@ class ConfigFactory:
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = self._amber_mask_from_indices(atom_idxs)
+                    restraint_mask = self._amber_mask_from_indices([i + 1 for i in atom_idxs])
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:
