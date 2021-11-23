@@ -208,7 +208,7 @@ class ConfigFactory:
             "ntpr": self._report_interval,          # Interval between reporting energies.
             "ntwr": self._restart_interval,         # Interval between saving restart files.
             "ntwx": self._restart_interval,         # Trajectory sampling frequency.
-            "ntxo": 1,                              # Output coordinates in ASCII.
+            "ntxo": 2,                              # Output coordinates as NetCDF.
             "irest": int(self._restart),            # Whether to restart.
         }
 
@@ -297,6 +297,10 @@ class ConfigFactory:
                 if self._has_box and self._has_water:
                     protocol_dict["ntp"] = 1        # Isotropic pressure scaling.
                     protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().magnitude():.5f}"  # Pressure in bar.
+                    if isinstance(self.protocol, _Protocol.Equilibration):
+                        protocol_dict["barostat"] = 1         # Berendsen barostat.
+                    else:
+                        protocol_dict["barostat"] = 2         # Monte Carlo barostat.
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -319,8 +323,8 @@ class ConfigFactory:
             else:
                 temp = self.protocol.getTemperature().kelvin().magnitude()
                 if not self._restart:
-                    protocol_dict["tempi"] = f"{temp:.2f}"  # Initial temperature.
-                protocol_dict["temp0"] = f"{temp:.2f}"      # Final temperature.
+                    protocol_dict["tempi"] = f"{temp:.2f}"   # Initial temperature.
+                protocol_dict["temp0"] = f"{temp:.2f}"       # Final temperature.
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
@@ -332,6 +336,7 @@ class ConfigFactory:
             protocol_dict["mbar_states"] = len(protocol)                            # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)                      # Lambda values.
             protocol_dict["clambda"] = self.protocol.getLambda()                    # Current lambda value.
+            protocol_dict["logdvdl"] = 1                                            # Output dVdl
             protocol_dict = {**protocol_dict, **self._generate_amber_fep_masks()}   # Atom masks.
 
         # Put everything together in a line-by-line format.
