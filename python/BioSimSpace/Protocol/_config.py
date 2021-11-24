@@ -331,12 +331,13 @@ class ConfigFactory:
             protocol_dict["icfe"] = 1                                               # Free energy mode.
             protocol_dict["ifsc"] = 1                                               # Use softcore potentials.
             protocol_dict["ntf"] = 1                                                # Remove SHAKE constraints.
-            protocol_dict["ifmbar"] = 1                                             # Calculate MBAR energies.
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["mbar_states"] = len(protocol)                            # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)                      # Lambda values.
             protocol_dict["clambda"] = self.protocol.getLambda()                    # Current lambda value.
-            protocol_dict["logdvdl"] = 1                                            # Output dVdl
+            if isinstance(self.protocol, _Protocol.Production):
+                protocol_dict["ifmbar"] = 1                                         # Calculate MBAR energies.
+                protocol_dict["logdvdl"] = 1                                        # Output dVdl
             protocol_dict = {**protocol_dict, **self._generate_amber_fep_masks()}   # Atom masks.
 
         # Put everything together in a line-by-line format.
@@ -540,7 +541,7 @@ class ConfigFactory:
             protocol_dict["ncycles"] = ncycles                                  # The number of SOMD cycles.
             protocol_dict["nmoves"] = report_interval                           # The number of moves per cycle.
             protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
-            protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = int(buffer_freq)  # Buffering frequency.
             timestep = self.protocol.getTimeStep().femtoseconds().magnitude()
             protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
 
