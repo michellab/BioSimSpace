@@ -49,6 +49,8 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
                  pressure=_Types.Pressure(1, "atmosphere"),
                  report_interval=200000,
                  restart_interval=20000,
+                 first_step=0,
+                 restart=False,
                  perturbation_type="full"
                 ):
         """Constructor.
@@ -89,6 +91,12 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
            restart_interval : int
                The frequency at which restart configurations and trajectory
 
+           first_step : int
+               The initial time step (for restart simulations).
+
+           restart : bool
+               Whether this is a continuation of a previous simulation.
+
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 "full" : A full perturbation of all terms (default option).
@@ -109,7 +117,9 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
                             temperature=temperature,
                             pressure=pressure,
                             report_interval=report_interval,
-                            restart_interval=restart_interval)
+                            restart_interval=restart_interval,
+                            first_step=first_step,
+                            restart=restart)
 
         _FreeEnergyMixin.__init__(self,
                                   lam=lam,
@@ -138,165 +148,3 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
                     "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d)"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                         self._temperature, self._pressure, self._report_interval, self._restart_interval)
-
-    def getTimeStep(self):
-        """Return the time step.
-
-           Returns
-           -------
-
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
-        """
-        return self._timestep
-
-    def setTimeStep(self, timestep):
-        """Set the time step.
-
-           Parameters
-           ----------
-
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
-        """
-        if type(timestep) is _Types.Time:
-            self._timestep = timestep
-        else:
-            raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
-
-    def getRunTime(self):
-        """Return the running time.
-
-           Returns
-           -------
-
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
-        """
-        return self._runtime
-
-    def setRunTime(self, runtime):
-        """Set the running time.
-
-           Parameters
-           ----------
-
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
-        """
-        if type(runtime) is _Types.Time:
-            self._runtime = runtime
-        else:
-            raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
-
-    def getTemperature(self):
-        """Return temperature.
-
-           Returns
-           -------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
-        """
-        return self._temperature
-
-    def setTemperature(self, temperature):
-        """Set the temperature.
-
-           Parameters
-           ----------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
-        """
-        if type(temperature) is _Types.Temperature:
-            self._temperature = temperature
-        else:
-            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
-
-    def getPressure(self):
-        """Return the pressure.
-
-           Returns
-           -------
-
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
-        """
-        return self._pressure
-
-    def setPressure(self, pressure):
-        """Set the pressure.
-
-           Parameters
-           ----------
-
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
-        """
-        if type(pressure) is _Types.Pressure:
-            self._pressure = pressure
-        else:
-            raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
-
-    def getReportInterval(self):
-        """Return the interval between reporting statistics. (In integration steps.)
-
-           Returns
-           -------
-
-           report_interval : int
-               The number of integration steps between reporting statistics.
-        """
-        return self._report_interval
-
-    def setReportInterval(self, report_interval):
-        """Set the interval at which statistics are reported. (In integration steps.)
-
-           Parameters
-           ----------
-
-           report_interval : int
-               The number of integration steps between reporting statistics.
-        """
-        if type(report_interval) is not int:
-            raise TypeError("'report_interval' must be of type 'int'")
-
-        if report_interval <= 0:
-            _warnings.warn("'report_interval' must be positive. Using default (100).")
-            report_interval = 100
-
-        self._report_interval = report_interval
-
-    def getRestartInterval(self):
-        """Return the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
-
-           Returns
-           -------
-
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
-        """
-        return self._restart_interval
-
-    def setRestartInterval(self, restart_interval):
-        """Set the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
-
-           Parameters
-           ----------
-
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
-        """
-        if type(restart_interval) is not int:
-            raise TypeError("'restart_interval' must be of type 'int'")
-
-        if restart_interval <= 0:
-            _warnings.warn("'restart_interval' must be positive. Using default (500).")
-            restart_interval = 500
-
-        self._restart_interval = restart_interval
