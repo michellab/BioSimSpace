@@ -315,12 +315,12 @@ class GAFF(_protocol.Protocol):
     """A class for handling protocols for the GAFF force field model."""
 
     # A list of supported charge methods.
-    _charge_methods = [ "RESP",
-                        "CM2",
-                        "MUL",
-                        "BCC",
-                        "ESP",
-                        "GAS" ]
+    _charge_methods = ["RESP",
+                       "CM2",
+                       "MUL",
+                       "BCC",
+                       "ESP",
+                       "GAS"]
 
     def __init__(self, charge_method="BCC", net_charge=None, property_map={}):
         """Constructor.
@@ -350,7 +350,7 @@ class GAFF(_protocol.Protocol):
         # Check that the charge method is valid.
         if not charge_method in self._charge_methods:
             raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
-                % (charge_method, self.charge_methods))
+                % (charge_method, self._charge_methods))
 
         if net_charge is not None:
             # Get the magnitude of the charge.

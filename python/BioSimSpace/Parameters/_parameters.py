@@ -510,7 +510,7 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
+def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -522,6 +522,10 @@ def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
+
+       charge_method : str
+               The method to use when calculating atomic charges:
+               "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
 
        work_dir : str
            The working directory for the process.
@@ -566,13 +570,15 @@ def gaff(molecule, work_dir=None, net_charge=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF(net_charge=net_charge, property_map=property_map)
+    protocol = _Protocol.GAFF(net_charge=net_charge,
+                              charge_method=charge_method,
+                              property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
+def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", property_map={}):
     """Parameterise using the gaff force field.
 
        Parameters
@@ -584,6 +590,10 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
 
        net_charge : int, :class:`Charge <BioSimSpace.Types.Charge>`
            The net charge on the molecule.
+
+       charge_method : str
+               The method to use when calculating atomic charges:
+               "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
 
        work_dir : str
            The working directory for the process.
@@ -631,7 +641,9 @@ def gaff2(molecule, work_dir=None, net_charge=None, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF2(net_charge=net_charge, property_map=property_map)
+    protocol = _Protocol.GAFF2(net_charge=net_charge,
+                               charge_method=charge_method,
+                               property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
