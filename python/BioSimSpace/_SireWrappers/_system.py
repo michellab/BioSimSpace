@@ -696,18 +696,49 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def setHydrogenMass(self, mass=4):
-        """Sets the mass of all hydrogens to a particular value. Useful for hydrogen mass repartitioning.
+    def repartitionHydrogenMass(self, factor=3, ignore_water=False, property_map={}):
+        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
+           the hydrogen atoms. This allows the use of larger simulation
+           integration time steps without encountering instabilities related
+           to high-frequency hydrogen motion.
 
            Parameters
            ----------
 
-           mass : float
-               The new hydrogen mass in Da.
+           factor : float
+               The repartioning scale factor. Hydrogen masses are scaled by this
+               amount.
+
+           ignore_water : bool
+               Whether to ignore water molecules.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
+        # Convert int to float.
+        if type(factor) is int:
+            factor = float(factor)
+
+        # Check scale factor.
+        if type(factor) is not float:
+            raise TypeError("'factor' must be of type 'float'.")
+        if factor <= 0:
+            raise ValueError("'factor' must be positive!")
+
+        # Check water skip flag.
+        if type(ignore_water) is not bool:
+            raise TypeError("'ignore_water' must be of type 'bool'.")
+
+        # Check property map.
+        if type(property_map) is not dict:
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        # Repartion hydrogen masses for all molecules in this system.
         for i, molecule in enumerate(self.getMolecules()):
-            molecule.setHydrogenMass(mass)
+            molecule.repartitionHydrogenMass(factor, ignore_water, property_map)
             self.updateMolecule(i, molecule)
 
     def search(self, query, property_map={}):
