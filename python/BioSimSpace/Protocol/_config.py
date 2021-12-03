@@ -319,6 +319,8 @@ class ConfigFactory:
                         f"&wt TYPE='TEMP0', istep1=0, istep2={self._steps}, value1={temp0:.2f}, value2={temp1:.2f} /"
                     ]
                 else:
+                    if not self._restart:
+                        protocol_dict["tempi"] = f"{temp0:.2f}"  # Initial temperature.
                     protocol_dict["temp0"] = f"{temp0:.2f}"  # Constant temperature.
             else:
                 temp = self.protocol.getTemperature().kelvin().magnitude()
