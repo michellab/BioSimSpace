@@ -171,7 +171,7 @@ class Gromacs(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if self._system.nPerturbableMolecules() == 0:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
@@ -516,7 +516,7 @@ class Gromacs(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         # Minimisation trajectories have a single frame, i.e. the final state.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             time = 0*_Units.Time.nanosecond
         # Get the current simulation time.
         else:
@@ -742,7 +742,7 @@ class Gromacs(_process.Process):
                The current simulation time in nanoseconds.
         """
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         else:
