@@ -80,7 +80,7 @@ except:
     _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
-        links_file=None, property_map={}):
+        links_file=None, property_map={}, n_edges_forced=None):
     """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
        Parameters
@@ -122,6 +122,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
            with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       n_edges_forced : int
+           A string that forces the number of edges that should be used in
+           the perturbation network. Must be in the range 
+           [1 .. (len(molecules)**2-len(molecules))/2]. 
+           In cases where n_edges_forced > the number of edges suggested by 
+           LOMAP, BSS will add the top scoring n edges parsed from the LOMAP 
+           output file and add them to the network. Conversely if 
+           n_edges_forced < the number of edges suggested by LOMAP, BSS will 
+           remove the bottom n edges parsed from the LOMAP output file.
+
 
        Returns
        -------
@@ -215,6 +226,15 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         else:
             raise IOError(f"The links file doesn't exist: {links_file}")
+
+    # Validate the number of edges parameter.
+    if type(n_edges_forced) is not int:
+    	raise TypeError("'n_edges_forced' must be of type 'int'")
+
+    n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
+
+    if not 0 < n_edges_forced < n_edges_fully_connected:
+    	raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
