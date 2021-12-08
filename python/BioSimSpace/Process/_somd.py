@@ -2422,7 +2422,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             file.write("        atom2          %s\n" % mol.atom(idx2).name().value())
             file.write("        atom3          %s\n" % mol.atom(idx3).name().value())
             file.write("        initial_form  ")
-            for term in sorted(amber_dihedral0.terms(),
+            for term in sorted(amber_dihedral.terms(),
                                key=lambda t: (t.k(), t.periodicity(), t.phase())):
                 if perturbation_type in ["discharge_soft", "vanish_soft", "flip", "full"]:
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
@@ -2430,7 +2430,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
                     file.write(" %5.4f %.1f %7.6f" % (term.k(), term.periodicity(), term.phase()))
             file.write("\n")
             file.write("        final_form    ")
-            for term in sorted(amber_dihedral1.terms(),
+            for term in sorted(amber_dihedral.terms(),
                                key=lambda t: (t.k(), t.periodicity(), t.phase())):
                 if perturbation_type in ["discharge_soft", "vanish_soft"]:
                     file.write(" %5.4f %.1f %7.6f" % (0.0, term.periodicity(), term.phase()))
