@@ -1,5 +1,6 @@
 import BioSimSpace as BSS
 
+import filecmp
 import pytest
 import os
 import warnings as _warnings
@@ -35,6 +36,23 @@ def test_production(system):
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
+@pytest.mark.parametrize("merged, pert",
+    [("test/io/morphs/merged01.s3", "test/io/morphs/morph01.pert")])
+def test_pert_file(merged, pert):
+    """Test the perturbation file writer."""
+
+    # Stream the molecule.
+    mol = BSS.Stream.load(merged)
+
+    # Create the perturbation file.
+    BSS.Process._somd._to_pert_file(mol)
+
+    # Check that the files are the same.
+    assert filecmp.cmp("MORPH.pert", pert)
+
+    # Remove the temporary perturbation file.
+    os.remove("MORPH.pert")
 
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
