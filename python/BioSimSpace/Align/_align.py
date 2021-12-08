@@ -125,16 +125,15 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
        n_edges_forced : int
            An integer that forces the number of edges that should be used in
-           the perturbation network. Must be in the range 
-           [1 .. (len(molecules)**2-len(molecules))/2]. 
-           In cases where n_edges_forced > the number of edges suggested by 
-           LOMAP, BSS will add the top scoring n edges parsed from the LOMAP 
-           output file and add them to the network. Conversely if 
-           n_edges_forced < the number of edges suggested by LOMAP, BSS will 
-           remove the bottom n edges parsed from the LOMAP output file. This 
-           last option is discouraged as it can cause network cycle breakage 
-           and disconnecting of ligands/clusters from the network.
-
+           the perturbation network. Must be in the range
+           [1 .. (len(molecules)**2-len(molecules))/2].
+           In cases where n_edges_forced > the number of edges suggested by
+           LOMAP, BioSimSpace will add the top scoring n edges parsed from the
+           LOMAP output file and add them to the network. Conversely if
+           n_edges_forced < the number of edges suggested by LOMAP, BioSimSpace
+           will remove the bottom n edges parsed from the LOMAP output file.
+           This last option is discouraged as it can cause network cycle
+           breakage and disconnecting of ligands/clusters from the network.
 
        Returns
        -------
@@ -332,7 +331,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 nodes.append(mol1)
                 scores.append(score)
 
-            # also collect the excluded edges in case we need to add more at a later stage.
+            # Also collect the excluded edges in case we need to add more at a later stage.
             elif row[7].strip() == "No":
                 # Extract the nodes (molecules) connected by the edge.
                 mol0 = int(row[2].rsplit(".")[0].rsplit("_")[0])
@@ -341,19 +340,19 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 # Extract the score and convert to a float.
                 score = float(row[4])
 
-                # Update the list while checking that the inverse edge is not already in 
+                # Update the list while checking that the inverse edge is not already in
                 # the network.
                 if not (mol1, mol0) in edges:
                     edges_excluded.append((mol0, mol1, score))
 
-    # If the user has specified a forced number of edges, adjust the network 
+    # If the user has specified a forced number of edges, adjust the network
     # to match the query. We have three situations to deal with.
     if n_edges_forced:
 
         # sort the list of excluded edges by LOMAP score.
         edges_excluded.sort(key=lambda x: x[2], reverse=True)
 
-        # 1) The network already contains the specified number of edges. 
+        # 1) The network already contains the specified number of edges.
         if  len(edges) == n_edges_forced:
             # Return the network as is.
             print(f"LOMAP already suggested the user-specified number of edges ({len(edges)}).")
@@ -364,14 +363,14 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             n_to_add = n_edges_forced-len(edges)
             print(f"Adding {n_to_add} edges to the LOMAP network.")
 
-            # get the top n excluded edges.
+            # Get the top n excluded edges.
             for edge in edges_excluded[:n_to_add]:
                 edges.append((edge[0], edge[1]))
                 nodes.append(edge[0])
                 nodes.append(edge[1])
-                scores.append(edge[2])                
+                scores.append(edge[2])
 
-        # 3) The network contains more edges than the specified number. This is not 
+        # 3) The network contains more edges than the specified number. This is not
         # recommended as this can cause breaking of network cycles or disconnecting nodes.
         elif len(edges) > n_edges_forced:
             # We need to remove edges from the network to match the queried number.
@@ -380,10 +379,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 +" breaking network cycles or disconnecting ligands/ clusters.")
             lomap_network = list(zip(edges, scores))
 
-            # sort the network by LOMAP-score.
+            # Sort the network by LOMAP-score.
             lomap_network.sort(key=lambda x: x[1])
 
-            # create the new network by keeping the required number of top edges.
+            # Create the new network by keeping the required number of top edges.
             edges = []
             nodes = []
             scores = []
@@ -392,7 +391,6 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 nodes.append(edge[0][0])
                 nodes.append(edge[0][1])
                 scores.append(edge[1])
-
 
     # Convert nodes to a set to remove duplicates.
     nodes = set(nodes)
