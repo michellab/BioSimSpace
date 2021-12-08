@@ -2350,7 +2350,8 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         # First create records for the impropers that are unique to lambda = 0 and 1.
 
         # lambda = 0.
-        for idx in impropers0_unique_idx.values():
+        for idx in sorted(impropers0_unique_idx.values(),
+                          key=lambda idx: sort_dihedrals(impropers0, idx)):
             # Get the improper potential.
             improper = impropers0[idx]
 
@@ -2400,7 +2401,8 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             file.write("    endimproper\n")
 
         # lambda = 1.
-        for idx in impropers1_unique_idx.values():
+        for idx in sorted(impropers1_unique_idx.values(),
+                          key=lambda idx: sort_dihedrals(impropers1, idx)):
             # Get the improper potential.
             improper = impropers1[idx]
 
@@ -2442,7 +2444,8 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             file.write("    endimproper\n")
 
         # Now add records for the shared impropers.
-        for idx0, idx1 in impropers_shared_idx.values():
+        for idx0, idx1 in sorted(impropers_shared_idx.values(),
+                                 key=lambda idx_pair: sort_dihedrals(impropers0, idx_pair[0])):
             # Get the improper potentials.
             improper0 = impropers0[idx0]
             improper1 = impropers1[idx1]
