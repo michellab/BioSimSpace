@@ -124,7 +124,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
            with their own naming scheme, e.g. { "charge" : "my-charge" }
 
        n_edges_forced : int
-           A string that forces the number of edges that should be used in
+           An integer that forces the number of edges that should be used in
            the perturbation network. Must be in the range 
            [1 .. (len(molecules)**2-len(molecules))/2]. 
            In cases where n_edges_forced > the number of edges suggested by 
