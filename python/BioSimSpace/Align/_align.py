@@ -229,12 +229,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Validate the number of edges parameter.
     if type(n_edges_forced) is not int:
-    	raise TypeError("'n_edges_forced' must be of type 'int'")
+        raise TypeError("'n_edges_forced' must be of type 'int'")
 
     n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
 
     if not 0 < n_edges_forced < n_edges_fully_connected:
-    	raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
+        raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -325,6 +325,23 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 nodes.append(mol0)
                 nodes.append(mol1)
                 scores.append(score)
+
+        # if the user has specified a forced number of edges, adjust the network 
+        # to match the query. We have three situations to deal with.
+        if n_edges_forced:
+
+            # 1) the network already contains the specified number. 
+            if  len(edges) == n_edges_forced:
+                pass
+
+            # 2) the network contains fewer than the specfied number.
+            elif len(edges) < n_edges_forced:
+                pass
+
+            # 3) the network contains more than the specified number.
+            elif len(edges) > n_edges_forced:
+                pass
+
 
     # Convert nodes to a set to remove duplicates.
     nodes = set(nodes)
