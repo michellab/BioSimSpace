@@ -405,7 +405,7 @@ class DBMolecules(object):
                         score = -score
                     self.prespecified_links[(indexa,indexb)]=score
                     self.prespecified_links[(indexb,indexa)]=score
-                    print("Added prespecified link for mols",mols,"->",(indexa,indexb),"score",score)
+                    logging.info("Added prespecified link for mols",mols,"->",(indexa,indexb),"score",score)
         except KeyError as e:
             raise IOError('Filename within the links file "'+links_file+'" not found: '+str(e)) from None
 
