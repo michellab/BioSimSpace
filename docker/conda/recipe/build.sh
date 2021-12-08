@@ -15,9 +15,12 @@ mkdir kcombu
 tar -xzf kcombu*.tar.gz -C kcombu
 cd kcombu/src
 
-# Update the C compiler on Linux.
 if [ "$(uname)" == "Linux" ]; then
+    # Update the C compiler on Linux.
     sed -i "s#gcc#$CC#g" Makefile.fkcombu
+else
+    # Ignore implicit function declaration errors on macOS.
+    sed -i.bak -e "s#Wall#Wno-implicit-function-declaration#g" Makefile.fkcombu
 fi
 
 # Build FKCOMBU.
