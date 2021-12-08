@@ -480,6 +480,8 @@ class Somd(_process.Process):
             # interval so that we match specified the run time.
             if ncycles - _math.floor(ncycles) != 0:
                 ncycles = _math.floor(ncycles)
+                if ncycles == 0:
+                    ncycles = 1
                 report_interval = _math.ceil((self._protocol.getRunTime()
                                 / self._protocol.getTimeStep()) / ncycles)
 
