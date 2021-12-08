@@ -228,13 +228,14 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             raise IOError(f"The links file doesn't exist: {links_file}")
 
     # Validate the number of edges parameter.
-    if type(n_edges_forced) is not int:
-        raise TypeError("'n_edges_forced' must be of type 'int'")
+    if n_edges_forced is not None:
+        if type(n_edges_forced) is not int:
+            raise TypeError("'n_edges_forced' must be of type 'int'")
 
-    n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
+        n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
 
-    if not 0 < n_edges_forced < n_edges_fully_connected:
-        raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
+        if not 0 < n_edges_forced < n_edges_fully_connected:
+            raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -300,19 +301,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     if not _os.path.isfile(lomap_file):
         raise _AlignmentError("LOMAP output file doesn't exist!")
 
-    # Read the file to get the edges and scores.
-    edges = []
-    nodes = []
-    scores = []
+    # Read the file to get the edges, scores and 'include' keywords.
+    all_edges = []
+
     with open(lomap_file, "r") as csv_file:
         # Load as a CSV file.
         csv_reader = _csv.reader(csv_file)
 
         # Loop over all rows of the CSV file.
         for row in csv_reader:
-            # If the file contains all possible edges, then only take edges
-            # that LOMAP indicates should be drawn.
-            if row[7].strip() == "Yes":
+                if row[2] == "Filename_1               ":
+                    continue # skip header
+
                 # Extract the nodes (molecules) connected by the edge.
                 mol0 = int(row[2].rsplit(".")[0].rsplit("_")[0])
                 mol1 = int(row[3].rsplit(".")[0].rsplit("_")[0])
@@ -320,27 +320,47 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 # Extract the score and convert to a float.
                 score = float(row[4])
 
+                # Extract whether LOMAP says the edge should be included.
+                include = row[7].rsplit()[0]
+
                 # Update the lists.
-                edges.append((mol0, mol1))
-                nodes.append(mol0)
-                nodes.append(mol1)
-                scores.append(score)
+                all_edges.append((mol0, mol1, score, include))
 
-        # if the user has specified a forced number of edges, adjust the network 
-        # to match the query. We have three situations to deal with.
-        if n_edges_forced:
+    edges = []
+    nodes = []
+    scores = []
 
-            # 1) the network already contains the specified number. 
-            if  len(edges) == n_edges_forced:
-                pass
+    if not n_edges_forced:
+        # Populate nodes/edges/scores lists with edges that are set to include 
+        # by LOMAP.
+        for edge in all_edges:
+            if edge[3] == "Yes":
+                edges.append((edge[0], edge[1]))
+                nodes.append(edge[0])
+                nodes.append(edge[1])
+                scores.append(edge[2])
 
-            # 2) the network contains fewer than the specfied number.
-            elif len(edges) < n_edges_forced:
-                pass
+    # If the user has specified a forced number of edges, adjust the network 
+    # to match the query. We have three situations to deal with.
+    elif n_edges_forced:
 
-            # 3) the network contains more than the specified number.
-            elif len(edges) > n_edges_forced:
-                pass
+        # 1) The network already contains the specified number of edges. 
+        if  len(edges) == n_edges_forced:
+            # Return the network as is.
+            print(f"LOMAP suggested {len(edges)} edges.")
+            pass
+
+        # 2) The network contains fewer edges than the specified number.
+        elif len(edges) < n_edges_forced:
+            # We need to add edges to the network to match the queried number.
+            print(f"Adding {n_edges_forced-len(edges)} edges.")
+            
+
+        # 3) The network contains more edges than the specified number.
+        elif len(edges) > n_edges_forced:
+            # We need to remove edges from the network to match the queried number.
+            print(f"Removing {len(edges) - n_edges_forced} edges.")
+            pass
 
 
     # Convert nodes to a set to remove duplicates.
