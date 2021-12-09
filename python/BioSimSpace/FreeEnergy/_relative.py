@@ -531,6 +531,13 @@ class Relative():
         if proc.returncode != 0:
             raise _AnalysisError("SOMD free-energy analysis failed!")
 
+        #rerun without subsampling if the subsampling has resulted in less than 50 samples
+        with open("%s/mbar.txt" % work_dir) as file:
+            for line in file:
+                if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
+                    command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
+                    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        
         # Initialise list to hold the data.
         data = []
 
