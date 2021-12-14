@@ -62,7 +62,7 @@ def generateBoxParameters(box_type, image_distance):
            The box vector angles: yz, xz, and xy.
     """
 
-    if type(box_type) is not str:
+    if not isinstance(box_type, str):
         raise TypeError("'box_type' must be of type 'str'")
     else:
         # Strip whitespace and convert to lower case.
@@ -94,7 +94,7 @@ def cubic(image_distance):
 
     # Validate arguments.
 
-    if type(image_distance) is not _Length:
+    if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if image_distance.magnitude() <=0:
@@ -126,7 +126,7 @@ def rhombicDodecahedronSquare(image_distance):
 
     # Validate arguments.
 
-    if type(image_distance) is not _Length:
+    if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if image_distance.magnitude() <=0:
@@ -159,7 +159,7 @@ def rhombicDodecahedronHexagon(image_distance):
 
     # Validate arguments.
 
-    if type(image_distance) is not _Length:
+    if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if image_distance.magnitude() <=0:
@@ -192,7 +192,7 @@ def truncatedOctahedron(image_distance):
 
     # Validate arguments.
 
-    if type(image_distance) is not _Length:
+    if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if image_distance.magnitude() <=0:

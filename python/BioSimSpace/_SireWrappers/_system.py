@@ -64,37 +64,37 @@ class System(_SireWrapper):
         # Check that the system is valid.
 
         # Convert tuple to a list.
-        if type(system) is tuple:
+        if isinstance(system, tuple):
             system = list(system)
 
         # A Sire System object.
-        if type(system) is _SireSystem.System:
+        if isinstance(system, _SireSystem.System):
             super().__init__(system)
 
         # Another BioSimSpace System object.
-        elif type(system) is System:
+        elif isinstance(system, System):
             super().__init__(system._sire_object)
 
         # A Sire Molecule object.
-        elif type(system) is _SireMol.Molecule:
+        elif isinstance(system, _SireMol.Molecule):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(_Molecule(system))
 
         # A BioSimSpace Molecule object.
-        elif type(system) is _Molecule:
+        elif isinstance(system, _Molecule):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
         # A BioSimSpace Molecules object.
-        elif type(system) is _Molecules:
+        elif isinstance(system, _Molecules):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
         # A list of BioSimSpace Molecule objects.
-        elif type(system) is list:
+        elif isinstance(system, list):
             if not all(isinstance(x, _Molecule) for x in system):
                 raise TypeError("'system' must contain a list of 'BioSimSpace._SireWrappers.Molecule' types.")
             else:
@@ -173,7 +173,7 @@ class System(_SireWrapper):
         system = System(self._sire_object.__deepcopy__())
 
         # Remove the molecules from the other system.
-        if type(other) is System:
+        if isinstance(other, System):
             system.removeMolecules(other.getMolecules())
         else:
             system.removeMolecules(other)
@@ -185,7 +185,7 @@ class System(_SireWrapper):
         """Get a molecule from the system."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the molecules.
             molecules = []
@@ -354,7 +354,7 @@ class System(_SireWrapper):
               The file formats associated with the system.
         """
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         prop = property_map.get("fileformat", "fileformat")
@@ -381,23 +381,23 @@ class System(_SireWrapper):
         is_sire_container = False
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A Molecules object.
-        if type(molecules) is _Molecules:
+        if isinstance(molecules, _Molecules):
             pass
 
         # A System object.
-        elif type(molecules) is System:
+        elif isinstance(molecules, System):
             molecules = molecules.getMolecules()
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -455,19 +455,19 @@ class System(_SireWrapper):
         is_sire_container = False
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A Molecules object.
-        if type(molecules) is _Molecules:
+        if isinstance(molecules, _Molecules):
             is_sire_container = True
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -516,13 +516,13 @@ class System(_SireWrapper):
                The updated (or replacement) molecule.
         """
 
-        if type(index) is not int:
+        if type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
             raise IndexError("The molecule 'index' is out of range.")
 
-        if type(molecule) is not _Molecule:
+        if not isinstance(molecule, _Molecule):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
 
 
@@ -567,15 +567,15 @@ class System(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -642,7 +642,7 @@ class System(_SireWrapper):
                The list of molecules in the group.
         """
 
-        if type(group) is not str:
+        if not isinstance(group, str):
             raise TypeError("'group' must be of type 'str'")
 
         # Try to extract the molecule group.
@@ -732,17 +732,17 @@ class System(_SireWrapper):
             factor = float(factor)
 
         # Check scale factor.
-        if type(factor) is not float:
+        if not isinstance(factor, float):
             raise TypeError("'factor' must be of type 'float'.")
         if factor <= 0:
             raise ValueError("'factor' must be positive!")
 
         # Check water skip flag.
-        if type(ignore_water) is not bool:
+        if not isinstance(ignore_water, bool):
             raise TypeError("'ignore_water' must be of type 'bool'.")
 
         # Check property map.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
         # Repartion hydrogen masses for all molecules in this system.
@@ -797,10 +797,10 @@ class System(_SireWrapper):
            >>> result = system.search("molidx 10 and atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Initialise a list to hold the search results.
@@ -840,7 +840,7 @@ class System(_SireWrapper):
         """
 
         # Convert single object to list.
-        if type(item) is not tuple and type(item) is not list:
+        if not isinstance(item, (tuple, list)):
             item = [item]
 
         # Create a list to hold the indices.
@@ -849,7 +849,7 @@ class System(_SireWrapper):
         # Loop over all of the items.
         for x in item:
             # Atom.
-            if type(x) is _Atom:
+            if isinstance(x, _Atom):
                 # Only compute the atom index mapping if it hasn't already
                 # been created.
                 if len(self._atom_index_tally) == 0:
@@ -873,7 +873,7 @@ class System(_SireWrapper):
                 indices.append(index)
 
             # Residue.
-            elif type(x) is _Residue:
+            elif isinstance(x, _Residue):
                 # Only compute the residue index mapping if it hasn't already
                 # been created.
                 if len(self._residue_index_tally) == 0:
@@ -897,7 +897,7 @@ class System(_SireWrapper):
                 indices.append(index)
 
             # Residue.
-            elif type(x) is _Molecule:
+            elif isinstance(x, _Molecule):
                 # Only compute the molecule index mapping if it hasn't already
                 # been created.
                 if len(self._molecule_index) == 0:
@@ -948,16 +948,16 @@ class System(_SireWrapper):
         """
 
         # Convert tuples to lists.
-        if type(box) is tuple:
+        if isinstance(box, tuple):
             box = list(box)
-        if type(angles) is tuple:
+        if isinstance(angles, tuple):
             angles = list(angles)
 
         # Validate input.
-        if type(box) is not list or not all(isinstance(x, _Length) for x in box):
+        if isinstance(box, list) or not all(isinstance(x, _Length) for x in box):
             raise TypeError("'box' must be a list of 'BioSimSpace.Types.Length' objects.")
 
-        if type(angles) is not list or not all(isinstance(x, _Angle) for x in angles):
+        if isinstance(angles, list) or not all(isinstance(x, _Angle) for x in angles):
             raise TypeError("'angles' must be a list of 'BioSimSpace.Types.Angle' objects.")
 
         if len(box) != 3:
@@ -1020,12 +1020,12 @@ class System(_SireWrapper):
             space = self._sire_object.property(property_map.get("space", "space"))
 
             # Periodic box.
-            if type(space) is _SireVol.PeriodicBox:
+            if isinstance(space, _SireVol.PeriodicBox):
                 box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
                 angles = 3*[_Angle(90, "degrees")]
 
             # TriclinicBox box.
-            elif type(space) is _SireVol.TriclinicBox:
+            elif isinstance(space, _SireVol.TriclinicBox):
                 box = [_Length(space.vector0().magnitude(), "Angstrom"),
                        _Length(space.vector1().magnitude(), "Angstrom"),
                        _Length(space.vector2().magnitude(), "Angstrom")]
@@ -1054,18 +1054,18 @@ class System(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
+                elif isinstance(x, _Length):
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
@@ -1073,7 +1073,7 @@ class System(_SireWrapper):
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the system.
@@ -1117,27 +1117,24 @@ class System(_SireWrapper):
                A list of the backbone atom indices.
         """
 
-        if type(restraint) is not str:
+        if not isinstance(restraint, str):
             raise TypeError("'restraint' must be of type 'str'.")
 
         # Allowed keyword options.
         allowed = ["backbone", "heavy", "all"]
 
-        if type(restraint) is str:
-            # Convert to lower case and strip whitespace.
-            restraint = restraint.lower().replace(" ", "")
-            if restraint not in allowed:
-                raise ValueError(f"'restraint' must be one of: {allowed}")
-        else:
-            raise TypeError("'restraint' must be of type 'str'.")
+        # Convert to lower case and strip whitespace.
+        restraint = restraint.lower().replace(" ", "")
+        if restraint not in allowed:
+            raise ValueError(f"'restraint' must be one of: {allowed}")
 
-        if mol_index is not None and type(mol_index) is not int:
+        if mol_index is not None and not type(mol_index) is int:
             raise TypeError("'mol_index' must be of type 'int'.")
 
-        if type(is_absolute) is not bool:
+        if not isinstance(is_absolute, bool):
             raise TypeError("'is_absolute' must be of type 'bool'.")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
         # Initialise the list of indices.
@@ -1524,7 +1521,7 @@ class System(_SireWrapper):
         """
 
         # Validate the system.
-        if type(system) is not System:
+        if not isinstance(system, System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the passed system contains the same number of molecules.
@@ -1533,13 +1530,13 @@ class System(_SireWrapper):
                                      "molecules. Expected '%d', found '%d'"
                                      % (self.nMolecules(), system.nMolecules()))
 
-        if type(property_map0) is not dict:
+        if not isinstance(property_map0, dict):
             raise TypeError("'property_map0' must be of type 'dict'.")
 
-        if type(property_map1) is not dict:
+        if not isinstance(property_map1, dict):
             raise TypeError("'property_map1' must be of type 'dict'.")
 
-        if type(is_lambda1) is not bool:
+        if not isinstance(is_lambda1, bool):
             raise TypeError("'is_lambda1' must be of type 'bool'.")
 
         # Check that each molecule in the system contains the same number of atoms.
@@ -1698,10 +1695,10 @@ class System(_SireWrapper):
 
         # Validate input.
 
-        if type(format) is not str:
+        if not isinstance(format, str):
             raise TypeError("'format' must be of type 'str'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Strip whitespace and convert to upper case.

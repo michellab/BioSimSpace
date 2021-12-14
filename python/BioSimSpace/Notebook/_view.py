@@ -87,7 +87,7 @@ class View():
             self._is_process = True
 
         # BioSimSpace system.
-        elif type(handle) is _System:
+        elif isinstance(handle, _System):
             self._handle = handle._getSireObject()
             self._is_process = False
 
@@ -161,14 +161,15 @@ class View():
         if indices is None:
             return self.system(gui=gui)
 
-        # Convert single indices to a list.
-        if isinstance(indices, range):
+        # Convert range or tuple to list.
+        if isinstance(indices, (range, tuple)):
             indices = list(indices)
-        elif type(indices) is not list:
+        # Convert single indices to a list.
+        elif not isinstance(indices, list):
             indices = [indices]
 
         # Check that the indices is a list of integers.
-        if not all(isinstance(x, int) for x in indices):
+        if not all(type(x) is int for x in indices):
             raise TypeError("'indices' must be a 'list' of type 'int'")
 
         # Get the latest system from the process.
@@ -223,7 +224,7 @@ class View():
             return None
 
         # Check that the index is an integer.
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Get the latest system from the process.
@@ -280,7 +281,7 @@ class View():
             index = self._num_views - 1
 
         # Check that the index is an integer.
-        elif type(index) is not int:
+        elif not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Make sure the view index is valid.
@@ -323,7 +324,7 @@ class View():
             index = self._num_views - 1
 
         # Check that the index is an integer.
-        elif type(index) is not int:
+        elif not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Make sure the view index is valid.

@@ -120,22 +120,22 @@ class Length(_Type):
             other = float(other)
 
         # Multiplication by float.
-        if type(other) is float:
+        if isinstance(other, float):
             mag = self._magnitude * other
             return Length(mag, self._unit)
 
         # Multiplication by another Length.
-        elif type(other) is Length:
+        elif isinstance(other, Length):
             mag = self.angstroms().magnitude() * other.angstroms().magnitude()
             return _Area(mag, "A2")
 
         # Multiplication by an Area.
-        elif type(other) is _Area:
+        elif isinstance(other, _Area):
             mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
             return _Volume(mag, "A3")
 
         # Multiplication by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = Length(other)
                 return self * length

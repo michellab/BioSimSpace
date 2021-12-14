@@ -37,6 +37,7 @@ import csv as _csv
 import os as _os
 import subprocess as _subprocess
 import shutil as _shutil
+import shlex as _shlex
 import sys as _sys
 import tempfile as _tempfile
 
@@ -151,11 +152,10 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Adapted from code by Jenke Scheen (@JenkeScheen).
 
-    # Convert tuple to list.
-    if type(molecules) is tuple:
-        molecules = list(molecules)
-    if type(names) is tuple:
-        names = list(names)
+    if not isinstance(molecules, (list, tuple)):
+        raise TypeError("'molecules' must be a list of "
+                        "'BioSimSpace._SireWrappers.Molecule' "
+                        "or 'rdkit.Chem.rdchem.Mol' objects.")
 
     # Validate the molecules.
     rdkit_input = False
@@ -180,21 +180,21 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Validate the working directory.
     if work_dir is not None:
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
 
     # Validate the plotting flag.
-    if type(plot_network) is not bool:
+    if not isinstance(plot_network, bool):
         raise TypeError("'plot_network' must be of type 'bool'.")
 
     # Validate the property map.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Validate the scores file.
     if links_file is not None:
 
-        if type(links_file) is not str:
+        if not isinstance(links_file, str):
             raise TypeError("'links_file' must be of type 'str'")
 
         # Check that it exists.
@@ -230,7 +230,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     # Validate the number of edges parameter.
     if n_edges_forced is not None:
-        if type(n_edges_forced) is not int:
+        if not type(n_edges_forced) is int:
             raise TypeError("'n_edges_forced' must be of type 'int'")
 
         n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
@@ -657,13 +657,13 @@ def matchAtoms(molecule0,
 
     # Validate input.
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(scoring_function) is not str:
+    if not isinstance(scoring_function, str):
         raise TypeError("'scoring_function' must be of type 'str'")
     else:
         # Strip underscores and whitespace, then convert to upper case.
@@ -677,33 +677,33 @@ def matchAtoms(molecule0,
         raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
                                     "https://pdbj.org/kcombu")
 
-    if type(matches) is not int:
+    if not type(matches) is int:
         raise TypeError("'matches' must be of type 'int'")
     else:
         if matches < 0:
             raise ValueError("'matches' must be positive!")
 
-    if type(return_scores) is not bool:
+    if not isinstance(return_scores, bool):
         raise TypeError("'return_matches' must be of type 'bool'")
 
-    if type(prematch) is not dict:
+    if not isinstance(prematch, dict):
         raise TypeError("'prematch' must be of type 'dict'")
     else:
         _validate_mapping(molecule0, molecule1, prematch, "prematch")
 
-    if type(timeout) is not _Units.Time._Time:
+    if not isinstance(timeout, _Units.Time._Time):
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
 
-    if type(max_scoring_matches) is not int:
+    if not type(max_scoring_matches) is int:
         raise TypeError("'max_scoring_matches' must be of type 'int'")
 
     if max_scoring_matches <= 0:
         raise ValueError("'max_scoring_matches' must be >= 1.")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # Extract the Sire molecule from each BioSimSpace molecule.
@@ -861,21 +861,21 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1)
     """
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -969,21 +969,21 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         if not _os.path.isfile(fkcombu_exe):
             raise IOError("'fkcombu' executable doesn't exist: '%s'" % fkcombu_exe)
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -1016,7 +1016,8 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_shlex.split(command), shell=False,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that the output file exists.
         if not _os.path.isfile("aligned.pdb"):
@@ -1102,30 +1103,30 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
        >>> molecule0 = BSS.Align.merge(molecule0, molecule1)
     """
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
-    if type(allow_ring_breaking) is not bool:
+    if not isinstance(allow_ring_breaking, bool):
         raise TypeError("'allow_ring_breaking' must be of type 'bool'")
 
-    if type(allow_ring_size_change) is not bool:
+    if not isinstance(allow_ring_size_change, bool):
         raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
-    if type(force) is not bool:
+    if not isinstance(force, bool):
         raise TypeError("'force' must be of type 'bool'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -1183,21 +1184,21 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     if not _is_notebook:
         return None
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -1566,7 +1567,7 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
     for idx0, idx1 in mapping.items():
             if type(idx0) is int and type(idx1) is int:
                 pass
-            elif type(idx0) is _SireMol.AtomIdx and type(idx1) is _SireMol.AtomIdx:
+            elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
                 idx0 = idx0.value()
                 idx1 = idx1.value()
             else:
@@ -1599,7 +1600,7 @@ def _to_sire_mapping(mapping):
     # Convert the mapping to AtomIdx key:value pairs.
     for idx0, idx1 in mapping.items():
         # Early exit if the mapping is already the correct format.
-        if type(idx0) is _SireMol.AtomIdx:
+        if isinstance(idx0, _SireMol.AtomIdx):
             return mapping
         else:
             sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)

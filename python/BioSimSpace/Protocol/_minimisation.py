@@ -85,7 +85,7 @@ class Minimisation(_Protocol):
            steps : int
                The maximum number of minimisation steps.
         """
-        if type(steps) is not int:
+        if not type(steps) is int:
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:

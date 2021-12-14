@@ -178,7 +178,7 @@ class FreeEnergy(_Protocol):
                 "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
                 "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
         """
-        if type(perturbation_type) is not str:
+        if not isinstance(perturbation_type, str):
             raise TypeError("'perturbation_type' must be of type 'str'")
 
         # Convert to lower case and strip whitespace.
@@ -245,19 +245,15 @@ class FreeEnergy(_Protocol):
             lam = float(lam)
 
         # Validate the lambda parameter.
-        if type(lam) is not float:
+        if not isinstance(lam, float):
             raise TypeError("'lam' must be of type 'float'.")
 
         self._lambda = lam
 
         # A list of lambda values takes precedence.
         if lam_vals is not None:
-            # Convert tuple to list.
-            if type(lam_vals) is tuple:
-                lam_vals = list(lam_vals)
-
             # Make sure list (or tuple) has been passed.
-            if type(lam_vals) is not list:
+            if isinstance(lam_vals, (list, tuple)):
                 raise TypeError("'lam_vals' must be of type 'list'.")
 
             # Make sure all lambda values are of type 'float'.
@@ -296,13 +292,13 @@ class FreeEnergy(_Protocol):
 
             # Validate type.
 
-            if type(min_lam) is not float:
+            if not isinstance(min_lam, float):
                 raise TypeError("'min_lam' must be of type 'float'.")
 
-            if type(max_lam) is not float:
+            if not isinstance(max_lam, float):
                 raise TypeError("'max_lam' must be of type 'float'.")
 
-            if type(num_lam) is not int:
+            if not type(num_lam) is int:
                 raise TypeError("'num_lam' must be of type 'int'.")
 
             # Validate values.
@@ -352,7 +348,7 @@ class FreeEnergy(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -377,7 +373,7 @@ class FreeEnergy(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -402,7 +398,7 @@ class FreeEnergy(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -427,7 +423,7 @@ class FreeEnergy(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -452,7 +448,7 @@ class FreeEnergy(_Protocol):
            report_interval : int
                The number of integration steps between reporting statistics.
         """
-        if type(report_interval) is not int:
+        if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
@@ -485,7 +481,7 @@ class FreeEnergy(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if type(restart_interval) is not int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:

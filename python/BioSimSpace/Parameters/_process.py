@@ -116,20 +116,20 @@ class Process():
 
         # Validate arguments.
 
-        if type(molecule) is not _Molecule and type(molecule) is not str:
+        if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
         if not isinstance(protocol, _Protocol._Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
 
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(auto_start) is not bool:
+        if not isinstance(auto_start, bool):
             raise TypeError("'auto_start' must be of type 'bool'")
 
         # Warn the user if the molecule contains no hydrogens.
-        if type(molecule) is _Molecule:
+        if isinstance(molecule, _Molecule):
             if molecule.search("element H").nResults() == 0:
                 _warnings.warn("Attempting to parameterise a molecule without hydrogen atoms!")
 

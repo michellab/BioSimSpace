@@ -42,6 +42,7 @@ try:
 
 # Post setup configuration.
 finally:
+    import shlex
     import sys
 
     if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
@@ -72,25 +73,25 @@ finally:
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Disabling conda auto update")
         command = "%s/conda config --system --set auto_update_conda false" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Installing conda dependencies: %s" % ", ".join(conda_deps))
         command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Activating notebook extension: nglview")
         command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Cleaning conda environment")
         command = "%s/conda clean --all --yes --quiet" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         # Close the file handles.
         stdout.close()

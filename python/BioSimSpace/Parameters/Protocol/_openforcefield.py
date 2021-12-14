@@ -124,13 +124,13 @@ class OpenForceField(_protocol.Protocol):
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule and type(molecule) is not str:
+        if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-        if type(work_dir) is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(queue) is not None and type(queue) is not _queue.Queue:
+        if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
         # Set work_dir to the current directory.
@@ -141,7 +141,7 @@ class OpenForceField(_protocol.Protocol):
         prefix = work_dir + "/"
 
         # Flag whether the molecule is a SMILES string.
-        if type(molecule) is str:
+        if isinstance(molecule, str):
             is_smiles = True
         else:
             is_smiles = False

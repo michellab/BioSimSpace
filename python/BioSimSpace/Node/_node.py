@@ -22,6 +22,7 @@
 from glob import glob as _glob
 
 import os as _os
+import shlex as _shlex
 import subprocess as _subprocess
 import yaml as _yaml
 
@@ -53,7 +54,7 @@ def help(name):
            The name of the node.
     """
 
-    if type(name) is not str:
+    if not isinstance(name) is not str:
         raise TypeError("'name' must be of type 'str'.")
 
     # Apped the node directory name.
@@ -71,7 +72,8 @@ def help(name):
     command = "%s/python %s --help" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(command, shell=True, text=True, stdout=_subprocess.PIPE)
+    proc = _subprocess.run(_shlex.split(command), shell=False,
+        text=True, stdout=_subprocess.PIPE)
 
     # Print the standard output, decoded as UTF-8.
     print(proc.stdout)
@@ -97,10 +99,7 @@ def run(name, args={}):
 
     # Validate the input.
 
-    if type(name) is not str:
-        raise TypeError("'name' must be of type 'str'.")
-
-    if type(args) is not dict:
+    if not isinstance(args, dict):
         raise TypeError("'args' must be of type 'dict'.")
 
     # Apped the node directory name.
@@ -127,7 +126,8 @@ def run(name, args={}):
         command = "%s/python %s" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(command, shell=True, text=True, stderr=_subprocess.PIPE)
+    proc = _subprocess.run(_shlex.split(command), shell=False,
+        text=True, stderr=_subprocess.PIPE)
 
     if proc.returncode == 0:
         # Read the output YAML file into a dictionary.

@@ -84,10 +84,10 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
 
     # Validate input.
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     # Cannot merge a perturbable molecule.
@@ -96,27 +96,27 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
     if molecule1._is_perturbable:
         raise IncompatibleError("'molecule1' has already been merged!")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
-    if type(allow_ring_breaking) is not bool:
+    if not isinstance(allow_ring_breaking, bool):
         raise TypeError("'allow_ring_breaking' must be of type 'bool'")
 
-    if type(allow_ring_size_change) is not bool:
+    if not isinstance(allow_ring_size_change, bool):
         raise TypeError("'allow_ring_size_change' must be of type 'bool'")
 
-    if type(force) is not bool:
+    if not isinstance(force, bool):
         raise TypeError("'force' must be of type 'bool'")
 
-    if type(mapping) is not dict:
+    if not isinstance(mapping, dict):
         raise TypeError("'mapping' must be of type 'dict'.")
     else:
         # Make sure all key/value pairs are of type AtomIdx.
         for idx0, idx1 in mapping.items():
-            if type(idx0) is not _SireMol.AtomIdx or type(idx1) is not _SireMol.AtomIdx:
+            if not isinstance(idx0, _SireMol.AtomIdx) or not isinstance(idx1, _SireMol.AtomIdx):
                 raise TypeError("key:value pairs in 'mapping' must be of type 'Sire.Mol.AtomIdx'")
 
     # Set 'allow_ring_breaking' and 'allow_ring_size_change' to true if the

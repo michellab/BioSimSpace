@@ -90,7 +90,7 @@ class ResourceManager():
                The number of nodes.
         """
 
-        if type(nodes) is not int:
+        if not type(nodes) is int:
             raise TypeError("'nodes' must be of type 'int'.")
 
         if nodes < 0:
@@ -119,7 +119,7 @@ class ResourceManager():
                The number of cpus.
         """
 
-        if type(cpus) is not int:
+        if not type(cpus) is int:
             raise TypeError("'cpus' must be of type 'int'.")
 
         if cpus < 0:
@@ -148,7 +148,7 @@ class ResourceManager():
                The number of GPUs.
         """
 
-        if type(gpus) is not int:
+        if not type(gpus) is int:
             raise TypeError("'gpus' must be of type 'int'.")
 
         if gpus < 0:

@@ -54,11 +54,10 @@ def save(sire_object, filebase):
 
     # Validate input.
 
-    if not isinstance(sire_object, _SireWrapper) and \
-       not isinstance(sire_object, _SireWrappers.SearchResult):
+    if not isinstance(sire_object, (_SireWrapper, _SireWrappers.SearchResult)):
         raise TypeError("'sire_object' must be of type 'BioSimSpace._SireWrappers.SireWrapper'.")
 
-    if type(filebase) is not str:
+    if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'.")
 
     try:

@@ -117,26 +117,26 @@ class Volume(_Type):
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             mag = self._magnitude / other
             return Volume(mag, self._unit)
 
         # Division by another Volume.
-        elif type(other) is Volume:
+        elif isinstance(other, Volume):
             return self.angstroms3().magnitude() / other.angstroms3().magnitude()
 
         # Division by an Area.
-        elif type(other) is _Area:
+        elif isinstance(other, _Area):
             mag = self.angstroms3().magnitude() / other.angstroms2().magnitude()
             return _Length(mag, "A")
 
         # Division by a Length.
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             mag = self.angstroms3().magnitude() / other.angstroms().magnitude()
             return _Area(mag, "A2")
 
         # Division by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self / length

@@ -100,7 +100,7 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The sum of the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
@@ -121,7 +121,7 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The difference of the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
@@ -135,7 +135,7 @@ class Vector():
             other = float(other)
 
         # Only support multiplication by float.
-        if type(other) is float:
+        if isinstance(other, float):
             # Return a new vector multiplied by other.
             return self._from_sire_vector(other * self._sire_object)
 
@@ -157,7 +157,7 @@ class Vector():
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             # Return a new vector divided by other.
             return self._from_sire_vector(self._sire_object / other)
 
@@ -180,7 +180,7 @@ class Vector():
            result : float
                The scalar product.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         return self._sire_object.dot(self._sire_object, other._sire_object)
@@ -200,7 +200,7 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The cross product.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         x = self.y()*other.z() - self.z()*other.y()
@@ -225,7 +225,7 @@ class Vector():
            angle : :class: `Angle <BioSimSpace.Types.Angle>`
                The angle between the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         # Calculate the angle.

@@ -57,23 +57,23 @@ class Molecules(_SireWrapper):
         # Check that the molecules argument is valid.
 
         # Convert tuple to list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Sire Molecules object.
-        if type(molecules) is _SireMol.MoleculeGroup:
+        if isinstance(molecules, _SireMol.MoleculeGroup):
             super().__init__(molecules)
 
         # A Sire System object.
-        elif type(molecules) is _SireSystem.System:
+        elif isinstance(molecules, _SireSystem.System):
             super().__init__(molecules.molecules())
 
         # A BioSimSpace System object.
-        elif type(molecules) is _System:
+        elif isinstance(molecules, _System):
             super().__init__(molecules._sire_object.group(_SireMol.MGName("all")))
 
         # Another BioSimSpace Molecule object.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             molgrp = _SireMol.MoleculeGroup("all")
             mol_nums = []
             for molecule in molecules:
@@ -110,7 +110,7 @@ class Molecules(_SireWrapper):
         """Addition operator."""
 
         # Convert tuple to a list.
-        if type(other) is tuple:
+        if isinstance(other, tuple):
             other = list(other)
 
         # Extract the molecules.
@@ -122,11 +122,11 @@ class Molecules(_SireWrapper):
         # Validate the input.
 
         # A System object.
-        if type(other) is _System:
+        if isinstance(other, _System):
             molecules.add(other._sire_object.molecules())
 
         # A Molecule object.
-        elif type(other) is _Molecule:
+        elif isinstance(other, _Molecule):
             if other._sire_object.number() in mol_nums:
                 raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
                                  "contain unique molecules. Use the 'copy' method "
@@ -135,11 +135,11 @@ class Molecules(_SireWrapper):
             molecules.add(other._sire_object)
 
         # A Molecules object.
-        elif type(other) is Molecules:
+        elif isinstance(other, Molecules):
             molecules.add(other._sire_object)
 
         # A list of Molecule objects.
-        elif type(other) is list and all(isinstance(x, _Molecule) for x in other):
+        elif isinstance(other, list) and all(isinstance(x, _Molecule) for x in other):
             for molecule in other:
                 if molecule._sire_object.number() in mol_nums:
                     raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
@@ -162,7 +162,7 @@ class Molecules(_SireWrapper):
         """Get a molecule from the container."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the molecules.
             molecules = []
@@ -305,18 +305,18 @@ class Molecules(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
+                elif isinstance(x, _Length):
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
@@ -324,7 +324,7 @@ class Molecules(_SireWrapper):
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the container.
@@ -366,7 +366,7 @@ class Molecules(_SireWrapper):
            >>> result = molecule.search("atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
         # Initialise a list to hold the search results.

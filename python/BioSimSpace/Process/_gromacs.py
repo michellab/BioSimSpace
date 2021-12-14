@@ -32,6 +32,7 @@ import math as _math
 import os as _os
 import pygtail as _pygtail
 import shutil as _shutil
+import shlex as _shlex
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
@@ -122,11 +123,11 @@ class Gromacs(_process.Process):
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
                                             "Please install GROMACS (http://www.gromacs.org).")
 
-        if type(ignore_warnings) is not bool:
+        if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool.")
         self._ignore_warnings = ignore_warnings
 
-        if type(show_errors) is not bool:
+        if not isinstance(show_errors, bool):
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
 
@@ -163,7 +164,7 @@ class Gromacs(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             # Check that the system contains a perturbable molecule.
             if self._system.nPerturbableMolecules() == 0:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
@@ -197,7 +198,7 @@ class Gromacs(_process.Process):
 
         # Generate the GROMACS configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -234,7 +235,7 @@ class Gromacs(_process.Process):
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             config.append("integrator = steep")             # Use steepest descent.
             config.append("nsteps = %d"
                 % self._protocol.getSteps())                # Set the number of steps.
@@ -275,7 +276,7 @@ class Gromacs(_process.Process):
             config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -375,7 +376,7 @@ class Gromacs(_process.Process):
             self._add_position_restraints(config)
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -460,7 +461,7 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().magnitude())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-        elif type(self._protocol) is _Protocol.FreeEnergy:
+        elif isinstance(self._protocol, _Protocol.FreeEnergy):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -562,7 +563,7 @@ class Gromacs(_process.Process):
             config.append("nstdhdl = 250")                  # Write gradients every 250 steps.
 
         # Add configuration variables for a metadynamics simulation.
-        elif type(self._protocol) is _Protocol.Metadynamics:
+        elif isinstance(self._protocol, _Protocol.Metadynamics):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -667,7 +668,7 @@ class Gromacs(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Add configuration variables for a steered molecular dynamics protocol.
-        elif type(self._protocol) is _Protocol.Steering:
+        elif isinstance(self._protocol, _Protocol.Steering):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -787,8 +788,7 @@ class Gromacs(_process.Process):
         self.setArg("-deffnm", self._name)  # Output file prefix.
 
         # Metadynamics and steered MD arguments.
-        if type(self._protocol) is _Protocol.Metadynamics or \
-           type(self._protocol) is _Protocol.Steering:
+        if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
             self.setArg("-plumed", "plumed.dat")
 
     def _generate_binary_run_file(self):
@@ -808,7 +808,7 @@ class Gromacs(_process.Process):
             command += " --maxwarn 1000"
 
         # Run the command.
-        proc = _subprocess.run(command, shell=True, text=True,
+        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
@@ -976,7 +976,7 @@ class Gromacs(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         # Minimisation trajectories have a single frame, i.e. the final state.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             time = 0*_Units.Time.nanosecond
         # Get the current simulation time.
         else:
@@ -1052,7 +1052,7 @@ class Gromacs(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -1202,7 +1202,7 @@ class Gromacs(_process.Process):
                The current simulation time in nanoseconds.
         """
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         else:
@@ -2068,7 +2068,7 @@ class Gromacs(_process.Process):
                 sys_idx_moltypes[idx] = mol_type
 
             # A keyword restraint.
-            if type(restraint) is str:
+            if isinstance(restraint, str):
 
                 # The number of restraint files.
                 num_restraint = 1
@@ -2371,7 +2371,7 @@ class Gromacs(_process.Process):
         if len(self._stdout_dict) is 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
@@ -2424,7 +2424,7 @@ class Gromacs(_process.Process):
                The molecular system from the closest trajectory frame.
         """
 
-        if type(time) is not _Types.Time:
+        if not isinstance(time, _Types.Time):
             raise TypeError("'time' must be of type 'BioSimSpace.Types.Time'")
 
         # Grab the last frame from the current trajectory file.
@@ -2444,7 +2444,7 @@ class Gromacs(_process.Process):
                     % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().magnitude())
 
                 # Run the command.
-                proc = _subprocess.run(command, shell=True,
+                proc = _subprocess.run(_shlex.split(command), shell=False,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Read the frame file.

@@ -76,8 +76,12 @@ class ProcessRunner():
                The working directory for the processes.
         """
 
+        # Convert tuple to list.
+        if isinstance(processes, tuple):
+            processes = list(processes)
+
         # Convert to a list.
-        if type(processes) is not list:
+        if not isinstance(processes, list):
             processes = [processes]
 
         # Check that the list of processes is valid.
@@ -89,7 +93,7 @@ class ProcessRunner():
             raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
 
         # Check that the working directory is valid.
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
         # Set the list of processes.
@@ -172,7 +176,7 @@ class ProcessRunner():
            name : str
                The process runner name.
         """
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
         else:
             self._name = name
@@ -189,7 +193,7 @@ class ProcessRunner():
         """
 
         # Convert to a list.
-        if type(process) is not list:
+        if not isinstance(process, list):
             processes = [process]
         else:
             processes = process
@@ -494,11 +498,11 @@ class ProcessRunner():
 
         # Validate input.
 
-        if type(serial) is not bool:
+        if not isinstance(serial, bool):
             raise TypeError("'serial' must be of type 'bool'.")
 
         if batch_size is not None:
-            if type(batch_size) is not int:
+            if not type(batch_size) is int:
                 raise TypeError("'batch_size' must be of type 'int'.")
             if batch_size < 1:
                 raise ValueError("'batch_size' must be > 1.")
@@ -506,7 +510,7 @@ class ProcessRunner():
             from multiprocessing import cpu_count
             batch_size = cpu_count()
 
-        if type(max_retries) is not int:
+        if not type(max_retries) is int:
             raise TypeError("'max_retries' must be of type 'int'.")
 
         if max_retries < 1:
@@ -559,11 +563,11 @@ class ProcessRunner():
 
         # Validate input.
 
-        if type(serial) is not bool:
+        if not isinstance(serial, bool):
             raise TypeError("'serial' must be of type 'bool'.")
 
         if batch_size is not None:
-            if type(batch_size) is not int:
+            if not type(batch_size) is int:
                 raise TypeError("'batch_size' must be of type 'int'.")
             if batch_size < 1:
                 raise ValueError("'batch_size' must be > 1.")
@@ -571,7 +575,7 @@ class ProcessRunner():
             from multiprocessing import cpu_count
             batch_size = cpu_count()
 
-        if type(max_retries) is not int:
+        if not type(max_retries) is int:
             raise TypeError("'max_retries' must be of type 'int'.")
 
         if max_retries < 1:

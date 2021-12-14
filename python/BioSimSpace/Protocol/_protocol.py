@@ -50,7 +50,7 @@ class Protocol():
            is_customised : bool
                Whether the protocol has been customised.
         """
-        if type(is_customised) is not bool:
+        if not isinstance(is_customised, bool):
             raise TypeError("'is_customised' must be of type 'bool'.")
 
         self._is_customised = is_customised

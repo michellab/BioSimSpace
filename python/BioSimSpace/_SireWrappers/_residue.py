@@ -55,11 +55,11 @@ class Residue(_SireWrapper):
         # Check that the residue is valid.
 
         # A Sire Residue object.
-        if type(residue) is _SireMol.Residue:
+        if isinstance(residue, _SireMol.Residue):
             sire_object = residue
 
         # Another BioSimSpace Residue object.
-        elif type(residue) is Residue:
+        elif isinstance(residue, Residue):
             sire_object = residue._sire_object
 
         # Invalid type.
@@ -96,7 +96,7 @@ class Residue(_SireWrapper):
         """Get an atom from the residue."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the atoms.
             atoms = []
@@ -285,10 +285,10 @@ class Residue(_SireWrapper):
            >>> result = residue.search("atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Initialise a list to hold the search results.

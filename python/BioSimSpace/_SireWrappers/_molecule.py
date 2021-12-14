@@ -77,7 +77,7 @@ class Molecule(_SireWrapper):
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
-        if type(molecule) is _SireMol.Molecule:
+        if isinstance(molecule, _SireMol.Molecule):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
@@ -85,7 +85,7 @@ class Molecule(_SireWrapper):
                 self._molecule1, _ = self._extractMolecule(is_lambda1=True)
 
         # Another BioSimSpace Molecule object.
-        elif type(molecule) is Molecule:
+        elif isinstance(molecule, Molecule):
             super().__init__(molecule._sire_object)
             if molecule._molecule0 is not None:
                 self._molecule0 = Molecule(molecule._molecule0)
@@ -114,7 +114,7 @@ class Molecule(_SireWrapper):
         """Addition operator."""
 
         # Convert tuple to a list.
-        if type(other) is tuple:
+        if isinstance(other, tuple):
             other = list(other)
 
         # Whether other is a container of molecules.
@@ -125,21 +125,21 @@ class Molecule(_SireWrapper):
         molecules = [self]
 
         # A System object.
-        if type(other) is _System:
+        if isinstance(other, _System):
             system = _System(other)
             system.addMolecules(self)
             return system
 
         # A single Molecule object.
-        elif type(other) is Molecule:
+        elif isinstance(other, Molecule):
             molecules.append(other)
 
         # A Molecules object.
-        elif type(other) is _Molecules:
+        elif isinstance(other, _Molecules):
             is_sire_container = True
 
         # A list of Molecule objects.
-        elif type(other) is list and all(isinstance(x, Molecule) for x in other):
+        elif isinstance(other, list) and all(isinstance(x, Molecule) for x in other):
             for molecule in other:
                 molecules.append(molecule)
 
@@ -275,10 +275,10 @@ class Molecule(_SireWrapper):
         """
 
         # Convert tuple to list.
-        if type(indices) is tuple:
+        if isinstance(indices, tuple):
             indices = list(indices)
 
-        if type(indices) is not list:
+        if not isinstance(indices, list):
             raise TypeError("'indices' must be a list of 'int' types.")
 
         # A list to store the indices, mapped back to 0 --> nAtoms() - 1.
@@ -289,7 +289,7 @@ class Molecule(_SireWrapper):
 
         for x in indices:
             # Check type.
-            if type(x) is not int:
+            if not type(x) is int:
                 raise TypeError("'indices' must be a list of 'int' types.")
 
             # Map index back to range.
@@ -634,10 +634,10 @@ class Molecule(_SireWrapper):
            >>> result = molecule.search("atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Initialise a list to hold the search results.
@@ -687,27 +687,27 @@ class Molecule(_SireWrapper):
         is_system = False
         if isinstance(molecule, _SireMol.Molecule):
             mol1 = molecule
-        elif type(molecule) is Molecule:
+        elif isinstance(molecule, Molecule):
             mol1 = molecule._sire_object
         elif isinstance(molecule, _SireSystem.System):
             mol1 = molecule
             is_system = True
-        elif type(molecule) is _System:
+        elif isinstance(molecule, _System):
             mol1 = molecule._sire_object
             is_system = True
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
-        if type(overwrite) is not bool:
+        if not isinstance(overwrite, bool):
             raise TypeError("'overwrite' must be of type 'bool'")
 
-        if type(rename_atoms) is not bool:
+        if not isinstance(rename_atoms, bool):
             raise TypeError("'rename_atoms' must be of type 'bool'")
 
-        if type(verbose) is not bool:
+        if not isinstance(verbose, bool):
             raise TypeError("'verbose' must be of type 'bool'")
 
         # Get the two Sire molecules.
@@ -1273,18 +1273,18 @@ class Molecule(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
+                elif isinstance(x, _Length):
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
@@ -1292,7 +1292,7 @@ class Molecule(_SireWrapper):
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate the molecule.
@@ -1342,17 +1342,17 @@ class Molecule(_SireWrapper):
             factor = float(factor)
 
         # Check scale factor.
-        if type(factor) is not float:
+        if not isinstance(factor, float):
             raise TypeError("'factor' must be of type 'float'.")
         if factor <= 0:
             raise ValueError("'factor' must be positive!")
 
         # Check water skip flag.
-        if type(ignore_water) is not bool:
+        if not isinstance(ignore_water, bool):
             raise TypeError("'ignore_water' must be of type 'bool'.")
 
         # Check property map.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
         # Handle perturbable molecules separately.
@@ -1514,11 +1514,11 @@ class Molecule(_SireWrapper):
            residue_offset : int
                The offset to add to all atom numbers.
         """
-        if type(residue_offset) is not int:
+        if not type(residue_offset) is int:
             raise TypeError("'residue_offset' must be of type 'int'.")
         if residue_offset < 0:
             raise ValueError("'residue_offset' must be greater than 0.")
-        if type(atom_offset) is not int:
+        if not type(atom_offset) is int:
             raise TypeError("'atom_offset' must be of type 'int'.")
         if atom_offset < 0:
             raise ValueError("'atom_offset' must be greater than 0.")
@@ -1643,10 +1643,10 @@ class Molecule(_SireWrapper):
                The molecule at the chosen end state.
         """
 
-        if type(is_lambda1) is not bool:
+        if not isinstance(is_lambda1, bool):
             raise TypeError("'is_lambda1' must be of type 'bool'")
 
-        if type(convert_amber_dummies) is not bool:
+        if not isinstance(convert_amber_dummies, bool):
             raise TypeError("'convert_amber_dummies' must be of type 'bool'")
 
         if is_lambda1:
@@ -1751,7 +1751,7 @@ class Molecule(_SireWrapper):
                The indices of any dummy atoms in the original molecule.
         """
 
-        if type(is_lambda1) is not bool:
+        if not isinstance(is_lambda1, bool):
             raise TypeError("'is_lambda1' must be of type 'bool'")
 
         if not self._is_perturbable:

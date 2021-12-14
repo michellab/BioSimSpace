@@ -161,30 +161,36 @@ if not _path.isdir(_gromacs_path):
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
 
+        import shlex as _shlex
         import subprocess as _subprocess
 
         # Generate the shell command. (Run gmx -h.)
-        _command = "%s -h 2>&1" % _gmx_exe
+        _command = "%s -h" % _gmx_exe
 
         # Run the command.
-        _proc = _subprocess.run(_command, shell=True, text=True, stdout=_subprocess.PIPE)
+        _proc = _subprocess.run(_shlex.split(_command), shell=False,
+            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         del _command
 
         # Get the data prefix.
         if _proc.returncode == 0:
+
             # Extract the "Data prefix" from the output.
-            for _line in _proc.stdout.split("\n"):
+            for _line in _proc.stderr.split("\n"):
                 if "Data prefix" in _line:
                     _gromacs_path = _line.split(":")[1].strip() + "/share/gromacs/top"
                     break
             del _line
+
             # Check that the topology file directory exists.
-            if not _path.isdir(_gromacs_path):
-                _gromacs_path = None
+            if _gromacs_path is not None:
+                if not _path.isdir(_gromacs_path):
+                    _gromacs_path = None
 
         del _path
         del _proc
+        del _shlex
         del _subprocess
 
 from . import Align

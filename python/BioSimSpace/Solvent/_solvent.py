@@ -31,6 +31,7 @@ __all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 import os as _os
 import re as _re
 import subprocess as _subprocess
+import shlex as _shlex
 import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
@@ -104,7 +105,7 @@ def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
            The solvated molecular system.
     """
 
-    if type(model) is not str:
+    if not isinstance(model, str):
         raise TypeError("'model' must be of type 'str'")
     else:
         # Strip whitespace and convert to lower case.
@@ -454,18 +455,18 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
     # Validate the molecule and create a local copy called _molecule to ensure
     # that the passed molecule is preserved.
     if molecule is not None:
-        if type(molecule) is _Molecule:
+        if isinstance(molecule, _Molecule):
             _molecule = _Molecule(molecule)
-        elif type(molecule) is _Molecules:
+        elif isinstance(molecule, _Molecules):
             _molecule = molecule.toSystem()
-        elif type(molecule) is _System:
+        elif isinstance(molecule, _System):
             _molecule = _System(molecule)
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
                             "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
-        if type(_molecule) is _System and box is None and shell is None:
+        if isinstance(_molecule, _System) and box is None and shell is None:
             try:
                 check_box = False
                 prop = property_map.get("space", "space")
@@ -481,7 +482,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
         # Warn the user if any of the molecules contain structural ions
         # parameterised for a different water model.
-        if type(_molecule) is _System:
+        if isinstance(_molecule, _System):
             for mol in _molecule:
                 ion_water_model = mol._ion_water_model
                 if ion_water_model is not None and ion_water_model != model:
@@ -506,11 +507,11 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
     if box is not None:
         # Convert tuple to list.
-        if type(box) is tuple:
+        if isinstance(box, tuple):
             box = list(box)
 
         # Convert Coordinate to list.
-        if type(box) is _Coordinate:
+        if isinstance(box, _Coordinate):
             box = [box.x(), box.y(), box.z()]
 
         # Validate.
@@ -524,7 +525,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
     if angles is not None:
         # Convert tuple to list.
-        if type(angles) is tuple:
+        if isinstance(angles, tuple):
             angles = list(angles)
 
         # Validate.
@@ -538,7 +539,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         angles=3*[_Angle(90, "degrees")]
 
     if shell is not None:
-        if type(shell) is not _Length:
+        if not isinstance(shell, _Length):
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
         if box is not None:
@@ -560,20 +561,20 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         box = 3*[base_length]
 
     # Check that the ion concentration is valid.
-    if type(ion_conc) is not float and type(ion_conc) is not int:
+    if not isinstance(ion_conc, float) and not type(ion_conc) is int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
     elif ion_conc < 0:
         raise ValueError("'ion_conc' cannot be negative!")
 
-    if type(is_neutral) is not bool:
+    if not isinstance(is_neutral, bool):
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
     # Check that the working directory is valid.
-    if work_dir is not None and type(work_dir) is not str:
+    if work_dir is not None and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Check that the property map is valid.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Check that the box is large enough to hold the molecule.
@@ -656,7 +657,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # Center the solute in the box.
         molecule.translate(shift)
 
-        if type(molecule) is _System:
+        if isinstance(molecule, _System):
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
             molecule._set_water_topology("GROMACS")
@@ -712,7 +713,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("editconf.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -745,7 +746,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("solvate.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -803,7 +804,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
-            if type(molecule) is _System:
+            if isinstance(molecule, _System):
                 system = molecule + water
             else:
                 system = molecule.toSystem() + water
@@ -857,7 +858,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             stderr = open("grommp.err", "w")
 
             # Run grompp as a subprocess.
-            proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -911,7 +912,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 stderr = open("genion.err", "w")
 
                 # Run genion as a subprocess.
-                proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+                proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
 
@@ -994,7 +995,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                     # Create a new system by adding the water to the original molecule.
                     if molecule is not None:
-                        if type(molecule) is _System:
+                        if isinstance(molecule, _System):
                             system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions

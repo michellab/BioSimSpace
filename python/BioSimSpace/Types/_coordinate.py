@@ -50,13 +50,13 @@ class Coordinate():
                The z position.
         """
 
-        if type(x) is not _Length:
+        if not isinstance(x, _Length):
             raise TypeError("'x' must be of type 'BioSimSpace.Types.Length'")
 
-        if type(y) is not _Length:
+        if not isinstance(y, _Length):
             raise TypeError("'y' must be of type 'BioSimSpace.Types.Length'")
 
-        if type(z) is not _Length:
+        if not isinstance(z, _Length):
             raise TypeError("'z' must be of type 'BioSimSpace.Types.Length'")
 
         # Set the vector.
@@ -94,10 +94,10 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The sum of the two coordinates.
         """
-        if type(other) is Coordinate:
+        if isinstance(other, Coordinate):
             return self._from_sire_vector(self._vector + other._vector)
 
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             vector = self._vector + _Vector(other.angstroms().magnitude(),
                                             other.angstroms().magnitude(),
                                             other.angstroms().magnitude())
@@ -123,10 +123,10 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The difference of the two coordinates.
         """
-        if type(other) is Coordinate:
+        if isinstance(other, Coordinate):
             return self._from_sire_vector(self._vector - other._vector)
 
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             vector = self._vector - _Vector(other.angstroms().magnitude(),
                                             other.angstroms().magnitude(),
                                             other.angstroms().magnitude())
@@ -144,7 +144,7 @@ class Coordinate():
             other = float(other)
 
         # Only support multiplication by float.
-        if type(other) is float:
+        if isinstance(other, float):
             # Return a new vector multiplied by other.
             return self._from_sire_vector(other * self._vector)
 
@@ -166,7 +166,7 @@ class Coordinate():
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             # Return a new vector divided by other.
             return self._from_sire_vector(self._vector / other)
 
@@ -232,10 +232,10 @@ class Coordinate():
            unit : :class: `Length <BioSimSpace.Types.Length>`
                The coordinate unit.
         """
-        if type(vector) is not _Vector:
+        if not isinstance(vector, _Vector):
             raise TypeError("'vector' must be of type 'BioSimSpace.Types.Vector'")
 
-        if type(unit) is not _Length:
+        if not isinstance(unit, _Length):
             raise TypeError("'unit' must be of type 'BioSimSpace.Types.Length'")
 
         return Coordinate(vector.x()*unit, vector.y()*unit, vector.z()*unit)

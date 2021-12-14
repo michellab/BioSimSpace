@@ -39,6 +39,7 @@ from glob import glob as _glob
 from io import StringIO as _StringIO
 
 import os as _os
+import shlex as _shlex
 import sys as _sys
 import subprocess as _subprocess
 import tempfile as _tempfile
@@ -202,13 +203,13 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
         return None
 
-    if type(id) is not str:
+    if not isinstance(id, str):
         raise TypeError("'id' must be of type 'str'")
 
-    if type(pdb4amber) is not bool:
+    if not isinstance(pdb4amber, bool):
         raise TypeError("'pdb4amber' must be of type 'bool'")
 
-    if work_dir and type(work_dir) is not str:
+    if work_dir and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Create a temporary working directory and store the directory name.
@@ -276,7 +277,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -345,11 +347,11 @@ def readMolecules(files, property_map={}):
         _has_gmx_warned = True
 
     # Glob string to catch wildcards and convert to list.
-    if type(files) is str:
+    if isinstance(files, str):
         files = _glob(files)
 
     # Check that all arguments are of type 'str'.
-    if type(files) is list:
+    if isinstance(files, (list, tuple)):
         if not all(isinstance(x, str) for x in files):
             raise TypeError("'files' must be a list of 'str' types.")
         if len(files) == 0:
@@ -358,7 +360,7 @@ def readMolecules(files, property_map={}):
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
 
     # Validate the map.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Add the GROMACS topology file path.
@@ -456,21 +458,21 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         _has_gmx_warned = True
 
     # Check that the filebase is a string.
-    if type(filebase) is not str:
+    if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
     # Check that that the system is of the correct type.
 
     # A System object.
-    if type(system) is _System:
+    if isinstance(system, _System):
         pass
     # A Molecule object.
-    elif type(system) is _Molecule:
+    elif isinstance(system, _Molecule):
         system = _System(system)
-    elif type(system) is _Molecules:
+    elif isinstance(system, _Molecules):
         system = system.toSystem()
     # A list of Molecule objects.
-    elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
+    elif isinstance(system, list) and all(isinstance(x, _Molecule) for x in system):
         system = _System(system)
     # Invalid type.
     else:
@@ -482,14 +484,11 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Convert to a list if a single string is passed.
     # We split on ',' since the user might pass system.fileFormats() as the argument.
-    if type(fileformat) is str:
+    if isinstance(fileformat, str):
         fileformat = fileformat.split(",")
     # Lists and tuples are okay!
-    elif type(fileformat) is list:
+    elif isinstance(fileformat, (list, tuple)):
         pass
-    elif type(fileformat) is tuple:
-        pass
-    # Invalid.
     else:
         raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
 
@@ -510,7 +509,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 "are: %s." % (format, str(_formats)))
 
     # Validate the map.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Copy the map.
@@ -667,20 +666,20 @@ def savePerturbableSystem(filebase, system, property_map={}):
     """
 
     # Check that the filebase is a string.
-    if type(filebase) is not str:
+    if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
     # Check that the system is valid.
-    if type(system) is _System:
+    if isinstance(system, _System):
         pass
     # A Molecule object.
-    elif type(system) is _Molecule:
+    elif isinstance(system, _Molecule):
         system = _System(system)
     # A Molecules object.
-    elif type(system) is _Molecules:
+    elif isinstance(system, _Molecules):
         system = system.toSystem()
     # A list of Molecule objects.
-    elif type(system) is list and all(isinstance(x, _Molecule) for x in system):
+    elif isinstance(system, list) and all(isinstance(x, _Molecule) for x in system):
         system = _System(system)
     # Invalid type.
     else:
@@ -689,7 +688,7 @@ def savePerturbableSystem(filebase, system, property_map={}):
                         "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
 
     # Validate the map.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Validate that there is a single perturbable molecule in the system.
@@ -749,16 +748,16 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
            A molecular system.
     """
 
-    if type(top0) is not str:
+    if not isinstance(top0, str):
         raise TypeError("'top0' must be of type 'str'.")
 
-    if type(coords0) is not str:
+    if not isinstance(coords0, str):
         raise TypeError("'coords0' must be of type 'str'.")
 
-    if type(top1) is not str:
+    if not isinstance(top1, str):
         raise TypeError("'top1' must be of type 'str'.")
 
-    if type(coords1) is not str:
+    if not isinstance(coords1, str):
         raise TypeError("'coords1' must be of type 'str'.")
 
     # Check that the coordinate and topology files can be parsed.

@@ -79,13 +79,13 @@ class Task():
 
         # Validate inputs.
 
-        if name is not None and type(name) is not str:
+        if name is not None and not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
 
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(auto_start) is not bool:
+        if not isinstance(auto_start, bool):
             raise TypeError("'auto_start' must be of type 'bool'")
 
         # Initialise status flags.
@@ -273,7 +273,7 @@ class Task():
                 else:
                     filename = self._name
             else:
-                if type(filename) is not str:
+                if not isinstance(filename, str):
                     raise TypeError("'filename' must be of type 'str'.")
 
             # Create the name of the zip file.

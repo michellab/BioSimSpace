@@ -53,7 +53,7 @@ def formalCharge(molecule):
            The total formal charge on the molecule.
     """
 
-    if type(molecule) is not _Molecule:
+    if not isinstance(molecule, _Molecule):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     from rdkit import Chem as _Chem

@@ -45,7 +45,7 @@ def cd(work_dir):
     """
 
     # Validate the input.
-    if type(work_dir) is not str:
+    if not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Store the current directory.

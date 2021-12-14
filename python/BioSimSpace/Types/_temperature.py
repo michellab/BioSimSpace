@@ -110,7 +110,7 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Addition of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
@@ -135,7 +135,7 @@ class Temperature(_Type):
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self + temp
 
@@ -149,7 +149,7 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Subtraction of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
@@ -174,7 +174,7 @@ class Temperature(_Type):
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self - temp
 
@@ -196,7 +196,7 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Only support multiplication by float.
-                if type(other) is float:
+                if isinstance(other, float):
                     # Multiply magnitude.
                     mag = self._magnitude * other
 
@@ -230,7 +230,7 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Float division.
-                if type(other) is float:
+                if isinstance(other, float):
                     # Divide magnitude.
                     mag = self._magnitude / other
 
@@ -238,11 +238,11 @@ class Temperature(_Type):
                     return Temperature(mag, self._unit)
 
                 # Division by another object of the same type.
-                elif type(other) is type(self):
+                elif isinstance(other, self):
                     return self._magnitude / other._convert_to(self._unit).magnitude()
 
                 # Division by a string.
-                elif type(other) is str:
+                elif isinstance(other, str):
                     obj = self._from_string(other)
                     return self / obj
 
