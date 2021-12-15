@@ -85,10 +85,15 @@ class Plumed():
         # Run a PLUMED as a background process to query the version number.
         command = "%s info --version" % self._exe
         process = _subprocess.run(_shlex.split(command), shell=False, stdout=_subprocess.PIPE)
-        self._plumed_version = float(process.stdout.decode("ascii").strip())
 
-        if self._plumed_version < 2.5:
-            raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+        if process.returncode == 0:
+            self._plumed_version = float(process.stdout.decode("ascii").strip())
+
+            if self._plumed_version < 2.5:
+                raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+
+        else:
+            raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
 
         # Set the working directory of the process.
         self._work_dir = work_dir
