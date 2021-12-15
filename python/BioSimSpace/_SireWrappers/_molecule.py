@@ -440,8 +440,13 @@ class Molecule(_SireWrapper):
         """
         return self._is_perturbable
 
-    def isWater(self):
+    def isWater(self, property_map={}):
         """Whether this is a water molecule.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -457,16 +462,19 @@ class Molecule(_SireWrapper):
         num_hydrogen = 0
         num_oxygen = 0
 
+        # Get the "element" property from the user map.
+        elem_prop = property_map.get("element", "element")
+
         # Loop over all atoms in the molecule.
         for atom in self._sire_object.atoms():
 
             # First try using the "element" property of the atom.
             try:
                 # Hydrogen.
-                if atom.property("element") == _SireMol.Element("H"):
+                if atom.property(elem_prop) == _SireMol.Element("H"):
                     num_hydrogen += 1
                 # Oxygen.
-                elif atom.property("element") == _SireMol.Element("O"):
+                elif atom.property(elem_prop) == _SireMol.Element("O"):
                     num_oxygen += 1
 
             # Otherwise, try to infer the element from the atom name.
