@@ -890,7 +890,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     charge = round(charge.magnitude())
 
                     # Create the genion command.
-                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
+                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
 
                     # Add enough counter ions to neutralise the charge.
                     if charge > 0:
@@ -899,7 +899,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                         command += " -np %d" % abs(charge)
                 else:
                     # Create the genion command.
-                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
+                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
                         % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
 
                 with open("README.txt", "a") as file:
@@ -912,7 +912,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 stderr = open("genion.err", "w")
 
                 # Run genion as a subprocess.
-                proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+                proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
+                proc = _subprocess.run(_shlex.split(command), shell=False,
+                    stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
+                proc_echo.stdout.close()
                 stdout.close()
                 stderr.close()
 

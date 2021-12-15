@@ -2440,12 +2440,14 @@ class Gromacs(_process.Process):
                     self._traj_file = traj_file
 
                 # Use trjconv to get the frame closest to the current simulation time.
-                command = "echo 0 | %s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
+                command = "%s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
                     % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().magnitude())
 
-                # Run the command.
-                proc = _subprocess.run(_shlex.split(command), shell=False,
-                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                # Run the command as a pipeline.
+                proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
+                proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                    stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc_echo.stdout.close()
 
                 # Read the frame file.
                 new_system = _IO.readMolecules(["frame.gro", self._top_file],
