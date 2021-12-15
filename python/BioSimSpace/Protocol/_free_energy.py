@@ -253,7 +253,7 @@ class FreeEnergy(_Protocol):
         # A list of lambda values takes precedence.
         if lam_vals is not None:
             # Make sure list (or tuple) has been passed.
-            if isinstance(lam_vals, (list, tuple)):
+            if not isinstance(lam_vals, (list, tuple)):
                 raise TypeError("'lam_vals' must be of type 'list'.")
 
             # Make sure all lambda values are of type 'float'.
