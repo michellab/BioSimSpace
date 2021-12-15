@@ -471,7 +471,7 @@ class Metadynamics(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if not type(restart_interva) is int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
