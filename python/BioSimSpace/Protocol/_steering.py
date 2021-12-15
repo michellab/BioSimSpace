@@ -366,11 +366,11 @@ class Steering(_Protocol):
                on "both" sides (default).
         """
 
-        # Convert tuple or string to list.
-        if isinstance(verse, (tuple, str)):
-            verse = list(verse)
+        # Convert string to list.
+        if isinstance(verse, str):
+            verse = [verse]
 
-        if isinstance(verse, list):
+        if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):
                 raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
         else:
