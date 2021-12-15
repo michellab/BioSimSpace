@@ -1160,7 +1160,7 @@ class Plumed():
         for x in range(0, len(schedule)):
             # Initialise the strings.
             step  = f"STEP{x}={schedule[x]}"
-            at    = f"AT{x}="
+            at    = (16-len(str(schedule[x])))*" " + f"AT{x}="
             kappa = f"KAPPA{x}="
 
             # Loop over all restraints for this stage.
@@ -1172,14 +1172,14 @@ class Plumed():
                     val = val.nanometers().magnitude()
                 elif isinstance(val, _Types.Angle):
                     val = val.radians().magnitude()
-                at    += str(val)
-                kappa += str(r.getForceConstant())
+                at    += f"{val:.6f}"
+                kappa += f"{r.getForceConstant():.2f}"
                 if idx < self._num_colvar - 1:
                     at    += ","
                     kappa += ","
 
             # Add the stage to the config.
-            self._config.append(f"  {step}\t{at}\t{kappa}")
+            self._config.append(f"  {step}{at}\t{kappa}")
 
         # End the MOVINGRESTRAINT record.
         self._config.append("... MOVINGRESTRAINT")
