@@ -451,7 +451,7 @@ class Process():
         if number < 1:
             raise ValueError("'number' must be >= 1")
 
-        if isinstance(bounds, (list, tuple)):
+        if not isinstance(bounds, (list, tuple)):
             raise TypeError("'bounds' must be of type 'list'.")
 
         # Make sure the number of bounds matches the number of collective variables.
