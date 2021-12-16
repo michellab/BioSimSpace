@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 from Sire.MM import InternalFF, IntraCLJFF, IntraFF
 from Sire.Mol import AtomIdx, PartialMolecule
 
@@ -310,3 +313,24 @@ def test_grow_whole_ring(mapping):
 
     # Check that we can merge without allowing ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping)
+
+
+def test_squash():
+    water = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/water*"))[0]
+    mol0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/methane*"))[0]
+    mol1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/methanol*"))[0]
+    system_vac = water + BSS.Align.merge(mol0, mol1).toSystem()
+    squashed_system = BSS.Align._merge._squash(system_vac)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        base = Path(tempdir)
+        BSS.IO.saveMolecules(f"{base}/temp", squashed_system, "prm7,rst7")
+        # Discard date metadata from the prm7 files
+        prm_contents = open(f"{base}/temp.prm7").readlines()[1:]
+        rst_contents = open(f"{base}/temp.rst7").readlines()
+
+    expected_prm_contents = open("test/io/amber/free_energy/squashed_system.prm7").readlines()[1:]
+    expected_rst_contents = open("test/io/amber/free_energy/squashed_system.rst7").readlines()
+
+    assert prm_contents == expected_prm_contents
+    assert rst_contents == expected_rst_contents
