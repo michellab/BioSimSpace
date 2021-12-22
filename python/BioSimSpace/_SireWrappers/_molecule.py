@@ -1278,8 +1278,29 @@ class Molecule(_SireWrapper):
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
-        self._sire_object = _SireIO.repartitionHydrogenMass(
-                self._sire_object, factor, ignore_water, property_map)
+        # Handle perturbable molecules separately.
+        if self.isPerturbable():
+            # Repartition masses for the lambda=0 state.
+            property_map = { "mass"         : "mass0",
+                             "element"      : "element0",
+                             "connectivity" : "connectivity0",
+                             "coordinates"  : "coordinates0"
+                           }
+            self._sire_object = _SireIO.repartitionHydrogenMass(
+                    self._sire_object, factor, ignore_water, property_map)
+
+            # Repartition masses for the lambda=1 state.
+            property_map = { "mass"         : "mass1",
+                             "element"      : "element1",
+                             "connectivity" : "connectivity1",
+                             "coordinates"  : "coordinates1"
+                           }
+            self._sire_object = _SireIO.repartitionHydrogenMass(
+                    self._sire_object, factor, ignore_water, property_map)
+
+        else:
+            self._sire_object = _SireIO.repartitionHydrogenMass(
+                    self._sire_object, factor, ignore_water, property_map)
 
     def _repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
