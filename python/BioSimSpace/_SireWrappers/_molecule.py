@@ -443,6 +443,9 @@ class Molecule(_SireWrapper):
     def isWater(self, property_map={}):
         """Whether this is a water molecule.
 
+           Parameters
+           ----------
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -454,55 +457,22 @@ class Molecule(_SireWrapper):
            is_water : bool
                Whether this is a water molecule.
         """
-        # Water models have 5 or less atoms.
-        if self.nAtoms() > 5:
-            return False
 
-        # Tally counters for the number of H and O atoms.
-        num_hydrogen = 0
-        num_oxygen = 0
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
 
-        # Get the "element" property from the user map.
-        elem_prop = property_map.get("element", "element")
+        return _SireIO.isWater(self._sire_object, property_map)
 
-        # Loop over all atoms in the molecule.
-        for atom in self._sire_object.atoms():
-
-            # First try using the "element" property of the atom.
-            try:
-                # Hydrogen.
-                if atom.property(elem_prop) == _SireMol.Element("H"):
-                    num_hydrogen += 1
-                # Oxygen.
-                elif atom.property(elem_prop) == _SireMol.Element("O"):
-                    num_oxygen += 1
-
-            # Otherwise, try to infer the element from the atom name.
-            except:
-                # Strip all digits from the name.
-                name = "".join([x for x in atom.name().value() if not x.isdigit()])
-
-                # Remove any whitespace.
-                name = name.replace(" ", "")
-
-                # Try to infer the element.
-                element = _SireMol.Element.biologicalElement(name)
-
-                # Hydrogen.
-                if element == _SireMol.Element("H"):
-                    num_hydrogen += 1
-                # Oxygen.
-                elif element == _SireMol.Element("O"):
-                    num_oxygen += 1
-
-        # A water molecule has two Hydrogens and one Oxygen.
-        if num_hydrogen == 2 and num_oxygen == 1:
-            return True
-        else:
-            return False
-
-    def isAmberWater(self):
+    def isAmberWater(self, property_map={}):
         """Whether this is an AMBER format water molecule.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -511,45 +481,20 @@ class Molecule(_SireWrapper):
                Whether this molecule is an AMBER format water.
         """
 
-        # First check that this is a water molecule.
-        if not self.isWater():
-            return False
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
 
-        # Now check the residue name.
-        if self.getResidues()[0].name() != "WAT":
-            return False
+        return _SireIO.isAmberWater(self._sire_object, property_map)
 
-        # Now check the atom names.
-
-        # Get the number of atoms.
-        num_atoms = self.nAtoms()
-
-        # SPC/E or TIP3P.
-        if num_atoms == 3:
-            atom_names = ["O", "H1", "H2"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # TIP4P.
-        elif num_atoms == 4:
-            atom_names = ["O", "H1", "H2", "EPW"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # TIP5P.
-        elif num_atoms == 5:
-            atom_names = ["O", "H1", "H2", "EP1", "EP2"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # If we get this far, then it is an AMBER format water.
-        return True
-
-    def isGromacsWater(self):
+    def isGromacsWater(self, property_map={}):
         """Whether this is a GROMACS format water molecule.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
 
            Returns
            -------
@@ -558,40 +503,10 @@ class Molecule(_SireWrapper):
                Whether this molecule is a GROMACS format water.
         """
 
-        # First check that this is a water molecule.
-        if not self.isWater():
-            return False
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
 
-        # Now check the residue name.
-        if self.getResidues()[0].name() != "SOL":
-            return False
-
-        # Get the number of atoms.
-        num_atoms = self.nAtoms()
-
-        # SPC/E or TIP3P.
-        if num_atoms == 3:
-            atom_names = ["OW", "HW1", "HW2"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # TIP4P.
-        elif num_atoms == 4:
-            atom_names = ["OW", "HW1", "HW2", "MW"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # TIP5P.
-        elif num_atoms == 5:
-            atom_names = ["OW", "HW1", "LP1", "LP2"]
-            for atom in self.getAtoms():
-                if atom.name() not in atom_names:
-                    return False
-
-        # If we get this far, then it is a GROMACS format water.
-        return True
+        return _SireIO.isAmberWater(self._sire_object, property_map)
 
     def toSystem(self):
         """Convert a single Molecule to a System.
@@ -1363,26 +1278,8 @@ class Molecule(_SireWrapper):
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
-        # Handle perturbable molecules separately.
-        if self.isPerturbable():
-            # Repartition masses for the lambda=0 state.
-            property_map = { "mass"         : "mass0",
-                             "element"      : "element0",
-                             "connectivity" : "connectivity0",
-                             "coordinates"  : "coordinates0"
-                           }
-            self._repartitionHydrogenMass(factor, ignore_water, property_map)
-
-            # Repartition masses for the lambda=1 state.
-            property_map = { "mass"         : "mass1",
-                             "element"      : "element1",
-                             "connectivity" : "connectivity1",
-                             "coordinates"  : "coordinates1"
-                           }
-            self._repartitionHydrogenMass(factor, ignore_water, property_map)
-
-        else:
-            self._repartitionHydrogenMass(factor, ignore_water, property_map)
+        self._sire_object = _SireIO.repartitionHydrogenMass(
+                self._sire_object, factor, ignore_water, property_map)
 
     def _repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
@@ -1508,44 +1405,6 @@ class Molecule(_SireWrapper):
                     property_map[prop[:-1]] = prop
 
         return property_map
-
-    def _renumberConstituents(self, residue_offset, atom_offset):
-        """Internal function to renumber the constituent residues and atoms when
-           this molecule is added to a container.
-
-           Parameters
-           ----------
-
-           residue_offset : int
-               The offset to add to all residue numbers.
-
-           residue_offset : int
-               The offset to add to all atom numbers.
-        """
-        if not type(residue_offset) is int:
-            raise TypeError("'residue_offset' must be of type 'int'.")
-        if residue_offset < 0:
-            raise ValueError("'residue_offset' must be greater than 0.")
-        if not type(atom_offset) is int:
-            raise TypeError("'atom_offset' must be of type 'int'.")
-        if atom_offset < 0:
-            raise ValueError("'atom_offset' must be greater than 0.")
-
-        # Make the molecule editable.
-        edit_mol = self._sire_object.edit()
-
-        # Renumber the residues.
-        for idx, res in enumerate(edit_mol.residues()):
-            num = _SireMol.ResNum(idx + residue_offset)
-            edit_mol = edit_mol.residue(res.index()).renumber(num).molecule()
-
-        # Renumber the atoms.
-        for idx, atom in enumerate(edit_mol.atoms()):
-            num = _SireMol.AtomNum(idx + atom_offset)
-            edit_mol = edit_mol.atom(atom.index()).renumber(num).molecule()
-
-        # Commit the changes and store.
-        self._sire_object = edit_mol.commit()
 
     def _getPropertyMap1(self):
         """Generate a property map for the lambda = 1 state of the merged molecule."""

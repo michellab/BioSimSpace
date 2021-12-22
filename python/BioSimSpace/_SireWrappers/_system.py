@@ -406,8 +406,11 @@ class System(_SireWrapper):
                             ", 'BioSimSpace._SireWrappers.System', or a list of "
                             "'BioSimSpace._SireWrappers.Molecule' types.")
 
+        # Store the existing number of molecules.
+        num_mols = self._sire_object.nMolecules()
+
         # The system is empty: create a new Sire system from the molecules.
-        if self._sire_object.nMolecules() == 0:
+        if num_mols == 0:
             self._sire_object = self._createSireSystem(molecules)
             self._mol_nums = []
 
@@ -423,15 +426,12 @@ class System(_SireWrapper):
                                  "of 'BioSimSpace._SireWrappers.Molecule' to "
                                  "create a new version of a molecule.")
 
-            # Renumber the residues and atoms so that they are unique.
-            mol._renumberConstituents(residue_offset, atom_offset)
-
             # Add the molecule to the system.
             self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
 
-            # Update the offsets.
-            residue_offset += mol.nResidues()
-            atom_offset += mol.nAtoms()
+        # Renumber all of the constituents in the system so that they are unique
+        # and in ascending order.
+        self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
 
         # Reset the index mappings.
         self._reset_mappings()
@@ -654,8 +654,16 @@ class System(_SireWrapper):
         # Return a molecules container.
         return _Molecules(molgrp)
 
-    def getWaterMolecules(self):
+    def getWaterMolecules(self, property_map={}):
         """Return a list containing all of the water molecules in the system.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -664,7 +672,7 @@ class System(_SireWrapper):
                A container of water molecule objects.
         """
 
-        return _Molecules(self._sire_object.search("water").toGroup())
+        return self.search("water", property_map)
 
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
@@ -746,8 +754,8 @@ class System(_SireWrapper):
             raise TypeError("'property_map' must be of type 'dict'.")
 
         # Repartion hydrogen masses for all molecules in this system.
-        for molecule in self:
-            molecule.repartitionHydrogenMass(factor, ignore_water, property_map)
+        self._sire_object = _SireIO.repartitionHydrogenMass(
+                self._sire_object, factor, ignore_water, property_map)
 
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
@@ -1720,11 +1728,11 @@ class System(_SireWrapper):
             # the template for the desired format.
 
             if format == "AMBER":
-                if waters[0].isAmberWater():
+                if waters[0].toMolecule().isAmberWater():
                     return
 
             elif format == "GROMACS":
-                if waters[0].isGromacsWater():
+                if waters[0].toMolecule().isGromacsWater():
                     return
 
             # There will be a "water_model" system property if this object was
@@ -1745,44 +1753,11 @@ class System(_SireWrapper):
                     water_model = "TIP5P"
 
             if format == "AMBER":
-                new_waters = _SireIO.setAmberWater(self._sire_object.search("water"), water_model)
+                self._sire_object = _SireIO.setAmberWater(
+                        self._sire_object, water_model, property_map)
             else:
-                new_waters = _SireIO.setGromacsWater(self._sire_object.search("water"), water_model)
-
-            # Create a new system and molecule group.
-            system = _SireSystem.System("BioSimSpace System")
-            molgrp = _SireMol.MoleculeGroup("all")
-
-            # Create a dictionary of water molecule numbers to list index.
-            wat_num_to_idx = {}
-            for idx, wat in enumerate(waters):
-                wat_num_to_idx[wat.number()] = idx
-
-            # Add all moleclules from the original system into the new one,
-            # preserving the order.
-            for mol in self.getMolecules():
-                try:
-                    # Water molecule.
-                    molgrp.add(new_waters[wat_num_to_idx[mol.number()]])
-                except:
-                    # Non-water molecule.
-                    molgrp.add(mol._sire_object)
-
-            # Add the group to the system.
-            system.add(molgrp)
-
-            # Copy across system properties.
-            for prop in self._sire_object.propertyKeys():
-                system.setProperty(prop, self._sire_object.property(prop))
-
-            # Set the system.
-            self._sire_object = system
-
-            # Reset the index mappings.
-            self._reset_mappings()
-
-            # Update the molecule numbers.
-            self._mol_nums = self._sire_object.molNums()
+                self._sire_object = _SireIO.setGromacsWater(
+                        self._sire_object, water_model, property_map)
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
