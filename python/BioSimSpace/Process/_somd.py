@@ -1525,7 +1525,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             idx0 = info.atomIdx(bond.atom0())
             idx1 = info.atomIdx(bond.atom1())
 
-            # Create the AngleID.
+            # Create the BondID.
             bond_id = _SireMol.BondID(idx0, idx1)
 
             # Add to the list of ids.
@@ -1552,7 +1552,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
             if idx not in bonds0_idx.keys():
                 bonds1_unique_idx[idx] = bonds1_idx[idx]
             elif idx not in bonds_shared_idx.keys():
-                bonds_shared_idx[idx] = (bonds0_idx[idx], angles1_idx[idx])
+                bonds_shared_idx[idx] = (bonds0_idx[idx], bonds1_idx[idx])
 
         # First create records for the bonds that are unique to lambda = 0 and 1.
 
