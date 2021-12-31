@@ -92,9 +92,9 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
 
     # Cannot merge a perturbable molecule.
     if molecule0._is_perturbable:
-        raise IncompatibleError("'molecule0' has already been merged!")
+        raise _IncompatibleError("'molecule0' has already been merged!")
     if molecule1._is_perturbable:
-        raise IncompatibleError("'molecule1' has already been merged!")
+        raise _IncompatibleError("'molecule1' has already been merged!")
 
     if type(property_map0) is not dict:
         raise TypeError("'property_map0' must be of type 'dict'")

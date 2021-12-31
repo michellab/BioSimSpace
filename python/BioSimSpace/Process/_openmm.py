@@ -456,6 +456,9 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
                     self.addToConfig( "    simulation.step(100)")
                 else:
+                    # Work out the number of temperature cycles.
+                    temp_cycles = _math.ceil(steps / 100)
+
                     # Work out the temperature change per step.
                     delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
                                   self._protocol.getStartTemperature().kelvin().magnitude()) / steps
@@ -1313,7 +1316,7 @@ class OpenMM(_process.Process):
            records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
-        return getRecords(block=False)
+        return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
         """Get the simulation time.

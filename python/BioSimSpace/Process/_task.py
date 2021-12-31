@@ -33,6 +33,7 @@ import os as _os
 import tempfile as _tempfile
 import threading as _threading
 import zipfile as _zipfile
+from IPython.display import FileLink as _FileLink
 
 from BioSimSpace import _is_notebook
 

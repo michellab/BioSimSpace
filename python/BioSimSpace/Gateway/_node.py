@@ -1316,7 +1316,7 @@ class Node():
                 help += "\n  min=%s" % minimum
         else:
             if maximum is not None:
-                help += "\n  max=%s" % maxmimum
+                help += "\n  max=%s" % maximum
 
         return help
 

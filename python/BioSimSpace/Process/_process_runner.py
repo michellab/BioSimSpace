@@ -452,7 +452,7 @@ class ProcessRunner():
         num_processes = self.nProcesses()
 
         if index < -num_processes or index > num_processes - 1:
-            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processess-1}]")
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
 
         # Map negative indices back into positive range.
         if index < 0:
