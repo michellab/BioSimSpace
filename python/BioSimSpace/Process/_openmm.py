@@ -456,15 +456,12 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
                     self.addToConfig( "    simulation.step(100)")
                 else:
-                    # Work out the number of temperature cycles.
-                    temp_cycles = _math.ceil(steps / 100)
-
                     # Work out the temperature change per step.
                     delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
                                   self._protocol.getStartTemperature().kelvin().magnitude()) / steps
 
                     self.addToConfig(f"start_temperature = {temperature}")
-                    self.addToConfig(f"for x in range(0, {temp_cycles}):")
+                    self.addToConfig(f"for x in range(0, {steps}):")
                     self.addToConfig(f"    temperature = {temperature} + x*{delta_temp}")
                     self.addToConfig(f"    integrator.setTemperature(temperature*kelvin)")
                     if is_const_pressure:
