@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Production"]
 
 import math as _math
+import warnings as _warnings
 
 from BioSimSpace import Types as _Types
 
@@ -315,7 +316,7 @@ class Production(_Protocol):
             raise TypeError("'first_step' must be of type 'int'")
 
         if first_step < 0:
-            warn("The initial time step must be positive. Using default (0).")
+            _warnings.warn("The initial time step must be positive. Using default (0).")
             self._first_step = 0
         else:
             self._first_step = _math.ceil(first_step)
@@ -343,5 +344,5 @@ class Production(_Protocol):
         if type(restart) is bool:
             self._restart = restart
         else:
-            warn("Non-boolean restart flag. Defaulting to False!")
+            _warnings.warn("Non-boolean restart flag. Defaulting to False!")
             self._restart = False

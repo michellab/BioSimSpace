@@ -453,9 +453,9 @@ class Trajectory():
 
                 # Make sure the frame index is within range.
                 if frame > 0 and frame >= n_frames:
-                    raise ValueError("Frame index (%d) of of range (0 to %d)." %s (frame, n_frames - 1))
+                    raise ValueError("Frame index (%d) of of range (0 to %d)." % (frame, n_frames - 1))
                 elif frame < -n_frames:
-                    raise ValueError("Frame index (%d) of of range (-1 to -%d)." %s (frame, n_frames))
+                    raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (frame, n_frames))
 
         if atoms is not None:
             # Check that all of the atom indices are integers.

@@ -35,6 +35,7 @@ import math as _math
 import os as _os
 import re as _re
 import time as _time
+import shutil as _shutil
 import timeit as _timeit
 import warnings as _warnings
 
