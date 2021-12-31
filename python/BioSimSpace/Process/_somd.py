@@ -995,10 +995,7 @@ class Somd(_process.Process):
 
             if len(search) != 1:
                 msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                if _isVerbose():
-                    raise _IncompatibleError(msg) from e
-                else:
-                    raise _IncompatibleError(msg) from None
+                raise _IncompatibleError(msg)
 
             # Extract the matching molecule.
             mol1 = search[0]

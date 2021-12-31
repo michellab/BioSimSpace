@@ -1181,7 +1181,7 @@ class Gromacs(_process.Process):
            records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
-        return getRecords(block=False)
+        return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
         """Get the simulation time.

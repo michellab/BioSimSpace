@@ -167,7 +167,7 @@ class Relative():
         # Validate the user specified molecular dynamics engine.
         if engine is not None:
             if not isinstance(engine, str):
-                raise Types("'engine' must be of type 'str'.")
+                raise TypeError("'engine' must be of type 'str'.")
 
             # Strip whitespace from engine and convert to upper case.
             engine = engine.replace(" ", "").upper()

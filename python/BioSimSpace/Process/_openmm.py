@@ -461,7 +461,7 @@ class OpenMM(_process.Process):
                                   self._protocol.getStartTemperature().kelvin().magnitude()) / steps
 
                     self.addToConfig(f"start_temperature = {temperature}")
-                    self.addToConfig(f"for x in range(0, {temp_cycles}):")
+                    self.addToConfig(f"for x in range(0, {steps}):")
                     self.addToConfig(f"    temperature = {temperature} + x*{delta_temp}")
                     self.addToConfig(f"    integrator.setTemperature(temperature*kelvin)")
                     if is_const_pressure:
@@ -1313,7 +1313,7 @@ class OpenMM(_process.Process):
            records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
-        return getRecords(block=False)
+        return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
         """Get the simulation time.

@@ -35,6 +35,7 @@ import math as _math
 import os as _os
 import re as _re
 import time as _time
+import shutil as _shutil
 import timeit as _timeit
 import warnings as _warnings
 
@@ -1023,7 +1024,7 @@ class Amber(_process.Process):
            records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
               The dictionary of time-series records.
         """
-        return getRecords(block=False)
+        return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
         """Get the simulation time.

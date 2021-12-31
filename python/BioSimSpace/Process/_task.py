@@ -28,6 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Task"]
 
+from IPython.display import FileLink as _FileLink
+
 import glob as _glob
 import os as _os
 import tempfile as _tempfile

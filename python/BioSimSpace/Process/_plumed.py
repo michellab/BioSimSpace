@@ -366,7 +366,7 @@ class Plumed():
             for idx in atoms:
                 # The atom index is invalid.
                 if idx >= system.nAtoms():
-                    raise __Exceptions.IncompatibleError("The collective variable is incompatible with the "
+                    raise _Exceptions.IncompatibleError("The collective variable is incompatible with the "
                         "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
 
                 # Get the molecule numbers in this system.
@@ -913,7 +913,7 @@ class Plumed():
             for idx in atoms:
                 # The atom index is invalid.
                 if idx >= system.nAtoms():
-                    raise __Exceptions.IncompatibleError("The collective variable is incompatible with the "
+                    raise _Exceptions.IncompatibleError("The collective variable is incompatible with the "
                         "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
 
                 # Get the molecule numbers in this system.
@@ -1135,7 +1135,7 @@ class Plumed():
 
             # Update the ARG record to separate the collective variable arguments.
             if idx < self._num_colvar - 1:
-                metad_string += ","
+                arg_string += ","
 
         # Get the steering schedule and restraints.
         schedule = protocol.getSchedule()

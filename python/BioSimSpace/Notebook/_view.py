@@ -28,6 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["View"]
 
+import glob as _glob
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile

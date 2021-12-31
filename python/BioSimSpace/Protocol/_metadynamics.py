@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Metadynamics"]
 
 import os as _os
+import warnings as _warnings
 
 from BioSimSpace import Types as _Types
 from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
