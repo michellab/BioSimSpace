@@ -1238,7 +1238,7 @@ class Molecule(_SireWrapper):
         # Update the internal molecule object.
         self._sire_object = mol
 
-    def repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
+    def repartitionHydrogenMass(self, factor=4, water="no", property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -1251,8 +1251,10 @@ class Molecule(_SireWrapper):
                The repartioning scale factor. Hydrogen masses are scaled by this
                amount.
 
-           ignore_water : bool
-               Whether to ignore water molecules.
+           water : str
+               Whether to repartition masses for water molecules. Options are
+               "yes", "no", and "exclusive", which can be used to repartition
+               masses for water molecules only.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1270,9 +1272,22 @@ class Molecule(_SireWrapper):
         if factor <= 0:
             raise ValueError("'factor' must be positive!")
 
-        # Check water skip flag.
-        if not isinstance(ignore_water, bool):
-            raise TypeError("'ignore_water' must be of type 'bool'.")
+        # Check water handling.
+        if not isinstance(water, str):
+            raise TypeError("'water' must be of type 'str'.")
+
+        # Strip whitespace and convert to lower case.
+        water = water.replace(" ", "").lower()
+
+        # Allowed options and mapping to Sire flag.
+        water_options = {"no" : 0,
+                         "yes" : 1,
+                         "exclusive" : 2
+                        }
+
+        if water not in water_options:
+            water_string = ", ".join(f"'{x}'" for x in water_options)
+            raise ValueError(f"'water' must be one of: {water_string}")
 
         # Check property map.
         if not isinstance(property_map, dict):
@@ -1287,7 +1302,7 @@ class Molecule(_SireWrapper):
                              "coordinates"  : "coordinates0"
                            }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, ignore_water, property_map)
+                    self._sire_object, factor, water_options[water], property_map)
 
             # Repartition masses for the lambda=1 state.
             property_map = { "mass"         : "mass1",
@@ -1296,124 +1311,11 @@ class Molecule(_SireWrapper):
                              "coordinates"  : "coordinates1"
                            }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, ignore_water, property_map)
+                    self._sire_object, factor, water_options[water], property_map)
 
         else:
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, ignore_water, property_map)
-
-    def _repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
-        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
-           the hydrogen atoms. This allows the use of larger simulation
-           integration time steps without encountering instabilities related
-           to high-frequency hydrogen motion. (Internal helper function.)
-
-           Parameters
-           ----------
-
-           factor : float
-               The repartioning scale factor. Hydrogen masses are scaled by this
-               amount.
-
-           ignore_water : bool
-               Whether to ignore water molecules.
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-        """
-
-        # Skip water molecules.
-        if ignore_water and self.isWater():
-            return
-
-        # Search for hydrogen atoms in the molecule.
-        hydrogens = self.search("element H", property_map)
-
-        # Early exit if this molecule contains no hydrogens.
-        if len(hydrogens) == 0:
-            return
-
-        # Get the mass and property name.
-        mass_prop = property_map.get("mass", "mass")
-
-        # Make sure the molecule has mass information.
-        if not self._sire_object.hasProperty(mass_prop):
-            raise _IncompatibleError(f"This molecule doesn't have a '{mass_prop}' property!")
-
-        # Get the connectivity of the molecule. Generate this ourselves since
-        # GROMACS water molecules won't necessarily have explicit hydrogen bonds.
-        connectivity = _SireMol.Connectivity(self._sire_object,
-                                             _SireMol.CovalentBondHunter(),
-                                             property_map)
-
-        # Compute the initial mass.
-        initial_mass = 0
-        for m in self._sire_object.property(mass_prop).toVector():
-            initial_mass += m.value()
-
-        # Make the molecule editable.
-        edit_mol = self._sire_object.edit()
-
-        # First adjust the mass of all hydrogen atoms.
-        connections = []
-        for hydrogen in hydrogens:
-            idx = _SireMol.AtomIdx(hydrogen.index())
-
-            # Compute the scaled mass.
-            mass = factor * edit_mol.atom(idx).property(mass_prop)
-
-            # Set the new mass.
-            edit_mol = edit_mol.atom(idx)                    \
-                               .setProperty(mass_prop, mass) \
-                               .molecule()
-
-            # Store the indices of atoms that are connected to this hydrogen.
-            connections.extend(connectivity.connectionsTo(idx))
-
-        # Commit the changes.
-        mol = edit_mol.commit()
-
-        # Compute the total adjusted mass.
-        final_mass = 0
-        for m in mol.property(mass_prop).toVector():
-            final_mass += m.value()
-
-        # Work out the delta averaged across the bonded heavy atoms.
-        delta_mass = (final_mass - initial_mass) / len(hydrogens)
-        delta_mass *= _SireUnits.g_per_mol
-
-        # Make the molecule editable again.
-        edit_mol = mol.edit()
-
-        # Initalise a dictionary mapping the heavy atom index to its
-        # current mass.
-        mass_dict = {}
-
-        # Loop over all connected heavy atoms.
-        for idx in connections:
-
-            # Use the current mass.
-            if idx in mass_dict:
-                mass = mass_dict[idx]
-            # Use the initial mass.
-            else:
-                mass = mol.atom(idx).property(mass_prop)
-
-            # Reduce the mass.
-            mass -= delta_mass
-
-            # Set the mass.
-            edit_mol = edit_mol.atom(idx)                     \
-                                .setProperty(mass_prop, mass) \
-                                .molecule()
-
-            # Store the updated mass.
-            mass_dict[idx] = mass
-
-        # Commit the changes and store the updated molecule.
-        self._sire_object = edit_mol.commit()
+                    self._sire_object, factor, water_options[water], property_map)
 
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""

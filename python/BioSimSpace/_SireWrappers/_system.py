@@ -713,7 +713,7 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def repartitionHydrogenMass(self, factor=4, ignore_water=False, property_map={}):
+    def repartitionHydrogenMass(self, factor=4, water="no", property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -726,8 +726,10 @@ class System(_SireWrapper):
                The repartioning scale factor. Hydrogen masses are scaled by this
                amount.
 
-           ignore_water : bool
-               Whether to ignore water molecules.
+           water : str
+               Whether to repartition masses for water molecules. Options are
+               "yes", "no", and "exclusive", which can be used to repartition
+               masses for water molecules only.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -745,9 +747,22 @@ class System(_SireWrapper):
         if factor <= 0:
             raise ValueError("'factor' must be positive!")
 
-        # Check water skip flag.
-        if not isinstance(ignore_water, bool):
-            raise TypeError("'ignore_water' must be of type 'bool'.")
+        # Check water handling.
+        if not isinstance(water, str):
+            raise TypeError("'water' must be of type 'str'.")
+
+        # Strip whitespace and convert to lower case.
+        water = water.replace(" ", "").lower()
+
+        # Allowed options and mapping to Sire flag.
+        water_options = {"no" : 0,
+                         "yes" : 1,
+                         "exclusive" : 2
+                        }
+
+        if water not in water_options:
+            water_string = ", ".join(f"'{x}'" for x in water_options)
+            raise ValueError(f"'water' must be one of: {water_string}")
 
         # Check property map.
         if not isinstance(property_map, dict):
@@ -755,7 +770,7 @@ class System(_SireWrapper):
 
         # Repartion hydrogen masses for all molecules in this system.
         self._sire_object = _SireIO.repartitionHydrogenMass(
-                self._sire_object, factor, ignore_water, property_map)
+                self._sire_object, factor, water_options[water], property_map)
 
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
