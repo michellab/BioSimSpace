@@ -488,6 +488,24 @@ class Amber(_process.Process):
                                                        self._property_map,
                                                        self._property_map)
 
+                # Even though the two molecules should have the same coordinates, they might be PBC wrapped differently.
+                # Here we take the first common core atom and translate the second molecule.
+                pertmol_idx, pertmol = next((i, molecule) for i, molecule in enumerate(old_system.getMolecules())
+                                            if molecule._is_perturbable)
+                pertatom_idx0, pertatom_idx1 = 0, 0
+                for i, atom in enumerate(pertmol.getAtoms()):
+                    is_dummy0 = "du" in atom._sire_object.property("ambertype0")
+                    is_dummy1 = "du" in atom._sire_object.property("ambertype1")
+                    if not is_dummy0 and not is_dummy1:
+                        break
+                    pertatom_idx0 += not is_dummy0
+                    pertatom_idx1 += not is_dummy1
+                old_system_squashed_pertatom0 = old_system_squashed[pertmol_idx].getAtoms()[pertatom_idx0]
+                old_system_squashed_pertatom1 = old_system_squashed[pertmol_idx + 1].getAtoms()[pertatom_idx1]
+                pertatom_coords0 = old_system_squashed_pertatom0._sire_object.property("coordinates")
+                pertatom_coords1 = old_system_squashed_pertatom1._sire_object.property("coordinates")
+                translation_vec = pertatom_coords1 - pertatom_coords0
+
                 # Update the velocities.
                 update_velocities = True
                 for idx in range(0, old_system_squashed.nMolecules()):
@@ -531,7 +549,7 @@ class Amber(_process.Process):
                             if "du" not in atom.property("ambertype1"):
                                 new_atom = old_system_squashed[mol_idx + 1].getAtoms()[idx1]
                                 if coordinates is None:
-                                    coordinates = new_atom._sire_object.property("coordinates")
+                                    coordinates = new_atom._sire_object.property("coordinates") - translation_vec
                                 if update_velocities and velocities is None:
                                     velocities = new_atom._sire_object.property("velocity")
                                 idx1 += 1
