@@ -506,7 +506,7 @@ class Molecule(_SireWrapper):
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
-        return _SireIO.isAmberWater(self._sire_object, property_map)
+        return _SireIO.isGromacsWater(self._sire_object, property_map)
 
     def toSystem(self):
         """Convert a single Molecule to a System.
