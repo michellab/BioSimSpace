@@ -52,7 +52,7 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 

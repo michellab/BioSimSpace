@@ -69,7 +69,7 @@ from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _lomap
 from ._merge import merge as _merge

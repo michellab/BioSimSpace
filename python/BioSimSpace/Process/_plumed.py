@@ -47,9 +47,9 @@ from BioSimSpace.Protocol import Metadynamics as _Metadynamics
 from BioSimSpace.Protocol import Steering as _Steering
 from BioSimSpace.Types import Coordinate as _Coordinate
 
-from BioSimSpace import _Exceptions as _Exceptions
+from BioSimSpace import _Exceptions
 from BioSimSpace import Types as _Types
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 from BioSimSpace import Units as _Units
 
 from ._process import _MultiDict

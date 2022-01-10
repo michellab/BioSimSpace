@@ -44,7 +44,6 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Types import Time as _Time
 
 from BioSimSpace import IO as _IO
-from BioSimSpace import _SireWrappers as _SireWrappers
 from BioSimSpace import Units as _Units
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.

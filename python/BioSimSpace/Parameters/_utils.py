@@ -32,7 +32,7 @@ import tempfile as _tempfile
 
 from BioSimSpace import _is_notebook
 from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 from BioSimSpace.Units.Charge import electron_charge as _electron_charge
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 

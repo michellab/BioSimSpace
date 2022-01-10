@@ -55,7 +55,7 @@ from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 
 from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
         shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
