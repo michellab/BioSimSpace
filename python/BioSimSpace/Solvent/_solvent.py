@@ -934,14 +934,15 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     num_na = 0
                     num_cl = 0
 
-                    # We now need to loop through the GRO file to extract the lines
-                    # corresponding to water or ion atoms.
+                    # We now need to loop through the GRO file to extract
+                    # the lines # corresponding to water or ion atoms.
                     water_ion_lines = []
 
                     with open("solvated_ions.gro", "r") as file:
-                        # Don't  for ions within the original system.
                         if molecule is None:
                             num_atoms = 0
+                        # Make sure we don't don't search for ions from the
+                        # original system.
                         else:
                             num_atoms = molecule.nAtoms()
                         for line in file.readlines()[num_atoms+2:]:
@@ -996,18 +997,17 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     # Load the water/ion box.
                     water_ions = _IO.readMolecules(["water_ions.gro", "water_ions.top"])
 
-                    # Create a new system by adding the water to the original molecule.
+                    # Create a new system by adding the water and ions to the original molecule.
                     if molecule is not None:
                         if isinstance(molecule, _System):
                             system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions
 
-                        # Add all of the water molecules' properties to the new system.
+                        # Add all of the system properties from the water molecules
+                        # to the new system.
                         for prop in water_ions._sire_object.propertyKeys():
                             prop = _property_map.get(prop, prop)
-
-                            # Add the space property from the water system.
                             system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
 
                     else:
