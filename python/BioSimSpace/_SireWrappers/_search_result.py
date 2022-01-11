@@ -29,7 +29,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
+import os as _os
+import uuid as _uuid
+
 from Sire import Mol as _SireMol
+
+import BioSimSpace.Stream as _Stream
 
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
@@ -183,6 +188,42 @@ class SearchResult():
         # Return the result.
         return result
 
+    def __getstate__(self):
+        """Pickle the object."""
+
+        # Stream the object to an s3 file.
+        filebase = "." + _uuid.uuid4().hex
+        _Stream.save(self, filebase)
+
+        # Read the file as a binary data stream.
+        contents = open(filebase + ".s3", "rb").read()
+
+        # Remove the intermediate file.
+        _os.remove(filebase + ".s3")
+
+        return contents
+
+    def __setstate__(self, state):
+        """Unpickle the object."""
+
+        # Write the binary data stream to an s3 file.
+        filename = "." + _uuid.uuid4().hex + ".s3"
+        with open(filename, "wb") as file:
+            file.write(state)
+
+        # Load the binary stream and remove the intermediate file.
+        system = _Stream.load(filename)
+        _os.remove(filename)
+
+        # Update the wrapped Sire object.
+        self._sire_object = system._sire_object
+
+        # Store the number of results.
+        self._num_results = len(self._sire_object)
+
+        # Initialise the iterator count.
+        self._iter_count = 0
+
     def copy(self):
         """Create a copy of this object.
 
@@ -225,6 +266,25 @@ class SearchResult():
                     :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
         return self[index]
+
+    def save(self, filebase=None):
+        """Save a the wrapped Sire object to a binary data stream. Objects can be
+           streamed to file, or to a Qt.QByteArray object, which will be returned.
+
+           Parameters
+           ----------
+
+           filebase : str
+               The base name of the binary output file. If none, then the object
+               will be streamed to a Qt.QByteArray object, which will be returned.
+
+           Returns
+           -------
+
+           stream : Qt.QByteArray
+               The streamed object. None will be returned when streaming to file.
+        """
+        _Stream.save(self, filebase)
 
     def _getSireObject(self):
         """Return the underlying Sire object.

@@ -1,4 +1,4 @@
-######################################################################
+#####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
 # Copyright: 2017-2022
@@ -31,6 +31,7 @@ __all__ = ["save", "load"]
 import os as _os
 
 from Sire import Mol as _SireMol
+from Sire import Qt as _Qt
 from Sire import Stream as _SireStream
 from Sire import System as _SireSystem
 
@@ -39,8 +40,9 @@ from BioSimSpace._Exceptions import StreamError as _StreamError
 from BioSimSpace._SireWrappers._sire_wrapper import SireWrapper as _SireWrapper
 from BioSimSpace import _SireWrappers
 
-def save(sire_object, filebase):
-    """Stream a wrapped Sire object to file.
+def save(sire_object, filebase=None):
+    """Save a wrapped Sire object to a binary data stream. Objects can be
+       streamed to file, or to a Qt.QByteArray object, which will be returned.
 
        Parameters
        ----------
@@ -49,7 +51,14 @@ def save(sire_object, filebase):
            A wrapped Sire object.
 
        filebase : str
-           The base name of the binary output file.
+           The base name of the binary output file. If none, then the object
+           will be streamed to a Qt.QByteArray object, which will be returned.
+
+       Returns
+       -------
+
+       stream : Qt.QByteArray
+           The streamed object. None will be returned when streaming to file.
     """
 
     # Validate input.
@@ -57,38 +66,63 @@ def save(sire_object, filebase):
     if not isinstance(sire_object, (_SireWrapper, _SireWrappers.SearchResult)):
         raise TypeError("'sire_object' must be of type 'BioSimSpace._SireWrappers.SireWrapper'.")
 
-    if not isinstance(filebase, str):
-        raise TypeError("'filebase' must be of type 'str'.")
+    if filebase is not None:
+        if not isinstance(filebase, str):
+            raise TypeError("'filebase' must be of type 'str'.")
 
-    try:
-        _SireStream.save(sire_object._sire_object, f"{filebase}.s3")
-    except Exception as e:
-        msg = f"Failed to stream {sire_object} to file '{filebase}.s3'."
-        if _isVerbose():
-            raise IOError(msg) from e
-        else:
-            raise IOError(msg) from None
+    if filebase is None:
+        try:
+            return _SireStream.save(sire_object._sire_object)
 
-def load(file):
-    """Stream a wrapped Sire object from file.
+        except Exception as e:
+            msg = f"Failed to stream {sire_object}."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
+    else:
+        try:
+            _SireStream.save(sire_object._sire_object, f"{filebase}.s3")
+
+            return None
+
+        except Exception as e:
+            msg = f"Failed to stream {sire_object} to file '{filebase}.s3'."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
+def load(stream):
+    """Load a wrapped Sire object from a binary data stream. Objects can be
+       streamed from file, or from a Qt.QByteArray object.
 
        Parameters
        ----------
 
-       file : str
-           The path to the binary file containing the streamed object.
+       stream : str, Qt.QByteArray
+           The path to the binary file / stream containing the object.
     """
 
     # Validate input.
 
-    if not _os.path.isfile(file):
-        raise TypeError(f"The binary file '{file}' doesn't exist!")
+    if isinstance(stream, str):
+        is_file = True
+    elif isinstance(stream, _Qt.QByteArray):
+        is_file = False
+    else:
+        raise TypeError("'stream' must be of type 'str' or 'Qt.QByteArray'.")
+
+    if is_file:
+        if not _os.path.isfile(stream):
+            raise ValueError(f"The binary file '{file}' doesn't exist!")
 
     # Try to load the object.
 
     try:
         # Stream from file.
-        sire_object = _SireStream.load(file)
+        sire_object = _SireStream.load(stream)
 
         # Construct the wrapped object.
         if isinstance(sire_object, _SireSystem.System):
@@ -107,7 +141,7 @@ def load(file):
             raise _StreamError(f"Unable to stream object of type {type(sire_object)}.")
 
     except Exception as e:
-        msg = f"Failed to stream {object} from file '{file}'."
+        msg = f"Failed to stream {object} from '{stream}'."
         if _isVerbose():
             raise IOError(msg) from e
         else:

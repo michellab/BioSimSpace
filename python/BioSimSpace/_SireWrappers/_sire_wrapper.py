@@ -29,6 +29,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
 
+import os as _os
+import uuid as _uuid
+
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Vol as _SireVol
@@ -79,6 +82,42 @@ class SireWrapper():
     def __hash__(self):
         """Hash operator."""
         return hash(self._sire_object)
+    
+    def __getstate__(self):
+        """Pickle the object."""
+
+        # Stream the object to an s3 file.
+        filebase = "." + _uuid.uuid4().hex
+        _Stream.save(self, filebase)
+
+        # Read the file as a binary data stream.
+        contents = open(filebase + ".s3", "rb").read()
+
+        # Remove the intermediate file.
+        _os.remove(filebase + ".s3")
+
+        return contents
+
+    def __setstate__(self, state):
+        """Unpickle the object."""
+
+        # Write the binary data stream to an s3 file.
+        filename = "." + _uuid.uuid4().hex + ".s3"
+        with open(filename, "wb") as file:
+            file.write(state)
+
+        # Load the binary stream and remove the intermediate file.
+        system = _Stream.load(filename)
+        _os.remove(filename)
+
+        # Update the wrapped Sire object.
+        self._sire_object = system._sire_object
+        try:
+            # If this is a System object, then we need to refresh any molecular
+            # mappings.
+            self._reset_mappings()
+        except:
+            pass
 
     def copy(self):
         """Return a copy of this object. The return type is same as the object
@@ -243,19 +282,24 @@ class SireWrapper():
 
         return box_min, box_max
 
-    def save(self, filebase):
-        """Stream a wrapped Sire object to file.
+    def save(self, filebase=None):
+        """Save a the wrapped Sire object to a binary data stream. Objects can be
+           streamed to file, or to a Qt.QByteArray object, which will be returned.
 
            Parameters
            ----------
 
-           sire_object : :class:`System <BioSimSpace._SireWrappers.SireWrapper>`
-               A wrapped Sire object.
-
            filebase : str
-               The base name of the binary output file.
+               The base name of the binary output file. If none, then the object
+               will be streamed to a Qt.QByteArray object, which will be returned.
+
+           Returns
+           -------
+
+           stream : Qt.QByteArray
+               The streamed object. None will be returned when streaming to file.
         """
-        _save(self, filebase)
+        _Stream.save(self, filebase)
 
     def _getSireObject(self):
         """Return the underlying Sire object.
@@ -321,4 +365,4 @@ class SireWrapper():
         return _SireVol.AABox(coord)
 
 # Import at bottom of module to avoid circular dependency.
-from BioSimSpace.Stream import save as _save
+import BioSimSpace.Stream as _Stream
