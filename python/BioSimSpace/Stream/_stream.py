@@ -29,6 +29,7 @@ __email__  = "lester.hedges@gmail.com"
 __all__ = ["save", "load"]
 
 import os as _os
+import uuid as _uuid
 
 from Sire import Mol as _SireMol
 from Sire import Qt as _Qt
@@ -42,7 +43,7 @@ from BioSimSpace import _SireWrappers
 
 def save(sire_object, filebase=None):
     """Save a wrapped Sire object to a binary data stream. Objects can be
-       streamed to file, or to a Qt.QByteArray object, which will be returned.
+       streamed to file, or to a bytes object, which will be returned.
 
        Parameters
        ----------
@@ -52,12 +53,12 @@ def save(sire_object, filebase=None):
 
        filebase : str
            The base name of the binary output file. If none, then the object
-           will be streamed to a Qt.QByteArray object, which will be returned.
+           will be streamed to a bytes object, which will be returned.
 
        Returns
        -------
 
-       stream : Qt.QByteArray
+       stream : bytes
            The streamed object. None will be returned when streaming to file.
     """
 
@@ -70,38 +71,42 @@ def save(sire_object, filebase=None):
         if not isinstance(filebase, str):
             raise TypeError("'filebase' must be of type 'str'.")
 
-    if filebase is None:
-        try:
-            return _SireStream.save(sire_object._sire_object)
+    try:
+        # Stream to a bytes object.
+        if filebase is None:
+            # Stream the object to an s3 file.
+            filebase = "." + _uuid.uuid4().hex
+            _SireStream.save(sire_object._sire_object, filebase + ".s3")
 
-        except Exception as e:
-            msg = f"Failed to stream {sire_object}."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+            # Read the file as a binary data stream.
+            contents = open(filebase + ".s3", "rb").read()
 
-    else:
-        try:
+            # Remove the intermediate file.
+            _os.remove(filebase + ".s3")
+
+            return contents
+
+        # Stream to file.
+        else:
             _SireStream.save(sire_object._sire_object, f"{filebase}.s3")
 
             return None
 
-        except Exception as e:
-            msg = f"Failed to stream {sire_object} to file '{filebase}.s3'."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+    except Exception as e:
+        msg = f"Failed to stream {sire_object}."
+        if _isVerbose():
+            raise IOError(msg) from e
+        else:
+            raise IOError(msg) from None
 
 def load(stream):
     """Load a wrapped Sire object from a binary data stream. Objects can be
-       streamed from file, or from a Qt.QByteArray object.
+       streamed from file, or from a bytes object.
 
        Parameters
        ----------
 
-       stream : str, Qt.QByteArray
+       stream : str, bytes
            The path to the binary file / stream containing the object.
     """
 
@@ -109,10 +114,10 @@ def load(stream):
 
     if isinstance(stream, str):
         is_file = True
-    elif isinstance(stream, _Qt.QByteArray):
+    elif isinstance(stream, bytes):
         is_file = False
     else:
-        raise TypeError("'stream' must be of type 'str' or 'Qt.QByteArray'.")
+        raise TypeError("'stream' must be of type 'str' or 'bytes'.")
 
     if is_file:
         if not _os.path.isfile(stream):
@@ -121,8 +126,20 @@ def load(stream):
     # Try to load the object.
 
     try:
-        # Stream from file.
-        sire_object = _SireStream.load(stream)
+        # Load a bytes object via an intermediate s3 file.
+        if not is_file:
+            # Write the binary data stream to an s3 file.
+            filename = "." + _uuid.uuid4().hex + ".s3"
+            with open(filename, "wb") as file:
+                file.write(stream)
+
+            # Load the binary stream and remove the intermediate file.
+            sire_object = _SireStream.load(filename)
+            _os.remove(filename)
+
+        # Stream from file directly.
+        else:
+            sire_object = _SireStream.load(stream)
 
         # Construct the wrapped object.
         if isinstance(sire_object, _SireSystem.System):
