@@ -82,7 +82,7 @@ class SireWrapper():
     def __hash__(self):
         """Hash operator."""
         return hash(self._sire_object)
-    
+
     def __getstate__(self):
         """Pickle the object."""
 
