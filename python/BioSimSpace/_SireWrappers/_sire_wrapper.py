@@ -84,7 +84,6 @@ class SireWrapper():
 
     def __getstate__(self):
         """Pickle the object."""
-
         return _Stream.save(self)
 
     def __setstate__(self, state):
