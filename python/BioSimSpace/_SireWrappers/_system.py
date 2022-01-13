@@ -672,7 +672,7 @@ class System(_SireWrapper):
                A container of water molecule objects.
         """
 
-        return self.search("water", property_map)
+        return _Molecules(self._sire_object.search("water").toGroup())
 
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
