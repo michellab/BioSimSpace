@@ -596,24 +596,21 @@ class System(_SireWrapper):
                     system = self.copy()._sire_object
                     system.update(mol._sire_object)
                 except:
-                    # Create a new system.
-                    system = _SireSystem.System("BioSimSpace System")
+                    # The UUID of the molecule has changed. Normally we would
+                    # need to remove and re-add the molecule, but this would
+                    # change the molecular ordering. Instead we create a new
+                    # system by re-adding all molecules in the original order.
 
-                    # Create a new "all" molecule group.
-                    molgrp = _SireMol.MoleculeGroup("all")
+                    system = self.copy()._sire_object
 
-                    # Get the index of the molecule in the existing molNums list.
+                    # Get the index of the molecule in the existing molNums
+                    # list.
                     idx = self._mol_nums.index(_SireMol.MolNum(mol.number()))
 
-                    # Now add them back, preserving the order.
-                    for m in self[0:idx]:
-                        molgrp.add(m._sire_object)
-                    molgrp.add(mol._sire_object)
-                    for m in self[idx+1:]:
-                        molgrp.add(m._sire_object)
-
-                    # Add the new molecule group.
-                    system.add(molgrp)
+                    # Update the molecule in the system, preserving the
+                    # original molecular ordering.
+                    system = _SireIO.updateAndPreserveOrder(
+                            system, mol._sire_object, idx)
 
         # Udpate the Sire object.
         self._sire_object = system
