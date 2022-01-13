@@ -205,7 +205,7 @@ class ConfigFactory:
 
         # Define some miscellaneous defaults.
         protocol_dict = {
-            "ntpr": self._report_interval,          # Interval between reporting energies.
+            "ntpr": 200,                            # Interval between reporting energies.
             "ntwr": self._restart_interval,         # Interval between saving restart files.
             "ntwx": self._restart_interval,         # Trajectory sampling frequency.
             "ntxo": 2,                              # Output coordinates as NetCDF.
@@ -248,6 +248,7 @@ class ConfigFactory:
             protocol_dict["cut"] = "999."           # Non-bonded cut-off.
         else:
             protocol_dict["cut"] = "8.0"            # Non-bonded cut-off.
+            protocol_dict["iwrap"] = 1              # Wrap the coordinates.
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration):
@@ -472,8 +473,8 @@ class ConfigFactory:
             lam = self.protocol.getLambda()
             idx = self.protocol.getLambdaValues().index(lam)
             protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
-            protocol_dict["nstcalcenergy"] = 250                                    # Calculate energies every 250 steps.
-            protocol_dict["nstdhdl"] = 250                                          # Write gradients every 250 steps.
+            protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
+            protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -518,32 +519,28 @@ class ConfigFactory:
             report_interval = self._report_interval
             restart_interval = self._restart_interval
 
-            # Work out the number of cycles.
-            ncycles = self._steps // report_interval
+            # The restart and report intervals must be a multiple of the energy frequency,
+            # which is 200 steps.
+            if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                report_interval = int(200 * _math.ceil(report_interval / 200))
+                restart_interval = int(200 * _math.ceil(restart_interval / 200))
 
-            # If the number of cycles isn't integer valued, adjust the report
-            # interval so that we match specified the run time.
-            report_interval = _math.ceil(self._steps / ncycles)
+            # The number of moves per cycle.
+            nmoves = report_interval
 
-            # The report interval must be a multiple of the energy frequency,
-            # which is 250 steps.
-            report_interval = 250 * _math.ceil(report_interval / 250)
+            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
+            ncycles = max(1, self._steps // nmoves)
 
-            # Work out the number of cycles per frame.
-            cycles_per_frame = restart_interval / report_interval
+            # How many cycles need to pass before we write a trajectory frame.
+            cycles_per_frame = max(1, restart_interval // nmoves)
 
-            # Work out whether we need to adjust the buffer frequency.
-            buffer_freq = 0
-            if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * restart_interval
-                cycles_per_frame = 1
-            else:
-                cycles_per_frame = _math.floor(cycles_per_frame)
+            # How many time steps need to pass before we write a trajectory frame.
+            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
             protocol_dict["ncycles"] = ncycles                                  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = report_interval                           # The number of moves per cycle.
+            protocol_dict["nmoves"] = nmoves                                    # The number of moves per cycle.
             protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
-            protocol_dict["buffered coordinates frequency"] = int(buffer_freq)  # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
             timestep = self.protocol.getTimeStep().femtoseconds().magnitude()
             protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
 
@@ -587,7 +584,7 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             if not isinstance(self.protocol, _Protocol.Minimisation):
                 protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
-                protocol_dict["energy frequency"] = 250                         # Write gradients every 250 steps.
+                protocol_dict["energy frequency"] = 200                         # Write gradients every 200 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
