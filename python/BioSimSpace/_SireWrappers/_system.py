@@ -593,15 +593,30 @@ class System(_SireWrapper):
             # Only try to update the molecule if it exists in the system.
             if _SireMol.MolNum(mol.number()) in self._mol_nums:
                 try:
-                    system = self.copy()
-                    system._sire_object.update(mol._sire_object)
+                    system = self.copy()._sire_object
+                    system.update(mol._sire_object)
                 except:
-                    system = self.copy()
-                    system._sire_object.remove(mol._sire_object.number())
-                    system._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+                    # Create a new system.
+                    system = _SireSystem.System("BioSimSpace System")
+
+                    # Create a new "all" molecule group.
+                    molgrp = _SireMol.MoleculeGroup("all")
+
+                    # Get the index of the molecule in the existing molNums list.
+                    idx = self._mol_nums.index(_SireMol.MolNum(mol.number()))
+
+                    # Now add them back, preserving the order.
+                    for m in self[0:idx]:
+                        molgrp.add(m._sire_object)
+                    molgrp.add(mol._sire_object)
+                    for m in self[idx+1:]:
+                        molgrp.add(m._sire_object)
+
+                    # Add the new molecule group.
+                    system.add(molgrp)
 
         # Udpate the Sire object.
-        self._sire_object = system._sire_object
+        self._sire_object = system
 
         # Reset the index mappings.
         self._reset_mappings()
