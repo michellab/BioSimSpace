@@ -1743,11 +1743,11 @@ class System(_SireWrapper):
             # the template for the desired format.
 
             if format == "AMBER":
-                if waters[0].toMolecule().isAmberWater():
+                if waters[0].isAmberWater():
                     return
 
             elif format == "GROMACS":
-                if waters[0].toMolecule().isGromacsWater():
+                if waters[0].isGromacsWater():
                     return
 
             # There will be a "water_model" system property if this object was
