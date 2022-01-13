@@ -935,7 +935,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     num_cl = 0
 
                     # We now need to loop through the GRO file to extract
-                    # the lines # corresponding to water or ion atoms.
+                    # the lines corresponding to water or ion atoms.
                     water_ion_lines = []
 
                     with open("solvated_ions.gro", "r") as file:
