@@ -1615,8 +1615,8 @@ class OpenMM(_process.Process):
         """Helper function to write the header (import statements) to the
            OpenMM Python script (config file).
         """
-        self.addToConfig("from simtk.openmm.app import *")
-        self.addToConfig("from simtk.openmm import *")
+        self.addToConfig("from openmm.app import *")
+        self.addToConfig("from openmm import *")
         self.addToConfig("from simtk.unit import *")
 
     def _add_config_platform(self):
