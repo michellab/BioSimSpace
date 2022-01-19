@@ -225,6 +225,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                             raise ValueError(f"{links_file} can only contain 'force' in the "
                                              f"fourth column: {line.rstrip()}.")
 
+                    # Make sure that the ligands are in the names list.
+                    if not records[0] in names:
+                        raise ValueError(f"Ligand '{records[0]}' not in 'names' list!")
+                    if not records[1] in names:
+                        raise ValueError(f"Ligand '{records[1]}' not in 'names' list!")
+
         else:
             raise IOError(f"The links file doesn't exist: {links_file}")
 
@@ -257,23 +263,51 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _os.makedirs(work_dir + "/inputs", exist_ok=True)
     _os.makedirs(work_dir + "/outputs", exist_ok=True)
 
+    # Dictionary to map ligand names in the links file to the file names
+    # that are used in the working directory.
+    links_names = {}
+
     # Write all of the molecules to disk.
     if rdkit_input:
-        for x, (molecule, name) in enumerate(zip(molecules, names)):
-            writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}_{name}.sdf")
-            writer.write(molecule)
-            writer.close()
+        if names is not None:
+            for x, (molecule, name) in enumerate(zip(molecules, names)):
+                file_name = f"{x:03d}_{name}.sdf"
+                links_names[name] = file_name
+                writer =  _Chem.SDWriter(work_dir/inputs/ + file_name)
+                writer.write(molecule)
+                writer.close()
+        else:
+            for x, molecule in enumerate(molecules):
+                writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}.sdf")
+                writer.write(molecule)
+                writer.close()
     else:
-        for x, (molecule, name) in enumerate(zip(molecules, names)):
-            _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                molecule, "mol2", property_map=property_map)
+        if names is not None:
+            for x, (molecule, name) in enumerate(zip(molecules, names)):
+                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                    molecule, "mol2", property_map=property_map)
+                links_names[name] = f"{x:03d}_{name}.mol2"
+        else:
+            for x, molecule in enumerate(molecules):
+                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                    molecule, "mol2", property_map=property_map)
 
-    # Create a local copy of the links file in the working directory.
-    # This isn't needed, but is useful for debugging and ensuring that
-    # all input/output is self-contained.
+    # Create a local copy of the links file in the working directory,
+    # replacing the original ligand names with their actual file names.
     if links_file:
-        lf = f"{work_dir}/inputs/lomap_links_file.txt"
-        _shutil.copyfile(links_file, lf)
+        # Read the old file and map the ligand names to their file names.
+        new_lines = []
+        with open(links_file, "r") as lf:
+            for line in lf:
+                records = line.split()
+                new_line = f"{links_names[records[0]]} {links_names[records[1]]}"
+                if len(records) > 2:
+                    new_line += " " + " ".join(records[2:])
+
+        # Write the updated lomap links file.
+        with open(f"{work_dir}/inputs/lomap_links_file.txt", "w") as lf:
+            for line in new_lines:
+                lf.write(line)
     else:
         lf = None
 
@@ -415,13 +449,22 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         # 1) Loop over each molecule and load into RDKit.
         try:
             rdmols = []
-            for x, name in zip(range(0, len(molecules)), names):
-                try:
-                    file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-                    rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-                except OSError:
-                    file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                    rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+            if names is not None:
+                for x, name in zip(range(0, len(molecules)), names):
+                    try:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+                    except OSError:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+            else:
+                for x in range(0, len(molecules)):
+                    try:
+                        file = f"{work_dir}/inputs/{x:03d}.mol2"
+                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+                    except OSError:
+                        file = f"{work_dir}/inputs/{x:03d}.sdf"
+                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -479,14 +522,16 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # Generate the graph.
             graph = _nx.Graph()
 
+            # If ligand names aren't specified, then use the molecule index.
+            if names is None:
+                names = [x for x in range(1, len(molecules)+1)]
+
             # Create a dictionary mapping the edges to their scores.
             edge_dict = {}
             for x, (node0, node1) in enumerate(edges):
                 edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
 
             # Loop over the nodes and add to the graph.
-            if names is None:
-                names = [x for x in range(1, len(molecules)+1)]
             for node in nodes:
                 img = f"{work_dir}/images/{node:03d}.png"
                 graph.add_node(names[node], image=img, label=names[node], labelloc="t")
