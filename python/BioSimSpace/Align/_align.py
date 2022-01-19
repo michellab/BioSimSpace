@@ -1353,10 +1353,16 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
     if prop1 != "coordinates":
         molecule1 = molecule1.edit().setProperty("coordinates", molecule1.property(prop1)).commit()
 
+    # We need to sanitize the molecules before we can generate
+    # substructure matches.
+    _Chem.SanitizeMol(rdkit_molecule0)
+    _Chem.SanitizeMol(rdkit_molecule1)
+
     # Get the set of matching substructures in each molecule. For some reason
     # setting uniquify to True removes valid matches, in some cases even the
     # best match! As such, we set uniquify to False and account for duplicate
     # mappings in the code below.
+
     matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False,
         maxMatches=max_scoring_matches, useChirality=False)
     matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False,
