@@ -494,7 +494,10 @@ class Relative():
                     elif mbar_section:
                         split_line = line.split()
                         eval_lambda = float(split_line[2])
-                        energy = float(split_line[-1])
+                        try:
+                            energy = float(split_line[-1])
+                        except ValueError:
+                            energy = float("inf")
                         current_energy_dict[eval_lambda] += [energy]
                     elif not found_temperature:
                         match = _re.search("temp0=([\d.]+)", line)
