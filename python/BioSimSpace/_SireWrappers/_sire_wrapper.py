@@ -82,25 +82,6 @@ class SireWrapper():
         """Hash operator."""
         return hash(self._sire_object)
 
-    def __getstate__(self):
-        """Pickle the object."""
-        return _Stream.save(self)
-
-    def __setstate__(self, state):
-        """Unpickle the object."""
-
-        # Unpickle the wrapped Sire object.
-        obj = _Stream.load(state)
-
-        # Update the internal Sire object.
-        self._sire_object = obj._sire_object
-        try:
-            # If this is a System object, then we need to refresh any molecular
-            # mappings.
-            self._reset_mappings()
-        except:
-            pass
-
     def copy(self):
         """Return a copy of this object. The return type is same as the object
            on which copy is called.
@@ -264,25 +245,6 @@ class SireWrapper():
 
         return box_min, box_max
 
-    def save(self, filebase=None):
-        """Save a the wrapped Sire object to a binary data stream. Objects can be
-           streamed to file, or to a bytes object, which will be returned.
-
-           Parameters
-           ----------
-
-           filebase : str
-               The base name of the binary output file. If none, then the object
-               will be streamed to a bytes object, which will be returned.
-
-           Returns
-           -------
-
-           stream : bytes
-               The streamed object. None will be returned when streaming to file.
-        """
-        return _Stream.save(self, filebase)
-
     def _getSireObject(self):
         """Return the underlying Sire object.
 
@@ -345,6 +307,3 @@ class SireWrapper():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
-
-# Import at bottom of module to avoid circular dependency.
-import BioSimSpace.Stream as _Stream

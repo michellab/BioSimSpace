@@ -37,13 +37,16 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
-@pytest.mark.parametrize("merged, pert",
-    [("test/io/morphs/merged01.s3", "test/io/morphs/morph01.pert")])
-def test_pert_file(merged, pert):
+@pytest.mark.parametrize("morph, pert",
+    [("test/io/morphs/morph01.pickle", "test/io/morphs/morph01.pert")])
+def test_pert_file(morph, pert):
     """Test the perturbation file writer."""
 
-    # Stream the molecule.
-    mol = BSS.Stream.load(merged)
+    import pickle
+
+    # Unpickle the molecule.
+    with open(morph, "rb") as file:
+        mol = pickle.load(file)
 
     # Create the perturbation file.
     BSS.Process._somd._to_pert_file(mol)

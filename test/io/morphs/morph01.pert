@@ -372,20 +372,20 @@ molecule LIG
     atom
         name           O1
         initial_type   o
-        final_type     du
-        initial_LJ     3.04812 0.14630
-        final_LJ       0.00000 0.00000
-        initial_charge -0.65680
-        final_charge   -0.00000
-    endatom
-    atom
-        name           O2
-        initial_type   o
         final_type     o
         initial_LJ     3.04812 0.14630
         final_LJ       3.04812 0.14630
         initial_charge -0.65680
         final_charge   -0.60110
+    endatom
+    atom
+        name           O2
+        initial_type   o
+        final_type     du
+        initial_LJ     3.04812 0.14630
+        final_LJ       0.00000 0.00000
+        initial_charge -0.65680
+        final_charge   -0.00000
     endatom
     atom
         name           S1
@@ -433,16 +433,16 @@ molecule LIG
         atom1          O1
         initial_force  653.20000
         initial_equil  1.46600
-        final_force    653.20000
-        final_equil    1.46600
+        final_force    652.60000
+        final_equil    1.21800
     endbond
     bond
         atom0          S1
         atom1          O2
         initial_force  653.20000
         initial_equil  1.46600
-        final_force    652.60000
-        final_equil    1.21800
+        final_force    653.20000
+        final_equil    1.46600
     endbond
     angle
         atom0          S1
@@ -531,8 +531,8 @@ molecule LIG
         atom2          O1
         initial_force  123.40000
         initial_equil  1.86977
-        final_force    123.40000
-        final_equil    1.86977
+        final_force    113.80000
+        final_equil    2.14763
     endangle
     angle
         atom0          N5
@@ -540,8 +540,8 @@ molecule LIG
         atom2          O2
         initial_force  123.40000
         initial_equil  1.86977
-        final_force    113.80000
-        final_equil    2.14763
+        final_force    123.40000
+        final_equil    1.86977
     endangle
     angle
         atom0          O1
@@ -549,8 +549,8 @@ molecule LIG
         atom2          C1
         initial_force  94.30000
         initial_equil  1.89107
-        final_force    94.30000
-        final_equil    1.89107
+        final_force    86.20000
+        final_equil    2.13977
     endangle
     angle
         atom0          O1
@@ -567,8 +567,8 @@ molecule LIG
         atom2          C1
         initial_force  94.30000
         initial_equil  1.89107
-        final_force    86.20000
-        final_equil    2.13977
+        final_force    94.30000
+        final_equil    1.89107
     endangle
     dihedral
         atom0          C20
@@ -632,7 +632,7 @@ molecule LIG
         atom2          S1
         atom3          O1
         initial_form   3.1333 2.0 -0.000000
-        final_form     0.0000 2.0 -0.000000
+        final_form     2.5000 2.0 3.141594
     enddihedral
     dihedral
         atom0          C19
@@ -640,7 +640,7 @@ molecule LIG
         atom2          S1
         atom3          O2
         initial_form   3.1333 2.0 -0.000000
-        final_form     2.5000 2.0 3.141594
+        final_form     0.0000 2.0 -0.000000
     enddihedral
     dihedral
         atom0          H16
@@ -656,7 +656,7 @@ molecule LIG
         atom2          S1
         atom3          O1
         initial_form   3.1333 2.0 -0.000000
-        final_form     0.0000 2.0 -0.000000
+        final_form     2.0000 1.0 -0.000000 2.5000 2.0 3.141594
     enddihedral
     dihedral
         atom0          H16
@@ -664,7 +664,7 @@ molecule LIG
         atom2          S1
         atom3          O2
         initial_form   3.1333 2.0 -0.000000
-        final_form     2.0000 1.0 -0.000000 2.5000 2.0 3.141594
+        final_form     0.0000 2.0 -0.000000
     enddihedral
     dihedral
         atom0          N5
@@ -688,7 +688,7 @@ molecule LIG
         atom2          C1
         atom3          C2
         initial_form   1.3000 2.0 3.141594
-        final_form     0.0000 2.0 3.141594
+        final_form     0.5225 2.0 3.141594
     enddihedral
     dihedral
         atom0          O1
@@ -696,7 +696,7 @@ molecule LIG
         atom2          C1
         atom3          C4
         initial_form   1.3000 2.0 3.141594
-        final_form     0.0000 2.0 3.141594
+        final_form     0.5225 2.0 3.141594
     enddihedral
     dihedral
         atom0          O2
@@ -704,7 +704,7 @@ molecule LIG
         atom2          C1
         atom3          C2
         initial_form   1.3000 2.0 3.141594
-        final_form     0.5225 2.0 3.141594
+        final_form     0.0000 2.0 3.141594
     enddihedral
     dihedral
         atom0          O2
@@ -712,7 +712,7 @@ molecule LIG
         atom2          C1
         atom3          C4
         initial_form   1.3000 2.0 3.141594
-        final_form     0.5225 2.0 3.141594
+        final_form     0.0000 2.0 3.141594
     enddihedral
     improper
         atom0          H16
@@ -723,7 +723,7 @@ molecule LIG
         final_form     1.1000 2.0 3.141594
     endimproper
     improper
-        atom0          O2
+        atom0          O1
         atom1          S1
         atom2          N5
         atom3          C1
