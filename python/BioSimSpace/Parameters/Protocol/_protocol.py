@@ -36,7 +36,7 @@ import subprocess as _subprocess
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
 _sys.stderr = open(_os.devnull, "w")
-from openff.toolkit.topology import Molecule as _OpenFFMolecule
+#from openff.toolkit.topology import Molecule as _OpenFFMolecule
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys

@@ -1,4 +1,5 @@
 import os
+import platform
 
 if not os.getenv("BSS_CONDA_INSTALL"):
     # Set the minimum allowed Sire version.
@@ -56,19 +57,20 @@ finally:
 
         # Create a list of the conda dependencies.
         conda_deps = ["configargparse",
-                      "mdanalysis",
-                      "mdtraj",
                       "nglview",
                       "openff-toolkit-base",
                       "parmed",
                       "pydot",
                       "pygtail",
-                      "pymbar",
                       "pypdb",
                       "pytest",
                       "pyyaml",
                       "rdkit",
                       "watchdog"]
+
+        if platform.machine() != "aarch64":
+            conda_deps.insert(1, "mdtraj")
+            conda_deps.insert(1, "mdanalysis")
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir

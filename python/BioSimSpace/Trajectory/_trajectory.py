@@ -28,8 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["getFrame", "Trajectory"]
 
-import MDAnalysis as _mdanalysis
-import mdtraj as _mdtraj
+#import MDAnalysis as _mdanalysis
+#import mdtraj as _mdtraj
 import os as _os
 import shutil as _shutil
 import warnings as _warnings

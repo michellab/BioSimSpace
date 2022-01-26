@@ -57,9 +57,9 @@ import sys as _sys
 # Temporarily redirect stderr to suppress import warnings.
 _sys.stderr = open(_os.devnull, "w")
 from simtk.openmm.app import PDBFile as _PDBFile
-from openff.toolkit.topology import Molecule as _OpenFFMolecule
-from openff.toolkit.topology import Topology as _OpenFFTopology
-from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
+#from openff.toolkit.topology import Molecule as _OpenFFMolecule
+#from openff.toolkit.topology import Topology as _OpenFFTopology
+#from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys

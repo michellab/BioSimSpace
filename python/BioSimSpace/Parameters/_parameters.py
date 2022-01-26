@@ -811,46 +811,49 @@ def _make_function(name):
 
 # Dynamically create functions for all available force fields from the Open
 # Force Field Initiative.
-from glob import glob as _glob
-import openforcefields as _openforcefields
-import os as _os
-_openff_dirs = _openforcefields.get_forcefield_dirs_paths()
-_open_forcefields = []
-# Loop over all force field directories.
-for _dir in _openff_dirs:
-    # Glob all offxml files in the directory.
-    _ff_list = _glob(f"{_dir}" + "/*.offxml")
-    for _ff in _ff_list:
-        # Get the force field name (base name minus extension).
-        _base = _os.path.basename(_ff)
-        _ff = _os.path.splitext(_base)[0]
+try:
+    from glob import glob as _glob
+    import openforcefields as _openforcefields
+    import os as _os
+    _openff_dirs = _openforcefields.get_forcefield_dirs_paths()
+    _open_forcefields = []
+    # Loop over all force field directories.
+    for _dir in _openff_dirs:
+        # Glob all offxml files in the directory.
+        _ff_list = _glob(f"{_dir}" + "/*.offxml")
+        for _ff in _ff_list:
+            # Get the force field name (base name minus extension).
+            _base = _os.path.basename(_ff)
+            _ff = _os.path.splitext(_base)[0]
 
-        # Only include unconstrained force-fields since we need to go via
-        # an intermediate ParmEd conversion. This means ParmEd must receive
-        # bond parameters. We can then choose to constrain later, if required.
-        # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
+            # Only include unconstrained force-fields since we need to go via
+            # an intermediate ParmEd conversion. This means ParmEd must receive
+            # bond parameters. We can then choose to constrain later, if required.
+            # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
 
-        if "unconstrained" in _ff:
-            # Append to the list of available force fields.
-            _forcefields.append(_ff)
-            _open_forcefields.append(_ff)
+            if "unconstrained" in _ff:
+                # Append to the list of available force fields.
+                _forcefields.append(_ff)
+                _open_forcefields.append(_ff)
 
-            # Create a sane function name, i.e. replace "-" and "."
-            # characters with "_".
-            _func_name = _ff.replace("-", "_")
-            _func_name = _func_name.replace(".", "_")
+                # Create a sane function name, i.e. replace "-" and "."
+                # characters with "_".
+                _func_name = _ff.replace("-", "_")
+                _func_name = _func_name.replace(".", "_")
 
-            # Generate the function and bind it to the namespace.
-            _function = _make_function(_ff)
-            setattr(_namespace, _func_name, _function)
+                # Generate the function and bind it to the namespace.
+                _function = _make_function(_ff)
+                setattr(_namespace, _func_name, _function)
 
-            # Expose the function to the user.
-            __all__.append(_func_name)
+                # Expose the function to the user.
+                __all__.append(_func_name)
 
-            # Convert force field name to lower case and map to its function.
-            _forcefields_lower.append(_ff.lower())
-            _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
-            _requires_water_model[_ff.lower()] = False
+                # Convert force field name to lower case and map to its function.
+                _forcefields_lower.append(_ff.lower())
+                _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+                _requires_water_model[_ff.lower()] = False
+except Exception:
+    print("openff is not supported!")
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -1023,17 +1026,20 @@ def _has_ions(molecule):
         return False, ions
 
 # Clean up redundant attributes.
-del _base
-del _dir
-del _ff
-del _ff_list
-del _function
-del _func_name
-del _glob
-del _make_function
-del _openforcefields
-del _openff_dirs
-del _os
-del _namespace
-del _sys
-del _var
+try:
+    del _base
+    del _dir
+    del _ff
+    del _ff_list
+    del _function
+    del _func_name
+    del _glob
+    del _make_function
+    del _openforcefields
+    del _openff_dirs
+    del _os
+    del _namespace
+    del _sys
+    del _var
+except Exception:
+    print("Still not supported...")
