@@ -52,8 +52,8 @@ finally:
         print("\nSetting up python environment...")
 
         # Open files for stdout/stderr.
-        stdout = open("setup.out", "w")
-        stderr = open("setup.err", "w")
+        stdout = sys.stdout   #open("setup.out", "w")
+        stderr = sys.stderr   #open("setup.err", "w")
 
         # Create a list of the conda dependencies.
         conda_deps = ["configargparse",
@@ -65,9 +65,13 @@ finally:
                       "pytest",
                       "pyyaml",
                       "rdkit",
+                      "networkx",
+                      "Plumed",
                       "watchdog"]
 
         if platform.machine() != "aarch64":
+            # these packages are not available on aarch64 in a way
+            # that is compatible with the above packages (yet)
             conda_deps.insert(1, "mdtraj")
             conda_deps.insert(1, "mdanalysis")
             conda_deps.insert(5, "openff-toolkit-base")
@@ -95,17 +99,17 @@ finally:
         subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
         # Close the file handles.
-        stdout.close()
-        stderr.close()
+        #stdout.close()
+        #stderr.close()
 
         try:
             import BioSimSpace
 
             # Installation worked. Remove the stdout/stderr files.
-            os.remove("setup.out")
-            os.remove("setup.err")
+            #os.remove("setup.out")
+            #os.remove("setup.err")
         except:
-            print("\nPossible installation issues. Please check output in 'setup.out' and 'setup.err'")
+            print("\nPossible installation issues.")
             sys.exit()
 
         print("\nDone!")
