@@ -33,6 +33,8 @@ __email__ = "chryswoods@hey.com"
 __all__ = ["_module_stub", "_try_import",
            "_assert_imported", "_have_imported"]
 
+_failed_modules = {}
+
 
 class _ModuleStub:
     def __init__(self, name: str, install_command: str):
@@ -108,6 +110,11 @@ def _try_import(name: str, install_command: str = None):
            The module if it loaded correctly, else otherwise
            a _ModuleStub for that module
     """
+    global _failed_modules
+
+    if name in _failed_modules:
+        return _failed_modules[name]
+
     import importlib
 
     try:
@@ -115,6 +122,8 @@ def _try_import(name: str, install_command: str = None):
     except Exception as e:
         m = _ModuleStub(name=name,
                         install_command=install_command)
+
+        _failed_modules[name] = m
 
         import BioSimSpace
         if BioSimSpace._isVerbose():

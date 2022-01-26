@@ -61,7 +61,6 @@ else:
     Chem = _rdkit
     DataStructs = _rdkit
 
-import networkx as nx
 import numpy as np
 from . import graphgen
 from . import mcs
