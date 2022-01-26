@@ -40,21 +40,31 @@ import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
 
+from BioSimSpace._Utils import _try_import, _have_imported, _assert_imported
+
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
 _warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 _warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
 _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
-    from rdkit import Chem as _Chem
-    from rdkit.Chem import rdFMCS as _rdFMCS
-    from rdkit import RDLogger as _RDLogger
+    _rdkit = _try_import("rdkit")
 
-    # Disable RDKit warnings.
-    _RDLogger.DisableLog('rdApp.*')
+    if _have_imported(_rdkit):
+        from rdkit import Chem as _Chem
+        from rdkit.Chem import rdFMCS as _rdFMCS
+        from rdkit import RDLogger as _RDLogger
+
+        # Disable RDKit warnings.
+        _RDLogger.DisableLog('rdApp.*')
+    else:
+        _Chem = _rdkit
+        _rdFMCS = _rdkit
+        _RDLogger = _rdkit
 
 from Sire import Base as _SireBase
 from Sire import Maths as _SireMaths
@@ -398,10 +408,16 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     # Plot the LOMAP network.
     if plot_network:
         # Conditional imports.
+        _assert_imported(_rdkit)
+
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
-        import networkx as _nx
-        import pydot as _pydot
+        _nx = _try_import("networkx")
+        _pydot = _try_import("pydot")
+
+        _assert_imported(_nx)
+        _assert_imported(_pydot)
+
         from rdkit.Chem import AllChem as _AllChem
         from rdkit.Chem import Draw as _Draw
         from rdkit.Chem import rdmolops as _rdmolops
@@ -1182,6 +1198,8 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     # Only draw within a notebook.
     if not _is_notebook:
         return None
+
+    _assert_imported(_rdkit)
 
     if type(molecule0) is not _Molecule:
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")

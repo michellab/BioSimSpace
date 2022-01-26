@@ -58,7 +58,6 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = ["configargparse",
                       "nglview",
-                      "openff-toolkit-base",
                       "parmed",
                       "pydot",
                       "pygtail",
@@ -71,6 +70,7 @@ finally:
         if platform.machine() != "aarch64":
             conda_deps.insert(1, "mdtraj")
             conda_deps.insert(1, "mdanalysis")
+            conda_deps.insert(5, "openff-toolkit-base")
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
