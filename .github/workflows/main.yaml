@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: bss_build
         if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
-      - name: Clone the repository
+      - name: Clone repositories
         run: |
           git clone https://github.com/michellab/Sire
           git clone https://github.com/michellab/BioSimSpace
@@ -43,12 +43,13 @@ jobs:
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab BioSimSpace/recipes/biosimspace
+        if: "!contains(github.event.head_commit.message, 'doc')"
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh "$GITHUB_WORKSPACE"/BioSimSpace "$CONDA"
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && "!contains(github.event.head_commit.message, 'doc')"
       - name: Build documentation
         shell: bash -l {0}
         run: |
