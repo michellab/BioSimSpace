@@ -4,6 +4,19 @@
 Binaries
 ========
 
+The self-extracting binary for the 2020.1.0 release of BioSimSpace
+can be downloaded from one of the following links:
+
+* Linux: `biosimspace_2020_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YMYAJMERzLE_6keRKHQMHypXqilpDkOVyQgpxdQ9HfxHrhgdxg9uDFRiBwfiwPM9/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_linux.run>`__
+* macOS: `biosimspace_2020_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/leVE5J5dLoyAE999I0tkoCouI8Mqr1l4NsWYNiBisrSwnmYwAd8hSPlrPN1JN1zH/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_osx.run>`__
+
+
+The latest self-extracting binary for the development version of BioSimSpace
+can be downloaded from one of the following links:
+
+* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
+* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
+
 The self-extracting binary for the 2019.3.0 release of BioSimSpace
 can be downloaded from one of the following links:
 

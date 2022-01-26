@@ -59,34 +59,9 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 Binary install
 ==============
 
-The self-extracting binary for the 2020.1.0 release of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_2020_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YMYAJMERzLE_6keRKHQMHypXqilpDkOVyQgpxdQ9HfxHrhgdxg9uDFRiBwfiwPM9/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_linux.run>`__
-* macOS: `biosimspace_2020_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/leVE5J5dLoyAE999I0tkoCouI8Mqr1l4NsWYNiBisrSwnmYwAd8hSPlrPN1JN1zH/n/hugs/b/biosimspace_releases/o/biosimspace_2020_1_0_osx.run>`__
-
-For older releases, please visit our :ref:`binaries <ref_binaries>` page.
-
-The latest self-extracting binary for the development version of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
-
-(These are portable X86-64 binaries that should work on any Linux distribution released
-since ~2011, or any macOS >= 10.14 [Mojave, released 2018]. Note that they are compiled
-with AVX enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors.)
-
-Once downloaded, the binary can be unpacked as follows, e.g. for the Linux
-development package:
-
-.. code-block:: bash
-
-   chmod +x biosimspace_devel_latest_linux.run
-   ./biosimspace_devel_latest_linux.run
-
-This will let you choose where to install BioSimSpace. By default, this will be
-into ``$HOME/biosimspace.app``.
+Prior to the 2022.1.0 release we provided a self-extracting binary install
+of BioSimSpace. Please visit our :ref:`binaries <ref_binaries>` page if you
+wish to download any of these.
 
 For developers
 ==============
