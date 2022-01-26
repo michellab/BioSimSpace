@@ -23,14 +23,15 @@
 This file provides a class that can be used to stub any
 module that BioSimSpace fails to import. The class will
 raise a ModuleNotFound exception with a clear instruction
-to the user if any attempt it made to use a module that 
+to the user if any attempt it made to use a module that
 has not been installed.
 """
 
 __author__ = "Christopher Woods"
 __email__ = "chryswoods@hey.com"
 
-__all__ = ["module_stub", "try_import"]
+__all__ = ["_module_stub", "_try_import",
+           "_assert_imported", "_have_imported"]
 
 
 class _ModuleStub:
@@ -42,13 +43,16 @@ class _ModuleStub:
         else:
             self._install_command = install_command
 
+    def __repr__(self):
+        return f"<stubmodule '{self._name}' from /could/not/be/imported>"
+
     def __getattr__(self, key):
         import BioSimSpace
 
-        message = f"Cannot continue as the module {self._name} " \
+        message = f"Cannot continue as the module '{self._name}' " \
                   "has not been installed. To continue, you " \
                   "should install the module using the command " \
-                  f"{self._install_command}."
+                  f"'{self._install_command}'."
 
         if BioSimSpace._isVerbose():
             print(message)
@@ -56,7 +60,7 @@ class _ModuleStub:
         raise ModuleNotFoundError(message)
 
 
-def module_stub(name: str, install_command: str = None):
+def _module_stub(name: str, install_command: str = None):
     """Return a ModuleStub that will raise a ModuleNotFoundError
        if it is used in any way.
 
@@ -76,6 +80,62 @@ def module_stub(name: str, install_command: str = None):
 
        module: _ModuleStub
            The stubbed module
-    """ 
+    """
     return _ModuleStub(name=name,
                        install_command=install_command)
+
+
+def _try_import(name: str, install_command: str = None):
+    """Try to import the module called 'name' and return
+       the resulting module. If this fails, catch the
+       error and instead return a _ModuleStub
+
+       Parameters
+       ----------
+
+       name: str
+           The name of the module being stubbed
+
+       install_command: str (optional)
+           The command used to install the module. If
+           this is not supplied, then it is assumed
+           to be 'conda install {name}'
+
+       Returns
+       -------
+
+       module: _ModuleStub | module
+           The module if it loaded correctly, else otherwise
+           a _ModuleStub for that module
+    """
+    import importlib
+
+    try:
+        m = importlib.import_module(name)
+    except Exception as e:
+        m = _ModuleStub(name=name,
+                        install_command=install_command)
+
+        import BioSimSpace
+        if BioSimSpace._isVerbose():
+            print(f"Failed to import module {name}.")
+            print("Functionality that depends on this module will "
+                  "not be available.")
+
+    return m
+
+
+def _assert_imported(module):
+    """Assert that the passed module has indeed been imported.
+       This will raise a ModuleNotFoundError if the module
+       has not been imported, and has instead been stubbed
+    """
+    if type(module) == _ModuleStub:
+        module.this_will_break()
+
+
+def _have_imported(module) -> bool:
+    """Return whether or not the passed module has indeed
+       been imported (and thus is not stubbed)
+    """
+    return type(module) != _ModuleStub

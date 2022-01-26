@@ -84,7 +84,7 @@ except NameError:
     _is_interactive = False      # Probably standard Python interpreter
 
 # Default to non-verbose error messages.
-_is_verbose = False
+_is_verbose = True
 
 def setVerbose(verbose):
     """Set verbosity of error messages.

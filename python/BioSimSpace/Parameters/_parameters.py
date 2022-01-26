@@ -38,13 +38,14 @@ __all__ = ["parameterise",
            "amberForceFields",
            "openForceFields"]
 
-from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
+from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path, _isVerbose
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace.Solvent import waterModels as _waterModels
 from BioSimSpace.Types import Charge as _Charge
+from BioSimSpace._Utils import _try_import, _have_imported
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
@@ -811,9 +812,10 @@ def _make_function(name):
 
 # Dynamically create functions for all available force fields from the Open
 # Force Field Initiative.
-try:
+_openforcefields = _try_import("openforcefields")
+
+if _have_imported(_openforcefields):
     from glob import glob as _glob
-    import openforcefields as _openforcefields
     import os as _os
     _openff_dirs = _openforcefields.get_forcefield_dirs_paths()
     _open_forcefields = []
@@ -852,8 +854,26 @@ try:
                 _forcefields_lower.append(_ff.lower())
                 _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
                 _requires_water_model[_ff.lower()] = False
-except Exception:
-    print("openff is not supported!")
+
+    # Clean up redundant attributes.
+    del _base
+    del _dir
+    del _ff
+    del _ff_list
+    del _function
+    del _func_name
+    del _glob
+    del _make_function
+    del _openff_dirs
+    del _os
+    del _namespace
+    del _sys
+    del _var
+elif _isVerbose():
+    print("openforcefields not available as this module cannot be loaded.")
+
+del _openforcefields
+
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -1024,22 +1044,3 @@ def _has_ions(molecule):
         return True, ions
     else:
         return False, ions
-
-# Clean up redundant attributes.
-try:
-    del _base
-    del _dir
-    del _ff
-    del _ff_list
-    del _function
-    del _func_name
-    del _glob
-    del _make_function
-    del _openforcefields
-    del _openff_dirs
-    del _os
-    del _namespace
-    del _sys
-    del _var
-except Exception:
-    print("Still not supported...")
