@@ -12,14 +12,14 @@ To create a new environment:
 
 .. code-block:: bash
 
-    conda create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
+    conda create -n biosimspace -c conda-forge -c michellab biosimspace
     conda activate biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda create -n biosimspace-dev -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda create -n biosimspace-dev -c conda-forge -c michellab/label/dev biosimspace
     conda activate biosimspace-dev
 
 When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
@@ -27,7 +27,7 @@ at the same time:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace sire
+    conda update -c conda-forge -c michellab/label/dev biosimspace sire
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
@@ -41,7 +41,7 @@ need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c michellab/label/dev biosimspace
 
 If you find that Conda is particularly slow to install or upgrade BioSimSpace,
 then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
@@ -54,7 +54,7 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
-    mamba create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
+    mamba create -n biosimspace -c conda-forge -c michellab biosimspace
 
 Binary install
 ==============
@@ -148,33 +148,6 @@ environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 .. code-block:: bash
 
    BSS_SKIP_DEPENDENCIES=True $HOME/sire.app/bin/python setup.py install
-
-OpenMM compatibility
-====================
-
-Some BioSimSpace functionality requires `OpenMM <http://openmm.org>`__. Although
-a bundled version is provided as part of the installation, this may not
-be appropriate for your GPU drivers. To automatically detect and install
-a suitable version of OpenMM, simply run the following command post-install:
-
-.. code-block:: bash
-
-    optimise_openmm
-
-(Note that, depending on your installation method, ``optimise_openmm`` may
-be located in ``$HOME/sire.app/bin``.)
-
-Alternatively, to manually install a particular version of OpenMM you can
-use a specific Conda label, e.g.:
-
-.. code-block:: bash
-
-    conda install -c omnia/label/cuda90 openmm
-
-If you have compiled Sire against a custom OpenMM installation, then you'll
-need to set the ``OPENMM_PLUGIN_DIR`` environment variable to point to the
-correct plugin location. By default this variable is set to the plugin
-directory of the bundled OpenMM package.
 
 Common issues
 =============
