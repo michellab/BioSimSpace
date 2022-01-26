@@ -31,7 +31,11 @@ __all__ = ["Process"]
 import collections as _collections
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+
+from BioSimSpace._Utils import _try_import
+
+_pygtail = _try_import("pygtail")
+
 import random as _random
 import timeit as _timeit
 import warnings as _warnings

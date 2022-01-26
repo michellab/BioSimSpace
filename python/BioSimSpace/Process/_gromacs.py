@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+pygtail = _try_import("pygtail")
 import shutil as _shutil
 import subprocess as _subprocess
 import timeit as _timeit
@@ -55,7 +57,7 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
-from ._plumed import Plumed as _Plumed
+_Plumed = _try_import("Plumed")
 
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""

@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Namd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 

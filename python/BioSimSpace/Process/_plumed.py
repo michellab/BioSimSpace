@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Plumed"]
 
+from BioSimSpace._Utils import _try_import
+
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings

@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import random as _random
 import string as _string
 import sys as _sys

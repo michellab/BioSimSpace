@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["OpenMM"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import sys as _sys
 import shutil as _shutil
 import timeit as _timeit
@@ -54,7 +56,7 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
-from ._plumed import Plumed as _Plumed
+_Plumed = _try_import("Plumed")
 
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""

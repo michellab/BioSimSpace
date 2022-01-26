@@ -28,8 +28,16 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
-from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
-from watchdog.observers import Observer as _Observer
+from BioSimSpace._Utils import _try_import, _have_imported
+
+_watchdog = _try_import("watchdog")
+
+if _have_imported(_watchdog):
+    from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
+    from watchdog.observers import Observer as _Observer
+else:
+    _PatternMatchingEventHandler = _watchdog
+    _Observer = _watchdog
 
 import math as _math
 import os as _os
@@ -55,7 +63,9 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
-from ._plumed import Plumed as _Plumed
+
+_Plumed = _try_import("Plumed")
+
 
 class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
@@ -83,59 +93,62 @@ class _Watcher:
         self._observer.daemon = True
         self._observer.start()
 
-class _Handler(_PatternMatchingEventHandler):
-    """An event handler to trigger updates to the energy dictionary each time
-       the log file is changed.
-    """
-
-    def __init__(self, proc):
-        """Constructor.
-
-           Parameters
-           ----------
-
-           proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
-               The Amber Process object.
-        """
-        self._process = proc
-
-        super(_Handler, self).__init__(case_sensitive=False,
-                                       ignore_directories=True,
-                                       ignore_patterns=[],
-                                       patterns=["*.nrg"])
-
-    def on_any_event(self, event):
-        """Update the dictionary when the file is modified.
-
-           Parameters
-           ----------
-
-           event : str
-               The file system event.
+if _have_imported(_watchdog):
+    class _Handler(_PatternMatchingEventHandler):
+        """An event handler to trigger updates to the energy dictionary each time
+           the log file is changed.
         """
 
-        # N.B.
-        #
-        # Since the watchdog package is cross-platform it doesn't support
-        # detection of "close-write" operations, so multiple "modified" events
-        # can be triggered while the log file is being written. As such, we
-        # check whether the file has been updated by seeing if the NSTEP record
-        # is different to the most recent entry in the dictionary.
-        # So far, no issues have been found with processing partially written
-        # files, i.e. duplicate or missing records.
+        def __init__(self, proc):
+            """Constructor.
 
-        if event.event_type == "modified":
-            # If this is the first time the file has been modified since the
-            # process started, then wipe the dictionary and flag that the file
-            # is now being watched.
-            if not self._process._is_watching:
-                self._process._stdout_dict = _process._MultiDict()
-                self._process._is_watching = True
+               Parameters
+               ----------
 
-            # Make sure the file exists.
-            if _os.path.isfile(self._process._nrg_file):
-                # Now update the dictionary with any new records.
-                self._process._update_energy_dict()
+               proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
+                   The Amber Process object.
+            """
+            self._process = proc
+
+            super(_Handler, self).__init__(case_sensitive=False,
+                                           ignore_directories=True,
+                                           ignore_patterns=[],
+                                           patterns=["*.nrg"])
+
+        def on_any_event(self, event):
+            """Update the dictionary when the file is modified.
+
+               Parameters
+               ----------
+
+               event : str
+                   The file system event.
+            """
+
+            # N.B.
+            #
+            # Since the watchdog package is cross-platform it doesn't support
+            # detection of "close-write" operations, so multiple "modified" events
+            # can be triggered while the log file is being written. As such, we
+            # check whether the file has been updated by seeing if the NSTEP record
+            # is different to the most recent entry in the dictionary.
+            # So far, no issues have been found with processing partially written
+            # files, i.e. duplicate or missing records.
+
+            if event.event_type == "modified":
+                # If this is the first time the file has been modified since the
+                # process started, then wipe the dictionary and flag that the file
+                # is now being watched.
+                if not self._process._is_watching:
+                    self._process._stdout_dict = _process._MultiDict()
+                    self._process._is_watching = True
+
+                # Make sure the file exists.
+                if _os.path.isfile(self._process._nrg_file):
+                    # Now update the dictionary with any new records.
+                    self._process._update_energy_dict()
+else:
+    _Handler = _watchdog
 
 class Amber(_process.Process):
     """A class for running simulations using AMBER."""
