@@ -25,7 +25,6 @@ jobs:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           activate-environment: bss_build
-        if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
       - name: Clone repositories
         run: |
           git clone https://github.com/michellab/Sire
