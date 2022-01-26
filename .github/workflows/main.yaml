@@ -46,7 +46,7 @@ jobs:
           SIRE_SRC_DIR: ${{ github.workspace }}/Sire
       - name: Build Conda package
         shell: bash -l {0}
-        run: conda-build -c conda-forge -c michellab BioSimSpace/recipes/biosimspace
+        run: conda-build -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
