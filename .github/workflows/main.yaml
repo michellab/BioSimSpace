@@ -41,15 +41,19 @@ jobs:
         shell: bash -l {0}
         run: conda install -y conda-build anaconda-client
       - name: Update Conda recipe
-        run: BioSimSpace/actions/update_recipe.sh "$GITHUB_WORKSPACE"/BioSimSpace "$GITHUB_WORKSPACE"/Sire
+        run: BioSimSpace/actions/update_recipe.sh
+        env:
+          BSS_SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
+          SIRE_SRC_DIR: "$GITHUB_WORKSPACE"/Sire
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab BioSimSpace/recipes/biosimspace
         if: "!contains(github.event.head_commit.message, 'doc')"
       - name: Upload Conda package
         shell: bash -l {0}
-        run: BioSimSpace/actions/upload_package.sh "$GITHUB_WORKSPACE"/BioSimSpace "$CONDA"
+        run: BioSimSpace/actions/upload_package.sh
         env:
+          SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         if: github.event_name != 'pull_request' && "!contains(github.event.head_commit.message, 'doc')"
       - name: Build documentation
@@ -58,9 +62,11 @@ jobs:
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
           cp BioSimSpace/actions/youtube.py "$CONDA"/envs/bss_build/lib/python3.7/site-packages/sphinxcontrib/youtube
           conda install "$CONDA"/envs/bss_build/conda-bld/linux-64/biosimspace-*
-          BioSimSpace/actions/inject_force_fields.sh "$GITHUB_WORKSPACE"/BioSimSpace
+          BioSimSpace/actions/inject_force_fields.sh
           cd BioSimSpace/doc
           PYTHONPATH="$GITHUB_WORKSPACE"/BioSimSpace/python SPHINXBUILD="$CONDA"/envs/bss_build/bin/sphinx-build make html
+        env:
+          SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
         if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
       - name: Update website
         run: |
@@ -73,6 +79,6 @@ jobs:
           git commit -a -m "Updating website."
           "$GITHUB_WORKSPACE"/BioSimSpace/actions/push_changes.sh
         env:
-          - EMAIL: ${{ secrets.EMAIL }}
-          - WEBSITE_TOKEN: ${{ secrets.WEBSITE_TOKEN }}
+          EMAIL: ${{ secrets.EMAIL }}
+          WEBSITE_TOKEN: ${{ secrets.WEBSITE_TOKEN }}
         if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
