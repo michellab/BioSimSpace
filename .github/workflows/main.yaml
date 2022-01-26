@@ -48,14 +48,13 @@ jobs:
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab BioSimSpace/recipes/biosimspace
-        if: "!contains(github.event.head_commit.message, 'doc')"
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
         env:
           SRC_DIR: ${{ github.workspace }}/BioSimSpace
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        if: github.event_name != 'pull_request' && "!contains(github.event.head_commit.message, 'doc')"
+        if: github.event_name != 'pull_request'
       - name: Build documentation
         shell: bash -l {0}
         run: |
