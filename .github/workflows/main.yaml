@@ -58,11 +58,9 @@ jobs:
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
           cp BioSimSpace/actions/youtube.py "$CONDA"/envs/bss_build/lib/python3.7/site-packages/sphinxcontrib/youtube
           conda install "$CONDA"/envs/bss_build/conda-bld/linux-64/biosimspace-*
-          BioSimSpace/actions/inject_force_fields.sh .
+          BioSimSpace/actions/inject_force_fields.sh "$GITHUB_WORKSPACE"/BioSimSpace
           cd BioSimSpace/doc
           PYTHONPATH="$GITHUB_WORKSPACE"/BioSimSpace/python SPHINXBUILD="$CONDA"/envs/bss_build/bin/sphinx-build make html
-        env:
-          - SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
         if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
       - name: Update website
         run: |
