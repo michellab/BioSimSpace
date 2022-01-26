@@ -43,8 +43,8 @@ jobs:
       - name: Update Conda recipe
         run: BioSimSpace/actions/update_recipe.sh
         env:
-          BSS_SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
-          SIRE_SRC_DIR: "$GITHUB_WORKSPACE"/Sire
+          BSS_SRC_DIR: ${{ github.workspace }}/BioSimSpace
+          SIRE_SRC_DIR: ${{ github.workspace }}/Sire
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab BioSimSpace/recipes/biosimspace
@@ -53,7 +53,7 @@ jobs:
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
         env:
-          SRC_DIR: "$GITHUB_WORKSPACE"/BioSimSpace
+          SRC_DIR: ${{ github.workspace }}/BioSimSpace
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         if: github.event_name != 'pull_request' && "!contains(github.event.head_commit.message, 'doc')"
       - name: Build documentation
