@@ -16,6 +16,7 @@ Changelog
   combination of molecular systems.
 * Native Python pickling support for wrapped Sire types (`@chryswoods <https://github.com/chryswoods>`_).
 * Numerous free-energy perturbation pipeline fixes and improvements. Thanks to `@kexul <https://github.com/kexul>`_ and `@msuruzhon <https://github.com/msuruzhon>`_ for their help testing and debugging.
+* Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
 
 `2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
 -------------------------------------------------------------------------------------------------
