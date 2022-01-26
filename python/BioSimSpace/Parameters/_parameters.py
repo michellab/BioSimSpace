@@ -553,8 +553,8 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         command = "antechamber -v"
 
         # Run the command as a subprocess.
-        proc = subprocess.run(_shlex.split(command), shell=False, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
 
         # Get stdout and split into lines.
         lines = proc.stdout.split("\n")
