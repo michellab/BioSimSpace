@@ -1619,6 +1619,16 @@ class OpenMM(_process.Process):
         """Helper function to write the header (import statements) to the
            OpenMM Python script (config file).
         """
+        # We should verify that openmm and simtk.unit are available to
+        # prevent difficult-to-debug errors in the run script
+        from BioSimSpace._Utils import _try_import, _assert_imported
+
+        _openmm = _try_import("openmm")
+        _assert_imported(_openmm)
+
+        _unit = _try_import("simtk.unit", "conda install simtk")
+        _assert_imported(_unit)
+
         self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm import *")
         self.addToConfig("from simtk.unit import *")
