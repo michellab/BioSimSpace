@@ -72,9 +72,18 @@ if _have_imported(_openmm):
 else:
     _PDBFile = _openmm
 
-#from openff.toolkit.topology import Molecule as _OpenFFMolecule
-#from openff.toolkit.topology import Topology as _OpenFFTopology
-#from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
+_openff = _try_import("openff")
+
+if _have_imported(_openff):
+    from openff.toolkit.topology import Molecule as _OpenFFMolecule
+    from openff.toolkit.topology import Topology as _OpenFFTopology
+    from openff.toolkit.typing.engines.smirnoff import ForceField \
+        as _Forcefield
+else:
+    _OpenFFMolecule = _openff
+    _OpenFFTopology = _openff
+    _Forcefield = _openff
+
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys

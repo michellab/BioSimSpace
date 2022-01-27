@@ -66,7 +66,6 @@ finally:
                       "pyyaml",
                       "rdkit",
                       "networkx",
-                      "Plumed",
                       "watchdog"]
 
         if platform.machine() != "aarch64":

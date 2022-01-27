@@ -64,7 +64,7 @@ from BioSimSpace import _Utils as _Utils
 
 from . import _process
 
-_Plumed = _try_import("Plumed")
+from ._plumed import Plumed as _Plumed
 
 
 class _Watcher:

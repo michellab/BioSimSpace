@@ -56,7 +56,9 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
 from . import _process
-_Plumed = _try_import("Plumed")
+
+from ._plumed import Plumed as _Plumed
+
 
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
