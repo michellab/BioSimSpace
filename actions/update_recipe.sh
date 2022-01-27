@@ -17,6 +17,10 @@ cp "$TEMPLATE" "$RECIPE"
 # Get the Sire version. (Latest tag.)
 SIRE_VERSION=$(git --git-dir="$SIRE_SRC_DIR"/.git --work-tree="$SIRE_SRC_DIR" describe --tags --abbrev=0)
 
+# Get the next major Sire version number.
+NEXT_SIRE_VERSION=$(echo $SIRE_VERSION | cut -d '.' -f1)
+NEXT_SIRE_VERSION=$((NEXT_SIRE_VERSION+1))
+
 # Get the BioSimSpace version. (Latest tag.)
 BSS_VERSION=$(git --git-dir="$BSS_SRC_DIR"/.git --work-tree="$BSS_SRC_DIR" describe --tags --abbrev=0)
 
@@ -39,7 +43,8 @@ echo "Updating BioSimSpace branch name: '$BSS_BRANCH'"
 sed -i.bak -e "s/BSS_BRANCH/$BSS_BRANCH/" "$RECIPE" && rm "$RECIPE".bak
 
 # Update the Sire dependency version.
-echo "Updating Sire dependency version: '$SIRE_VERSION'"
+echo "Updating Sire dependency version: '>=$SIRE_VERSION,<$NEXT_SIRE_VERSION.0a0'"
+sed -i.bak -e "s/NEXT_SIRE_VERSION/$NEXT_SIRE_VERSION/" "$RECIPE" && rm "$RECIPE".bak
 sed -i.bak -e "s/SIRE_VERSION/$SIRE_VERSION/" "$RECIPE" && rm "$RECIPE".bak
 
 echo "Recipe updated!"
