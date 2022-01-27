@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -150,7 +150,7 @@ class Production(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -175,7 +175,7 @@ class Production(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -200,7 +200,7 @@ class Production(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -225,7 +225,7 @@ class Production(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -250,7 +250,7 @@ class Production(_Protocol):
            report_interval : int
                The number of integration steps between reporting statistics.
         """
-        if type(report_interval) is not int:
+        if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
@@ -283,7 +283,7 @@ class Production(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if type(restart_interval) is not int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
@@ -312,7 +312,7 @@ class Production(_Protocol):
            step : int
                The first time step.
         """
-        if type(first_step) is not int:
+        if not type(first_step) is int:
             raise TypeError("'first_step' must be of type 'int'")
 
         if first_step < 0:
@@ -341,7 +341,7 @@ class Production(_Protocol):
            restart : bool
                Whether this is a restart simulation.
         """
-        if type(restart) is bool:
+        if isinstance(restart, bool):
             self._restart = restart
         else:
             _warnings.warn("Non-boolean restart flag. Defaulting to False!")

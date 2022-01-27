@@ -14,6 +14,6 @@ outputs. This means that any commits will correspond to actual changes
 in the notebook code and that users are presented with a fresh notebook
 when it is launched.
 
-Please also add ``***NO_CI***`` to commit messages to avoid unnecessarily
-running the Azure pipelines build, e.g. rebuilding the BioSimSpace binary,
-updating the website, etc.
+Please also add ``ci skip`` to commit messages to avoid unnecessarily
+running the GitHub actions build, e.g. rebuilding the BioSimSpace conda,
+package, updating the website, etc.

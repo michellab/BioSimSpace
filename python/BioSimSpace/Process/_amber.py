@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -60,7 +60,7 @@ from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -281,7 +281,7 @@ class Amber(_process.Process):
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -321,7 +321,7 @@ class Amber(_process.Process):
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
 
             # Work out the number of steepest descent cycles.
             # This is 1000 or 10% of the number of steps, whichever is larger.
@@ -352,7 +352,7 @@ class Amber(_process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -413,7 +413,7 @@ class Amber(_process.Process):
             restraint = self._protocol.getRestraint()
             if restraint is not None:
                 # Get the indices of the atoms that are restrained.
-                if type(restraint) is str:
+                if isinstance(restraint, str):
                     atom_idxs = self._system.getRestraintAtoms(restraint)
                 else:
                     atom_idxs = restraint
@@ -430,7 +430,7 @@ class Amber(_process.Process):
                         # so it's easy to overflow if we are matching by index
                         # on a large protein. As such, handle "backbone" and
                         # "heavy" restraints using a non-interoperable name mask.
-                        if type(restraint) is str:
+                        if isinstance(restraint, str):
                             if restraint == "backbone":
                                 restraint_mask = "@CA,C,O,N"
                             elif restraint == "heavy":
@@ -464,7 +464,7 @@ class Amber(_process.Process):
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -535,7 +535,7 @@ class Amber(_process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for a metadynamics simulation.
-        elif type(self._protocol) is _Protocol.Metadynamics:
+        elif isinstance(self._protocol, _Protocol.Metadynamics):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -624,7 +624,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Add configuration variables for a steered molecular dynamics simulation.
-        elif type(self._protocol) is _Protocol.Steering:
+        elif isinstance(self._protocol, _Protocol.Steering):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -732,15 +732,15 @@ class Amber(_process.Process):
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
         # Skip if the user has passed a custom protocol.
-        if type(self._protocol) is not _Protocol.Custom:
+        if not isinstance(self._protocol, _Protocol.Custom):
 
             # Append a reference file if this a restrained equilibration.
-            if type(self._protocol) is _Protocol.Equilibration:
+            if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this anything other than a minimisation.
-            if type(self._protocol) is not _Protocol.Minimisation:
+            if not isinstance(self._protocol, _Protocol.Minimisation):
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -905,7 +905,7 @@ class Amber(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -1059,7 +1059,7 @@ class Amber(_process.Process):
         """
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         # Get the list of time steps.
@@ -1554,7 +1554,7 @@ class Amber(_process.Process):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The total energy.
         """
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return self.getRecord("ENERGY", time_series, _Units.Energy.kcal_per_mol, block)
         else:
             return self.getRecord("ETOT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1818,7 +1818,7 @@ class Amber(_process.Process):
                 if len(line) > 0 and line[0] != "|":
 
                     # The output format is different for minimisation protocols.
-                    if type(self._protocol) is _Protocol.Minimisation:
+                    if isinstance(self._protocol, _Protocol.Minimisation):
 
                         # No equals sign in the line.
                         if "=" not in line:
@@ -1906,7 +1906,7 @@ class Amber(_process.Process):
                 max_time = max_time.minutes().magnitude()
 
             # Float.
-            elif type(max_time) is float:
+            elif isinstance(max_time, float):
                 if max_time <= 0:
                     raise ValueError("'max_time' cannot be negative!")
 
@@ -1956,7 +1956,7 @@ class Amber(_process.Process):
         if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
@@ -2010,13 +2010,10 @@ class Amber(_process.Process):
                The AMBER restraint mask.
         """
 
-        if type(atom_idxs) is tuple:
-            atom_idxs = list(atom_idxs)
-
-        if type(atom_idxs) is not list:
+        if not isinstance(atom_idxs, (list, tuple)):
             raise TypeError("'atom_idxs' must be a list of 'int' types.")
 
-        if not all(isinstance(x, int) for x in atom_idxs):
+        if not all(type(x) is int for x in atom_idxs):
             raise TypeError("'atom_idxs' must be a list of 'int' types.")
 
         # AMBER has a restriction on the number of characters in the restraint

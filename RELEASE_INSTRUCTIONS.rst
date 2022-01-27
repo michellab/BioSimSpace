@@ -54,26 +54,10 @@ Finally, push the new commit and updated tag:
 Step 4
 ======
 
-Once the build has finished you can log into the `Oracle Cloud <https://cloud.oracle.com/home>`__
-and create pre-authenticated URLs for the new release binaries. (These files
-are currently located in the ``software_releases`` compartment of the ``Object Storage``
-menu.) When generating a download URL make sure to choose a sensible expiry
-date. Copy the URL to your clipboard and add download links to the
-`install <https://github.com/michellab/BioSimSpace/blob/devel/doc/source/install.rst>`_
-page in the website documentation and move the download links for the previous
-release to the `binaries <https://github.com/michellab/BioSimSpace/blob/devel/doc/source/binaries.rst>`_
-page. (Note that the website won't be updated until you next trigger a
-development build. Alternatively, you can move the tag to this commit and
-re-push following the instructions above. The binaries will be overwritten,
-but the URLs won't change.)
-
-Step 5
-======
-
 Create a `GitHub release <https://github.com/michellab/BioSimSpace/releases>`_.
 When drafting the release, simply choose the tag that you have created.
 
-Step 6
+Step 5
 ======
 
 Create a `pull request <https://github.com/michellab/BioSimSpace/pulls>`_ to

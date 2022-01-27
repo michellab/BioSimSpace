@@ -2,9 +2,9 @@
 BioSimSpace
 ===========
 
-.. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
-   :target: https://dev.azure.com/michellab/BioSimSpace/_build
-   :alt: Build Status
+.. image:: https://github.com/michellab/BioSimSpace/workflows/Build/badge.svg
+   :target: https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild)
+   :alt: Build status
 
 .. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
    :target: https://anaconda.org/michellab/biosimspace

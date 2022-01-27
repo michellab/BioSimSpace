@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -45,7 +45,7 @@ def cd(work_dir):
     """
 
     # Validate the input.
-    if type(work_dir) is not str:
+    if not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Store the current directory.

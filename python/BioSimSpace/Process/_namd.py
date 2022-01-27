@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -50,7 +50,7 @@ from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -245,7 +245,7 @@ class Namd(_process.Process):
             file.close()
 
         # Generate the NAMD configuration file.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -381,7 +381,7 @@ class Namd(_process.Process):
         self.addToConfig("binaryRestart         no")
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             # Output frequency.
             self.addToConfig("restartfreq           500")
             self.addToConfig("xstFreq               500")
@@ -398,7 +398,7 @@ class Namd(_process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
@@ -501,7 +501,7 @@ class Namd(_process.Process):
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
@@ -760,7 +760,7 @@ class Namd(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -918,7 +918,7 @@ class Namd(_process.Process):
                The current simulation time in nanoseconds.
         """
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         else:
@@ -1839,7 +1839,7 @@ class Namd(_process.Process):
         s = system.copy()
 
         # Keyword restraint.
-        if type(restraint) is str:
+        if isinstance(restraint, str):
 
             # Loop over all molecules by number.
             for x, mol in enumerate(s):
@@ -1862,7 +1862,7 @@ class Namd(_process.Process):
                 s._sire_object.update(edit_mol.commit())
 
         # A user-defined list of atoms.
-        elif type(restraint) is list:
+        elif isinstance(restraint, (list, tuple)):
 
             # Create an empty multi dict for each MolNum.
             mol_atoms = {}
@@ -1929,7 +1929,7 @@ class Namd(_process.Process):
         if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -54,7 +54,7 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -112,7 +112,7 @@ class Somd(_process.Process):
         # This process can generate trajectory data.
         self._has_trajectory = True
 
-        if type(platform) is not str:
+        if not isinstance(platform, str):
             raise TypeError("'platform' must be of type 'str'.")
         else:
             # Strip all whitespace and convert to upper case.
@@ -135,7 +135,7 @@ class Somd(_process.Process):
                 somd_path = _os.path.join(_os.path.normpath(_SireBase.getShareDir()), "scripts")
                 somd_interpreter = _os.path.join(_os.path.normpath(_SireBase.getBinDir()), "sire_python.exe")
                 somd_suffix = ".py"
-            if type(self._protocol) is _Protocol.FreeEnergy:
+            if isinstance(self._protocol, _Protocol.FreeEnergy):
                 somd_exe = "somd-freenrg"
             else:
                 somd_exe = "somd"
@@ -211,7 +211,7 @@ class Somd(_process.Process):
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             if system.nPerturbableMolecules() == 1:
                 # Extract the perturbable molecule.
                 pert_mol = system.getPerturbableMolecules()[0]
@@ -264,7 +264,7 @@ class Somd(_process.Process):
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -311,7 +311,7 @@ class Somd(_process.Process):
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("minimise = True")                         # Minimisation simulation.
@@ -334,7 +334,7 @@ class Somd(_process.Process):
         # MD drivers).
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
             # Only constant temperature equilibration simulations are supported.
             if not self._protocol.isConstantTemp():
                 raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
@@ -405,7 +405,7 @@ class Somd(_process.Process):
                 self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -469,7 +469,7 @@ class Somd(_process.Process):
                 self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a free energy simulation.
-        elif type(self._protocol) is _Protocol.FreeEnergy:
+        elif isinstance(self._protocol, _Protocol.FreeEnergy):
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -572,7 +572,7 @@ class Somd(_process.Process):
         # Add the default arguments.
         self.setArg("-c", "%s.rst7" % self._name)                       # Coordinate restart file.
         self.setArg("-t", "%s.prm7" % self._name)                       # Topology file.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             self.setArg("-m", "%s.pert" % self._name)                   # Perturbation file.
         self.setArg("-C", "%s.cfg" % self._name)                        # Config file.
         self.setArg("-p", self._platform)                               # Simulation platform.
@@ -736,7 +736,7 @@ class Somd(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -790,7 +790,7 @@ class Somd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         # Get the number of trajectory frames.
@@ -913,7 +913,7 @@ class Somd(_process.Process):
                 _os.remove(file)
 
         # Additional files for free energy simulations.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
 
             file = "%s/gradients.dat" % self._work_dir
             if _os.path.isfile(file):
@@ -955,10 +955,10 @@ class Somd(_process.Process):
 
         # Validate the systems.
 
-        if type(old_system) is not _System:
+        if not isinstance(old_system, _System):
             raise TypeError("'old_system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(new_system) is not _System:
+        if not isinstance(new_system, _System):
             raise TypeError("'new_system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the two systems contain the same number of molecules.
@@ -967,13 +967,13 @@ class Somd(_process.Process):
                                      "molecules. Expected '%d', found '%d'"
                                      % (old_system.nMolecules(), new_system.nMolecules()))
 
-        if type(property_map0) is not dict:
+        if not isinstance(property_map0, dict):
             raise TypeError("'property_map0' must be of type 'dict'.")
 
-        if type(property_map1) is not dict:
+        if not isinstance(property_map1, dict):
             raise TypeError("'property_map1' must be of type 'dict'.")
 
-        if type(is_lambda1) is not bool:
+        if not isinstance(is_lambda1, bool):
             raise TypeError("'is_lambda1' must be of type 'bool'.")
 
         # Work out the name of the "coordinates" property.
@@ -1084,7 +1084,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         molecule : :class:`System <BioSimSpace._SireWrappers.Molecule>`
             The molecule with properties corresponding to the lamda = 0 state.
     """
-    if type(molecule) is not _Molecule:
+    if not isinstance(molecule, _Molecule):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if not molecule._is_perturbable:
@@ -1093,19 +1093,19 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     if not molecule._sire_object.property("forcefield0").isAmberStyle():
         raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
-    if type(zero_dummy_dihedrals) is not bool:
+    if not isinstance(zero_dummy_dihedrals, bool):
         raise TypeError("'zero_dummy_dihedrals' must be of type 'bool'")
 
-    if type(zero_dummy_impropers) is not bool:
+    if not isinstance(zero_dummy_impropers, bool):
         raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
 
-    if type(print_all_atoms) is not bool:
+    if not isinstance(print_all_atoms, bool):
         raise TypeError("'print_all_atoms' must be of type 'bool'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    if type(perturbation_type) is not str:
+    if not isinstance(perturbation_type, str):
         raise TypeError("'perturbation_type' must be of type 'str'")
 
     # Convert to lower case and strip whitespace.

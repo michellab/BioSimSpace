@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -46,9 +46,9 @@ class SearchResult():
 
         # Check that the select_result is valid.
 
-        if type(select_result) is SearchResult:
+        if isinstance(select_result, SearchResult):
             select_result = select_result._sire_object
-        elif type(select_result) is _SireMol.SelectResult:
+        elif isinstance(select_result, _SireMol.SelectResult):
             pass
         else:
             raise TypeError("'select_result' must be of type 'BioSimSpace._SireWrappers.SearchResult' "
@@ -137,13 +137,13 @@ class SearchResult():
             result = self._sire_object[key]
 
             # Atom.
-            if type(result) is _SireMol.Atom:
+            if isinstance(result, _SireMol.Atom):
                 return _Atom(result)
             # Residue.
-            if type(result) is _SireMol.Residue:
+            if isinstance(result, _SireMol.Residue):
                 return _Residue(result)
             # Molecule.
-            if type(result) is _SireMol.Molecule:
+            if isinstance(result, _SireMol.Molecule):
                 # If the molecule contains a single atom, then convert to an atom.
                 if result.nAtoms() == 1:
                     return _Atom(result.atom())

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -32,7 +32,7 @@ import tempfile as _tempfile
 
 from BioSimSpace import _is_notebook
 from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 from BioSimSpace.Units.Charge import electron_charge as _electron_charge
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
@@ -53,7 +53,7 @@ def formalCharge(molecule):
            The total formal charge on the molecule.
     """
 
-    if type(molecule) is not _Molecule:
+    if not isinstance(molecule, _Molecule):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     from rdkit import Chem as _Chem

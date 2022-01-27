@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -85,7 +85,7 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
            The parameterised molecule.
     """
 
-    if type(forcefield) is not str:
+    if not isinstance(forcefield, str):
         raise TypeError("'forcefield' must be of type 'str'")
     else:
         # Strip whitespace and convert to lower case.
@@ -143,36 +143,8 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
                                     "GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if water_model is not None and type(water_model) is not str:
-        raise TypeError("'water_model' must be of type 'str'.")
-
-    if water_model is not None:
-        if not _validate_water_model(water_model):
-            water_models = ", ".join(_waterModels())
-            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
-        has_ions, ions = _has_ions(molecule)
-        if has_ions:
-            ion_string = ", ".join(ions)
-            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
-                              "Please choose a 'water_model' for the ion parameters.")
-
-    if leap_commands is not None:
-        if type(leap_commands) is tuple:
-            # Convert tuple to list.
-            leap_commands = list(leap_commands)
-        if type(leap_commands) is not list:
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+    _validate(molecule=molecule, water_model=water_model,
+        leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99(water_model=water_model,
@@ -225,36 +197,8 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if water_model is not None and type(water_model) is not str:
-        raise TypeError("'water_model' must be of type 'str'.")
-
-    if water_model is not None:
-        if not _validate_water_model(water_model):
-            water_models = ", ".join(_waterModels())
-            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
-        has_ions, ions = _has_ions(molecule)
-        if has_ions:
-            ion_string = ", ".join(ions)
-            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
-                              "Please choose a 'water_model' for the ion parameters.")
-
-    if leap_commands is not None:
-        if type(leap_commands) is tuple:
-            # Convert tuple to list.
-            leap_commands = list(leap_commands)
-        if type(leap_commands) is not list:
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+    _validate(molecule=molecule, water_model=water_model,
+        leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SB(water_model=water_model,
@@ -307,36 +251,8 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if water_model is not None and type(water_model) is not str:
-        raise TypeError("'water_model' must be of type 'str'.")
-
-    if water_model is not None:
-        if not _validate_water_model(water_model):
-            water_models = ", ".join(_waterModels())
-            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
-        has_ions, ions = _has_ions(molecule)
-        if has_ions:
-            ion_string = ", ".join(ions)
-            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
-                              "Please choose a 'water_model' for the ion parameters.")
-
-    if leap_commands is not None:
-        if type(leap_commands) is tuple:
-            # Convert tuple to list.
-            leap_commands = list(leap_commands)
-        if type(leap_commands) is not list:
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+    _validate(molecule=molecule, water_model=water_model,
+        leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SBILDN(water_model=water_model,
@@ -389,36 +305,8 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if water_model is not None and type(water_model) is not str:
-        raise TypeError("'water_model' must be of type 'str'.")
-
-    if water_model is not None:
-        if not _validate_water_model(water_model):
-            water_models = ", ".join(_waterModels())
-            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
-        has_ions, ions = _has_ions(molecule)
-        if has_ions:
-            ion_string = ", ".join(ions)
-            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
-                              "Please choose a 'water_model' for the ion parameters.")
-
-    if leap_commands is not None:
-        if type(leap_commands) is tuple:
-            # Convert tuple to list.
-            leap_commands = list(leap_commands)
-        if type(leap_commands) is not list:
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+    _validate(molecule=molecule, water_model=water_model,
+        leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF03(water_model=water_model,
@@ -470,36 +358,8 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
                                     "Please install AmberTools (http://ambermd.org).")
 
     # Validate arguments.
-
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if water_model is not None and type(water_model) is not str:
-        raise TypeError("'water_model' must be of type 'str'.")
-
-    if water_model is not None:
-        if not _validate_water_model(water_model):
-            water_models = ", ".join(_waterModels())
-            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
-        has_ions, ions = _has_ions(molecule)
-        if has_ions:
-            ion_string = ", ".join(ions)
-            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
-                              "Please choose a 'water_model' for the ion parameters.")
-
-    if leap_commands is not None:
-        if type(leap_commands) is tuple:
-            # Convert tuple to list.
-            leap_commands = list(leap_commands)
-        if type(leap_commands) is not list:
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
+    _validate(molecule=molecule, water_model=water_model,
+        leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF14SB(water_model=water_model,
@@ -548,15 +408,14 @@ def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+    _validate(molecule=molecule, property_map=property_map)
 
     if net_charge is not None:
         # Get the magnitude of the charge.
-        if type(net_charge) is _Charge:
+        if isinstance(net_charge, _Charge):
             net_charge = net_charge.magnitude()
 
-        if type(net_charge) is float:
+        if isinstance(net_charge, float):
             if net_charge % 1 != 0:
                 raise ValueError("'net_charge' must be integer valued.")
 
@@ -565,9 +424,6 @@ def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property
             net_charge = int(net_charge)
         except:
             raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
     protocol = _Protocol.GAFF(net_charge=net_charge,
@@ -616,15 +472,14 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", propert
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule and type(molecule) is not str:
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+    _validate(molecule=molecule, property_map=property_map)
 
     if net_charge is not None:
         # Get the magnitude of the charge.
-        if type(net_charge) is _Charge:
+        if isinstance(net_charge, _Charge):
             net_charge = net_charge.magnitude()
 
-        if type(net_charge) is float:
+        if isinstance(net_charge, float):
             if net_charge % 1 != 0:
                 raise ValueError("'net_charge' must be integer valued.")
 
@@ -636,9 +491,6 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", propert
 
         if net_charge % 1 != 0:
             raise ValueError("'net_charge' must be integer valued.")
-
-    if type(property_map) is not dict:
-        raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
     protocol = _Protocol.GAFF2(net_charge=net_charge,
@@ -694,15 +546,16 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         # Antechamber returns an exit code of 1 when requesting version information.
         # As such, we wrap the call within a try-except block in case it fails.
 
-        import subprocess
+        import shlex as _shlex
+        import subprocess as _subprocess
 
         # Generate the command-line string. (Antechamber must be in the PATH,
         # so no need to use AMBERHOME.
         command = "antechamber -v"
 
         # Run the command as a subprocess.
-        proc = subprocess.run(command, shell=True, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+            stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
 
         # Get stdout and split into lines.
         lines = proc.stdout.split("\n")
@@ -723,6 +576,9 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         else:
             is_compatible = False
 
+        del _shlex
+        del _subprocess
+
     # Something went wrong, disable Open Force Field support.
     except:
         is_compatible = False
@@ -733,10 +589,10 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
 
     # Validate arguments.
 
-    if type(molecule) is not _Molecule and type(molecule) is not str:
+    if not isinstance(molecule, (_Molecule, str)):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-    if type(forcefield) is not str:
+    if not isinstance(forcefield, str):
         raise TypeError("'forcefield' must be of type 'str'")
     else:
         # Strip whitespace and convert to lower case.
@@ -745,7 +601,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         if forcefield not in _forcefields_lower:
             raise ValueError("Supported force fields are: %s" % openForceFields())
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
@@ -1025,7 +881,7 @@ def _has_ions(molecule):
     ions = []
 
     # Whether the molecule is a string.
-    if type(molecule) is str:
+    if isinstance(molecule, str):
         is_string = True
         molecule = molecule.upper()
     else:
@@ -1044,3 +900,64 @@ def _has_ions(molecule):
         return True, ions
     else:
         return False, ions
+
+
+def _validate(molecule=None, water_model=None, leap_commands=None,
+        work_dir=None, property_map=None):
+    """
+    Internal function to validate arguments.
+
+    Parameters
+    ----------
+
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+        The molecule to parameterise, either as a Molecule object or SMILES
+        string.
+
+    water_model : str
+        The water model used to parameterise any structural ions.
+        Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+        water models. This is ignored if ions are not present.
+
+    leap_commands : [str]
+        An optional list of extra commands for the LEaP program. These
+        will be added after any default commands and can be used to, e.g.,
+        load additional parameter files. When this option is set, we can no
+        longer fall back on GROMACS's pdb2gmx.
+
+    work_dir : str
+        The working directory for the process.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+    """
+
+    if molecule is not None:
+        if not isinstance(molecule, (_Molecule, str)):
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+
+    if water_model is not None:
+        if not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'.")
+        if not _validate_water_model(water_model):
+            water_models = ", ".join(_waterModels())
+            raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
+    else:
+        has_ions, ions = _has_ions(molecule)
+        if has_ions:
+            ion_string = ", ".join(ions)
+            raise ValueError(f"The molecule contains the following ions: {ion_string}. "
+                              "Please choose a 'water_model' for the ion parameters.")
+
+    if leap_commands is not None:
+        if not isinstance(leap_commands, (list, tuple)):
+            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in leap_commands):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
+    if property_map is not None:
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")

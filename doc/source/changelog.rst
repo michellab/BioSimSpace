@@ -1,6 +1,23 @@
 Changelog
 =========
 
+`2022.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
+------------------------------------------------------------------------------------------------
+
+* Added basic support for cleaning PDB files with `pdb4amber <https://github.com/Amber-MD/pdb4amber>`_ prior to read.
+* Added basic support for exporting BioSimSpace Nodes as Common Workflow Language wrappers.
+* Added support for parameterising molecules using OpenForceField.
+* Added support for using SMILES strings for input to parameterisation functions.
+* Added support for funnel metadynamics simulations (`@dlukauskis <https://github.com/dlukauskis>`_).
+* Added support for steered molecular dynamics simulations (`@AdeleLip <https://github.com/AdeleLip>`_).
+* Added support for generating perturbation networks using LOMAP (`@JenkeScheen <https://github.com/JenkeScheen>`_).
+* Fixed bug affecting certain improper/dihedral terms in SOMD perturbation file writer.
+* Numerous performance improvements, particularly involving the manipulation and
+  combination of molecular systems.
+* Native Python pickling support for wrapped Sire types (`@chryswoods <https://github.com/chryswoods>`_).
+* Numerous free-energy perturbation pipeline fixes and improvements. Thanks to `@kexul <https://github.com/kexul>`_ and `@msuruzhon <https://github.com/msuruzhon>`_ for their help testing and debugging.
+* Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
+
 `2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
 -------------------------------------------------------------------------------------------------
 
@@ -13,7 +30,6 @@ Changelog
 * Handle GROMACS simulations with non-periodic boxes.
 * Run vacuum simulations on a single thread when using GROMACS to avoid domain decomposition.
 * Make sure BioSimSpace is always built against the latest version of Sire during conda build.
-
 
 `2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
 ------------------------------------------------------------------------------------------------
