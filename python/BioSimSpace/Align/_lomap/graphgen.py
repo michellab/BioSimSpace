@@ -45,25 +45,14 @@ potential ligands within a substantial of compounds.
 # MODULE IMPORTS
 # ****************
 
-from BioSimSpace._Utils import _try_import, _have_imported
-
-nx = _try_import("networkx")
-
+import networkx as nx
 import numpy as np
 import subprocess
 import matplotlib.pyplot as plt
 import copy
 from operator import itemgetter
-
-_rdkit = _try_import("rdkit")
-
-if _have_imported(_rdkit):
-    from rdkit.Chem import Draw
-    from rdkit.Chem import AllChem
-else:
-    Draw = _rdkit
-    AllChem = _rdkit
-
+from rdkit.Chem import Draw
+from rdkit.Chem import AllChem
 import os.path
 import logging
 import tempfile

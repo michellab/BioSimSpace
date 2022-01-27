@@ -7,11 +7,11 @@
 LOMAP
 =====
 
-Alchemical free energy calculations hold increasing promise as an aid to drug
-discovery efforts. However, applications of these techniques in discovery
-projects have been relatively few, partly because of the difficulty of planning
-and setting up calculations. The Lead Optimization Mapper (LOMAP) is an
-automated algorithm to plan efficient relative free energy calculations between
+Alchemical free energy calculations hold increasing promise as an aid to drug 
+discovery efforts. However, applications of these techniques in discovery 
+projects have been relatively few, partly because of the difficulty of planning 
+and setting up calculations. The Lead Optimization Mapper (LOMAP) is an 
+automated algorithm to plan efficient relative free energy calculations between 
 potential ligands within a substantial of compounds.
 
 """
@@ -21,7 +21,7 @@ potential ligands within a substantial of compounds.
 # Copyright 2015 - 2016  UC Irvine and the Authors
 #
 # Authors: Dr Gaetano Calabro' and Dr David Mobley
-#
+# 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -49,21 +49,12 @@ import os
 import pickle
 from ._version import get_versions
 
-from BioSimSpace._Utils import _try_import, _have_imported
-
-nx = _try_import("networkx")
-_rdkit = _try_import("rdkit")
-
-if _have_imported(_rdkit):
-    from rdkit import Chem
-    from rdkit import DataStructs
-else:
-    Chem = _rdkit
-    DataStructs = _rdkit
-
+import networkx as nx
 import numpy as np
 from . import graphgen
 from . import mcs
+from rdkit import Chem
+from rdkit import DataStructs
 
 __all__ = ['DBMolecules', 'SMatrix', 'Molecule']
 
@@ -74,24 +65,24 @@ __all__ = ['DBMolecules', 'SMatrix', 'Molecule']
 
 class DBMolecules(object):
     """
-
-    This class is used as a container for all the Molecules
-
+    
+    This class is used as a container for all the Molecules  
+    
     """
 
     # Initialization function
     def __init__(self, directory, parallel=1, verbose='off',
                  time=20, ecrscore=0.0, threed=False, max3d=1000.0, output=False,
                  name='out', output_no_images=False, output_no_graph=False, display=False,
-                 allow_tree=False, max=6, cutoff=0.4, radial=False, hub=None, fast=False,
+                 allow_tree=False, max=6, cutoff=0.4, radial=False, hub=None, fast=False, 
                  links_file=None, known_actives_file=None, max_dist_from_actives=2):
 
         """
         Initialization of  the Molecule Database Class
-
+    
         Parameters
         ----------
-        directory : str
+        directory : str 
            the mol2/sdf directory file name
         parallel : int
            the number of cores used to generate the similarity score matrices
@@ -104,7 +95,7 @@ class DBMolecules(object):
         threed: bool
            If true, symmetry-equivalent MCSes are filtered to prefer the one with the best real-space alignment
         max3d: float
-           The MCS is filtered to remove atoms which are further apart than this threshold. The default of 1000 is
+           The MCS is filtered to remove atoms which are further apart than this threshold. The default of 1000 is 
            effectively "no filter"
         output : bool
            a flag used to generate or not the output files
@@ -119,7 +110,7 @@ class DBMolecules(object):
         allow_tree: bool
            if set, then the final graph does not need a cycle covering and will be a tree
         max : int
-           the maximum diameter of the resulting graph
+           the maximum diameter of the resulting graph 
         cutoff : float
            the Minimum Similarity Score (MSS) used to build the graph
         links_file : str
@@ -128,11 +119,11 @@ class DBMolecules(object):
            the name of a file containing mols whose activity is known
         max_dist_from_actives : int
             The maximum number of links from any molecule to an active
-
+            
 
         """
 
-        # Set the Logging
+        # Set the Logging 
         if verbose == 'off':
             logging.basicConfig(format='%(message)s', level=logging.CRITICAL)
 
@@ -221,13 +212,13 @@ class DBMolecules(object):
         # Hold the MCS index map strings for each molecule pair. Indexed by a tuple of molecule IDs (lowest first)
         self.mcs_map_store = {}
 
-        # Pre-specified links between molecules - a map of molecule index tuples to score.
+        # Pre-specified links between molecules - a map of molecule index tuples to score. 
         # A value < -1 means "recompute, but force the link to be included"
         # A negative value (>= -1) means "Use the absolute value as the score, but force the link to be included"
         # A positive value means "Use this value as the score, but treat the link as normal in the graph calculation"
         self.prespecified_links = {}
 
-        # List of which molecules are "known actives". Note that all pairs of known actives
+        # List of which molecules are "known actives". Note that all pairs of known actives 
         # are automatically added as prespecified links with a score of -1 (i.e force score to
         # 1 and force link to be included)
         self.known_actives = []
@@ -245,11 +236,11 @@ class DBMolecules(object):
         # Index used to perform index selection by using __iter__ function
         self.__ci = 0
 
-        # Symmetric matrices used to store the mcs scoring. The matrices are subclasses of numpy
+        # Symmetric matrices used to store the mcs scoring. The matrices are subclasses of numpy 
         self.strict_mtx = SMatrix(shape=(0,))
         self.loose_mtx = SMatrix(shape=(0,))
 
-        # Empty pointer to the networkx graph
+        # Empty pointer to the networkx graph 
         self.Graph = nx.Graph()
 
     def __iter__(self):
@@ -280,15 +271,15 @@ class DBMolecules(object):
     def __setitem__(self, index, molecule):
         """
         Index setting function
-
+        
         Parameters
         ----------
-        index : int
+        index : int 
            the molecule index
         molecule : Molecule obj
-           the molecule to assign to the molecule database by selecting the index:
+           the molecule to assign to the molecule database by selecting the index: 
            DB[index] = molecule
-
+        
         """
 
         if not isinstance(molecule, Molecule):
@@ -299,11 +290,11 @@ class DBMolecules(object):
     def __add__(self, molecule):
 
         """
-        Add a new molecule to the molecule database
-
+        Add a new molecule to the molecule database    
+        
         Parameters
         ----------
-        molecule : Molecule obj
+        molecule : Molecule obj 
            the molecule to append into the molecule database
         """
 
@@ -352,7 +343,7 @@ class DBMolecules(object):
         mol_id_cnt = 0
 
         for fname in mol_fnames:
-            # The RDkit molecule object reads in as mol2/sdf file. The molecule is not sanitized and
+            # The RDkit molecule object reads in as mol2/sdf file. The molecule is not sanitized and 
             # all the hydrogens are kept in place - we are assuming 3D input, correctly charged
             # and prepared in the protein active site
             if fname.endswith(".mol2"):
@@ -402,7 +393,7 @@ class DBMolecules(object):
                 for line in lf:
                     mols = line.split();
                     if (len(mols)<2 or len(mols)>4):
-                        raise IOError('Syntax error in links file parsing line:'+line)
+                        raise IOError('Syntax error in links file parsing line:'+line) 
                     indexa = self.inv_dic_mapping[mols[0]]
                     indexb = self.inv_dic_mapping[mols[1]]
                     score = -2
@@ -410,7 +401,7 @@ class DBMolecules(object):
                         score = float(mols[2])
                     if (len(mols)>3):
                         if (mols[3] != "force"):
-                            raise IOError('Syntax error parsing fourth argument in links file on line:'+line)
+                            raise IOError('Syntax error parsing fourth argument in links file on line:'+line) 
                         score = -score
                     self.prespecified_links[(indexa,indexb)]=score
                     self.prespecified_links[(indexb,indexa)]=score
@@ -453,24 +444,24 @@ class DBMolecules(object):
     def compute_mtx(self, a, b, strict_mtx, loose_mtx, true_strict_mtx, MCS_map):
         """
         Compute a chunk of the similarity score matrices. The chunk is selected
-        by the start index a and the final index b. The matrices are indeed
+        by the start index a and the final index b. The matrices are indeed 
         treated as linear array
 
         Parameters
         ----------
-        a : int
-           the start index of the chunk
+        a : int 
+           the start index of the chunk 
         b : int
            the final index of the chunk
         strict_mtx: python multiprocessing array
 
            strict similarity score matrix. This array is used as shared memory
-           array managed by the different allocated processes. Each process
+           array managed by the different allocated processes. Each process 
            operates on a separate chunk selected by the indexes a and b
 
         loose_mtx: python multiprocessing array
-           loose similarity score matrix. This array is used as shared memory
-           array managed by the different allocated processes. Each process
+           loose similarity score matrix. This array is used as shared memory 
+           array managed by the different allocated processes. Each process 
            operates on a separate chunk selected by the indexes a and b
 
         true_strict_mtx: python multiprocessing array
@@ -478,7 +469,7 @@ class DBMolecules(object):
            modified by the prespecified link function (which sets the link score to 1.0).
 
         MCS_map: dict (multiprocessing)
-            Holds a dict of (index tuple) -> string with the strings being the
+            Holds a dict of (index tuple) -> string with the strings being the 
             MCS atom index map between the two molecules
 
         """
@@ -486,7 +477,7 @@ class DBMolecules(object):
         # name = multiprocessing.current_process().name
         # print(name)
         # print('a = %d, b = %d' % (a,b))
-        # print('\n')
+        # print('\n') 
 
         def formal_charge(mol):
             total_charge_mol = 0.0
@@ -509,10 +500,10 @@ class DBMolecules(object):
 
             Parameters
             ----------
-            mol_i : Rdkit molecule object
-               the first molecules used to calculate the ECR rule
-            mol_j : Rdkit molecule object
-               the second molecules used to calculate the ECR rule
+            mol_i : Rdkit molecule object 
+               the first molecules used to calculate the ECR rule  
+            mol_j : Rdkit molecule object 
+               the second molecules used to calculate the ECR rule 
 
             Returns
             -------
@@ -522,8 +513,8 @@ class DBMolecules(object):
 
             """
 
-            total_charge_mol_i = formal_charge(mol_i)
-            total_charge_mol_j = formal_charge(mol_j)
+            total_charge_mol_i = formal_charge(mol_i) 
+            total_charge_mol_j = formal_charge(mol_j) 
 
             if abs(total_charge_mol_j - total_charge_mol_i) < 1e-3:
                 scr_ecr = 1.0
@@ -561,7 +552,7 @@ class DBMolecules(object):
                 logging.info('MCS molecules: %s - %s final score %s set in links file' %
                       (self[i].getName(), self[j].getName(), strict_scr))
             else:
-                # The MCS is computed only if the passed molecules have the same charges
+                # The MCS is computed only if the passed molecules have the same charges 
                 if ecr_score or self.options.ecrscore:
                     if ecr_score == 0.0 and self.options.ecrscore:
                         logging.critical('WARNING: Mutation between different charge molecules is enabled')
@@ -595,7 +586,7 @@ class DBMolecules(object):
                 strict_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=True)
                 loose_scr = tmp_scr * 1 #  MC.tmcsr(strict_flag=False)
                 logging.info(
-                    'MCS molecules: %s - %s final score %s from ecr %s mncar %s mcsr %s tmcsr %s anum %s sulf %s het %s RingMe %s' %
+                    'MCS molecules: %s - %s final score %s from ecr %s mncar %s mcsr %s tmcsr %s anum %s sulf %s het %s RingMe %s' % 
                       (self[i].getName(), self[j].getName(), strict_scr, ecr_score, MC.mncar(),MC.mcsr(),MC.tmcsr(strict_flag=True),
                         MC.atomic_number_rule(),MC.sulfonamides_rule(),MC.heterocycles_rule(),MC.transmuting_methyl_into_ring_rule()))
 
@@ -659,22 +650,22 @@ class DBMolecules(object):
               loose_mtx = multiprocessing.Array('d', self.loose_mtx)
               true_strict_mtx = multiprocessing.Array('d', self.true_strict_mtx)
               MCS_map = manager.dict()
-
+  
               # Chopping the indexes redistributing the remainder
               for k in range(0, kmax):
-
+  
                   spc = delta + int(int(rem / (k + 1)) > 0)
-
+  
                   if k == 0:
                       i = 0
                   else:
                       i = j + 1
-
+  
                   if k != kmax - 1:
                       j = i + spc - 1
                   else:
                       j = l - 1
-
+  
                   # Python multiprocessing allocation
                   p = multiprocessing.Process(target=self.compute_mtx,
                                               args=(i, j, strict_mtx, loose_mtx, true_strict_mtx, MCS_map, ))
@@ -750,11 +741,11 @@ class DBMolecules(object):
 
 class SMatrix(np.ndarray):
     """
-    This class implements a "basic" interface for symmetric matrices
+    This class implements a "basic" interface for symmetric matrices 
     subclassing ndarray. The class internally stores a bi-dimensional
-    numpy array as a linear array A[k], however the user can still
+    numpy array as a linear array A[k], however the user can still 
     access to the matrix elements by using a two indeces notation A[i,j]
-
+ 
     """
 
     def __new__(subtype, shape, dtype=float, buffer=None, offset=0, strides=None, order=None):
@@ -780,7 +771,7 @@ class SMatrix(np.ndarray):
         """
         This function retrieves the selected elements i,j from the symmetric
         matrix A[i,j]
-
+        
         Parameters
         ----------
         *kargs : python tuples
@@ -790,7 +781,7 @@ class SMatrix(np.ndarray):
         -------
             : float
             the selected element extracted from the allocated linear array
-
+            
         """
 
         if isinstance(kargs[0], int):
@@ -810,7 +801,7 @@ class SMatrix(np.ndarray):
         if i == j:
             return 0.0
 
-        # Length of the linear array
+        # Length of the linear array 
         l = self.size
 
         # Total number of elements in the corresponding bi-dimensional symmetric matrix
@@ -832,11 +823,11 @@ class SMatrix(np.ndarray):
     def __setitem__(self, *kargs):
         """
         This function set the matrix elements i,j to the passed value
-
+        
         Parameters
         ----------
         *kargs : python tuples
-           the passed elements i,j, value to set
+           the passed elements i,j, value to set  
 
         """
 
@@ -858,7 +849,7 @@ class SMatrix(np.ndarray):
         j = kargs[0][1]
         value = kargs[1]
 
-        # Length of the linear array
+        # Length of the linear array 
         l = self.size
 
         # Total number of elements in the corresponding bi-dimensional symmetric matrix
@@ -877,18 +868,18 @@ class SMatrix(np.ndarray):
 
     def to_numpy_2D_array(self):
         """
-        This function returns the symmetric similarity score numpy matrix
+        This function returns the symmetric similarity score numpy matrix 
         generated from the linear array
-
+        
         Returns
         -------
         np_mat : numpy matrix
            the symmetric similarity score numpy matrix built by using the linear
-           array
-
+           array 
+        
         """
 
-        # Length of the linear array
+        # Length of the linear array 
         l = self.size
 
         # Total number of elements in the corresponding bi-dimensional symmetric matrix
@@ -904,16 +895,16 @@ class SMatrix(np.ndarray):
 
     def mat_size(self):
         """
-        This function returns the size of the square similarity score matrix
-
+        This function returns the size of the square similarity score matrix 
+        
         Returns
         -------
         n : int
            the size of the similarity score matrix
-
+        
         """
 
-        # Length of the linear array
+        # Length of the linear array 
         l = self.size
 
         # Total number of elements in the corresponding bi-dimensional symmetric matrix
@@ -930,8 +921,8 @@ class SMatrix(np.ndarray):
 
 class Molecule(object):
     """
-    This Class stores the Rdkit molecule objects, their identification number
-    and the total number of instantiated molecules
+    This Class stores the Rdkit molecule objects, their identification number 
+    and the total number of instantiated molecules 
 
     """
 
@@ -941,8 +932,8 @@ class Molecule(object):
 
     def __init__(self, molecule, mol_id, molname):
         """
-        Initialization class function
-
+        Initialization class function 
+        
         Parameters
         ----------
         molecule : Rdkit molecule object
@@ -953,7 +944,7 @@ class Molecule(object):
 
         molname : str
            the molecule file name
-
+        
         """
 
         # Check Inputs
@@ -967,11 +958,11 @@ class Molecule(object):
         # The variable is defined as private
         self.__molecule = molecule
 
-        # The variable __ID saves the molecule identification number
+        # The variable __ID saves the molecule identification number 
         # The variable is defined as private
         self.__ID = mol_id
 
-        # The variable __name saves the molecule identification name
+        # The variable __name saves the molecule identification name 
         # The variable is defined as private
         self.__name = molname
 
@@ -1011,7 +1002,7 @@ class Molecule(object):
 
         Returns
         -------
-           : str
+           : str 
            the molecule string file name
 
         """
@@ -1080,9 +1071,9 @@ def startup():
     ops = parser.parse_args()
 
     # Molecule DataBase initialized with the passed user options
-    db_mol = DBMolecules(ops.directory, ops.parallel, ops.verbose, ops.time, ops.ecrscore, ops.threed, ops.max3d,
-                         ops.output, ops.name, ops.output_no_images, ops.output_no_graph, ops.display,
-                         ops.allow_tree, ops.max, ops.cutoff, ops.radial, ops.hub, ops.fast, ops.links_file,
+    db_mol = DBMolecules(ops.directory, ops.parallel, ops.verbose, ops.time, ops.ecrscore, ops.threed, ops.max3d, 
+                         ops.output, ops.name, ops.output_no_images, ops.output_no_graph, ops.display, 
+                         ops.allow_tree, ops.max, ops.cutoff, ops.radial, ops.hub, ops.fast, ops.links_file, 
                          ops.known_actives_file, ops.max_dist_from_actives)
     # Similarity score linear array generation
     strict, loose = db_mol.build_matrices()

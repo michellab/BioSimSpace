@@ -41,34 +41,18 @@ potential ligands within a substantial of compounds.
 # MODULE IMPORTS
 # ****************
 
-from BioSimSpace._Utils import _try_import, _have_imported
 
-_rdkit = _try_import("rdkit")
-
-if _have_imported(_rdkit):
-    from rdkit import Chem
-    from rdkit.Chem import rdFMCS
-    from rdkit.Chem import AllChem
-    from rdkit.Chem.Draw.MolDrawing import DrawingOptions
-    from rdkit.Chem import Draw
-    from rdkit.Chem import rdmolops
-    from rdkit import DataStructs
-    from rdkit.Geometry.rdGeometry import Point3D
-    from rdkit import RDLogger
-else:
-    Chem = _rdkit
-    rdFMCS = _rdkit
-    AllChem = _rdkit
-    DrawingOptions = _rdkit
-    Draw = _rdkit
-    rdmolops = _rdkit
-    DataStructs = _rdkit
-    Point3D = _rdkit
-    RDLogger = _rdkit
-
+from rdkit import Chem
+from rdkit.Chem import rdFMCS
+from rdkit.Chem import AllChem
+from rdkit.Chem.Draw.MolDrawing import DrawingOptions
+from rdkit.Chem import Draw
+from rdkit.Chem import rdmolops
+from rdkit import DataStructs
+from rdkit.Geometry.rdGeometry import Point3D
 import sys
 import math
-
+from rdkit import RDLogger
 import logging
 import argparse
 
