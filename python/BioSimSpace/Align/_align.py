@@ -176,10 +176,6 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     _assert_imported(_lomap)
 
-    # Convert tuple to list.
-    if type(names) is tuple:
-        names = list(names)
-
     if not isinstance(molecules, (list, tuple)):
         raise TypeError("'molecules' must be a list of "
                         "'BioSimSpace._SireWrappers.Molecule' "
