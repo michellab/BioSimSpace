@@ -1871,7 +1871,7 @@ class OpenMM(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if type(time_series) is not bool:

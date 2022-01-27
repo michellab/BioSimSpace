@@ -1660,7 +1660,7 @@ def _unarchive(name):
                 # Loop over all of the members and get the file names.
                 # If the name has no extension, then we assume that it's a directory.
                 for file in tar.members:
-                    if _os.path.splitext(file.name)[1] is not "":
+                    if _os.path.splitext(file.name)[1] != "":
                         files.append(dir + file.name)
 
                 # Now extract all of the files.

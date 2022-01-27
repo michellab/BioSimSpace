@@ -1176,9 +1176,9 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                if key is "verbose":
+                if key == "verbose":
                     setVerbose(value)
-                elif key is "strict_file_naming":
+                elif key == "strict_file_naming":
                     if value is True:
                         self._strict_file_naming = True
                 else:

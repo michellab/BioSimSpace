@@ -1815,7 +1815,7 @@ class Amber(_process.Process):
             for line in file:
 
                 # Skip empty lines and summary reports.
-                if len(line) > 0 and line[0] is not "|":
+                if len(line) > 0 and line[0] != "|":
 
                     # The output format is different for minimisation protocols.
                     if type(self._protocol) is _Protocol.Minimisation:
@@ -1953,7 +1953,7 @@ class Amber(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if type(time_series) is not bool:
@@ -1968,7 +1968,7 @@ class Amber(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "NSTEP":
+                if key == "NSTEP":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -1982,7 +1982,7 @@ class Amber(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "NSTEP":
+                if key == "NSTEP":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:

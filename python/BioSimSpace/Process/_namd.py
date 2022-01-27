@@ -1926,7 +1926,7 @@ class Namd(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if type(time_series) is not bool:
@@ -1941,7 +1941,7 @@ class Namd(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "TS":
+                if key == "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -1955,7 +1955,7 @@ class Namd(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "TS":
+                if key == "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:
