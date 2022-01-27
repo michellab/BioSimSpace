@@ -80,7 +80,19 @@ from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils as _Utils
 
-from . import _lomap
+# lomap depends on RDKit and networkx
+_networkx = _try_import("networkx")
+
+if _have_imported(_rdkit) and _have_imported(_networkx):
+    from . import _lomap
+elif _have_imported(_rdkit):
+    _lomap = _networkx
+elif _have_imported(_networkx):
+    _lomap = _rdkit
+else:
+    from BioSimSpace._Utils import _module_stub
+    _lomap = _module_stub(name="rdkit, networkx")
+
 from ._merge import merge as _merge
 
 # Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
@@ -160,6 +172,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     """
 
     # Adapted from code by Jenke Scheen (@JenkeScheen).
+
+    _assert_imported(_lomap)
 
     # Convert tuple to list.
     if type(molecules) is tuple:
