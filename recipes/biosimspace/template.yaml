@@ -15,9 +15,10 @@ build:
 requirements:
   host:
     - python
-    - pip
+  run:
     - sire SIRE_VERSION
     - configargparse
+    - fkcombu
     - mdtraj
     - mdanalysis
     - nglview
@@ -30,22 +31,6 @@ requirements:
     - pyyaml
     - rdkit
     - watchdog
-  run:
-    - {{ pin_compatible('python') }}
-    - {{ pin_compatible('sire') }}
-    - {{ pin_compatible('configargparse') }}
-    - {{ pin_compatible('mdtraj') }}
-    - {{ pin_compatible('mdanalysis') }}
-    - {{ pin_compatible('nglview') }}
-    - {{ pin_compatible('openff-toolkit-base') }}
-    - {{ pin_compatible('parmed') }}
-    - {{ pin_compatible('pydot') }}
-    - {{ pin_compatible('pygtail') }}
-    - {{ pin_compatible('pypdb') }}
-    - {{ pin_compatible('pytest') }}
-    - {{ pin_compatible('pyyaml') }}
-    - {{ pin_compatible('rdkit') }}
-    - {{ pin_compatible('watchdog') }}
 
 test:
   requires:
