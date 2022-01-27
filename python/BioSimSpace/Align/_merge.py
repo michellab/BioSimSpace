@@ -807,6 +807,7 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
     # Check that the merge hasn't modified the connectivity.
 
     # molecule0
+    top_change_sets0 = []
     for x in range(0, molecule0.nAtoms()):
         # Convert to an AtomIdx.
         idx = _SireMol.AtomIdx(x)
@@ -845,7 +846,11 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
                                              "If you want to proceed with this mapping pass "
                                              "'force=True'. You are warned that the resulting "
                                              "perturbation will likely be unstable.")
+            if is_ring_broken or is_ring_size_change:
+                top_change_sets0.append(set([idx, idy]))
+            
     # molecule1
+    top_change_sets1 = []
     for x in range(0, molecule1.nAtoms()):
         # Convert to an AtomIdx.
         idx = _SireMol.AtomIdx(x)
@@ -890,6 +895,8 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
                                              "If you want to proceed with this mapping pass "
                                              "'force=True'. You are warned that the resulting "
                                              "perturbation will likely be unstable.")
+            if is_ring_broken or is_ring_size_change:
+                top_change_sets1.append(set([idx_map, idy_map]))
 
     # Set the "connectivity" property.
     edit_mol.setProperty("connectivity", conn)
@@ -940,22 +947,35 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         idx = _SireMol.AtomIdx(x)
 
         # Map the index to its position in the merged molecule.
-        idx = inv_mapping[idx]
+        idx_map = inv_mapping[idx]
 
         for y in range(x+1, molecule1.nAtoms()):
             # Convert to an AtomIdx.
             idy = _SireMol.AtomIdx(y)
 
             # Map the index to its position in the merged molecule.
-            idy = inv_mapping[idy]
+            idy_map = inv_mapping[idy]
 
-            # Get the intrascale value.
-            intra = intrascale1.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
+            if set([idx_map, idy_map]) in top_change_sets1:
+                conn_type = conn.connectionType(idx_map, idy_map)
+                # The atoms aren't bonded.
+                if conn_type == 0:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(1, 1)
+                    clj_nb_pairs0.set(idx_map, idy_map, clj_scale_factor)
 
-            # Only set if there is a non-zero value.
-            # Set using the re-mapped atom indices.
-            if not intra.coulomb() == 0:
-                clj_nb_pairs0.set(idx, idy, intra)
+                # The atoms are part of a dihedral.
+                elif conn_type == 4:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
+                                                            ff.vdw14ScaleFactor())
+                    clj_nb_pairs0.set(idx_map, idy_map, clj_scale_factor)
+            else:
+                # Get the intrascale value.
+                intra = intrascale1.get(idx, idy)
+
+                # Only set if there is a non-zero value.
+                # Set using the re-mapped atom indices.
+                if not intra.coulomb() == 0:
+                    clj_nb_pairs0.set(idx_map, idy_map, intra)
 
     # Now copy in all intrascale values from molecule0 into both
     # clj_nb_pairs matrices.
@@ -963,15 +983,31 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
     # Perform a triangular loop over atoms from molecule0.
     for x in range(0, molecule0.nAtoms()):
         for y in range(x+1, molecule0.nAtoms()):
+            idx = _SireMol.AtomIdx(x)
+            idy = _SireMol.AtomIdx(y)
             # Get the intrascale value.
-            intra = intrascale0.get(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y))
+            intra = intrascale0.get(idx, idy)
 
             # Set the value in the new matrix, overwriting existing value.
-            clj_nb_pairs0.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
+            clj_nb_pairs0.set(idx, idy, intra)
 
-            # Only set if there is a non-zero value.
-            if not intra.coulomb() == 0:
-                clj_nb_pairs1.set(_SireMol.AtomIdx(x), _SireMol.AtomIdx(y), intra)
+            if set([idx, idy]) in top_change_sets0:
+                conn_type = conn.connectionType(idx, idy)
+
+                # The atoms aren't bonded.
+                if conn_type == 0:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(1, 1)
+                    clj_nb_pairs1.set(idx, idy, clj_scale_factor)
+
+                # The atoms are part of a dihedral.
+                elif conn_type == 4:
+                    clj_scale_factor = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
+                                                            ff.vdw14ScaleFactor())
+                    clj_nb_pairs1.set(idx, idy, clj_scale_factor)
+            else:
+                # Only set if there is a non-zero value.
+                if not intra.coulomb() == 0:
+                    clj_nb_pairs1.set(idx, idy, intra)
 
     # Finally, copy the intrascale from molecule1 into clj_nb_pairs1.
 
