@@ -30,7 +30,6 @@ fi
 # Upload the packages to the michellab channel on Anaconda Cloud.
 
 # Label release packages with main and dev so that dev is at least as new as main.
-# Uncomment the fkcombu package upload as and when there are new releases.
 if [ "$LABEL" = "main" ]; then
     anaconda \
         --token "$ANACONDA_TOKEN" upload \
@@ -38,16 +37,14 @@ if [ "$LABEL" = "main" ]; then
         --label main \
         --label dev \
         --force \
-        "$CONDA_BLD"/"$OS"/biosimspace-* \
-        "$CONDA_BLD"/"$OS"/fkcombu-*
+        "$CONDA_BLD"/"$OS"/biosimspace-*
 else
     anaconda \
         --token "$ANACONDA_TOKEN" upload \
         --user michellab \
         --label dev \
         --force \
-        "$CONDA_BLD"/"$OS"/biosimspace-* \
-        "$CONDA_BLD"/"$OS"/fkcombu-*
+        "$CONDA_BLD"/"$OS"/biosimspace-*
 fi
 
 echo "Package uploaded!"
