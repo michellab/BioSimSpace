@@ -27,6 +27,14 @@ authors=("Lester Hedges <lester.hedges@gmail.com, "
          "Christopher Woods <chryswoods@gmail.com>, "
          "Antonia Mey <antonia.mey@gmail.com")
 
+# Function to check if a conda dependency has been installed
+def is_installed(dep: str, conda: str):
+    p = subprocess.Popen([conda, "list", dep], stdout=subprocess.PIPE)
+    lines = str(p.stdout.read())
+
+    return lines.find(dep) != -1
+
+
 # Run the setup.
 try:
     setup(name='BioSimSpace',
@@ -53,28 +61,25 @@ finally:
         print("\nSetting up python environment...")
 
         # Open files for stdout/stderr.
-        stdout = sys.stdout   #open("setup.out", "w")
-        stderr = sys.stderr   #open("setup.err", "w")
+        stdout = sys.stdout
+        stderr = sys.stderr
 
         # Create a list of the conda dependencies.
         conda_deps = ["configargparse",
-                      "nglview",
-                      "parmed",
-                      "pydot",
                       "pygtail",
-                      "pypdb",
                       "pytest",
                       "pyyaml",
-                      "rdkit",
+                      "watchdog",
+                      "pydot",
                       "networkx",
-                      "watchdog"]
-
-        if platform.machine() != "aarch64":
-            # these packages are not available on aarch64 in a way
-            # that is compatible with the above packages (yet)
-            conda_deps.insert(1, "mdtraj")
-            conda_deps.insert(1, "mdanalysis")
-            conda_deps.insert(5, "openff-toolkit-base")
+                      "nglview",
+                      "pypdb",
+                      "rdkit",
+                      "parmed",
+                      "mdtraj",             # known not available on aarch64
+                      "mdanalysis",         # known not available on aarch64
+                      "openff-toolkit-base" # known not available on aarch64
+                     ]
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
@@ -86,7 +91,40 @@ finally:
 
         print("Installing conda dependencies: %s" % ", ".join(conda_deps))
         command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+
+        all_installed_ok = True
+
+        try:
+            subprocess.run(shlex.split(command), shell=False, 
+                           stdout=stdout, stderr=stderr, check=True)
+        except Exception:
+            all_installed_ok = False
+
+        if not all_installed_ok:
+            print("There were errors installing some of the dependencies.")
+            print("We will now try to install them one-by-one. This may take some time...")
+
+            failures = []
+
+            for dep in conda_deps:
+                if not is_installed(dep, conda="%s/conda" % bin_dir):
+                    print("Trying again to install '%s'" % dep)
+                    command = "%s/conda install -y -q %s" % (bin_dir, dep)
+
+                    try:
+                        subprocess.run(shlex.split(command), shell=False,
+                                       stdout=stdout, stderr=stderr, check=True)
+                    except Exception:
+                        failures.append(dep)
+
+            if len(failures) == 0:
+                print("All dependencies installed successfully!")
+            else:
+                print("Failed to install these dependencies: %s" % ",".join(failures))
+                print("BioSimSpace will still install and run, but some functionality may not be available.")
+        else:
+            print("All dependencies install successfully first time!")
+
 
         print("Activating notebook extension: nglview")
         command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
@@ -98,16 +136,8 @@ finally:
         command = "%s/conda clean --all --yes --quiet" % bin_dir
         subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
-        # Close the file handles.
-        #stdout.close()
-        #stderr.close()
-
         try:
             import BioSimSpace
-
-            # Installation worked. Remove the stdout/stderr files.
-            #os.remove("setup.out")
-            #os.remove("setup.err")
         except:
             print("\nPossible installation issues.")
             sys.exit()
