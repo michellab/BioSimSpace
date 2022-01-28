@@ -81,6 +81,19 @@ finally:
                       "openff-toolkit-base" # known not available on aarch64
                      ]
 
+        # Don't try to install things that are already installed...
+        to_install_deps = []
+
+        print("Checking for dependencies that are already installed...")
+
+        for dep in conda_deps:
+            if not is_installed(dep, conda="%s/conda" % bin_dir):
+                to_install_deps.append(dep)
+            else:
+                print("Already installed %s" % dep)
+
+        conda_deps = to_install_deps
+
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
         subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
@@ -120,8 +133,8 @@ finally:
             if len(failures) == 0:
                 print("All dependencies installed successfully!")
             else:
-                print("Failed to install these dependencies: %s" % ",".join(failures))
-                print("BioSimSpace will still install and run, but some functionality may not be available.")
+                print("\n** Failed to install these dependencies: %s" % ", ".join(failures))
+                print("** BioSimSpace will still install and run, but some functionality may not be available.\n")
         else:
             print("All dependencies install successfully first time!")
 
