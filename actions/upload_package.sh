@@ -27,7 +27,7 @@ if [ ! -e "$TAG" ]; then
     LABEL=main
 fi
 
-# Upload the packages to the michellab channel on Anaconda Cloud.
+# Upload the package to the michellab channel on Anaconda Cloud.
 
 # Label release packages with main and dev so that dev is at least as new as main.
 if [ "$LABEL" = "main" ]; then
