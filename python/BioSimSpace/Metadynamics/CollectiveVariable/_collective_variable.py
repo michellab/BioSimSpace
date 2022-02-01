@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -65,11 +65,11 @@ class CollectiveVariable():
                A lower bound on the value of the collective variable.
         """
 
-        if type(lower_bound) is None:
+        if lower_bound is None:
             self._lower_bound = None
             return
 
-        if type(lower_bound) is not _Bound:
+        if not isinstance(lower_bound, _Bound):
             raise TypeError("'lower_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
 
         # Store the existing value.
@@ -107,11 +107,11 @@ class CollectiveVariable():
                An upper bound on the value of the collective variable.
         """
 
-        if type(upper_bound) is None:
+        if upper_bound is None:
             self._upper_bound = None
             return
 
-        if type(upper_bound) is not _Bound:
+        if not isinstance(upper_bound, _Bound):
             raise TypeError("'upper_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
 
         # Store the existing value.
@@ -154,7 +154,7 @@ class CollectiveVariable():
             self._grid = None
             return
 
-        if type(grid) is not _Grid:
+        if not isinstance(grid, _Grid):
             raise TypeError("'grid' must be of type 'BioSimSpace.Metadynamics.Grid'")
 
         # Store the existing value.

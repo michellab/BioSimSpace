@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -117,17 +117,17 @@ class Area(_Type):
             other = float(other)
 
         # Multiplication by float.
-        if type(other) is float:
+        if isinstance(other, float):
             mag = self._magnitude * other
             return Area(mag, self._unit)
 
         # Multiplication by a Length.
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             mag = self.angstroms2().magnitude() * other.angstroms().magnitude()
             return _Volume(mag, "A3")
 
         # Multiplication by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self * length
@@ -152,21 +152,21 @@ class Area(_Type):
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             mag = self._magnitude / other
             return Area(mag, self._unit)
 
         # Division by another Area.
-        elif type(other) is Area:
+        elif isinstance(other, Area):
             return self.angstroms2().magnitude() / other.angstroms2().magnitude()
 
         # Division by a Length.
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             mag = self.angstroms2().magnitude() / other.angstroms().magnitude()
             return _Length(mag, "A")
 
         # Division by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self / length

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -64,7 +64,7 @@ class Type():
             # Check that the magnitude is valid.
             if type(magnitude) is int:
                 self._magnitude = float(magnitude)
-            elif type(magnitude) is float:
+            elif isinstance(magnitude, float):
                 self._magnitude = magnitude
             else:
                 raise TypeError("'magnitude' must be of type 'int' or 'float'")
@@ -74,7 +74,7 @@ class Type():
 
         # The user has passed a string representation of the temperature.
         elif len(args) == 1:
-            if type(args[0]) != str:
+            if not isinstance(args[0], str):
                 raise TypeError("'string' must be of type 'str'")
 
             # Convert the string to an object of this type.
@@ -122,7 +122,7 @@ class Type():
             return self._default_unit(mag)._convert_to(self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self + temp
 
@@ -142,7 +142,7 @@ class Type():
             return self._default_unit(mag)._convert_to(self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self - temp
 
@@ -158,7 +158,7 @@ class Type():
             other = float(other)
 
         # Only support multiplication by float.
-        if type(other) is float:
+        if isinstance(other, float):
             # Convert to default unit and multiply.
             mag = self._default_unit().magnitude() * other
 
@@ -183,7 +183,7 @@ class Type():
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             # Convert to default unit and divide.
             mag = self._default_unit().magnitude() / other
 
@@ -195,7 +195,7 @@ class Type():
             return self._default_unit().magnitude() / other._default_unit().magnitude()
 
         # Division by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             obj = self._from_string(other)
             return self / obj
 
@@ -211,7 +211,7 @@ class Type():
             return self._default_unit().magnitude() < other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() < self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -226,7 +226,7 @@ class Type():
             return self._default_unit().magnitude() <= other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() <= self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -241,7 +241,7 @@ class Type():
             return self._default_unit().magnitude() == other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() == self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -255,7 +255,7 @@ class Type():
             return self._default_unit().magnitude() != other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() != self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -269,7 +269,7 @@ class Type():
             return self._default_unit().magnitude() >= other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() >= self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -284,7 +284,7 @@ class Type():
             return self._default_unit().magnitude() > other._default_unit().magnitude()
 
         # Compare with a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             return self._default_unit().magnitude() > self._from_string(other)._default_unit().magnitude()
 
         else:
@@ -334,7 +334,7 @@ class Type():
 
         string_copy = string
 
-        if type(string) is str:
+        if isinstance(string, str):
             # Strip white space from the string.
             string = string.replace(" ", "")
 

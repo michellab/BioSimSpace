@@ -174,6 +174,7 @@ def test_merge():
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
 
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_three_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-13a*"))
@@ -196,6 +197,7 @@ def test_ring_breaking_three_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_five_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
@@ -218,6 +220,7 @@ def test_ring_breaking_five_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_six_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
@@ -240,8 +243,10 @@ def test_ring_breaking_six_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.parametrize("ligands", [["CAT-13c", "CAT-17i"],
-                                     ["CAT-13e", "CAT-17g"]])
+@pytest.mark.parametrize("ligands", [ pytest.param(["CAT-13c", "CAT-17i"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")),
+                                     pytest.param(["CAT-13e", "CAT-17g"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"))
+                                     ],
+                        )
 def test_ring_size_change(ligands):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/%s.*" % ligands[0]))

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -31,12 +31,22 @@ __all__ = ["Protocol"]
 
 import os as _os
 import queue as _queue
+import shlex as _shlex
 import subprocess as _subprocess
+
+from BioSimSpace._Utils import _try_import, _have_imported
 
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
 _sys.stderr = open(_os.devnull, "w")
-from openff.toolkit.topology import Molecule as _OpenFFMolecule
+
+_openff = _try_import("openff")
+
+if _have_imported(_openff):
+    from openff.toolkit.topology import Molecule as _OpenFFMolecule
+else:
+    _OpenFFMolecule = _openff
+
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys
@@ -111,13 +121,13 @@ class Protocol():
             raise Exception("<Protocol> must be subclassed.")
 
         # Validate and set the force field name.
-        if type(forcefield) is not str:
+        if not isinstance(forcefield, str):
             raise TypeError("'forcefield' must be of type 'str'")
         else:
             self._forcefield = forcefield
 
         # Validate and set the property map.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
         else:
             self._property_map = property_map.copy()
@@ -152,13 +162,13 @@ class Protocol():
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule and type(molecule) is not str:
+        if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-        if type(work_dir) is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(queue) is not None and type(queue) is not _queue.Queue:
+        if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
         # Set work_dir to the current directory.
@@ -166,7 +176,7 @@ class Protocol():
             work_dir = _os.getcwd()
 
         # Flag whether the molecule is a SMILES string.
-        if type(molecule) is str:
+        if isinstance(molecule, str):
             is_smiles = True
         else:
             is_smiles = False
@@ -250,7 +260,7 @@ class Protocol():
                Whether missing atoms were added.
         """
 
-        if type(tleap_file) is not str:
+        if not isinstance(tleap_file, str):
             raise TypeError("'tleap_file' must be of type 'str'.")
 
         if not (_os.path.exists(tleap_file)):
@@ -313,7 +323,7 @@ class Protocol():
         """
 
         # Convert SMILES to a molecule.
-        if type(molecule) is str:
+        if isinstance(molecule, str):
             try:
                 _molecule = self._smiles_to_molecule(molecule, work_dir)
             except Exception as e:
@@ -381,7 +391,8 @@ class Protocol():
         stderr = open(prefix + "leap.err", "w")
 
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -432,7 +443,7 @@ class Protocol():
             raise _IncompatibleError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
 
         # Convert SMILES to a molecule.
-        if type(molecule) is str:
+        if isinstance(molecule, str):
             try:
                 _molecule = self._smiles_to_molecule(molecule, work_dir)
             except Exception as e:
@@ -482,7 +493,8 @@ class Protocol():
         stderr = open(prefix + "pdb2gmx.err", "w")
 
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 

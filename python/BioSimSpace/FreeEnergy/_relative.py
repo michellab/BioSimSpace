@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -33,6 +33,7 @@ from glob import glob as _glob
 
 import copy as _copy
 import math as _math
+import shlex as _shlex
 import sys as _sys
 import os as _os
 import shutil as _shutil
@@ -128,14 +129,14 @@ class Relative():
 
         # Validate the input.
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
             # Store a copy of solvated system.
             self._system = system.copy()
 
         if protocol is not None:
-            if type(protocol) is _Protocol.FreeEnergy:
+            if isinstance(protocol, _Protocol.FreeEnergy):
                 self._protocol = protocol
             else:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
@@ -143,7 +144,7 @@ class Relative():
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
 
-        if type(setup_only) is not bool:
+        if not isinstance(setup_only, bool):
             raise TypeError("'setup_only' must be of type 'bool'.")
         else:
             self._setup_only = setup_only
@@ -165,7 +166,7 @@ class Relative():
 
         # Validate the user specified molecular dynamics engine.
         if engine is not None:
-            if type(engine) is not str:
+            if not isinstance(engine, str):
                 raise TypeError("'engine' must be of type 'str'.")
 
             # Strip whitespace from engine and convert to upper case.
@@ -202,16 +203,16 @@ class Relative():
         # Set the engine.
         self._engine = engine
 
-        if type(ignore_warnings) is not bool:
+        if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool.")
         self._ignore_warnings = ignore_warnings
 
-        if type(show_errors) is not bool:
+        if not isinstance(show_errors, bool):
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
 
         # Check that the map is valid.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
         self._property_map = property_map
 
@@ -233,7 +234,7 @@ class Relative():
                Whether to run the individual processes for the lambda windows
                in serial.
         """
-        if type(serial) is not bool:
+        if not isinstance(serial, bool):
             raise TypeError("'serial' must be of type 'bool'.")
 
         if self._setup_only:
@@ -302,12 +303,12 @@ class Relative():
         if self._work_dir is None:
             raise ValueError("'work_dir' must be set!")
         else:
-            if type(work_dir) is not str:
+            if not isinstance(work_dir, str):
                 raise TypeError("'work_dir' must be of type 'str'.")
             if not _os.path.isdir(work_dir):
                 raise ValueError("'work_dir' doesn't exist!")
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
 
         # Generate the zip file name.
@@ -375,7 +376,7 @@ class Relative():
                will be None when GROMACS is used.
         """
 
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
@@ -434,7 +435,7 @@ class Relative():
                standard error.
         """
 
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
@@ -443,7 +444,8 @@ class Relative():
         command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
 
         # Run the first command.
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_shlex.split(command), shell=False,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
             raise _AnalysisError("GROMACS free-energy analysis failed!")
 
@@ -518,7 +520,7 @@ class Relative():
                will be None when GROMACS is used.
         """
 
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
@@ -527,7 +529,8 @@ class Relative():
         command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
         # Run the first command.
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_shlex.split(command), shell=False,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
             raise _AnalysisError("SOMD free-energy analysis failed!")
 
@@ -538,7 +541,8 @@ class Relative():
                     _warnings.warn("Subsampling resulted in less than 50 samples, "
                                   f"re-running without subsampling for '{work_dir}'")
                     command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
-                    proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                    proc = _subprocess.run(_shlex.split(command), shell=False,
+                        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                     if proc.returncode != 0:
                         raise _AnalysisError("SOMD free-energy analysis failed!")
                     break
@@ -618,13 +622,13 @@ class Relative():
                The relative free-energy difference and its associated error.
         """
 
-        if type(pmf) is not list:
+        if not isinstance(pmf, list):
             raise TypeError("'pmf' must be of type 'list'.")
-        if type(pmf_ref) is not list:
+        if not isinstance(pmf_ref, list):
             raise TypeError("'pmf_ref' must be of type 'list'.")
 
         for rec in pmf:
-            if type(rec) is not tuple:
+            if not isinstance(rec, tuple):
                 raise TypeError("'pmf1' must contain tuples containing lambda "
                                 "values and the associated free-energy and error.")
             else:
@@ -633,11 +637,11 @@ class Relative():
                                     "a lambda value and the associated free energy "
                                     "and error.")
                 for val in rec[1:]:
-                    if type(val) is not _Types.Energy:
+                    if not isinstance(val, _Types.Energy):
                         raise TypeError("'pmf' must contain 'BioSimSpace.Types.Energy' types.")
 
         for rec in pmf_ref:
-            if type(rec) is not tuple:
+            if not isinstance(rec, tuple):
                 raise TypeError("'pmf_ref' must contain tuples containing lambda "
                                 "values and the associated free-energy and error.")
             else:
@@ -646,7 +650,7 @@ class Relative():
                                     "a lambda value and the associated free energy "
                                     "and error.")
                 for val in rec[1:]:
-                    if type(val) is not _Types.Energy:
+                    if not isinstance(val, _Types.Energy):
                         raise TypeError("'pmf_ref' must contain 'BioSimSpace.Types.Energy' types.")
 
         # Work out the difference in free energy.
@@ -837,7 +841,7 @@ class Relative():
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(command, shell=True, text=True,
+                proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Create a copy of the process and update the working
@@ -876,8 +880,8 @@ class Relative():
                for the process executable.
         """
 
-        if type(args) is not dict and type(args) is not _OrderedDict:
-            raise TypeError("'args' must be of type 'dict', or 'collections.OrderedDict'")
+        if not isinstance(args, dict):
+            raise TypeError("'args' must be of type 'dict'")
 
         for process in self._runner.processes():
             process.setArgs(args)

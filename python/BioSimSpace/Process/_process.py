@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -31,7 +31,11 @@ __all__ = ["Process"]
 import collections as _collections
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+
+from BioSimSpace._Utils import _try_import
+
+_pygtail = _try_import("pygtail")
+
 import random as _random
 import timeit as _timeit
 import warnings as _warnings
@@ -93,7 +97,7 @@ class Process():
             raise Exception("<Process> must be subclassed.")
 
         # Check that the system is valid.
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Make sure the system is parameterised.
@@ -107,15 +111,15 @@ class Process():
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Check that the working directory is valid.
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
         # Check that the seed is valid.
-        if seed is not None and type(seed) is not int:
+        if seed is not None and not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
         # Check that the map is valid.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Make sure that molecules in the system have coordinates.
@@ -330,7 +334,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -365,7 +369,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -406,7 +410,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -445,17 +449,13 @@ class Process():
                The value of the collective variable for each configuration.
         """
 
-        if type(number) is not int:
+        if not type(number) is int:
             raise TypeError("'number' must be of type 'int'")
 
         if number < 1:
             raise ValueError("'number' must be >= 1")
 
-        # Convert tuple to list.
-        if type(bounds) is tuple:
-            bounds = list(bounds)
-
-        if type(bounds) is not list:
+        if not isinstance(bounds, (list, tuple)):
             raise TypeError("'bounds' must be of type 'list'.")
 
         # Make sure the number of bounds matches the number of collective variables.
@@ -477,7 +477,7 @@ class Process():
             # Extract the unit of the collective variable. (Its type)
             unit = units[names[x]]
 
-            if type(bound) is list or type(bound) is tuple:
+            if isinstance(bound, (list, tuple)):
                 # Must have upper/lower bound.
                 if len(bound) != 2:
                     raise ValueError(msg)
@@ -595,7 +595,7 @@ class Process():
         """
 
         # Check that the system is valid.
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # If the system contains a perturbable molecule, then we'll warn the user
@@ -671,7 +671,7 @@ class Process():
 
         # Check that the new system is valid.
         else:
-            if type(system) is not _System:
+            if not isinstance(system, _System):
                 raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Use the existing protocol.
@@ -723,7 +723,7 @@ class Process():
                The process name.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
         else:
             self._name = name
@@ -749,7 +749,7 @@ class Process():
                The random number seed.
         """
 
-        if type(seed) is not int:
+        if not type(seed) is int:
             _warnings.warn("The seed must be an integer. Disabling seeding.")
             self._seed = None
         else:
@@ -779,7 +779,7 @@ class Process():
                 max_time = int(max_time.milliseconds().magnitude())
 
             # Float.
-            elif type(max_time) is float:
+            elif isinstance(max_time, float):
                 if max_time <= 0:
                     raise ValueError("'max_time' cannot be negative!")
 
@@ -1014,7 +1014,7 @@ class Process():
         if name is None:
             name = self._name + "_input"
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("'name' must be of type 'str'")
 
         # Generate the zip file name.
@@ -1067,7 +1067,7 @@ class Process():
         if name is None:
             name = self._name + "_output"
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("'name' must be of type 'str'")
 
         # Wait for the process to finish.
@@ -1167,7 +1167,7 @@ class Process():
         """
 
         # Append a single string.
-        if type(config) is str:
+        if isinstance(config, str):
             self._config.append(config)
             self.writeConfig(self._config_file)
 
@@ -1212,7 +1212,7 @@ class Process():
            file : str
                The path to a file.
         """
-        if type(file) is not str:
+        if not isinstance(file, str):
             raise TypeError("'file' must be of type 'str'")
 
         with open(file, "w") as f:
@@ -1228,7 +1228,7 @@ class Process():
            file : str
                The path to a file.
         """
-        if type(file) is not str:
+        if not isinstance(file, str):
             raise TypeError("'file' must be of type 'str'")
 
         with open(file, "w") as f:
@@ -1275,7 +1275,7 @@ class Process():
         # Add the arguments to the list.
         for key, value in self._args.items():
             # Boolean flag.
-            if type(value) is bool:
+            if isinstance(value, bool):
                 if value:
                     args.append(str(key))
             else:
@@ -1318,7 +1318,7 @@ class Process():
                The value of the argument.
         """
 
-        if type(arg) is not str:
+        if not isinstance(arg, str):
             raise TypeError("'arg' must be of type 'str'.")
 
         self._args[arg] = value
@@ -1339,7 +1339,7 @@ class Process():
                The index in the dictionary.
         """
 
-        if type(arg) is not str:
+        if not isinstance(arg, str):
             raise TypeError("'arg' must be of type 'str'.")
 
         _odict_insert(self._args, arg, value, index)
@@ -1461,7 +1461,7 @@ def _is_list_of_strings(lst):
 def _odict_insert(dct, key, value, index):
     """Insert an item into an ordered dictionary."""
 
-    if type(index) is not int:
+    if not type(index) is int:
         raise TypeError("'index' must be of type 'int'.")
 
     # Store the original size of the dictionary.

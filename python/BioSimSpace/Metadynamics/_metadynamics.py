@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -92,43 +92,43 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
     """
 
     # Check that the system is valid.
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     # Check that the protocol is valid.
-    if type(protocol) is not _Protocol.Metadynamics:
+    if not isinstance(protocol, _Protocol.Metadynamics):
         raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
     # Validate optional arguments.
 
-    if type(engine) is not str:
+    if not isinstance(engine, str):
         raise TypeError("'engine' must be of type 'str'.")
     md_engine = engine.upper().replace(" ", "")
 
-    if type(gpu_support) is not bool:
+    if not isinstance(gpu_support, bool):
         raise TypeError("'gpu_support' must be of type 'bool'")
 
-    if type(auto_start) is not bool:
+    if not isinstance(auto_start, bool):
         raise TypeError("'auto_start' must be of type 'bool'")
 
-    if type(name) is not str:
+    if not isinstance(name, str):
         raise TypeError("'name' must be of type 'str'")
 
     if work_dir is not None:
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
     if seed is not None:
-        if type(seed) is not int:
+        if not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    if type(ignore_warnings) is not bool:
+    if not isinstance(ignore_warnings, bool):
         raise ValueError("'ignore_warnings' must be of type 'bool.")
 
-    if type(show_errors) is not bool:
+    if not isinstance(show_errors, bool):
         raise ValueError("'show_errors' must be of type 'bool.")
 
     # Find a molecular dynamics engine and executable.

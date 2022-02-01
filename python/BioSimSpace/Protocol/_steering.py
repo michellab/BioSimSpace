@@ -1,7 +1,7 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -201,11 +201,7 @@ class Steering(_Protocol):
             self._collective_variable = [collective_variable]
 
         else:
-            # Convert tuple to list.
-            if type(collective_variable) is tuple:
-                collective_variable = tuple(collective_variable)
-
-            if type(collective_variable) is list:
+            if isinstance(collective_variable, (list, tuple)):
                 if not all(isinstance(x, _colvar_type) for x in collective_variable):
                     raise TypeError("'collective_variable' must all be of type "
                                     "'BioSimSpace.Metadynamics.CollectiveVariable'")
@@ -246,11 +242,7 @@ class Steering(_Protocol):
                The time schedule for the steering.
         """
 
-        # Convert tuple to list.
-        if type(schedule) is tuple:
-            schedule = list(schedule)
-
-        if type(schedule) is list:
+        if isinstance(schedule, (list, tuple)):
             if not all(isinstance(x, _Types.Time) for x in schedule):
                 raise TypeError("'schedule' must all be of type "
                                 "'BioSimSpace.Types.Time'")
@@ -303,12 +295,8 @@ class Steering(_Protocol):
                each stage of the schedule.
         """
 
-        # Convert tuple to list.
-        if type(restraints) is tuple:
-            restraints = list(restraints)
-
         # Validate type.
-        if type(restraints) is not list:
+        if not isinstance(restraints, (list, tuple)):
             raise TypeError("'restraints' must be a list of "
                             "'BioSimSpace.CollectiveVariable.Restraint' types.")
 
@@ -321,10 +309,10 @@ class Steering(_Protocol):
         num_cvs = len(self._collective_variable)
         for restraint in restraints:
             # Convert tuple to list.
-            if type(restraint) is tuple:
+            if isinstance(restraint, tuple):
                 restraint = list(restraint)
             # Convert any non-list type to a list.
-            if type(restraint) is not list:
+            if not isinstance(restraint, list):
                 restraint = [restraint]
             # Validate that there is a restraint for each collective variable
             # for each stage in the schedule.
@@ -378,15 +366,15 @@ class Steering(_Protocol):
                on "both" sides (default).
         """
 
-        # Convert tuple to list.
-        if type(verse) is tuple:
-            verse = list(verse)
-        elif type(verse) is str:
+        # Convert string to list.
+        if isinstance(verse, str):
             verse = [verse]
 
-        if type(verse) is list:
+        if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):
                 raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
+        else:
+            raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
 
         new_verse = []
         allowed = ["both", "larger", "smaller"]
@@ -422,7 +410,7 @@ class Steering(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -452,7 +440,7 @@ class Steering(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -482,7 +470,7 @@ class Steering(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -507,7 +495,7 @@ class Steering(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -532,7 +520,7 @@ class Steering(_Protocol):
            report_interval : int
                The number of integration steps between reporting statistics.
         """
-        if type(report_interval) is not int:
+        if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
@@ -565,7 +553,7 @@ class Steering(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if type(restart_interval) is not int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
@@ -594,7 +582,7 @@ class Steering(_Protocol):
            colvar_file : str
                The path to an existing COLVAR file.
         """
-        if type(colvar_file) is not str:
+        if not isinstance(colvar_file, str):
             raise ValueError("'colvar_file' must be of type 'str'")
 
         if not _os.path.isfile(colvar_file):

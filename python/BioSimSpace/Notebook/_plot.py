@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -121,20 +121,10 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
               "to load. Please check your matplotlib installation.")
         return None
 
-    if type(logx) is not bool:
+    if not isinstance(logx, bool):
         raise TypeError("'logx' must be of type 'bool'.")
-    if type(logy) is not bool:
+    if not isinstance(logy, bool):
         raise TypeError("'logy' must be of type 'bool'.")
-
-    # Convert tuple to a list.
-    if type(x) is tuple:
-        x = list(x)
-    if type(y) is tuple:
-        y = list(y)
-    if type(xerr) is tuple:
-        xerr = list(xerr)
-    if type(yerr) is tuple:
-        yerr = list(yerr)
 
     # Whether we need to convert the x and y data to floats.
     is_unit_x = False
@@ -154,8 +144,8 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             y = x
             x = [x for x in range(0, len(y))]
 
-    # The x argument must be a list of data records.
-    if type(x) is not list:
+    # The x argument must be a list or tuple of data records.
+    if not isinstance(x, (list, tuple)):
         raise TypeError("'x' must be of type 'list'")
 
     else:
@@ -183,8 +173,8 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
         if isinstance(x[0], _Type):
             is_unit_x = True
 
-    # The y argument must be a list of data records.
-    if type(y) is not list:
+    # The y argument must be a list or tuple of data records.
+    if not isinstance(y, (list, tuple)):
         raise TypeError("'y' must be of type 'list'")
 
     else:
@@ -232,14 +222,14 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             yerr = yerr[:len(y)]
 
     if xlabel is not None:
-        if type(xlabel) is not str:
+        if not isinstance(xlabel, str):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
-        if type(ylabel) is not str:
+        if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
@@ -328,19 +318,13 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
               "to load. Please check your matplotlib installation.")
         return None
 
-    # Convert tuple to a list.
-    if type(x) is tuple:
-        x = list(x)
-    if type(y) is tuple:
-        y = list(y)
-
     # Whether we need to convert the x, y, and z data to floats.
     is_unit_x = False
     is_unit_y = False
     is_unit_z = False
 
-    # The x argument must be a list of data records.
-    if type(x) is not list:
+    # The x argument must be a list or tuple of data records.
+    if not isinstance(x, (list, tuple)):
         raise TypeError("'x' must be of type 'list'")
 
     else:
@@ -358,8 +342,8 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         if isinstance(x[0], _Type):
             is_unit_x = True
 
-    # The y argument must be a list of data records.
-    if type(y) is not list:
+    # The y argument must be a list or tuple of data records.
+    if not isinstance(y, (list, tuple)):
         raise TypeError("'y' must be of type 'list'")
 
     else:
@@ -377,7 +361,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         if isinstance(y[0], _Type):
             is_unit_y = True
 
-    if type(z) is not list:
+    if not isinstance(z, (list, tuple)):
         raise TypeError("'z' must be of type 'list'")
 
     else:
@@ -411,21 +395,21 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         z = z[:min_len]
 
     if xlabel is not None:
-        if type(xlabel) is not str:
+        if not isinstance(xlabel, str):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
-        if type(ylabel) is not str:
+        if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
             ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
 
     if zlabel is not None:
-        if type(zlabel) is not str:
+        if not isinstance(zlabel, str):
             raise TypeError("'zlabel' must be of type 'str'")
     else:
         if isinstance(z[0], _Type):
@@ -500,15 +484,16 @@ def plotOverlapMatrix(overlap):
 
     # Validate the input.
 
-    # Convert tuple to list.
-    if type(overlap) is tuple:
-        overlap = list(overlap)
+    if not isinstance(overlap, (list, tuple)):
+        raise TypeError("The 'overlap' matrix must be a list of list types!")
 
     # Store the number of rows.
     num_rows = len(overlap)
 
     # Check the data in each row.
     for row in overlap:
+        if not isinstance(row, (list, tuple)):
+            raise TypeError("The 'overlap' matrix must be a list of list types!")
         if len(row) != num_rows:
             raise ValueError("The 'overlap' matrix must be square!")
         if not all(isinstance(x, float) for x in row):

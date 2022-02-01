@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -112,20 +112,20 @@ class RMSD(_CollectiveVariable):
 
         # Validate input.
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
 
-        if type(reference) is not _Molecule:
+        if not isinstance(reference, _Molecule):
             raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
         self._reference = reference.copy()
 
         # Check that the map is valid.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Extract the corresponding molecule from the system by index.
         if reference_index is not None:
-            if type(reference_index) is not int:
+            if not type(reference_index) is int:
                 raise TypeError("'reference_index' must be of type 'int'.")
             self._reference_index = reference_index
             molecule = system[reference_index]
@@ -147,11 +147,7 @@ class RMSD(_CollectiveVariable):
             self._reference_index = reference_index
             molecule = system[reference_index]
 
-        # Convert tuple to list.
-        if type(rmsd_indices) is tuple:
-            rmsd_indices = list(rmsd_indices)
-
-        if type(rmsd_indices) is list:
+        if isinstance(rmsd_indices, (list, tuple)):
             # Make sure the indices are unique.
             rmsd_indices = list(set(rmsd_indices))
 
@@ -162,7 +158,7 @@ class RMSD(_CollectiveVariable):
                                  "atoms from the reference molecule.")
 
             for idx in rmsd_indices:
-                if type(idx) is not int:
+                if not type(idx) is int:
                     raise TypeError("'rmsd_indices' must be a list of 'int' types.")
                 if idx < 0:
                     idx += reference.nAtoms()
@@ -330,7 +326,7 @@ class RMSD(_CollectiveVariable):
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill.
         """
-        if type(hill_width) is not _Length:
+        if not isinstance(hill_width, _Length):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
 
         if hill_width.magnitude() < 0:
@@ -360,7 +356,7 @@ class RMSD(_CollectiveVariable):
            alignment_type : str
                The RMSD alignment type.
         """
-        if type(alignment_type) is not str:
+        if not isinstance(alignment_type, str):
             raise TypeError("'alignment_type' must be of type 'str'")
 
         alignment_type = alignment_type.lower().replace(" ", "")
@@ -402,7 +398,7 @@ class RMSD(_CollectiveVariable):
            pbc : bool
                Whether to use periodic boundaries conditions.
         """
-        if type(pbc) is not bool:
+        if not isinstance(pbc, bool):
             raise TypeError("'pbc' must be of type 'bool'")
         self._pbc = pbc
 
@@ -462,30 +458,30 @@ class RMSD(_CollectiveVariable):
         # Note that we need to do this manually, since Sire.Mol.Evaluator doesn't
         # work correctly for molecules with different numbers of coordinate groups.
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
 
-        if type(reference) is not _Molecule:
+        if not isinstance(reference, _Molecule):
             raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
 
-        if type(reference_index) is not int:
+        if not type(reference_index) is int:
             raise TypeError("'reference_index' must be of type 'int'.")
 
-        if type(rmsd_mapping) is not dict:
+        if not isinstance(rmsd_mapping, dict):
             raise TypeError("'rmsd_mapping' must be of type 'dict'.")
 
         for k, v in rmsd_mapping.items():
-            if type(k) is not _SireMol.AtomIdx or type(v) is not _SireMol.AtomIdx:
+            if not isinstance(k, _SireMol.AtomIdx) or not isinstance(v, _SireMol.AtomIdx):
                 raise TypeError("'mapping' must contain 'Sire.Mol.AtomIdx' key-value pairs!")
 
-        if type(align_mapping) is not dict:
+        if not isinstance(align_mapping, dict):
             raise TypeError("'align_mapping' must be of type 'dict'.")
 
         for k, v in align_mapping.items():
-            if type(k) is not int or type(v) is not int:
+            if not type(k) is int or not type(v) is int:
                 raise TypeError("'align_mapping' must contain 'int' key-value pairs!")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         try:

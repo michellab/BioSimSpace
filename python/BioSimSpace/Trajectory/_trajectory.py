@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,8 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["getFrame", "Trajectory"]
 
-import MDAnalysis as _mdanalysis
-import mdtraj as _mdtraj
+#import MDAnalysis as _mdanalysis
+#import mdtraj as _mdtraj
 import os as _os
 import shutil as _shutil
 import warnings as _warnings
@@ -44,7 +44,6 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Types import Time as _Time
 
 from BioSimSpace import IO as _IO
-from BioSimSpace import _SireWrappers as _SireWrappers
 from BioSimSpace import Units as _Units
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
@@ -73,13 +72,13 @@ def getFrame(trajectory, topology, index):
            The System object of the corresponding frame.
     """
 
-    if type(trajectory) is not str:
+    if not isinstance(trajectory, str):
         raise TypeError("'trajectory' must be of type 'str'")
 
-    if type(topology) is not str:
+    if not isinstance(topology, str):
         raise TypeError("'topology' must be of type 'str'")
 
-    if type(index) is not int:
+    if not type(index) is int:
         raise TypeError("'index' must be of type 'int'")
 
     # Try to load the frame.
@@ -180,7 +179,7 @@ class Trajectory():
                     raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % self._process_name)
 
         # Trajectory and topology files.
-        elif type(trajectory) is str and type(topology) is str:
+        elif isinstance(trajectory, str) and isinstance(topology, str):
 
             # Make sure the trajectory file exists.
             if not _os.path.isfile(trajectory):
@@ -337,7 +336,7 @@ class Trajectory():
             indices = [indices]
 
         # A single time stamp.
-        elif type(indices) is _Time:
+        elif isinstance(indices, _Time):
             if n_frames > 1:
                 # Round time stamp to nearest frame index.
                 indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
@@ -346,7 +345,7 @@ class Trajectory():
                                          "with only one frame!")
 
         # A list of frame indices.
-        elif all(isinstance(x, int) for x in indices):
+        elif all(type(x) is int for x in indices):
             pass
 
         # A list of time stamps.
@@ -445,7 +444,7 @@ class Trajectory():
         if frame is None:
             frame = 0
         else:
-            if type(frame) is not int:
+            if not type(frame) is int:
                 raise TypeError("'frame' must be of type 'int'")
             else:
                 # Store the number of frames.
@@ -459,7 +458,7 @@ class Trajectory():
 
         if atoms is not None:
             # Check that all of the atom indices are integers.
-            if not all(isinstance(x, int) for x in atoms):
+            if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
 
         # Use MDTraj to compute the RMSD.

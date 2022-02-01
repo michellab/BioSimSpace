@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -83,9 +83,7 @@ class Bound():
            value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
-        if not type(value) is int and   \
-           not type(value) is float and \
-           not isinstance(value, _Type):
+        if not isinstance(value, (float, _Type)) and not type(value) is int:
             raise TypeError("'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._value = value
 

@@ -404,11 +404,11 @@ committing. When happy, commit your changes, e.g.
 Remember that it is better to make small changes and commit frequently.
 
 If your edits don't change the BioSimSpace source code, or documentation,
-e.g. fixing typos, then please add ``***NO_CI***`` to your commit message.
-This will avoid unnecessarily running the
-`Azure pipelines <https://dev.azure.com/michellab/BioSimSpace/_build>`__, e.g.
+e.g. fixing typos, then please add ``ci skip`` to your commit message.
+This will avoid unnecessarily triggering
+`GitHub actions <https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild>`__, e.g.
 building a new BioSimSpace binary, updating the website, etc. To this end, we
-have provided a git hook that will append ``***NO_CI***`` if the commit only
+have provided a git hook that will append ``ci skip`` if the commit only
 modifies files in a blacklist that is specified in the file ``.ciignore``
 (analogous to the ``.gitignore`` used to ignore untracked files). To enable
 the hook, simply copy it into the ``.git/hooks`` directory:

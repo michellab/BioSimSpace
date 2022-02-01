@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -55,11 +55,11 @@ class Atom(_SireWrapper):
         # Check that the atom is valid.
 
         # A Sire Atom object.
-        if type(atom) is _SireMol.Atom:
+        if isinstance(atom, _SireMol.Atom):
             sire_object = atom
 
         # Another BioSimSpace Atom object.
-        elif type(atom) is Atom:
+        elif isinstance(atom, Atom):
             sire_object = atom._sire_object
 
         # Invalid type.
