@@ -47,6 +47,12 @@ jobs:
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
+      - name: Run tests
+        shell: bash -l {0}
+        run: |
+          conda install -y -c conda-forge pytest
+          cd BioSimSpace
+          pytest -vvv test
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
