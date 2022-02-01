@@ -32,3 +32,4 @@ Context managers
 """
 
 from ._contextmanagers import *
+from ._module_stub import *

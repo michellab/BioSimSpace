@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Plumed"]
 
+from BioSimSpace._Utils import _try_import
+
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
@@ -1505,7 +1507,7 @@ class Plumed():
         """
 
         # No data!
-        if len(self._colvar_dict) is 0:
+        if len(self._colvar_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):
@@ -1568,7 +1570,7 @@ class Plumed():
         """
 
         # No data!
-        if len(self._hills_dict) is 0:
+        if len(self._hills_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):

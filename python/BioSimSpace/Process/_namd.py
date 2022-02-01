@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Namd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 
@@ -1924,7 +1926,7 @@ class Namd(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):
@@ -1939,7 +1941,7 @@ class Namd(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "TS":
+                if key == "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -1953,7 +1955,7 @@ class Namd(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "TS":
+                if key == "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:

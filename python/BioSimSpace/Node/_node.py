@@ -21,10 +21,12 @@
 
 from glob import glob as _glob
 
+from BioSimSpace._Utils import _try_import
+
 import os as _os
 import shlex as _shlex
 import subprocess as _subprocess
-import yaml as _yaml
+_yaml = _try_import("yaml")
 
 from Sire import Base as _SireBase
 

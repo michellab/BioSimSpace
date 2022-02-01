@@ -34,10 +34,19 @@ import queue as _queue
 import shlex as _shlex
 import subprocess as _subprocess
 
+from BioSimSpace._Utils import _try_import, _have_imported
+
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
 _sys.stderr = open(_os.devnull, "w")
-from openff.toolkit.topology import Molecule as _OpenFFMolecule
+
+_openff = _try_import("openff")
+
+if _have_imported(_openff):
+    from openff.toolkit.topology import Molecule as _OpenFFMolecule
+else:
+    _OpenFFMolecule = _openff
+
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys

@@ -27,8 +27,12 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import openmm as mm
-import simtk.unit as unit
+
+from BioSimSpace._Utils import _try_import
+
+mm = _try_import("openmm")
+unit = _try_import("simtk.unit", "conda install simtk")
+
 from collections import namedtuple
 from functools import reduce
 import os
@@ -261,7 +265,7 @@ class Metadynamics(object):
                 diffInBias = bias.bias - self._totalBias
                 diffInBias[diffInBias < 0] = 0
                 self._totalBias += diffInBias
-            
+
             self._selfBias = self._totalBias
 
         # Save the new bias file

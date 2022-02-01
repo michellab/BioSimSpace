@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
 import subprocess as _subprocess
@@ -56,7 +58,9 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils
 
 from . import _process
+
 from ._plumed import Plumed as _Plumed
+
 
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
@@ -2371,7 +2375,7 @@ class Gromacs(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):
@@ -2386,7 +2390,7 @@ class Gromacs(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "STEP":
+                if key == "STEP":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -2400,7 +2404,7 @@ class Gromacs(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "STEP":
+                if key == "STEP":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:

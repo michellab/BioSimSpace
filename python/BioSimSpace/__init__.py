@@ -82,8 +82,13 @@ try:
 except NameError:
     _is_interactive = False      # Probably standard Python interpreter
 
-# Default to non-verbose error messages.
-_is_verbose = False
+# Default to non-verbose error messages, unless the 'BSS_VERBOSE_ERRORS'
+# environment variable is set to '1' (this allows verbose to be set before
+# import, so that we can see verbose messages if there are any problems
+# while importing BioSimSpace)
+from os import environ as _environ
+_is_verbose = "BSS_VERBOSE_ERRORS" in _environ and \
+    _environ["BSS_VERBOSE_ERRORS"] == "1"
 
 def setVerbose(verbose):
     """Set verbosity of error messages.
@@ -112,7 +117,6 @@ def _isVerbose():
     global _is_verbose
     return _is_verbose
 
-from os import environ as _environ
 from warnings import warn as _warn
 
 # Check to see if AMBERHOME is set.

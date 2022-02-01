@@ -33,8 +33,10 @@ __all__ = ["OpenForceField"]
 # To override any protocols, just implement a custom "run" method in any
 # of the classes.
 
+from BioSimSpace._Utils import _try_import, _have_imported
+
 import os as _os
-import parmed as _parmed
+_parmed = _try_import("parmed")
 import queue as _queue
 import subprocess as _subprocess
 
@@ -47,19 +49,41 @@ _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
-    from rdkit import Chem as _Chem
-    from rdkit import RDLogger as _RDLogger
+    _rdkit = _try_import("rdkit")
 
-    # Disable RDKit warnings.
-    _RDLogger.DisableLog('rdApp.*')
+    if _have_imported(_rdkit):
+        from rdkit import Chem as _Chem
+        from rdkit import RDLogger as _RDLogger
+
+        # Disable RDKit warnings.
+        _RDLogger.DisableLog('rdApp.*')
+    else:
+        _Chem = _rdkit
+        _RDLogger = _rdkit
 
 import sys as _sys
 # Temporarily redirect stderr to suppress import warnings.
 _sys.stderr = open(_os.devnull, "w")
-from openmm.app import PDBFile as _PDBFile
-from openff.toolkit.topology import Molecule as _OpenFFMolecule
-from openff.toolkit.topology import Topology as _OpenFFTopology
-from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
+
+_openmm = _try_import("openmm")
+
+if _have_imported(_openmm):
+    from openmm.app import PDBFile as _PDBFile
+else:
+    _PDBFile = _openmm
+
+_openff = _try_import("openff")
+
+if _have_imported(_openff):
+    from openff.toolkit.topology import Molecule as _OpenFFMolecule
+    from openff.toolkit.topology import Topology as _OpenFFTopology
+    from openff.toolkit.typing.engines.smirnoff import ForceField \
+        as _Forcefield
+else:
+    _OpenFFMolecule = _openff
+    _OpenFFTopology = _openff
+    _Forcefield = _openff
+
 # Reset stderr.
 _sys.stderr = _sys.__stderr__
 del _sys

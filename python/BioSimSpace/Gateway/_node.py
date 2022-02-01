@@ -28,6 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Node"]
 
+from BioSimSpace._Utils import _try_import
+
 import configargparse as _argparse
 import collections as _collections
 import __main__
@@ -36,7 +38,7 @@ import shutil as _shutil
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
-import yaml as _yaml
+_yaml = _try_import("yaml")
 
 from BioSimSpace import _is_notebook
 from BioSimSpace import setVerbose
@@ -1174,9 +1176,9 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                if key is "verbose":
+                if key == "verbose":
                     setVerbose(value)
-                elif key is "strict_file_naming":
+                elif key == "strict_file_naming":
                     if value is True:
                         self._strict_file_naming = True
                 else:

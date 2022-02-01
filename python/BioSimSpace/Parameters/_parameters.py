@@ -38,13 +38,14 @@ __all__ = ["parameterise",
            "amberForceFields",
            "openForceFields"]
 
-from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path
+from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path, _isVerbose
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace.Solvent import waterModels as _waterModels
 from BioSimSpace.Types import Charge as _Charge
+from BioSimSpace._Utils import _try_import, _have_imported
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
@@ -667,46 +668,68 @@ def _make_function(name):
 
 # Dynamically create functions for all available force fields from the Open
 # Force Field Initiative.
-from glob import glob as _glob
-import openforcefields as _openforcefields
-import os as _os
-_openff_dirs = _openforcefields.get_forcefield_dirs_paths()
-_open_forcefields = []
-# Loop over all force field directories.
-for _dir in _openff_dirs:
-    # Glob all offxml files in the directory.
-    _ff_list = _glob(f"{_dir}" + "/*.offxml")
-    for _ff in _ff_list:
-        # Get the force field name (base name minus extension).
-        _base = _os.path.basename(_ff)
-        _ff = _os.path.splitext(_base)[0]
+_openforcefields = _try_import("openforcefields")
 
-        # Only include unconstrained force-fields since we need to go via
-        # an intermediate ParmEd conversion. This means ParmEd must receive
-        # bond parameters. We can then choose to constrain later, if required.
-        # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
+if _have_imported(_openforcefields):
+    from glob import glob as _glob
+    import os as _os
+    _openff_dirs = _openforcefields.get_forcefield_dirs_paths()
+    _open_forcefields = []
+    # Loop over all force field directories.
+    for _dir in _openff_dirs:
+        # Glob all offxml files in the directory.
+        _ff_list = _glob(f"{_dir}" + "/*.offxml")
+        for _ff in _ff_list:
+            # Get the force field name (base name minus extension).
+            _base = _os.path.basename(_ff)
+            _ff = _os.path.splitext(_base)[0]
 
-        if "unconstrained" in _ff:
-            # Append to the list of available force fields.
-            _forcefields.append(_ff)
-            _open_forcefields.append(_ff)
+            # Only include unconstrained force-fields since we need to go via
+            # an intermediate ParmEd conversion. This means ParmEd must receive
+            # bond parameters. We can then choose to constrain later, if required.
+            # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
 
-            # Create a sane function name, i.e. replace "-" and "."
-            # characters with "_".
-            _func_name = _ff.replace("-", "_")
-            _func_name = _func_name.replace(".", "_")
+            if "unconstrained" in _ff:
+                # Append to the list of available force fields.
+                _forcefields.append(_ff)
+                _open_forcefields.append(_ff)
 
-            # Generate the function and bind it to the namespace.
-            _function = _make_function(_ff)
-            setattr(_namespace, _func_name, _function)
+                # Create a sane function name, i.e. replace "-" and "."
+                # characters with "_".
+                _func_name = _ff.replace("-", "_")
+                _func_name = _func_name.replace(".", "_")
 
-            # Expose the function to the user.
-            __all__.append(_func_name)
+                # Generate the function and bind it to the namespace.
+                _function = _make_function(_ff)
+                setattr(_namespace, _func_name, _function)
 
-            # Convert force field name to lower case and map to its function.
-            _forcefields_lower.append(_ff.lower())
-            _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
-            _requires_water_model[_ff.lower()] = False
+                # Expose the function to the user.
+                __all__.append(_func_name)
+
+                # Convert force field name to lower case and map to its function.
+                _forcefields_lower.append(_ff.lower())
+                _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+                _requires_water_model[_ff.lower()] = False
+
+    # Clean up redundant attributes.
+    del _base
+    del _dir
+    del _ff
+    del _ff_list
+    del _function
+    del _func_name
+    del _glob
+    del _make_function
+    del _openff_dirs
+    del _os
+    del _namespace
+    del _sys
+    del _var
+elif _isVerbose():
+    print("openforcefields not available as this module cannot be loaded.")
+
+del _openforcefields
+
 
 def forceFields():
     """Return a list of the supported force fields.
@@ -878,6 +901,7 @@ def _has_ions(molecule):
     else:
         return False, ions
 
+
 def _validate(molecule=None, water_model=None, leap_commands=None,
         work_dir=None, property_map=None):
     """
@@ -937,19 +961,3 @@ def _validate(molecule=None, water_model=None, leap_commands=None,
     if property_map is not None:
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
-
-# Clean up redundant attributes.
-del _base
-del _dir
-del _ff
-del _ff_list
-del _function
-del _func_name
-del _glob
-del _make_function
-del _openforcefields
-del _openff_dirs
-del _os
-del _namespace
-del _sys
-del _var

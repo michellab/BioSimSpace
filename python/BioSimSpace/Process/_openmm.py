@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["OpenMM"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import sys as _sys
 import shutil as _shutil
 import timeit as _timeit
@@ -54,7 +56,9 @@ from BioSimSpace import Units as _Units
 from BioSimSpace import _Utils
 
 from . import _process
+
 from ._plumed import Plumed as _Plumed
+
 
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
@@ -1615,6 +1619,16 @@ class OpenMM(_process.Process):
         """Helper function to write the header (import statements) to the
            OpenMM Python script (config file).
         """
+        # We should verify that openmm and simtk.unit are available to
+        # prevent difficult-to-debug errors in the run script
+        from BioSimSpace._Utils import _try_import, _assert_imported
+
+        _openmm = _try_import("openmm")
+        _assert_imported(_openmm)
+
+        _unit = _try_import("simtk.unit", "conda install simtk")
+        _assert_imported(_unit)
+
         self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm import *")
         self.addToConfig("from simtk.unit import *")
@@ -1867,7 +1881,7 @@ class OpenMM(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):
