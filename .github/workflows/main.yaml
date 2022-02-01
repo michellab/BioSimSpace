@@ -47,13 +47,8 @@ jobs:
       - name: Build Conda package
         shell: bash -l {0}
         run: conda-build -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
-      - name: Run tests
-        shell: bash -l {0}
-        run: |
-          conda install -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld biosimspace
-          conda install -y -c conda-forge pytest
-          cd BioSimSpace
-          pytest -vvv test
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
@@ -65,7 +60,9 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
-          cp BioSimSpace/actions/youtube.py "$CONDA_PREFIX"/lib/python3.7/site-packages/sphinxcontrib/youtube
+          cp BioSimSpace/actions/youtube.py "$CONDA_PREXIX"/lib/python3.7/site-packages/sphinxcontrib/youtube
+          conda install -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld biosimspace
+          conda install "$CONDA"/envs/bss_build/conda-bld/linux-64/biosimspace-*
           BioSimSpace/actions/inject_force_fields.sh
           cd BioSimSpace/doc
           PYTHONPATH="$GITHUB_WORKSPACE"/BioSimSpace/python SPHINXBUILD="$CONDA_PREFIX"/bin/sphinx-build make html

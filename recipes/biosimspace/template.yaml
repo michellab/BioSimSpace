@@ -34,8 +34,15 @@ requirements:
     - watchdog
 
 test:
+  script_env:
+    - HEAD_BRANCH
+  requires:
+    - git
+    - pytest
   imports:
     - BioSimSpace
+  commands:
+    - git clone https://github.com/michellab/BioSimSpace && cd BioSimSpace && git checkout $HEAD_BRANCH && pytest -vvv test
 
 about:
   home: https://biosimspace.org
