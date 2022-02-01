@@ -901,7 +901,6 @@ def _has_ions(molecule):
     else:
         return False, ions
 
-
 def _validate(molecule=None, water_model=None, leap_commands=None,
         work_dir=None, property_map=None):
     """
