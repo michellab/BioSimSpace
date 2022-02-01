@@ -50,6 +50,7 @@ jobs:
       - name: Run tests
         shell: bash -l {0}
         run: |
+          conda install -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld biosimspace
           conda install -y -c conda-forge pytest
           cd BioSimSpace
           pytest -vvv test
@@ -65,8 +66,6 @@ jobs:
         run: |
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
           cp BioSimSpace/actions/youtube.py "$CONDA"/envs/bss_build/lib/python3.7/site-packages/sphinxcontrib/youtube
-          conda install -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld biosimspace
-          conda install "$CONDA"/envs/bss_build/conda-bld/linux-64/biosimspace-*
           BioSimSpace/actions/inject_force_fields.sh
           cd BioSimSpace/doc
           PYTHONPATH="$GITHUB_WORKSPACE"/BioSimSpace/python SPHINXBUILD="$CONDA"/envs/bss_build/bin/sphinx-build make html
