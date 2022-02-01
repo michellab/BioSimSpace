@@ -51,10 +51,10 @@ try:
 
 # Post setup configuration.
 finally:
-    import shlex
     import sys
 
     if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
+        import shlex
         import subprocess
 
         # Install Python dependencies and enable Jupyter widget extensions.
