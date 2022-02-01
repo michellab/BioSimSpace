@@ -40,7 +40,7 @@ test:
   imports:
     - BioSimSpace
   commands:
-    - git clone https://github.com/michellab/BioSimSpace && pytest -vvv BioSimSpace/test
+    - git clone https://github.com/michellab/BioSimSpace && cd BioSimSpace && pytest -vvv test
 
 about:
   home: https://biosimspace.org
