@@ -74,7 +74,7 @@ jobs:
         run: |
           git clone https://github.com/michellab/BioSimSpaceWebsite
           cd BioSimSpaceWebsite
-          cp -a "GITHUB_WORKSPACE"/BioSimSpace/doc/build/html/* docs
+          cp -a "$GITHUB_WORKSPACE"/BioSimSpace/doc/build/html/* docs
           git config user.name "BioSimSpaceBot"
           git config user.email "$EMAIL"
           git add docs
