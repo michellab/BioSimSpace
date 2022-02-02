@@ -69,7 +69,7 @@ jobs:
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
           SRC_DIR: ${{ github.workspace }}/BioSimSpace
-        if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
+        if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.os == 'ubuntu-latest'
       - name: Update website
         run: |
           git clone https://github.com/michellab/BioSimSpaceWebsite
@@ -83,4 +83,4 @@ jobs:
         env:
           EMAIL: ${{ secrets.EMAIL }}
           WEBSITE_TOKEN: ${{ secrets.WEBSITE_TOKEN }}
-        if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.config.os == 'ubuntu-latest'
+        if: github.event_name == 'push' && matrix.python-version == 3.7 && matrix.os == 'ubuntu-latest'
