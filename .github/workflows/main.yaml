@@ -62,7 +62,7 @@ jobs:
           conda create -n bss_doc -c conda-forge -c michellab/label/dev -c file://"$CONDA_PREFIX"/conda-bld python="$PYTHON_VERSION" biosimspace
           conda activate bss_doc
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
-          cp BioSimSpace/actions/youtube.py "$CONDA_PREXIX"/lib/python3.7/site-packages/sphinxcontrib/youtube
+          cp BioSimSpace/actions/youtube.py "$CONDA_PREFIX"/lib/python3.7/site-packages/sphinxcontrib/youtube
           BioSimSpace/actions/inject_force_fields.sh
           cd BioSimSpace/doc
           PYTHONPATH="$GITHUB_WORKSPACE"/BioSimSpace/python SPHINXBUILD="$CONDA_PREFIX"/bin/sphinx-build make html
