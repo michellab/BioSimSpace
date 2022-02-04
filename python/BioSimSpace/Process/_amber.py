@@ -66,7 +66,6 @@ from . import _process
 
 from ._plumed import Plumed as _Plumed
 
-
 class _Watcher:
     """A class to watch for changes to the AMBER energy info file. An event handler
        is used trigger updates to the energy dictionary each time the file is modified.

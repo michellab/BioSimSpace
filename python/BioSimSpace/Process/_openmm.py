@@ -59,7 +59,6 @@ from . import _process
 
 from ._plumed import Plumed as _Plumed
 
-
 class OpenMM(_process.Process):
     """A class for running simulations using OpenMM."""
 
