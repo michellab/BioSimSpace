@@ -28,8 +28,10 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["getFrame", "Trajectory"]
 
-#import MDAnalysis as _mdanalysis
-#import mdtraj as _mdtraj
+from BioSimSpace._Utils import _try_import
+
+_mdanalysis = _try_import("MDAnalysis")
+_mdtraj = _try_import("mdtraj")
 import os as _os
 import shutil as _shutil
 import warnings as _warnings
