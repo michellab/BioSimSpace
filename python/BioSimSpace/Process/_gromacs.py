@@ -32,7 +32,7 @@ from BioSimSpace._Utils import _try_import
 
 import math as _math
 import os as _os
-pygtail = _try_import("pygtail")
+_pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
 import subprocess as _subprocess
