@@ -109,44 +109,6 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
     mamba create -n biosimspace -c conda-forge -c michellab biosimspace
 
-Using the prebuilt binaries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The latest self-extracting binary for the development version of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
-
-Once downloaded, the binary can be unpacked as follows:
-
-.. code-block:: bash
-
-   chmod +x biosimspace_devel_latest_linux.run
-   ./biosimspace_devel_latest_linux.run
-
-Unless a different installation path was given, BioSimSpace can be found in:
-``$HOME/biosimspace.app``. BioSimSpace comes with a bundled with a Python
-interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`__.
-
-For example, to run a BioSimSpace Python script, use:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/python script.py
-
-To launch an interactive BioSimSpace session:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/ipython
-
-To run a BioSimSpace notebook:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
-
 Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^
 
