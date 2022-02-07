@@ -35,7 +35,7 @@ from BioSimSpace import Protocol as _Protocol
 # Import common objects from BioSimSpace.MD._md
 from BioSimSpace.MD._md import _file_extensions, _md_engines, _find_md_engines
 
-def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
     name="metamd", work_dir=None, seed=None, property_map={},
     ignore_warnings=False, show_errors=True):
     """Auto-configure and run a metadynamics process.
@@ -50,7 +50,7 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
            The metadynamics protocol.
 
        engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
+           The molecular dynamics engine to use. If "AUTO", then a matching
            engine will automatically be chosen. Supported engines can be
            found using 'BioSimSpace.Metadynamics.engines()'.
 

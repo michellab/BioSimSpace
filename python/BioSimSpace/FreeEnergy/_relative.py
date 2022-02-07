@@ -28,37 +28,40 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import OrderedDict as _OrderedDict
-from glob import glob as _glob
-
+from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
+from glob import glob as _glob
 import math as _math
 import shlex as _shlex
 import sys as _sys
 import os as _os
+import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
+import numpy as _np
+from simtk import unit as _unit
+from simtk.unit.constants import MOLAR_GAS_CONSTANT_R as _MOLAR_GAS_CONSTANT_R
+import pymbar as _pymbar
+
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
-
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
 
 from BioSimSpace import _gmx_exe
 from BioSimSpace import _is_notebook
 from BioSimSpace._Exceptions import AnalysisError as _AnalysisError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecules as _Molecules
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace._Utils import cd as _cd
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Types as _Types
 from BioSimSpace import Units as _Units
+
+from BioSimSpace.MD._md import _find_md_engines
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
@@ -77,10 +80,11 @@ class Relative():
     """Class for configuring and running relative free-energy perturbation simulations."""
 
     # Create a list of supported molecular dynamics engines.
-    _engines = ["GROMACS", "SOMD"]
+    _engines = ["AMBER", "GROMACS", "SOMD"]
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            setup_only=False, ignore_warnings=False, show_errors=True,
+            gpu_support=False, setup_only=False, ignore_warnings=False,
+            show_errors=True, extra_options=None, extra_lines=None,
             property_map={}):
         """Constructor.
 
@@ -101,8 +105,11 @@ class Relative():
 
            engine: str
                The molecular dynamics engine used to run the simulation. Available
-               options are "GROMACS", or "SOMD". If this argument is omitted then
-               BioSimSpace will choose an appropriate engine for you.
+               options are "AMBER", "GROMACS", or "SOMD". If this argument is omitted
+               then BioSimSpace will choose an appropriate engine for you.
+
+           gpu_support : bool
+               Whether the engine must have GPU support.
 
            setup_only: bool
                Whether to only support simulation setup. If True, then no
@@ -121,6 +128,12 @@ class Relative():
                run file. This option is specific to GROMACS and will be ignored
                when a different molecular dynamics engine is chosen.
 
+           extra_options : dict
+               A dictionary containing extra options. Overrides the ones generated from the protocol.
+
+           extra_lines : list
+               A list of extra lines to be put at the end of the script.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -136,13 +149,16 @@ class Relative():
             self._system = system.copy()
 
         if protocol is not None:
-            if isinstance(protocol, _Protocol.FreeEnergy):
+            if isinstance(protocol, _Protocol._FreeEnergyMixin):
                 self._protocol = protocol
             else:
                 raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
         else:
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
+
+        self._extra_options = extra_options if extra_options is not None else {}
+        self._extra_lines = extra_lines if extra_lines is not None else []
 
         if not isinstance(setup_only, bool):
             raise TypeError("'setup_only' must be of type 'bool'.")
@@ -165,6 +181,7 @@ class Relative():
                 _os.makedirs(work_dir, exist_ok=True)
 
         # Validate the user specified molecular dynamics engine.
+        self._exe = None
         if engine is not None:
             if not isinstance(engine, str):
                 raise TypeError("'engine' must be of type 'str'.")
@@ -189,6 +206,25 @@ class Relative():
 
                 if self._protocol.getPerturbationType() != "full":
                     raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
+                                              "type. Please use engine='SOMD' when running multistep "
+                                              "perturbation types.")
+                self._exe = _gmx_exe
+            elif engine == "AMBER":
+                # Find a molecular dynamics engine and executable.
+                engines, exes = _find_md_engines(system, protocol, engine, gpu_support)
+                if not exes:
+                    raise _MissingSoftwareError("Cannot use AMBER engine as AMBER is not installed!")
+                elif len(exes) > 1:
+                    _warnings.warn(f"Multiple AMBER engines were found. Proceeding with {exes[0]}...")
+                self._exe = exes[0]
+
+                # The system must have a perturbable molecule.
+                if system.nPerturbableMolecules() == 0:
+                    raise ValueError("The system must contain a perturbable molecule! "
+                                     "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+
+                if self._protocol.getPerturbationType() != "full":
+                    raise NotImplementedError("AMBER currently only supports the 'full' perturbation "
                                               "type. Please use engine='SOMD' when running multistep "
                                               "perturbation types.")
         else:
@@ -381,19 +417,18 @@ class Relative():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # First test for SOMD files.
-        data = _glob(work_dir + "/lambda_*/gradients.dat")
+        function_glob_dict = {
+            "SOMD": (Relative._analyse_somd, "/lambda_*/gradients.dat"),
+            "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
+            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.log")
+        }
 
-        # SOMD.
-        if len(data) > 0:
-            return Relative._analyse_somd(work_dir)
+        for engine, (func, mask) in function_glob_dict.items():
+            data = _glob(work_dir + mask)
+            if data:
+                return func(work_dir)
 
-        # Now check for GROMACS output.
-        else:
-            data = _glob(work_dir + "/lambda_*/gromacs.xvg")
-            if len(data) == 0:
-                raise ValueError("Couldn't find any SOMD or GROMACS free-energy output?")
-            return Relative._analyse_gromacs(work_dir)
+        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
 
     def _analyse(self):
         """Analyse free-energy data for this object.
@@ -415,6 +450,88 @@ class Relative():
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return Relative.analyse(self._work_dir)
+
+    @staticmethod
+    def _analyse_amber(work_dir=None):
+        """Analyse the AMBER free energy data.
+
+           Parameters
+           ----------
+
+           work_dir : str
+               The path to the working directory.
+
+           Returns
+           -------
+
+           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+               The potential of mean force (PMF). The data is a list of tuples,
+               where each tuple contains the lambda value, the PMF, and the
+               standard error.
+        """
+
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        files = _glob(work_dir + "/lambda_*/amber.log")
+        energy_dict = {}
+        sample_dict = {}
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        temperatures = []
+
+        # Extract the MBAR energies from the files.
+        for file, lambda_ in zip(files, lambdas):
+            current_energy_dict = _defaultdict(list)
+            mbar_section = False
+            found_temperature = False
+            with open(file) as f:
+                for line in f.readlines():
+                    if "MBAR Energy analysis" in line:
+                        mbar_section = True
+                    elif mbar_section and "-----------" in line:
+                        mbar_section = False
+                    elif mbar_section:
+                        split_line = line.split()
+                        eval_lambda = float(split_line[2])
+                        try:
+                            energy = float(split_line[-1])
+                        except ValueError:
+                            energy = float("inf")
+                        current_energy_dict[eval_lambda] += [energy]
+                    elif not found_temperature:
+                        match = _re.search("temp0=([\d.]+)", line)
+                        if match is not None:
+                            temperatures += [float(match.group(1))]
+                            found_temperature = True
+
+                if not found_temperature:
+                    raise ValueError("The temperature was not detected in the AMBER output file")
+
+                if set(current_energy_dict.keys()) != set(lambdas):
+                    raise ValueError("MBAR values not generated at the lambda values at which the simulations were run")
+
+                ordered_lambdas = sorted(current_energy_dict.keys())
+                energy_dict[lambda_] = _np.asarray([current_energy_dict[x] for x in ordered_lambdas])
+                sample_dict[lambda_] = len(current_energy_dict[lambda_])
+
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError("The temperatures at the endstates don't match")
+
+        # Generate an input for pymbar and return the resulting free energies.
+        energy_matrix = _np.concatenate([energy_dict[x] for x in ordered_lambdas], axis=1)
+        kTs = _MOLAR_GAS_CONSTANT_R.value_in_unit(_unit.kilocalories_per_mole/_unit.kelvin) * _np.asarray(temperatures)
+        energy_matrix /= kTs[:, None]
+        n_samples = [sample_dict[x] for x in ordered_lambdas]
+        mbar = _pymbar.MBAR(energy_matrix, n_samples)
+        fes, errors = mbar.getFreeEnergyDifferences()
+        data = [(lambda_,
+                 (fe * kT) * _Units.Energy.kcal_per_mol,
+                 (error * kT) * _Units.Energy.kcal_per_mol)
+                for lambda_, fe, error, kT in zip(ordered_lambdas, fes[0], errors[0], kTs)]
+
+        return (data, None)
 
     @staticmethod
     def _analyse_gromacs(work_dir=None):
@@ -743,20 +860,23 @@ class Relative():
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map)
-            if self._setup_only:
-                del(first_process)
-            else:
-                processes.append(first_process)
 
         # GROMACS.
         elif self._engine == "GROMACS":
             first_process = _Process.Gromacs(system, self._protocol,
                 work_dir=first_dir, ignore_warnings=self._ignore_warnings,
                 show_errors=self._show_errors)
-            if self._setup_only:
-                del(first_process)
-            else:
-                processes.append(first_process)
+
+        # AMBER.
+        elif self._engine == "AMBER":
+            first_process = _Process.Amber(system, self._protocol, exe=self._exe,
+                work_dir=first_dir, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
+
+        if self._setup_only:
+            del(first_process)
+        else:
+            processes.append(first_process)
 
         # Loop over the rest of the lambda values.
         for x, lam in enumerate(lam_vals[1:]):
@@ -837,7 +957,7 @@ class Relative():
 
                 # Use grompp to generate the portable binary run input file.
                 command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
-                    % (_gmx_exe, mdp, mdp_out, gro, top, gro, tpr)
+                    % (self._exe, mdp, mdp_out, gro, top, gro, tpr)
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
@@ -862,6 +982,38 @@ class Relative():
                                                process._gro_file,
                                                process._top_file,
                                                process._tpr_file]
+                    processes.append(process)
+
+            # AMBER.
+            elif self._engine == "AMBER":
+                new_config = []
+                with open(new_dir + "/amber.cfg", "r") as f:
+                    for line in f:
+                        if "clambda" in line:
+                            new_config.append("   clambda = %s\n" % lam)
+                        else:
+                            new_config.append(line)
+                with open(new_dir + "/amber.cfg", "w") as f:
+                    for line in new_config:
+                        f.write(line)
+
+                # Create a copy of the process and update the working
+                # directory.
+                if not self._setup_only:
+                    process                 = _copy.copy(first_process)
+                    process._system         = first_process._system.copy()
+                    process._protocol       = self._protocol
+                    process._work_dir       = new_dir
+                    process._std_out_file   = new_dir + "/amber.out"
+                    process._std_err_file   = new_dir + "/amber.err"
+                    process._rst_file       = new_dir + "/amber.rst7"
+                    process._top_file       = new_dir + "/amber.prm7"
+                    process._traj_file      = new_dir + "/amber.nc"
+                    process._config_file    = new_dir + "/amber.cfg"
+                    process._nrg_file       = new_dir + "/amber.nrg"
+                    process._input_files    = [process._config_file,
+                                               process._rst_file,
+                                               process._top_file]
                     processes.append(process)
 
         if not self._setup_only:

@@ -432,6 +432,15 @@ class System(_SireWrapper):
         # Renumber all of the constituents in the system so that they are unique
         # and in ascending order.
         self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
+            # # Renumber the residues and atoms so that they are unique.
+            # mol._renumberConstituents(residue_offset, atom_offset)
+
+            # # Add the molecule to the system.
+            # self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+
+            # # Update the offsets.
+            # residue_offset += mol.nResidues()
+            # atom_offset += mol.nAtoms()
 
         # Reset the index mappings.
         self._reset_mappings()

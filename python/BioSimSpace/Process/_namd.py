@@ -89,7 +89,7 @@ class Namd(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map=property_map)
 
         # Set the package name.
         self._package_name = "NAMD"

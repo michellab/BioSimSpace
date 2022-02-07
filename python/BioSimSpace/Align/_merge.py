@@ -29,12 +29,14 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["merge"]
 
 from Sire import Base as _SireBase
+from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._SireWrappers import System as _System
 
 def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         allow_ring_size_change=False, force=False,
@@ -1189,3 +1191,90 @@ def _is_on_ring(idx, conn):
 
     # If we get this far, then the atom is not adjacent to a ring.
     return False
+
+def _removeDummies(molecule, is_lambda1):
+    """Internal function which removes the dummy atoms from one of the endstates of a merged molecule.
+
+       Parameters
+       ----------
+
+       molecule : BioSimSpace._SireWrappers.Molecule
+           The molecule.
+
+       is_lambda1 : bool
+          Whether to use the molecule at lambda = 1.
+    """
+    if not molecule._is_perturbable:
+        raise _IncompatibleError("'molecule' is not a perturbable molecule")
+
+    # Always use the coordinates at lambda = 0.
+    coordinates = molecule._sire_object.property("coordinates0")
+
+    # Generate a molecule with all dummies present.
+    molecule = molecule.copy()._toRegularMolecule(is_lambda1=is_lambda1)
+
+    # Set the coordinates to those at lambda = 0
+    molecule._sire_object = molecule._sire_object.edit().setProperty("coordinates", coordinates).commit()
+
+    # Extract all the nondummy indices
+    nondummy_indices = [i for i, atom in enumerate(molecule.getAtoms()) if
+                        "du" not in atom._sire_object.property("ambertype")]
+
+    # Create an AtomSelection.
+    selection = molecule._sire_object.selection()
+
+    # Unselect all of the atoms.
+    selection.selectNone()
+
+    # Now add all of the nondummy atoms.
+    for idx in nondummy_indices:
+        selection.select(_SireMol.AtomIdx(idx))
+
+    # Create a partial molecule and extract the atoms.
+    partial_molecule = _SireMol.PartialMolecule(molecule._sire_object, selection).extract().molecule()
+
+    # Remove the incorrect intrascale property.
+    partial_molecule = partial_molecule.edit().removeProperty("intrascale").molecule().commit()
+
+    # Recreate a BioSimSpace molecule object.
+    molecule = _Molecule(partial_molecule)
+
+    # Parse the molecule as a GROMACS topology, which will recover the intrascale
+    # matrix.
+    gro_top = _SireIO.GroTop(molecule.toSystem()._sire_object)
+
+    # Convert back to a Sire system.
+    gro_sys = gro_top.toSystem()
+
+    # Add the intrascale property back into the merged molecule.
+    edit_mol = molecule._sire_object.edit()
+    edit_mol = edit_mol.setProperty("intrascale", gro_sys[_SireMol.MolIdx(0)].property("intrascale"))
+    molecule = _Molecule(edit_mol.commit())
+
+    return molecule
+
+def _squash(system):
+    """Internal function which converts a merged BioSimSpace system into an AMBER-compatible format, where all perturbed
+       molecules are represented sequentially, instead of in a mixed topology, like in GROMACS.
+
+       Parameters
+       ----------
+
+       system : BioSimSpace._SireWrappers.System
+           The system.
+    """
+    # Squash the system.
+    all_molecules = []
+    for molecule in system.getMolecules():
+        if not molecule._is_perturbable:
+            all_molecules += [_Molecule(molecule)]
+        else:
+            all_molecules += [_removeDummies(molecule, False), _removeDummies(molecule, True)]
+
+    # Copy all the properties from the old system.
+    new_system = _System(all_molecules)
+    for prop in system._sire_object.propertyKeys():
+        val = system._sire_object.property(prop)
+        new_system._sire_object.setProperty(prop, val)
+
+    return new_system

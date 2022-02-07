@@ -37,4 +37,4 @@ def engines():
        engines : [str]
            The list of supported engines.
     """
-    return ["Amber", "Gromacs", "OpenMM", "auto"]
+    return ["AMBER", "GROMACS", "OPENMM", "AUTO"]

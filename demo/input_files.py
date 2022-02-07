@@ -44,7 +44,7 @@ node.addInput("protocol", BSS.Gateway.String(help="The molecular simulation prot
                                              default="Minimisation"))
 node.addInput("package", BSS.Gateway.String(help="The molecular dynamics package.",
                                             allowed=BSS.Process.engines(),
-                                            default="Amber"))
+                                            default="AMBER"))
 
 
 # Note that we don't allow the user to specify any further details of the protocol. In this case we use a _best practice_ protocol.

@@ -44,6 +44,7 @@ from BioSimSpace import Protocol as _Protocol
 _md_engines = { "AMBER"    : { "pmemd.cuda.MPI" : True,
                                "pmemd.cuda"     : True,
                                "pmemd.MPI"      : False,
+                               "pmemd"          : False,
                                "sander"         : False },
                  "GROMACS" : { "gmx"            : True,
                                "gmx_mpi"        : True },
@@ -65,7 +66,7 @@ _file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
 
 # Whether each engine supports free energy simulations. This dictionary needs to
 # be updated as support for different engines is added.
-_free_energy = { "AMBER"   : False,
+_free_energy = { "AMBER"   : True,
                  "GROMACS" : True,
                  "NAMD"    : False,
                  "OPENMM"  : False,
@@ -90,7 +91,7 @@ _steering = { "AMBER"   : True,
               "SOMD"    : False
             }
 
-def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
+def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
     """Find molecular dynamics engines on the system that
        support the given protocol and GPU requirements.
 
@@ -104,7 +105,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
            The simulation protocol.
 
        engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
+           The molecular dynamics engine to use. If "AUTO", then a matching
            engine will automatically be chosen.
 
        gpu_support : bool
@@ -124,12 +125,16 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
     fileformat = system.fileFormat()
 
     # Make sure that this format is supported.
-    if not fileformat in _file_extensions:
+    if fileformat is None:
+        if engine == "AUTO":
+            raise ValueError("Cannot automatically choose an MD engine")
+        engines = list(_md_engines.keys())
+    elif not fileformat in _file_extensions:
         raise ValueError("Cannot find an MD engine that supports format: %s" % fileformat)
     else:
         engines = _file_extensions[fileformat]
 
-    # If engine != "auto", then check the chosen engine supports the file
+    # If engine != "AUTO", then check the chosen engine supports the file
     # format.
     md_engine = engine
     if md_engine != "AUTO":
@@ -145,7 +150,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
     is_metadynamics = False
     is_steering = False
 
-    if isinstance(protocol, _Protocol.FreeEnergy):
+    if isinstance(protocol, _Protocol._FreeEnergyMixin):
         is_free_energy = True
     elif isinstance(protocol, _Protocol.Metadynamics):
         is_metadynamics = True
@@ -218,7 +223,7 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
 
     return found_engines, found_exes
 
-def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
         name="md", work_dir=None, seed=None, property_map={},
         ignore_warnings=False, show_errors=True):
     """Auto-configure and run a molecular dynamics process.
@@ -233,7 +238,7 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
            The simulation protocol.
 
        engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
+           The molecular dynamics engine to use. If "AUTO", then a matching
            engine will automatically be chosen. Supported engines can be
            found using 'BioSimSpace.MD.engines()'.
 

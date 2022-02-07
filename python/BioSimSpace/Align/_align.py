@@ -608,6 +608,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
 def matchAtoms(molecule0,
                molecule1,
+               topology="single",
                scoring_function="rmsd_align",
                matches=1,
                return_scores=False,
@@ -632,6 +633,13 @@ def matchAtoms(molecule0,
 
        molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The reference molecule.
+
+      topology : str
+           Specifies the type of MCS mapping. The default is "single", which
+           matches atoms and bonds regardless of their type. The next option
+           is "dual", which is equivalent to an empty MCS and results in
+           full decoupling of each molecule. The final option is "hybrid",
+           which only matches the same atom and bond types.
 
        scoring_function : str
            The scoring function used to match atoms. Available options are:
@@ -732,7 +740,21 @@ def matchAtoms(molecule0,
     if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if not isinstance(scoring_function, str):
+    topology = topology.lower()
+    allowed_topology_values = ["single", "hybrid", "dual"]
+    if topology not in allowed_topology_values:
+        raise ValueError(f"The topology needs to be one of: {allowed_topology_values}")
+
+    if topology == "single":
+        atomCompare = _rdFMCS.AtomCompare.CompareAny
+        bondCompare = _rdFMCS.BondCompare.CompareAny
+    elif topology == "hybrid":
+        atomCompare = _rdFMCS.AtomCompare.CompareElements
+        bondCompare = _rdFMCS.BondCompare.CompareOrder
+    else:
+        return {}
+
+    if type(scoring_function) is not str:
         raise TypeError("'scoring_function' must be of type 'str'")
     else:
         # Strip underscores and whitespace, then convert to upper case.
@@ -804,8 +826,8 @@ def matchAtoms(molecule0,
 
             # Generate the MCS match.
             mcs = _rdFMCS.FindMCS(mols,
-                                  atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                                  bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                  atomCompare=atomCompare,
+                                  bondCompare=bondCompare,
                                   completeRingsOnly=complete_rings_only,
                                   ringMatchesRingOnly=True,
                                   matchChiralTag=False,
@@ -1105,7 +1127,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     return _Molecule(molecule0)
 
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        allow_ring_size_change=False, force=False,
+        allow_ring_size_change=False, force=False, topology="single",
         property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single topology
@@ -1138,6 +1160,13 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
            This will likely lead to an unstable perturbation. This option
            takes precedence over 'allow_ring_breaking' and
            'allow_ring_size_change'.
+
+       topology : str
+           Specifies the type of MCS mapping. The default is "single", which
+           matches atoms and bonds regardless of their type. The next option
+           is "dual", which is equivalent to an empty MCS and results in
+           full decoupling of each molecule. The final option is "hybrid",
+           which only matches the same atom and bond types.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -1192,6 +1221,11 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     if not isinstance(force, bool):
         raise TypeError("'force' must be of type 'bool'")
 
+    topology = topology.lower()
+    allowed_topology_values = ["single", "dual", "hybrid"]
+    if topology not in allowed_topology_values:
+        raise ValueError(f"The topology needs to be one of: {allowed_topology_values}")
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if not isinstance(mapping, dict):
@@ -1202,9 +1236,10 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1,
+        mapping = matchAtoms(molecule0, molecule1, topology=topology,
             property_map0=property_map0, property_map1=property_map1)
-        molecule0 = rmsdAlign(molecule0, molecule1, mapping)
+        if topology != "dual":
+            molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
