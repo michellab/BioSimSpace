@@ -28,7 +28,6 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
-import math as _math
 import os as _os
 _pygtail = _try_import("pygtail")
 import random as _random
