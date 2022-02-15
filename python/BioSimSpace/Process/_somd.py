@@ -28,6 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
+from BioSimSpace._Utils import _try_import
+
 import os as _os
 _pygtail = _try_import("pygtail")
 import random as _random
@@ -47,7 +49,6 @@ from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._Utils import _try_import
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
