@@ -43,10 +43,8 @@ import warnings as _warnings
 import zipfile as _zipfile
 
 import numpy as _np
-from simtk import unit as _unit
-from simtk.unit.constants import MOLAR_GAS_CONSTANT_R as _MOLAR_GAS_CONSTANT_R
+from Sire.Units import gasr as _gasr
 import pymbar as _pymbar
-
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -420,7 +418,7 @@ class Relative():
         function_glob_dict = {
             "SOMD": (Relative._analyse_somd, "/lambda_*/gradients.dat"),
             "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
-            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.log")
+            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.out")
         }
 
         for engine, (func, mask) in function_glob_dict.items():
@@ -475,7 +473,7 @@ class Relative():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        files = _glob(work_dir + "/lambda_*/amber.log")
+        files = _glob(work_dir + "/lambda_*/amber.out")
         energy_dict = {}
         sample_dict = {}
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -521,7 +519,7 @@ class Relative():
 
         # Generate an input for pymbar and return the resulting free energies.
         energy_matrix = _np.concatenate([energy_dict[x] for x in ordered_lambdas], axis=1)
-        kTs = _MOLAR_GAS_CONSTANT_R.value_in_unit(_unit.kilocalories_per_mole/_unit.kelvin) * _np.asarray(temperatures)
+        kTs = _gasr * _np.asarray(temperatures)
         energy_matrix /= kTs[:, None]
         n_samples = [sample_dict[x] for x in ordered_lambdas]
         mbar = _pymbar.MBAR(energy_matrix, n_samples)
@@ -990,7 +988,7 @@ class Relative():
                 with open(new_dir + "/amber.cfg", "r") as f:
                     for line in f:
                         if "clambda" in line:
-                            new_config.append("   clambda = %s\n" % lam)
+                            new_config.append("   clambda = %s\n," % lam)
                         else:
                             new_config.append(line)
                 with open(new_dir + "/amber.cfg", "w") as f:
