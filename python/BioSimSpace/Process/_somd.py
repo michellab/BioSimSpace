@@ -981,8 +981,8 @@ class Somd(_process.Process):
         prop_c1 = property_map1.get("coordinates1", "coordinates")
 
         # Work out the name of the "velocity" property.
-        prop_v0 = property_map0.get("velocity", "coordinates")
-        prop_v1 = property_map1.get("velocity", "coordinates")
+        prop_v0 = property_map0.get("velocity", "velocity")
+        prop_v1 = property_map1.get("velocity", "velocity")
 
         # Loop over all molecules and update the coordinates.
         for idx, mol0 in enumerate(old_system.getMolecules()):
