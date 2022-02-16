@@ -140,6 +140,15 @@ def test_merge():
 
     assert internalff0.energy().value() == pytest.approx(internalff2.energy().value())
 
+    # Extract the original molecule for the lambda=0 end state.
+    amber_mol, _ = m2._extractMolecule()
+
+    internalff2 = InternalFF("internal")
+    internalff2.setStrict(True)
+    internalff2.add(amber_mol._sire_object)
+
+    assert internalff0.energy().value() == pytest.approx(internalff2.energy().value())
+
     # Now extract a partial molecule using the atoms from molecule1 in
     # the merged molecule.
     selection = m2._sire_object.selection()
@@ -156,6 +165,16 @@ def test_merge():
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
 
+    # Extract the original molecule for the lambda=1 end state.
+    amber_mol, _ = m2._extractMolecule(is_lambda1=True)
+
+    internalff2 = InternalFF("internal")
+    internalff2.setStrict(True)
+    internalff2.add(amber_mol._sire_object)
+
+    assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
+
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_three_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-13a*"))
@@ -178,6 +197,7 @@ def test_ring_breaking_three_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_five_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
@@ -200,6 +220,7 @@ def test_ring_breaking_five_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_six_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
@@ -222,8 +243,10 @@ def test_ring_breaking_six_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.parametrize("ligands", [["CAT-13c", "CAT-17i"],
-                                     ["CAT-13e", "CAT-17g"]])
+@pytest.mark.parametrize("ligands", [ pytest.param(["CAT-13c", "CAT-17i"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")),
+                                     pytest.param(["CAT-13e", "CAT-17g"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"))
+                                     ],
+                        )
 def test_ring_size_change(ligands):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/%s.*" % ligands[0]))
@@ -247,39 +270,51 @@ def test_ring_size_change(ligands):
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True)
 
 # Parameterise the function with a valid mapping.
-@pytest.mark.parametrize("mapping", [{
-    2 : 21,
-    4 : 23,
-    6 : 25,
-    8 : 27,
-    10 : 18,
-    1 : 19,
-    0 : 20,
-    11 : 16,
-    12 : 17,
-    13 : 14,
-    15 : 13,
-    18 : 11,
-    20 : 9,
-    22 : 8,
-    23 : 5,
-    16 : 6,
-    24 : 3,
-    26 : 1,
-    27 : 0,
-    9 : 28,
-    5 : 24,
-    3 : 22,
-    7 : 26,
-    14 : 15,
-    19 : 12,
-    21 : 10,
-    17 : 7,
-    25 : 4}])
-def test_grow_whole_ring(mapping):
+@pytest.mark.parametrize("ligands, mapping", [(("grow1", "grow2"),
+                                               {2 : 21,
+                                                4 : 23,
+                                                6 : 25,
+                                                8 : 27,
+                                                10 : 18,
+                                                1 : 19,
+                                                0 : 20,
+                                                11 : 16,
+                                                12 : 17,
+                                                13 : 14,
+                                                15 : 13,
+                                                18 : 11,
+                                                20 : 9,
+                                                22 : 8,
+                                                23 : 5,
+                                                16 : 6,
+                                                24 : 3,
+                                                26 : 1,
+                                                27 : 0,
+                                                9 : 28,
+                                                5 : 24,
+                                                3 : 22,
+                                                7 : 26,
+                                                14 : 15,
+                                                19 : 12,
+                                                21 : 10,
+                                                17 : 7,
+                                                25 : 4}),
+                                               (("grow3", "grow4"),
+                                               {1: 6,
+                                                2: 7,
+                                                3: 8,
+                                                4: 9,
+                                                5: 10,
+                                                6: 11,
+                                                14: 21,
+                                                13: 20,
+                                                12: 19,
+                                                11: 18,
+                                                10: 17})])
+def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/grow1*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/grow2*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[0]}*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[1]}*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -290,3 +325,44 @@ def test_grow_whole_ring(mapping):
 
     # Check that we can merge without allowing ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping)
+
+def test_hydrogen_mass_repartitioning():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Get the best mapping between the molecules.
+    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second)
+
+    # Align m0 to m1 based on the mapping.
+    m0 = BSS.Align.rmsdAlign(m0, m1, mapping)
+
+    # Create the merged molecule.
+    merged = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
+
+    # Work out the initial mass of the system.
+    initial_mass0 = 0
+    for mass in merged._sire_object.property("mass0").toVector():
+        initial_mass0 += mass.value()
+    initial_mass1 = 0
+    for mass in merged._sire_object.property("mass1").toVector():
+        initial_mass1 += mass.value()
+
+    # Repartition the hydrogen mass.
+    merged.repartitionHydrogenMass()
+
+    # Work out the final mass of the system.
+    final_mass0 = 0
+    for mass in merged._sire_object.property("mass0").toVector():
+        final_mass0 += mass.value()
+    final_mass1 = 0
+    for mass in merged._sire_object.property("mass1").toVector():
+        final_mass1 += mass.value()
+
+    # Assert the the masses are approximately the same.
+    assert final_mass0 == pytest.approx(initial_mass0)
+    assert final_mass1 == pytest.approx(initial_mass1)

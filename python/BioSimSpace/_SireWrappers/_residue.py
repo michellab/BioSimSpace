@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,7 +25,7 @@ not be directly exposed to the user.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Residue"]
 
@@ -34,6 +34,8 @@ import random as _random
 import string as _string
 
 from Sire import Mol as _SireMol
+
+from BioSimSpace import _isVerbose
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
@@ -53,11 +55,11 @@ class Residue(_SireWrapper):
         # Check that the residue is valid.
 
         # A Sire Residue object.
-        if type(residue) is _SireMol.Residue:
+        if isinstance(residue, _SireMol.Residue):
             sire_object = residue
 
         # Another BioSimSpace Residue object.
-        elif type(residue) is Residue:
+        elif isinstance(residue, Residue):
             sire_object = residue._sire_object
 
         # Invalid type.
@@ -94,7 +96,7 @@ class Residue(_SireWrapper):
         """Get an atom from the residue."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the atoms.
             atoms = []
@@ -185,6 +187,34 @@ class Residue(_SireWrapper):
         """
         return self._sire_object.molecule().number().value()
 
+    def coordinates(self, property_map={}):
+        """Return the coordinates of the atoms in the residue.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+               The coordinates of the atoms in the residue.
+        """
+        # Get the "coordinates" property for each atom in the residue.
+        try:
+            coordinates = []
+            for atom in self.getAtoms():
+                coordinates.append(atom.coordinates(property_map))
+        except:
+            return None
+
+        # Return the coordinates.
+        return coordinates
+
     def nAtoms(self):
         """Return the number of atoms in the residue.
 
@@ -223,7 +253,7 @@ class Residue(_SireWrapper):
         """
         return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
 
-    def search(self, query):
+    def search(self, query, property_map={}):
         """Search the residue for atoms and residues.
 
            Parameters
@@ -231,6 +261,11 @@ class Residue(_SireWrapper):
 
            query : str
                The search query.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -250,18 +285,25 @@ class Residue(_SireWrapper):
            >>> result = residue.search("atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
-        # Intialise a list to hold the search results.
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        # Initialise a list to hold the search results.
         results = []
 
         try:
-            # Query the Sire system.
-            search_result = self._sire_object.search(query)
+            # Query the Sire residue.
+            search_result = _SireMol.Select(query)(self._sire_object, property_map)
 
-        except:
-            raise ValueError("'Invalid search query: %r" % query) from None
+        except Exception as e:
+            msg = "'Invalid search query: %r" % query
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         return _SearchResult(search_result)
 

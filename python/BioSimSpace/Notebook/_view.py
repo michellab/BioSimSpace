@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,10 +24,11 @@ Tools for visualising molecular systems.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["View"]
 
+import glob as _glob
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
@@ -37,7 +38,8 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _is_notebook
+from BioSimSpace import _is_notebook, _isVerbose
+from BioSimSpace import IO as _IO
 from BioSimSpace.Process._process import Process as _Process
 from BioSimSpace._SireWrappers import System as _System
 
@@ -51,25 +53,42 @@ class View():
            ----------
 
            handle : :class:`Process <BioSimSpace.Process>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-               A handle to a process or system.
+                    :class:`System <BioSimSpace._SireWrappers.System>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecule>` \
+                    :class:`System <BioSimSpace._SireWrappers.Molecules>` \
+                    str, [str]
+               A handle to a process, system, molecule, or molecule container,
+               or the path to molecular input file(s).
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
 
         # Check the handle.
 
+        # Convert tuple to list.
+        if isinstance(handle, tuple):
+            handle = list(handle)
+
+        # Convert single string to list.
+        if isinstance(handle, str):
+            handle = [handle]
+
+        # List of strings (file paths).
+        if isinstance(handle, list) and all(isinstance(x, str) for x in handle):
+            system = _IO.readMolecules(handle)
+            self._handle = system._getSireObject()
+            self._is_process = False
+
         # BioSimSpace process.
-        if isinstance(handle, _Process):
+        elif isinstance(handle, _Process):
             self._handle = handle
             self._is_process = True
 
         # BioSimSpace system.
-        elif type(handle) is _System:
+        elif isinstance(handle, _System):
             self._handle = handle._getSireObject()
             self._is_process = False
 
@@ -79,7 +98,11 @@ class View():
                 self._handle = handle._getSireObject()
                 self._is_process = False
             except:
-                raise TypeError("The handle must be of type 'BioSimSpace.Process' or 'BioSimSpace._SireWrappers.System'.")
+                raise TypeError("The handle must be of type 'BioSimSpace.Process', "
+                                "'BioSimSpace._SireWrappers.System', "
+                                "'BioSimSpace._SireWrappers.Molecule', "
+                                "'BioSimSpace._SireWrappers.Molecules', "
+                                "'str', or a list of 'str' types.")
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -99,7 +122,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Get the latest system from the process.
@@ -132,21 +155,22 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return a view of the entire system.
         if indices is None:
             return self.system(gui=gui)
 
-        # Convert single indices to a list.
-        if isinstance(indices, range):
+        # Convert range or tuple to list.
+        if isinstance(indices, (range, tuple)):
             indices = list(indices)
-        elif type(indices) is not list:
+        # Convert single indices to a list.
+        elif not isinstance(indices, list):
             indices = [indices]
 
         # Check that the indices is a list of integers.
-        if not all(isinstance(x, int) for x in indices):
+        if not all(type(x) is int for x in indices):
             raise TypeError("'indices' must be a 'list' of type 'int'")
 
         # Get the latest system from the process.
@@ -169,6 +193,8 @@ class View():
 
         # Loop over all of the indices.
         for index in indices:
+            if index < 0:
+                index += len(molnums)
             if index < 0 or index > len(molnums):
                 raise ValueError("Molecule index is out of range!")
 
@@ -195,11 +221,11 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Check that the index is an integer.
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Get the latest system from the process.
@@ -216,6 +242,8 @@ class View():
         molnums = system.molNums()
 
         # Make sure the index is valid.
+        if index < 0:
+            index += len(molnums)
         if index < 0 or index > len(molnums):
             raise ValueError("Molecule index is out of range!")
 
@@ -242,7 +270,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Return if there are no views.
@@ -254,7 +282,7 @@ class View():
             index = self._num_views - 1
 
         # Check that the index is an integer.
-        elif type(index) is not int:
+        elif not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Make sure the view index is valid.
@@ -289,7 +317,7 @@ class View():
         """
 
         # Make sure we're running inside a Jupyter notebook.
-        if not _is_notebook():
+        if not _is_notebook:
             return None
 
         # Default to the most recent view.
@@ -297,7 +325,7 @@ class View():
             index = self._num_views - 1
 
         # Check that the index is an integer.
-        elif type(index) is not int:
+        elif not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         # Make sure the view index is valid.
@@ -364,8 +392,13 @@ class View():
             try:
                 pdb = _SireIO.PDB2(system)
                 pdb.writeToFile(filename)
-            except:
-                raise IOError("Failed to write system to 'PDB' format.") from None
+            except Exception as e:
+                msg = "Failed to write system to 'PDB' format."
+                if _isVerbose():
+                    print(msg)
+                    raise IOError(e) from None
+                else:
+                    raise IOError(msg) from None
 
         # Import NGLView when it is used for the first time.
         import nglview as _nglview

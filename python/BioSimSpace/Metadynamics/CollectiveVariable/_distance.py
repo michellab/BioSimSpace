@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for distance based collective variables.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Distance"]
 
@@ -48,11 +48,11 @@ class Distance(_CollectiveVariable):
            Parameters
            ----------
 
-           atom0 : int, [int, int, ...], [:class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+           atom0 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
                The atom, group of atoms, or coordinate, that the distance
                will be measured from.
 
-           atom1 : int, [int, int, ...], [:class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+           atom1 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
                The atom, group of atoms, or coordinate, that the distance
                will be measured to.
 
@@ -101,7 +101,10 @@ class Distance(_CollectiveVariable):
         """
 
         # Call the base class constructor.
-        super().__init__(pbc)
+        super().__init__()
+
+        # Set the types associated with this collective variable.
+        self._types = [_Length]
 
         # Initialise member data.
         self._atom0 = None
@@ -116,13 +119,12 @@ class Distance(_CollectiveVariable):
         self._component = None
 
         # Set the required parameters.
-
         self.setAtom0(atom0)
         self.setAtom1(atom1)
         self.setHillWidth(hill_width)
+        self.setPeriodicBoundaries(pbc)
 
         # Set the optional parameters.
-
         if weights0 is not None:
             self.setWeights0(weights0)
         if weights1 is not None:
@@ -189,7 +191,7 @@ class Distance(_CollectiveVariable):
         """
 
         # Convert tuples to a list.
-        if type(atom0) is tuple:
+        if isinstance(atom0, tuple):
             atom0 = list(atom0)
 
         # Single atom index.
@@ -197,11 +199,11 @@ class Distance(_CollectiveVariable):
             pass
 
         # List of atom indices.
-        elif type(atom0) is list and all(isinstance(x, int) for x in atom0):
+        elif isinstance(atom0, list) and all(type(x) is int for x in atom0):
             pass
 
         # A coordinate.
-        elif type(atom0) is _Coordinate:
+        elif isinstance(atom0, _Coordinate):
             pass
 
         # Invalid type.
@@ -249,7 +251,7 @@ class Distance(_CollectiveVariable):
         """
 
         # Convert tuples to a list.
-        if type(atom1) is tuple:
+        if isinstance(atom1, tuple):
             atom1 = list(atom1)
 
         # Single atom index.
@@ -257,11 +259,11 @@ class Distance(_CollectiveVariable):
             pass
 
         # List of atom indices.
-        elif type(atom1) is list and all(isinstance(x, int) for x in atom1):
+        elif isinstance(atom1, list) and all(type(x) is int for x in atom1):
             pass
 
         # A coordinate.
-        elif type(atom1) is _Coordinate:
+        elif isinstance(atom1, _Coordinate):
             pass
 
         # Invalid type.
@@ -303,7 +305,7 @@ class Distance(_CollectiveVariable):
            hill_width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the Gaussian hill.
         """
-        if type(hill_width) is not _Length:
+        if not isinstance(hill_width, _Length):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
 
         if hill_width.magnitude() < 0:
@@ -340,11 +342,7 @@ class Distance(_CollectiveVariable):
             self._weights0 = None
             return
 
-        # Convert tuples to a list.
-        if type(weights0) is tuple:
-            weights0 = list(weights0)
-
-        if type(weights0) is list:
+        if isinstance(weights0, (list, tuple)):
             weights = []
 
             # Try converting the weights to floats.
@@ -353,12 +351,14 @@ class Distance(_CollectiveVariable):
                     weights.append(float(w))
                 except:
                     raise TypeError("'weights0' should be a list of 'float' types.")
+        else:
+            raise TypeError("'weights0' should be a list of 'float' types.")
 
         # Store the existing value.
         old_value = self._weights0
 
         # All okay, set the value.
-        self._weights0 = weights
+        self._weights0 = list(weights)
 
         # If we are modifying an existing object, then check for consistency.
         if not self._is_new_object:
@@ -372,8 +372,8 @@ class Distance(_CollectiveVariable):
         """Get the weights to be used when computing the center of the first
            atom group.
 
-           Returnas
-           --------
+           Returns
+           -------
 
            weights0 : [float]
                A list of weights to be used when computing the center of the
@@ -400,11 +400,7 @@ class Distance(_CollectiveVariable):
             self._weights1 = None
             return
 
-        # Convert tuples to a list.
-        if type(weights1) is tuple:
-            weights1 = list(weights1)
-
-        if type(weights1) is list:
+        if isinstance(weights1, (list, tuple)):
             weights = []
 
             # Try converting the weights to floats.
@@ -413,12 +409,14 @@ class Distance(_CollectiveVariable):
                     weights.append(float(w))
                 except:
                     raise TypeError("'weights1' should be a list of 'float' types.")
+        else:
+            raise TypeError("'weights1' should be a list of 'float' types.")
 
         # Store the existing value.
         old_value = self._weights1
 
         # All okay, set the value.
-        self._weights1 = weights
+        self._weights1 = list(weights)
 
         # If we are modifying an existing object, then check for consistency.
         if not self._is_new_object:
@@ -432,8 +430,8 @@ class Distance(_CollectiveVariable):
         """Get the weights to be used when computing the center of the second
            atom group.
 
-           Returnas
-           --------
+           Returns
+           -------
 
            weights1 : [float]
                A list of weights to be used when computing the center of the
@@ -459,7 +457,7 @@ class Distance(_CollectiveVariable):
             self._is_com0 = None
             return
 
-        if type(is_com) is not bool:
+        if not isinstance(is_com, bool):
             raise TypeError("'is_com' must be of type 'bool'")
 
         # Store the existing value.
@@ -503,7 +501,7 @@ class Distance(_CollectiveVariable):
             self._is_com0 = None
             return
 
-        if type(is_com) is not bool:
+        if not isinstance(is_com, bool):
             raise TypeError("'is_com' must be of type 'bool'")
 
         # Store the existing value.
@@ -548,7 +546,7 @@ class Distance(_CollectiveVariable):
             self._component = None
             return
 
-        if type(component) is not str:
+        if not isinstance(component, str):
             raise TypeError("'component' must be of type 'str'")
 
         allowed = ["x", "y", "z"]
@@ -574,11 +572,37 @@ class Distance(_CollectiveVariable):
         """
         return self._component
 
+    def setPeriodicBoundaries(self, pbc):
+        """Set whether to use periodic_boundaries when calculating the
+           collective variable.
+
+           Parameters
+           ----------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        if not isinstance(pbc, bool):
+            raise TypeError("'pbc' must be of type 'bool'")
+        self._pbc = pbc
+
+    def getPeriodicBoundaries(self):
+        """Return whether to take account of periodic boundary conditions
+           when computing the collective variable.
+
+           Returns
+           -------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        return self._pbc
+
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
 
         if self._weights0 is not None:
-            if type(self._atom0) is not list:
+            if not isinstance(self._atom0, list):
                 raise ValueError("'weights0' only valid when 'atom0' is a "
                                  "list of atom indices.")
             elif len(self._weights0) != len(self._atom0):
@@ -587,7 +611,7 @@ class Distance(_CollectiveVariable):
                                  % (len(self._weights0), len(self._atom0)))
 
         if self._weights1 is not None:
-            if type(self._atom1) is not list:
+            if not isinstance(self._atom1, list):
                 raise ValueError("'weights1' only valid when 'atom1' is a "
                                  "list of atom indices.")
             elif len(self._weights1) != len(self._atom1):
@@ -596,21 +620,21 @@ class Distance(_CollectiveVariable):
                                  % (len(self._weights1), len(self._atom1)))
 
         if self._is_com0 == True:
-            if type(self._atom0) is not list:
+            if not isinstance(self._atom0, list):
                 raise ValueError("'is_com0=True but atom0 is not a list of indices. "
                                  "Cannot compute center without atom group!")
         if self._is_com1 == True:
-            if type(self._atom1) is not list:
+            if not isinstance(self._atom1, list):
                 raise ValueError("'is_com1=True but atom1 is not a list of indices. "
                                  "Cannot compute center without atom group!")
 
         if self._lower_bound is not None:
-            if type(self._lower_bound.getValue()) is not _Length:
+            if not isinstance(self._lower_bound.getValue(), _Length):
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().nanometers())
         if self._upper_bound is not None:
-            if type(self._upper_bound.getValue()) is not _Length:
+            if not isinstance(self._upper_bound.getValue(), _Length):
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().nanometers())
@@ -619,11 +643,11 @@ class Distance(_CollectiveVariable):
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
-            if type(self._grid.getMinimum()) is not _Length:
+            if not isinstance(self._grid.getMinimum(), _Length):
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._grid.setMinimum(self._grid.getMinimum().nanometers())
-            if type(self._grid.getMaximum()) is not _Length:
+            if not isinstance(self._grid.getMaximum(), _Length):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().nanometers())

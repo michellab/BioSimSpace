@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for configuring bounds on collective variables.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Bound"]
 
@@ -34,7 +34,7 @@ class Bound():
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
         """Constructor.
 
-           Set a bound on the value of a the collective variable along with the
+           Set a bound on the value of a collective variable along with the
            parameters used to define the bias potential.
 
            The expression for the bias is:
@@ -83,9 +83,7 @@ class Bound():
            value : int, float, :class:`Type <BioSimSpace.Types>`
                The value of the bound.
         """
-        if not type(value) is int and   \
-           not type(value) is float and \
-           not isinstance(value, _Type):
+        if not isinstance(value, (float, _Type)) and not type(value) is int:
             raise TypeError("'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._value = value
 

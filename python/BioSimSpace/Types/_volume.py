@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ A volume type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Volume"]
 
@@ -117,26 +117,26 @@ class Volume(_Type):
             other = float(other)
 
         # Float division.
-        if type(other) is float:
+        if isinstance(other, float):
             mag = self._magnitude / other
             return Volume(mag, self._unit)
 
         # Division by another Volume.
-        elif type(other) is Volume:
+        elif isinstance(other, Volume):
             return self.angstroms3().magnitude() / other.angstroms3().magnitude()
 
         # Division by an Area.
-        elif type(other) is _Area:
+        elif isinstance(other, _Area):
             mag = self.angstroms3().magnitude() / other.angstroms2().magnitude()
             return _Length(mag, "A")
 
         # Division by a Length.
-        elif type(other) is _Length:
+        elif isinstance(other, _Length):
             mag = self.angstroms3().magnitude() / other.angstroms().magnitude()
             return _Area(mag, "A2")
 
         # Division by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self / length
@@ -252,7 +252,7 @@ class Volume(_Type):
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()
 
-        # Replace any occurence of cubed with 3.
+        # Replace any occurrence of cubed with 3.
         unit = unit.replace("CUBED", "3")
         unit = unit.replace("CUBE", "3")
 

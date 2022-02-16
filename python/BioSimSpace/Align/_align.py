@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,43 +24,587 @@ Functionality for aligning molecules.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
-__all__ = ["matchAtoms", "rmsdAlign", "flexAlign", "merge"]
+__all__ = ["generateNetwork",
+           "matchAtoms",
+           "drawMapping",
+           "rmsdAlign",
+           "flexAlign",
+           "merge"]
 
+import csv as _csv
 import os as _os
 import subprocess as _subprocess
+import shutil as _shutil
+import shlex as _shlex
+import sys as _sys
 import tempfile as _tempfile
+
+from BioSimSpace._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
 _warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+_warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
 _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
     _warnings.filterwarnings("ignore")
-    from rdkit import Chem as _Chem
-    from rdkit.Chem import rdFMCS as _rdFMCS
+    _rdkit = _try_import("rdkit")
+
+    if _have_imported(_rdkit):
+        from rdkit import Chem as _Chem
+        from rdkit.Chem import rdFMCS as _rdFMCS
+        from rdkit import RDLogger as _RDLogger
+
+        # Disable RDKit warnings.
+        _RDLogger.DisableLog('rdApp.*')
+    else:
+        _Chem = _rdkit
+        _rdFMCS = _rdkit
+        _RDLogger = _rdkit
 
 from Sire import Base as _SireBase
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
+from BioSimSpace import _is_notebook, _isVerbose
 from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
-# Try to find the FKCOMBU program from KCOMBU: http://strcomp.protein.osaka-u.ac.jp/kcombu
+# lomap depends on RDKit and networkx
+_networkx = _try_import("networkx")
+
+if _have_imported(_rdkit) and _have_imported(_networkx):
+    from . import _lomap
+elif _have_imported(_rdkit):
+    _lomap = _networkx
+elif _have_imported(_networkx):
+    _lomap = _rdkit
+else:
+    from BioSimSpace._Utils import _module_stub
+    _lomap = _module_stub(name="rdkit, networkx")
+
+from ._merge import merge as _merge
+
+# Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
     _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
 except:
     _fkcombu_exe = None
+
+def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
+        links_file=None, property_map={}, n_edges_forced=None):
+    """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
+
+       Parameters
+       ----------
+
+       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`], \
+                    [rdkit.Chem.rdchem.Mol]
+           A list of molecules. (Both BioSimSpace and RDKit molecule objects
+           are supported.)
+
+       names : [str]
+           A list of names for the molecules. If None, then the index of each
+           molecule will be used.
+
+       work_dir : str
+           The working directory for the LOMAP process.
+
+       plot_network : bool
+           Whether to plot the network when running from within a notebook.
+           If using a 'work_dir', then a PNG image will be located in
+           'work_dir/images/network.png'.
+
+       links_file : str
+           Path to a file providing links to seed the LOMAP graph with. Each
+           record in the file must contain a minimum of two entries, i.e. the
+           names of the ligands of interest, e.g.
+             ligA ligB
+           The third column can include a pre-computed score for the ligand
+           pair, e.g.
+             ligA ligB score
+           A value of < -1 means 'recompute', but force the link to be included.
+           A negative value (>= -1) means use the absolute value as the score,
+           but force the link to be included. A positive means use this value
+           as the score, but treat the link as normal in the LOMAP graph
+           calculation. Finally, if the fourth column contains the string
+           'force', then the link is included, irrespective of its score.
+
+       property_map : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       n_edges_forced : int
+           An integer that forces the number of edges that should be used in
+           the perturbation network. Must be in the range
+           [1 .. (len(molecules)**2-len(molecules))/2].
+           In cases where n_edges_forced > the number of edges suggested by
+           LOMAP, BioSimSpace will add the top scoring n edges parsed from the
+           LOMAP output file and add them to the network. Conversely if
+           n_edges_forced < the number of edges suggested by LOMAP, BioSimSpace
+           will remove the bottom n edges parsed from the LOMAP output file.
+           This last option is discouraged as it can cause network cycle
+           breakage and disconnecting of ligands/clusters from the network.
+
+       Returns
+       -------
+
+       edges : [(int, int)]
+           A tuple containing the edges of the network. Each edge is itself
+           a tuple, containing the indices of the molecules that are
+           connected by the edge.
+
+       scores : [float]
+           The LOMAP score for each edge. The higher the score implies that a
+           perturbation between molecules along an edge is likely to be more
+           accurate.
+    """
+
+    # Adapted from code by Jenke Scheen (@JenkeScheen).
+
+    _assert_imported(_lomap)
+
+    if not isinstance(molecules, (list, tuple)):
+        raise TypeError("'molecules' must be a list of "
+                        "'BioSimSpace._SireWrappers.Molecule' "
+                        "or 'rdkit.Chem.rdchem.Mol' objects.")
+
+    # Validate the molecules.
+    rdkit_input = False
+
+    # A list of BioSimSpace molecule objects.
+    if all(isinstance(x, _Molecule) for x in molecules):
+        pass
+    # A list of RDKit molecule objects.
+    elif all(isinstance(x, _Chem.rdchem.Mol) for x in molecules):
+        rdkit_input = True
+    else:
+        raise TypeError("'molecules' must be a list of "
+                        "'BioSimSpace._SireWrappers.Molecule' "
+                        "or 'rdkit.Chem.rdchem.Mol' objects.")
+
+    # Validate the names.
+    if names is not None:
+        if not all(isinstance(x, str) for x in names):
+            raise TypeError("'names' must be a list of 'str' types.")
+        if len(names) != len(molecules):
+            raise ValueError("There must be one name for each molecule!")
+
+    # Validate the working directory.
+    if work_dir is not None:
+        if not isinstance(work_dir, str):
+            raise TypeError("'work_dir' must be of type 'str'.")
+
+    # Validate the plotting flag.
+    if not isinstance(plot_network, bool):
+        raise TypeError("'plot_network' must be of type 'bool'.")
+
+    # Validate the property map.
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'")
+
+    # Validate the scores file.
+    if links_file is not None:
+
+        if not isinstance(links_file, str):
+            raise TypeError("'links_file' must be of type 'str'")
+
+        # Check that it exists.
+        if _os.path.isfile(links_file):
+            # Must have names to match against.
+            if names is None:
+                raise ValueError("'names' must be defined when passing 'links_file' to LOMAP.")
+
+            # Validate the records in the links file. Must have at least two
+            # entries per line, i.e. ligA ligB, third column must contain a
+            # float type score if present, and fourth column can only contain
+            # 'force' to insist that the link is included irrespective of its
+            # score.
+            with open(links_file, "r") as lf:
+                for line in lf:
+                    records = line.split()
+                    if len(records) < 2:
+                        raise ValueError(f"{links_file} should have at least two entries "
+                                         f"per line. Failed line is {line.rstrip()}")
+                    if len(records) > 2:
+                        try:
+                            float(records[2])
+                        except ValueError:
+                            raise ValueError(f"{links_file} contains a non-numerical value for the "
+                                             f"score in the third column: {line.rstrip()}.")
+                    if len(records) > 3:
+                        if records[3] != "force":
+                            raise ValueError(f"{links_file} can only contain 'force' in the "
+                                             f"fourth column: {line.rstrip()}.")
+
+                    # Make sure that the ligands are in the names list.
+                    if not records[0] in names:
+                        raise ValueError(f"Ligand '{records[0]}' not in 'names' list!")
+                    if not records[1] in names:
+                        raise ValueError(f"Ligand '{records[1]}' not in 'names' list!")
+
+        else:
+            raise IOError(f"The links file doesn't exist: {links_file}")
+
+    # Validate the number of edges parameter.
+    if n_edges_forced is not None:
+        if not type(n_edges_forced) is int:
+            raise TypeError("'n_edges_forced' must be of type 'int'")
+
+        n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
+
+        if not 0 < n_edges_forced < n_edges_fully_connected:
+            raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
+
+    # Create a temporary working directory and store the directory name.
+    if work_dir is None:
+        tmp_dir = _tempfile.TemporaryDirectory()
+        work_dir = tmp_dir.name
+
+    # User specified working directory.
+    else:
+        # Use full path.
+        if work_dir[0] != "/":
+            work_dir = _os.getcwd() + "/" + work_dir
+
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(work_dir):
+            _os.makedirs(work_dir, exist_ok=True)
+
+    # Make the LOMAP input and output directories.
+    _os.makedirs(work_dir + "/inputs", exist_ok=True)
+    _os.makedirs(work_dir + "/outputs", exist_ok=True)
+
+    # Dictionary to map ligand names in the links file to the file names
+    # that are used in the working directory.
+    links_names = {}
+
+    # Write all of the molecules to disk.
+    if rdkit_input:
+        if names is not None:
+            for x, (molecule, name) in enumerate(zip(molecules, names)):
+                file_name = f"{x:03d}_{name}.sdf"
+                links_names[name] = file_name
+                writer =  _Chem.SDWriter(work_dir/inputs/ + file_name)
+                writer.write(molecule)
+                writer.close()
+        else:
+            for x, molecule in enumerate(molecules):
+                writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}.sdf")
+                writer.write(molecule)
+                writer.close()
+    else:
+        if names is not None:
+            for x, (molecule, name) in enumerate(zip(molecules, names)):
+                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                    molecule, "mol2", property_map=property_map)
+                links_names[name] = f"{x:03d}_{name}.mol2"
+        else:
+            for x, molecule in enumerate(molecules):
+                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                    molecule, "mol2", property_map=property_map)
+
+    # Create a local copy of the links file in the working directory,
+    # replacing the original ligand names with their actual file names.
+    if links_file:
+        # Read the old file and map the ligand names to their file names.
+        new_lines = []
+        with open(links_file, "r") as lf:
+            for line in lf:
+                records = line.split()
+                new_line = f"{links_names[records[0]]} {links_names[records[1]]}"
+                if len(records) > 2:
+                    new_line += " " + " ".join(records[2:])
+
+        # Write the updated lomap links file.
+        with open(f"{work_dir}/inputs/lomap_links_file.txt", "w") as lf:
+            for line in new_lines:
+                lf.write(line)
+    else:
+        lf = None
+
+    # Create the DBMolecules object.
+    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
+                                name=f"{work_dir}/outputs/lomap",
+                                links_file=lf,
+                                output_no_graph=True,
+                                output_no_images=True,
+                                threed=True,
+                                max3d=3.0,
+                                time=3,
+                                parallel=10)
+
+    # Create the similarity matrices.
+    strict, loose = db_mol.build_matrices()
+
+    # Generate the graph. (Might be able to use this later, rather than
+    # reconstructing it by hand.)
+    nx_graph = db_mol.build_graph()
+
+    # Store the name to the LOMAP output file.
+    lomap_file = work_dir + "/outputs/lomap_score_with_connection.txt"
+
+    # Check that it exists.
+    if not _os.path.isfile(lomap_file):
+        raise _AlignmentError("LOMAP output file doesn't exist!")
+
+    # Read the file to get the edges and scores.
+    edges = []
+    nodes = []
+    scores = []
+
+    edges_excluded = []
+
+    with open(lomap_file, "r") as csv_file:
+        # Load as a CSV file.
+        csv_reader = _csv.reader(csv_file)
+
+        # Loop over all rows of the CSV file.
+        for row in csv_reader:
+            # If the file contains all possible edges, then only take edges
+            # that LOMAP indicates should be drawn.
+            if row[7].strip() == "Yes":
+                # Extract the nodes (molecules) connected by the edge.
+                mol0 = int(row[2].rsplit(".")[0].rsplit("_")[0])
+                mol1 = int(row[3].rsplit(".")[0].rsplit("_")[0])
+
+                # Extract the score and convert to a float.
+                score = float(row[4])
+
+                # Update the lists.
+                edges.append((mol0, mol1))
+                nodes.append(mol0)
+                nodes.append(mol1)
+                scores.append(score)
+
+            # Also collect the excluded edges in case we need to add more at a later stage.
+            elif row[7].strip() == "No":
+                # Extract the nodes (molecules) connected by the edge.
+                mol0 = int(row[2].rsplit(".")[0].rsplit("_")[0])
+                mol1 = int(row[3].rsplit(".")[0].rsplit("_")[0])
+
+                # Extract the score and convert to a float.
+                score = float(row[4])
+
+                # Update the list while checking that the inverse edge is not already in
+                # the network.
+                if not (mol1, mol0) in edges:
+                    edges_excluded.append((mol0, mol1, score))
+
+    # If the user has specified a forced number of edges, adjust the network
+    # to match the query. We have three situations to deal with.
+    if n_edges_forced:
+
+        # sort the list of excluded edges by LOMAP score.
+        edges_excluded.sort(key=lambda x: x[2], reverse=True)
+
+        # 1) The network already contains the specified number of edges.
+        if  len(edges) == n_edges_forced:
+            # Return the network as is.
+            print(f"LOMAP already suggested the user-specified number of edges ({len(edges)}).")
+
+        # 2) The network contains fewer edges than the specified number.
+        elif len(edges) < n_edges_forced:
+            # We need to add edges to the network to match the queried number.
+            n_to_add = n_edges_forced-len(edges)
+            print(f"Adding {n_to_add} edges to the LOMAP network.")
+
+            # Get the top n excluded edges.
+            for edge in edges_excluded[:n_to_add]:
+                edges.append((edge[0], edge[1]))
+                nodes.append(edge[0])
+                nodes.append(edge[1])
+                scores.append(edge[2])
+
+        # 3) The network contains more edges than the specified number. This is not
+        # recommended as this can cause breaking of network cycles or disconnecting nodes.
+        elif len(edges) > n_edges_forced:
+            # We need to remove edges from the network to match the queried number.
+            n_to_remove = len(edges) - n_edges_forced
+            print(f"Removing {n_to_remove} edges from the LOMAP network, potentially" \
+                +" breaking network cycles or disconnecting ligands/ clusters.")
+            lomap_network = list(zip(edges, scores))
+
+            # Sort the network by LOMAP-score.
+            lomap_network.sort(key=lambda x: x[1])
+
+            # Create the new network by keeping the required number of top edges.
+            edges = []
+            nodes = []
+            scores = []
+            for edge in lomap_network[n_to_remove:]:
+                edges.append(edge[0])
+                nodes.append(edge[0][0])
+                nodes.append(edge[0][1])
+                scores.append(edge[1])
+
+    # Convert nodes to a set to remove duplicates.
+    nodes = set(nodes)
+
+    # Plot the LOMAP network.
+    if plot_network:
+        # Conditional imports.
+        _assert_imported(_rdkit)
+
+        import matplotlib.image as _mpimg
+        import matplotlib.pyplot as _plt
+        _nx = _try_import("networkx")
+        _pydot = _try_import("pydot")
+
+        _assert_imported(_nx)
+        _assert_imported(_pydot)
+
+        from rdkit.Chem import AllChem as _AllChem
+        from rdkit.Chem import Draw as _Draw
+        from rdkit.Chem import rdmolops as _rdmolops
+
+        # Set the DPI to make the network look nice.
+        _plt.rcParams["figure.dpi"]= 150
+
+        # Make directory for output images.
+        _os.makedirs(work_dir + "/images", exist_ok=True)
+
+        # 1) Loop over each molecule and load into RDKit.
+        try:
+            rdmols = []
+            if names is not None:
+                for x, name in zip(range(0, len(molecules)), names):
+                    try:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+                    except OSError:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+            else:
+                for x in range(0, len(molecules)):
+                    try:
+                        file = f"{work_dir}/inputs/{x:03d}.mol2"
+                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
+                    except OSError:
+                        file = f"{work_dir}/inputs/{x:03d}.sdf"
+                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+
+        except Exception as e:
+            msg = "Unable to load molecule into RDKit!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 2) Find the MCS of the molecules to use as a template.
+        try:
+            # Remove hydrogens to dramatically speed up MCS algorithm.
+            rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
+
+            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols,
+                                    atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                                    bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                    matchValences=False,
+                                    ringMatchesRingOnly=True,
+                                    completeRingsOnly=True,
+                                    matchChiralTag=False).smartsString)
+            _AllChem.Compute2DCoords(template)
+
+        except Exception as e:
+            msg = "Unable to compute MCS of molecules!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 3) Load all ligands, make 2D depiction aligned to the template and save to file.
+        try:
+            for x, mol in enumerate(rdmols):
+                mol.UpdatePropertyCache(strict=False)
+                _AllChem.Compute2DCoords(mol)
+                _AllChem.GenerateDepictionMatching2DStructure(mol, template)
+
+                mol = _Chem.RemoveHs(mol)
+
+                # Remove stereochemistry to simplify depiction in network.
+                _rdmolops.RemoveStereochemistry(mol)
+                _Draw.MolToFile(mol, f"{work_dir}/images/{x:03d}.png")
+
+        except Exception as e:
+            msg = "Unable to make 2D depiction of molecules!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 4) Create the NetworkX graph.
+        try:
+            # Generate the graph.
+            graph = _nx.Graph()
+
+            # If ligand names aren't specified, then use the molecule index.
+            if names is None:
+                names = [x for x in range(1, len(molecules)+1)]
+
+            # Create a dictionary mapping the edges to their scores.
+            edge_dict = {}
+            for x, (node0, node1) in enumerate(edges):
+                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
+
+            # Loop over the nodes and add to the graph.
+            for node in nodes:
+                img = f"{work_dir}/images/{node:03d}.png"
+                graph.add_node(names[node], image=img, label=names[node], labelloc="t")
+
+            # Loop over the edges and add to the graph.
+            for edge in edges:
+                graph.add_edge(names[edge[0]],
+                               names[edge[1]],
+                               label=(edge_dict[(names[edge[0]], names[edge[1]])]))
+
+        except Exception as e:
+            msg = "Unable to generate network representation!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+        # 5) Create and display the plot.
+        try:
+            # Convert to a dot graph.
+            dot_graph = _nx.drawing.nx_pydot.to_pydot(graph)
+
+            # Write to a PNG.
+            network_plot = f"{work_dir}/images/network.png"
+            dot_graph.write_png(network_plot)
+
+            if _is_notebook:
+                # Create a plot of the network.
+                img = _mpimg.imread(network_plot)
+                _plt.figure(figsize=(20, 20))
+                _plt.axis("off")
+                _plt.imshow(img)
+
+        except Exception as e:
+            msg = "Unable to create network plot!"
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise _AlignmentError(msg) from e
+            else:
+                raise _AlignmentError(msg) from None
+
+    return edges, scores
 
 def matchAtoms(molecule0,
                molecule1,
@@ -69,6 +613,8 @@ def matchAtoms(molecule0,
                return_scores=False,
                prematch={},
                timeout=5*_Units.Time.second,
+               complete_rings_only=True,
+               max_scoring_matches=1000,
                property_map0={},
                property_map1={}):
     """Find mappings between atom indices in molecule0 to those in molecule1.
@@ -99,7 +645,7 @@ def matchAtoms(molecule0,
              - "rmsd_flex_align"
                  Flexibly align molecule0 to molecule1 based on the mapping
                  before computing the above RMSD score. (Requires the
-                 'fkcombu'. package: http://strcomp.protein.osaka-u.ac.jp/kcombu)
+                 'fkcombu'. package: https://pdbj.org/kcombu)
 
        matches : int
            The maximum number of matches to return. (Sorted in order of score).
@@ -112,6 +658,18 @@ def matchAtoms(molecule0,
 
        timeout : BioSimSpace.Types.Time
            The timeout for the maximum common substructure search.
+
+       complete_rings_only : bool
+           Whether to only match complete rings during the MCS search. This
+           option is only relevant to MCS performed using RDKit and will be
+           ignored when falling back on Sire.
+
+       max_scoring_matches : int
+           The maximum number of matching MCS substructures to consider when
+           computing mapping scores. Consider reducing this if you find the
+           matchAtoms function to be taking an excessive amount of time. This
+           option is only relevant to MCS performed using RDKit and will be
+           ignored when falling back on Sire.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -168,13 +726,13 @@ def matchAtoms(molecule0,
 
     # Validate input.
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(scoring_function) is not str:
+    if not isinstance(scoring_function, str):
         raise TypeError("'scoring_function' must be of type 'str'")
     else:
         # Strip underscores and whitespace, then convert to upper case.
@@ -186,29 +744,35 @@ def matchAtoms(molecule0,
 
     if _scoring_function == "RMSDFLEXALIGN" and _fkcombu_exe is None:
         raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
-                                    "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+                                    "https://pdbj.org/kcombu")
 
-    if type(matches) is not int:
+    if not type(matches) is int:
         raise TypeError("'matches' must be of type 'int'")
     else:
         if matches < 0:
             raise ValueError("'matches' must be positive!")
 
-    if type(return_scores) is not bool:
+    if not isinstance(return_scores, bool):
         raise TypeError("'return_matches' must be of type 'bool'")
 
-    if type(prematch) is not dict:
+    if not isinstance(prematch, dict):
         raise TypeError("'prematch' must be of type 'dict'")
     else:
         _validate_mapping(molecule0, molecule1, prematch, "prematch")
 
-    if type(timeout) is not _Units.Time._Time:
+    if not isinstance(timeout, _Units.Time._Time):
         raise TypeError("'timeout' must be of type 'BioSimSpace.Types.Time'")
 
-    if type(property_map0) is not dict:
+    if not type(max_scoring_matches) is int:
+        raise TypeError("'max_scoring_matches' must be of type 'int'")
+
+    if max_scoring_matches <= 0:
+        raise ValueError("'max_scoring_matches' must be >= 1.")
+
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # Extract the Sire molecule from each BioSimSpace molecule.
@@ -235,14 +799,19 @@ def matchAtoms(molecule0,
             # Note that the C++ function overloading seems to be broken, so we
             # need to pass all arguments by position, rather than keyword.
             # The arguments are: "filename", "sanitize", "removeHs", "flavor"
-            mols = [_Chem.MolFromPDBFile("tmp0.pdb", False, False, 0),
-                    _Chem.MolFromPDBFile("tmp1.pdb", False, False, 0)]
+            mols = [_Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
+                    _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0)]
 
             # Generate the MCS match.
-            mcs = _rdFMCS.FindMCS(mols, atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                bondCompare=_rdFMCS.BondCompare.CompareAny, completeRingsOnly=True,
-                ringMatchesRingOnly=True, matchChiralTag=False, matchValences=False,
-                maximizeBonds=False, timeout=timeout)
+            mcs = _rdFMCS.FindMCS(mols,
+                                  atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                                  bondCompare=_rdFMCS.BondCompare.CompareAny,
+                                  completeRingsOnly=complete_rings_only,
+                                  ringMatchesRingOnly=True,
+                                  matchChiralTag=False,
+                                  matchValences=False,
+                                  maximizeBonds=False,
+                                  timeout=timeout)
 
             # Get the common substructure as a SMARTS string.
             mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
@@ -252,11 +821,20 @@ def matchAtoms(molecule0,
 
     # Score the mappings and return them in sorted order (best to worst).
     mappings, scores = _score_rdkit_mappings(mol0, mol1, mols[0], mols[1],
-        mcs_smarts, prematch, _scoring_function, property_map0, property_map1)
+        mcs_smarts, prematch, _scoring_function, max_scoring_matches,
+        property_map0, property_map1)
 
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
     if len(mappings) == 1 and mappings[0] == prematch:
+
+        # Warn that we've fallen back on using Sire.
+        if prematch != {}:
+            _warnings.warn("RDKit mapping didn't include prematch. Using Sire MCS.")
+
+        # Warn about unsupported options.
+        if not complete_rings_only:
+            _warnings.warn("Using Sire MCS. Ignoring unsupported 'complete_rings_only' option!")
 
         # Convert timeout to a Sire Unit.
         timeout = timeout * _SireUnits.second
@@ -351,21 +929,21 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
        >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1)
     """
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -385,8 +963,12 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Perform the alignment, mol0 to mol1.
     try:
         mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
-    except:
-        raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
+    except Exception as e:
+        msg = "Failed to align molecules based on mapping: %r" % mapping
+        if _isVerbose():
+            raise _AlignmentError(msg) from e
+        else:
+            raise _AlignmentError(msg) from None
 
     # Return the aligned molecule.
     return _Molecule(mol0)
@@ -447,7 +1029,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     if fkcombu_exe is None:
         if _fkcombu_exe is None:
             raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
-                                        "http://strcomp.protein.osaka-u.ac.jp/kcombu")
+                                        "https://pdbj.org/kcombu")
         else:
             fkcombu_exe = _fkcombu_exe
     # Check that the user supplied executable exists.
@@ -455,21 +1037,21 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         if not _os.path.isfile(fkcombu_exe):
             raise IOError("'fkcombu' executable doesn't exist: '%s'" % fkcombu_exe)
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -502,7 +1084,8 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_shlex.split(command), shell=False,
+            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that the output file exists.
         if not _os.path.isfile("aligned.pdb"):
@@ -522,10 +1105,11 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     return _Molecule(molecule0)
 
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        allow_ring_size_change=False, property_map0={}, property_map1={}):
+        allow_ring_size_change=False, force=False,
+        property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
-       atom index 'mapping'. The merged molecule can be used in single- and
-       dual-toplogy free energy calculations.
+       atom index 'mapping'. The merged molecule can be used in single topology
+       free-energy simulations.
 
        Parameters
        ----------
@@ -547,6 +1131,13 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
        allow_ring_size_change : bool
            Whether to allow changes in ring size.
+
+       force : bool
+           Whether to try to force the merge, even when the molecular
+           connectivity changes not as the result of a ring transformation.
+           This will likely lead to an unstable perturbation. This option
+           takes precedence over 'allow_ring_breaking' and
+           'allow_ring_size_change'.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -580,27 +1171,30 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
        >>> molecule0 = BSS.Align.merge(molecule0, molecule1)
     """
 
-    if type(molecule0) is not _Molecule:
+    if not isinstance(molecule0, _Molecule):
         raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(molecule1) is not _Molecule:
+    if not isinstance(molecule1, _Molecule):
         raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if type(property_map0) is not dict:
+    if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
 
-    if type(property_map1) is not dict:
+    if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
-    if type(allow_ring_breaking) is not bool:
+    if not isinstance(allow_ring_breaking, bool):
         raise TypeError("'allow_ring_breaking' must be of type 'bool'")
 
-    if type(allow_ring_size_change) is not bool:
+    if not isinstance(allow_ring_size_change, bool):
         raise TypeError("'allow_ring_size_change' must be of type 'bool'")
+
+    if not isinstance(force, bool):
+        raise TypeError("'force' must be of type 'bool'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
-        if type(mapping) is not dict:
+        if not isinstance(mapping, dict):
             raise TypeError("'mapping' must be of type 'dict'.")
         else:
             _validate_mapping(molecule0, molecule1, mapping, "mapping")
@@ -608,18 +1202,117 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0, property_map1=property_map1)
+        mapping = matchAtoms(molecule0, molecule1,
+            property_map0=property_map0, property_map1=property_map1)
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
     # Create and return the merged molecule.
-    return molecule0._merge(molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            allow_ring_size_change=allow_ring_size_change, property_map0=property_map0, property_map1=property_map1)
+    return _merge(molecule0, molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
+            allow_ring_size_change=allow_ring_size_change, force=force,
+            property_map0=property_map0, property_map1=property_map1)
+
+def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+    """Visualise the mapping between molecule0 and molecule1. This draws a 2D
+       depiction of the two molecules side-by-side, with the mapped atoms from
+       each molecule highlighted.
+
+       Parameters
+       ----------
+
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule of interest. This is the molecule that will be
+           drawn.
+
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The reference molecule against which the mapping is made.
+
+       mapping : dict
+           A dictionary mapping atoms in molecule0 to those in molecule1.
+
+       property_map0 : dict
+           A dictionary that maps "properties" in molecule0 to their user
+           defined values. This allows the user to refer to properties
+           with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+       property_map1 : dict
+           A dictionary that maps "properties" in molecule1 to their user
+           defined values.
+
+       Returns
+       -------
+
+       image : IPython.core.display.Image
+           An image of molecule0 with the mapping atoms highlighted.
+    """
+
+    # Only draw within a notebook.
+    if not _is_notebook:
+        return None
+
+    _assert_imported(_rdkit)
+
+    if not isinstance(molecule0, _Molecule):
+        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if not isinstance(molecule1, _Molecule):
+        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+
+    if not isinstance(property_map0, dict):
+        raise TypeError("'property_map0' must be of type 'dict'")
+
+    if not isinstance(property_map1, dict):
+        raise TypeError("'property_map1' must be of type 'dict'")
+
+    # The user has passed an atom mapping.
+    if mapping is not None:
+        if not isinstance(mapping, dict):
+            raise TypeError("'mapping' must be of type 'dict'.")
+        else:
+            _validate_mapping(molecule0, molecule1, mapping, "mapping")
+
+    # Get the best atom mapping and align molecule0 to molecule1 based on the
+    # mapping.
+    else:
+        mapping = matchAtoms(molecule0, molecule1,
+            property_map0=property_map0, property_map1=property_map1)
+        molecule0 = rmsdAlign(molecule0, molecule1, mapping)
+
+    # Create a temporary working directory and store the directory name.
+    tmp_dir = _tempfile.TemporaryDirectory()
+    work_dir = tmp_dir.name
+
+    # Write the first molecule to PDB format.
+    _IO.saveMolecules(work_dir + "/molecule",
+        molecule0, "pdb", property_map=property_map0)
+
+    from rdkit.Chem import AllChem as _AllChem
+    from rdkit.Chem.Draw import IPythonConsole as _IPythonConsole
+
+    # Set image properties.
+    _IPythonConsole.drawOptions.addAtomIndices = True
+    _IPythonConsole.molSize = 1200, 400
+
+    # Load the molecules into RDKit.
+    rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
+        sanitize=False, removeHs=False)
+
+    # Highlight atoms from the mapping.
+    rdmol.__sssAtoms = mapping.keys()
+
+    # Convert to 2D.
+    _AllChem.Compute2DCoords(rdmol)
+
+    # Convert to PNG bytes.
+    png = _IPythonConsole._toPNG(rdmol)
+
+    return _IPythonConsole.display.Image(png)
 
 def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
-        mcs_smarts, prematch, scoring_function, property_map0, property_map1):
+        mcs_smarts, prematch, scoring_function, max_scoring_matches, property_map0,
+        property_map1):
     """Internal function to score atom mappings based on the root mean squared
        displacement (RMSD) between mapped atoms in two molecules. Optionally,
        molecule0 can first be aligned to molecule1 based on the mapping prior
@@ -652,6 +1345,11 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
        scoring_function : str
            The RMSD scoring function.
 
+       max_scoring_matches : int
+           The maximum number of matching MCS substructures to consider when
+           computing mapping scores. Consider reducing this if you find the
+           matchAtoms function to be taking an excessive amount of time.
+
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
            defined values. This allows the user to refer to properties
@@ -682,10 +1380,13 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
 
     # Get the set of matching substructures in each molecule. For some reason
     # setting uniquify to True removes valid matches, in some cases even the
-    # best match! As such, we set uniquify to False and account ignore duplicate
+    # best match! As such, we set uniquify to False and account for duplicate
     # mappings in the code below.
-    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
-    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False, maxMatches=1000, useChirality=False)
+
+    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False,
+        maxMatches=max_scoring_matches, useChirality=False)
+    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False,
+        maxMatches=max_scoring_matches, useChirality=False)
 
     # Swap the order of the matches.
     if len(matches0) < len(matches1):
@@ -739,8 +1440,12 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
                     if scoring_function == "RMSDALIGN":
                         try:
                             molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
-                        except:
-                            raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                        except Exception as e:
+                            msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                            if _isVerbose():
+                                raise _AlignmentError(msg) from e
+                            else:
+                                raise _AlignmentError(msg) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
                         molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
@@ -860,8 +1565,12 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
             if scoring_function == "RMSDALIGN":
                 try:
                     molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
-                except:
-                    raise _AlignmentError("Failed to align molecules when scoring based on mapping: %r" % mapping) from None
+                except Exception as e:
+                    msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                    if _isVerbose():
+                        raise _AlignmentError(msg) from e
+                    else:
+                        raise _AlignmentError(msg) from None
             # Flexibly align molecule0 to molecule1 based on the mapping.
             elif scoring_function == "RMSDFLEXALIGN":
                 molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), _from_sire_mapping(mapping),
@@ -929,7 +1638,7 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
     for idx0, idx1 in mapping.items():
             if type(idx0) is int and type(idx1) is int:
                 pass
-            elif type(idx0) is _SireMol.AtomIdx and type(idx1) is _SireMol.AtomIdx:
+            elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
                 idx0 = idx0.value()
                 idx1 = idx1.value()
             else:
@@ -962,7 +1671,7 @@ def _to_sire_mapping(mapping):
     # Convert the mapping to AtomIdx key:value pairs.
     for idx0, idx1 in mapping.items():
         # Early exit if the mapping is already the correct format.
-        if type(idx0) is _SireMol.AtomIdx:
+        if isinstance(idx0, _SireMol.AtomIdx):
             return mapping
         else:
             sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)

@@ -15,28 +15,33 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
+@pytest.fixture
+def system(scope="session"):
+    """Re-use the same molecuar system for each test."""
+    return BSS.IO.readMolecules("test/io/amber/ala/*")
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_minimise():
+def test_minimise(system):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_equilibrate():
+def test_equilibrate(system):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
     protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_heat():
+def test_heat(system):
     """Test a heating protocol."""
 
     # Create a short heating protocol.
@@ -45,10 +50,10 @@ def test_heat():
                                           temperature_end=BSS.Types.Temperature(300, "kelvin"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_cool():
+def test_cool(system):
     """Test a cooling protocol."""
 
     # Create a short heating protocol.
@@ -57,20 +62,20 @@ def test_cool():
                                           temperature_end=BSS.Types.Temperature(0, "kelvin"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_production():
+def test_production(system):
     """Test a production protocol."""
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_args():
+def test_args(system):
     """Test setting an manipulation of command-line args."""
 
     # Create a default minimisation protocol. This doesn't matter since
@@ -78,7 +83,7 @@ def test_args():
     protocol = BSS.Protocol.Minimisation()
 
     # Create the process object.
-    process = create_process(protocol)
+    process = BSS.Process.Amber(system, protocol, name="test")
 
     # Clear the existing arguments.
     process.clearArgs()
@@ -176,23 +181,11 @@ def test_args():
     assert len(arg_string_list) == 17
     assert arg_string == "-x X -a A -b B -y -e -f 6 -g -h H -k K -z Z"
 
-def create_process(protocol):
-    """Create an Amber process for a given prototol."""
-
-    # Glob the input files.
-    files = BSS.IO.glob("test/io/amber/ala/*")
-
-    # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
-
-    # Initialise the AMBER process.
-    return BSS.Process.Amber(system, protocol, name="test")
-
-def run_process(protocol):
+def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
     # Initialise the AMBER process.
-    process = create_process(protocol)
+    process = BSS.Process.Amber(system, protocol, name="test")
 
     # Start the AMBER simulation.
     process.start()

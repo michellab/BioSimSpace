@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,6 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    engines
     run
 
 Classes
@@ -38,10 +39,13 @@ Classes
 
     Bound
     Grid
+    Restraint
 """
 
 from ._bound import *
 from ._grid import *
 from ._metadynamics import *
+from ._restraint import *
+from ._utils import *
 
 from . import CollectiveVariable

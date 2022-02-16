@@ -7,24 +7,33 @@ Installation
 Conda install
 =============
 
-The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__:
+The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__.
+To create a new environment:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab biosimspace
+    conda create -n biosimspace -c conda-forge -c michellab biosimspace
+    conda activate biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda create -n biosimspace-dev -c conda-forge -c michellab/label/dev biosimspace
+    conda activate biosimspace-dev
+
+When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
+at the same time:
+
+.. code-block:: bash
+
+    conda update -c conda-forge -c michellab/label/dev biosimspace sire
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
 
 .. code-block:: bash
 
-    jupyter-nbextension enable fileupload --py --sys-prefix
     jupyter-nbextension enable nglview --py --sys-prefix
 
 Unless you add the required channels to your Conda configuration, then you'll
@@ -32,60 +41,27 @@ need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c michellab/label/dev biosimspace
 
-Note that because of Conda's peculiar scoring metrics you might not end up with
-the latest version of BioSimSpace when performing a fresh install or update.
-(It tries to minimise various things, such as the number of dependencies
-installed, which is difficult when your package depends on many other packages.)
-To see what packages are available, run:
+If you find that Conda is particularly slow to install or upgrade BioSimSpace,
+then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
 
 .. code-block:: bash
 
-    conda search -c michellab/label/dev biosimspace
+    conda install -c conda-forge mamba
 
-You can then install the latest version by explicitly stating the full package
-name, e.g.:
+You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
-    conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace=2019.1.0=py37h14c3975_85
+    mamba create -n biosimspace -c conda-forge -c michellab biosimspace
 
 Binary install
 ==============
 
-The self-extracting binary for the 2019.2.0 release of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_2019_2_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/0ALaspTf-EZ3KwSNIKX4Y1bdhiXtMnd98IdcLElltz0/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_linux.run>`__
-* Mac OS X: `biosimspace_2019_2_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/g5GMMGqdNXb6Zv40vnRi5rVDjiKgmH78qI9WiW6xwxg/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_2_0_osx.run>`__
-
-The self-extracting binary for the 2019.1.0 release of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_2019_1_0_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/uM4T7NjDaeLBOt0cBXSEyW7p4XcPhcKewlytEheX3HA/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_linux.run>`__
-* Mac OS X: `biosimspace_2019_1_0_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/yFhNo6rPsh2QtWpjNNsx6DGr45idI3AZ_-cc6L7k51g/n/chryswoods/b/biosimspace_releases/o/biosimspace_2019_1_0_osx.run>`__
-
-The latest self-extracting binary for the development version of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/ZH4wscDHe59T28yVJtrMH8uqifI_ih0NL5IyqxXQjSo/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* Mac OS X: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/whcwfvWfndjA4RxupM-4gsVsjcdR0w5I9aP1RJKPruQ/n/chryswoods/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
-
-(These are portable X86-64 binaries that should work on any Linux distribution released
-since ~2011, or any OS X >= 10.9 [Mavericks, released 2013]. Note that they are compiled
-with AVX enabled, so will only work on modern (>2011) X86-64 Intel/AMD processors.)
-
-Once downloaded, the binary can be unpacked as follows, e.g. for the Linux
-development package:
-
-.. code-block:: bash
-
-   chmod +x biosimspace_devel_latest_linux.run
-   ./biosimspace_devel_latest_linux.run
-
-This will let you choose where to install BioSimSpace. By default, this will be
-into ``$HOME/biosimspace.app``.
+Prior to the 2022.1.0 release we provided a self-extracting binary install
+of BioSimSpace. Please visit our :ref:`binaries <ref_binaries>` page if you
+wish to download any of these.
 
 For developers
 ==============
@@ -148,33 +124,6 @@ environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 
    BSS_SKIP_DEPENDENCIES=True $HOME/sire.app/bin/python setup.py install
 
-OpenMM compatibility
-====================
-
-Some BioSimSpace functionality requires `OpenMM <http://openmm.org>`__. Although
-a bundled version is provided as part of the installation, this may not
-be appropriate for your GPU drivers. To automatically detect and install
-a suitable version of OpenMM, simply run the following command post-install:
-
-.. code-block:: bash
-
-    optimise_openmm
-
-(Note that, depending on your installation method, ``optimise_openmm`` may
-be located in ``$HOME/sire.app/bin``.)
-
-Alternatively, to manually install a particular version of OpenMM you can
-use a specific Conda label, e.g.:
-
-.. code-block:: bash
-
-    conda install -c omnia/label/cuda90 openmm
-
-If you have compiled Sire against a custom OpenMM installation, then you'll
-need to set the ``OPENMM_PLUGIN_DIR`` environment variable to point to the
-correct plugin location. By default this variable is set to the plugin
-directory of the bundled OpenMM package.
-
 Common issues
 =============
 
@@ -207,3 +156,12 @@ recommended installation instructions.
 * `Amber / AmberTools <http://ambermd.org>`__ -- *Dynamics / Parameterisation*
 * `Gromacs <http://www.gromacs.org>`__ -- *Dynamics / Parameterisation / Solvation*
 * `Namd <http://www.ks.uiuc.edu/Research/namd>`__ -- *Dynamics*
+
+For `Amber / AmberTools <http://ambermd.org>`__, we also recommend adding
+``${AMBERHOME}/bin`` to your ``PATH`` to ensure that its binaries are
+visible to third-party libraries, such as
+`openff-toolkit <https://github.com/openforcefield/openff-toolkit>`__.
+
+Please visit our :ref:`compatibility <ref_compatibility>` page to see which
+versions of the external dependencies BioSimSpace has currently been tested
+against.

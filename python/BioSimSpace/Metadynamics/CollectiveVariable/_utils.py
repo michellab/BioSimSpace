@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,11 +24,12 @@ Utility functions.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["list"]
 
 from ._distance import *
+from ._funnel import *
 from ._torsion import *
 
 # Create a list of the supported collective variables.
@@ -36,7 +37,7 @@ _colvars = []
 import sys as _sys
 _namespace = _sys.modules[__name__]
 for _var in dir():
-    if _var[0] != "_" and _var != "Custom":
+    if _var[0] != "_" and _var[0] != _var[0].lower():
         _colvars.append(_var)
 del _namespace
 del _sys

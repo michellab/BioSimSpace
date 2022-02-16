@@ -1,2 +1,4 @@
 include versioneer.py
 include BioSimSpace/_version.py
+include BioSimSpace/Metadynamics/_aux/*
+include BioSimSpace/Align/_lomap/*

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,17 @@ Classes
 .. autosummary::
     :toctree: generated/
 
-    Binding
-    Solvation
+    Relative
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+    engines
+    getData
 """
 
-from ._binding import *
-from ._solvation import *
+from ._relative import *
+from ._utils import *

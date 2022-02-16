@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,15 +24,17 @@ Utility functions.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["protocols", "createProtocol"]
 
 from ._custom import *
 from ._equilibration import *
 from ._free_energy import *
+from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
+from ._steering import *
 
 _protocols = []         # List of protocols (actual name).
 _protocols_lower = []   # List of lower case names.

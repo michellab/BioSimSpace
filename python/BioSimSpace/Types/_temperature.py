@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ A temperature type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
@@ -110,7 +110,7 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Addition of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
@@ -128,14 +128,14 @@ class Temperature(_Type):
                 if not allow_offset:
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
-                    # Left-hand operand takes precendence.
+                    # Left-hand operand takes precedence.
                     mag = self._magnitude + other._convert_to(self._unit).magnitude()
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self + temp
 
@@ -149,7 +149,7 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Subtraction of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
@@ -162,19 +162,19 @@ class Temperature(_Type):
                         # Return a new object of the same type with the original unit.
                         return Temperature(mag, self._unit)
                 else:
-                    return super().__add__(other)
+                    return super().__sub__(other)
             else:
                 if not allow_offset:
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
-                    # Left-hand operand takes precendence.
+                    # Left-hand operand takes precedence.
                     mag = self._magnitude - other._convert_to(self._unit).magnitude()
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self - temp
 
@@ -196,7 +196,7 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Only support multiplication by float.
-                if type(other) is float:
+                if isinstance(other, float):
                     # Multiply magnitude.
                     mag = self._magnitude * other
 
@@ -230,7 +230,7 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Float division.
-                if type(other) is float:
+                if isinstance(other, float):
                     # Divide magnitude.
                     mag = self._magnitude / other
 
@@ -238,11 +238,11 @@ class Temperature(_Type):
                     return Temperature(mag, self._unit)
 
                 # Division by another object of the same type.
-                elif type(other) is type(self):
+                elif isinstance(other, self):
                     return self._magnitude / other._convert_to(self._unit).magnitude()
 
                 # Division by a string.
-                elif type(other) is str:
+                elif isinstance(other, str):
                     obj = self._from_string(other)
                     return self / obj
 

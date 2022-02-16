@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,26 +24,29 @@ Functionality for creating BioSimSpace workflow components (nodes).
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Node"]
+
+from BioSimSpace._Utils import _try_import
 
 import configargparse as _argparse
 import collections as _collections
 import __main__
 import os as _os
+import shutil as _shutil
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
-import yaml as _yaml
+_yaml = _try_import("yaml")
 
 from BioSimSpace import _is_notebook
+from BioSimSpace import setVerbose
 
 # Enable Jupyter widgets.
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
-    import fileupload as _fileupload
     import ipywidgets as _widgets
     import zipfile as _zipfile
 
@@ -68,6 +71,160 @@ from ._requirements import Volume as _Volume
 # Float types (including those with units).
 _float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
     _Temperature, _Time]
+
+# Unit types.
+_unit_types = [_Charge, _Energy, _Pressure, _Length, _Area, _Volume,
+    _Temperature, _Time]
+
+class Parser(_argparse.ArgumentParser):
+    # Pass the message straight through to the exit method.
+    def error(self, message):
+        return self.exit(status=1, message=message)
+
+    # Print the full help text, then the message, then exit.
+    def exit(self, status=0, message=None):
+        if message is not None:
+            self.print_help()
+            print("\nArgument parser failed with the following message:")
+            message = "   " + message + "\n"
+        return super().exit(status, message)
+
+class CwlAction(_argparse.Action):
+    """Helper class to export CWL wrappers from Node metadata."""
+
+    @classmethod
+    def bind_node(cls, node):
+        """Bind the inputs and outputs of a node to this action."""
+        cls.inputs = node._inputs
+        cls.outputs = node._outputs
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Export the CWL wrapper."""
+
+        if values == False:
+            parser.exit()
+            return
+
+        for value in self.outputs.values():
+            # Currently we only support File and FileSet output
+            # requirements with CWL.
+            output_type = type(value)
+            if output_type not in [_File, _FileSet]:
+                raise TypeError("We currently only support File and "
+                                "FileSet outputs with CWL.")
+
+        # Store the absolute path of the Python interpreter used to run the node.
+        exe = _sys.executable
+
+        # Store the absolute path of the node.
+        import __main__
+        node = _os.path.abspath(__main__.__file__)
+
+        # Create the name of the CWL wrapper.
+        cwl_wrapper = __main__.__file__.replace(".py", ".cwl")
+
+        # Write the wrapper.
+        with open(cwl_wrapper, "w") as file:
+            # Write the header.
+            file.write( "cwlVersion: v1.0\n")
+            file.write( "class: CommandLineTool\n")
+            file.write(f'baseCommand: ["{exe}", "{node}", "--strict-file-naming"]\n')
+
+            # Write the inputs section.
+            file.write("\n")
+            file.write("inputs:\n")
+            for key, value in self.inputs.items():
+                file.write(f"  {key}:\n")
+
+                # Map the requirement to the appropriate CWL type.
+
+                if isinstance(value, _Boolean):
+                    cwl_type = "bool"
+
+                elif isinstance(value, _Integer):
+                    cwl_type = "int"
+
+                elif isinstance(value, _Float):
+                    cwl_type = "float"
+
+                elif isinstance(value, _String):
+                    cwl_type = "string"
+
+                elif isinstance(value, _File):
+                    cwl_type = "File"
+
+                elif isinstance(value, _FileSet):
+                    cwl_type = "array"
+
+                # Use a string for unit-based types since it gives
+                # the user greatest flexibility in expressing the input.
+                if type(value) in _unit_types:
+                    cwl_type = "string"
+
+                # Handle FileSet types separately.
+                if cwl_type == "array":
+                    file.write("    type:\n")
+                    if value.isOptional():
+                        file.write('      - "null"\n')
+                    file.write("      - type: array\n")
+                    file.write("        items: File\n")
+
+                # Handle optional values.
+                else:
+                    if value.isOptional():
+                        cwl_type += "?"
+                    file.write(f"    type: {cwl_type}\n")
+
+                # Handle default values.
+                default = value.getDefault()
+                if default is not None:
+                    if type(value) in _unit_types:
+                        magnitude = default.magnitude()
+                        unit = default.unit()
+                        unit = unit.lower()
+                        file.write(f"    default: {magnitude} {unit}\n")
+                    else:
+                        file.write(f"    default: {default}\n")
+
+                # Bind the command-line option name.
+                file.write( "    inputBinding:\n")
+                file.write(f"      prefix: --{key}\n")
+                file.write( "      separate: true\n")
+
+                file.write("\n")
+
+            # Write the outputs section.
+            if len(self.outputs) == 0:
+                file.write("outputs: []\n")
+            else:
+                file.write("outputs:\n")
+                for key, value in self.outputs.items():
+                    output_type = type(value)
+                    file.write(f"  {key}:\n")
+
+                    # Only support File and FileSet for now. This has been
+                    # validated at the start of the __call__ method, but we
+                    # include an if/elif/else conditional block so that we
+                    # can support additional types in future. Note that we
+                    # use glob to bind the output, so the prefix used to name
+                    # files must match the key used to define the requirement.
+
+                    # File.
+                    if output_type is _File:
+                        file.write( "    type: File\n")
+                        file.write( "    outputBinding:\n")
+                        file.write(f'      glob: "{key}.*"\n')
+
+                    # FileSet.
+                    elif output_type is _FileSet:
+                        file.write( "    type:\n")
+                        file.write( "      type: array\n")
+                        file.write( "      items: File\n")
+                        file.write( "    outputBinding:\n")
+                        file.write(f'      glob: "{key}.*"\n')
+
+        # Exit the parser.
+        parser.exit()
 
 class Node():
     """A class for interfacing with BioSimSpace nodes.
@@ -102,7 +259,7 @@ class Node():
     _is_knime = False
 
     # Whether the node is run from a Jupyter notebook.
-    _is_notebook = _is_notebook()
+    _is_notebook = _is_notebook
 
     def __init__(self, description, name=None):
         """Constructor.
@@ -117,7 +274,7 @@ class Node():
                The name of the node.
         """
 
-        if type(description) is not str:
+        if not isinstance(description, str):
             raise TypeError("The 'description' keyword must be of type 'str'.")
 
         # Set the node name.
@@ -127,17 +284,17 @@ class Node():
             except:
                 self._name = None
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("The 'name' keyword must be of type 'str'.")
             self._name = name
 
         # Set the node description string.
         self._description = description
 
-        # Initalise the authors.
+        # Initialise the authors.
         self._authors = None
 
-        # Initalise the license.
+        # Initialise the license.
         self._license = None
 
         # Initialise dictionaries for the inputs/outputs.
@@ -160,8 +317,11 @@ class Node():
         self._parser = None
         self._required = None
 
-        # Intialise the Jupyter input panel.
+        # Initialise the Jupyter input panel.
         self._control_panel = None
+
+        # Strict file naming is off by default.
+        self._strict_file_naming = False
 
         # Running from the command-line.
         if not self._is_knime and not self._is_notebook:
@@ -169,16 +329,25 @@ class Node():
             description = self._generate_description()
 
             # Create the parser.
-            self._parser = _argparse.ArgumentParser(description=description,
+            self._parser = Parser(description=description,
                 formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
                 config_file_parser_class=_argparse.YAMLConfigFileParser,
                 add_config_file_help=False)
+
+            # Bind the node inputs and outputs to the CWL action.
+            CwlAction.bind_node(self)
 
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
             self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
             self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
+            self._optional.add_argument("-v", "--verbose", type=_str2bool, nargs='?', const=True, default=False,
+                                        help="Print verbose error messages.")
+            self._optional.add_argument("--export-cwl", action=CwlAction, type=_str2bool, nargs='?', const=True,
+                                        default=False, help="Export Common Workflow Language (CWL) wrapper and exit.")
+            self._optional.add_argument("--strict-file-naming", type=_str2bool, nargs='?', const=True, default=False,
+                                        help="Enforce that the prefix of any file based output matches its name.")
 
             # Overload the "_check_value" method for more flexible string support.
             # (Ignore whitespace and case insensitive.)
@@ -205,7 +374,7 @@ class Node():
                The input requirement object.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'.")
 
         if not isinstance(input, _Requirement):
@@ -261,7 +430,7 @@ class Node():
                     self._optional.add_argument(name, type=input.getArgType(), nargs='+',
                         help=self._create_help_string(input), default=input.getDefault())
                 else:
-                    if input.getArgType() is bool:
+                    if isinstance(input.getArgType(), bool):
                         self._optional.add_argument(name, type=_str2bool, nargs='?',
                             const=True, default=input.getDefault(), help=self._create_help_string(input))
                     else:
@@ -289,7 +458,7 @@ class Node():
                         help=self._create_help_string(input), required=True,
                         choices=input.getAllowedValues())
                 else:
-                    if input.getArgType() is bool:
+                    if isinstance(input.getArgType(), bool):
                         self._required.add_argument(name, type=_str2bool, nargs='?',
                             const=True, help=self._create_help_string(input))
                     else:
@@ -339,14 +508,13 @@ class Node():
         # Add a Jupyter widget for each of the supported requirement types.
 
         # Boolean.
-        if type(input) is _Boolean:
+        if isinstance(input, _Boolean):
             # Create a Jupyter toggle button.
             widget = _widgets.ToggleButton(
                 value=False,
                 description=name,
                 tooltip=input.getHelp(),
                 button_style="",
-                icon="check",
                 disabled=False
             )
 
@@ -376,7 +544,7 @@ class Node():
             self._widgets[name] = widget
 
         # Integer.
-        elif type(input) is _Integer:
+        elif isinstance(input, _Integer):
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -527,7 +695,7 @@ class Node():
                             continuous_update=False,
                             orientation="horizontal",
                             readout=True,
-                            readout_format=".1f",
+                            readout_format=".2f",
                             disabled=False
                         )
 
@@ -568,7 +736,7 @@ class Node():
             self._widgets[name] = widget
 
         # String.
-        elif type(input) is _String:
+        elif isinstance(input, _String):
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -631,10 +799,17 @@ class Node():
             # Store the widget.
             self._widgets[name] = widget
 
-        # File.
-        elif type(input) is _File:
+        # File / File set.
+        elif isinstance(input, (_File, _FileSet)):
+
             # Create a fileupload widget.
-            widget = _fileupload.FileUploadWidget()
+            if isinstance(input, _FileSet):
+                widget = _widgets.FileUpload(multiple=True)
+            else:
+                widget = _widgets.FileUpload(multiple=False)
+
+            # Make the widget dynamically resize to the content.
+            widget.layout = {"width": "max-content"}
 
             # Add the 'set' indicator button to the widget.
             widget._button = button
@@ -642,11 +817,8 @@ class Node():
             # Flag that the widget is unset.
             widget._is_set = False
 
-            # Flag that this is just a single file upload.
-            widget._is_multi = False
-
-            # Set the value to None.
-            widget.value = None
+            # Flag that this widget references files.
+            widget._is_file = True
 
             # Store the requirement name.
             widget._name = name
@@ -656,41 +828,6 @@ class Node():
 
             # Store the widget.
             self._widgets[name] = widget
-
-        # File set.
-        elif type(input) is _FileSet:
-            # Create a fileupload widget.
-            widget = _fileupload.FileUploadWidget()
-
-            # Add the 'set' indicator button to the widget.
-            widget._button = button
-
-            # Flag that the widget is unset.
-            widget._is_set = False
-
-            # Flag that this is is a set of files.
-            widget._is_multi = True
-
-            # Set the value to None.
-            widget.value = None
-
-            # Store a reference to the node.
-            widget._node = self
-
-            # Store the requirement name.
-            widget._name = name
-
-            # Store the requirement.
-            widget._input = input
-
-            # Bind the callback function.
-            widget.observe(_on_file_upload, names="data")
-
-            # This is a new widget.
-            if not name in self._widgets or reset:
-                self._widgets[name] = [widget]
-            else:
-                self._widgets[name].append(widget)
 
         # Unsupported input.
         else:
@@ -709,13 +846,13 @@ class Node():
                The output requirement object.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'.")
 
         if not isinstance(output, _Requirement):
             raise TypeError("'output' must be of type 'Requirement'.")
 
-        # We already have an ouput requirement with this name.
+        # We already have an output requirement with this name.
         if name in self._outputs:
             _warnings.warn("Duplicate input requirement. Overwriting existing value!")
 
@@ -739,6 +876,44 @@ class Node():
                The value of the output.
         """
         try:
+            # Enforce strict naming for all file-based outputs. This ensures
+            # that the prefix used matches the requirement name.
+            if self._strict_file_naming:
+                if isinstance(self._outputs[name], (_File, _FileSet)):
+                    is_file = False
+                    new_value = []
+                    # For convenience, convert single file names to a list with
+                    # one entry.
+                    if isinstance(type(value), str):
+                        value = [value]
+                        is_file = True
+                    # Loop over each file.
+                    for file in value:
+                        # Get the directory name, file prefix, and file extension.
+                        basename = _os.path.basename(file)
+                        dirname = _os.path.dirname(file)
+                        fileprefix = basename.split(".")[0]
+                        extension = basename.split(".")[1]
+
+                        # If the file prefix doesn't match the requirement name, then
+                        # rename, i.e. move, the file.
+                        if fileprefix != name:
+                            _warnings.warn(f"Output file prefix '{fileprefix}' "
+                                           f"doesn't match requirement name '{name}'. "
+                                            "Renaming file!")
+                            new_name = dirname + f"/{name}.{extension}"
+                            _shutil.move(file, new_name)
+                            file = new_name
+
+                        # Store the new value of the file name.
+                        new_value.append(file)
+
+                    # Convert back into a single entry if this was a File requirement.
+                    if is_file:
+                        value = new_value[0]
+                    else:
+                        value = new_value
+
             self._outputs[name].setValue(value, name=name)
         except KeyError:
             raise
@@ -759,7 +934,7 @@ class Node():
                The value of the named input requirement.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("The name must be of type 'str'")
 
         # Validate the inputs.
@@ -767,7 +942,7 @@ class Node():
 
         try:
             value = self._inputs[name].getValue()
-            if type(value) is list:
+            if isinstance(value, list):
                 return value.copy()
             else:
                 return value
@@ -799,7 +974,7 @@ class Node():
                The error message.
         """
 
-        if type(error) is not str:
+        if not isinstance(error, str):
             raise TypeError("The error message must be of type 'str'")
         else:
             self._errors.append(error)
@@ -823,13 +998,13 @@ class Node():
         if name is None:
             raise ValueError("Missing required 'name' keyword argument.")
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
 
-        if email is not None and type(email) is not str:
+        if email is not None and not isinstance(email, str):
             raise TypeError("'email' must be of type 'str'")
 
-        if affiliation is not None and type(affiliation) is not str:
+        if affiliation is not None and not isinstance(affiliation, str):
             raise TypeError("'affiliation' must be of type 'str'")
 
         if self._authors is None:
@@ -859,7 +1034,7 @@ class Node():
            license : str
                The license type.
         """
-        if type(license) is not str:
+        if not isinstance(license, str):
             raise TypeError("The license must be of type 'str'")
         else:
             self._license = license
@@ -904,7 +1079,7 @@ class Node():
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
 
-            # Credate the label string.
+            # Create the label string.
             string = "%s: %s" % (name, self._inputs[name].getHelp())
 
             # Add the unit information.
@@ -916,7 +1091,7 @@ class Node():
             label = _widgets.Label(value=string)
 
             # This is a FileSet requirement with multiple widgets.
-            if type(widget) is list:
+            if isinstance(widget, list):
                 items = [label] + widget
                 indicator = widget[0]._button
             else:
@@ -972,17 +1147,19 @@ class Node():
                 # Use the widget value if it has been set, otherwise, set the value to None.
                 # This ensures that the user actually sets a value.
 
-                # This is a FileSet requirement with multiple widgets.
-                if type(widget) is list:
-                    value = []
-                    # Loop over all of the widgets.
-                    for w in widget:
-                        if w._is_set:
-                            value.append(w.value)
-                    # If there are no values, set to None.
-                    if len(value) == 0:
+                # File based widget.
+                if hasattr(widget, "_is_file"):
+                    if widget._is_set:
+                        if len(widget._files) == 1:
+                            # Single file.
+                            value = widget._files[0]
+                        else:
+                            # File set.
+                            value = widget._files
+                    else:
                         value = None
-                # Single widget.
+
+                # Non file widget.
                 else:
                     if widget._is_set:
                         value = widget.value
@@ -994,12 +1171,19 @@ class Node():
         # Command-line.
         else:
             # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_known_args()[0])
+            args = vars(self._parser.parse_known_args(
+                args=None if _sys.argv[1:] else ['--help'])[0])
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                if key is not "config":
-                    self._inputs[key].setValue(value, name=key)
+                if key == "verbose":
+                    setVerbose(value)
+                elif key == "strict_file_naming":
+                    if value is True:
+                        self._strict_file_naming = True
+                else:
+                    if not key in ["config", "export_cwl"]:
+                        self._inputs[key].setValue(value, name=key)
 
     def validate(self, file_prefix="output"):
         """Whether the output requirements are satisfied.
@@ -1019,7 +1203,7 @@ class Node():
                the node output.
         """
 
-        if type(file_prefix) is not str:
+        if not isinstance(file_prefix, str):
             raise TypeError("The 'file_prefix' keyword must be of type 'str'.")
 
         # Flag that we have validated output.
@@ -1033,7 +1217,7 @@ class Node():
             if output.getValue() is None:
                 self._errors.append("Missing output for requirement '%s'" % name)
             else:
-                if type(output) is _File or type(output) is _FileSet:
+                if isinstance(output, (_File, _FileSet)):
                     file_outputs.append(output)
 
         # Node failed.
@@ -1057,15 +1241,21 @@ class Node():
                 with _zipfile.ZipFile(zipname, "w") as zip:
                     # Loop over all of the file outputs.
                     for output in file_outputs:
-                        if type(output) is _File:
+                        if isinstance(output, _File):
                             file = output.getValue()
                             zip.write(file, arcname=_os.path.basename(file))
                         else:
                             for file in output.getValue():
                                 zip.write(file, arcname=_os.path.basename(file))
 
+                # Create a FileLink to the archive.
+                file_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                file_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
                 # Return a link to the archive.
-                return _FileLink(zipname)
+                return file_link
         else:
             # Initialise an empty dictionary to store the output data.
             data = {}
@@ -1128,7 +1318,7 @@ class Node():
                 help += "\n  min=%s" % minimum
         else:
             if maximum is not None:
-                help += "\n  max=%s" % maxmimum
+                help += "\n  max=%s" % maximum
 
         return help
 
@@ -1184,48 +1374,70 @@ def _on_value_change(change):
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
 
-    # Store the number of bytes.
-    num_bytes = len(change["owner"].data)
+    # Initialise the widget label.
+    label = ""
 
-    # Return if there is no data.
-    if num_bytes == 0:
-        return
+    # Initialise file counter.
+    num_files = 0
 
-    # Get the file name.
-    filename = change["owner"].filename
+    # Clear the list of files.
+    change["owner"]._files = []
 
-    # Create the uploads directory if it doesn't already exist.
-    if not _os.path.isdir("uploads"):
-        _os.makedirs("uploads")
+    # Loop over all uploaded files.
+    for filename in change["owner"].value:
 
-    # Append the upload directory to the file name.
-    new_filename = "uploads/%s" % filename
+        # Store the number of bytes.
+        num_bytes = len(change["owner"].value[filename]["content"])
 
-    # Has this file already been uploaded?
-    if _os.path.isfile(new_filename):
+        # Return if there is no data.
+        if num_bytes == 0:
+            return
 
-        # We'll append a number to the file name.
-        index = 1
-        new_filename_append = new_filename + ".%d" % index
+        # Separate label with commas.
+        if num_files > 0:
+            label += ", "
 
-        # Keep trying until a unique name is found.
-        while _os.path.isfile(new_filename_append):
-            index += 1
+        # Extract the file content.
+        content = change["owner"].value[filename]["content"]
+
+        # Create the uploads directory if it doesn't already exist.
+        if not _os.path.isdir("uploads"):
+            _os.makedirs("uploads")
+
+        # Append the upload directory to the file name.
+        new_filename = "uploads/%s" % filename
+
+        # Has this file already been uploaded?
+        if _os.path.isfile(new_filename):
+
+            # We'll append a number to the file name.
+            index = 1
             new_filename_append = new_filename + ".%d" % index
 
-        # Copy back into the new_filename variable.
-        new_filename = new_filename_append
+            # Keep trying until a unique name is found.
+            while _os.path.isfile(new_filename_append):
+                index += 1
+                new_filename_append = new_filename + ".%d" % index
 
-    # Write the file to disk.
-    with open(new_filename, "wb") as file:
-        file.write(change["owner"].data)
+            # Copy back into the new_filename variable.
+            new_filename = new_filename_append
 
-    # Report that the file was uploaded.
-    print("Uploaded '{}' ({:.2f} kB)".format(
-        filename, num_bytes / 2 **10))
+        # Write the file to disk.
+        with open(new_filename, "wb") as file:
+            file.write(content)
 
-    # Clear the redundant data from the widget.
-    change["owner"].data = b""
+        # Report that the file was uploaded.
+        print("Uploaded '{}' ({:.2f} kB)".format(
+            filename, num_bytes / 2 **10))
+
+        # Truncate the filename string if it is more than 15 characters.
+        label += (filename[:15] + "...") if len(filename) > 15 else filename
+
+        # Increment the number of files.
+        num_files += 1
+
+        # Store the location of the uploaded file on disk.
+        change["owner"]._files.append(new_filename)
 
     # Flag that the widget value has been set.
     change["owner"]._is_set = True
@@ -1233,51 +1445,15 @@ def _on_file_upload(change):
     change["owner"]._button.button_style = "success"
     change["owner"]._button.icon = "fa-check"
 
-    # Now update the widget value.
+    # Update the widget description with the name of the uploaded file/files.
+    change["owner"].description = label
 
-    # Truncate the filename string if it is more than 15 characters.
-    label = (filename[:15] + "...") if len(filename) > 15 else filename
-
-    # This is a file set widget.
-    if change["owner"]._is_multi:
-        # This is the first time the value has been set.
-        if change["owner"].value is None:
-            # Whether a match has been found.
-            is_match = False
-
-            # Store the name of the input requirement.
-            name = change["owner"]._name
-
-            # Loop over the widgets in the control panel and find the one
-            # that with the matching name.
-            for index, child in enumerate(change["owner"]._node._control_panel.children[0].children):
-                # The widget name matches.
-                if child.children[1]._name == name:
-                    is_match = True
-                    break
-
-                # Increment the index.
-                index += 1
-
-            # No match!
-            if not is_match:
-                raise RunTimeError("Missing widget for requirement name: '%s'" % name)
-
-            # Create a new widget.
-            change["owner"]._node._addInputJupyter(name, change["owner"]._input)
-
-            # Convert the children of the control panel to a list.
-            boxes = list(change["owner"]._node._control_panel.children[0].children[index].children)
-
-            # Append the new widget to the list.
-            boxes.append(change["owner"]._node._widgets[name][-1])
-
-            # Add the updated box back into the list of boxes.
-            change["owner"]._node._control_panel.children[0].children[index].children = tuple(boxes)
-
-    # Update the widget value and label.
-    change["owner"].value = new_filename
-    change["owner"].label = label
+    # Update the widget counter. For some reason the default shows the total
+    # number of files uploaded, rather than the current number of files.
+    # This means that the number is incorrect if the user changes the files
+    # that are uploaded, e.g. fixing an error, or re-running the same node
+    # with different input.
+    change["owner"]._counter = len(change["owner"].value)
 
 def _check_value(action, value):
     """Helper function to overload argparse's choice checker."""
@@ -1288,7 +1464,7 @@ def _check_value(action, value):
         msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
 
         # If the value is a string, then strip whitespace and try a case insensitive search.
-        if type(value) is str:
+        if isinstance(value, str):
             new_value = value.replace(" ", "").upper()
             choices = [x.replace(" ", "").upper() for x in action.choices]
 

@@ -1,7 +1,7 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,12 +24,12 @@ Functionality for metadynamics protocols.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Metadynamics"]
 
-import math as _math
 import os as _os
+import warnings as _warnings
 
 from BioSimSpace import Types as _Types
 from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
@@ -50,10 +50,9 @@ class Metadynamics(_Protocol):
                  pressure=_Types.Pressure(1, "atmosphere"),
                  hill_height=_Types.Energy(1, "kj per mol"),
                  hill_frequency=1000,
-                 bias_factor=None,
-                 hills_file=None,
-                 grid_file=None,
-                 colvar_file=None
+                 report_interval=1000,
+                 restart_interval=1000,
+                 bias_factor=None
                 ):
         """Constructor.
 
@@ -82,25 +81,15 @@ class Metadynamics(_Protocol):
            hill_frequency : int
                The frequency at which hills are deposited.
 
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
+               frames are saved. (In integration steps.)
+
            bias_factor : float
                The bias factor for well tempered metadynamics.
-
-           hills_file : str
-               The path to a HILLS file from a previous simulation. This can
-               be used to restart in order to contiune sampling. The information
-               in the file must be consistent with the 'collective_variable'
-               argument.
-
-           grid_file : str
-               The path to a GRID file from a previous simulation. This can
-               be used to restart in order to continue sampling. The information
-               in the file must be consistent with the 'collective_variable'
-               argument.
-
-           colvar_file : str
-               The path to a COLVAR file from a previous simulation. The
-               information in the file must be consistent with the
-               'collective_variable' argument.
         """
 
         # Call the base class constructor.
@@ -121,6 +110,12 @@ class Metadynamics(_Protocol):
         # Set the system temperature.
         self.setTemperature(temperature)
 
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
+
         # Set the system pressure.
         if pressure is not None:
             self.setPressure(pressure)
@@ -136,20 +131,6 @@ class Metadynamics(_Protocol):
             self.setBiasFactor(bias_factor)
         else:
             self._bias_factor = None
-
-        # Set the restart files.
-        if hills_file is not None:
-            self.setHillsFile(hills_file)
-        else:
-            self._hills_file = None
-        if grid_file is not None:
-            self.setGridFile(grid_file)
-        else:
-            self._grid_file = None
-        if colvar_file is not None:
-            self.setColvarFile(colvar_file)
-        else:
-            self._colvar_file = None
 
         # Flag that the object has been created.
         self._is_new_object = False
@@ -170,12 +151,8 @@ class Metadynamics(_Protocol):
             string += ", hill_frequency=%s" % self._hill_frequency
             if self._bias_factor is not None:
                 string += ", bias_factor=%s" % self._bias_factor
-            if self._hills_file is not None:
-                string += ", hills_file=%r" % self._hills_file
-            if self._grid_file is not None:
-                string += ", grid_file=%r" % self._grid_file
-            if self._colvar_file is not None:
-                string += ", colvar_file=%r" % self._colvar_file
+            string += ", report_interval=%d" % self._report_interval
+            string += ", restart_interval=%d" % self._restart_interval
             string += ">"
 
             return string
@@ -211,11 +188,7 @@ class Metadynamics(_Protocol):
             self._collective_variable = [collective_variable]
             return
 
-        # Convert tuple to list.
-        if type(collective_variable) is tuple:
-            collective_variable = tuple(collective_variable)
-
-        if type(collective_variable) is list:
+        if isinstance(collective_variable, (list, tuple)):
             if not all(isinstance(x, _colvar_type) for x in collective_variable):
                 raise TypeError("'collective_variable' must all be of type "
                                 "'BioSimSpace.Metadynamics.CollectiveVariable'")
@@ -264,7 +237,7 @@ class Metadynamics(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -289,7 +262,7 @@ class Metadynamics(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -314,7 +287,7 @@ class Metadynamics(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -339,7 +312,7 @@ class Metadynamics(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -365,7 +338,7 @@ class Metadynamics(_Protocol):
                The hill height.
         """
 
-        if type(hill_height) is not _Types.Energy:
+        if not isinstance(hill_height, _Types.Energy):
             raise TypeError("'hill_height' must be of type 'BioSimSpace.Types.Energy'")
 
         # Check that heights is greater than zero.
@@ -436,153 +409,74 @@ class Metadynamics(_Protocol):
         except:
             raise TypeError("'bias_factor' must be of type 'float'")
 
-        if bias_factor <= 0:
-            raise ValueError("'bias_factor' must be > 0")
+        if bias_factor < 1.0:
+            raise ValueError("'bias_factor' must be > 1.0")
+
+        # OpenMM crashes when the bias factor is exactly one, so add a delta.
+        delta = 1e-6
+        if abs(bias_factor - 1.0) < delta:
+            bias_factor += delta
 
         self._bias_factor = bias_factor
 
-    def getHillsFile(self):
-        """Return the path to the HILLS file.
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
 
            Returns
            -------
 
-           hills_file : str
-               The path to the HILLS file.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        return self._hills_file
+        return self._report_interval
 
-    def setHillsFile(self, hills_file):
-        """Set the location of an existing HILLS file.
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
 
            Parameters
            ----------
 
-           hills_file : str
-               The path to an existing HILLS file.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        if type(hills_file) is not str:
-            raise ValueError("'hills_file' must be of type 'str'")
+        if not type(report_interval) is int:
+            raise TypeError("'report_interval' must be of type 'int'")
 
-        if not _os.path.isfile(hills_file):
-            raise ValueError("'hills_file' doesn't exist: %s" % hills_file)
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
 
-        # Read the header and make sure that it is consistent with the
-        # collective variables.
-        with open(hills_file, "r") as file:
-            # Read the header record.
-            header = file.readline()
+        self._report_interval = report_interval
 
-            # Split on whitespace to get the records.
-            records = header.split()
-
-            # Make sure this is a valid header.
-            if records[0] != "#!" or records[1] != "FIELDS" or records[2] != "time":
-                raise ValueError("'hills_file' doesn't contain valid header information!")
-
-            # Make sure there are the right number of collective variables.
-            num_colvar = 0
-            for x in range(3, len(records)):
-                # We've incremented past the collective variable records.
-                if "sigma" in records[x]:
-                    break
-                else:
-                    num_colvar += 1
-
-            try:
-                if num_colvar != len(self._collective_variable):
-                    raise ValueError("'hills_file' contains %d collective variable records, "
-                                     "should have %d" % (num_colvar, len(collective_variable)))
-            except:
-                if num_colvar != 1:
-                    raise ValueError("'hills_file' contains %d collective variable records, "
-                                     "should have 1" % num_colvar)
-
-        self._hills_file = hills_file
-
-    def getGridFile(self):
-        """Return the path to the GRID file.
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
 
            Returns
            -------
 
-           grid_file : str
-               The path to the GRID file.
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
         """
-        return self._grid_file
+        return self._restart_interval
 
-    def setGridFile(self, grid_file):
-        """Set the location of an existing GRID file.
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
 
            Parameters
            ----------
 
-           grid_file : str
-               The path to an existing GRID file.
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
         """
-        if type(grid_file) is not str:
-            raise ValueError("'grid_file' must be of type 'str'")
+        if not type(restart_interval) is int:
+            raise TypeError("'restart_interval' must be of type 'int'")
 
-        if not _os.path.isfile(grid_file):
-            raise ValueError("'grid_file' doesn't exist: %s" % grid_file)
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
 
-        # Read the header and make sure that it is consistent with the
-        # collective variables.
-        with open(grid_file, "r") as file:
-            # Read the header record.
-            header = file.readline()
-
-            # Split on whitespace to get the records.
-            records = header.split()
-
-            # Make sure this is a valid header.
-            if records[0] != "#!" or records[1] != "FIELDS":
-                raise ValueError("'grid_file' doesn't contain valid header information!")
-
-            # Make sure there are the right number of collective variables.
-            num_colvar = 0
-            for x in range(2, len(records)):
-                # We've incremented past the collective variable records.
-                if "bias" in records[x]:
-                    break
-                else:
-                    num_colvar += 1
-
-            try:
-                if num_colvar != len(self._collective_variable):
-                    raise ValueError("'grid_file' contains %d collective variable records, "
-                                     "should have %d" % (num_colvar, len(collective_variable)))
-            except:
-                if num_colvar != 1:
-                    raise ValueError("'grid_file' contains %d collective variable records, "
-                                     "should have 1" % num_colvar)
-
-        self._grid_file = grid_file
-
-    def getColvarFile(self):
-        """Return the path to the COLVAR file.
-
-           Returns
-           -------
-
-           colvar_file : str
-               The path to the COLVAR file.
-        """
-        return self._colvar_file
-
-    def setColvarFile(self, colvar_file):
-        """Set the location of an existing COLVAR file.
-
-           Parameters
-           ----------
-
-           colvar_file : str
-               The path to an existing COLVAR file.
-        """
-        if type(colvar_file) is not str:
-            raise ValueError("'colvar_file' must be of type 'str'")
-
-        if not _os.path.isfile(colvar_file):
-            raise ValueError("'colvar_file' doesn't exist: %s" % colvar_file)
-
-        self._colvar_file = colvar_file
+        self._restart_interval = restart_interval

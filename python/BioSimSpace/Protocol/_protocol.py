@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for handling simulation protocols.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 
@@ -34,7 +34,7 @@ class Protocol():
     def __init__(self):
         """Constructor."""
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
 
@@ -50,7 +50,7 @@ class Protocol():
            is_customised : bool
                Whether the protocol has been customised.
         """
-        if type(is_customised) is not bool:
+        if not isinstance(is_customised, bool):
             raise TypeError("'is_customised' must be of type 'bool'.")
 
         self._is_customised = is_customised

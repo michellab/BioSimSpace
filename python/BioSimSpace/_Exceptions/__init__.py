@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,12 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    AlignmentError
+    AnalysisError
     IncompatibleError
     MissingSoftwareError
     ParameterisationError
+    ThirdPartyError
 """
 
 from ._exceptions import *

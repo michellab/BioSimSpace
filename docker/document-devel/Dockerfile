@@ -11,10 +11,18 @@ ENV GITHUB_TOKEN=$github_token
 ENV GITHUB_EMAIL=$github_email
 
 # Install additional Python dependencies.
-RUN $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme
+RUN $HOME/sire.app/bin/pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2
 
-# Build the html docs.
-RUN cd $HOME/BioSimSpace/doc && SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
+# Patch the sphinxcontrib.youtube package.
+RUN cp $HOME/BioSimSpace/docker/document-devel/youtube.py $HOME/sire.app/lib/python3.7/site-packages/sphinxcontrib/youtube
+
+# Inject the dynamically create force field function names into the Sphinx
+# documentation in the source repository.
+ADD inject_force_fields.sh .
+RUN $HOME/inject_force_fields.sh
+
+# Build the html docs against the patched source code.
+RUN cd $HOME/BioSimSpace/doc && PYTHONPATH=$HOME/BioSimSpace/python SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
 
 # Clone the BioSimSpaceWebsite repository, copy across latest docs, commit and push.
 RUN git clone https://github.com/michellab/BioSimSpaceWebsite.git && \

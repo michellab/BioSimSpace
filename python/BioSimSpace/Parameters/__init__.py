@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,14 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    parameterise
-    ff99
-    ff99SB
-    ff99SBildn
-    ff14SB
-    gaff
-    gaff2
-    forceFields
+    __FORCE_FIELDS__
     formalCharge
 
 Examples
@@ -122,6 +115,49 @@ incorrect formal charge information.
    # Get the parameterised molecule. This will now block until the
    # parameterisation is finished.
    molecule = process.getMolecule()
+
+Parameterise a molecule using GAFF, passing the molecule as a SMILES
+string.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Parameterise directly using a SMILES string.
+   molecule = BSS.Parameters.gaff("C1=CC=CC=C1").getMolecule()
+
+When parameterising a molecule containing a structural ion with an AMBER force
+field then it is necessary to pass the name of a water model that will be used
+for the ion parameters, e.g:
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/4V2Y_A.pdb")
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.ff14SB(molecule, water_model="tip3p").getMolecule()
+
+Additional parameters can be loaded by passing the ``leap_commands`` option to
+any compatible AMBER force field function, e.g.:
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecule from file.
+   molecule = BSS.IO.readMolecules("molecules/peptide.pdb")
+
+   # Create a list of the additional commands for the LEaP program. These will
+   # be run after any default commands.
+   leap_commands = ["addPath phosphate_params", "source leaprc.phosaa10"]
+
+   # Initialise the parameterisation process and block until the molecule is
+   # ready to be returned.
+   molecule = BSS.Parameters.ff14SB(molecule, leap_commands=leap_commands).getMolecule()
 """
 
 from ._parameters import *

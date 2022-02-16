@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ A coordinate (position vector) type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Coordinate"]
 
@@ -50,13 +50,13 @@ class Coordinate():
                The z position.
         """
 
-        if type(x) is not _Length:
+        if not isinstance(x, _Length):
             raise TypeError("'x' must be of type 'BioSimSpace.Types.Length'")
 
-        if type(y) is not _Length:
+        if not isinstance(y, _Length):
             raise TypeError("'y' must be of type 'BioSimSpace.Types.Length'")
 
-        if type(z) is not _Length:
+        if not isinstance(z, _Length):
             raise TypeError("'z' must be of type 'BioSimSpace.Types.Length'")
 
         # Set the vector.
@@ -85,8 +85,8 @@ class Coordinate():
            Parameters
            ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               Another coordinate.
+           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                   :class: `Length <BioSimSpace.Types.Length>`
 
            Return
            ------
@@ -94,11 +94,18 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The sum of the two coordinates.
         """
-        if type(other) is not Coordinate:
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+        if isinstance(other, Coordinate):
+            return self._from_sire_vector(self._vector + other._vector)
 
-        return self._from_sire_vector(self._vector + other._vector)
+        elif isinstance(other, _Length):
+            vector = self._vector + _Vector(other.angstroms().magnitude(),
+                                            other.angstroms().magnitude(),
+                                            other.angstroms().magnitude())
+            return self.fromVector(vector, _Length(1, "A"))
+
+        else:
+            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __sub__(self, other):
         """Subtraction operator.
@@ -106,8 +113,9 @@ class Coordinate():
            Parameters
            ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               Another coordinate.
+           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                   :class: `Length <BioSimSpace.Types.Length>`
+               Another coordinate or a length.
 
            Return
            ------
@@ -115,11 +123,57 @@ class Coordinate():
            result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
                The difference of the two coordinates.
         """
-        if type(other) is not Coordinate:
+        if isinstance(other, Coordinate):
+            return self._from_sire_vector(self._vector - other._vector)
+
+        elif isinstance(other, _Length):
+            vector = self._vector - _Vector(other.angstroms().magnitude(),
+                                            other.angstroms().magnitude(),
+                                            other.angstroms().magnitude())
+            return self.fromVector(vector, _Length(1, "A"))
+
+        else:
             raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
-        return self._from_sire_vector(self._vector - other._vector)
+    def __mul__(self, other):
+        """Multiplication operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Only support multiplication by float.
+        if isinstance(other, float):
+            # Return a new vector multiplied by other.
+            return self._from_sire_vector(other * self._vector)
+
+        else:
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __rmul__(self, other):
+        """Multiplication operator."""
+
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        """Division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if isinstance(other, float):
+            # Return a new vector divided by other.
+            return self._from_sire_vector(self._vector / other)
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
 
     def x(self):
         """Return the x component of the coordinate.
@@ -178,10 +232,10 @@ class Coordinate():
            unit : :class: `Length <BioSimSpace.Types.Length>`
                The coordinate unit.
         """
-        if type(vector) is not _Vector:
+        if not isinstance(vector, _Vector):
             raise TypeError("'vector' must be of type 'BioSimSpace.Types.Vector'")
 
-        if type(unit) is not _Length:
+        if not isinstance(unit, _Length):
             raise TypeError("'unit' must be of type 'BioSimSpace.Types.Length'")
 
         return Coordinate(vector.x()*unit, vector.y()*unit, vector.z()*unit)

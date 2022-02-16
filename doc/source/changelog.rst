@@ -1,7 +1,45 @@
 Changelog
 =========
 
-`2019.2.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.1.0>`_ - Sep 11 2019
+`2022.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
+------------------------------------------------------------------------------------------------
+
+* Added basic support for cleaning PDB files with `pdb4amber <https://github.com/Amber-MD/pdb4amber>`_ prior to read.
+* Added basic support for exporting BioSimSpace Nodes as Common Workflow Language wrappers.
+* Added support for parameterising molecules using OpenForceField.
+* Added support for using SMILES strings for input to parameterisation functions.
+* Added support for funnel metadynamics simulations (`@dlukauskis <https://github.com/dlukauskis>`_).
+* Added support for steered molecular dynamics simulations (`@AdeleLip <https://github.com/AdeleLip>`_).
+* Added support for generating perturbation networks using LOMAP (`@JenkeScheen <https://github.com/JenkeScheen>`_).
+* Fixed bug affecting certain improper/dihedral terms in SOMD perturbation file writer.
+* Numerous performance improvements, particularly involving the manipulation and
+  combination of molecular systems.
+* Native Python pickling support for wrapped Sire types (`@chryswoods <https://github.com/chryswoods>`_).
+* Numerous free-energy perturbation pipeline fixes and improvements. Thanks to `@kexul <https://github.com/kexul>`_ and `@msuruzhon <https://github.com/msuruzhon>`_ for their help testing and debugging.
+* Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
+
+`2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
+-------------------------------------------------------------------------------------------------
+
+* Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`_).
+* Make sure potential terms are sorted when writing to SOMD perturbation files (`@ptosco <https://github.com/ptosco>`_).
+* Switch to using ipywidgets.FileUpload to eliminate non-conda dependencies.
+* Added support for single-leg free energy simulations.
+* Created a KCOMBU mirror to avoid network issues during install.
+* Allow AMBER simulations when system wasn't loaded from file.
+* Handle GROMACS simulations with non-periodic boxes.
+* Run vacuum simulations on a single thread when using GROMACS to avoid domain decomposition.
+* Make sure BioSimSpace is always built against the latest version of Sire during conda build.
+
+`2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
+------------------------------------------------------------------------------------------------
+
+* Make FKCOMBU download during conda build resilient to server downtime.
+* Added support for xtc trajectory files and custom protocols with GROMACS.
+* Fixed numerous typos in Sphinx documentation.
+* Added Journal of Open Source Software paper.
+
+`2019.2.0 <https://github.com/michellab/BioSimSpace/compare/2019.1.0...2019.2.0>`_ - Sep 11 2019
 ------------------------------------------------------------------------------------------------
 
 * Switched to using `RDKit <https://www.rdkit.org/>`_ for maximum common substructure (MCS) mappings.

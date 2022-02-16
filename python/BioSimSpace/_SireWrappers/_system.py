@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,24 +25,24 @@ not be directly exposed to the user.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
+from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
+from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
-
-class _MolWithResName(_SireMol.MolWithResID):
-    def __init__(self, resname):
-        super().__init__(_SireMol.ResName(resname))
 
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
@@ -64,37 +64,37 @@ class System(_SireWrapper):
         # Check that the system is valid.
 
         # Convert tuple to a list.
-        if type(system) is tuple:
+        if isinstance(system, tuple):
             system = list(system)
 
         # A Sire System object.
-        if type(system) is _SireSystem.System:
+        if isinstance(system, _SireSystem.System):
             super().__init__(system)
 
         # Another BioSimSpace System object.
-        elif type(system) is System:
+        elif isinstance(system, System):
             super().__init__(system._sire_object)
 
         # A Sire Molecule object.
-        elif type(system) is _SireMol.Molecule:
+        elif isinstance(system, _SireMol.Molecule):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(_Molecule(system))
 
         # A BioSimSpace Molecule object.
-        elif type(system) is _Molecule:
+        elif isinstance(system, _Molecule):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
         # A BioSimSpace Molecules object.
-        elif type(system) is _Molecules:
+        elif isinstance(system, _Molecules):
             sire_object = _SireSystem.System("BioSimSpace System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
         # A list of BioSimSpace Molecule objects.
-        elif type(system) is list:
+        elif isinstance(system, list):
             if not all(isinstance(x, _Molecule) for x in system):
                 raise TypeError("'system' must contain a list of 'BioSimSpace._SireWrappers.Molecule' types.")
             else:
@@ -111,7 +111,7 @@ class System(_SireWrapper):
         # Flag that this object holds multiple atoms.
         self._is_multi_atom = True
 
-        # Initalise dictionaries mapping MolNums to the number cumulative
+        # Initialise dictionaries mapping MolNums to the number cumulative
         # number of atoms/residues in the system, up to that MolNum.
         self._atom_index_tally = {}
         self._residue_index_tally = {}
@@ -122,8 +122,29 @@ class System(_SireWrapper):
         # Store the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
 
-        # Intialise the iterator counter.
+        # Initialise the iterator counter.
         self._iter_count = 0
+
+        # Copy any fileformat property to each molecule.
+        if "fileformat" in self._sire_object.propertyKeys():
+            fileformat = self._sire_object.property("fileformat")
+            for num in self._mol_nums:
+                edit_mol = self._sire_object[num].edit()
+                edit_mol = edit_mol.setProperty("fileformat", fileformat)
+                self._sire_object.update(edit_mol.commit())
+        else:
+            # If a molecule has a fileformat property, use the first
+            # that we find.
+            for mol in self:
+                if mol._sire_object.hasProperty("fileformat"):
+                    self._sire_object.setProperty("fileformat", mol._sire_object.property("fileformat"))
+                    break
+
+        # Reset the index mappings.
+        self._reset_mappings()
+
+        # Update the molecule numbers.
+        self._mol_nums = self._sire_object.molNums()
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -152,7 +173,7 @@ class System(_SireWrapper):
         system = System(self._sire_object.__deepcopy__())
 
         # Remove the molecules from the other system.
-        if type(other) is System:
+        if isinstance(other, System):
             system.removeMolecules(other.getMolecules())
         else:
             system.removeMolecules(other)
@@ -164,7 +185,7 @@ class System(_SireWrapper):
         """Get a molecule from the system."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the molecules.
             molecules = []
@@ -190,7 +211,7 @@ class System(_SireWrapper):
                 key = key + self.nMolecules()
 
             # Extract and return the corresponding molecule.
-            return _Molecule(self._sire_object.molecule(self._mol_nums[key]))
+            return _Molecule(self._sire_object[_SireMol.MolIdx(key)])
 
     def __setitem__(self, key, value):
         """Set a molecule in the container."""
@@ -333,7 +354,7 @@ class System(_SireWrapper):
               The file formats associated with the system.
         """
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         prop = property_map.get("fileformat", "fileformat")
@@ -360,23 +381,23 @@ class System(_SireWrapper):
         is_sire_container = False
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A Molecules object.
-        if type(molecules) is _Molecules:
-            is_sire_container = True
+        if isinstance(molecules, _Molecules):
+            pass
 
         # A System object.
-        elif type(molecules) is System:
-            is_sire_container = True
+        elif isinstance(molecules, System):
+            molecules = molecules.getMolecules()
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -385,21 +406,32 @@ class System(_SireWrapper):
                             ", 'BioSimSpace._SireWrappers.System', or a list of "
                             "'BioSimSpace._SireWrappers.Molecule' types.")
 
-        # The system is empty: create a new Sire system from the molecules.
-        if self._sire_object.nMolecules() == 0:
-            self._sire_object = self._createSireSystem(molecules)
+        # Store the existing number of molecules.
+        num_mols = self._sire_object.nMolecules()
 
-        # Otherwise, add the molecules to the existing "all" group.
-        else:
-            if is_sire_container:
-                try:
-                    molecules = molecules._sire_object.molecules()
-                except:
-                    molecules = molecules._sire_object
-                self._sire_object.add(molecules, _SireMol.MGName("all"))
-            else:
-                for mol in molecules:
-                    self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+        # The system is empty: create a new Sire system from the molecules.
+        if num_mols == 0:
+            self._sire_object = self._createSireSystem(molecules)
+            self._mol_nums = []
+
+        # Now add the molecules to the existing "all" group.
+
+        # Initialise the offsets for renumbering (one indexed).
+        residue_offset = 1 + self.nResidues()
+        atom_offset = 1 + self.nAtoms()
+        for mol in molecules:
+            if mol._sire_object.number() in self._mol_nums:
+                raise ValueError("'BioSimSpace._SireWrappers.System' can only "
+                                 "contain unique molecules. Use the 'copy' method "
+                                 "of 'BioSimSpace._SireWrappers.Molecule' to "
+                                 "create a new version of a molecule.")
+
+            # Add the molecule to the system.
+            self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+
+        # Renumber all of the constituents in the system so that they are unique
+        # and in ascending order.
+        self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
 
         # Reset the index mappings.
         self._reset_mappings()
@@ -423,19 +455,19 @@ class System(_SireWrapper):
         is_sire_container = False
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A Molecules object.
-        if type(molecules) is _Molecules:
+        if isinstance(molecules, _Molecules):
             is_sire_container = True
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -471,6 +503,58 @@ class System(_SireWrapper):
         # Update the molecule numbers.
         self._mol_nums = self._sire_object.molNums()
 
+    def updateMolecule(self, index, molecule):
+        """Updated the molecule at the given index.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the molecule.
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The updated (or replacement) molecule.
+        """
+
+        if type(index) is int:
+            raise TypeError("'index' must be of type 'int'")
+
+        if index < -self.nMolecules() or index >= self.nMolecules():
+            raise IndexError("The molecule 'index' is out of range.")
+
+        if not isinstance(molecule, _Molecule):
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
+
+
+        # The molecule numbers match.
+        if self[index].number() == molecule.number():
+            self.updateMolecules(molecule)
+
+        # The molecule numbers don't match.
+        else:
+            # Store the original molecule number.
+            mol_num = self[index]._sire_object.number()
+
+            # Store a copy of the passed molecule.
+            mol_copy = molecule._sire_object.__deepcopy__()
+
+            # Delete the existing molecule.
+            self._sire_object.remove(mol_num)
+
+            # Renumber the new molecule.
+            edit_mol = mol_copy.edit()
+            edit_mol.renumber(mol_num)
+            mol_copy = edit_mol.commit()
+
+            # Add the renumbered molecule to the system.
+            self._sire_object.add(mol_copy, _SireMol.MGName("all"))
+
+            # Reset the index mappings.
+            self._reset_mappings()
+
+            # Update the molecule numbers.
+            self._mol_nums = self._sire_object.molNums()
+
     def updateMolecules(self, molecules):
         """Update a molecule, or list of molecules in the system.
 
@@ -483,15 +567,15 @@ class System(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
         # A Molecule object.
-        if type(molecules) is _Molecule:
+        if isinstance(molecules, _Molecule):
             molecules = [molecules]
 
         # A list of Molecule objects.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             pass
 
         # Invalid argument.
@@ -502,13 +586,34 @@ class System(_SireWrapper):
         # Update each of the molecules.
         # TODO: Currently the Sire.System.update method doesn't work correctly
         # for certain changes to the Molecule molInfo object. As such, we remove
-        # the old molecule from the system, then add the new one in.
+        # the old molecule from the system, then add the new one in. Make sure to
+        # operate on a copy of the system since the original will be destroyed if
+        # an exception is thrown.
         for mol in molecules:
-            try:
-                self._sire_object.update(mol._sire_object)
-            except:
-                self._sire_object.remove(mol._sire_object.number())
-                self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            # Only try to update the molecule if it exists in the system.
+            if _SireMol.MolNum(mol.number()) in self._mol_nums:
+                try:
+                    system = self.copy()._sire_object
+                    system.update(mol._sire_object)
+                except:
+                    # The UUID of the molecule has changed. Normally we would
+                    # need to remove and re-add the molecule, but this would
+                    # change the molecular ordering. Instead we create a new
+                    # system by re-adding all molecules in the original order.
+
+                    system = self.copy()._sire_object
+
+                    # Get the index of the molecule in the existing molNums
+                    # list.
+                    idx = self._mol_nums.index(_SireMol.MolNum(mol.number()))
+
+                    # Update the molecule in the system, preserving the
+                    # original molecular ordering.
+                    system = _SireIO.updateAndPreserveOrder(
+                            system, mol._sire_object, idx)
+
+        # Udpate the Sire object.
+        self._sire_object = system
 
         # Reset the index mappings.
         self._reset_mappings()
@@ -549,7 +654,7 @@ class System(_SireWrapper):
                The list of molecules in the group.
         """
 
-        if type(group) is not str:
+        if not isinstance(group, str):
             raise TypeError("'group' must be of type 'str'")
 
         # Try to extract the molecule group.
@@ -559,19 +664,27 @@ class System(_SireWrapper):
             raise ValueError("No molecules in group '%s'" % group)
 
         # Return a molecules container.
-        return _Molecules(molgrp.molecules())
+        return _Molecules(molgrp)
 
-    def getWaterMolecules(self):
+    def getWaterMolecules(self, property_map={}):
         """Return a list containing all of the water molecules in the system.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
 
-           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
                A container of water molecule objects.
         """
 
-        return _Molecules(self._sire_object.search("water").toMolecules())
+        return _Molecules(self._sire_object.search("water").toGroup())
 
     def nWaterMolecules(self):
         """Return the number of water molecules in the system.
@@ -612,7 +725,66 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def search(self, query):
+    def repartitionHydrogenMass(self, factor=4, water="no", property_map={}):
+        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
+           the hydrogen atoms. This allows the use of larger simulation
+           integration time steps without encountering instabilities related
+           to high-frequency hydrogen motion.
+
+           Parameters
+           ----------
+
+           factor : float
+               The repartioning scale factor. Hydrogen masses are scaled by this
+               amount.
+
+           water : str
+               Whether to repartition masses for water molecules. Options are
+               "yes", "no", and "exclusive", which can be used to repartition
+               masses for water molecules only.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Convert int to float.
+        if type(factor) is int:
+            factor = float(factor)
+
+        # Check scale factor.
+        if not isinstance(factor, float):
+            raise TypeError("'factor' must be of type 'float'.")
+        if factor <= 0:
+            raise ValueError("'factor' must be positive!")
+
+        # Check water handling.
+        if not isinstance(water, str):
+            raise TypeError("'water' must be of type 'str'.")
+
+        # Strip whitespace and convert to lower case.
+        water = water.replace(" ", "").lower()
+
+        # Allowed options and mapping to Sire flag.
+        water_options = {"no" : 0,
+                         "yes" : 1,
+                         "exclusive" : 2
+                        }
+
+        if water not in water_options:
+            water_string = ", ".join(f"'{x}'" for x in water_options)
+            raise ValueError(f"'water' must be one of: {water_string}")
+
+        # Check property map.
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        # Repartion hydrogen masses for all molecules in this system.
+        self._sire_object = _SireIO.repartitionHydrogenMass(
+                self._sire_object, factor, water_options[water], property_map)
+
+    def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results
            will be reduced to their minimal representation, i.e. a molecule
            containing a single residue will be returned as a residue.
@@ -622,6 +794,11 @@ class System(_SireWrapper):
 
            query : str
                The search query.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
 
            Returns
            -------
@@ -655,18 +832,25 @@ class System(_SireWrapper):
            >>> result = system.search("molidx 10 and atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
-        # Intialise a list to hold the search results.
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        # Initialise a list to hold the search results.
         results = []
 
         try:
             # Query the Sire system.
-            search_result = self._sire_object.search(query)
+            search_result = _SireMol.Select(query)(self._sire_object, property_map)
 
-        except:
-            raise ValueError("'Invalid search query: %r" % query) from None
+        except Exception as e:
+            msg = "'Invalid search query: %r" % query
+            if _isVerbose():
+                raise ValueError(msg) from e
+            else:
+                raise ValueError(msg) from None
 
         return _SearchResult(search_result)
 
@@ -691,7 +875,7 @@ class System(_SireWrapper):
         """
 
         # Convert single object to list.
-        if type(item) is not tuple and type(item) is not list:
+        if not isinstance(item, (tuple, list)):
             item = [item]
 
         # Create a list to hold the indices.
@@ -700,7 +884,7 @@ class System(_SireWrapper):
         # Loop over all of the items.
         for x in item:
             # Atom.
-            if type(x) is _Atom:
+            if isinstance(x, _Atom):
                 # Only compute the atom index mapping if it hasn't already
                 # been created.
                 if len(self._atom_index_tally) == 0:
@@ -724,7 +908,7 @@ class System(_SireWrapper):
                 indices.append(index)
 
             # Residue.
-            elif type(x) is _Residue:
+            elif isinstance(x, _Residue):
                 # Only compute the residue index mapping if it hasn't already
                 # been created.
                 if len(self._residue_index_tally) == 0:
@@ -748,7 +932,7 @@ class System(_SireWrapper):
                 indices.append(index)
 
             # Residue.
-            elif type(x) is _Molecule:
+            elif isinstance(x, _Molecule):
                 # Only compute the molecule index mapping if it hasn't already
                 # been created.
                 if len(self._molecule_index) == 0:
@@ -779,14 +963,17 @@ class System(_SireWrapper):
         else:
             return indices
 
-    def setBox(self, size, property_map={}):
+    def setBox(self, box, angles=3*[_Angle(90, "degree")], property_map={}):
         """Set the size of the periodic simulation box.
 
            Parameters
            ----------
 
-           size : [:class:`Length <BioSimSpace.Types.Length>`]
-               The size of the box in each dimension.
+           box : [:class:`Length <BioSimSpace.Types.Length>`]
+               The box vector magnitudes in each dimension.
+
+           angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               The box vector angles: yz, xz, and xy.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -795,25 +982,51 @@ class System(_SireWrapper):
 
         """
 
-        # Convert tuple to list.
-        if type(size) is tuple:
-            size = list(size)
+        # Convert tuples to lists.
+        if isinstance(box, tuple):
+            box = list(box)
+        if isinstance(angles, tuple):
+            angles = list(angles)
 
         # Validate input.
-        if type(size) is not list or not all(isinstance(x, _Length) for x in size):
-            raise TypeError("'size' must be a list of 'BioSimSpace.Types.Length' objects.")
+        if isinstance(box, list) or not all(isinstance(x, _Length) for x in box):
+            raise TypeError("'box' must be a list of 'BioSimSpace.Types.Length' objects.")
 
-        if len(size) != 3:
-            raise ValueError("'size' must contain three items.")
+        if isinstance(angles, list) or not all(isinstance(x, _Angle) for x in angles):
+            raise TypeError("'angles' must be a list of 'BioSimSpace.Types.Angle' objects.")
+
+        if len(box) != 3:
+            raise ValueError("'box' must contain three items.")
+
+        if len(box) != 3:
+            raise ValueError("'angles' must contain three items.")
 
         # Convert sizes to Anstrom.
-        vec = [x.angstroms().magnitude() for x in size]
+        vec = [x.angstroms().magnitude() for x in box]
 
-        # Create a periodic box object.
-        box = _SireVol.PeriodicBox(_SireMaths.Vector(vec))
+        # Whether the box is triclinic.
+        is_triclinic = False
+
+        # If any angle isn't 90 degrees, then the box is triclinic.
+        for x in angles:
+            if abs(x.degrees().magnitude() - 90) > 1e-6:
+                is_triclinic = True
+                break
+
+        if is_triclinic:
+            # Convert angles to Sire units.
+            ang = [x.degrees().magnitude()*_SireUnits.degree for x in angles]
+
+            # Create a triclinic box object.
+            space = _SireVol.TriclinicBox(vec[0], vec[1], vec[2],
+                                        ang[0], ang[1], ang[2])
+
+        else:
+            # Create a periodic box object.
+            space = _SireVol.PeriodicBox(_SireMaths.Vector(vec))
 
         # Set the "space" property.
-        self._sire_object.setProperty(property_map.get("space", "space"), box)
+        self._sire_object.setProperty(property_map.get("space", "space"), space)
 
     def getBox(self, property_map={}):
         """Get the size of the periodic simulation box.
@@ -830,18 +1043,35 @@ class System(_SireWrapper):
            -------
 
            box_size : [:class:`Length <BioSimSpace.Types.Length>`]
-               The size of the box in each dimension.
+               The box vector magnitudes in each dimension.
+
+           angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+               The box vector angles: yz, xz, and xy.
        """
 
         # Get the "space" property and convert to a list of BioSimSpace.Type.Length
         # objects.
         try:
-            box = self._sire_object.property(property_map.get("space", "space"))
-            box = [ _Length(x, "Angstrom") for x in box.dimensions() ]
+            space = self._sire_object.property(property_map.get("space", "space"))
+
+            # Periodic box.
+            if isinstance(space, _SireVol.PeriodicBox):
+                box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
+                angles = 3*[_Angle(90, "degrees")]
+
+            # TriclinicBox box.
+            elif isinstance(space, _SireVol.TriclinicBox):
+                box = [_Length(space.vector0().magnitude(), "Angstrom"),
+                       _Length(space.vector1().magnitude(), "Angstrom"),
+                       _Length(space.vector2().magnitude(), "Angstrom")]
+                angles = [_Angle(space.alpha(), "degree"),
+                          _Angle(space.beta(), "degree"),
+                          _Angle(space.gamma(), "degree")]
         except:
             box = None
+            angles = None
 
-        return box
+        return box, angles
 
     def translate(self, vector, property_map={}):
         """Translate the system.
@@ -859,18 +1089,18 @@ class System(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
+                elif isinstance(x, _Length):
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
@@ -878,20 +1108,304 @@ class System(_SireWrapper):
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the system.
-        for n in self._sire_object.molNums():
-            # Copy the property map.
+        for mol in self.getMolecules():
+            mol.translate(vector, property_map)
+            self._sire_object.update(mol._sire_object)
+
+    def getRestraintAtoms(self, restraint, mol_index=None, is_absolute=True,
+            allow_zero_matches=False, property_map={}):
+        """Get the indices of atoms involved in a restraint.
+
+           Parameters
+           ----------
+
+           restraint : str
+               The type of restraint.
+
+           mol_index : int
+               The index of the molecule of interest. If None, then the
+               entire system is searched.
+
+           is_absolute : bool
+               Whether the indices are absolute, i.e. indexed within the
+               entire system. If False, then indices are relative to the
+               molecule in which the atom is found.
+
+           allow_zero_matches : bool
+               Whether to raise an exception when no atoms match the restraint.
+               Setting to false is useful if you need to determine restraints
+               on a per-molecule basis, i.e. so molecules won't contain atoms
+               matching the restraint, but the entire system will.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           indices : [int]
+               A list of the backbone atom indices.
+        """
+
+        if not isinstance(restraint, str):
+            raise TypeError("'restraint' must be of type 'str'.")
+
+        # Allowed keyword options.
+        allowed = ["backbone", "heavy", "all"]
+
+        # Convert to lower case and strip whitespace.
+        restraint = restraint.lower().replace(" ", "")
+        if restraint not in allowed:
+            raise ValueError(f"'restraint' must be one of: {allowed}")
+
+        if mol_index is not None and not type(mol_index) is int:
+            raise TypeError("'mol_index' must be of type 'int'.")
+
+        if not isinstance(is_absolute, bool):
+            raise TypeError("'is_absolute' must be of type 'bool'.")
+
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        # Initialise the list of indices.
+        indices = []
+
+        # A set of protein residues. Taken from MDAnalysis.
+        prot_res = {
+            # CHARMM top_all27_prot_lipid.rtf
+            "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HSD",
+            "HSE", "HSP", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR",
+            "TRP", "TYR", "VAL", "ALAD",
+            ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
+            # PDB
+            "HIS", "MSE",
+            # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
+            "ARGN", "ASPH", "CYS2", "CYSH", "QLN", "PGLU", "GLUH", "HIS1", "HISD",
+            "HISE", "HISH", "LYSH",
+            # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
+            "ASN1", "CYS1", "HISA", "HISB", "HIS2",
+            # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
+            "HID", "HIE", "HIP", "ORN", "DAB", "LYN", "HYP", "CYM", "CYX", "ASH",
+            "GLH", "ACE", "NME",
+            # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
+            "NALA", "NGLY", "NSER", "NTHR", "NLEU", "NILE", "NVAL", "NASN", "NGLN",
+            "NARG", "NHID", "NHIE", "NHIP", "NTRP", "NPHE", "NTYR", "NGLU", "NASP",
+            "NLYS", "NPRO", "NCYS", "NCYX", "NMET", "CALA", "CGLY", "CSER", "CTHR",
+            "CLEU", "CILE", "CVAL", "CASF", "CASN", "CGLN", "CARG", "CHID", "CHIE",
+            "CHIP", "CTRP", "CPHE", "CTYR", "CGLU", "CASP", "CLYS", "CPRO", "CCYS",
+            "CCYX", "CMET", "CME", "ASF",
+        }
+
+        # A list of ion elements.
+        ions = [
+            "F", "Cl", "Br", "I", "Li", "Na", "K", "Rb", "Cs", "Mg", "Tl", "Cu", "Ag",
+            "Be", "Cu", "Ni", "Pt", "Zn", "Co", "Pd", "Ag", "Cr", "Fe", "Mg", "V", "Mn",
+            "Hg", "Cd", "Yb", "Ca", "Sn", "Pb", "Eu", "Sr", "Sm", "Ba", "Ra", "Al", "Fe",
+            "Cr", "In", "Tl", "Y", "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
+            "Er", "Tm", "Lu", "Hf", "Zr", "Ce", "U", "Pu", "Th",
+        ]
+
+        # Whether we've searched a perturbable system. If so, then we need to process
+        # the search results differently. (There will be one for each molecule.)
+        is_perturbable_system = False
+
+        # Search the entire system.
+        if mol_index is None:
+
+            # Only search the system directly if there are no perturbable molecules.
+            if self.nPerturbableMolecules() == 0:
+
+                # Backbone restraints.
+                if restraint == "backbone":
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
+                    search = self.search(string, property_map)
+
+                elif restraint == "heavy":
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions + ["H,Xx"])
+                    # Find all non-water, non-hydrogen, non-ion elements.
+                    string = f"(atoms in not water) and not element {ion_string}"
+                    search = self.search(string, property_map)
+
+                elif restraint == "all":
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions)
+                    # Find all non-water, non-ion elements.
+                    string = f"(atoms in not water) and not element {ion_string}"
+                    search = self.search(string, property_map)
+
+            # Search each molecule individually, using the property map to specify the
+            # correct name for the "element" property in any perturble molecules.
+            else:
+                is_perturbable_system = True
+
+                # Initialise a list to hold all of the search results.
+                results = []
+
+                for mol in self.getMolecules():
+                    # Reset the local property map.
+                    _property_map = property_map.copy()
+
+                    # Initialise an empty search.
+                    search = []
+
+                    # If perturbable, use the 'element0' property for the search
+                    # unless it's already been set to the lambda = 1 property.
+                    if mol.isPerturbable():
+                        if _property_map.get("element") != "element1":
+                            _property_map["element"] = "element0"
+
+                    if restraint == "backbone":
+                        if not mol.isWater():
+                            # Find all N, CA, C, and O atoms in protein residues.
+                            string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                            search = mol.search(string, _property_map)
+
+                    elif restraint == "heavy":
+                        if not mol.isWater():
+                            # Convert to a formatted string for the search.
+                            ion_string = ",".join(ions + ["H,Xx"])
+                            # Find all non-water, non-hydrogen, non-ion elements.
+                            string = f"not element {ion_string}"
+                            search = mol.search(string, _property_map)
+
+                    elif restraint == "all":
+                        if not mol.isWater():
+                            # Convert to a formatted string for the search.
+                            ion_string = ",".join(ions)
+                            # Find all non-water, non-ion elements.
+                            string = f"not element {ion_string}"
+                            search = mol.search(string, _property_map)
+
+                    # Append the search result for this molecule.
+                    if len(search) > 0:
+                        results.append(search)
+
+        # Search the chosen molecule.
+        else:
+            # Create a local copy of the property map.
             _property_map = property_map.copy()
 
-            # If this is a perturbable molecule, use the coordinates at lambda = 0.
-            if self._sire_object.molecule(n).hasProperty("is_perturbable"):
-                _property_map["coordinates"] = "coordinates0"
+            # Initialise an empty search.
+            search = []
 
-            mol = self._sire_object[n].move().translate(_SireMaths.Vector(vec), _property_map).commit()
-            self._sire_object.update(mol)
+            # Extract the molecule.
+            mol = self[mol_index]
+
+            # If perturbable, use the 'element0' property for the search
+            # unless it's already been set to the lambda = 1 property.
+            if mol.isPerturbable():
+                if _property_map.get("element") != "element1":
+                    _property_map["element"] = "element0"
+
+            if restraint == "backbone":
+                if not mol.isWater():
+                    # Find all N, CA, C, and O atoms in protein residues.
+                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                    search = mol.search(string, _property_map)
+
+            elif restraint == "heavy":
+                if not mol.isWater():
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions + ["H,Xx"])
+                    # Find all non-water, non-hydrogen, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string, _property_map)
+
+            elif restraint == "all":
+                if not mol.isWater():
+                    # Convert to a formatted string for the search.
+                    ion_string = ",".join(ions)
+                    # Find all non-water, non-ion elements.
+                    string = f"not element {ion_string}"
+                    search = mol.search(string, _property_map)
+
+        if is_perturbable_system:
+            # Raise an exception if no atoms match the restraint.
+            if not allow_zero_matches:
+                num_results = 0
+                for search in results:
+                    num_results += len(search)
+                if num_results == 0:
+                    msg = "No atoms matched the restraint!"
+                    if restraint == "backbone":
+                        msg += " Backbone restraints only apply to atoms in protein residues."
+                    raise _IncompatibleError(msg)
+
+            # Loop over the searches for each molecule.
+            for search in results:
+                # Now loop over all matching atoms and get their indices.
+                for atom in search:
+                    if is_absolute:
+                        indices.append(self.getIndex(atom))
+                    else:
+                        indices.append(atom.index())
+
+        else:
+            # Raise an exception if no atoms match the restraint.
+            if len(search) == 0 and not allow_zero_matches:
+                msg = "No atoms matched the restraint!"
+                if restraint == "backbone":
+                    msg += " Backbone restraints only apply to atoms in protein residues."
+                raise _IncompatibleError(msg)
+
+            # Now loop over all matching atoms and get their indices.
+            for atom in search:
+                if is_absolute:
+                    indices.append(self.getIndex(atom))
+                else:
+                    indices.append(atom.index())
+
+        # The indices should be sorted, but do so just in case.
+        indices.sort()
+
+        return indices
+
+    def _isParameterised(self, property_map={}):
+        """Whether the system is parameterised, i.e. can we run a simulation
+           using this system. Essentially we check whether every molecule in
+           the system has "bond" and "LJ" properties and assume that is
+           parameterised if so.
+
+           Parameters
+           ----------
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+
+           Returns
+           -------
+
+           is_parameterised : bool
+               Whether the system is parameterised.
+        """
+
+        # Get the "bond" property.
+        bond = property_map.get("bond", "bond")
+        # Test for perturbable molecules too.
+        bond0 = bond + "0"
+
+        # Get the "LJ" property.
+        LJ = property_map.get("LJ", "LJ")
+        # Test for perturbable molecules too.
+        LJ0 = LJ + "0"
+
+        # Check each molecule for "bond" and "LJ" properties.
+        for mol in self.getMolecules():
+            props = mol._sire_object.propertyKeys()
+            if (bond not in props and bond0 not in props) or \
+               (LJ   not in props and LJ0   not in props):
+                return False
+
+        # If we get this far, then all molecules are okay.
+        return True
 
     def _getAABox(self, property_map={}):
         """Get the axis-aligned bounding box for the molecular system.
@@ -925,15 +1439,19 @@ class System(_SireWrapper):
                 if "coordinates" in property_map:
                     prop = property_map["coordinates"]
                 else:
-                    if mol.isMerged():
+                    if mol.isPerturbable():
                         prop = "coordinates0"
                     else:
                         prop = "coordinates"
                 coord.extend(mol._sire_object.property(prop).toVector())
 
-            except UserWarning:
-                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
-                                         "box since a molecule has no 'coordinates' property.") from None
+            except UserWarning as e:
+                msg = "Unable to compute the axis-aligned bounding " + \
+                      "box since a molecule has no 'coordinates' property."
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
@@ -1014,9 +1532,9 @@ class System(_SireWrapper):
         # Return the renumbered molecules.
         return new_molecules
 
-    def _updateCoordinates(self, system, property_map0={}, property_map1={},
+    def _updateCoordinatesAndVelocities(self, system, property_map0={}, property_map1={},
             is_lambda1=False):
-        """Update the coordinates of atoms in the system.
+        """Update the coordinates and velocities of atoms in the system.
 
            Parameters
            ----------
@@ -1038,7 +1556,7 @@ class System(_SireWrapper):
         """
 
         # Validate the system.
-        if type(system) is not System:
+        if not isinstance(system, System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Check that the passed system contains the same number of molecules.
@@ -1047,19 +1565,32 @@ class System(_SireWrapper):
                                      "molecules. Expected '%d', found '%d'"
                                      % (self.nMolecules(), system.nMolecules()))
 
+        if not isinstance(property_map0, dict):
+            raise TypeError("'property_map0' must be of type 'dict'.")
+
+        if not isinstance(property_map1, dict):
+            raise TypeError("'property_map1' must be of type 'dict'.")
+
+        if not isinstance(is_lambda1, bool):
+            raise TypeError("'is_lambda1' must be of type 'bool'.")
+
         # Check that each molecule in the system contains the same number of atoms.
         for idx in range(0, self.nMolecules()):
             # Extract the number of atoms in the molecules.
             num_atoms0 = self._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
-            num_atoms1 = self._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
+            num_atoms1 = system._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
 
             if num_atoms0 != num_atoms1:
                 raise _IncompatibleError("Mismatch in atom count for molecule '%d': "
                                          "Expected '%d', found '%d'" % (num_atoms0, num_atoms1))
 
         # Work out the name of the "coordinates" property.
-        prop0 = property_map0.get("coordinates0", "coordinates")
-        prop1 = property_map1.get("coordinates1", "coordinates")
+        prop_c0 = property_map0.get("coordinates0", "coordinates")
+        prop_c1 = property_map1.get("coordinates1", "coordinates")
+
+        # Work out the name of the "velocity" property.
+        prop_v0 = property_map0.get("velocity", "coordinates")
+        prop_v1 = property_map1.get("velocity", "coordinates")
 
         # Loop over all molecules and update the coordinates.
         for idx in range(0, self.nMolecules()):
@@ -1070,31 +1601,40 @@ class System(_SireWrapper):
             # Check whether the molecule is perturbable.
             if mol0.hasProperty("is_perturbable"):
                 if is_lambda1:
-                    prop = "coordinates1"
+                    prop_c = "coordinates1"
                 else:
-                    prop = "coordinates0"
+                    prop_c = "coordinates0"
             else:
-                prop = prop0
+                prop_c = prop_c0
 
             # Try to update the coordinates property.
             try:
-                mol0 = mol0.edit().setProperty(prop, mol1.property(prop1)).molecule().commit()
-            except:
-                raise _IncompatibleError("Unable to update 'coordinates' for molecule index '%d'" % idx)
+                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
+            except Exception as e:
+                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
+                if _isVerbose():
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
+
+            # Try to update the velocity property. This isn't always present so
+            # only try this when the passed system contains the property.
+            if mol1.hasProperty(prop_v1):
+                try:
+                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
+                except Exception as e:
+                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
+                    if _isVerbose():
+                        raise _IncompatibleError(msg) from e
+                    else:
+                        raise _IncompatibleError(msg) from None
 
             # Update the molecule in the original system.
             self._sire_object.update(mol0)
 
     @staticmethod
     def _createSireSystem(molecules):
-        """Create a Sire system from a Molecules object or a list of Molecule
-           objects.
-
-           Parameters
-           ----------
-
-           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>` \
-                       [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+        """Create an empty Sire system with a single molecule group called "all".
 
            Returns
            -------
@@ -1109,17 +1649,57 @@ class System(_SireWrapper):
         # Create a new "all" molecule group.
         molgrp = _SireMol.MoleculeGroup("all")
 
-        # Add the molecules to the group.
-        if type(molecules) is _Molecules:
-            molgrp.add(molecules._sire_object)
-        else:
-            for mol in molecules:
-                molgrp.add(mol._sire_object)
-
         # Add the molecule group to the system.
         system.add(molgrp)
 
         return system
+
+    def _getRelativeIndices(self, abs_index):
+        """Given an absolute index, get the number of the molecule to which it
+           belongs and the relative index within that molecule.
+
+           Parameters
+           ----------
+
+           abs_index : int
+               The absolute index of the atom in the system.
+
+           Returns
+           -------
+
+           mol_index : int
+               The molecule index to which the atom belongs.
+
+           rel_index : int
+               The relative index of the atom in the molecule to which it
+               belongs.
+        """
+        # Make sure the atom index tally has been created.
+        self.getIndex(self[0].getAtoms()[0])
+
+        # Set tally counters for the total number of atoms to date
+        # and the total up to the previous molecule.
+        tally = 0
+        tally_last = 0
+
+        # Set the current and previous MolNum.
+        mol_num = self._mol_nums[0]
+        mol_num_last = self._mol_nums[0]
+
+        # Loop over each molecule until the total atom number is equal
+        # to or greater than the absolute index. When it is, return the
+        # absolute index minus the tally up to the previous molecule.
+        for num, num_atoms in self._atom_index_tally.items():
+            if abs_index >= tally:
+                tally_last = tally
+                tally = num_atoms
+                mol_num_last = mol_num
+                mol_num = num
+            else:
+                mol_idx = self._molecule_index[mol_num_last]
+                return mol_idx, abs_index - tally_last
+
+        raise ValueError("'abs_index' exceeded system atom tally!")
 
     def _reset_mappings(self):
         """Internal function to reset index mapping dictionaries."""
@@ -1132,6 +1712,79 @@ class System(_SireWrapper):
         # Rebuild the MolNum to index mapping.
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+
+    def _set_water_topology(self, format, property_map={}):
+        """Internal function to swap the water topology to AMBER or GROMACS format.
+
+            Parameters
+            ----------
+
+            format : string
+                The format to convert to: either "AMBER" or "GROMACS".
+
+            property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Validate input.
+
+        if not isinstance(format, str):
+            raise TypeError("'format' must be of type 'str'")
+
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        # Strip whitespace and convert to upper case.
+        format = format.replace(" ", "").upper()
+
+        # We allow conversion to AMBER or GROMACS format water toplogies. While
+        # AMBER requires a specific topology, GROMACS can handle whatever. We
+        # leave this format as an option in case we want to allow the user to
+        # swap the topology in future.
+        if format not in ["AMBER", "GROMACS"]:
+            raise ValueError("'format' must be 'AMBER' or 'GROMACS'.")
+
+        # Get the water molecules.
+        waters = self.getWaterMolecules()
+
+        if len(waters) > 0:
+
+            # Don't perform conversion if the topology already matches the
+            # the template for the desired format.
+
+            if format == "AMBER":
+                if waters[0].isAmberWater():
+                    return
+
+            elif format == "GROMACS":
+                if waters[0].isGromacsWater():
+                    return
+
+            # There will be a "water_model" system property if this object was
+            # solvated by BioSimSpace.
+            if "water_model" in self._sire_object.propertyKeys():
+                water_model = self._sire_object.property("water_model").toString()
+
+            # Otherwise, convert to an appropriate topology.
+            else:
+                num_point = waters[0].nAtoms()
+
+                if num_point == 3:
+                    # TODO: Assume TIP3P. Not sure how to detect SPC/E at present.
+                    water_model = "TIP3P"
+                elif num_point == 4:
+                    water_model = "TIP4P"
+                elif num_point == 5:
+                    water_model = "TIP5P"
+
+            if format == "AMBER":
+                self._sire_object = _SireIO.setAmberWater(
+                        self._sire_object, water_model, property_map)
+            else:
+                self._sire_object = _SireIO.setGromacsWater(
+                        self._sire_object, water_model, property_map)
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

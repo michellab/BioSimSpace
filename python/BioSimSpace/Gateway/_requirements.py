@@ -1,7 +1,7 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,7 +25,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
            "File", "FileSet",                           # File types.
@@ -86,7 +86,7 @@ class Requirement():
                Whether the requirement is optional.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Requirement:
             raise Exception("<Requirement> must be subclassed.")
 
@@ -94,14 +94,14 @@ class Requirement():
 
         if help is None:
             raise ValueError("Missing 'help' keyword argument!")
-        elif type(help) is not str:
+        elif not isinstance(help, str):
             raise TypeError("'help' keyword argument must be of type 'str'")
         else:
             self._help = help
 
-        # Optional keywords aguments.
+        # Optional keywords arguments.
 
-        if type(optional) is not bool:
+        if not isinstance(optional, bool):
             raise TypeError("'optional' keyword argument must be of type 'bool'")
 
         # Set defaults
@@ -127,9 +127,13 @@ class Requirement():
                 raise ValueError("The maximum value '%s' is less than the minimum '%s'"
                     % (maximum, minimum))
 
+        # Convert tuple to list.
+        if isinstance(allowed, tuple):
+            allowed = list(allowed)
+
         # Set the allowed values.
         if allowed is not None:
-            if type(allowed) is not list:
+            if not isinstance(allowed, list):
                 allowed = [allowed]
             self._allowed = [self._validate(x) for x in allowed]
 
@@ -160,7 +164,7 @@ class Requirement():
         """
 
         if value is None and not self._is_optional:
-            if type(name) is str:
+            if isinstance(name, str):
                 raise ValueError("Value is unset for requirement '%s'!" % name)
             else:
                 raise ValueError("Value is unset!")
@@ -177,13 +181,13 @@ class Requirement():
 
         # Maximum.
         if self._max is not None and value > self._max:
-            raise ValueError("The value (%s) is less than the allowed "
+            raise ValueError("The value (%s) is greater than the allowed "
                 "maximum (%s)" % (value, self._max))
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
-            # For String requirements, strip whitespace and ingore case.
-            if type(self) is String:
+            # For String requirements, strip whitespace and ignore case.
+            if isinstance(self, String):
                 new_value = value.replace(" ", "").upper()
                 allowed = [x.replace(" ", "").upper() for x in self._allowed]
 
@@ -332,7 +336,7 @@ class Boolean(Requirement):
     def _validate(self, value):
         """Validate the value."""
 
-        if type(value) is bool:
+        if isinstance(value, bool):
             return value
         else:
             raise TypeError("The value should be of type 'bool'.")
@@ -452,7 +456,7 @@ class Float(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is float:
+        if isinstance(value, float):
             return value
         elif type(value) is int:
             return float(value)
@@ -501,7 +505,7 @@ class String(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is str:
+        if isinstance(value, str):
             return value
         else:
             raise TypeError("The value should be of type 'str'")
@@ -545,11 +549,11 @@ class File(Requirement):
             return None
 
         # Check the type.
-        if type(value) is str:
+        if isinstance(value, str):
             file = _unarchive(value)
             if file is None:
                 file = value
-            elif type(file) is list:
+            elif isinstance(file, (list, tuple)):
                 raise ValueError("The archive contains multiple files: use a FileSet instead!")
         else:
             raise TypeError("The value should be of type 'str'")
@@ -616,7 +620,7 @@ class FileSet(Requirement):
             return None
 
         # Handle single strings.
-        if type(value) is str:
+        if isinstance(value, str):
             value = [value]
 
         # The user can pass a list of compressed files so we need to keep
@@ -624,7 +628,7 @@ class FileSet(Requirement):
         uncompressed_files = []
 
         # We should receive a list of strings.
-        if type(value) is list:
+        if isinstance(value, (list, tuple)):
 
             # A single file was passed.
             if len(value) == 1:
@@ -635,14 +639,14 @@ class FileSet(Requirement):
             for file in value:
 
                 # Check the types.
-                if type(file) is not str:
+                if not isinstance(file, str):
                     raise TypeError("The value should be of type 'str'")
 
                 # Check whether this is an archive.
                 files = _unarchive(file)
 
                 if files is not None:
-                    if type(files) is list:
+                    if isinstance(files, list):
                         uncompressed_files += files
                     else:
                         uncompressed_files.append(files)
@@ -744,7 +748,7 @@ class Length(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Length:
+        if isinstance(value, _Types.Length):
             return value._convert_to(self._unit)
 
         else:
@@ -843,7 +847,7 @@ class Area(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Area:
+        if isinstance(value, _Types.Area):
             return value._convert_to(self._unit)
 
         else:
@@ -942,7 +946,7 @@ class Volume(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Volume:
+        if isinstance(value, _Types.Volume):
             return value._convert_to(self._unit)
 
         else:
@@ -1041,7 +1045,7 @@ class Angle(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Angle:
+        if isinstance(value, _Types.Angle):
             return value._convert_to(self._unit)
 
         else:
@@ -1140,7 +1144,7 @@ class Charge(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Charge:
+        if isinstance(value, _Types.Charge):
             return value._convert_to(self._unit)
 
         else:
@@ -1238,7 +1242,7 @@ class Energy(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Energy:
+        if isinstance(value, _Types.Energy):
             return value._convert_to(self._unit)
 
         else:
@@ -1337,7 +1341,7 @@ class Pressure(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Pressure:
+        if isinstance(value, _Types.Pressure):
             return value._convert_to(self._unit)
 
         else:
@@ -1436,7 +1440,7 @@ class Temperature(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Temperature:
+        if isinstance(value, _Types.Temperature):
             return value._convert_to(self._unit)
 
         else:
@@ -1534,7 +1538,7 @@ class Time(Requirement):
     def _validate(self, value):
         """Validate that the value is of the correct type."""
 
-        if type(value) is _Types.Time:
+        if isinstance(value, _Types.Time):
             return value._convert_to(self._unit)
 
         else:
@@ -1569,7 +1573,7 @@ def _validate_unit_requirement(value, unit_type):
     unit = None
 
     # Float.
-    if type(value) is float:
+    if isinstance(value, float):
         pass
 
     # Integer.
@@ -1577,7 +1581,7 @@ def _validate_unit_requirement(value, unit_type):
         value = float(value)
 
     # String.
-    elif type(value) is str:
+    elif isinstance(value, str):
         # First try to directly convert to a float.
         try:
             value = float(value)
@@ -1652,7 +1656,7 @@ def _unarchive(name):
             # Decompress the archive.
             with _tarfile.open(name) as tar:
                 # We need to call tar.list(), otherwise the tar object will not know
-                # about nested directories, i.e. it will appear as if ther is a single
+                # about nested directories, i.e. it will appear as if there is a single
                 # member.
                 print("Decompressing...")
                 tar.list(verbose=False)
@@ -1660,7 +1664,7 @@ def _unarchive(name):
                 # Loop over all of the members and get the file names.
                 # If the name has no extension, then we assume that it's a directory.
                 for file in tar.members:
-                    if _os.path.splitext(file.name)[1] is not "":
+                    if _os.path.splitext(file.name)[1] != "":
                         files.append(dir + file.name)
 
                 # Now extract all of the files.

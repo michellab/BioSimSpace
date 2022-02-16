@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for minimisation protocols.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Minimisation"]
 
@@ -85,7 +85,7 @@ class Minimisation(_Protocol):
            steps : int
                The maximum number of minimisation steps.
         """
-        if type(steps) is not int:
+        if not type(steps) is int:
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:

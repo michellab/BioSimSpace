@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for handling collective variables for metadynamics simulations.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["CollectiveVariable"]
 
@@ -34,24 +34,26 @@ from .._grid import Grid as _Grid
 class CollectiveVariable():
     """A base class for holding collective variables."""
 
-    def __init__(self, pbc=True):
+    def __init__(self):
         """Constructor.
-
-           Parameters
-           ----------
-
-           pbc : bool
-              Whether to use periodic boundaries conditions.
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is CollectiveVariable:
             raise Exception("<CollectiveVariable> must be subclassed.")
+
+        # Default to non-unit based types.
+        self._types = [int, float]
+
+        # Default to single-component collective variable.
+        self._num_components = 1
 
         # Whether this is a newly created object.
         self._is_new_object = True
 
-        self.setPeriodicBoundaries(pbc)
+    def nComponents(self):
+        """Return the number of components for the collective variable."""
+        return self._num_components
 
     def setLowerBound(self, lower_bound=None):
         """Set a lower bound on the value of the collective variable.
@@ -63,11 +65,11 @@ class CollectiveVariable():
                A lower bound on the value of the collective variable.
         """
 
-        if type(lower_bound) is None:
+        if lower_bound is None:
             self._lower_bound = None
             return
 
-        if type(lower_bound) is not _Bound:
+        if not isinstance(lower_bound, _Bound):
             raise TypeError("'lower_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
 
         # Store the existing value.
@@ -105,11 +107,11 @@ class CollectiveVariable():
                An upper bound on the value of the collective variable.
         """
 
-        if type(upper_bound) is None:
+        if upper_bound is None:
             self._upper_bound = None
             return
 
-        if type(upper_bound) is not _Bound:
+        if not isinstance(upper_bound, _Bound):
             raise TypeError("'upper_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
 
         # Store the existing value.
@@ -152,7 +154,7 @@ class CollectiveVariable():
             self._grid = None
             return
 
-        if type(grid) is not _Grid:
+        if not isinstance(grid, _Grid):
             raise TypeError("'grid' must be of type 'BioSimSpace.Metadynamics.Grid'")
 
         # Store the existing value.
@@ -179,32 +181,6 @@ class CollectiveVariable():
                The grid on which the collective variable is sampled.
         """
         return self._grid
-
-    def setPeriodicBoundaries(self, pbc):
-        """Set whether to use periodic_boundaries when calculating the
-           collective variable.
-
-           Parameters
-           ----------
-
-           pbc : bool
-               Whether to use periodic boundaries conditions.
-        """
-        if type(pbc) is not bool:
-            raise TypeError("'pbc' must be of type 'bool'")
-        self._pbc = pbc
-
-    def getPeriodicBoundaries(self):
-        """Return whether to take account of periodic boundary conditions
-           when computing the collective variable.
-
-           Returns
-           -------
-
-           pbc : bool
-               Whether to use periodic boundaries conditions.
-        """
-        return self._pbc
 
     def _validate(self):
         """Internal function to validate that the object is in a consistent

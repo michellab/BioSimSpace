@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ An energy type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Energy"]
 
@@ -56,7 +56,7 @@ class Energy(_Type):
                      "KT"                    : "An energy in KT." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "KLO CALORIES PER MOL"
+    _null_unit = "KILO CALORIES PER MOL"
 
     def __init__(self, *args):
         """Constructor.

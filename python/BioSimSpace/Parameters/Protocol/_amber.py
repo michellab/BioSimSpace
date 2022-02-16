@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -26,7 +26,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 
@@ -35,6 +35,7 @@ __all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 
 import os as _os
 import queue as _queue
+import shlex as _shlex
 import subprocess as _subprocess
 import warnings as _warnings
 
@@ -42,8 +43,10 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
+from BioSimSpace import _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
 from BioSimSpace.Types import Charge as _Charge
@@ -53,11 +56,23 @@ from . import _protocol
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -68,18 +83,46 @@ class FF03(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff03", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if not isinstance(leap_commands, (list, tuple)):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = True
+        if self._leap_commands is None:
+            self._pdb2gmx = True
 
 class FF99(_protocol.Protocol):
     """A class for handling protocols for the FF99 force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -90,18 +133,46 @@ class FF99(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if not isinstance(leap_commands, (list, tuple)):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = True
+        if self._leap_commands is None:
+            self._pdb2gmx = True
 
 class FF99SB(_protocol.Protocol):
     """A class for handling protocols for the FF99SB force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -112,17 +183,44 @@ class FF99SB(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SB", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if not isinstance(leap_commands, (list, tuple)):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
 
 class FF99SBILDN(_protocol.Protocol):
     """A class for handling protocols for the FF99SBILDN force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -133,18 +231,44 @@ class FF99SBILDN(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SBildn", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if not isinstance(leap_commands, (list, tuple)):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
-        self._pdb2gmx = False
 
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           water_model : str
+               The water model used to parameterise any structural ions. This
+               will be ignored when it is not supported by the chosen force field.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -155,6 +279,21 @@ class FF14SB(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff14SB", property_map=property_map)
 
+        # Validate the water model.
+        if water_model is not None and not isinstance(water_model, str):
+            raise TypeError("'water_model' must be of type 'str'")
+        else:
+            self._water_model = water_model
+
+        # Validate the additional leap commands.
+        if leap_commands is not None:
+            if not isinstance(leap_commands, (list, tuple)):
+                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in leap_commands):
+                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        self._leap_commands = leap_commands
+
         # Set the compatibility flags.
         self._tleap = True
 
@@ -162,12 +301,12 @@ class GAFF(_protocol.Protocol):
     """A class for handling protocols for the GAFF force field model."""
 
     # A list of supported charge methods.
-    _charge_methods = [ "RESP",
-                        "CM2",
-                        "MUL",
-                        "BCC",
-                        "ESP",
-                        "GAS" ]
+    _charge_methods = ["RESP",
+                       "CM2",
+                       "MUL",
+                       "BCC",
+                       "ESP",
+                       "GAS"]
 
     def __init__(self, charge_method="BCC", net_charge=None, property_map={}):
         """Constructor.
@@ -188,7 +327,7 @@ class GAFF(_protocol.Protocol):
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-        if type(charge_method) is not str:
+        if not isinstance(charge_method, str):
             raise TypeError("'charge_method' must be of type 'str'")
 
         # Strip whitespace and convert to upper case.
@@ -197,14 +336,14 @@ class GAFF(_protocol.Protocol):
         # Check that the charge method is valid.
         if not charge_method in self._charge_methods:
             raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
-                % (charge_method, self.charge_methods))
+                % (charge_method, self._charge_methods))
 
         if net_charge is not None:
             # Get the magnitude of the charge.
-            if type(net_charge) is _Charge:
+            if isinstance(net_charge, _Charge):
                 net_charge = net_charge.magnitude()
 
-            if type(net_charge) is float:
+            if isinstance(net_charge, float):
                 if net_charge % 1 != 0:
                     raise ValueError("'net_charge' must be integer valued.")
 
@@ -265,8 +404,9 @@ class GAFF(_protocol.Protocol):
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            work_dir : str
                The working directory.
@@ -281,13 +421,13 @@ class GAFF(_protocol.Protocol):
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if not isinstance(molecule, (_Molecule, str)):
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-        if type(work_dir) is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(queue) is not None and type(queue) is not _queue.Queue:
+        if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
         # Set work_dir to the current directory.
@@ -297,8 +437,21 @@ class GAFF(_protocol.Protocol):
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a copy of the molecule.
-        new_mol = molecule.copy()
+        # Convert SMILES to a molecule.
+        if isinstance(molecule, str):
+            is_smiles = True
+            try:
+                new_mol = self._smiles_to_molecule(molecule, work_dir)
+            except Exception as e:
+                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
+        else:
+            is_smiles = False
+            new_mol = molecule.copy()
 
         # Use the net molecular charge passed as an option.
         if self._net_charge is not None:
@@ -344,7 +497,7 @@ class GAFF(_protocol.Protocol):
                     charge = new_mol.charge(property_map=_property_map).magnitude()
 
                     # Compute the formal charge ourselves to check that it is consistent.
-                    formal_charge = _formalCharge(molecule).magnitude()
+                    formal_charge = _formalCharge(new_mol).magnitude()
 
                     if charge != formal_charge:
                         _warnings.warn("The formal charge on the molecule is %d "
@@ -368,8 +521,13 @@ class GAFF(_protocol.Protocol):
         try:
             pdb = _SireIO.PDB2(s)
             pdb.writeToFile(prefix + "antechamber.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the Antechamber command.
         command = ("%s -at %d -i antechamber.pdb -fi pdb " +
@@ -387,7 +545,8 @@ class GAFF(_protocol.Protocol):
         stderr = open(prefix + "antechamber.err", "w")
 
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -410,7 +569,8 @@ class GAFF(_protocol.Protocol):
             stderr = open(prefix + "parmchk.err", "w")
 
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -444,28 +604,55 @@ class GAFF(_protocol.Protocol):
                     file.write("%s\n" % command)
 
                 # Create files for stdout/stderr.
-                stdout = open(prefix + "tleap.out", "w")
-                stderr = open(prefix + "tleap.err", "w")
+                stdout = open(prefix + "leap.out", "w")
+                stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+                proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                    shell=False, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
 
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
                 if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
-                    # Load the parameterised molecule.
+                    # Check the output of tLEaP for missing atoms.
+                    if self._has_missing_atoms(prefix + "leap.out"):
+                        raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
+                                                     "inconsistent with the original molecule. Please "
+                                                     "make sure that your initial molecule has a "
+                                                     "complete topology.")
+
+                    # If the original molecule was comprised of multiple chains, then we need
+                    # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
+                    # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
+                    if new_mol.nChains() > 1:
+                        with open(prefix + "leap.top", "a") as file:
+                            file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                            file.write("%FORMAT(10I8)\n")
+                            file.write("    %d\n" % new_mol.nAtoms())
+
+                    # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
-                        par_mol = _Molecule(_IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
-                                ._getSireObject()[_SireMol.MolIdx(0)])
-                    except:
-                        raise IOError("Failed to read molecule from: 'leap.top', 'leap.crd'") from None
+                        par_mol = _IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
+                        # Extract single molecules.
+                        if par_mol.nMolecules() == 1:
+                            par_mol = par_mol.getMolecules()[0]
+                    except Exception as e:
+                        msg = "Failed to read molecule from: 'leap.top', 'leap.crd'"
+                        if _isVerbose():
+                            msg += ": " + getattr(e, "message", repr(e))
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
 
                     # Make the molecule 'mol' compatible with 'par_mol'. This will create
                     # a mapping between atom indices in the two molecules and add all of
                     # the new properties from 'par_mol' to 'mol'.
-                    new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+                    if is_smiles:
+                        new_mol = par_mol
+                    else:
+                        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
                     # Record the forcefield used to parameterise the molecule.
                     new_mol._forcefield = ff
@@ -521,10 +708,10 @@ class GAFF2(_protocol.Protocol):
 
         if net_charge is not None:
             # Get the magnitude of the charge.
-            if type(net_charge) is _Charge:
+            if isinstance(net_charge, _Charge):
                 net_charge = net_charge.magnitude()
 
-            if type(net_charge) is float:
+            if isinstance(net_charge, float):
                 if net_charge % 1 != 0:
                     raise ValueError("'net_charge' must be integer valued.")
 

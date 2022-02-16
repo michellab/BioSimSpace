@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,11 +24,12 @@ Functionality for free energy protocols.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
 import math as _math
+import warnings as _warnings
 
 from BioSimSpace import Types as _Types
 
@@ -44,10 +45,12 @@ class FreeEnergy(_Protocol):
                  max_lam=1.0,
                  num_lam=11,
                  timestep=_Types.Time(2, "femtosecond"),
-                 runtime=_Types.Time(1, "nanosecond"),
+                 runtime=_Types.Time(4, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 frames=20
+                 report_interval=200000,
+                 restart_interval=20000,
+                 perturbation_type="full"
                 ):
         """Constructor.
 
@@ -81,8 +84,23 @@ class FreeEnergy(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure. Pass pressure=None to use the NVT ensemble.
 
-           frames : int
-               The number of trajectory frames to record.
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
+
+           perturbation_type : str
+               The type of perturbation to perform. Options are:
+                "full" : A full perturbation of all terms (default option).
+                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                "flip" : Perturb all hard atom terms as well as bonds/angles.
+                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+
+                Currently perturubation_type != "full" is only supported by
+                BioSimSpace.Process.Somd.
         """
 
         # Call the base class constructor.
@@ -106,28 +124,78 @@ class FreeEnergy(_Protocol):
         else:
             self._pressure = None
 
-        # Set the number of trajectory frames.
-        self.setFrames(frames)
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
+
+        # Set the perturbation type. Default is "full", i.e. onestep protocol.
+        self.setPerturbationType(perturbation_type)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d>"
+            return ("<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, timestep=%s, "
+                    "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d>"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames)
+                        self._temperature, self._pressure, self._report_interval, self._restart_interval)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, "
-                    "timestep=%s, runtime=%s, temperature=%s, pressure=%s, frames=%d)"
+            return ("BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, timestep=%s, "
+                    "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d)"
                    ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
-                        self._temperature, self._pressure, self._frames)
+                        self._temperature, self._pressure, self._report_interval, self._restart_interval)
+
+    def getPerturbationType(self):
+        """Get the perturbation type.
+
+           Returns
+           -------
+
+           perturbation_type : str
+               The perturbation type.
+        """
+        return self._perturbation_type
+
+    def setPerturbationType(self, perturbation_type):
+        """Set the perturbation type.
+
+           Parameters
+           ----------
+
+           perturbation_type : str
+               The type of perturbation to perform. Options are:
+                "full" : A full perturbation of all terms (default option).
+                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+                "flip" : Perturb all hard atom terms as well as bonds/angles.
+                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+        """
+        if not isinstance(perturbation_type, str):
+            raise TypeError("'perturbation_type' must be of type 'str'")
+
+        # Convert to lower case and strip whitespace.
+        perturbation_type = perturbation_type.lower().replace(" ", "")
+
+        allowed_perturbation_types = ["full",
+                                      "discharge_soft",
+                                      "vanish_soft",
+                                      "flip",
+                                      "grow_soft",
+                                      "charge_soft"]
+
+        if perturbation_type not in allowed_perturbation_types:
+            raise ValueError(f"'perturbation_type' must be one of: {allowed_perturbation_types}")
+
+        self._perturbation_type = perturbation_type
 
     def getLambda(self):
         """Get the value of the perturbation parameter.
@@ -178,19 +246,15 @@ class FreeEnergy(_Protocol):
             lam = float(lam)
 
         # Validate the lambda parameter.
-        if type(lam) is not float:
+        if not isinstance(lam, float):
             raise TypeError("'lam' must be of type 'float'.")
 
         self._lambda = lam
 
         # A list of lambda values takes precedence.
         if lam_vals is not None:
-            # Convert tuple to list.
-            if type(lam_vals) is tuple:
-                lam_vals = list(lam_vals)
-
             # Make sure list (or tuple) has been passed.
-            if type(lam_vals) is not list:
+            if not isinstance(lam_vals, (list, tuple)):
                 raise TypeError("'lam_vals' must be of type 'list'.")
 
             # Make sure all lambda values are of type 'float'.
@@ -229,13 +293,13 @@ class FreeEnergy(_Protocol):
 
             # Validate type.
 
-            if type(min_lam) is not float:
+            if not isinstance(min_lam, float):
                 raise TypeError("'min_lam' must be of type 'float'.")
 
-            if type(max_lam) is not float:
+            if not isinstance(max_lam, float):
                 raise TypeError("'max_lam' must be of type 'float'.")
 
-            if type(num_lam) is not int:
+            if not type(num_lam) is int:
                 raise TypeError("'num_lam' must be of type 'int'.")
 
             # Validate values.
@@ -285,7 +349,7 @@ class FreeEnergy(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -310,7 +374,7 @@ class FreeEnergy(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -335,7 +399,7 @@ class FreeEnergy(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -360,36 +424,69 @@ class FreeEnergy(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
-    def getFrames(self):
-        """Return the number of frames.
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
 
            Returns
            -------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        return self._frames
+        return self._report_interval
 
-    def setFrames(self, frames):
-        """Set the number of frames.
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
 
            Parameters
            ----------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        if type(frames) is not int:
-            raise TypeError("'frames' must be of type 'int'")
+        if not type(report_interval) is int:
+            raise TypeError("'report_interval' must be of type 'int'")
 
-        if frames <= 0:
-            warn("The number of frames must be positive. Using default (20).")
-            self._frames = 20
-        else:
-            self._frames = _math.ceil(frames)
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
+
+        self._report_interval = report_interval
+
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Returns
+           -------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        return self._restart_interval
+
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
+
+           Parameters
+           ----------
+
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
+        """
+        if not type(restart_interval) is int:
+            raise TypeError("'restart_interval' must be of type 'int'")
+
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
+
+        self._restart_interval = restart_interval

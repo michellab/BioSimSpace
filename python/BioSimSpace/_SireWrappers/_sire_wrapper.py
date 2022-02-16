@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,15 +25,19 @@ not be directly exposed to the user.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
+
+import os as _os
 
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Vol as _SireVol
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Types import Length as _Length
 from BioSimSpace import Units as _Units
 
 class SireWrapper():
@@ -52,9 +56,9 @@ class SireWrapper():
         # Store a deep copy of the Sire object.
         self._sire_object = object.__deepcopy__()
 
-        # Intialise flags.
+        # Initialise flags.
         self._is_multi_atom = False
-        self._is_merged = False
+        self._is_perturbable = False
 
     def __eq__(self, other):
         """Equals to operator."""
@@ -85,7 +89,7 @@ class SireWrapper():
            Returns
            -------
 
-           system : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+           object : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
                     :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
                     :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
@@ -115,15 +119,23 @@ class SireWrapper():
                The charge.
         """
 
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'.")
+
+        if not isinstance(is_lambda1, bool):
+            raise TypeError("'is_lambda1' must be of type 'bool'.")
+
         # Copy the map.
         _property_map = property_map.copy()
 
-        # This is a merged molecule.
-        if self._is_merged:
-            if is_lambda1:
-                _property_map = { "charge" : "charge1" }
-            else:
-                _property_map = { "charge" : "charge0" }
+        if property_map == {}:
+            # This is a perturbable molecule.
+            if self._is_perturbable:
+                # Compute the charge for the chosen end state.
+                if is_lambda1:
+                    _property_map = { "charge" : "charge1" }
+                else:
+                    _property_map = { "charge" : "charge0" }
 
         # Calculate the charge.
         try:
@@ -150,18 +162,18 @@ class SireWrapper():
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
+                elif isinstance(x, _Length):
                     vec.append(x.angstroms().magnitude())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
@@ -169,14 +181,15 @@ class SireWrapper():
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         try:
             # Make a local copy of the property map.
             _property_map = property_map.copy()
 
-            if "coordinates" not in property_map and self._is_merged:
+            # This is a perturbable molecule. First translate the lamba = 0 state.
+            if self._is_perturbable:
                 _property_map["coordinates"] = "coordinates0"
 
             # Perform the translation.
@@ -184,9 +197,24 @@ class SireWrapper():
                                     .move()                                           \
                                     .translate(_SireMaths.Vector(vec), _property_map) \
                                     .commit()
-        except UserWarning:
-            raise _IncompatibleError("Cannot compute axis-aligned bounding box since "
-                                     "the object has no 'coordinates' property.") from None
+
+            # This is a perturbable molecule. Now translate the lamba = 1 state.
+            if self._is_perturbable:
+                _property_map["coordinates"] = "coordinates1"
+
+                # Perform the translation.
+                self._sire_object = self._sire_object                                     \
+                                        .move()                                           \
+                                        .translate(_SireMaths.Vector(vec), _property_map) \
+                                        .commit()
+
+        except UserWarning as e:
+            msg = "Cannot compute axis-aligned bounding box " + \
+                   "since the object has no 'coordinates' property."
+            if _isVerbose():
+                raise _IncompatibleError(msg) from e
+            else:
+                raise _IncompatibleError(msg) from None
 
     def getAxisAlignedBoundingBox(self, property_map={}):
         """Get the axis-aligned bounding box enclosing the object.
@@ -250,8 +278,8 @@ class SireWrapper():
 
         prop = property_map.get("coordinates", "coordinates")
 
-        # Handle merged molecules.
-        if self._is_merged:
+        # Handle perturbable molecules.
+        if self._is_perturbable:
             prop = "coordinates0"
 
         # Residues need to be converted to molecules to have a
@@ -261,9 +289,14 @@ class SireWrapper():
         except:
             try:
                 c = self.toMolecule()._sire_object.property(prop)
-            except:
-                raise _IncompatibleError("Unable to compute the axis-aligned bounding "
-                                         "box since the object has no 'coordinates' property.") from None
+            except Exception as e:
+                msg = "Cannot compute axis-aligned bounding box " + \
+                      "since the object has no 'coordinates' property."
+                if _isVerbose():
+                    print(msg)
+                    raise _IncompatibleError(msg) from e
+                else:
+                    raise _IncompatibleError(msg) from None
 
         # We have a vector of coordinates. (Multiple atoms)
         if self._is_multi_atom:

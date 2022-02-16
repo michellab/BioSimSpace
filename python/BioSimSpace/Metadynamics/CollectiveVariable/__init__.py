@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -29,6 +29,8 @@ Functions
     :toctree: generated/
 
     list
+    makeFunnel
+    viewFunnel
 
 Classes
 =======
@@ -37,9 +39,13 @@ Classes
     :toctree: generated/
 
     Distance
+    Funnel
+    RMSD
     Torsion
 """
 
 from ._distance import *
+from ._funnel import *
+from ._rmsd import *
 from ._torsion import *
 from ._utils import *

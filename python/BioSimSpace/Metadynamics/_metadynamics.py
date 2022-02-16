@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for initialising metadynamics simulation processes.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["run"]
 
@@ -32,8 +32,12 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 
-def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
-     seed=None, property_map={}):
+# Import common objects from BioSimSpace.MD._md
+from BioSimSpace.MD._md import _file_extensions, _md_engines, _find_md_engines
+
+def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+    name="metamd", work_dir=None, seed=None, property_map={},
+    ignore_warnings=False, show_errors=True):
     """Auto-configure and run a metadynamics process.
 
        Parameters
@@ -44,6 +48,14 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
 
        protocol : :class:`Protocol <BioSimSpace.Protocol.Metadynamics>`
            The metadynamics protocol.
+
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen. Supported engines can be
+           found using 'BioSimSpace.Metadynamics.engines()'.
+
+       gpu_support : bool
+           Whether to choose an engine with GPU support.
 
        auto_start : bool
            Whether to start the process automatically.
@@ -62,6 +74,16 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
 
+       ignore_warnings : bool
+           Whether to ignore warnings when generating the binary run file.
+           This option is specific to GROMACS and will be ignored when a
+           different molecular dynamics engine is chosen.
+
+       show_errors : bool
+           Whether to show warning/error messages when generating the binary
+           run file. This option is specific to GROMACS and will be ignored
+           when a different molecular dynamics engine is chosen.
+
        Returns
        -------
 
@@ -70,39 +92,85 @@ def run(system, protocol, auto_start=True, name="metamd", work_dir=None,
     """
 
     # Check that the system is valid.
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     # Check that the protocol is valid.
-    if type(protocol) is not _Protocol.Metadynamics:
+    if not isinstance(protocol, _Protocol.Metadynamics):
         raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
     # Validate optional arguments.
 
-    if type(auto_start) is not bool:
+    if not isinstance(engine, str):
+        raise TypeError("'engine' must be of type 'str'.")
+    md_engine = engine.upper().replace(" ", "")
+
+    if not isinstance(gpu_support, bool):
+        raise TypeError("'gpu_support' must be of type 'bool'")
+
+    if not isinstance(auto_start, bool):
         raise TypeError("'auto_start' must be of type 'bool'")
 
-    if type(name) is not str:
+    if not isinstance(name, str):
         raise TypeError("'name' must be of type 'str'")
 
     if work_dir is not None:
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
     if seed is not None:
-        if type(seed) is not int:
+        if not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    # Create the process object.
+    if not isinstance(ignore_warnings, bool):
+        raise ValueError("'ignore_warnings' must be of type 'bool.")
 
-    process = _Process.Gromacs(system, protocol, name=name,
-        work_dir=work_dir, seed=seed, property_map=property_map)
+    if not isinstance(show_errors, bool):
+        raise ValueError("'show_errors' must be of type 'bool.")
 
-    # Start the process.
-    if auto_start:
-        return process.start()
+    # Find a molecular dynamics engine and executable.
+    engines, exes = _find_md_engines(system, protocol, md_engine, gpu_support)
+
+    # Create the process object, return the first supported engine that can
+    # instantiate a process.
+
+    for engine, exe in zip(engines, exes):
+        try:
+            # AMBER.
+            if engine == "AMBER":
+                process = _Process.Amber(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
+
+            # GROMACS.
+            elif engine == "GROMACS":
+                process = _Process.Gromacs(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map,
+                    ignore_warnings=ignore_warnings, show_errors=show_errors)
+
+            # OPENMM.
+            elif engine == "OPENMM":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.OpenMM(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+
+            # Start the process.
+            if auto_start:
+                return process.start()
+            else:
+                return process
+
+        except:
+            pass
+
+    # If we got here, then we couldn't create a process.
+    if md_engine == "AUTO":
+        raise Exception(f"Unable to create a process using any supported engine: {engines}")
     else:
-        return process
+        raise Exception(f"Unable to create a process using the chosen engine: {md_engine}")

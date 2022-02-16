@@ -64,7 +64,7 @@ node.addOutput("converted", BSS.Gateway.File(help="The converted molecular syste
 # 
 # NAMD: [alanin.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.pdb), [alanin.psf](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.psf), [alanin.params](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.params)
 # 
-# When uploading files the name of the current file will replace the `Browse` button. If you need to change the file, simply click on the button again and choose a new file. For `FileSet` requirements, a new `Browse` button will appear whenever an additional file is uploaded.
+# When uploading files the name of the current file(s) will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 
 # In[ ]:
 
@@ -72,7 +72,7 @@ node.addOutput("converted", BSS.Gateway.File(help="The converted molecular syste
 node.showControls()
 
 
-# Once all requirements are set then we can acces the values using the `node.getInput` method. The first time this is called the `node` will automatically validate all of the input and report the user if any errors were found.
+# Once all requirements are set then we can access the values using the `node.getInput` method. The first time this is called the `node` will automatically validate all of the input and report the user if any errors were found.
 # 
 # We'll now create a molecular system using the input files uploaded by the user. Note that we don't specify the format of the files, since this is automatically determined by BioSimSpace. (BioSimSpace has support for a wide range of formats and can convert between certain formats too.)
 
@@ -95,7 +95,7 @@ file_format = node.getInput("format")
 node.setOutput("converted", BSS.IO.saveMolecules("converted", system, file_format)[0])
 
 
-# Finally, we validate that the node completed succesfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.
+# Finally, we validate that the node completed successfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.
 # 
 # Note that the validation will fail until the cell above finishes running.
 
@@ -105,6 +105,7 @@ node.setOutput("converted", BSS.IO.saveMolecules("converted", system, file_forma
 node.validate()
 
 
-# Once we are satisfied with our node we can choosed to download it as a regular Python script that can be run from the command-line.
+# Once we are satisfied with our node we can choose to download it as a regular Python script that can be run from the command-line.
 # 
-# Click on: `File/Download As/Python`
+# In JupyterHub, click on: `File/Download As/Python`\
+# In JupyterLab, click on: `File/Export Notebook As/Export Notebook to Executable Script`

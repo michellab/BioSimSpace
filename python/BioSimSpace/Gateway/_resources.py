@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for finding and managing hardware resources.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["ResourceManager"]
 
@@ -38,17 +38,18 @@ class ResourceManager():
 
         # Set default values.
         self._nodes = None
-        self._cores = None
+        self._cpus = None
         self._gpus = None
 
         # Create the argument parser.
-        self._parser = _argparse.ArgumentParser(description="Command-line parser for hardware resources",
+        self._parser = _argparse.ArgumentParser(prog="BioSimSpace",
+                                                description="Command-line parser for hardware resources",
                                                 add_help=False, allow_abbrev=False)
 
         # Add the arguments.
         self._parser.add_argument("--nodes", type=int, help="The number of harwdare nodes.")
-        self._parser.add_argument("--cores", type=int, help="The number of harwdare cores.")
-        self._parser.add_argument("--gpus",  type=int, help="The number of harwdare graphics processors.")
+        self._parser.add_argument("--cpus", type=int, help="The number of harwdare central processing units.")
+        self._parser.add_argument("--gpus", type=int, help="The number of harwdare graphics processors.")
 
     def _initialise(self):
         """Initialise the resource manager."""
@@ -60,13 +61,13 @@ class ResourceManager():
         for key, value in args.items():
             if key == "nodes":
                 if value is not None:
-                    self._nodes = int(value)
-            elif key == "cores":
+                    self.setNodes(value)
+            elif key == "cpus":
                 if value is not None:
-                    self._cores = int(value)
+                    self.setCPUs(value)
             elif key == "gpus":
                 if value is not None:
-                    self._gpus = int(value)
+                    self.setGPUs(value)
 
     def getNodes(self):
         """Return the number of nodes.
@@ -89,7 +90,7 @@ class ResourceManager():
                The number of nodes.
         """
 
-        if type(nodes) is not int:
+        if not type(nodes) is int:
             raise TypeError("'nodes' must be of type 'int'.")
 
         if nodes < 0:
@@ -97,34 +98,34 @@ class ResourceManager():
 
         self._nodes = nodes
 
-    def getCores(self):
-        """Return the number of cores.
+    def getCPUs(self):
+        """Return the number of cpus.
 
            Returns
            -------
 
-           cores : int
-               The number of cores.
+           cpus : int
+               The number of CPUs.
         """
-        return self._cores
+        return self._cpus
 
-    def setCores(self, cores):
-        """Set the number of cores.
+    def setCPUs(self, cpus):
+        """Set the number of CPUs.
 
            Parameters
            ----------
 
-           cores : int
-               The number of cores.
+           cpus : int
+               The number of cpus.
         """
 
-        if type(cores) is not int:
-            raise TypeError("'cores' must be of type 'int'.")
+        if not type(cpus) is int:
+            raise TypeError("'cpus' must be of type 'int'.")
 
-        if cores < 0:
-            raise ValueError("'cores' cannot be negative!")
+        if cpus < 0:
+            raise ValueError("'cpus' cannot be negative!")
 
-        self._cores = cores
+        self._cpus = cpus
 
     def getGPUs(self):
         """Return the number of GPUs.
@@ -147,7 +148,7 @@ class ResourceManager():
                The number of GPUs.
         """
 
-        if type(gpus) is not int:
+        if not type(gpus) is int:
             raise TypeError("'gpus' must be of type 'int'.")
 
         if gpus < 0:

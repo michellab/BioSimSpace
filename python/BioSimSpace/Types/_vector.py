@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ A general three-vector type.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Vector"]
 
@@ -100,7 +100,7 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The sum of the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
@@ -121,11 +121,49 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The difference of the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
-        return self._from_sire_vector(self._sire_object - other._object)
+        return self._from_sire_vector(self._sire_object - other._sire_object)
+
+    def __mul__(self, other):
+        """Multiplication operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Only support multiplication by float.
+        if isinstance(other, float):
+            # Return a new vector multiplied by other.
+            return self._from_sire_vector(other * self._sire_object)
+
+        else:
+            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __rmul__(self, other):
+        """Multiplication operator."""
+
+        # Multipliation is commutative: a*b = b*a
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        """Division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if isinstance(other, float):
+            # Return a new vector divided by other.
+            return self._from_sire_vector(self._sire_object / other)
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def dot(self, other):
         """Return the dot (scalar) product with the other vector.
@@ -142,7 +180,7 @@ class Vector():
            result : float
                The scalar product.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         return self._sire_object.dot(self._sire_object, other._sire_object)
@@ -162,7 +200,7 @@ class Vector():
            result : :class: `Vector <BioSimSpace.Types.Vector>`
                The cross product.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         x = self.y()*other.z() - self.z()*other.y()
@@ -187,7 +225,7 @@ class Vector():
            angle : :class: `Angle <BioSimSpace.Types.Angle>`
                The angle between the two vectors.
         """
-        if type(other) is not Vector:
+        if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
         # Calculate the angle.

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,6 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    engines
     run
 
 Examples
@@ -55,3 +56,5 @@ Examples
 """
 
 from ._md import *
+from ._utils import *
+

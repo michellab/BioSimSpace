@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,14 +24,18 @@ Functionality for running simulation processes.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Process"]
 
 import collections as _collections
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+
+from BioSimSpace._Utils import _try_import
+
+_pygtail = _try_import("pygtail")
+
 import random as _random
 import timeit as _timeit
 import warnings as _warnings
@@ -42,13 +46,14 @@ import zipfile as _zipfile
 from Sire import Mol as _SireMol
 
 from BioSimSpace import _is_interactive, _is_notebook
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace.Protocol import Metadynamics as _Metadynamics
 from BioSimSpace.Protocol._protocol import Protocol as _Protocol
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Units as _Units
 
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
 class _MultiDict(dict):
@@ -87,29 +92,42 @@ class Process():
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Process:
             raise Exception("<Process> must be subclassed.")
 
         # Check that the system is valid.
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # Make sure the system is parameterised.
+        if not system._isParameterised():
+            raise _IncompatibleError("Cannot execute a Process for this System since it appears "
+                                     "to contain molecules that are not parameterised. Consider "
+                                     "using the 'BioSimSpace.Parameters' package.")
 
         # Check that the protocol is valid.
         if not isinstance(protocol, _Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Check that the working directory is valid.
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
         # Check that the seed is valid.
-        if seed is not None and type(seed) is not int:
+        if seed is not None and not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
         # Check that the map is valid.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
+
+        # Make sure that molecules in the system have coordinates.
+        prop = property_map.get("coordinates", "coordinates")
+        for mol in system.getMolecules():
+            if not mol.isPerturbable():
+                if not mol._sire_object.hasProperty(prop):
+                    raise _IncompatibleError("System object contains molecules without coordinates!")
 
         # Set the process to None.
         self._process = None
@@ -119,14 +137,14 @@ class Process():
 
         # Is the process running interactively? If so, don't block
         # when a get method is called.
-        self._is_blocked = not _is_interactive()
+        self._is_blocked = not _is_interactive
 
         # Whether this process can generate trajectory data.
         # Even if a process can generate a trajectory, whether it does
         # will depend on the chosen protocol.
         self._has_trajectory = False
 
-	# Copy the passed system, protocol, and process name.
+        # Copy the passed system, protocol, and process name.
         self._system = system.copy()
         self._protocol = protocol
 
@@ -193,7 +211,7 @@ class Process():
         # Initialise the configuration file string list.
         self._config = []
 
-        # Initalise the command-line argument dictionary.
+        # Initialise the command-line argument dictionary.
         self._args = _collections.OrderedDict()
 
         # Clear any existing output in the current working directory
@@ -316,7 +334,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -351,7 +369,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -363,7 +381,7 @@ class Process():
         # Use the PLUMED interface to get the required data.
         return self._plumed.getCollectiveVariable(index, time_series)
 
-    def _getFreeEnergy(self, index=None, stride=None, kt=None, block="AUTO"):
+    def _getFreeEnergy(self, index=None, stride=None, kt=_Units.Energy.kt, block="AUTO"):
         """Get the current free energy estimate.
 
            Parameters
@@ -378,7 +396,7 @@ class Process():
                check for convergence.
 
            kt : BioSimSpace.Types.Energy
-               The temperature in energy units for intergrating out variables.
+               The temperature in energy units for integrating out variables.
 
            block : bool
                Whether to block until the process has finished running.
@@ -392,7 +410,7 @@ class Process():
         """
 
         # Check that this is a metadynamics simulation.
-        if type(self._protocol) is not _Metadynamics:
+        if not isinstance(self._protocol, _Metadynamics):
             return None
 
         # Wait for the process to finish.
@@ -431,17 +449,13 @@ class Process():
                The value of the collective variable for each configuration.
         """
 
-        if type(number) is not int:
+        if not type(number) is int:
             raise TypeError("'number' must be of type 'int'")
 
         if number < 1:
             raise ValueError("'number' must be >= 1")
 
-        # Convert tuple to list.
-        if type(bounds) is tuple:
-            bounds = list(bounds)
-
-        if type(bounds) is not list:
+        if not isinstance(bounds, (list, tuple)):
             raise TypeError("'bounds' must be of type 'list'.")
 
         # Make sure the number of bounds matches the number of collective variables.
@@ -452,7 +466,7 @@ class Process():
         msg = "'bounds' must contain tuples with the lower and upper bound " \
               "for each collective variable."
 
-        # Store the list of collective varaible names and their units.
+        # Store the list of collective variable names and their units.
         names = self._plumed._colvar_name
         units = self._plumed._colvar_unit
 
@@ -463,7 +477,7 @@ class Process():
             # Extract the unit of the collective variable. (Its type)
             unit = units[names[x]]
 
-            if type(bound) is list or type(bound) is tuple:
+            if isinstance(bound, (list, tuple)):
                 # Must have upper/lower bound.
                 if len(bound) != 2:
                     raise ValueError(msg)
@@ -562,6 +576,55 @@ class Process():
 
         return configs, colvar_vals
 
+    def _checkPerturbable(self, system):
+        """Helper function to check for perturble molecules and convert to the
+           desired end state.
+
+           Parameters
+           ---------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system at a given end state.
+        """
+
+        # Check that the system is valid.
+        if not isinstance(system, _System):
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+        # If the system contains a perturbable molecule, then we'll warn the user
+        # and simulate the lambda = 0 state.
+        if system.nPerturbableMolecules() > 0:
+            if not "is_lambda1" in self._property_map:
+                is_lambda1 = False
+                _warnings.warn("The system contains a perturbable molecule ."
+                                "We will assume that you intend to simulate the "
+                                "lambda = 0 state. If you want to simulate the "
+                                "lambda = 1 state, then pass {'is_lambda1' : True} "
+                                "in the 'property_map' argument.")
+            else:
+                is_lambda1 = self._property_map["is_lambda1"]
+                self._property_map.pop("is_lambda1")
+
+            # Loop over all perturbable molecules in the system and replace them
+            # with a regular molecule and the chosen end state.
+            for mol in system.getPerturbableMolecules():
+                system.updateMolecules(mol._toRegularMolecule(property_map=self._property_map,
+                                                              is_lambda1=is_lambda1,
+                                                              convert_amber_dummies=True))
+
+            # Copy across the properties from the original system.
+            for prop in self._system._sire_object.propertyKeys():
+                system._sire_object.setProperty(prop, self._system._sire_object.property(prop))
+
+        return system
+
     def start(self):
         """Start the process.
 
@@ -608,7 +671,7 @@ class Process():
 
         # Check that the new system is valid.
         else:
-            if type(system) is not _System:
+            if not isinstance(system, _System):
                 raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Use the existing protocol.
@@ -660,7 +723,7 @@ class Process():
                The process name.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
         else:
             self._name = name
@@ -686,7 +749,7 @@ class Process():
                The random number seed.
         """
 
-        if type(seed) is not int:
+        if not type(seed) is int:
             _warnings.warn("The seed must be an integer. Disabling seeding.")
             self._seed = None
         else:
@@ -699,7 +762,7 @@ class Process():
            ----------
 
            max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
-               The maximimum time to wait (in minutes).
+               The maximum time to wait (in minutes).
         """
 
         # The process isn't running.
@@ -716,7 +779,7 @@ class Process():
                 max_time = int(max_time.milliseconds().magnitude())
 
             # Float.
-            elif type(max_time) is float:
+            elif isinstance(max_time, float):
                 if max_time <= 0:
                     raise ValueError("'max_time' cannot be negative!")
 
@@ -759,13 +822,13 @@ class Process():
             return False
 
     def isError(self):
-        """Return whether the process errored.
+        """Return whether the process exited with an error.
 
            Returns
            -------
 
            is_error : bool
-               Whether the process errored.
+               Whether the process exited with an error.
         """
         try:
             return self._process.isError()
@@ -944,14 +1007,14 @@ class Process():
            Returns
            -------
 
-           ouput : str, IPython.display.FileLink
+           output : str, IPython.display.FileLink
                A path, or file link, to an archive of the process input.
         """
 
         if name is None:
             name = self._name + "_input"
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("'name' must be of type 'str'")
 
         # Generate the zip file name.
@@ -963,9 +1026,16 @@ class Process():
                 zip.write(file, arcname=_os.path.basename(file))
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
-                return _FileLink(zipname)
+                # Create a FileLink to the archive.
+                f_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
+                # Return a link to the archive.
+                return f_link
             else:
                 return zipname
         # Return the path to the archive.
@@ -990,14 +1060,14 @@ class Process():
            Returns
            -------
 
-           ouput : str, IPython.display.FileLink
+           output : str, IPython.display.FileLink
                A path, or file link, to an archive of the process output.
         """
 
         if name is None:
             name = self._name + "_output"
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("'name' must be of type 'str'")
 
         # Wait for the process to finish.
@@ -1018,7 +1088,7 @@ class Process():
                 zip.write(file, arcname=_os.path.basename(file))
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
                 return _FileLink(zipname)
             else:
@@ -1097,7 +1167,7 @@ class Process():
         """
 
         # Append a single string.
-        if type(config) is str:
+        if isinstance(config, str):
             self._config.append(config)
             self.writeConfig(self._config_file)
 
@@ -1142,7 +1212,7 @@ class Process():
            file : str
                The path to a file.
         """
-        if type(file) is not str:
+        if not isinstance(file, str):
             raise TypeError("'file' must be of type 'str'")
 
         with open(file, "w") as f:
@@ -1158,7 +1228,7 @@ class Process():
            file : str
                The path to a file.
         """
-        if type(file) is not str:
+        if not isinstance(file, str):
             raise TypeError("'file' must be of type 'str'")
 
         with open(file, "w") as f:
@@ -1205,7 +1275,7 @@ class Process():
         # Add the arguments to the list.
         for key, value in self._args.items():
             # Boolean flag.
-            if type(value) is bool:
+            if isinstance(value, bool):
                 if value:
                     args.append(str(key))
             else:
@@ -1248,7 +1318,7 @@ class Process():
                The value of the argument.
         """
 
-        if type(arg) is not str:
+        if not isinstance(arg, str):
             raise TypeError("'arg' must be of type 'str'.")
 
         self._args[arg] = value
@@ -1269,7 +1339,7 @@ class Process():
                The index in the dictionary.
         """
 
-        if type(arg) is not str:
+        if not isinstance(arg, str):
             raise TypeError("'arg' must be of type 'str'.")
 
         _odict_insert(self._args, arg, value, index)
@@ -1381,69 +1451,6 @@ class Process():
         """Generate the dictionary of command-line arguments."""
         self.clearArgs()
 
-def _restrain_backbone(system):
-    """Restrain protein backbone atoms.
-
-        Parameters
-        ----------
-
-        system : Sire.System.System
-            A Sire molecular system.
-    """
-
-    # Copy the original system.
-    s = system
-
-    # A list of amino acid name abbreviations.
-    # Since we only want to restrain atoms in protein backbones, we compare
-    # molecule residue names against this list in order to determine whether
-    # the molecule is a protein.
-    amino_acids = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE",
-        "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "SEC",
-        "VAL", "TRP", "TYR"]
-
-    # Loop over all molecules by number.
-    for n in s.molNums():
-
-        # Extract the molecule and make it editable.
-        m = s.molecule(n).edit()
-
-        # Initialise a list of protein residues.
-        protein_residues = []
-
-        # Compare each residue name against the amino acid list.
-        for res in m.residues():
-
-            # This residue is an amino acid.
-            if res.name().value().upper() in amino_acids:
-                protein_residues.append(res.index())
-
-        # Loop over all of the protein residues.
-        for residx in protein_residues:
-
-            # Loop over all of the atoms in the residue.
-            for atom in m.residue(residx).atoms():
-
-                # Try to compare the atom element property against the list of
-                # backbone atoms and set the "restrained" property if a match
-                # is found.
-                try:
-                    element = atom.property("element")
-                    if element == _SireMol.Element("CA") or \
-                       element == _SireMol.Element("N")  or \
-                       element == _SireMol.Element("C")  or \
-                       element == _SireMol.Element("O"):
-                           m = m.atom(atom.index()).setProperty("restrained", 1.0).molecule()
-
-                except:
-                    pass
-
-        # Update the system.
-        s.update(m.commit())
-
-    # Return the new system.
-    return s
-
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""
     if lst and isinstance(lst, list):
@@ -1454,7 +1461,7 @@ def _is_list_of_strings(lst):
 def _odict_insert(dct, key, value, index):
     """Insert an item into an ordered dictionary."""
 
-    if type(index) is not int:
+    if not type(index) is int:
         raise TypeError("'index' must be of type 'int'.")
 
     # Store the original size of the dictionary.

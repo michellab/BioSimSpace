@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,7 +25,7 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Process"]
 
@@ -49,15 +49,17 @@ import queue as _queue
 import sys as _sys
 import tempfile as _tempfile
 import threading as _threading
+import warnings as _warnings
 import zipfile as _zipfile
 
 from BioSimSpace import _is_notebook
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 from . import Protocol as _Protocol
 
-if _is_notebook():
+if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
 def _wrap_protocol(protocol_function, process):
@@ -74,7 +76,9 @@ def _wrap_protocol(protocol_function, process):
            A handle to the parent process.
     """
     try:
-        protocol_function(process._molecule, process._work_dir, process._queue)
+        protocol_function(process._molecule,
+                          process._work_dir,
+                          process._queue)
     except Exception as e:
         # Record that an error has been thrown.
         process._is_error = True
@@ -96,8 +100,9 @@ class Process():
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to parameterise.
+           molecule : BioSimSpace._SireWrappers.Molecule, str
+               The molecule to parameterise, either as a Molecule object, or
+               SMILES string.
 
            protocol : BioSimSpace.Parameters.Protocol
                The parameterisation protocol.
@@ -111,17 +116,22 @@ class Process():
 
         # Validate arguments.
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if not isinstance(molecule, (_Molecule, str)):
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
         if not isinstance(protocol, _Protocol._Protocol):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
 
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(auto_start) is not bool:
+        if not isinstance(auto_start, bool):
             raise TypeError("'auto_start' must be of type 'bool'")
+
+        # Warn the user if the molecule contains no hydrogens.
+        if isinstance(molecule, _Molecule):
+            if molecule.search("element H").nResults() == 0:
+                _warnings.warn("Attempting to parameterise a molecule without hydrogen atoms!")
 
         # Set attributes.
         self._molecule = molecule
@@ -211,7 +221,10 @@ class Process():
 
         # If there was an problem, return the last error.
         if self._is_error:
-            raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
+            if _isVerbose():
+                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
+            else:
+                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
 
         return self._new_molecule
 
@@ -274,9 +287,16 @@ class Process():
                 self._zipfile = zipname
 
         # Return a link to the archive.
-        if _is_notebook():
-            if file_link:
-                return _FileLink(self._zipfile)
+        if _is_notebook:
+            if file_link and self._zipfile is not None:
+                # Create a FileLink to the archive.
+                f_link = _FileLink(self._zipfile)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                f_link.html_link_str = f"<a href='%s' target='_blank' download='{self._zipfile}'>%s</a>"
+
+                # Return a link to the archive.
+                return f_link
             else:
                 return self._zipfile
         else:

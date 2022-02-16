@@ -1,4 +1,5 @@
 import os
+import platform
 
 if not os.getenv("BSS_CONDA_INSTALL"):
     # Set the minimum allowed Sire version.
@@ -26,6 +27,14 @@ authors=("Lester Hedges <lester.hedges@gmail.com, "
          "Christopher Woods <chryswoods@gmail.com>, "
          "Antonia Mey <antonia.mey@gmail.com")
 
+# Function to check if a conda dependency has been installed
+def is_installed(dep: str, conda: str):
+    p = subprocess.Popen([conda, "list", dep], stdout=subprocess.PIPE)
+    lines = str(p.stdout.read())
+
+    return lines.find(dep) != -1
+
+
 # Run the setup.
 try:
     setup(name='BioSimSpace',
@@ -36,7 +45,8 @@ try:
           url='https://github.com/michellab/BioSimSpace',
           license='GPLv2',
           packages=find_packages(),
-          zip_safe=True
+          include_package_data=True,
+          zip_safe=False
         )
 
 # Post setup configuration.
@@ -44,81 +54,105 @@ finally:
     import sys
 
     if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
+        import shlex
         import subprocess
 
         # Install Python dependencies and enable Jupyter widget extensions.
         print("\nSetting up python environment...")
 
         # Open files for stdout/stderr.
-        stdout = open("setup.out", "w")
-        stderr = open("setup.err", "w")
+        stdout = sys.stdout
+        stderr = sys.stderr
 
         # Create a list of the conda dependencies.
-        conda_deps = ["mdanalysis",
-                      "mdtraj",
-                      "rdkit"]
+        conda_deps = ["configargparse",
+                      "pygtail",
+                      "pytest",
+                      "pyyaml",
+                      "watchdog",
+                      "pydot",
+                      "networkx",
+                      "nglview",
+                      "pypdb",
+                      "rdkit",
+                      "parmed",
+                      "mdtraj",             # known not available on aarch64
+                      "mdanalysis",         # known not available on aarch64
+                      "openff-toolkit-base" # known not available on aarch64
+                     ]
 
-        # Create a list of the pip depdendencies.
-        pip_deps = ["configargparse",
-                    "duecredit",
-                    "fileupload",
-                    "jupyter",
-                    "mock",
-                    "nglview",
-                    "pyaml",
-                    "pygtail",
-                    "pymbar",
-                    "pypdb",
-                    "watchdog"]
+        # Don't try to install things that are already installed...
+        to_install_deps = []
+
+        print("Checking for dependencies that are already installed...")
+
+        for dep in conda_deps:
+            if not is_installed(dep, conda="%s/conda" % bin_dir):
+                to_install_deps.append(dep)
+            else:
+                print("Already installed %s" % dep)
+
+        conda_deps = to_install_deps
 
         print("Adding conda-forge channel")
         command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Disabling conda auto update")
         command = "%s/conda config --system --set auto_update_conda false" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Installing conda dependencies: %s" % ", ".join(conda_deps))
         command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
 
-        print("Upgrading pip")
-        command = "%s/pip install --upgrade pip" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        all_installed_ok = True
 
-        print("Installing pip dependencies: %s" % ", ".join(pip_deps))
-        command = "%s/pip install %s" % (bin_dir, " ".join(pip_deps))
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        try:
+            subprocess.run(shlex.split(command), shell=False, 
+                           stdout=stdout, stderr=stderr, check=True)
+        except Exception:
+            all_installed_ok = False
 
-        print("Activating notebook extension: fileupload")
-        command = "%s/jupyter-nbextension install fileupload --py --sys-prefix --log-level=0" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-        command = "%s/jupyter-nbextension enable fileupload --py --sys-prefix" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        if not all_installed_ok:
+            print("There were errors installing some of the dependencies.")
+            print("We will now try to install them one-by-one. This may take some time...")
+
+            failures = []
+
+            for dep in conda_deps:
+                if not is_installed(dep, conda="%s/conda" % bin_dir):
+                    print("Trying again to install '%s'" % dep)
+                    command = "%s/conda install -y -q %s" % (bin_dir, dep)
+
+                    try:
+                        subprocess.run(shlex.split(command), shell=False,
+                                       stdout=stdout, stderr=stderr, check=True)
+                    except Exception:
+                        failures.append(dep)
+
+            if len(failures) == 0:
+                print("All dependencies installed successfully!")
+            else:
+                print("\n** Failed to install these dependencies: %s" % ", ".join(failures))
+                print("** BioSimSpace will still install and run, but some functionality may not be available.\n")
+        else:
+            print("All dependencies install successfully first time!")
+
 
         print("Activating notebook extension: nglview")
         command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         print("Cleaning conda environment")
-        command = "%s/conda clean -all -y -q" % bin_dir
-        subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
-
-        # Close the file handles.
-        stdout.close()
-        stderr.close()
+        command = "%s/conda clean --all --yes --quiet" % bin_dir
+        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
 
         try:
             import BioSimSpace
-
-            # Installation worked. Remove the stdout/stderr files.
-            os.remove("setup.out")
-            os.remove("setup.err")
         except:
-            print("\nPossible installation issues. Please check output in 'setup.out' and 'setup.err'")
+            print("\nPossible installation issues.")
             sys.exit()
 
         print("\nDone!")
@@ -129,3 +163,4 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
+        print("FKCOMBU: https://pdbj.org/kcombu")

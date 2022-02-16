@@ -40,5 +40,18 @@ fi
 # Build the Conda package.
 $BIN_DIR/conda-build -c conda-forge -c omnia -c michellab/label/$LABEL .
 
-# Upload the package to the michellab channel on Anaconda Cloud.
-$BIN_DIR/anaconda -t $ANACONDA_TOKEN upload --user michellab $HOME/sire.app/conda-bld/$OS/biosimspace-* --label $LABEL
+# Label release packages with main and dev so that dev is at least as new as main.
+if [ "$LABEL" = "main" ]; then
+    $BIN_DIR/anaconda \
+        --token $ANACONDA_TOKEN upload \
+        --user michellab \
+        --label main \
+        --label dev \
+        $HOME/sire.app/conda-bld/$OS/biosimspace-*
+else
+    $BIN_DIR/anaconda \
+        --token $ANACONDA_TOKEN upload \
+        --user michellab \
+        --label dev \
+        $HOME/sire.app/conda-bld/$OS/biosimspace-*
+fi

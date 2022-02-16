@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -29,9 +29,10 @@ www.biosimspace.org
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Align",
+           "Box",
            "FreeEnergy",
            "Gateway",
            "IO",
@@ -56,32 +57,66 @@ except ModuleNotFoundError:
         + "Python interpreter: www.siremol.org")
 
 # Determine whether we're being imported from a Jupyter notebook.
-def _is_notebook():
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter
+try:
+    _shell = get_ipython().__class__.__name__
+    if _shell == 'ZMQInteractiveShell':
+        _is_notebook = True   # Jupyter notebook or qtconsole
+    elif _shell == 'TerminalInteractiveShell':
+        _is_notebook = False  # Terminal running IPython
+    else:
+        _is_notebook = False  # Other type (?)
+    del _shell
+except NameError:
+    _is_notebook = False      # Probably standard Python interpreter
 
 # Determine whether we're being run interactively.
-def _is_interactive():
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return True   # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter
+try:
+    _shell = get_ipython().__class__.__name__
+    if _shell == 'ZMQInteractiveShell':
+        _is_interactive = True   # Jupyter notebook or qtconsole
+    elif _shell == 'TerminalInteractiveShell':
+        _is_interactive = True   # Terminal running IPython
+    else:
+        _is_interactive = False  # Other type (?)
+    del _shell
+except NameError:
+    _is_interactive = False      # Probably standard Python interpreter
 
+# Default to non-verbose error messages, unless the 'BSS_VERBOSE_ERRORS'
+# environment variable is set to '1' (this allows verbose to be set before
+# import, so that we can see verbose messages if there are any problems
+# while importing BioSimSpace)
 from os import environ as _environ
+_is_verbose = "BSS_VERBOSE_ERRORS" in _environ and \
+    _environ["BSS_VERBOSE_ERRORS"] == "1"
+
+def setVerbose(verbose):
+    """Set verbosity of error messages.
+
+       Parameters
+       ----------
+
+       verbose : bool
+           Whether to print verbose error messages.
+    """
+    if type(verbose) is not bool:
+        raise TypeError("'verbose' must be of type 'bool'.")
+
+    global _is_verbose
+    _is_verbose = verbose
+
+def _isVerbose():
+    """Whether verbose error messages are active.
+
+       Returns
+       ------
+
+       is_verbose : bool
+           Whether verbose error messages are active.
+    """
+    global _is_verbose
+    return _is_verbose
+
 from warnings import warn as _warn
 
 # Check to see if AMBERHOME is set.
@@ -129,28 +164,40 @@ if not _path.isdir(_gromacs_path):
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
 
+        import shlex as _shlex
         import subprocess as _subprocess
 
-        # Generate the shell command.
-        _command = "%s -h 2>&1 | grep 'Data prefix' | awk -F ':' '{print $2}'" % _gmx_exe
+        # Generate the shell command. (Run gmx -h.)
+        _command = "%s -h" % _gmx_exe
 
         # Run the command.
-        _proc = _subprocess.run(_command, shell=True, stdout=_subprocess.PIPE)
+        _proc = _subprocess.run(_shlex.split(_command), shell=False,
+            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         del _command
 
         # Get the data prefix.
         if _proc.returncode == 0:
-            _gromacs_path = _proc.stdout.decode("ascii").strip() + "/share/gromacs/top"
-            # Check for the topology file directory.
-            if not _path.isdir(_gromacs_path):
-                _gromacs_path = None
+
+            # Extract the "Data prefix" from the output.
+            for _line in _proc.stderr.split("\n"):
+                if "Data prefix" in _line:
+                    _gromacs_path = _line.split(":")[1].strip() + "/share/gromacs/top"
+                    break
+            del _line
+
+            # Check that the topology file directory exists.
+            if _gromacs_path is not None:
+                if not _path.isdir(_gromacs_path):
+                    _gromacs_path = None
 
         del _path
         del _proc
+        del _shlex
         del _subprocess
 
 from . import Align
+from . import Box
 from . import FreeEnergy
 from . import Gateway
 from . import IO
@@ -165,33 +212,6 @@ from . import Solvent
 from . import Trajectory
 from . import Types
 from . import Units
-
-# Top-level functions.
-
-def viewMolecules(files, idxs=None):
-    """View the molecules contained in the passed file(s). Optionally supply
-       a list of indices of molecules you want to view. This views the molecules
-       and also returns a view object that will allow you to change the view,
-       e.g. choosing different molecules to view etc.
-    """
-
-    if not _is_notebook():
-        _warn("You can only view molecules from within a Jupyter notebook.")
-        return None
-
-    if isinstance(files, str):
-        files = [files]
-
-    print("Reading molecules from '%s'" % files)
-    s = IO.readMolecules(files)
-
-    print("Rendering the molecules...")
-    v = Notebook.View(s)
-
-    if idxs:
-        return v.molecules(idxs)
-    else:
-        return v.system()
 
 from ._version import get_versions
 __version__ = get_versions()['version']

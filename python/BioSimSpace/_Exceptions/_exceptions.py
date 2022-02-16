@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,16 +24,21 @@ Custom exceptions for error handling.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["AlignmentError",
+           "AnalysisError",
            "IncompatibleError",
            "MissingSoftwareError",
-           "ParameterisationError"]
+           "ParameterisationError",
+           "ThirdPartyError"]
 
 class AlignmentError(Exception):
     """Exception thrown when molecular alignment fails."""
     pass
+
+class AnalysisError(Exception):
+    """Exception thrown when analysis on existing simulation data fails."""
 
 class IncompatibleError(Exception):
     """Exception thrown when objects are incompatible with each other."""
@@ -46,3 +51,6 @@ class MissingSoftwareError(Exception):
 class ParameterisationError(Exception):
     """Exception thrown when molecular parameterisation fails."""
     pass
+
+class ThirdPartyError(Exception):
+    """Exception thrown by a third party package."""

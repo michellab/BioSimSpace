@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for torsion based collective variables.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Torsion"]
 
@@ -68,7 +68,10 @@ class Torsion(_CollectiveVariable):
         """
 
         # Call the base class constructor.
-        super().__init__(pbc)
+        super().__init__()
+
+        # Set the types associated with this collective variable.
+        self._types = [_Angle]
 
         # Initialise optional member data.
         self._lower_bound = None
@@ -76,12 +79,11 @@ class Torsion(_CollectiveVariable):
         self._grid = None
 
         # Set the required parameters.
-
         self.setAtoms(atoms)
         self.setHillWidth(hill_width)
+        self.setPeriodicBoundaries(pbc)
 
         # Set the optional parameters.
-
         if lower_bound is not None:
             self.setLowerBound(lower_bound)
         if upper_bound is not None:
@@ -126,12 +128,8 @@ class Torsion(_CollectiveVariable):
                will be measured from.
         """
 
-        # Convert tuples to a list.
-        if type(atoms) is tuple:
-            atoms = list(atoms)
-
-        # List of atom indices.
-        if type(atoms) is list and all(isinstance(x, int) for x in atoms):
+        # List/tuple of atom indices.
+        if isinstance(atoms, (list, tuple)) and all(type(x) is int for x in atoms):
             pass
         else:
             raise TypeError("'atoms' must be of list of 'int' types.")
@@ -140,7 +138,7 @@ class Torsion(_CollectiveVariable):
             raise ValueError("'atoms' must contain four indices.")
 
         # All okay, set the value.
-        self._atoms = atoms
+        self._atoms = list(atoms)
 
     def getAtoms(self):
         """Return list of atom indices involved in the torsion.
@@ -160,7 +158,7 @@ class Torsion(_CollectiveVariable):
            hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
                The width of the Gaussian hill.
         """
-        if type(hill_width) is not _Angle:
+        if not isinstance(hill_width, _Angle):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Angle'")
 
         if hill_width.magnitude() < 0:
@@ -181,16 +179,42 @@ class Torsion(_CollectiveVariable):
         """
         return self._hill_width
 
+    def setPeriodicBoundaries(self, pbc):
+        """Set whether to use periodic_boundaries when calculating the
+           collective variable.
+
+           Parameters
+           ----------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        if not isinstance(pbc, bool):
+            raise TypeError("'pbc' must be of type 'bool'")
+        self._pbc = pbc
+
+    def getPeriodicBoundaries(self):
+        """Return whether to take account of periodic boundary conditions
+           when computing the collective variable.
+
+           Returns
+           -------
+
+           pbc : bool
+               Whether to use periodic boundaries conditions.
+        """
+        return self._pbc
+
     def _validate(self):
         """Internal function to check that the object is in a consistent state."""
 
         if self._lower_bound is not None:
-            if type(self._lower_bound.getValue()) is not _Angle:
+            if not isinstance(self._lower_bound.getValue(), _Angle):
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().radians())
         if self._upper_bound is not None:
-            if type(self._upper_bound.getValue()) is not _Angle:
+            if not isinstance(self._upper_bound.getValue(), _Angle):
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().radians())
@@ -199,11 +223,11 @@ class Torsion(_CollectiveVariable):
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
-            if type(self._grid.getMinimum()) is not _Angle:
+            if not isinstance(self._grid.getMinimum(), _Angle):
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._grid.setMinimum(self._grid.getMinimum().radians())
-            if type(self._grid.getMaximum()) is not _Angle:
+            if not isinstance(self._grid.getMaximum(), _Angle):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().radians())

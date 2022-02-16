@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,12 +24,14 @@ Functionality for running multiple processes.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["ProcessRunner"]
 
 import os as _os
 import tempfile as _tempfile
+import threading as _threading
+import time as _time
 
 from BioSimSpace._SireWrappers import System as _System
 
@@ -37,9 +39,28 @@ from ._process import Process as _Process
 
 class ProcessRunner():
     """A class for managing and running multiple simulation processes, e.g.
-       a free energy simulation at multiple lambda values."""
+       a free energy simulation at multiple lambda values.
 
-    def __init__(self, processes, name="runner", work_dir=None, nest_dirs=True):
+       Since BioSimSpace handles its own background processes it is unsuitable
+       for use with Python modules such as concurrent.futures, where use of
+       objects like a ProcessPoolExecutor would lead to redundant processes,
+       i.e. a process would be created, from which BioSimSpace would fork its
+       own background process. Instead, we recommend using a ProcessRunner,
+       which can handle the running of processes for you, both in serial and
+       parallel.
+
+       At present there is no way to allocate specific compute resources to
+       individual processes. As such, unless you have access to a large amount
+       of compute, when executing the runner in parallel we recommend that the
+       individual processes are serial in nature. BioSimSpace is not intended
+       to be a workflow manager and the ProcessRunner is only meant to help
+       facilitate running of more complex, multi-leg simulation processes. If
+       you desire more fine-grained resource control we recommend breaking your
+       workflow into separate :class:`nodes <BioSimSpace.Gateway.Node>`, which
+       can be run independently and allocated their own specific resources.
+    """
+
+    def __init__(self, processes, name="runner", work_dir=None):
         """Constructor.
 
            Parameters
@@ -53,11 +74,15 @@ class ProcessRunner():
 
            work_dir : str
                The working directory for the processes.
-
-           nest_dirs : bool
-               Whether to nest the working directory of the processes inside
-               the process runner top-level directory.
         """
+
+        # Convert tuple to list.
+        if isinstance(processes, tuple):
+            processes = list(processes)
+
+        # Convert to a list.
+        if not isinstance(processes, list):
+            processes = [processes]
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
@@ -68,39 +93,33 @@ class ProcessRunner():
             raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
 
         # Check that the working directory is valid.
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
-
-        # Check that the nest_dirs flag is valid.
-        if type(nest_dirs) is not bool:
-            raise TypeError("'nest_dirs' must be of type 'bool'")
-        self._nest_dirs = nest_dirs
 
         # Set the list of processes.
         self._processes = processes
 
-        # Set the name
-        if name is None:
-            self._name = None
-        else:
-            self.setName(name)
+        # Set the working directory.
+        self._work_dir = work_dir
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
+        # Inititialise a null thread to run the processes.
+        self._thread = None
 
-        # User specified working directory.
-        else:
-            self._work_dir = work_dir
+        # Flag that the runner hasn't been killed.
+        self._is_killed = False
 
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Set the name.
+        self.setName(name)
 
         # Nest all of the process working directories inside the runner directory.
-        if nest_dirs:
+        if self._work_dir is not None:
             self._processes = self._nest_directories(self._processes)
+
+        # Initialise the state for each process.
+        for p in self._processes:
+            p._is_queued = True
+            p._is_finished = False
+            p._num_failed = 0
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -157,7 +176,7 @@ class ProcessRunner():
            name : str
                The process runner name.
         """
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
         else:
             self._name = name
@@ -174,8 +193,10 @@ class ProcessRunner():
         """
 
         # Convert to a list.
-        if type(process) is not list:
-            processes = [ process ]
+        if not isinstance(process, list):
+            processes = [process]
+        else:
+            processes = process
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
@@ -185,10 +206,18 @@ class ProcessRunner():
         if not all(process.isRunning() == False for process in processes):
             raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
 
-        # Nest the directories inside the process runner's working directory.
-        if self._nest_dirs:
-            # Extend the list of procesess.
-            self._processes.extend(self._nest_directories(processes, len(self._processes)))
+        if self._work_dir is None:
+            self._processes.extend(self._nest_directories(processes))
+        else:
+            self._processes.extend(processes)
+
+        # Initialise the state for each process.
+        num_processes = self.nProcesses()
+        for x in range(0, len(processes)):
+            idx = num_processes - x - 1
+            self._processes[idx]._is_queued = True
+            self._processes[idx]._is_finished = False
+            self._processes[idx]._num_failed = 0
 
     def removeProcess(self, index):
         """Remove a process from the runner.
@@ -201,14 +230,32 @@ class ProcessRunner():
         """
 
         try:
-            # Pop the chosen process from the list.
-            process = self._processes.pop(index)
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-            # Kill the process.
-            process.kill()
+        num_processes = self.nProcesses()
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
+
+        # Only remove process if the runner is stopped.
+        if self._thread is None or not self._thread.is_alive():
+            try:
+                # Pop the chosen process from the list.
+                process = self._processes.pop(index)
+
+                # Kill the process.
+                process.kill()
+
+            except IndexError:
+                raise IndexError("'index' is out of range: [0-%d]" % (self.nProcesses() - 1))
+        else:
+            print("ProcessRunner has started. Kill all processes before removing.")
 
     def nProcesses(self):
         """Return the number of processes.
@@ -390,7 +437,8 @@ class ProcessRunner():
         return bool_list
 
     def start(self, index):
-        """Start a specific process. The same can be achieved using:
+        """Start a specific process. The same can be achieved using:\n
+
                runner.processes()[index].start()
 
            Parameters
@@ -401,40 +449,251 @@ class ProcessRunner():
         """
 
         try:
-            self._processes[index].start()
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+        num_processes = self.nProcesses()
 
-    def startAll(self):
-        """Start all of the processes."""
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
 
-        for p in self._processes:
-            # Initialise the error state.
-            is_error = True
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
 
-            # Zero the tally of failed processes.
-            num_failed = 0
+        # Reset the process state
+        self._processes[index]._is_queued = False
+        self._processes[index]._is_error = False
+        self._processes[index]._num_failed = 0
 
-            # Retry failed processes up to a maximum of 5 times.
-            while is_error:
-                # Start the process and wait for it to finish.
-                p.start()
+        # Start the process.
+        self._processes[index].start()
+
+    def startAll(self, serial=False, batch_size=None, max_retries=5):
+        """Start all of the processes.
+
+           Parameters
+           ----------
+
+           serial : bool
+               Whether to start the processes in serial, i.e. wait for a
+               process to finish before starting the next. When running
+               in parallel (serial=False) care should be taken to ensure
+               that each process doesn't consume too many resources. We
+               normally intend for the ProcessRunner to be used to manage
+               single core processes.
+
+           batch_size : int
+               When running in parallel, how many processes to run at any
+               one time. If set to None, then the batch size will be set
+               to the output of multiprocess.cpu_count().
+
+           max_retries : int
+               How many times to retry a process if it fails.
+        """
+
+        if self.nProcesses() == 0:
+            raise ValueError("The ProcessRunner contains no processes!")
+
+        # Validate input.
+
+        if not isinstance(serial, bool):
+            raise TypeError("'serial' must be of type 'bool'.")
+
+        if batch_size is not None:
+            if not type(batch_size) is int:
+                raise TypeError("'batch_size' must be of type 'int'.")
+            if batch_size < 1:
+                raise ValueError("'batch_size' must be > 1.")
+        else:
+            from multiprocessing import cpu_count
+            batch_size = cpu_count()
+
+        if not type(max_retries) is int:
+            raise TypeError("'max_retries' must be of type 'int'.")
+
+        if max_retries < 1:
+            raise ValueError("'max_retries' must be > 0.")
+
+        # Set up the background thread.
+        if self._thread is None or not self._thread.is_alive():
+
+            # Flag that the runner is alive.
+            self._is_killed = False
+
+            # Create the thread.
+            self._thread = _threading.Thread(target=self._run_processes,
+                                             args=[serial, batch_size, max_retries])
+
+            # Daemonize the thread.
+            self._thread.daemon = True
+
+            # Start the thread.
+            self._thread.start()
+
+        else:
+            print("ProcessRunner already started!")
+
+    def _run_processes(self, serial=False, batch_size=None, max_retries=5):
+        """Helper function to run all of the processes in a background thread.
+
+           Parameters
+           ----------
+
+           serial : bool
+               Whether to start the processes in serial, i.e. wait for a
+               process to finish before starting the next. When running
+               in parallel (serial=False) care should be taken to ensure
+               that each process doesn't consume too many resources. We
+               normally indend for the ProcessRunner to be used to manage
+               single core processes.
+
+           batch_size : int
+               When running in parallel, how many processes to run at any
+               one time. If set to None, then the batch size will be set
+               to the output of multiprocess.cpu_count().
+
+           max_retries : int
+               How many times to retry a process if it fails.
+        """
+
+        if self.nProcesses() == 0:
+            raise ValueError("The ProcessRunner contains no processes!")
+
+        # Validate input.
+
+        if not isinstance(serial, bool):
+            raise TypeError("'serial' must be of type 'bool'.")
+
+        if batch_size is not None:
+            if not type(batch_size) is int:
+                raise TypeError("'batch_size' must be of type 'int'.")
+            if batch_size < 1:
+                raise ValueError("'batch_size' must be > 1.")
+        else:
+            from multiprocessing import cpu_count
+            batch_size = cpu_count()
+
+        if not type(max_retries) is int:
+            raise TypeError("'max_retries' must be of type 'int'.")
+
+        if max_retries < 1:
+            raise ValueError("'max_retries' must be > 0.")
+
+        # Run processes in serial.
+        if serial:
+            for p in self._processes:
+                # Initialise the error state.
+                is_error = True
+
+                # Flag that the process is no longer queued.
+                p._is_queued = False
+
+                # Zero the tally of failed processes.
+                num_failed = 0
+
+                # Retry failed processes up to a maximum of 5 times.
+                while is_error and not self._is_killed:
+                    # Start the process and wait for it to finish.
+                    p.start()
+                    p.wait()
+
+                    # Check the error state.
+                    is_error = p.isError()
+
+                    # Increment the number of failures.
+                    if is_error:
+                        num_failed += 1
+
+                        # Maximum retries reached, move to the next process.
+                        if num_failed == max_retries:
+                            break
+
+        # Run in parallel.
+        else:
+            # First, set all processes as queued and set the number of
+            # failures to zero.
+            for p in self._processes:
+                p._is_queued = True
+                p._is_finished = False
+                p._num_failed = 0
+
+            # The total number of finished processes.
+            num_finished = 0
+
+            # A list to hold the indices of the processes that have been run.
+            # (Not those that are actually still running.)
+            run_idxs = []
+
+            # Loop until all processes have finished.
+            while num_finished < self.nProcesses() and not self._is_killed:
+
+                # Only submit more processes if we're below the batch size.
+                if self.nRunning() < batch_size:
+
+                    # Loop over all queued processes until we've submitted batch_size.
+                    queued = self.queued()
+                    for idx in queued:
+                        p = self._processes[idx]
+                        p._is_queued = False
+
+                        # Start the process and mark it as no-longer queued.
+                        p.start()
+
+                        # Record that we've run this process.
+                        run_idxs.append(idx)
+
+                        # We've hit the batch size, exit.
+                        if self.nRunning() == batch_size:
+                            break
+
+                # Copy the indices of the run jobs.
+                run_idxs_copy = run_idxs.copy()
+
+                # Loop over all the jobs that we've run.
+                for idx in run_idxs_copy:
+                    # The process is no longer running.
+                    p = self._processes[idx]
+                    if not p.isRunning():
+                        # There was an error.
+                        if p.isError():
+                            # We haven't yet reached the retry limit. Add this
+                            # process back to the queue and delete it from the
+                            # run list.
+                            if p._num_failed < max_retries:
+                                p._is_queued = True
+                                p._num_failed += 1
+                                run_idxs.remove(idx)
+                            else:
+                                # Record the the proceess has finished.
+                                if not p._is_finished:
+                                    p._is_finished = True
+                                    num_finished += 1
+                        else:
+                            # Record the the proceess has finished.
+                            if not p._is_finished:
+                                p._is_finished = True
+                                num_finished += 1
+
+                # Sleep for 5 seconds.
+                _time.sleep(5)
+
+    def wait(self):
+        """Wait for any running processes to finish."""
+
+        if self._thread is not None and not self._thread.is_alive():
+            self._thread.join()
+        else:
+            for p in self._processes:
+                # Sleep for a second to give the process a chance to start.
+                _time.sleep(1)
+                # Now wait for it to finish.
                 p.wait()
 
-                # Check the error state.
-                is_error = p.isError()
-
-                # Increment the number of failures.
-                if is_error:
-                    num_failed += 1
-
-                    # Maximum retries reached, move to the next process.
-                    if num_failed == 5:
-                        break
-
     def kill(self, index):
-        """Kill a specific process. The same can be achieved using:
+        """Kill a specific process. The same can be achieved using:\n
+
                runner.processes()[index].kill()
 
            Parameters
@@ -445,13 +704,25 @@ class ProcessRunner():
         """
 
         try:
-            self._processes[index].kill()
+            index = int(index)
+        except:
+            raise TypeError("'index' must be of type 'int'")
 
-        except IndexError:
-            raise("'index' is out of range: [0-%d]" % len(self._processes))
+        num_processes = self.nProcesses()
+
+        if index < -num_processes or index > num_processes - 1:
+            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+
+        # Map negative indices back into positive range.
+        if index < 0:
+            index = index + num_processes
+
+        self._processes[index].kill()
 
     def killAll(self):
         """Kill all of the processes."""
+
+        self._is_killed = True
 
         for p in self._processes:
             p.kill()
@@ -461,7 +732,16 @@ class ProcessRunner():
 
         for p in self._processes:
             if p.isError():
-                p.start()
+                # Reset the process state.
+                p._is_queued = False
+                p._is_error = False
+                p._num_failed = 0
+
+                # Only directly start the process if the runner is not active.
+                # Otherwise, it will be picked up by virtue of its state being
+                # reset to queued.
+                if self._thread is None or not self._thread.is_active():
+                    p.start()
 
     def runTime(self):
         """Return the run time for each process.
@@ -503,7 +783,7 @@ class ProcessRunner():
         # Loop over each process.
         for process in processes:
             # Create the new working directory name.
-            new_dir = "%s/%s" % (self._work_dir, process._work_dir)
+            new_dir = "%s/%s" % (self._work_dir, _os.path.basename(process._work_dir))
 
             # Create a new process object using the nested directory.
             if process._package_name == "SOMD":

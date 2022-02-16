@@ -1,51 +1,67 @@
-import os
-import warnings as _warnings
 import BioSimSpace as BSS
 
-def test_minimise():
+import filecmp
+import pytest
+import os
+import warnings as _warnings
+
+@pytest.fixture
+def system(scope="session"):
+    """Re-use the same molecuar system for each test."""
+    return BSS.IO.readMolecules("test/io/amber/ala/*")
+
+def test_minimise(system):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_equilibrate():
+def test_equilibrate(system):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
     protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def test_production():
+def test_production(system):
     """Test a production protocol."""
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(protocol)
+    assert run_process(system, protocol)
 
-def create_process(protocol):
-    """Create a SOMD process for a given prototol."""
+@pytest.mark.parametrize("morph, pert",
+    [("test/io/morphs/morph01.pickle", "test/io/morphs/morph01.pert")])
+def test_pert_file(morph, pert):
+    """Test the perturbation file writer."""
 
-    # Glob the input files.
-    files = BSS.IO.glob("test/io/amber/ala/*")
+    import pickle
 
-    # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
+    # Unpickle the molecule.
+    with open(morph, "rb") as file:
+        mol = pickle.load(file)
 
-    # Initialise the SOMD process.
-    return BSS.Process.Somd(system, protocol, name="test", platform="CPU")
+    # Create the perturbation file.
+    BSS.Process._somd._to_pert_file(mol)
 
-def run_process(protocol):
+    # Check that the files are the same.
+    assert filecmp.cmp("MORPH.pert", pert)
+
+    # Remove the temporary perturbation file.
+    os.remove("MORPH.pert")
+
+def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
     # Initialise the SOMD process.
-    process = create_process(protocol)
+    process = BSS.Process.Somd(system, protocol, name="test", platform="CPU")
 
     # Start the SOMD simulation.
     process.start()

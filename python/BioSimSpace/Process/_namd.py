@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,28 +24,33 @@ Functionality for running simulations using NAMD.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Namd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire import Mol as _SireMol
+from Sire.Maths import Vector as _Vector
 
+from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Trajectory import Trajectory as _Trajectory
 from BioSimSpace.Types._type import Type as _Type
 
 from BioSimSpace import Protocol as _Protocol
+from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -135,19 +140,33 @@ class Namd(_process.Process):
 
         # Create the input files...
 
+        # Create a copy of the system.
+        system = self._system.copy()
+
+        # Check for perturbable molecules and convert to the chosen end state.
+        system = self._checkPerturbable(system)
+
         # PSF and parameter files.
         try:
             psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)
             psf.writeToFile(self._psf_file)
-        except:
-            raise IOError("Failed to write system to 'CHARMMPSF' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'CHARMMPSF' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # PDB file.
         try:
             pdb = _SireIO.PDB2(self._system._sire_object, self._property_map)
             pdb.writeToFile(self._top_file)
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Try to write a PDB "velocity" restart file.
         # The file will only be generated if all atoms in the system have
@@ -226,7 +245,7 @@ class Namd(_process.Process):
             file.close()
 
         # Generate the NAMD configuration file.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -251,14 +270,32 @@ class Namd(_process.Process):
             # Flag that we have found a box.
             has_box = True
 
-            # Get the box size.
-            box_size = self._system._sire_object.property(prop).dimensions()
+            # Periodic box.
+            try:
+                box_size = self._system._sire_object.property(prop).dimensions()
+                v0 = _Vector(box_size.x(), 0, 0)
+                v1 = _Vector(0, box_size.y(), 0)
+                v2 = _Vector(0, 0, box_size.z())
+
+            # TriclinicBox.
+            except:
+                v0 = self._system._sire_object.property(prop).vector0()
+                v1 = self._system._sire_object.property(prop).vector1()
+                v2 = self._system._sire_object.property(prop).vector2()
+
+            # Work out the minimum box size.
+            box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
+
+            # Convert vectors to tuples.
+            v0 = tuple(v0)
+            v1 = tuple(v1)
+            v2 = tuple(v2)
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
             # ensures a consistent wrapping for coordinates in the  NAMD
             # output files.
-            origin = tuple(_process._getAABox(self._system._sire_object).center())
+            origin = tuple(self._system._getAABox().center())
 
         # No box information. Assume this is a gas phase simulation.
         else:
@@ -313,7 +350,7 @@ class Namd(_process.Process):
         # Solvated.
         else:
             # Only use a cutoff if the box is large enough.
-            if min(box_size) > 26:
+            if box_size > 26:
                 self.addToConfig("cutoff                12.")
                 self.addToConfig("pairlistdist          14.")
                 self.addToConfig("switching             on")
@@ -324,7 +361,12 @@ class Namd(_process.Process):
             # We force the cell origin to be located at the system's centre
             # of geometry. This ensures a consistent periodic wrapping for
             # all NAMD output.
-            self.addToConfig("cellOrigin            %.1f   %.1f   %.1f" % origin)
+            self.addToConfig("cellOrigin            %.3f   %.3f   %.3f" % origin)
+
+            # Add the cell vectors.
+            self.addToConfig("cellBasisVector1      %.3f   %.3f   %.3f" % v0)
+            self.addToConfig("cellBasisVector2      %.3f   %.3f   %.3f" % v1)
+            self.addToConfig("cellBasisVector3      %.3f   %.3f   %.3f" % v2)
 
             # Wrap all molecular coordinates to the periodic box.
             self.addToConfig("wrapAll               on")
@@ -338,16 +380,16 @@ class Namd(_process.Process):
         self.addToConfig("binaryOutput          no")
         self.addToConfig("binaryRestart         no")
 
-        # Output frequency.
-        self.addToConfig("restartfreq           500")
-        self.addToConfig("xstFreq               500")
-
-        # Printing frequency.
-        self.addToConfig("outputEnergies        100")
-        self.addToConfig("outputTiming          1000")
-
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            # Output frequency.
+            self.addToConfig("restartfreq           500")
+            self.addToConfig("xstFreq               500")
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        100")
+            self.addToConfig("outputTiming          1000")
+
             self.addToConfig("temperature           300")
 
             # Work out the number of steps. This must be a multiple of
@@ -356,7 +398,28 @@ class Namd(_process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Output frequency.
+            self.addToConfig("restartfreq           %d" % restart_interval)
+            self.addToConfig("xstFreq               %d" % restart_interval)
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        %d" % report_interval)
+            self.addToConfig("outputTiming          1000")
+
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
@@ -392,15 +455,16 @@ class Namd(_process.Process):
                 self.addToConfig("useConstantArea       no")
 
             # Restrain the backbone.
-            if self._protocol.isRestrained():
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
                 # Create a restrained system.
-                restrained = _process._restrain_backbone(self._system._sire_object)
+                restrained = self._createRestrainedSystem(self._system, restraint)
 
                 # Create a PDB object, mapping the "occupancy" property to "restrained".
                 prop = self._property_map.get("occupancy", "occupancy")
 
                 try:
-                    p = _SireIO.PDB2(restrained, {prop : "restrained"})
+                    p = _SireIO.PDB2(restrained._sire_object, {prop : "restrained"})
 
                     # File name for the restraint file.
                     self._restraint_file = "%s/%s.restrained" % (self._work_dir, self._name)
@@ -410,16 +474,11 @@ class Namd(_process.Process):
 
                 except:
                     _warnings.warn("Failed to add restraints to PDB file. "
-                                   "Perhaps there are no backbone atoms?")
+                                   "Perhaps there are no atoms matching the restraint?")
 
                 # Update the configuration file.
                 self.addToConfig("fixedAtoms            yes")
                 self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
-
-            # Work out number of steps needed to exceed desired running time,
-            # rounded up to the nearest 20.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-            steps = 20 * _math.ceil(steps / 20)
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
@@ -436,13 +495,34 @@ class Namd(_process.Process):
                     % self._protocol.getEndTemperature().kelvin().magnitude())
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % restart_interval)
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Output frequency.
+            self.addToConfig("restartfreq           %d" % restart_interval)
+            self.addToConfig("xstFreq               %d" % restart_interval)
+
+            # Printing frequency.
+            self.addToConfig("outputEnergies        %d" % report_interval)
+            self.addToConfig("outputTiming          1000")
+
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
                 % self._protocol.getTemperature().kelvin().magnitude())
@@ -475,13 +555,11 @@ class Namd(_process.Process):
                 self.addToConfig("useFlexibleCell       no")
                 self.addToConfig("useConstantArea       no")
 
-            # Work out number of steps needed to exceed desired running time,
-            # rounded up to the nearest 20.
+            # Work out number of steps needed to exceed desired running time.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-            steps = 20 * _math.ceil(steps / 20)
 
             # Trajectory output frequency.
-            self.addToConfig("DCDfreq               %d" % _math.floor(steps / self._protocol.getFrames()))
+            self.addToConfig("DCDfreq               %d" % restart_interval)
 
             # Run the simulation.
             self.addToConfig("run                   %d" % steps)
@@ -558,6 +636,10 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         # Read the PDB coordinate file and construct a parameterised molecular
         # system using the original PSF and param files.
 
@@ -598,7 +680,22 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                return _System(_SireIO.MoleculeParser.read(files, self._property_map))
+                # Read the molecular system.
+                new_system = _System(_SireIO.MoleculeParser.read(files, self._property_map))
+
+                # Copy the new coordinates back into the original system.
+                old_system = self._system.copy()
+                old_system._updateCoordinatesAndVelocities(new_system,
+                                                           self._property_map,
+                                                           self._property_map)
+
+                # Update the box information in the original system.
+                if "space" in new_system._sire_object.propertyKeys():
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+                return old_system
+
             except:
                 return None
 
@@ -637,8 +734,58 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         try:
-            return _Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self)
+
+        except:
+            return None
+
+    def getFrame(self, index):
+        """Return a specific trajectory frame.
+
+           Parameters
+           ----------
+
+           index : int
+               The index of the frame.
+
+           Returns
+           -------
+
+           frame : :class:`System <BioSimSpace._SireWrappers.System>`
+               The System object of the corresponding frame.
+        """
+
+        if not type(index) is int:
+            raise TypeError("'index' must be of type 'int'")
+
+        max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
+                  / self._protocol.getRestartInterval()) - 1
+
+        if index < 0 or index > max_index:
+            raise ValueError(f"'index' must be in range [0, {max_index}].")
+
+        try:
+            new_system =  _Trajectory.getFrame(self._traj_file,
+                                               self._top_file,
+                                               index)
+
+            # Copy the new coordinates back into the original system.
+            old_system = self._system.copy()
+            old_system._updateCoordinates(new_system,
+                                          self._property_map,
+                                          self._property_map)
+
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
 
         except:
             return None
@@ -667,12 +814,15 @@ class Namd(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
-
         # Wait for the process to finish.
         if block is True:
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
 
         self.stdout(0)
         return self._get_stdout_record(record, time_series, unit)
@@ -698,6 +848,10 @@ class Namd(_process.Process):
            record : :class:`Type <BioSimSpace.Types>`
                The matching record.
         """
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         self.stdout(0)
         return self._get_stdout_record(record, time_series, unit)
 
@@ -722,6 +876,10 @@ class Namd(_process.Process):
         elif block == "AUTO" and self._is_blocked:
             self.wait()
 
+        # Warn the user if the process has exited with an error.
+        if self.isError():
+            _warnings.warn("The process exited with an error!")
+
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
@@ -739,10 +897,10 @@ class Namd(_process.Process):
            records : BioSimSpace.Process._process._MultiDict
               The dictionary of time-series records.
         """
-        return getRecords(block=False)
+        return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
-        """Get the time (in nanoseconds).
+        """Get the simulation time.
 
            Parameters
            ----------
@@ -760,15 +918,15 @@ class Namd(_process.Process):
                The current simulation time in nanoseconds.
         """
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         else:
             # Get the list of time steps.
             time_steps = self.getRecord("TS", time_series, None, block)
 
-            # Convert the time step to nanoseconds.
-            timestep = self._protocol.getTimeStep().nanoseconds()
+            # Convert the time step to the default unit.
+            timestep = self._protocol.getTimeStep()._default_unit()
 
             # Multiply by the integration time step.
             if time_steps is not None:
@@ -778,7 +936,7 @@ class Namd(_process.Process):
                     return timestep * time_steps
 
     def getCurrentTime(self, time_series=False):
-        """Get the current time (in nanoseconds).
+        """Get the current simulation time.
 
            Parameters
            ----------
@@ -1599,7 +1757,7 @@ class Namd(_process.Process):
                 if data[0] == "TIMING:":
 
                     # Try to find the "hours" record.
-                    # If found, return the entry preceeding it.
+                    # If found, return the entry precedeing it.
                     try:
                         return (float(data[data.index("hours") - 1]) * 60) * _Units.Time.minutes
 
@@ -1658,6 +1816,93 @@ class Namd(_process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
+    def _createRestrainedSystem(self, system, restraint):
+        """Restrain protein backbone atoms.
+
+            Parameters
+            ----------
+
+            system : :class:`System <BioSimSpace._SireWrappers.System>`
+                The molecular system.
+
+            restraint : str, [int]
+                The type of restraint.
+
+            Returns
+            -------
+
+            system : :class:`System <BioSimSpace._SireWrappers.System>`
+                The molecular system with an added 'restrained' property.
+        """
+
+        # Copy the original system.
+        s = system.copy()
+
+        # Keyword restraint.
+        if isinstance(restraint, str):
+
+            # Loop over all molecules by number.
+            for x, mol in enumerate(s):
+
+                # Get the indices of the restrained atoms for this molecule.
+                atoms = s.getRestraintAtoms(restraint, x, is_relative=False)
+
+                # Extract the molecule and make it editable.
+                edit_mol = mol._sire_object.edit()
+
+                # First set all restraints to zero.
+                for atom in edit_mol.atoms():
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
+
+                # Now apply restraints to the selected atoms.
+                for idx in atoms:
+                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 1.0).molecule()
+
+                # Update the system.
+                s._sire_object.update(edit_mol.commit())
+
+        # A user-defined list of atoms.
+        elif isinstance(restraint, (list, tuple)):
+
+            # Create an empty multi dict for each MolNum.
+            mol_atoms = {}
+            for num in s._mol_nums:
+                mol_atoms[num] = []
+
+            # Now work out which MolNum corresponds to each atom in the restraint.
+            for idx in restraint:
+                try:
+                    mol_idx, atom_idx = s._getRelativeIndices(idx)
+                    mol_num = s._mol_nums[mol_idx]
+                    atom_idx = _SireMol.AtomIdx(atom_idx)
+                    mol_atoms[mol_num].append(atom_idx)
+                except Exception as e:
+                    msg = "Unable to find restrained atom in the system?"
+                    if _isVerbose():
+                        raise ValueError(msg) from e
+                    else:
+                        raise ValueError(msg) from None
+
+            # Now loop over the multi-dict.
+            for num, idxs in mol_atoms.items():
+
+                # Extract the molecule and make it editable.
+                edit_mol = s._sire_object[num].edit()
+
+                # First set all restraints to zero.
+                for atom in edit_mol.atoms():
+                    edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
+
+                # Now apply restraints to the selected atoms.
+                for idx in idxs:
+                    edit_mol = edit_mol.atom(idx).setProperty("restrained", 1.0).molecule()
+
+                # Update the system.
+                s._sire_object.update(edit_mol.commit())
+
+        # Return the new system.
+        return s
+
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """Helper function to get a stdout record from the dictionary.
 
@@ -1681,14 +1926,14 @@ class Namd(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
-        # Valdate the unit.
+        # Validate the unit.
         if unit is not None:
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
@@ -1696,13 +1941,13 @@ class Namd(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "TS":
+                if key == "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [float(x) * unit for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1710,13 +1955,13 @@ class Namd(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "TS":
+                if key == "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return float(self._stdout_dict[key][-1]) * unit
+                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
 
             except KeyError:
                 return None

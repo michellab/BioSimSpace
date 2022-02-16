@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -19,6 +19,10 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
+# generateNetwork uses a modified version of LOMAP:
+# https://github.com/MobleyLab/Lomap, which is released under the MIT
+# license.
+
 """
 .. currentmodule:: BioSimSpace.Align
 
@@ -28,7 +32,9 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    generateNetwork
     matchAtoms
+    drawMapping
     rmsdAlign
     flexAlign
     merge

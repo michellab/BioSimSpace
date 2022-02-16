@@ -1,6 +1,6 @@
 package:
   name: biosimspace
-  version: VERSION
+  version: BSS_VERSION
 
 source:
   git_url: https://github.com/michellab/BioSimSpace.git
@@ -15,11 +15,14 @@ requirements:
   host:
     - python 3.7
     - pip
-    - sire
+    - sire SIRE_VERSION
     - configargparse
     - mdtraj
     - mdanalysis
     - nglview
+    - openff-toolkit-base
+    - parmed
+    - pydot
     - pygtail
     - pymbar
     - pypdb
@@ -28,19 +31,22 @@ requirements:
     - rdkit
     - watchdog
   run:
-    -  {{ pin_compatible('python') }}
-    -  {{ pin_compatible('sire') }}
-    -  {{ pin_compatible('configargparse') }}
-    -  {{ pin_compatible('mdtraj') }}
-    -  {{ pin_compatible('mdanalysis') }}
-    -  {{ pin_compatible('nglview') }}
-    -  {{ pin_compatible('pygtail') }}
-    -  {{ pin_compatible('pymbar') }}
-    -  {{ pin_compatible('pypdb') }}
-    -  {{ pin_compatible('pytest') }}
-    -  {{ pin_compatible('pyyaml') }}
-    -  {{ pin_compatible('rdkit') }}
-    -  {{ pin_compatible('watchdog') }}
+    - {{ pin_compatible('python') }}
+    - {{ pin_compatible('sire') }}
+    - {{ pin_compatible('configargparse') }}
+    - {{ pin_compatible('mdtraj') }}
+    - {{ pin_compatible('mdanalysis') }}
+    - {{ pin_compatible('nglview') }}
+    - {{ pin_compatible('openff-toolkit-base') }}
+    - {{ pin_compatible('parmed') }}
+    - {{ pin_compatible('pydot') }}
+    - {{ pin_compatible('pygtail') }}
+    - {{ pin_compatible('pymbar') }}
+    - {{ pin_compatible('pypdb') }}
+    - {{ pin_compatible('pytest') }}
+    - {{ pin_compatible('pyyaml') }}
+    - {{ pin_compatible('rdkit') }}
+    - {{ pin_compatible('watchdog') }}
 
 test:
   imports:
@@ -53,6 +59,34 @@ about:
   summary: "An interoperable Python framework for biomolecular simulation."
   dev_url: https://github.com/michellab/BioSimSpace
   doc_url: https://biosimspace.org
+  description: |
+                BioSimSpace is an interoperable Python framework for
+                biomolecular simulation. With it you can:
+
+                * Write robust and portable biomolecular workflow components
+                  that work on different hardware, with different software
+                  packages, and that can be run in different ways, e.g.
+                  command-line, Jupyter.
+                * Interact with molecular-simulation processes in real time.
+
+                To install:
+
+                `conda install -c conda-forge -c omnia -c michellab biosimspace`
+
+                To install the development version:
+
+                `conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace`
+
+                When updating the development version it is generally advised to
+                update Sire at the same time:
+
+                `conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace sire`
+
+                Since BioSimSpace has many dependencies, an install or update
+                might not always give you the most recent version. If this is
+                the case, use, e.g.:
+
+                `conda install -c conda-forge -c omnia -c michellab/label/dev biosimspace --all`
 
 extra:
   recipe-maintainers:

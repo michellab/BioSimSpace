@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for configuring and driving molecular dynamics simulations.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["run"]
 
@@ -33,45 +33,66 @@ import os as _os
 from Sire import Base as _SireBase
 
 from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import Process as _Process
 from BioSimSpace import Protocol as _Protocol
 
-# A dictionary mapping MD packages to their executable names and GPU support.
-#                PACKAGE        EXE               GPU
-_md_packages = { "AMBER"   : { "pmemd.cuda.MPI" : True,
+# A dictionary mapping MD engines to their executable names and GPU support.
+#                engine        EXE               GPU
+_md_engines = { "AMBER"    : { "pmemd.cuda.MPI" : True,
                                "pmemd.cuda"     : True,
                                "pmemd.MPI"      : False,
                                "sander"         : False },
                  "GROMACS" : { "gmx"            : True,
                                "gmx_mpi"        : True },
-                 "SOMD"    : { "somd"           : True },
-                 "NAMD"    : { "namd2"          : False }
+                 "NAMD"    : { "namd2"          : False },
+                 "OPENMM"  : { "sire_python"    : True },
+                 "SOMD"    : { "somd"           : True }
                }
 
-# A dictionary reverse mapping MD packages to their supported Sire file extensions.
+# A dictionary reverse mapping MD engines to their supported Sire file extensions.
 # Use SOMD as a fall-back where possible. Since we can't guarantee interconversion
 # of potentials for CHARMM-PSF format input files, we restrict such simulations to
 # only run using NAMD.
-#                    EXTENSION        PACKAGES
-_file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "SOMD"],
-                     "PRM7,RST"     : ["AMBER", "GROMACS", "SOMD"],
-                     "GroTop,Gro87" : ["GROMACS", "AMBER", "SOMD"],
+#                    EXTENSION        ENGINES
+_file_extensions = { "PRM7,RST7"    : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
+                     "PRM7,RST"     : ["AMBER", "GROMACS", "OPENMM", "SOMD"],
+                     "GroTop,Gro87" : ["GROMACS", "AMBER", "OPENMM", "SOMD"],
                      "PSF,PDB"      : ["NAMD"]
                    }
 
-# Whether each package supports free energy simulations. This dictionary needs to
-# be updated as support for different packages is added.
+# Whether each engine supports free energy simulations. This dictionary needs to
+# be updated as support for different engines is added.
 _free_energy = { "AMBER"   : False,
                  "GROMACS" : True,
-                 "SOMD"    : True,
-                 "NAMD"    : False
+                 "NAMD"    : False,
+                 "OPENMM"  : False,
+                 "SOMD"    : True
                 }
 
-def _find_md_package(system, protocol, gpu_support=False):
-    """Find a molecular dynamics package on the system and return
-       a handle to it as a MDPackage object.
+# Whether each engine supports metadynamics simulations. This dictionary needs to
+# be updated as support for different engines is added.
+_metadynamics = { "AMBER"   : True,
+                  "GROMACS" : True,
+                  "NAMD"    : False,
+                  "OPENMM"  : True,
+                  "SOMD"    : False
+                }
+
+# Whether each engine supports steered molecular dynamics simulations. This
+# dictionary needs to # be updated as support for different engines is added.
+_steering = { "AMBER"   : True,
+              "GROMACS" : True,
+              "NAMD"    : False,
+              "OPENMM"  : False,
+              "SOMD"    : False
+            }
+
+def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
+    """Find molecular dynamics engines on the system that
+       support the given protocol and GPU requirements.
 
        Parameters
        ----------
@@ -82,14 +103,18 @@ def _find_md_package(system, protocol, gpu_support=False):
        protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
 
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen.
+
        gpu_support : bool
-           Whether to use package must have GPU support.
+           Whether the engine must have GPU support.
 
        Returns
        -------
 
-       (package, exe) : (str, str)
-           The name of the MD package and a path to its executable.
+       engines, exes : [ str ], [ str ]
+          Lists containing the supported MD engines and executables.
     """
 
     # The input has already been validated in the run method, so no need
@@ -100,60 +125,102 @@ def _find_md_package(system, protocol, gpu_support=False):
 
     # Make sure that this format is supported.
     if not fileformat in _file_extensions:
-        raise ValueError("Cannot find an MD package that supports format: %s" % fileformat)
+        raise ValueError("Cannot find an MD engine that supports format: %s" % fileformat)
     else:
-        packages = _file_extensions[fileformat]
+        engines = _file_extensions[fileformat]
 
-    # Is this a free energy protocol.
-    if type(protocol) is _Protocol.FreeEnergy:
+    # If engine != "auto", then check the chosen engine supports the file
+    # format.
+    md_engine = engine
+    if md_engine != "AUTO":
+        if md_engine not in _md_engines.keys():
+            raise ValueError(f"The {engine} MD engine isn't supported!")
+        if md_engine not in engines:
+            raise ValueError(f"The {engine} MD engine doesn't format {fileformat}")
+        else:
+            # Just search for the chosen engine.
+            engines = [md_engine]
+
+    is_free_energy = False
+    is_metadynamics = False
+    is_steering = False
+
+    if isinstance(protocol, _Protocol.FreeEnergy):
         is_free_energy = True
-    else:
-        is_free_energy = False
+    elif isinstance(protocol, _Protocol.Metadynamics):
+        is_metadynamics = True
+    elif isinstance(protocol, _Protocol.Steering):
+        is_steering = True
 
-    # Loop over each package that supports the file format.
-    for package in packages:
-        # If this is free energy protocol, then check that the package has support.
-        if not is_free_energy or _free_energy[package]:
-            # Check whether this package exists on the system and has the desired
+    # Create a list to store all of the engines and executables.
+    found_engines = []
+    found_exes = []
+
+    # Loop over each engine that supports the file format.
+    for engine in engines:
+        # Don't continue if the engine doesn't support the protocol.
+        if (not is_free_energy or _free_energy[engine]) and \
+           (not is_metadynamics or _metadynamics[engine]) and \
+           (not is_steering or _steering[engine]):
+            # Check whether this engine exists on the system and has the desired
             # GPU support.
-            for exe, gpu in _md_packages[package].items():
-                # If the user has requested GPU support make sure the package
+            for exe, gpu in _md_engines[engine].items():
+                # If the user has requested GPU support make sure the engine
                 # supports it.
                 if not gpu_support or gpu:
                     # AMBER
-                    if package == "AMBER":
+                    if engine == "AMBER":
                         # Search AMBERHOME, if set.
                         if _amber_home is not None:
                             _exe = "%s/bin/%s" % (_amber_home, exe)
                             if _os.path.isfile(_exe):
-                                return (package, _exe)
+                                found_engines.append(engine)
+                                found_exes.append(_exe)
                         # Search system PATH.
                         else:
                             try:
                                 exe = _SireBase.findExe(exe).absoluteFilePath()
-                                return (package, exe)
+                                found_engines.append(engine)
+                                found_exes.append(exe)
                             except:
                                 pass
                     # GROMACS
-                    elif package == "GROMACS":
-                        if _gmx_exe is not None:
-                            return (package, _gmx_exe)
+                    elif engine == "GROMACS":
+                        if _gmx_exe is not None and _os.path.basename(_gmx_exe) == exe:
+                            found_engines.append(engine)
+                            found_exes.append(_gmx_exe)
+                    # OPENMM
+                    elif engine == "OPENMM":
+                        found_engines.append(engine)
+                        found_exes.append(_SireBase.getBinDir() + "/sire_python")
                     # SOMD
-                    elif package == "SOMD":
-                        return (package, _SireBase.getBinDir() + "/somd")
+                    elif engine == "SOMD":
+                        found_engines.append(engine)
+                        if is_free_energy:
+                            found_exes.append(_SireBase.getBinDir() + "/somd-freenrg")
+                        else:
+                            found_exes.append(_SireBase.getBinDir() + "/somd")
                     # Search system PATH.
                     else:
                         try:
                             exe = _SireBase.findExe(exe).absoluteFilePath()
-                            return (package, exe)
+                            found_engines.append(engine)
+                            found_exes.append(exe)
                         except:
                             pass
 
-    # If we get this far, then no package was found.
-    raise _MissingSoftwareError("Couldn't find package to support format: %s" % fileformat)
+    # No engine was found.
+    if len(found_engines) == 0:
+        if md_engine == "AUTO":
+            raise _MissingSoftwareError("Couldn't find an engine that supports the protocol!")
+        else:
+            raise _MissingSoftwareError("The chosen engine doesn't support the protocol!")
 
-def run(system, protocol, gpu_support=False, auto_start=True,
-        name="md", work_dir=None, seed=None, property_map={}):
+    return found_engines, found_exes
+
+def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+        name="md", work_dir=None, seed=None, property_map={},
+        ignore_warnings=False, show_errors=True):
     """Auto-configure and run a molecular dynamics process.
 
        Parameters
@@ -165,8 +232,13 @@ def run(system, protocol, gpu_support=False, auto_start=True,
        protocol : :class:`Protocol <BioSimSpace.Protocol>`
            The simulation protocol.
 
+       engine : str
+           The molecular dynamics engine to use. If "auto", then a matching
+           engine will automatically be chosen. Supported engines can be
+           found using 'BioSimSpace.MD.engines()'.
+
        gpu_support : bool
-           Whether to choose a package with GPU support.
+           Whether to choose an engine with GPU support.
 
        auto_start : bool
            Whether to start the process automatically.
@@ -185,6 +257,16 @@ def run(system, protocol, gpu_support=False, auto_start=True,
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
 
+       ignore_warnings : bool
+           Whether to ignore warnings when generating the binary run file.
+           This option is specific to GROMACS and will be ignored when a
+           different molecular dynamics engine is chosen.
+
+       show_errors : bool
+           Whether to show warning/error messages when generating the binary
+           run file. This option is specific to GROMACS and will be ignored
+           when a different molecular dynamics engine is chosen.
+
        Returns
        -------
 
@@ -193,12 +275,18 @@ def run(system, protocol, gpu_support=False, auto_start=True,
     """
 
     # Check that the system is valid.
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+    # Make sure the system is parameterised.
+    if not system._isParameterised():
+        raise _IncompatibleError("Cannot execute a Process for this System since it appears "
+                                 "to contain molecules that are not parameterised. Consider "
+                                 "using the 'BioSimSpace.Parameters' engine.")
 
     # Check that the protocol is valid.
     if not isinstance(protocol, _Protocol._protocol.Protocol):
-        if type(protocol) is str:
+        if isinstance(protocol, str):
             protocol = _Protocol.Custom(protocol)
         else:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
@@ -206,57 +294,91 @@ def run(system, protocol, gpu_support=False, auto_start=True,
 
     # Validate optional arguments.
 
-    if type(gpu_support) is not bool:
+    if not isinstance(engine, str):
+        raise TypeError("'engine' must be of type 'str'.")
+    md_engine = engine.upper().replace(" ", "")
+
+    if not isinstance(gpu_support, bool):
         raise TypeError("'gpu_support' must be of type 'bool'")
 
-    if type(auto_start) is not bool:
+    if not isinstance(auto_start, bool):
         raise TypeError("'auto_start' must be of type 'bool'")
 
-    if type(name) is not str:
+    if not isinstance(name, str):
         raise TypeError("'name' must be of type 'str'")
 
     if work_dir is not None:
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
     if seed is not None:
-        if type(seed) is not int:
+        if not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    # Find a molecular dynamics package and executable.
-    package, exe = _find_md_package(system, protocol, gpu_support)
+    if not isinstance(ignore_warnings, bool):
+        raise ValueError("'ignore_warnings' must be of type 'bool.")
 
-    # Create the process object.
+    if not isinstance(show_errors, bool):
+        raise ValueError("'show_errors' must be of type 'bool.")
 
-    # AMBER.
-    if package == "AMBER":
-        process = _Process.Amber(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+    # Find a molecular dynamics engine and executable.
+    engines, exes = _find_md_engines(system, protocol, md_engine, gpu_support)
 
-    # GROMACS.
-    elif package == "GROMACS":
-        process = _Process.Gromacs(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+    # Create the process object, return the first supported engine that can
+    # instantiate a process.
 
-    # SOMD.
-    elif package == "SOMD":
-        if gpu_support:
-            platform = "CUDA"
-        else:
-            platform = "CPU"
-        process = _Process.Somd(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+    for engine, exe in zip(engines, exes):
+        try:
+            # AMBER.
+            if engine == "AMBER":
+                process = _Process.Amber(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
 
-    # NAMD.
-    elif package == "NAMD":
-        process = _Process.Namd(system, protocol, exe=exe, name=name,
-            work_dir=work_dir, seed=seed, property_map=property_map)
+            # GROMACS.
+            elif engine == "GROMACS":
+                process = _Process.Gromacs(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map,
+                    ignore_warnings=ignore_warnings, show_errors=show_errors)
 
-    # Start the process.
-    if auto_start:
-        return process.start()
+            # NAMD.
+            elif engine == "NAMD":
+                process = _Process.Namd(system, protocol, exe=exe, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map)
+
+            # OPENMM.
+            elif engine == "OPENMM":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.OpenMM(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+
+            # SOMD.
+            elif engine == "SOMD":
+                if gpu_support:
+                    platform = "CUDA"
+                else:
+                    platform = "CPU"
+                # Don't pass the executable name through so that this works on Windows too.
+                process = _Process.Somd(system, protocol, exe=None, name=name,
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+
+            # Start the process.
+            if auto_start:
+                return process.start()
+            else:
+                return process
+
+        except:
+            pass
+
+    # If we got here, then we couldn't create a process.
+    if md_engine == "AUTO":
+        raise Exception(f"Unable to create a process using any supported engine: {engines}")
     else:
-        return process
+        raise Exception(f"Unable to create a process using the chosen engine: {md_engine}")

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,9 +24,11 @@ Functionality for running background tasks.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Task"]
+
+from IPython.display import FileLink as _FileLink
 
 import glob as _glob
 import os as _os
@@ -79,13 +81,13 @@ class Task():
 
         # Validate inputs.
 
-        if name is not None and type(name) is not str:
+        if name is not None and not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
 
-        if work_dir is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(auto_start) is not bool:
+        if not isinstance(auto_start, bool):
             raise TypeError("'auto_start' must be of type 'bool'")
 
         # Initialise status flags.
@@ -191,13 +193,13 @@ class Task():
         return self._is_started
 
     def isError(self):
-        """Return whether the task errored.
+        """Return whether the task exited with an error.
 
            Returns
            -------
 
            is_error : bool
-               Whether the task errored.
+               Whether the task exited with an error.
         """
         return self._is_error
 
@@ -273,7 +275,7 @@ class Task():
                 else:
                     filename = self._name
             else:
-                if type(filename) is not str:
+                if not isinstance(filename, str):
                     raise TypeError("'filename' must be of type 'str'.")
 
             # Create the name of the zip file.
@@ -298,9 +300,16 @@ class Task():
                 self._zipfile = zipname
 
         # Return a link to the archive.
-        if _is_notebook():
+        if _is_notebook:
             if file_link:
-                return _FileLink(zipname)
+                # Create a FileLink to the archive.
+                f_link = _FileLink(zipname)
+
+                # Set the download attribute so that JupyterLab doesn't try to open the file.
+                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+
+                # Return a link to the archive.
+                return f_link
             else:
                 return zipname
         else:

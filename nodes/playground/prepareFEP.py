@@ -196,7 +196,7 @@ system1.addMolecules(merged)
 
 # Log the mapping used
 writeLog(lig1, lig2, mapping)
-BSS.IO.saveMolecules("merged_at_lam0.pdb", merged, "PDB", { "coordinates" : "coordinates0" , "element": "element0" })
+BSS.IO.saveMolecules("merged_at_lam0.pdb", merged, "PDB", { "coordinates" : "coordinates0" , "bond" : "bond0", "element": "element0" })
 # Generate package specific input
 protocol = BSS.Protocol.FreeEnergy(runtime = 2*BSS.Units.Time.femtosecond, num_lam=3)
 process = BSS.Process.Somd(system1, protocol)

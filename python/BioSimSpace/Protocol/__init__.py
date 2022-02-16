@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -43,6 +43,7 @@ Classes
     Metadynamics
     Minimisation
     Production
+    Steering
 
 Examples
 ========
@@ -95,4 +96,5 @@ from ._free_energy import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
+from ._steering import *
 from ._utils import *

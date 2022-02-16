@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for equilibration protocols.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Equilibration"]
 
@@ -39,6 +39,9 @@ from ._protocol import Protocol as _Protocol
 class Equilibration(_Protocol):
     """A class for storing equilibration protocols."""
 
+    # Supported restraint keywords.
+    _restraints = ["backbone", "heavy", "all", "none"]
+
     def __init__(self,
                  timestep=_Types.Time(2, "femtosecond"),
                  runtime=_Types.Time(0.2, "nanoseconds"),
@@ -46,7 +49,9 @@ class Equilibration(_Protocol):
                  temperature_end=_Types.Temperature(300, "kelvin"),
                  temperature=None,
                  pressure=None,
-                 frames=20,
+                 report_interval=100,
+                 restart_interval=500,
+                 restraint=None,
                  restrain_backbone=False
                 ):
         """Constructor.
@@ -74,11 +79,32 @@ class Equilibration(_Protocol):
                The pressure. If this argument is omitted then the simulation
                is run using the NVT ensemble.
 
-           frames : int
-               The number of trajectory frames to record.
+           report_interval : int
+               The frequency at which statistics are recorded. (In integration steps.)
+
+           restart_interval : int
+               The frequency at which restart configurations and trajectory
+               frames are saved. (In integration steps.)
+
+           restraint : str, [int]
+               The type of restraint to perform. This should be one of the
+               following options:
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
+               Alternatively, the user can pass a list of atom indices for
+               more fine-grained control. If None, then no restraints are used.
 
            restrain_backbone : bool
-               Whether the atoms in the backbone are fixed.
+               Restraint atoms in the protein backbone. This option is now
+               deprecated. Please use restraint = "backbone" instead.
         """
 
         # Call the base class constructor.
@@ -116,11 +142,24 @@ class Equilibration(_Protocol):
         else:
             self._pressure = None
 
-        # Set the number of trajectory frames.
-        self.setFrames(frames)
+        # Handle deprecated restraint option in event it is set and
+        # new option is unset.
+        if restraint is None:
+            if isinstance(restrain_backbone, bool) and restrain_backbone:
+                restraint = "backbone"
+                _warnings.warn("'restrain_backbone' is deprecated. Please use restraint='backbone'.")
 
-        # Set the backbone restraint.
-        self.setRestraint(restrain_backbone)
+        # Set the report interval.
+        self.setReportInterval(report_interval)
+
+        # Set the restart interval.
+        self.setRestartInterval(restart_interval)
+
+        # Set the restraint.
+        if restraint is not None:
+            self.setRestraint(restraint)
+        else:
+            self._restraint = None
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -128,9 +167,10 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r>"
-                   ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, "
+                    "report_interval=%d, restart_interval=%d,restraint=%r>"
+                   ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
+                           self._pressure, self._report_interval, self._restart_interval, self._restraint)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -138,9 +178,10 @@ class Equilibration(_Protocol):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                    "temperature_start=%s, temperature_end=%s, pressure=%s, frames=%d, restrain_backbone=%r)"
-                   ) % (self._timestep, self._runtime, self._temperature_start,
-                        self._temperature_end, self._pressure, self._frames, self._is_restrained)
+                    "temperature_start=%s, temperature_end=%s, pressure=%s, "
+                    "report_interval=%d, restart_interval=%d, restraint=%r)"
+                   ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
+                           self._pressure, self._report_interval, self._restart_interval, self._restraint)
 
     def getTimeStep(self):
         """Return the time step.
@@ -162,7 +203,7 @@ class Equilibration(_Protocol):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -187,7 +228,7 @@ class Equilibration(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -213,7 +254,7 @@ class Equilibration(_Protocol):
                The starting temperature.
         """
 
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             if temperature.kelvin().magnitude() == _pytest.approx(0):
                 temperature._magnitude = 0.01
             self._temperature_start = temperature
@@ -240,7 +281,7 @@ class Equilibration(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The final temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             if temperature.kelvin().magnitude() == _pytest.approx(0):
                 temperature._magnitude = 0.01
             self._temperature_end = temperature
@@ -267,65 +308,128 @@ class Equilibration(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
-    def getFrames(self):
-        """Return the number of frames.
+    def getReportInterval(self):
+        """Return the interval between reporting statistics. (In integration steps.)
 
            Returns
            -------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        return self._frames
+        return self._report_interval
 
-    def setFrames(self, frames):
-        """Set the number of frames.
+    def setReportInterval(self, report_interval):
+        """Set the interval at which statistics are reported. (In integration steps.)
 
            Parameters
            ----------
 
-           frames : int
-               The number of trajectory frames.
+           report_interval : int
+               The number of integration steps between reporting statistics.
         """
-        if type(frames) is not int:
-            raise TypeError("'frames' must be of type 'int'")
+        if not type(report_interval) is int:
+            raise TypeError("'report_interval' must be of type 'int'")
 
-        if frames <= 0:
-            _warnings.warn("The number of frames must be positive. Using default (20).")
-            self._frames = 20
-        else:
-            self._frames = _math.ceil(frames)
+        if report_interval <= 0:
+            _warnings.warn("'report_interval' must be positive. Using default (100).")
+            report_interval = 100
 
-    def isRestrained(self):
-        """Return whether the backbone is restrained.
+        self._report_interval = report_interval
+
+    def getRestartInterval(self):
+        """Return the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
 
            Returns
            -------
 
-           is_restrained : bool
-               Whether the backbone is restrained.
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
         """
-        return self._is_restrained
+        return self._restart_interval
 
-    def setRestraint(self, restrain_backbone):
-        """Set the backbone restraint.
+    def setRestartInterval(self, restart_interval):
+        """Set the interval between saving restart confiugrations, and/or
+           trajectory frames. (In integration steps.)
 
            Parameters
            ----------
 
-           is_restrained : bool
-               Whether the backbone is restrained.
+           restart_interval : int
+               The number of integration steps between saving restart
+               configurations and/or trajectory frames.
         """
-        if type(restrain_backbone) is bool:
-            self._is_restrained = restrain_backbone
+        if not type(restart_interval) is int:
+            raise TypeError("'restart_interval' must be of type 'int'")
+
+        if restart_interval <= 0:
+            _warnings.warn("'restart_interval' must be positive. Using default (500).")
+            restart_interval = 500
+
+        self._restart_interval = restart_interval
+
+    def getRestraint(self):
+        """Return the type of restraint..
+
+           Returns
+           -------
+
+           restraint : str, [int]
+               The type of restraint.
+        """
+        return self._restraint
+
+    def setRestraint(self, restraint):
+        """Set the type of restraint.
+
+           Parameters
+           ----------
+
+           restraint : str, [int]
+               The type of restraint to perform. This should be one of the
+               following options:
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
+               Alternatively, the user can pass a list of atom indices for
+               more fine-grained control.
+        """
+
+        if isinstance(restraint, str):
+            # Convert to lower case and strip whitespace.
+            restraint = restraint.lower().replace(" ", "")
+            if restraint not in self._restraints:
+                raise ValueError(f"'restraint' must be one of: {self._restraints}")
+            # Set to NoneType if equal to "none", since this makes checking
+            # whether a restraint is set elsewhere much easier.
+            if restraint == "none":
+                restraint = None
+
+        elif isinstance(restraint, (list, tuple)):
+            if not all(type(x) is int for x in restraint):
+                raise ValueError("'restraint' must be a list of 'int' types!")
+            # Create a set to sort and ensure no duplicates, then convert back to a list.
+            restraint = list(set(restraint))
+            restraint.sort()
+
         else:
-            _warnings.warn("Non-boolean backbone restraint flag. Defaulting to no restraint!")
-            self._is_restrained = False
+            raise TypeError("'restraint' must be of type 'str', or a list of 'int' types.")
+
+        self._restraint = restraint
 
     def isConstantTemp(self):
         """Return whether the protocol has a constant temperature.
@@ -337,3 +441,15 @@ class Equilibration(_Protocol):
                Whether the temperature is fixed.
         """
         return self._temperature_start == self._temperature_end
+
+    @classmethod
+    def restraints(cls):
+        """Return a list of the supported restraint keywords.
+
+           Returns
+           -------
+
+           restraints : [str]
+               A list of the supported restraint keywords.
+        """
+        return cls._restraints.copy()

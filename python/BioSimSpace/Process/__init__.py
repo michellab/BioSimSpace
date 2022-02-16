@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,7 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    packages
+    engines
     createProcess
 
 MD driver classes
@@ -40,6 +40,8 @@ MD driver classes
     Amber
     Gromacs
     Namd
+    OpenMM
+    Plumed
     Somd
 
 Multi process simulation tools
@@ -53,13 +55,13 @@ Multi process simulation tools
 Examples
 ========
 
-Print the list of supported molecular dynamics packages.
+Print the list of supported molecular dynamics engines.
 
 .. code-block:: python
 
    import BioSimSpace as BSS
 
-   print(BSS.Process.packages())
+   print(BSS.Process.engines())
 
 Create a process to apply a minimisation protocol to a molecular system
 using the `AMBER <http://ambermd.org>`_ package. Execute the process and
@@ -91,6 +93,8 @@ get the minimised molecular system.
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
+from ._openmm import *
+from ._plumed import *
 from ._process_runner import *
 from ._somd import *
 from ._utils import *

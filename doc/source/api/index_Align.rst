@@ -3,7 +3,7 @@
 BioSimSpace.Align
 =================
 
-The *Align* package provides functionality for aligning and mergin molecules.
+The *Align* package provides functionality for aligning and merging molecules.
 Molecules are aligned using a Maximum Common Substructure (MCS) search, which
 is used to find mappings between atom indices in the two molecules.
 Functionality is provided for sorting the mappings according to a scoring
@@ -34,9 +34,6 @@ Some examples:
    # The resulting "merged-molecule" can be used in free energy perturbation
    # simulations.
    merged = BSS.Align.merge(mol0, mol1, mappings)
-
-API
----
 
 .. automodule:: BioSimSpace.Align
 

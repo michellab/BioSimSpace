@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -25,23 +25,42 @@ Author: Lester Hedges <lester.hedges@gmail.com>
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 
 import os as _os
 import queue as _queue
+import shlex as _shlex
 import subprocess as _subprocess
+
+from BioSimSpace._Utils import _try_import, _have_imported
+
+# Temporarily redirect stderr to suppress import warnings.
+import sys as _sys
+_sys.stderr = open(_os.devnull, "w")
+
+_openff = _try_import("openff")
+
+if _have_imported(_openff):
+    from openff.toolkit.topology import Molecule as _OpenFFMolecule
+else:
+    _OpenFFMolecule = _openff
+
+# Reset stderr.
+_sys.stderr = _sys.__stderr__
+del _sys
 
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home, _gmx_exe
+from BioSimSpace import _amber_home, _gmx_exe, _isVerbose
 from BioSimSpace import IO as _IO
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
 from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
+from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
 from BioSimSpace._SireWrappers import Molecule as _Molecule
 
 # Set the tLEaP cmd directory.
@@ -97,26 +116,29 @@ class Protocol():
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-	# Don't allow user to create an instance of this base class.
+        # Don't allow user to create an instance of this base class.
         if type(self) is Protocol:
             raise Exception("<Protocol> must be subclassed.")
 
         # Validate and set the force field name.
-        if type(forcefield) is not str:
+        if not isinstance(forcefield, str):
             raise TypeError("'forcefield' must be of type 'str'")
         else:
             self._forcefield = forcefield
 
         # Validate and set the property map.
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
         else:
             self._property_map = property_map.copy()
 
-        # Set default compatability flags for the utility programs.
+        # Set default compatibility flags for the utility programs.
         # These must be overridden in the constructor of any derived classes.
         self._tleap = False
         self._pdb2gmx = False
+
+        # Default to no water model for ion parameterisation.
+        self._water_model = None
 
     def run(self, molecule, work_dir=None, queue=None):
         """Run the parameterisation protocol.
@@ -140,24 +162,31 @@ class Protocol():
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        if not isinstance(molecule, (_Molecule, str)):
+            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-        if type(work_dir) is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(queue) is not None and type(queue) is not _queue.Queue:
+        if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
         # Set work_dir to the current directory.
         if work_dir is None:
             work_dir = _os.getcwd()
 
+        # Flag whether the molecule is a SMILES string.
+        if isinstance(molecule, str):
+            is_smiles = True
+        else:
+            is_smiles = False
+
         # Create the file prefix.
         prefix = work_dir + "/"
 
-        # Create a copy of the molecule.
-        new_mol = molecule.copy()
+        if not is_smiles:
+            # Create a copy of the molecule.
+            new_mol = molecule.copy()
 
         # Choose the program to run with depending on the force field compatibility.
         # If tLEaP and pdb2gmx are supported, default to tLEaP, then use pdb2gmx if
@@ -167,6 +196,8 @@ class Protocol():
         if self._tleap:
             if _tleap_exe is not None:
                 output = self._run_tleap(molecule, work_dir)
+                if not is_smiles:
+                    new_mol._ion_water_model = self._water_model
             # Otherwise, try using pdb2gmx.
             elif self._pdb2gmx:
                 if _gmx_exe is not None:
@@ -185,15 +216,26 @@ class Protocol():
         output = [prefix + output[0], prefix + output[1]]
 
         try:
-            # Load the parameterised molecule.
-            par_mol = _Molecule(_IO.readMolecules(output)._getSireObject()[_SireMol.MolIdx(0)])
-        except:
-            raise IOError("Failed to read molecule from: '%s', '%s'" % (output[0], output[1])) from None
+            # Load the parameterised molecule. (This could be a system of molecules.)
+            par_mol = _IO.readMolecules(output)
+            # Extract single molecules.
+            if par_mol.nMolecules() == 1:
+                par_mol = par_mol.getMolecules()[0]
+        except Exception as e:
+            msg = "Failed to read molecule from: '%s', '%s'" % (output[0], output[1])
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Make the molecule 'mol' compatible with 'par_mol'. This will create
         # a mapping between atom indices in the two molecules and add all of
         # the new properties from 'par_mol' to 'mol'.
-        new_mol._makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+        if is_smiles:
+            new_mol = par_mol
+        else:
+            new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -202,25 +244,104 @@ class Protocol():
             queue.put(new_mol)
         return new_mol
 
+    def _has_missing_atoms(self, tleap_file):
+        """Check whether tLEaP has added missing atoms.
+
+           Parameters
+           ----------
+
+           tleap_file : str
+               The path to the output file generated by tLEaP.
+
+           Returns
+           -------
+
+           has_missing_atoms : bool
+               Whether missing atoms were added.
+        """
+
+        if not isinstance(tleap_file, str):
+            raise TypeError("'tleap_file' must be of type 'str'.")
+
+        if not (_os.path.exists(tleap_file)):
+            raise IOError(f"'tleap_file' doesn't exist: '{tleap_file}'")
+
+        with open(tleap_file, "r") as file:
+            for line in file:
+                if "missing atoms" in line:
+                    return True
+
+        return False
+
+    def _smiles_to_molecule(self, smiles, work_dir):
+        """Convert a SMILES string to a Molecule.
+
+           Parameters
+           ----------
+
+           smiles : str
+               A SMILES representation of a molecule.
+
+           work_dir : str
+               The working directory.
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The BioSimSpace representation of the molecule.
+        """
+
+        # Create an OpenFF molecule from the smiles string.
+        off_molecule = _OpenFFMolecule.from_smiles(smiles)
+
+        # Generate a single conformer for the molecule.
+        off_molecule.generate_conformers(n_conformers=1)
+
+        # Write to file.
+        file = work_dir + "/off.pdb"
+        off_molecule.to_file(file, "pdb")
+
+        # Read PDB back into internal molecular representation.
+        molecule = _IO.readMolecules(file)
+
+        # Assume this is a single molecule.
+        return molecule[0]
+
     def _run_tleap(self, molecule, work_dir):
         """Run using tLEaP.
 
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            work_dir : str
                The working directory.
         """
+
+        # Convert SMILES to a molecule.
+        if isinstance(molecule, str):
+            try:
+                _molecule = self._smiles_to_molecule(molecule, work_dir)
+            except Exception as e:
+                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
+        else:
+            _molecule = molecule
 
         # Create a new system and molecule group.
         s = _SireSystem.System("BioSimSpace System")
         m = _SireMol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireObject())
+        m.add(_molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.
@@ -230,8 +351,13 @@ class Protocol():
         try:
             pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "leap.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
@@ -239,6 +365,15 @@ class Protocol():
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
             file.write("source %s\n" % ff)
+            if self._water_model is not None:
+                if self._water_model in ["tip4p", "tip5p"]:
+                    file.write("source leaprc.water.tip4pew\n")
+                else:
+                    file.write("source leaprc.water.%s\n" % self._water_model)
+            # Write extra user commands.
+            if self._leap_commands is not None:
+                for command in self._leap_commands:
+                    file.write("%s\n" % command)
             file.write("mol = loadPdb leap.pdb\n")
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")
@@ -252,17 +387,33 @@ class Protocol():
             file.write("%s\n" % command)
 
         # Create files for stdout/stderr.
-        stdout = open(prefix + "tleap.out", "w")
-        stderr = open(prefix + "tleap.err", "w")
+        stdout = open(prefix + "leap.out", "w")
+        stderr = open(prefix + "leap.err", "w")
 
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
         if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+            # Check the output of tLEaP for missing atoms.
+            if self._has_missing_atoms(prefix + "leap.out"):
+                raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
+                                             "inconsistent with the original molecule. Please "
+                                             "make sure that your initial molecule has a "
+                                             "complete topology.")
+            if _molecule.nChains() > 1:
+                # If the original molecule was comprised of multiple chains, then we
+                # need to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
+                # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
+                with open(prefix + "leap.top", "a") as file:
+                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
+                    file.write("%FORMAT(10I8)\n")
+                    file.write("    %d\n" % _molecule.nAtoms())
+
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
@@ -273,8 +424,9 @@ class Protocol():
            Parameters
            ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
 
            work_dir : str
                The working directory.
@@ -290,12 +442,26 @@ class Protocol():
         if self._forcefield not in supported_ff:
             raise _IncompatibleError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
 
+        # Convert SMILES to a molecule.
+        if isinstance(molecule, str):
+            try:
+                _molecule = self._smiles_to_molecule(molecule, work_dir)
+            except Exception as e:
+                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                if _isVerbose():
+                    msg += ": " + getattr(e, "message", repr(e))
+                    raise _ThirdPartyError(msg) from e
+                else:
+                    raise _ThirdPartyError(msg) from None
+        else:
+            _molecule = molecule
+
         # Create a new system and molecule group.
         s = _SireSystem.System("BioSimSpace System")
         m = _SireMol.MoleculeGroup("all")
 
         # Add the molecule.
-        m.add(molecule._getSireObject())
+        m.add(_molecule._getSireObject())
         s.add(m)
 
         # Create the file prefix.
@@ -305,8 +471,13 @@ class Protocol():
         try:
             pdb = _SireIO.PDB2(s, self._property_map)
             pdb.writeToFile(prefix + "input.pdb")
-        except:
-            raise IOError("Failed to write system to 'PDB' format.") from None
+        except Exception as e:
+            msg = "Failed to write system to 'PDB' format."
+            if _isVerbose():
+                msg += ": " + getattr(e, "message", repr(e))
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
         # Generate the pdb2gmx command.
         command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
@@ -322,7 +493,8 @@ class Protocol():
         stderr = open(prefix + "pdb2gmx.err", "w")
 
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 

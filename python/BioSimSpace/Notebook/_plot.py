@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,9 +24,9 @@ Tools for plotting data.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
-__all__ = ["plot", "plotContour"]
+__all__ = ["plot", "plotContour", "plotOverlapMatrix"]
 
 from warnings import warn as _warn
 from os import environ as _environ
@@ -45,13 +45,15 @@ if _display is not None:
     _has_display = True
     try:
         import matplotlib.pyplot as _plt
+        import matplotlib.colors as _colors
         _has_matplotlib = True
     except ImportError:
         _has_matplotlib = False
 else:
-    if _is_notebook():
+    if _is_notebook:
         try:
             import matplotlib.pyplot as _plt
+            import matplotlib.colors as _colors
             _has_matplotlib = True
         except ImportError:
             _has_matplotlib = False
@@ -109,25 +111,20 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
     """
 
     # Make sure were running interactively.
-    if not _is_interactive():
+    if not _is_interactive:
         _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-            "to load. Please check your matplotlib installation.")
+              "to load. Please check your matplotlib installation.")
         return None
 
-    # Convert tuple to a list.
-    if type(x) is tuple:
-        x = list(x)
-    if type(y) is tuple:
-        y = list(y)
-    if type(xerr) is tuple:
-        xerr = list(xerr)
-    if type(yerr) is tuple:
-        yerr = list(yerr)
+    if not isinstance(logx, bool):
+        raise TypeError("'logx' must be of type 'bool'.")
+    if not isinstance(logy, bool):
+        raise TypeError("'logy' must be of type 'bool'.")
 
     # Whether we need to convert the x and y data to floats.
     is_unit_x = False
@@ -147,8 +144,8 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             y = x
             x = [x for x in range(0, len(y))]
 
-    # The x argument must be a list of data records.
-    if type(x) is not list:
+    # The x argument must be a list or tuple of data records.
+    if not isinstance(x, (list, tuple)):
         raise TypeError("'x' must be of type 'list'")
 
     else:
@@ -176,8 +173,8 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
         if isinstance(x[0], _Type):
             is_unit_x = True
 
-    # The y argument must be a list of data records.
-    if type(y) is not list:
+    # The y argument must be a list or tuple of data records.
+    if not isinstance(y, (list, tuple)):
         raise TypeError("'y' must be of type 'list'")
 
     else:
@@ -225,14 +222,14 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             yerr = yerr[:len(y)]
 
     if xlabel is not None:
-        if type(xlabel) is not str:
+        if not isinstance(xlabel, str):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
-        if type(ylabel) is not str:
+        if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
@@ -311,29 +308,23 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     from mpl_toolkits.axes_grid1 import make_axes_locatable as _make_axes_locatable
 
     # Make sure were running interactively.
-    if not _is_interactive():
+    if not _is_interactive:
         _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
         return None
 
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
         _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-            "to load. Please check your matplotlib installation.")
+              "to load. Please check your matplotlib installation.")
         return None
-
-    # Convert tuple to a list.
-    if type(x) is tuple:
-        x = list(x)
-    if type(y) is tuple:
-        y = list(y)
 
     # Whether we need to convert the x, y, and z data to floats.
     is_unit_x = False
     is_unit_y = False
     is_unit_z = False
 
-    # The x argument must be a list of data records.
-    if type(x) is not list:
+    # The x argument must be a list or tuple of data records.
+    if not isinstance(x, (list, tuple)):
         raise TypeError("'x' must be of type 'list'")
 
     else:
@@ -351,8 +342,8 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         if isinstance(x[0], _Type):
             is_unit_x = True
 
-    # The y argument must be a list of data records.
-    if type(y) is not list:
+    # The y argument must be a list or tuple of data records.
+    if not isinstance(y, (list, tuple)):
         raise TypeError("'y' must be of type 'list'")
 
     else:
@@ -370,7 +361,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         if isinstance(y[0], _Type):
             is_unit_y = True
 
-    if type(z) is not list:
+    if not isinstance(z, (list, tuple)):
         raise TypeError("'z' must be of type 'list'")
 
     else:
@@ -404,21 +395,21 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
         z = z[:min_len]
 
     if xlabel is not None:
-        if type(xlabel) is not str:
+        if not isinstance(xlabel, str):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
             xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
 
     if ylabel is not None:
-        if type(ylabel) is not str:
+        if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
             ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
 
     if zlabel is not None:
-        if type(zlabel) is not str:
+        if not isinstance(zlabel, str):
             raise TypeError("'zlabel' must be of type 'str'")
     else:
         if isinstance(z[0], _Type):
@@ -435,7 +426,7 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     # Convert to two-dimensional arrays. We don't assume the data is on a grid,
     # so we interpolate the z values.
     try:
-        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(y), 1000),
+        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(x), 1000),
                              _np.linspace(_np.min(y), _np.max(y), 1000))
         Z = _interp.griddata((x, y), z, (X, Y), method="linear")
     except:
@@ -467,5 +458,72 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     cbar = _plt.colorbar(cp, cax=cax)
     if zlabel is not None:
         cbar.set_label(zlabel)
+
+    return _plt.show()
+
+def plotOverlapMatrix(overlap):
+    """Plot the overlap matrix from a free-energy perturbation analysis.
+
+       Parameters
+       ----------
+
+       overlap : [ [ float, float, ... ] ]
+           The overlap matrix.
+    """
+
+    # Make sure were running interactively.
+    if not _is_interactive:
+        _warn("You can only use BioSimSpace.Notebook.plot when running interactively.")
+        return None
+
+    # Matplotlib failed to import.
+    if not _has_matplotlib and _has_display:
+        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+              "to load. Please check your matplotlib installation.")
+        return None
+
+    # Validate the input.
+
+    if not isinstance(overlap, (list, tuple)):
+        raise TypeError("The 'overlap' matrix must be a list of list types!")
+
+    # Store the number of rows.
+    num_rows = len(overlap)
+
+    # Check the data in each row.
+    for row in overlap:
+        if not isinstance(row, (list, tuple)):
+            raise TypeError("The 'overlap' matrix must be a list of list types!")
+        if len(row) != num_rows:
+            raise ValueError("The 'overlap' matrix must be square!")
+        if not all(isinstance(x, float) for x in row):
+            raise TypeError("The 'overlap' matrix must contain 'float' types!")
+
+    # Set the colour map.
+    cmap = _colors.ListedColormap(["#FBE8EB","#88CCEE","#78C592", "#117733"])
+
+    # Create the figure and axis.
+    fig, ax = _plt.subplots()
+
+    # Create the image.
+    im = ax.imshow(overlap, origin="lower", cmap=cmap)
+
+    # Annotate the cells with the value of the overlap.
+    for x in range(0, num_rows):
+        for y in range(0, num_rows):
+            text = ax.text(y, x, f"{overlap[x][y]:.2f}", ha="center", color="k")
+
+    # Set the axis labels.
+    _plt.xlabel(r"$\lambda$ window")
+    _plt.ylabel(r"$\lambda$ window")
+
+    ticks = [x for x in range(0, num_rows)]
+
+    # Set ticks every lambda window.
+    _plt.xticks(ticks)
+    _plt.yticks(ticks)
+
+    # Create a tight layout to trim whitespace.
+    fig.tight_layout()
 
     return _plt.show()

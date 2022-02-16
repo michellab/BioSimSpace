@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2019
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -24,7 +24,7 @@ Functionality for configuring grids for metadynamics simulation.
 """
 
 __author__ = "Lester Hedges"
-__email_ = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Grid"]
 
@@ -83,9 +83,7 @@ class Grid():
            minimum : int, float, :class:`Type <BioSimSpace.Types>`
                The minimum value of the grid.
         """
-        if not type(minimum) is int and   \
-           not type(minimum) is float and \
-           not isinstance(minimum, _Type):
+        if not isinstance(minimum, (float, _Type)) and not type(minimum) is int:
             raise TypeError("'minimum' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._minimum = minimum
 
@@ -115,9 +113,7 @@ class Grid():
            maximum : int, float, :class:`Type <BioSimSpace.Types>`
                The maximum value of the grid.
         """
-        if not type(maximum) is int and   \
-           not type(maximum) is float and \
-           not isinstance(maximum, _Type):
+        if not isinstance(maximum, (float, _Type)) and not type(maximum) is int:
             raise TypeError("'maximum' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
         self._maximum = maximum
 
