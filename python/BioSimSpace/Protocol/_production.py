@@ -43,8 +43,8 @@ class Production(_Protocol):
                  runtime=_Types.Time(1, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 report_interval=100,
-                 restart_interval=100,
+                 report_interval=200,
+                 restart_interval=1000,
                  first_step=0,
                  restart=False
                 ):
@@ -254,8 +254,8 @@ class Production(_Protocol):
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
-            _warnings.warn("'report_interval' must be positive. Using default (100).")
-            report_interval = 100
+            _warnings.warn("'report_interval' must be positive. Using default (200).")
+            report_interval = 200
 
         self._report_interval = report_interval
 
@@ -287,8 +287,8 @@ class Production(_Protocol):
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
-            _warnings.warn("'restart_interval' must be positive. Using default (500).")
-            restart_interval = 500
+            _warnings.warn("'restart_interval' must be positive. Using default (1000).")
+            restart_interval = 1000
 
         self._restart_interval = restart_interval
 

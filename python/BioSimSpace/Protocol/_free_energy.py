@@ -34,10 +34,10 @@ import warnings as _warnings
 from BioSimSpace import Types as _Types
 
 from ._free_energy_mixin import _FreeEnergyMixin
-from ._production import Production as _Producton
+from ._production import Production as _Production
 
 
-class FreeEnergy(_Producton, _FreeEnergyMixin):
+class FreeEnergy(_Production, _FreeEnergyMixin):
     """A class for storing free energy production protocols."""
 
     def __init__(self,
@@ -50,8 +50,8 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
                  runtime=_Types.Time(4, "nanosecond"),
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
-                 report_interval=200000,
-                 restart_interval=20000,
+                 report_interval=200,
+                 restart_interval=1000,
                  first_step=0,
                  restart=False,
                  perturbation_type="full"
@@ -114,7 +114,7 @@ class FreeEnergy(_Producton, _FreeEnergyMixin):
         """
 
         # Call the base class constructors.
-        _Producton.__init__(self,
+        _Production.__init__(self,
                             timestep=timestep,
                             runtime=runtime,
                             temperature=temperature,

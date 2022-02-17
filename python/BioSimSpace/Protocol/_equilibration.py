@@ -49,10 +49,11 @@ class Equilibration(_Protocol):
                  temperature_end=_Types.Temperature(300, "kelvin"),
                  temperature=None,
                  pressure=None,
-                 report_interval=100,
-                 restart_interval=500,
+                 report_interval=200,
+                 restart_interval=1000,
                  restraint=None,
-                 restrain_backbone=False
+                 restrain_backbone=False,
+                 restart=False
                 ):
         """Constructor.
 
@@ -76,8 +77,8 @@ class Equilibration(_Protocol):
                the other temperatures, i.e. to run at fixed temperature.
 
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure. If this argument is omitted then the simulation
-               is run using the NVT ensemble.
+               The pressure. If None, then the simulation is run using the NVT ensemble.
+               If set to a value, then the simulation is run using the NPT ensemble.
 
            report_interval : int
                The frequency at which statistics are recorded. (In integration steps.)
@@ -105,6 +106,9 @@ class Equilibration(_Protocol):
            restrain_backbone : bool
                Restraint atoms in the protein backbone. This option is now
                deprecated. Please use restraint = "backbone" instead.
+
+           restart : bool
+               Whether this is a continuation of a previous simulation.
         """
 
         # Call the base class constructor.
@@ -155,6 +159,9 @@ class Equilibration(_Protocol):
         # Set the restart interval.
         self.setRestartInterval(restart_interval)
 
+        # Set the restart flag.
+        self.setRestart(restart)
+
         # Set the restraint.
         if restraint is not None:
             self.setRestraint(restraint)
@@ -168,9 +175,9 @@ class Equilibration(_Protocol):
         else:
             return ("<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
                     "temperature_start=%s, temperature_end=%s, pressure=%s, "
-                    "report_interval=%d, restart_interval=%d,restraint=%r>"
+                    "report_interval=%d, restart_interval=%d,restraint=%r, restart=%r>"
                    ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
-                           self._pressure, self._report_interval, self._restart_interval, self._restraint)
+                           self._pressure, self._report_interval, self._restart_interval, self._restraint, self._restart)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
@@ -179,9 +186,9 @@ class Equilibration(_Protocol):
         else:
             return ("BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
                     "temperature_start=%s, temperature_end=%s, pressure=%s, "
-                    "report_interval=%d, restart_interval=%d, restraint=%r)"
+                    "report_interval=%d, restart_interval=%d, restraint=%r, restart=%r)"
                    ) % (self._timestep, self._runtime, self._temperature_start, self._temperature_end,
-                           self._pressure, self._report_interval, self._restart_interval, self._restraint)
+                           self._pressure, self._report_interval, self._restart_interval, self._restraint, self._restart)
 
     def getTimeStep(self):
         """Return the time step.
@@ -337,8 +344,8 @@ class Equilibration(_Protocol):
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
-            _warnings.warn("'report_interval' must be positive. Using default (100).")
-            report_interval = 100
+            _warnings.warn("'report_interval' must be positive. Using default (200).")
+            report_interval = 200
 
         self._report_interval = report_interval
 
@@ -370,10 +377,36 @@ class Equilibration(_Protocol):
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
-            _warnings.warn("'restart_interval' must be positive. Using default (500).")
-            restart_interval = 500
+            _warnings.warn("'restart_interval' must be positive. Using default (1000).")
+            restart_interval = 1000
 
         self._restart_interval = restart_interval
+
+    def isRestart(self):
+        """Return whether this restart simulation.
+
+           Returns
+           -------
+
+           is_restart : bool
+               Whether this is a restart simulation.
+        """
+        return self._restart
+
+    def setRestart(self, restart):
+        """Set the restart flag.
+
+           Parameters
+           ----------
+
+           restart : bool
+               Whether this is a restart simulation.
+        """
+        if isinstance(restart, bool):
+            self._restart = restart
+        else:
+            _warnings.warn("Non-boolean restart flag. Defaulting to False!")
+            self._restart = False
 
     def getRestraint(self):
         """Return the type of restraint..

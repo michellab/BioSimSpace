@@ -205,7 +205,7 @@ class ConfigFactory:
 
         # Define some miscellaneous defaults.
         protocol_dict = {
-            "ntpr": 200,                            # Interval between reporting energies.
+            "ntpr": self._report_interval,          # Interval between reporting energies.
             "ntwr": self._restart_interval,         # Interval between saving restart files.
             "ntwx": self._restart_interval,         # Trajectory sampling frequency.
             "ntxo": 2,                              # Output coordinates as NetCDF.
@@ -381,7 +381,6 @@ class ConfigFactory:
             "nstlog": self._report_interval,                                        # Interval between writing to the log file.
             "nstenergy": self._restart_interval,                                    # Interval between writing to the energy file.
             "nstxout": self._restart_interval,                                      # Interval between writing to the trajectory file.
-            "gen-vel": "yes" if self._restart else "no"                             # Whether to generate velocities.
         }
 
         # Minimisation.
@@ -401,7 +400,7 @@ class ConfigFactory:
         protocol_dict["cutoff-scheme"] = "Verlet"                                   # Use Verlet pair lists.
         if self._has_box and self._has_water:
             protocol_dict["ns-type"] = "grid"                                       # Use a grid to search for neighbours.
-            protocol_dict["nstlist"] = "10"                                         # Rebuild neighbour list every 10 steps.
+            protocol_dict["nstlist"] = "20"                                         # Rebuild neighbour list every 20 steps. Recommended in the manual for parallel simulations and/or non-bonded force calculation on the GPU.
             protocol_dict["rlist"] = "0.8"                                          # Set short-range cutoff.
             protocol_dict["rvdw"] = "0.8"                                           # Set van der Waals cutoff.
             protocol_dict["rcoulomb"] = "0.8"                                       # Set Coulomb cutoff.
@@ -450,6 +449,8 @@ class ConfigFactory:
 
             # Heating/cooling protocol.
             elif not self.protocol.isConstantTemp():
+                #still need a reference temperature for each group, even when heating/cooling
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().magnitude()
                 # Work out the final time of the simulation.
                 timestep = self.protocol.getTimeStep().picoseconds().magnitude()
                 end_time = _math.floor(timestep * self._steps)
@@ -473,8 +474,8 @@ class ConfigFactory:
             lam = self.protocol.getLambda()
             idx = self.protocol.getLambdaValues().index(lam)
             protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
-            protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
-            protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.
+            protocol_dict["nstcalcenergy"] = self._report_interval                  # Calculate energies every report interval steps.
+            protocol_dict["nstdhdl"] = self._report_interval                        # Write gradients every report interval steps.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -584,11 +585,14 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             if not isinstance(self.protocol, _Protocol.Minimisation):
                 protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
-                protocol_dict["energy frequency"] = 200                         # Write gradients every 200 steps.
+                protocol_dict["energy frequency"] = self._report_interval       # Write gradients every report interval steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
+            #protocol_dict["minimise"] = True                                    # minimise at each window
+            #protocol_dict["hydrogen mass repartitioning factor"] = 1.0         # apply HMR
+            
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}

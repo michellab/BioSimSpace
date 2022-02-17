@@ -857,13 +857,15 @@ class Relative():
 
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
-                property_map=self._property_map)
+                property_map=self._property_map, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
 
         # GROMACS.
         elif self._engine == "GROMACS":
             first_process = _Process.Gromacs(system, self._protocol,
                 work_dir=first_dir, ignore_warnings=self._ignore_warnings,
-                show_errors=self._show_errors)
+                show_errors=self._show_errors, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
 
         # AMBER.
         elif self._engine == "AMBER":
@@ -988,7 +990,7 @@ class Relative():
                 with open(new_dir + "/amber.cfg", "r") as f:
                     for line in f:
                         if "clambda" in line:
-                            new_config.append("   clambda = %s\n," % lam)
+                            new_config.append("   clambda=%s,\n" % lam)
                         else:
                             new_config.append(line)
                 with open(new_dir + "/amber.cfg", "w") as f:
