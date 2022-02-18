@@ -163,7 +163,7 @@ class OpenMM(_process.Process):
 
         # Set the path for the OpenMM Python script. (We use the concept of a
         # config file for consistency with other Process classes.)
-        self._config_file = "%s/%s.py" % (self._work_dir, name)
+        self._config_file = "%s/%s_script.py" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
@@ -1660,19 +1660,16 @@ class OpenMM(_process.Process):
         """Helper function to write the header (import statements) to the
            OpenMM Python script (config file).
         """
-        # We should verify that openmm and simtk.unit are available to
-        # prevent difficult-to-debug errors in the run script
+        # We should verify that openmm is available to prevent
+        # difficult-to-debug errors in the run script
         from BioSimSpace._Utils import _try_import, _assert_imported
 
         _openmm = _try_import("openmm")
         _assert_imported(_openmm)
 
-        _unit = _try_import("simtk.unit", "conda install simtk")
-        _assert_imported(_unit)
-
-        self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm import *")
-        self.addToConfig("from simtk.unit import *")
+        self.addToConfig("from openmm.app import *")
+        self.addToConfig("from openmm.unit import *")
 
     def _add_config_platform(self):
         """Helper function to add platform information to the OpenMM
