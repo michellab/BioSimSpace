@@ -183,7 +183,7 @@ class Somd(_process.Process):
         # Initialise the buffering frequency.
         self._buffer_freq = 0
 
-        # Initialise the molecule mapping. SOMD re-orders molecules on
+        # Initialise the molecule index mapping. SOMD re-orders molecules on
         # startup so we need to re-map to the original system.
         self._mapping = {}
 
@@ -660,6 +660,12 @@ class Somd(_process.Process):
 
         # Try to grab the latest coordinates from the binary restart file.
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system = _IO.readMolecules(self._restart_file)
 
             # Since SOMD requires specific residue and water naming we copy the
@@ -672,7 +678,7 @@ class Somd(_process.Process):
                     old_system._sire_object,
                     new_system._sire_object,
                     self._mapping,
-                    False,
+                    is_lambda1,
                     self._property_map,
                     self._property_map)
 
@@ -762,6 +768,12 @@ class Somd(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
@@ -775,7 +787,7 @@ class Somd(_process.Process):
                     old_system._sire_object,
                     new_system._sire_object,
                     self._mapping,
-                    False,
+                    is_lambda1,
                     self._property_map,
                     self._property_map)
 
