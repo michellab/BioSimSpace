@@ -43,8 +43,11 @@ import warnings as _warnings
 import zipfile as _zipfile
 
 import numpy as _np
+import pandas as _pd
 from Sire.Units import gasr as _gasr
 import pymbar as _pymbar
+from alchemlyb.parsing.gmx import extract_u_nk as _extract_u_nk
+from alchemlyb.estimators import MBAR as _MBAR
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -555,61 +558,123 @@ class Relative():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # Create the command.
-        command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
+        #figure out the gromacs version
+        def gromacs_version():    
+            p = _subprocess.run([_gmx_exe,'-version'], stdout=_subprocess.PIPE).stdout.decode('utf-8')
+            with _tempfile.TemporaryDirectory() as tmpdirname:
+                file = f'{tmpdirname}/version.txt'
+                with open (file,'w') as f:
+                    print(p, file=f)
+                f = open(file,'r')
+                for line in f:
+                    if "GROMACS version" in line:
+                        l = line.strip().split(':')
+                        l = l[1].strip()
+                        l = float(l)
+                        return(l)
 
-        # Run the first command.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        if proc.returncode != 0:
-            raise _AnalysisError("GROMACS free-energy analysis failed!")
+        #check if gromacs version is available
+        if gromacs_version() is False:
+            raise _AnalysisError("GROMACS free-energy analysis failed! Gromacs version couldn't be identified.")
+        
+        #for the older gromacs versions so they use the gmx bar analysis
+        elif gromacs_version() < 2020:
+            print("Analysing using gmx bar and BAR as the gromacs version is older...")
+            # Create the command.
+            command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
 
-        # Initialise list to hold the data.
-        data = []
+            # Run the first command.
+            proc = _subprocess.run(_shlex.split(command), shell=True,
+                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            if proc.returncode != 0:
+                raise _AnalysisError("GROMACS free-energy analysis failed!")
 
-        # Extract the data from the output files.
+            # Initialise list to hold the data.
+            data = []
 
-        # First leg.
-        with open("%s/bar.xvg" % work_dir) as file:
+            # Extract the data from the output files.
 
-            # Read all of the lines into a list.
-            lines = []
-            for line in file:
-                # Ignore comments and xmgrace directives.
-                if line[0] != "#" and line[0] != "@":
-                    lines.append(line.rstrip())
+            # First leg.
+            with open("%s/bar.xvg" % work_dir) as file:
 
-            # Store the initial free energy reading.
-            data.append((0.0,
-                         0.0 * _Units.Energy.kcal_per_mol,
-                         0.0 * _Units.Energy.kcal_per_mol))
+                # Read all of the lines into a list.
+                lines = []
+                for line in file:
+                    # Ignore comments and xmgrace directives.
+                    if line[0] != "#" and line[0] != "@":
+                        lines.append(line.rstrip())
 
-            # Zero the accumulated error.
-            total_error = 0
+                # Store the initial free energy reading.
+                data.append((0.0,
+                            0.0 * _Units.Energy.kcal_per_mol,
+                            0.0 * _Units.Energy.kcal_per_mol))
 
-            # Zero the accumulated free energy difference.
-            total_freenrg = 0
+                # Zero the accumulated error.
+                total_error = 0
 
-            # Process the BAR data.
-            for x, line in enumerate(lines):
-                # Extract the data from the line.
-                records = line.split()
+                # Zero the accumulated free energy difference.
+                total_freenrg = 0
 
-                # Update the total free energy difference.
-                total_freenrg += float(records[1])
+                # Process the BAR data.
+                for x, line in enumerate(lines):
+                    # Extract the data from the line.
+                    records = line.split()
 
-                # Extract the error.
-                error = float(records[2])
+                    # Update the total free energy difference.
+                    total_freenrg += float(records[1])
 
-                # Update the accumulated error.
-                total_error = _math.sqrt(total_error*total_error + error*error)
+                    # Extract the error.
+                    error = float(records[2])
 
+                    # Update the accumulated error.
+                    total_error = _math.sqrt(total_error*total_error + error*error)
+
+                    # Append the data.
+                    data.append(((x + 1) / (len(lines)),
+                                (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                                (total_error * _Units.Energy.kt).kcal_per_mol()))
+
+            return (data, None)
+
+
+        #for the newer gromacs version so it's analysed using alchemlyb / pymbar  
+        elif gromacs_version() >= 2020:
+            print("Gromacs version is newer so analysing using alchemlyb and MBAR...")
+            files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
+            
+            #find the temperature at each lambda window
+            temperatures = []
+            for file in files:
+                with open (file,'r') as f:
+                    for line in f.readlines():
+                        t = None
+                        start = 'T ='
+                        end = '(K)'
+                        if start and end in line:
+                            t = int(((line.split(start)[1]).split(end)[0]).strip())
+                            temperatures.append(t)
+                            if t is not None:
+                                break
+
+            #extract the energies using alchemlyb and calculate mbar
+            _u_nk = _pd.concat([_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
+            mbar = _MBAR().fit(_u_nk)
+
+            #extract the data from the mbar results
+            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+            data = []
+            for lambda_ in lambdas:
+                x = lambdas.index(lambda_)
+                mbar_value = mbar.delta_f_.iloc[0,x]
+                mbar_error = mbar.d_delta_f_.iloc[1,x]
+                
                 # Append the data.
-                data.append(((x + 1) / (len(lines)),
-                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
-                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+                data.append((lambda_,
+                            (mbar_value) * _Units.Energy.kcal_per_mol,
+                            (mbar_error) * _Units.Energy.kcal_per_mol))
+            
+            return (data, None)
 
-        return (data, None)
 
     @staticmethod
     def _analyse_somd(work_dir=None):
