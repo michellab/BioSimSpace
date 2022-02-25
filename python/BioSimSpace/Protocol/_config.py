@@ -483,6 +483,52 @@ class ConfigFactory:
 
         return total_lines
 
+    def _generate_somd_fep_mask(self):
+        """Internal helper function which generates the perturbed residue number based on the system.
+
+           Returns
+           -------
+
+           option_dict : dict
+               A dictionary of the SOMD perturbed residue number.
+        """
+
+        _system = self.system
+
+        # Extract the perturbable molecule index from the system.
+        perturbed_mol_indices = []
+        perturbed_atom_indices = []
+        index = 0
+        #first find the number of perturbable molecules in the system
+        for mol in _system.getMolecules():
+            for res in mol.getResidues():
+                index += 1
+            if mol._is_perturbable:
+                perturbed_mol_indices += [index]
+            else:
+                perturbed_mol_indices += []  
+        
+        # There should only be one perturbable molecule in the SOMD system.
+        if len(perturbed_mol_indices) > 1:
+            raise _IncompatibleError("There is more than one perturbable molecule in the system.")
+        
+        # Get the perturbable molecule 
+        for mol in _system.getPerturbableMolecules():
+            perturbed_atom_indices = [_system.getIndex(atom) + 1 for atom in mol.getAtoms()]
+            mol_no = _system.getIndex(mol) + 1
+            # check if this matches the index found earlier
+            if mol_no != perturbed_mol_indices[0] :
+                perturbed_molecule = perturbed_mol_indices[0]
+            else:
+                perturbed_molecule = mol_no
+
+        # Create an option dict for SOMD with the perturbed residue number.
+        option_dict = {
+            "perturbed residue number": f"{perturbed_molecule}",
+        }
+
+        return option_dict
+
     def generateSomdConfig(self, extra_options=None, extra_lines=None):
         """Outputs the current protocol in a format compatible with SOMD.
 
@@ -592,6 +638,7 @@ class ConfigFactory:
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
             #protocol_dict["minimise"] = True                                    # minimise at each window
             #protocol_dict["hydrogen mass repartitioning factor"] = 1.0         # apply HMR
+            protocol_dict = {**protocol_dict, **self._generate_somd_fep_mask()}   # Atom masks.
             
 
         # Put everything together in a line-by-line format.
