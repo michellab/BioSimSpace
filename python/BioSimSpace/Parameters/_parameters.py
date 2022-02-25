@@ -144,7 +144,7 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
     # Validate arguments.
     _validate(molecule=molecule, water_model=water_model,
-        leap_commands=leap_commands, property_map=property_map)
+        check_ions=True, leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99(water_model=water_model,
@@ -198,7 +198,7 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
     # Validate arguments.
     _validate(molecule=molecule, water_model=water_model,
-        leap_commands=leap_commands, property_map=property_map)
+        check_ions=True, leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SB(water_model=water_model,
@@ -252,7 +252,7 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
 
     # Validate arguments.
     _validate(molecule=molecule, water_model=water_model,
-        leap_commands=leap_commands, property_map=property_map)
+        check_ions=True, leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SBILDN(water_model=water_model,
@@ -306,7 +306,7 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
 
     # Validate arguments.
     _validate(molecule=molecule, water_model=water_model,
-        leap_commands=leap_commands, property_map=property_map)
+        check_ions=True, leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF03(water_model=water_model,
@@ -359,7 +359,7 @@ def ff14SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
 
     # Validate arguments.
     _validate(molecule=molecule, water_model=water_model,
-        leap_commands=leap_commands, property_map=property_map)
+        check_ions=True, leap_commands=leap_commands, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF14SB(water_model=water_model,
@@ -407,8 +407,7 @@ def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property
                                     "Please install AmberTools (http://ambermd.org).")
 
     # Validate arguments.
-
-    _validate(molecule=molecule, property_map=property_map)
+    _validate(molecule=molecule, check_ions=False, property_map=property_map)
 
     if net_charge is not None:
         # Get the magnitude of the charge.
@@ -471,8 +470,7 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", propert
                                     "Please install AmberTools (http://ambermd.org).")
 
     # Validate arguments.
-
-    _validate(molecule=molecule, property_map=property_map)
+    _validate(molecule=molecule, check_ions=False, property_map=property_map)
 
     if net_charge is not None:
         # Get the magnitude of the charge.
@@ -901,8 +899,8 @@ def _has_ions(molecule):
     else:
         return False, ions
 
-def _validate(molecule=None, water_model=None, leap_commands=None,
-        work_dir=None, property_map=None):
+def _validate(molecule=None, water_model=None, check_ions=False,
+        leap_commands=None, work_dir=None, property_map=None):
     """
     Internal function to validate arguments.
 
@@ -917,6 +915,10 @@ def _validate(molecule=None, water_model=None, leap_commands=None,
         The water model used to parameterise any structural ions.
         Run 'BioSimSpace.Solvent.waterModels()' to see the supported
         water models. This is ignored if ions are not present.
+
+    check_ions: bool
+        Whether to check for the presence of structural ions. This is only
+        required when parameterising with protein force fields.
 
     leap_commands : [str]
         An optional list of extra commands for the LEaP program. These
@@ -943,7 +945,7 @@ def _validate(molecule=None, water_model=None, leap_commands=None,
         if not _validate_water_model(water_model):
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
-    else:
+    elif check_ions:
         has_ions, ions = _has_ions(molecule)
         if has_ions:
             ion_string = ", ".join(ions)

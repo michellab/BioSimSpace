@@ -1977,6 +1977,12 @@ class Gromacs(_process.Process):
         try:
             with _Utils.cd(self._work_dir):
 
+                # Do we need to get coordinates for the lambda=1 state.
+                if "is_lambda1" in self._property_map:
+                    is_lambda1 = True
+                else:
+                    is_lambda1 = False
+
                 # Locate the trajectory file.
                 traj_file = self._find_trajectory_file()
 
@@ -2002,18 +2008,30 @@ class Gromacs(_process.Process):
                 # Delete the frame file.
                 _os.remove("frame.gro")
 
-                # Copy the old system and update the coordinates.
+                # Create a copy of the existing system object.
                 old_system = self._system.copy()
-                old_system._updateCoordinatesAndVelocities(new_system,
-                                                           self._property_map,
-                                                           self._property_map)
+
+                # Udpate the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
+
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
                 # Update the box information in the original system.
-                try:
+                if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-                except:
-                    pass
 
                 return old_system
 

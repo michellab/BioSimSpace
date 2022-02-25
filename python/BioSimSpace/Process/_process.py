@@ -230,6 +230,11 @@ class Process():
         # and set out stdout/stderr files.
         self._clear_output()
 
+        # Initialise the molecule index mapping. This is used to re-map molecules
+        # that are loaded from trajectory/restart files to those in the original
+        # system. By default, we assume that the indices map directly.
+        self._mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, self._system.nMolecules())}
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Process.%s: system=%s, protocol=%s, exe='%s', name='%s', work_dir='%s', seed=%s>" \
