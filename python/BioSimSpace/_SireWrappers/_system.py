@@ -931,7 +931,7 @@ class System(_SireWrapper):
 
                 indices.append(index)
 
-            # Residue.
+            # Molecule.
             elif isinstance(x, _Molecule):
                 # Only compute the molecule index mapping if it hasn't already
                 # been created.
