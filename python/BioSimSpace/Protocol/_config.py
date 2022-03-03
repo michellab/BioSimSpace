@@ -4,6 +4,7 @@ import warnings as _warnings
 
 from BioSimSpace.Align._merge import _squash
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
+from BioSimSpace.Units.Time import nanosecond as _nanosecond
 
 from BioSimSpace import Protocol as _Protocol
 
@@ -299,7 +300,7 @@ class ConfigFactory:
                     protocol_dict["ntp"] = 1        # Isotropic pressure scaling.
                     protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().magnitude():.5f}"  # Pressure in bar.
                     if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["barostat"] = 1         # Berendsen barostat.
+                        protocol_dict["barostat"] = 2         # Monte Carlo barostat.
                     else:
                         protocol_dict["barostat"] = 2         # Monte Carlo barostat.
                 else:
@@ -483,52 +484,6 @@ class ConfigFactory:
 
         return total_lines
 
-    def _generate_somd_fep_mask(self):
-        """Internal helper function which generates the perturbed residue number based on the system.
-
-           Returns
-           -------
-
-           option_dict : dict
-               A dictionary of the SOMD perturbed residue number.
-        """
-
-        _system = self.system
-
-        # Extract the perturbable molecule index from the system.
-        perturbed_mol_indices = []
-        perturbed_atom_indices = []
-        index = 0
-        #first find the number of perturbable molecules in the system
-        for mol in _system.getMolecules():
-            for res in mol.getResidues():
-                index += 1
-            if mol._is_perturbable:
-                perturbed_mol_indices += [index]
-            else:
-                perturbed_mol_indices += []  
-        
-        # There should only be one perturbable molecule in the SOMD system.
-        if len(perturbed_mol_indices) > 1:
-            raise _IncompatibleError("There is more than one perturbable molecule in the system.")
-        
-        # Get the perturbable molecule 
-        for mol in _system.getPerturbableMolecules():
-            perturbed_atom_indices = [_system.getIndex(atom) + 1 for atom in mol.getAtoms()]
-            mol_no = _system.getIndex(mol) + 1
-            # check if this matches the index found earlier
-            if mol_no != perturbed_mol_indices[0] :
-                perturbed_molecule = perturbed_mol_indices[0]
-            else:
-                perturbed_molecule = mol_no
-
-        # Create an option dict for SOMD with the perturbed residue number.
-        option_dict = {
-            "perturbed residue number": f"{perturbed_molecule}",
-        }
-
-        return option_dict
-
     def generateSomdConfig(self, extra_options=None, extra_lines=None):
         """Outputs the current protocol in a format compatible with SOMD.
 
@@ -572,11 +527,11 @@ class ConfigFactory:
                 report_interval = int(200 * _math.ceil(report_interval / 200))
                 restart_interval = int(200 * _math.ceil(restart_interval / 200))
 
-            # The number of moves per cycle.
-            nmoves = report_interval
-
+            # The number of moves per cycle - want about 1 cycle per 1 ns.
+            nmoves = int(max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond))))
+)
             # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = max(1, self._steps // nmoves)
+            ncycles = int(max(1, self._steps // nmoves))
 
             # How many cycles need to pass before we write a trajectory frame.
             cycles_per_frame = max(1, restart_interval // nmoves)
@@ -598,7 +553,7 @@ class ConfigFactory:
             protocol_dict["cutoff type"] = "cutoffnonperiodic"                  # No periodic box.
         else:
             protocol_dict["cutoff type"] = "cutoffperiodic"                     # Periodic box.
-        protocol_dict["cutoff distance"] = "10 angstrom"                        # Non-bonded cut-off.
+        protocol_dict["cutoff distance"] = "8 angstrom"                        # Non-bonded cut-off.
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration) and self.protocol.getRestraint() is not None:
@@ -636,11 +591,11 @@ class ConfigFactory:
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
-            #protocol_dict["minimise"] = True                                    # minimise at each window
-            #protocol_dict["hydrogen mass repartitioning factor"] = 1.0         # apply HMR
-            protocol_dict = {**protocol_dict, **self._generate_somd_fep_mask()}   # Atom masks.
-            
-
+            #protocol_dict["minimise"] = True                                   # minimise at each window
+            # Find the ligand, which will have the name LIG if created using BSS.
+            lig_res_num = self.system.search(f"resname LIG")[0]._sire_object.number().value()
+            protocol_dict["perturbed residue number"] = lig_res_num
+        
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
         total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
