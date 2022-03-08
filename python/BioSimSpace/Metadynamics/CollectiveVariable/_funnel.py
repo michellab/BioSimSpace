@@ -527,7 +527,7 @@ class Funnel(_CollectiveVariable):
         result = 0
         delta = delta.nanometers().magnitude()
         for x, y in zip(funnel[:-1], funnel[1:]):
-            result += (x**2 + y) * delta * 0.5
+            result += (x**2 + y**2) * delta * 0.5
 
         # Work out the volume of the unbound area.
         volume = _Volume(_math.pi*result, "nanometers cubed")
