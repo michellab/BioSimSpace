@@ -31,7 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 from BioSimSpace._Utils import _try_import
 
 mm = _try_import("openmm")
-unit = _try_import("simtk.unit", "conda install simtk")
+unit = _try_import("openmm.unit", "conda install simtk")
 
 from collections import namedtuple
 from functools import reduce

@@ -516,7 +516,7 @@ class System(_SireWrapper):
                The updated (or replacement) molecule.
         """
 
-        if type(index) is int:
+        if not isinstance(index, int):
             raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
@@ -988,10 +988,10 @@ class System(_SireWrapper):
             angles = list(angles)
 
         # Validate input.
-        if isinstance(box, list) or not all(isinstance(x, _Length) for x in box):
+        if not isinstance(box, list) or not all(isinstance(x, _Length) for x in box):
             raise TypeError("'box' must be a list of 'BioSimSpace.Types.Length' objects.")
 
-        if isinstance(angles, list) or not all(isinstance(x, _Angle) for x in angles):
+        if not isinstance(angles, list) or not all(isinstance(x, _Angle) for x in angles):
             raise TypeError("'angles' must be a list of 'BioSimSpace.Types.Angle' objects.")
 
         if len(box) != 3:
