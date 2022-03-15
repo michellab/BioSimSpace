@@ -122,8 +122,14 @@ class ConfigFactory:
 
         return mask
 
-    def _generate_amber_fep_masks(self):
+    def _generate_amber_fep_masks(self, timestep):
         """Internal helper function which generates timasks and scmasks based on the system.
+
+           Parameters
+           ----------
+
+           timestep : [float]
+               The timestep in ps for the FEP perturbation. Generates a different mask based on this.
 
            Returns
            -------
@@ -134,6 +140,13 @@ class ConfigFactory:
 
         # Squash the system into an AMBER-friendly format.
         squashed_system = _squash(self.system)
+
+        # define whether HMR is used based on the timestep
+        # When HMR is used, there can be no X
+        if timestep >= 0.004:
+            HMR_on = True
+        else:
+            HMR_on = False
 
         # Extract all perturbable molecules from both the squashed and the merged systems.
         perturbable_mol_mask = []
@@ -169,13 +182,19 @@ class ConfigFactory:
                           for atom in mol.getAtoms()
                           if "du" in atom._sire_object.property("ambertype0")]
 
+        # If it is HMR
+        if HMR_on == True :
+            no_shake_mask = ""
+        else:
+            no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
+
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
             "timask1": f"\"{self._amber_mask_from_indices(mols0_indices)}\"",
             "timask2": f"\"{self._amber_mask_from_indices(mols1_indices)}\"",
             "scmask1": f"\"{self._amber_mask_from_indices(dummy0_indices)}\"",
             "scmask2": f"\"{self._amber_mask_from_indices(dummy1_indices)}\"",
-            "noshakemask": f"\"{self._amber_mask_from_indices(mols0_indices + mols1_indices)}\"",
+            "noshakemask": f"\"{no_shake_mask}\"",
         }
 
         return option_dict
@@ -234,8 +253,12 @@ class ConfigFactory:
             protocol_dict["ntmin"] = 2              # Set the minimisation method to XMIN
             protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
             protocol_dict["ncyc"] = num_steep       # Set the number of steepest descent steps.
+            # FIX need to remove and fix this, only for initial testing
+            timestep = 0.004
         else:
-            protocol_dict["dt"] = f"{self.protocol.getTimeStep().picoseconds().magnitude():.3f}"  # Time step.
+            # Define the timestep
+            timestep = self.protocol.getTimeStep().picoseconds().magnitude() # Get the time step in ps
+            protocol_dict["dt"] = f"{timestep:.3f}" # Time step.
             protocol_dict["nstlim"] = self._steps   # Number of integration steps.
 
         # Constraints.
@@ -342,7 +365,7 @@ class ConfigFactory:
             if isinstance(self.protocol, _Protocol.Production):
                 protocol_dict["ifmbar"] = 1                                         # Calculate MBAR energies.
                 protocol_dict["logdvdl"] = 1                                        # Output dVdl
-            protocol_dict = {**protocol_dict, **self._generate_amber_fep_masks()}   # Atom masks.
+            protocol_dict = {**protocol_dict, **self._generate_amber_fep_masks(timestep)}   # Atom masks.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -546,6 +569,12 @@ class ConfigFactory:
             timestep = self.protocol.getTimeStep().femtoseconds().magnitude()
             protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
 
+            # Use the Langevin Middle integrator if it is a 4 fs timestep
+            if timestep >= 4.00:
+                protocol_dict["integrator_type"] = "langevinmiddle"             # Langevin middle integrator
+            else:
+                pass
+
         # PBC.
         if self._has_water:
             protocol_dict["reaction field dielectric"] = "78.3"                 # Solvated box.
@@ -577,6 +606,12 @@ class ConfigFactory:
                 raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
 
             protocol_dict["thermostat"] = "True"                                # Turn on the thermostat.
+            
+            if protocol_dict["integrator_type"] == "langevinmiddle" :         
+                protocol_dict["thermostat"] = "False"                           # Turn off the thermostat for langevin middle integrator.
+            else:
+                pass
+
             if not isinstance(self.protocol, _Protocol.Equilibration):
                 protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature().kelvin().magnitude()
             else:
