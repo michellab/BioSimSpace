@@ -601,14 +601,22 @@ class Amber(_process.Process):
                         mol_idx += 2
                 old_system = _System(molecules)
             else:
-                old_system._updateCoordinates(new_system,
-                                              self._property_map,
-                                              self._property_map)
+                # Update the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
 
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
-                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
             return old_system
 
@@ -698,7 +706,7 @@ class Amber(_process.Process):
             # Create a copy of the existing system object.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
