@@ -76,6 +76,7 @@ finally:
                       "pypdb",
                       "rdkit",
                       "parmed",
+                      "lomap2",
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit-base" # known not available on aarch64

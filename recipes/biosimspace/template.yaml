@@ -20,6 +20,7 @@ requirements:
     - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
     - configargparse
     - fkcombu
+    - lomap2
     - mdtraj
     - mdanalysis
     - nglview

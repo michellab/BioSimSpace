@@ -85,7 +85,7 @@ from BioSimSpace import _Utils
 _networkx = _try_import("networkx")
 
 if _have_imported(_rdkit) and _have_imported(_networkx):
-    from . import _lomap
+    import lomap as _lomap
 elif _have_imported(_rdkit):
     _lomap = _networkx
 elif _have_imported(_networkx):
