@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["generateNetwork",
            "matchAtoms",
-           "drawMapping",
+           "viewMapping",
            "rmsdAlign",
            "flexAlign",
            "merge"]
@@ -1215,7 +1215,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
-def drawMapping(molecule0, molecule1, mapping=None,
+def viewMapping(molecule0, molecule1, mapping=None,
         property_map0={}, property_map1={}, style=None):
     """Visualise the mapping between molecule0 and molecule1. This draws a 3D
        depiction of molecule0 with the mapped atoms highlighted in green.
