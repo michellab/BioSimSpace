@@ -44,10 +44,12 @@ import zipfile as _zipfile
 
 import numpy as _np
 import pandas as _pd
-from Sire.Units import gasr as _gasr
-import pymbar as _pymbar
-from alchemlyb.parsing.gmx import extract_u_nk as _extract_u_nk
-from alchemlyb.estimators import MBAR as _MBAR
+import alchemlyb as _alchemlyb
+from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
+from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
+from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -409,8 +411,7 @@ class Relative():
 
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+               window.
         """
 
         if not isinstance(work_dir, str):
@@ -432,7 +433,7 @@ class Relative():
         raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
 
     def _analyse(self):
-        """Analyse free-energy data for this object.
+        """Analyse free-energy data for this object using MBAR.
 
            Returns
            -------
@@ -444,8 +445,7 @@ class Relative():
 
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+               window.
         """
 
         # Return the result of calling the staticmethod, passing in the working
@@ -469,6 +469,10 @@ class Relative():
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
                standard error.
+            
+           overlap : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each lambda
+               window.
         """
 
         if type(work_dir) is not str:
@@ -477,62 +481,68 @@ class Relative():
             raise ValueError("'work_dir' doesn't exist!")
 
         files = _glob(work_dir + "/lambda_*/amber.out")
-        energy_dict = {}
-        sample_dict = {}
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
         temperatures = []
-
-        # Extract the MBAR energies from the files.
         for file, lambda_ in zip(files, lambdas):
-            current_energy_dict = _defaultdict(list)
-            mbar_section = False
             found_temperature = False
             with open(file) as f:
                 for line in f.readlines():
-                    if "MBAR Energy analysis" in line:
-                        mbar_section = True
-                    elif mbar_section and "-----------" in line:
-                        mbar_section = False
-                    elif mbar_section:
-                        split_line = line.split()
-                        eval_lambda = float(split_line[2])
-                        try:
-                            energy = float(split_line[-1])
-                        except ValueError:
-                            energy = float("inf")
-                        current_energy_dict[eval_lambda] += [energy]
-                    elif not found_temperature:
+                    if not found_temperature:
                         match = _re.search("temp0=([\d.]+)", line)
                         if match is not None:
                             temperatures += [float(match.group(1))]
                             found_temperature = True
+                        elif found_temperature == True:
+                            pass
 
                 if not found_temperature:
                     raise ValueError("The temperature was not detected in the AMBER output file")
 
-                if set(current_energy_dict.keys()) != set(lambdas):
-                    raise ValueError("MBAR values not generated at the lambda values at which the simulations were run")
-
-                ordered_lambdas = sorted(current_energy_dict.keys())
-                energy_dict[lambda_] = _np.asarray([current_energy_dict[x] for x in ordered_lambdas])
-                sample_dict[lambda_] = len(current_energy_dict[lambda_])
-
         if temperatures[0] != temperatures[-1]:
-            raise ValueError("The temperatures at the endstates don't match")
+            raise ValueError("The temperatures at the endstates don't match!")
 
-        # Generate an input for pymbar and return the resulting free energies.
-        energy_matrix = _np.concatenate([energy_dict[x] for x in ordered_lambdas], axis=1)
-        kTs = _gasr * _np.asarray(temperatures)
-        energy_matrix /= kTs[:, None]
-        n_samples = [sample_dict[x] for x in ordered_lambdas]
-        mbar = _pymbar.MBAR(energy_matrix, n_samples)
-        fes, errors = mbar.getFreeEnergyDifferences()
-        data = [(lambda_,
-                 (fe * kT) * _Units.Energy.kcal_per_mol,
-                 (error * kT) * _Units.Energy.kcal_per_mol)
-                for lambda_, fe, error, kT in zip(ordered_lambdas, fes[0], errors[0], kTs)]
+        # Process the data files using the alchemlyb library.
+        # Subsample according to statistical inefficiency and then calculate the MBAR.
+        sample_okay = False
+        try:
+            u_nk = [_amber_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
+            sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
+            mbar = _AutoMBAR().fit(sampled_u_nk)
+            sample_okay = True
+        except:
+            print("Could not calculate statistical inefficiency.")
 
-        return (data, None)
+        if not sample_okay:
+            print("Running without calculating the statistical inefficiency and without subsampling...")
+            try:
+                u_nk = _alchemlyb.concat([_amber_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
+                mbar = _AutoMBAR().fit(u_nk)
+            except:
+                raise _AnalysisError("MBAR free-energy analysis failed!")
+
+        # Extract the data from the mbar results.
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        data = []
+        # convert the data frames to kcal/mol
+        delta_f_ = _to_kcalmol(mbar.delta_f_)
+        d_delta_f_ = _to_kcalmol(mbar.d_delta_f_)
+        for lambda_,t in zip(lambdas, temperatures):
+            x = lambdas.index(lambda_)
+            mbar_value = delta_f_.iloc[0,x]
+            mbar_error = d_delta_f_.iloc[1,x]
+            
+            # Append the data.
+            data.append((lambda_,
+                        (mbar_value) * _Units.Energy.kcal_per_mol,
+                        (mbar_error) * _Units.Energy.kcal_per_mol))    
+        
+        # Calculate overlap matrix.
+        overlap = mbar.overlap_matrix
+
+        return (data, overlap)
+
+        # kTs = _gasr * _np.asarray(temperatures)
+        # energy_matrix /= kTs[:, None]
 
     @staticmethod
     def _analyse_gromacs(work_dir=None):
@@ -551,6 +561,10 @@ class Relative():
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
                standard error.
+            
+           overlap : [ [ float, float, ... ] ]
+               The overlap matrix. This gives the overlap between each lambda
+               window.
         """
 
         if not isinstance(work_dir, str):
@@ -558,7 +572,7 @@ class Relative():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        #figure out the gromacs version
+        # Figure out the gromacs version.
         def gromacs_version():    
             p = _subprocess.run([_gmx_exe,'-version'], stdout=_subprocess.PIPE).stdout.decode('utf-8')
             with _tempfile.TemporaryDirectory() as tmpdirname:
@@ -573,11 +587,11 @@ class Relative():
                         l = float(l)
                         return(l)
 
-        #check if gromacs version is available
+        # Check if gromacs version is available.
         if gromacs_version() is False:
             raise _AnalysisError("GROMACS free-energy analysis failed! Gromacs version couldn't be identified.")
         
-        #for the older gromacs versions so they use the gmx bar analysis
+        # For the older gromacs versions use the gmx bar analysis.
         elif gromacs_version() < 2020:
             print("Analysing using gmx bar and BAR as the gromacs version is older...")
             # Create the command.
@@ -637,14 +651,15 @@ class Relative():
             return (data, None)
 
 
-        #for the newer gromacs version so it's analysed using alchemlyb / pymbar  
+        # For the newer gromacs version, analyse using MBAR.
         elif gromacs_version() >= 2020:
             print("Gromacs version is newer so analysing using alchemlyb and MBAR...")
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
-            
+
             #find the temperature at each lambda window
             temperatures = []
             for file in files:
+                found_temperature = False
                 with open (file,'r') as f:
                     for line in f.readlines():
                         t = None
@@ -654,26 +669,54 @@ class Relative():
                             t = int(((line.split(start)[1]).split(end)[0]).strip())
                             temperatures.append(t)
                             if t is not None:
+                                found_temperature = True
                                 break
 
-            #extract the energies using alchemlyb and calculate mbar
-            _u_nk = _pd.concat([_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
-            mbar = _MBAR().fit(_u_nk)
+                if not found_temperature:
+                    raise ValueError(f"The temperature was not detected in the GROMACS output file, {file}")
 
-            #extract the data from the mbar results
+            if temperatures[0] != temperatures[-1]:
+                raise ValueError("The temperatures at the endstates don't match!")
+
+            # Process the data files using the alchemlyb library.
+            # Subsample according to statistical inefficiency and then calculate the MBAR.
+            sample_okay = False
+            try:
+                u_nk = [_gmx_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
+                sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
+                mbar = _AutoMBAR().fit(sampled_u_nk)
+                sample_okay = True
+            except:
+                print("Could not calculate statistical inefficiency.")
+
+            if not sample_okay:
+                print("Running without calculating the statistical inefficiency and without subsampling...")
+                try:
+                    u_nk = _alchemlyb.concat([_amber_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
+                    mbar = _AutoMBAR().fit(u_nk)
+                except:
+                    raise _AnalysisError("MBAR free-energy analysis failed!")
+
+            # Extract the data from the mbar results.
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
             data = []
-            for lambda_ in lambdas:
+            # convert the data frames to kcal/mol
+            delta_f_ = _to_kcalmol(mbar.delta_f_)
+            d_delta_f_ = _to_kcalmol(mbar.d_delta_f_)
+            for lambda_,t in zip(lambdas, temperatures):
                 x = lambdas.index(lambda_)
-                mbar_value = mbar.delta_f_.iloc[0,x]
-                mbar_error = mbar.d_delta_f_.iloc[1,x]
+                mbar_value = delta_f_.iloc[0,x]
+                mbar_error = d_delta_f_.iloc[1,x]
                 
                 # Append the data.
                 data.append((lambda_,
                             (mbar_value) * _Units.Energy.kcal_per_mol,
                             (mbar_error) * _Units.Energy.kcal_per_mol))
             
-            return (data, None)
+            # Calculate overlap matrix.
+            overlap = mbar.overlap_matrix
+
+            return (data, overlap)
 
 
     @staticmethod
@@ -696,8 +739,7 @@ class Relative():
 
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+               window.
         """
 
         if not isinstance(work_dir, str):
