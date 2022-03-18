@@ -73,7 +73,7 @@ finally:
                       "pydot",
                       "networkx",
                       "nglview",
-                      "py3Dmol",
+                      "py3dmol",
                       "pypdb",
                       "rdkit",
                       "parmed",

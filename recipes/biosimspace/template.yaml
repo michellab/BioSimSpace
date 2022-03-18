@@ -27,7 +27,7 @@ requirements:
     - nglview
     - openff-toolkit-base
     - parmed
-    - py3Dmol
+    - py3dmol
     - pydot
     - pygtail
     - pypdb
