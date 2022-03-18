@@ -1326,7 +1326,7 @@ def drawMapping(molecule0, molecule1, mapping=None,
                         "radius" : 0.5,
                         "color"  : "green", "alpha": 0.8})
         view.addLabel(f"{atom} \u2192 {mapping[atom]}",
-                     {"position" : {"x" : p.x-0.1, "y" : p.y-0.1, "z" : p.z-0.1}})
+                     {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}})
 
     # Set background colour.
     view.setBackgroundColor("white")
