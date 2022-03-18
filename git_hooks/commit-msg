@@ -43,5 +43,5 @@ fi
 # Delete all comments from commit message.
 sed -i.bak -e "/^#/d" "$1" && rm "$1.bak"
 
-# Append "***NO_CI*** to the commit message.
-sed -i.bak -e "\$s/$/ ***NO_CI***/" "$1" && rm "$1".bak
+# Append [ci skip] to the commit message.
+sed -i.bak -e "\$s/$/ [ci skip]/" "$1" && rm "$1".bak
