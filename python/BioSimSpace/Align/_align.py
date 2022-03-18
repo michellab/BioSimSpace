@@ -1215,7 +1215,8 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
-def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
+def drawMapping(molecule0, molecule1, mapping=None,
+        property_map0={}, property_map1={}, style=None):
     """Visualise the mapping between molecule0 and molecule1. This draws a 2D
        depiction of the two molecules side-by-side, with the mapped atoms from
        each molecule highlighted.
@@ -1242,12 +1243,18 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
 
+       style : dict
+           Drawing style. See https://3dmol.csb.pitt.edu/doc/$3Dmol.GLViewer.html
+           for some examples.
+
        Returns
        -------
 
-       image : IPython.core.display.Image
-           An image of molecule0 with the mapping atoms highlighted.
+       view : py3Dmol.view
+           An view of molecule0 with the mapping atoms highlighted.
     """
+
+    # Adapted from: https://gist.github.com/cisert/d05664d4c98ac1cf86ee70b8700e56a9
 
     # Only draw within a notebook.
     if not _is_notebook:
@@ -1266,6 +1273,10 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
 
     if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
+
+    if style is not None:
+        if not isinstance(style, dict):
+            raise TypeError("'style' must be of type 'dict'")
 
     # The user has passed an atom mapping.
     if mapping is not None:
@@ -1289,27 +1300,43 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     _IO.saveMolecules(work_dir + "/molecule",
         molecule0, "pdb", property_map=property_map0)
 
-    from rdkit.Chem import AllChem as _AllChem
-    from rdkit.Chem.Draw import IPythonConsole as _IPythonConsole
-
-    # Set image properties.
-    _IPythonConsole.drawOptions.addAtomIndices = True
-    _IPythonConsole.molSize = 1200, 400
+    import py3Dmol as _py3Dmol
 
     # Load the molecules into RDKit.
     rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
         sanitize=False, removeHs=False)
 
-    # Highlight atoms from the mapping.
-    rdmol.__sssAtoms = mapping.keys()
+    # Create the view.
+    view = _py3Dmol.view()
 
-    # Convert to 2D.
-    _AllChem.Compute2DCoords(rdmol)
+    # Set default drawing style.
+    if style is None:
+        style = {"stick":{"colorscheme":"grayCarbon", "linewidth": 0.1}}
 
-    # Convert to PNG bytes.
-    png = _IPythonConsole._toPNG(rdmol)
+    # Add the molecule to the view.
+    view.addModel(_Chem.MolToMolBlock(rdmol), "mol")
 
-    return _IPythonConsole.display.Image(png)
+    # Set the style.
+    view.setStyle({"model":0}, style)
+
+    # Highlight the atoms from the mapping.
+    for atom in mapping.keys():
+        p = rdmol.GetConformer().GetAtomPosition(atom)
+        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
+                        "radius" : 0.5,
+                        "color"  : "green", "alpha": 0.8})
+        view.addLabel(f"{atom} \u2192 {mapping[atom]}",
+                     {"position" : {"x" : p.x-0.1, "y" : p.y-0.1, "z" : p.z-0.1}})
+
+    # Set background colour.
+    view.setBackgroundColor("white")
+
+    # Zoom to molecule.
+    view.zoomTo()
+
+    print(type(view))
+
+    return view
 
 def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
         mcs_smarts, prematch, scoring_function, max_scoring_matches, property_map0,

@@ -73,6 +73,7 @@ finally:
                       "pydot",
                       "networkx",
                       "nglview",
+                      "py3Dmol",
                       "pypdb",
                       "rdkit",
                       "parmed",
@@ -109,7 +110,7 @@ finally:
         all_installed_ok = True
 
         try:
-            subprocess.run(shlex.split(command), shell=False, 
+            subprocess.run(shlex.split(command), shell=False,
                            stdout=stdout, stderr=stderr, check=True)
         except Exception:
             all_installed_ok = False
