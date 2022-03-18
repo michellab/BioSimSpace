@@ -23,6 +23,7 @@ requirements:
     - lomap2
     - mdtraj
     - mdanalysis
+    - networkx
     - nglview
     - openff-toolkit-base
     - parmed
