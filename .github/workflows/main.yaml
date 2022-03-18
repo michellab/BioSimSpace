@@ -81,8 +81,10 @@ jobs:
           git config user.name "BioSimSpaceBot"
           git config user.email "$EMAIL"
           git add docs
-          git commit -a -m "Updating website."
-          "$GITHUB_WORKSPACE"/BioSimSpace/actions/push_changes.sh
+          if ! git diff-index --quiet HEAD; then
+            git commit -a -m "Updating website."
+            "$GITHUB_WORKSPACE"/BioSimSpace/actions/push_changes.sh
+          fi
         env:
           EMAIL: ${{ secrets.EMAIL }}
           WEBSITE_TOKEN: ${{ secrets.WEBSITE_TOKEN }}
