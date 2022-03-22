@@ -323,7 +323,7 @@ class Trajectory():
         if n_frames > 1:
             if self._process is not None and self._process._package_name != "OPENMM":
                 time_interval = (self._process._protocol.getRunTime() / self._process._protocol.getRestartInterval())
-                time_interval = time_interval.nanoseconds().magnitude()
+                time_interval = time_interval.nanoseconds().value()
             else:
                 time_interval = self._trajectory.timestep / 1000
 
@@ -341,7 +341,7 @@ class Trajectory():
         elif isinstance(indices, _Time):
             if n_frames > 1:
                 # Round time stamp to nearest frame index.
-                indices = [round(indices.nanoseconds().magnitude() / time_interval) - 1]
+                indices = [round(indices.nanoseconds().value() / time_interval) - 1]
             else:
                 raise _IncompatibleError("Cannot determine time stamps for a trajectory "
                                          "with only one frame!")
@@ -357,7 +357,7 @@ class Trajectory():
                                          "with only one frame!")
 
             # Round time stamps to nearest frame indices.
-            indices = [round(x.nanoseconds().magnitude() / time_interval) - 1 for x in indices]
+            indices = [round(x.nanoseconds().value() / time_interval) - 1 for x in indices]
 
         # Unsupported argument.
         else:

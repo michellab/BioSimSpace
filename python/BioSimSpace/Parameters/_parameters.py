@@ -410,9 +410,9 @@ def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property
     _validate(molecule=molecule, check_ions=False, property_map=property_map)
 
     if net_charge is not None:
-        # Get the magnitude of the charge.
+        # Get the value of the charge.
         if isinstance(net_charge, _Charge):
-            net_charge = net_charge.magnitude()
+            net_charge = net_charge.value()
 
         if isinstance(net_charge, float):
             if net_charge % 1 != 0:
@@ -473,9 +473,9 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", propert
     _validate(molecule=molecule, check_ions=False, property_map=property_map)
 
     if net_charge is not None:
-        # Get the magnitude of the charge.
+        # Get the value of the charge.
         if isinstance(net_charge, _Charge):
-            net_charge = net_charge.magnitude()
+            net_charge = net_charge.value()
 
         if isinstance(net_charge, float):
             if net_charge % 1 != 0:

@@ -284,7 +284,7 @@ class Namd(_process.Process):
                 v2 = self._system._sire_object.property(prop).vector2()
 
             # Work out the minimum box size.
-            box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
+            box_size = min(v0.value(), v1.value(), v2.value())
 
             # Convert vectors to tuples.
             v0 = tuple(v0)
@@ -423,15 +423,15 @@ class Namd(_process.Process):
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
             else:
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -446,7 +446,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -483,16 +483,16 @@ class Namd(_process.Process):
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
-                            self._protocol.getStartTemperature().kelvin().magnitude())
+                denom = abs(self._protocol.getEndTemperature().kelvin().value() -
+                            self._protocol.getStartTemperature().kelvin().value())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
                 self.addToConfig("reassignTemp          %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig("reassignIncr          1.")
                 self.addToConfig("reassignHold          %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % restart_interval)
@@ -525,12 +525,12 @@ class Namd(_process.Process):
 
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -547,7 +547,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")

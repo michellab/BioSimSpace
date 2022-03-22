@@ -1208,7 +1208,7 @@ class Molecule(_SireWrapper):
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")
@@ -1377,7 +1377,7 @@ class Molecule(_SireWrapper):
             raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
 
         # Calculate the charge.
-        charge = self.charge(property_map=property_map).magnitude()
+        charge = self.charge(property_map=property_map).value()
 
         # Calculate the difference from the nearest integer value.
         delta = round(charge) - charge

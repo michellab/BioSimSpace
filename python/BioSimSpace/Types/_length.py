@@ -73,14 +73,14 @@ class Length(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the length, e.g. "12 Angstrom".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -121,17 +121,17 @@ class Length(_Type):
 
         # Multiplication by float.
         if isinstance(other, float):
-            mag = self._magnitude * other
+            mag = self._value * other
             return Length(mag, self._unit)
 
         # Multiplication by another Length.
         elif isinstance(other, Length):
-            mag = self.angstroms().magnitude() * other.angstroms().magnitude()
+            mag = self.angstroms().value() * other.angstroms().value()
             return _Area(mag, "A2")
 
         # Multiplication by an Area.
         elif isinstance(other, _Area):
-            mag = self.angstroms().magnitude() * other.angstroms2().magnitude()
+            mag = self.angstroms().value() * other.angstroms2().value()
             return _Volume(mag, "A3")
 
         # Multiplication by a string.
@@ -164,7 +164,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in meters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter), "METER")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.meter), "METER")
 
     def centimeters(self):
         """Return the length in centimeters.
@@ -175,7 +175,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in centimeters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.centimeter), "CENTIMETER")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.centimeter), "CENTIMETER")
 
     def millimeters(self):
         """Return the length in millimeters.
@@ -186,7 +186,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in millimeters.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.millimeter), "MILLIMETER")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.millimeter), "MILLIMETER")
 
     def nanometers(self):
         """Return the length in nanometers.
@@ -197,7 +197,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in nanometers.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer), "NANOMETER")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer), "NANOMETER")
 
     def angstroms(self):
         """Return the length in angstroms.
@@ -208,7 +208,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in angstrom.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom), "ANGSTROM")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom), "ANGSTROM")
 
     def picometers(self):
         """Return the length in picometers.
@@ -219,7 +219,7 @@ class Length(_Type):
            length : :class:`Length <BioSimSpace.Types.Length>`
                The length in picometers.
         """
-        return Length((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer), "PICOMETER")
+        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer), "PICOMETER")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -228,7 +228,7 @@ class Length(_Type):
            ----------
 
            mag : float
-              The magnitude (optional).
+              The value (optional).
 
            Returns
            -------

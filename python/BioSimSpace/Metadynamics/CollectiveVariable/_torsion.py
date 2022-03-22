@@ -161,8 +161,8 @@ class Torsion(_CollectiveVariable):
         if not isinstance(hill_width, _Angle):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Angle'")
 
-        if hill_width.magnitude() < 0:
-            raise ValueError("'hill_width' must have a magnitude of > 0")
+        if hill_width.value() < 0:
+            raise ValueError("'hill_width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._hill_width = hill_width.radians()
@@ -235,9 +235,9 @@ class Torsion(_CollectiveVariable):
             # Torsion is a periodic collective variable, so the grid must be defined
             # from -pi to pi. PLUMED allows no other grid, regardless of lower or
             # upper walls.
-            if (self._grid.getMinimum().magnitude() / _pi) != _approx(-1.0):
+            if (self._grid.getMinimum().value() / _pi) != _approx(-1.0):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians.")
-            if (self._grid.getMaximum().magnitude() / _pi) != _approx(1.0):
+            if (self._grid.getMaximum().value() / _pi) != _approx(1.0):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians.")
 
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
@@ -247,6 +247,6 @@ class Torsion(_CollectiveVariable):
 
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid.getBins() is None:
-                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).magnitude()
-                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).value()
+                num_bins = _ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid.setBins(num_bins)

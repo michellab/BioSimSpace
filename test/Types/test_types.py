@@ -90,6 +90,6 @@ def test_round_trip(Type):
         for x in range(1, len(units)+1):
             my_type = my_type._convert_to(units[index-x])
 
-        # Make sure the unit and magnitude are correct.
-        assert my_type.magnitude() == pytest.approx(1.0)
+        # Make sure the unit and value are correct.
+        assert my_type.value() == pytest.approx(1.0)
         assert unit == my_type.unit()
