@@ -532,11 +532,11 @@ class Funnel(_CollectiveVariable):
         # Work out the volume of the unbound area.
         volume = _Volume(_math.pi*result, "nanometers cubed")
 
-        # Estimate the average area of the restraint.
-        area = volume / proj_max
+        # Estimate the average area of the restraint (in Angstrom squared).
+        area = (volume / proj_max).angstroms2()
 
         # Compute the correction.
-        correction = _Energy(_math.log((volume / 1600).magnitude()), "kt")
+        correction = _Energy(_math.log((area / 1660).magnitude()), "kt")
 
         return correction
 
