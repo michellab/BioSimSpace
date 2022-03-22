@@ -1002,20 +1002,20 @@ class System(_SireWrapper):
             raise ValueError("'angles' must contain three items.")
 
         # Convert sizes to Anstrom.
-        vec = [x.angstroms().magnitude() for x in box]
+        vec = [x.angstroms().value() for x in box]
 
         # Whether the box is triclinic.
         is_triclinic = False
 
         # If any angle isn't 90 degrees, then the box is triclinic.
         for x in angles:
-            if abs(x.degrees().magnitude() - 90) > 1e-6:
+            if abs(x.degrees().value() - 90) > 1e-6:
                 is_triclinic = True
                 break
 
         if is_triclinic:
             # Convert angles to Sire units.
-            ang = [x.degrees().magnitude()*_SireUnits.degree for x in angles]
+            ang = [x.degrees().value()*_SireUnits.degree for x in angles]
 
             # Create a triclinic box object.
             space = _SireVol.TriclinicBox(vec[0], vec[1], vec[2],
@@ -1061,9 +1061,9 @@ class System(_SireWrapper):
 
             # TriclinicBox box.
             elif isinstance(space, _SireVol.TriclinicBox):
-                box = [_Length(space.vector0().magnitude(), "Angstrom"),
-                       _Length(space.vector1().magnitude(), "Angstrom"),
-                       _Length(space.vector2().magnitude(), "Angstrom")]
+                box = [_Length(space.vector0().value(), "Angstrom"),
+                       _Length(space.vector1().value(), "Angstrom"),
+                       _Length(space.vector2().value(), "Angstrom")]
                 angles = [_Angle(space.alpha(), "degree"),
                           _Angle(space.beta(), "degree"),
                           _Angle(space.gamma(), "degree")]
@@ -1101,7 +1101,7 @@ class System(_SireWrapper):
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")

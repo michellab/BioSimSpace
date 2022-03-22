@@ -174,7 +174,7 @@ class SireWrapper():
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")

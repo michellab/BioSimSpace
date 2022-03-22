@@ -237,13 +237,13 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
     # Convert the x and y values to floats.
     if is_unit_x:
-        x = [x.magnitude() for x in x]
+        x = [x.value() for x in x]
         if xerr is not None:
-            xerr = [x.magnitude() for x in xerr]
+            xerr = [x.value() for x in xerr]
     if is_unit_y:
-        y = [y.magnitude() for y in y]
+        y = [y.value() for y in y]
         if yerr is not None:
-            yerr = [y.magnitude() for y in yerr]
+            yerr = [y.value() for y in yerr]
 
     # Set the figure size.
     _plt.figure(figsize=(8, 6))
@@ -417,11 +417,11 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
     # Convert the x and y values to floats.
     if is_unit_x:
-        x = [x.magnitude() for x in x]
+        x = [x.value() for x in x]
     if is_unit_y:
-        y = [y.magnitude() for y in y]
+        y = [y.value() for y in y]
     if is_unit_z:
-        z = [z.magnitude() for z in z]
+        z = [z.value() for z in z]
 
     # Convert to two-dimensional arrays. We don't assume the data is on a grid,
     # so we interpolate the z values.

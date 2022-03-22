@@ -50,18 +50,18 @@ def test_makeCompatibleWith():
     process1.wait()
 
     # Compare bond energies. (In kJ / mol)
-    nrg0 = process0.getBondEnergy().kj_per_mol().magnitude()
-    nrg1 = process1.getBondEnergy().kj_per_mol().magnitude()
+    nrg0 = process0.getBondEnergy().kj_per_mol().value()
+    nrg1 = process1.getBondEnergy().kj_per_mol().value()
     assert nrg0 == pytest.approx(nrg1, rel=1e-2)
 
     # Compare angle energies. (In kJ / mol)
-    nrg0 = process0.getAngleEnergy().kj_per_mol().magnitude()
-    nrg1 = process1.getAngleEnergy().kj_per_mol().magnitude()
+    nrg0 = process0.getAngleEnergy().kj_per_mol().value()
+    nrg1 = process1.getAngleEnergy().kj_per_mol().value()
     assert nrg0 == pytest.approx(nrg1, rel=1e-2)
 
     # Compare dihedral energies. (In kJ / mol)
-    nrg0 = process0.getDihedralEnergy().kj_per_mol().magnitude()
-    nrg1 = process1.getDihedralEnergy().kj_per_mol().magnitude()
+    nrg0 = process0.getDihedralEnergy().kj_per_mol().value()
+    nrg1 = process1.getDihedralEnergy().kj_per_mol().value()
     assert nrg0 == pytest.approx(nrg1, rel=1e-2)
 
     # Make sure we can load a system from the process for the single-molecule

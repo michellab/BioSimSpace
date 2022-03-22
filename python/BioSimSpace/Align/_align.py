@@ -779,8 +779,8 @@ def matchAtoms(molecule0,
     mol0 = molecule0._getSireObject()
     mol1 = molecule1._getSireObject()
 
-    # Convert the timeout to seconds and take the magnitude as an integer.
-    timeout = int(timeout.seconds().magnitude())
+    # Convert the timeout to seconds and take the value as an integer.
+    timeout = int(timeout.seconds().value())
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()

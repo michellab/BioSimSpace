@@ -65,14 +65,14 @@ class Area(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the area, e.g. "30 nm^2".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -106,7 +106,7 @@ class Area(_Type):
         super().__init__(*args)
 
         # Don't support negative areas.
-        if self._magnitude < 0:
+        if self._value < 0:
             raise ValueError("The area cannot be negative!")
 
     def __mul__(self, other):
@@ -118,12 +118,12 @@ class Area(_Type):
 
         # Multiplication by float.
         if isinstance(other, float):
-            mag = self._magnitude * other
+            mag = self._value * other
             return Area(mag, self._unit)
 
         # Multiplication by a Length.
         elif isinstance(other, _Length):
-            mag = self.angstroms2().magnitude() * other.angstroms().magnitude()
+            mag = self.angstroms2().value() * other.angstroms().value()
             return _Volume(mag, "A3")
 
         # Multiplication by a string.
@@ -153,16 +153,16 @@ class Area(_Type):
 
         # Float division.
         if isinstance(other, float):
-            mag = self._magnitude / other
+            mag = self._value / other
             return Area(mag, self._unit)
 
         # Division by another Area.
         elif isinstance(other, Area):
-            return self.angstroms2().magnitude() / other.angstroms2().magnitude()
+            return self.angstroms2().value() / other.angstroms2().value()
 
         # Division by a Length.
         elif isinstance(other, _Length):
-            mag = self.angstroms2().magnitude() / other.angstroms().magnitude()
+            mag = self.angstroms2().value() / other.angstroms().value()
             return _Length(mag, "A")
 
         # Division by a string.
@@ -191,7 +191,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square meters.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
 
     def nanometers2(self):
         """Return the area in square nanometers.
@@ -202,7 +202,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square nanometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
 
     def angstroms2(self):
         """Return the area in square Angstrom.
@@ -213,7 +213,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square Angstrom.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
 
     def picometers2(self):
         """Return the area in square picometers.
@@ -224,7 +224,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square picometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -233,7 +233,7 @@ class Area(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

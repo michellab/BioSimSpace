@@ -781,7 +781,7 @@ class Process():
 
             # BioSimSpace.Types.Time
             if isinstance(max_time, _Type):
-                max_time = int(max_time.milliseconds().magnitude())
+                max_time = int(max_time.milliseconds().value())
 
             # Float.
             elif isinstance(max_time, float):

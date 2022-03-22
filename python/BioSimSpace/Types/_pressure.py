@@ -57,14 +57,14 @@ class Pressure(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the pressure, e.g. "1.38 bar".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -105,7 +105,7 @@ class Pressure(_Type):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure in atomospheres.
         """
-        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.atm), "ATMOSPHERE")
+        return Pressure((self._value * self._supported_units[self._unit]).to(_SireUnits.atm), "ATMOSPHERE")
 
     def bar(self):
         """Return the pressure in bar.
@@ -116,7 +116,7 @@ class Pressure(_Type):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure in bar.
         """
-        return Pressure((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.bar), "BAR")
+        return Pressure((self._value * self._supported_units[self._unit]).to(_SireUnits.bar), "BAR")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -125,7 +125,7 @@ class Pressure(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

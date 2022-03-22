@@ -179,10 +179,10 @@ class CwlAction(_argparse.Action):
                 default = value.getDefault()
                 if default is not None:
                     if type(value) in _unit_types:
-                        magnitude = default.magnitude()
+                        value = default.value()
                         unit = default.unit()
                         unit = unit.lower()
-                        file.write(f"    default: {magnitude} {unit}\n")
+                        file.write(f"    default: {value} {unit}\n")
                     else:
                         file.write(f"    default: {default}\n")
 
@@ -640,18 +640,18 @@ class Node():
             # Get the default value.
             default = input.getDefault()
 
-            # Get the magnitude of types with units.
+            # Get the value of types with units.
             if isinstance(default, _Type):
-                default = default.magnitude()
+                default = default.value()
 
             if allowed is not None:
                 # Set the default.
                 if default is None:
                     default = allowed[0]
 
-                    # Get the magnitude of types with units.
+                    # Get the value of types with units.
                     if isinstance(default, _Type):
-                        default = default.magnitude()
+                        default = default.value()
 
                 # Create a dropdown for the list of allowed values.
                 widget = _widgets.Dropdown(
@@ -667,11 +667,11 @@ class Node():
                 _min = input.getMin()
                 _max = input.getMax()
 
-                # Get the magnitude of types with units.
+                # Get the value of types with units.
                 if isinstance(_min, _Type):
-                    _min = _min.magnitude()
+                    _min = _min.value()
                 if isinstance(_max, _Type):
-                    _max = _max.magnitude()
+                    _max = _max.value()
 
                 # Whether the float is unbounded.
                 is_unbounded = True

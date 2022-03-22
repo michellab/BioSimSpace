@@ -374,10 +374,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            temperature = self._protocol.getStartTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -395,7 +395,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Pressure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -438,10 +438,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -459,7 +459,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -515,10 +515,10 @@ class Somd(_process.Process):
                 buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -537,7 +537,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:

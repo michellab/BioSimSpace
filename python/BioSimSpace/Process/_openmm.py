@@ -330,7 +330,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            temperature = self._protocol.getStartTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -342,8 +342,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -382,7 +382,7 @@ class OpenMM(_process.Process):
                 self.addToConfig("    positions.append(positions[i])")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
@@ -448,8 +448,8 @@ class OpenMM(_process.Process):
                     temp_cycles = _math.ceil(steps / 100)
 
                     # Work out the temperature change per cycle.
-                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
-                                  self._protocol.getStartTemperature().kelvin().magnitude()) / temp_cycles
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().value() -
+                                  self._protocol.getStartTemperature().kelvin().value()) / temp_cycles
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {temp_cycles}):")
@@ -460,8 +460,8 @@ class OpenMM(_process.Process):
                     self.addToConfig( "    simulation.step(100)")
                 else:
                     # Work out the temperature change per step.
-                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
-                                  self._protocol.getStartTemperature().kelvin().magnitude()) / steps
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().value() -
+                                  self._protocol.getStartTemperature().kelvin().value()) / steps
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {steps}):")
@@ -496,7 +496,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -508,8 +508,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -519,7 +519,7 @@ class OpenMM(_process.Process):
                     self.addToConfig("system.addForce(barostat)")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
@@ -645,7 +645,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -657,8 +657,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -690,7 +690,7 @@ class OpenMM(_process.Process):
             self.addToConfig(f"p2 = [{p2_string}]")
             self.addToConfig(f"lig = [x for x in range({idx_start}, {idx_end})]")
 
-            sigma_proj = colvar.getHillWidth()[0].nanometers().magnitude()
+            sigma_proj = colvar.getHillWidth()[0].nanometers().value()
             self.addToConfig( "\n# Create the bias variable for the funnel projection.")
             self.addToConfig( "projection = CustomCentroidBondForce(3, 'distance(g1,g2)*cos(angle(g1,g2,g3))')")
             self.addToConfig( "projection.addGroup(lig)")
@@ -704,11 +704,11 @@ class OpenMM(_process.Process):
                 lower_wall = 0.5
                 upper_wall = 4.5
             else:
-                lower_wall = colvar.getLowerBound().getValue().nanometers().magnitude()
-                upper_wall = colvar.getUpperBound().getValue().nanometers().magnitude()
+                lower_wall = colvar.getLowerBound().getValue().nanometers().value()
+                upper_wall = colvar.getUpperBound().getValue().nanometers().value()
             self.addToConfig(f"proj = BiasVariable(projection, {lower_wall-0.2}, {upper_wall+0.2}, {sigma_proj}, False, gridWidth=200)")
 
-            sigma_ext = colvar.getHillWidth()[1].nanometers().magnitude()
+            sigma_ext = colvar.getHillWidth()[1].nanometers().value()
             self.addToConfig("\n# Create the bias variable for the funnel extent.")
             self.addToConfig("extent = CustomCentroidBondForce(3, 'distance(g1,g2)*sin(angle(g1,g2,g3))')")
             self.addToConfig("extent.addGroup(lig)")
@@ -716,8 +716,8 @@ class OpenMM(_process.Process):
             self.addToConfig("extent.addGroup(p2)")
             self.addToConfig("extent.addBond([0,1,2])")
             self.addToConfig("extent.setUsesPeriodicBoundaryConditions(True)")
-            extent_max = colvar.getWidth().nanometers().magnitude()  \
-                       + colvar.getBuffer().nanometers().magnitude() \
+            extent_max = colvar.getWidth().nanometers().value()  \
+                       + colvar.getBuffer().nanometers().value() \
                        + 0.2
             self.addToConfig(f"sigma_ext = {sigma_ext}")
             self.addToConfig(f"ext = BiasVariable(extent, 0.0, {extent_max}, {sigma_ext}, False, gridWidth=200)")
@@ -742,10 +742,10 @@ class OpenMM(_process.Process):
             self.addToConfig("system.addForce(upper_wall_rest)")
 
             self.addToConfig("\n# Sides of the funnel.")
-            self.addToConfig(f"wall_width = {colvar.getWidth().nanometers().magnitude()}*nanometer")
-            self.addToConfig(f"wall_buffer = {colvar.getBuffer().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"wall_width = {colvar.getWidth().nanometers().value()}*nanometer")
+            self.addToConfig(f"wall_buffer = {colvar.getBuffer().nanometers().value()}*nanometer")
             self.addToConfig(f"beta_cent = {colvar.getSteepness()}")
-            self.addToConfig(f"s_cent = {colvar.getInflection().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"s_cent = {colvar.getInflection().nanometers().value()}*nanometer")
 
             self.addToConfig("dist_restraint = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*sin(angle(g1,g2,g3)) - (a/(1+exp(b*(distance(g1,g2)*cos(angle(g1,g2,g3))-c)))+d), 0)^2')")
             self.addToConfig("dist_restraint.addGroup(lig)")
@@ -820,12 +820,12 @@ class OpenMM(_process.Process):
             else:
                 bias = self._protocol.getBiasFactor()
             self.addToConfig(f"bias = {bias}")
-            height = self._protocol.getHillHeight().kj_per_mol().magnitude()
+            height = self._protocol.getHillHeight().kj_per_mol().value()
 
             self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, bias, {height}*kilojoules_per_mole, {hill_freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")

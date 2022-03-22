@@ -342,8 +342,8 @@ class Metadynamics(_Protocol):
             raise TypeError("'hill_height' must be of type 'BioSimSpace.Types.Energy'")
 
         # Check that heights is greater than zero.
-        if hill_height.magnitude() <= 0:
-            raise ValueError("Cannot have 'hill_height' with magnitude <= 0")
+        if hill_height.value() <= 0:
+            raise ValueError("Cannot have 'hill_height' with value <= 0")
 
         self._hill_height = hill_height.kj_per_mol()
 
