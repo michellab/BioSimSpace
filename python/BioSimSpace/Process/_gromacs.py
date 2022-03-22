@@ -2467,6 +2467,7 @@ class Gromacs(_process.Process):
                     proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
                     proc = _subprocess.Popen(_shlex.split(command), shell=False,
                         stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                    proc_echo.stdout.close()
 
                 # Read the frame file.
                 new_system = _IO.readMolecules(["frame.gro", self._top_file],
