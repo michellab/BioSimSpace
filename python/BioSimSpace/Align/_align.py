@@ -965,6 +965,8 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
         mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
     except Exception as e:
         msg = "Failed to align molecules based on mapping: %r" % mapping
+        if "Could not calculate the single value decomposition" in str(e):
+            msg += ". Try minimising your molecular coordinates prior to aligment."
         if _isVerbose():
             raise _AlignmentError(msg) from e
         else:
@@ -1401,6 +1403,9 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
     # Initialise a list of to hold the score for each mapping.
     scores = []
 
+    # Whether there was a GSL alignment error.
+    is_gsl_error = False
+
     # Loop over all matches from mol0.
     for x in range(len(matches0)):
         match0 = matches0[x]
@@ -1441,11 +1446,15 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
                         try:
                             molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
                         except Exception as e:
-                            msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
-                            if _isVerbose():
-                                raise _AlignmentError(msg) from e
+                            if "Could not calculate the single value decomposition" in str(e):
+                                is_gsl_error = True
+                                gsl_exception = e
                             else:
-                                raise _AlignmentError(msg) from None
+                                msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                                if _isVerbose():
+                                    raise _AlignmentError(msg) from e
+                                else:
+                                    raise _AlignmentError(msg) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
                         molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
@@ -1473,6 +1482,16 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
 
     # No mappings were found.
     if len(mappings) == 0:
+        # We failed to align mappings during scoring due to convergence issues
+        # during the GSL single value decomposition routine.
+        if is_gsl_error:
+            msg = "Failed to align molecules when scoring. " \
+                  "Try minimising your molecular coordinates prior calling matchAtoms."
+            if _isVerbose():
+                raise _AlignmentError(msg) from gsl_exception
+            else:
+                raise _AlignmentError(msg) from None
+
         if len(prematch) == 0:
             return ([{}], [])
         else:
