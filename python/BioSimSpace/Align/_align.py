@@ -1217,25 +1217,21 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
-def viewMapping(molecule0, molecule1, mapping=None,
-        property_map0={}, property_map1={}, style=None):
+def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
+        property_map1={}, style=None, orientation="horizontal", pixels=900):
     """Visualise the mapping between molecule0 and molecule1. This draws a 3D
-       depiction of molecule0 with the mapped atoms highlighted in green.
+       depiction of both molecules with the mapped atoms highlighted in green.
        Labels specify the indices of the atoms, along with the indices of
-       the atoms in molecule1 to which they map. Creating a second view
-       by passing the molecules in reverse order along with a reversed
-       mapping allows for cross-referencing of mapped atoms between
-       the two molecules.
+       the atoms to which they map in the other molecule.
 
        Parameters
        ----------
 
        molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule of interest. This is the molecule that will be
-           drawn.
+           The first molecule.
 
        molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule against which the mapping is made.
+           The second molecule.
 
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
@@ -1253,11 +1249,20 @@ def viewMapping(molecule0, molecule1, mapping=None,
            Drawing style. See https://3dmol.csb.pitt.edu/doc/$3Dmol.GLViewer.html
            for some examples.
 
+       orientation : str
+           Whether to display the two molecules in a "horizontal" or "vertical"
+           arrangement.
+
+       pixels : int
+           The size of the largest view dimension in pixel, i.e. either the
+           "horizontal" or "vertical" size.
+
        Returns
        -------
 
        view : py3Dmol.view
-           An view of molecule0 with the mapping atoms highlighted.
+           A view of the two molecules with the mapped atoms highlighted and
+           labelled.
     """
 
     # Adapted from: https://gist.github.com/cisert/d05664d4c98ac1cf86ee70b8700e56a9
@@ -1284,6 +1289,23 @@ def viewMapping(molecule0, molecule1, mapping=None,
         if not isinstance(style, dict):
             raise TypeError("'style' must be of type 'dict'")
 
+    if not isinstance(orientation, str):
+        raise TypeError("'orientation' must be of type 'str'")
+    else:
+        # Convert to lower case and strip whitespace.
+        orientation = orientation.lower().replace(" ", "")
+
+        if orientation not in ["horizontal", "vertical"]:
+            raise ValueError("'orientation' must be equal to 'horizontal' "
+                             "or 'vertical'.")
+
+    if isinstance(pixels, float):
+        pixels = int(pixels)
+    if not type(pixels) is int:
+        raise TypeError("'pixels' must be of type 'int'")
+    if pixels <= 0:
+        raise ValueError("pixels' must be > 0!")
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if not isinstance(mapping, dict):
@@ -1302,45 +1324,75 @@ def viewMapping(molecule0, molecule1, mapping=None,
     tmp_dir = _tempfile.TemporaryDirectory()
     work_dir = tmp_dir.name
 
-    # Write the first molecule to PDB format.
-    _IO.saveMolecules(work_dir + "/molecule",
+    # Write the molecules to PDB format.
+    _IO.saveMolecules(work_dir + "/molecule0",
         molecule0, "pdb", property_map=property_map0)
+    _IO.saveMolecules(work_dir + "/molecule1",
+        molecule1, "pdb", property_map=property_map0)
 
     import py3Dmol as _py3Dmol
 
     # Load the molecules into RDKit.
-    rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
+    rdmol0 = _Chem.MolFromPDBFile(work_dir + "/molecule0.pdb",
+        sanitize=False, removeHs=False)
+    rdmol1 = _Chem.MolFromPDBFile(work_dir + "/molecule1.pdb",
         sanitize=False, removeHs=False)
 
+    # Set grid view properties.
+    viewer0 = (0, 0)
+    if orientation == "horizontal":
+        viewergrid = (1, 2)
+        viewer1 = (0, 1)
+        width = pixels
+        height = pixels / 2
+    else:
+        viewergrid = (2, 1)
+        viewer1 = (1, 0)
+        width = pixels / 2
+        height = pixels
+
     # Create the view.
-    view = _py3Dmol.view()
+    view = _py3Dmol.view(linked=False, width=width,
+            height=height, viewergrid=viewergrid)
 
     # Set default drawing style.
     if style is None:
         style = {"stick":{"colorscheme":"grayCarbon", "linewidth": 0.1}}
 
-    # Add the molecule to the view.
-    view.addModel(_Chem.MolToMolBlock(rdmol), "mol")
+    # Add the molecules to the views.
+    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
+    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol1", viewer=viewer1)
 
     # Set the style.
-    view.setStyle({"model":0}, style)
+    view.setStyle({"model": 0}, style, viewer=viewer0)
+    view.setStyle({"model": 0}, style, viewer=viewer1)
 
     # Highlight the atoms from the mapping.
-    for atom in mapping.keys():
-        p = rdmol.GetConformer().GetAtomPosition(atom)
+    for atom0, atom1 in mapping.items():
+        p = rdmol0.GetConformer().GetAtomPosition(atom0)
         view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
                         "radius" : 0.5,
-                        "color"  : "green", "alpha": 0.8})
-        view.addLabel(f"{atom} \u2192 {mapping[atom]}",
-                     {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}})
+                        "color"  : "green", "alpha": 0.8},
+                       viewer=viewer0)
+        view.addLabel(f"{atom0} \u2192 {atom1}",
+                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
+                      viewer=viewer0)
+        p = rdmol1.GetConformer().GetAtomPosition(atom1)
+        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
+                        "radius" : 0.5,
+                        "color"  : "green", "alpha": 0.8},
+                       viewer=viewer1)
+        view.addLabel(f"{atom1} \u2192 {atom0}",
+                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
+                      viewer=viewer1)
 
     # Set background colour.
-    view.setBackgroundColor("white")
+    view.setBackgroundColor("white", viewer=viewer0)
+    view.setBackgroundColor("white", viewer=viewer1)
 
     # Zoom to molecule.
-    view.zoomTo()
-
-    print(type(view))
+    view.zoomTo(viewer=viewer0)
+    view.zoomTo(viewer=viewer1)
 
     return view
 
