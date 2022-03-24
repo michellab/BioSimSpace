@@ -1087,7 +1087,7 @@ class OpenMM(_process.Process):
                 # Make a copy of the existing molecular system.
                 old_system = self._system.copy()
 
-                # Udpate the coordinates and velocities and return a mapping between
+                # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                         old_system._sire_object,
@@ -1223,7 +1223,7 @@ class OpenMM(_process.Process):
                                                self._top_file,
                                                index)
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,

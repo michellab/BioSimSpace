@@ -967,7 +967,7 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     except Exception as e:
         msg = "Failed to align molecules based on mapping: %r" % mapping
         if "Could not calculate the single value decomposition" in str(e):
-            msg += ". Try minimising your molecular coordinates prior to aligment."
+            msg += ". Try minimising your molecular coordinates prior to alignment."
         if _isVerbose():
             raise _AlignmentError(msg) from e
         else:

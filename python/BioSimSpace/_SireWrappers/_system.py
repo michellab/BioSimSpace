@@ -612,7 +612,7 @@ class System(_SireWrapper):
                     system = _SireIO.updateAndPreserveOrder(
                             system, mol._sire_object, idx)
 
-        # Udpate the Sire object.
+        # Update the Sire object.
         self._sire_object = system
 
         # Reset the index mappings.

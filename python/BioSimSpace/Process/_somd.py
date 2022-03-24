@@ -672,7 +672,7 @@ class Somd(_process.Process):
             # coordinates back into the original system.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
@@ -781,7 +781,7 @@ class Somd(_process.Process):
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule numbers in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
@@ -1070,7 +1070,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     # that the names must be unique. As such we need to count the number of
     # atoms with a particular name, then append an index to their name.
 
-    # Loop over all atoms in the molecule and tally the occurence of each
+    # Loop over all atoms in the molecule and tally the occurrence of each
     # name.
     atom_names = {}
     for atom in mol.atoms():

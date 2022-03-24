@@ -595,7 +595,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # Write the default file to get the full path.
                 file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
 
-                # Now overwite the file the PDB file with the updated records.
+                # Now overwrite the file the PDB file with the updated records.
                 with open(file[0], "w") as pdb_file:
                     pdb_file.write(pdb_records)
 
