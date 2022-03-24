@@ -884,7 +884,7 @@ class Node():
                     new_value = []
                     # For convenience, convert single file names to a list with
                     # one entry.
-                    if isinstance(type(value), str):
+                    if isinstance(value, str):
                         value = [value]
                         is_file = True
                     # Loop over each file.
