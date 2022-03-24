@@ -1,6 +1,19 @@
 Changelog
 =========
 
+`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.1.0>`_ - Mar 24 2022
+------------------------------------------------------------------------------------------------
+
+* Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.
+* Fix import issues caused by change in module layout for conda-forge OpenMM package.
+* Don't check for structural ions when parameterising with GAFF/GAFF2.
+* Fix errors in funnel correction calculation.
+* Switch to using conda-forge lomap2 package, removing need to vendor lomap code.
+* Use py3Dmol to visualise maximum common substructure mappings.
+* Rename ``.magnitude()`` method on ``BioSimSpace.Type`` objects to ``.value()`` to avoid confusion.
+* Handle trjconv frame extraction failures within ``BioSimSpace.Process.Gromacs.getSystem()``.
+* Catch and handle possible GSL error during singular valued decomposition routine used for molecular alignment.
+
 `2022.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
 ------------------------------------------------------------------------------------------------
 
@@ -68,8 +81,8 @@ Changelog
 * Fixed conda NetCDF issue on macOS. Yay for managing `python environments <https://xkcd.com/1987>`_\ !
 * Install conda `ambertools <https://anaconda.org/AmberMD/ambertools>`_ during `setup <python/setup.py>`_.
 * Search for bundled version of ``sander`` when running `AMBER <http://ambermd.org>`_ simulation processes.
-* Pass executable found by `BioSimSpace.MD <python/BioSimSpace/MD>`_ to `BioSimSpace.Process <python/BioSimSpace/Process>`_ constructor.
-* Fixed error in RMSD calculation within `BioSimSpace.Trajectory <python/BioSimSpace/Trajectory>`_ class.
+* Pass executable found by ``BioSimSpace.MD`` to ``BioSimSpace.Process`` constructor.
+* Fixed error in RMSD calculation within ``BioSimSpace.Trajectory`` class.
 * Improved example scripts and notebooks.
 
 2018.1.0 - May 01 2018
