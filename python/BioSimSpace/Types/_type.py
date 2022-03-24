@@ -36,14 +36,14 @@ class Type():
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the type.
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -56,18 +56,18 @@ class Type():
         if type(self) is Type:
             raise Exception("<Type> must be subclassed.")
 
-        # The user has passed a magnitude and a unit.
+        # The user has passed a value and a unit.
         if len(args) > 1:
-            magnitude = args[0]
+            value = args[0]
             unit = args[1]
 
-            # Check that the magnitude is valid.
-            if type(magnitude) is int:
-                self._magnitude = float(magnitude)
-            elif isinstance(magnitude, float):
-                self._magnitude = magnitude
+            # Check that the value is valid.
+            if type(value) is int:
+                self._value = float(value)
+            elif isinstance(value, float):
+                self._value = value
             else:
-                raise TypeError("'magnitude' must be of type 'int' or 'float'")
+                raise TypeError("'value' must be of type 'int' or 'float'")
 
             # Check that the unit is supported.
             self._unit = self._validate_unit(unit)
@@ -80,23 +80,23 @@ class Type():
             # Convert the string to an object of this type.
             obj = self._from_string(args[0])
 
-            # Store the magnitude and unit.
-            self._magnitude = obj._magnitude
+            # Store the value and unit.
+            self._value = obj._value
             self._unit = obj._unit
 
         # No arguments.
         else:
-            raise TypeError("__init__() missing positional argument(s): 'magnitude' and 'unit', or 'string'")
+            raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', or 'string'")
 
         # Set the documentation string.
         self.__doc__ = self._doc_strings[self._unit]
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
-            return "%.4e %s" % (self._magnitude, self._print_format[self._unit])
+        if abs(self._value) > 1e4 or abs(self._value) < 1e-4:
+            return "%.4e %s" % (self._value, self._print_format[self._unit])
         else:
-            return "%5.4f %s" % (self._magnitude, self._print_format[self._unit])
+            return "%5.4f %s" % (self._value, self._print_format[self._unit])
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
@@ -104,19 +104,19 @@ class Type():
 
     def __pos__(self):
         """Unary + operator."""
-        return type(self)(self.magnitude(), self.unit())
+        return type(self)(self.value(), self.unit())
 
     def __neg__(self):
         """Unary - operator."""
-        return type(self)(-self.magnitude(), self.unit())
+        return type(self)(-self.value(), self.unit())
 
     def __add__(self, other):
         """Addition operator."""
 
         # Addition of another object of the same type.
         if type(other) is type(self):
-            # Add the magnitudes in a common unit.
-            mag = self._default_unit().magnitude() + other._default_unit().magnitude()
+            # Add the values in a common unit.
+            mag = self._default_unit().value() + other._default_unit().value()
 
             # Return a new object of the same type with the original unit.
             return self._default_unit(mag)._convert_to(self._unit)
@@ -135,8 +135,8 @@ class Type():
 
         # Subtraction of another object of the same type.
         if type(other) is type(self):
-            # Subtract the magnitudes in a common unit.
-            mag = self._default_unit().magnitude() - other._default_unit().magnitude()
+            # Subtract the values in a common unit.
+            mag = self._default_unit().value() - other._default_unit().value()
 
             # Return a new object of the same type with the original unit.
             return self._default_unit(mag)._convert_to(self._unit)
@@ -160,7 +160,7 @@ class Type():
         # Only support multiplication by float.
         if isinstance(other, float):
             # Convert to default unit and multiply.
-            mag = self._default_unit().magnitude() * other
+            mag = self._default_unit().value() * other
 
             # Return a new object of the same type with the original unit.
             return self._default_unit(mag)._convert_to(self._unit)
@@ -185,14 +185,14 @@ class Type():
         # Float division.
         if isinstance(other, float):
             # Convert to default unit and divide.
-            mag = self._default_unit().magnitude() / other
+            mag = self._default_unit().value() / other
 
             # Return a new object of the same type with the original unit.
             return self._default_unit(mag)._convert_to(self._unit)
 
         # Division by another object of the same type.
         elif type(other) is type(self):
-            return self._default_unit().magnitude() / other._default_unit().magnitude()
+            return self._default_unit().value() / other._default_unit().value()
 
         # Division by a string.
         elif isinstance(other, str):
@@ -208,11 +208,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() < other._default_unit().magnitude()
+            return self._default_unit().value() < other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() < self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() < self._from_string(other)._default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' < '%s'"
@@ -223,11 +223,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() <= other._default_unit().magnitude()
+            return self._default_unit().value() <= other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() <= self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() <= self._from_string(other)._default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' <= '%s'"
@@ -238,11 +238,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() == other._default_unit().magnitude()
+            return self._default_unit().value() == other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() == self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() == self._from_string(other)._default_unit().value()
 
         else:
             return False
@@ -252,11 +252,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() != other._default_unit().magnitude()
+            return self._default_unit().value() != other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() != self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() != self._from_string(other)._default_unit().value()
 
         else:
             return True
@@ -266,11 +266,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() >= other._default_unit().magnitude()
+            return self._default_unit().value() >= other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() >= self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() >= self._from_string(other)._default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' >= '%s'"
@@ -281,26 +281,26 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().magnitude() > other._default_unit().magnitude()
+            return self._default_unit().value() > other._default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().magnitude() > self._from_string(other)._default_unit().magnitude()
+            return self._default_unit().value() > self._from_string(other)._default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' > '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
-    def magnitude(self):
-        """Return the magnitude.
+    def value(self):
+        """Return the value.
 
            Returns
            -------
 
-           magnitude : float
-               The magnitude of the type.
+           value : float
+               The value of the type.
         """
-        return self._magnitude
+        return self._value
 
     def unit(self):
         """Return the unit.

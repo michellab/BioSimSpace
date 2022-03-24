@@ -34,10 +34,10 @@ Functions
 
     generateNetwork
     matchAtoms
-    drawMapping
     rmsdAlign
     flexAlign
     merge
+    viewMapping
 """
 
 from ._align import *

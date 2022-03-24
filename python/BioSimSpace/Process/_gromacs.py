@@ -301,7 +301,7 @@ class Gromacs(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)                # Random number seed.
@@ -351,7 +351,7 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().value())
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
@@ -364,15 +364,15 @@ class Gromacs(_process.Process):
                 # Linearly change temperature between start and end times.
                 config.append("annealing-time = 0 %d" % end_time)
                 config.append("annealing-temp = %.2f %.2f"
-                    % (self._protocol.getStartTemperature().kelvin().magnitude(),
-                       self._protocol.getEndTemperature().kelvin().magnitude()))
+                    % (self._protocol.getStartTemperature().kelvin().value(),
+                       self._protocol.getEndTemperature().kelvin().value()))
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Add any position restraints.
@@ -401,7 +401,7 @@ class Gromacs(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)                # Random number seed.
@@ -454,14 +454,14 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
         elif isinstance(self._protocol, _Protocol.FreeEnergy):
@@ -486,7 +486,7 @@ class Gromacs(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)                # Random number seed.
@@ -537,14 +537,14 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Extract the lambda value and array.
@@ -588,7 +588,7 @@ class Gromacs(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)                # Random number seed.
@@ -639,14 +639,14 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
@@ -693,7 +693,7 @@ class Gromacs(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
             config.append("ld-seed = %d" % seed)                # Random number seed.
@@ -744,14 +744,14 @@ class Gromacs(_process.Process):
             config.append("tc-grps = system")               # A single temperature group for the entire system.
             config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
                                                             # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().magnitude())
+            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 config.append("pcoupl = berendsen")         # Berendsen barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
@@ -2437,6 +2437,12 @@ class Gromacs(_process.Process):
         try:
             with _Utils.cd(self._work_dir):
 
+                # Do we need to get coordinates for the lambda=1 state.
+                if "is_lambda1" in self._property_map:
+                    is_lambda1 = True
+                else:
+                    is_lambda1 = False
+
                 # Locate the trajectory file.
                 traj_file = self._find_trajectory_file()
 
@@ -2447,13 +2453,21 @@ class Gromacs(_process.Process):
 
                 # Use trjconv to get the frame closest to the current simulation time.
                 command = "%s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
-                    % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().magnitude())
+                    % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().value())
 
                 # Run the command as a pipeline.
                 proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
                 proc = _subprocess.Popen(_shlex.split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                 proc_echo.stdout.close()
+
+                # For some reason, this doesn't always work the first time it's run
+                # as a subprocess, so try again if frame.gro isn't found.
+                if not _os.path.isfile("frame.gro"):
+                    proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
+                    proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                        stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                    proc_echo.stdout.close()
 
                 # Read the frame file.
                 new_system = _IO.readMolecules(["frame.gro", self._top_file],
@@ -2462,18 +2476,30 @@ class Gromacs(_process.Process):
                 # Delete the frame file.
                 _os.remove("frame.gro")
 
-                # Copy the old system and update the coordinates.
+                # Create a copy of the existing system object.
                 old_system = self._system.copy()
-                old_system._updateCoordinatesAndVelocities(new_system,
-                                                           self._property_map,
-                                                           self._property_map)
+
+                # Update the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
+
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
                 # Update the box information in the original system.
-                try:
+                if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
-                except:
-                    pass
 
                 return old_system
 

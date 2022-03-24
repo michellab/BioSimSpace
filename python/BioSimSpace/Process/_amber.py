@@ -373,7 +373,7 @@ class Amber(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
@@ -404,7 +404,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -448,18 +448,18 @@ class Amber(_process.Process):
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
-                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature().kelvin().magnitude())
+                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature().kelvin().value())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature().kelvin().value())
                 self.addToConfig("  nmropt=1,")
                 self.addToConfig(" /")
                 self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                    % (steps, self._protocol.getStartTemperature().kelvin().magnitude(),
-                       self._protocol.getEndTemperature().kelvin().magnitude()))
+                    % (steps, self._protocol.getStartTemperature().kelvin().value(),
+                       self._protocol.getEndTemperature().kelvin().value()))
                 self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
             else:
-                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
@@ -485,7 +485,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -517,9 +517,9 @@ class Amber(_process.Process):
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             if not self._protocol.isRestart():
                 self.addToConfig("  tempi=%.2f,"                # Initial temperature.
-                    % self._protocol.getTemperature().kelvin().magnitude())
+                    % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -527,7 +527,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -556,7 +556,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -581,9 +581,9 @@ class Amber(_process.Process):
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -591,7 +591,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -645,7 +645,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -670,9 +670,9 @@ class Amber(_process.Process):
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -680,7 +680,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -826,14 +826,34 @@ class Amber(_process.Process):
 
         # Check that the file exists.
         if _os.path.isfile(restart):
-            # Read the molecular system.
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Create a new molecular system from the restart file.
             new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinatesAndVelocities(new_system,
-                                                       self._property_map,
-                                                       self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -914,15 +934,36 @@ class Amber(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Get the latest trajectory frame.
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -1902,7 +1943,7 @@ class Amber(_process.Process):
 
             # BioSimSpace.Types.Time
             if isinstance(max_time, _Type):
-                max_time = max_time.minutes().magnitude()
+                max_time = max_time.minutes().value()
 
             # Float.
             elif isinstance(max_time, float):
@@ -1921,7 +1962,7 @@ class Amber(_process.Process):
 
             # The maximum run time has been exceeded, kill the job.
             if max_time is not None:
-                if self.runTime().magnitude() > max_time:
+                if self.runTime().value() > max_time:
                     self.kill()
                     return
 

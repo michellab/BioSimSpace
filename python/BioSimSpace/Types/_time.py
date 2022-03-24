@@ -80,14 +80,14 @@ class Time(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the time, e.g. "0.2 fs".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -120,21 +120,21 @@ class Time(_Type):
         super().__init__(*args)
 
         # Don't support negative times.
-        if self._magnitude < 0:
+        if self._value < 0:
             raise ValueError("The time cannot be negative!")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
 
         abbrev = self._print_format[self._unit]
-        if self._magnitude != 1:
+        if self._value != 1:
             if abbrev[-1] != "s":
                 abbrev = abbrev + "s"
 
-        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
-            return "%.4e %s" % (self._magnitude, abbrev)
+        if abs(self._value) > 1e4 or abs(self._value) < 1e-4:
+            return "%.4e %s" % (self._value, abbrev)
         else:
-            return "%5.4f %s" % (self._magnitude, abbrev)
+            return "%5.4f %s" % (self._value, abbrev)
 
     def days(self):
         """Return the time in days.
@@ -145,7 +145,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in days.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.day), "DAY")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.day), "DAY")
 
     def hours(self):
         """Return the time in hours.
@@ -156,7 +156,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in hours.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.hour), "HOUR")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.hour), "HOUR")
 
     def minutes(self):
         """Return the time in minutes.
@@ -167,7 +167,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in minutes.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.minute), "MINUTE")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.minute), "MINUTE")
 
     def seconds(self):
         """Return the time in seconds.
@@ -178,7 +178,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in seconds.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.second), "SECOND")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.second), "SECOND")
 
     def milliseconds(self):
         """Return the time in milliseconds.
@@ -189,7 +189,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in milliseconds.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.millisecond), "MILLISECOND")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.millisecond), "MILLISECOND")
 
     def nanoseconds(self):
         """Return the time in nanoseconds.
@@ -200,7 +200,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in nanoseconds.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanosecond), "NANOSECOND")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.nanosecond), "NANOSECOND")
 
     def picoseconds(self):
         """Return the time in picoseconds.
@@ -211,7 +211,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in picoseconds.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picosecond), "PICOSECOND")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.picosecond), "PICOSECOND")
 
     def femtoseconds(self):
         """Return the time in femtoseconds.
@@ -222,7 +222,7 @@ class Time(_Type):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The time in femtoseconds.
         """
-        return Time((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.femtosecond), "FEMTOSECOND")
+        return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.femtosecond), "FEMTOSECOND")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -231,7 +231,7 @@ class Time(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

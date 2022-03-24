@@ -254,8 +254,8 @@ class Funnel(_CollectiveVariable):
         if not isinstance(width, _Length):
             raise TypeError("'width' must be of type 'BioSimSpace.Types.Length'")
 
-        if width.magnitude() < 0:
-            raise ValueError("'width' must have a magnitude of > 0")
+        if width.value() < 0:
+            raise ValueError("'width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._width = width.nanometers()
@@ -283,8 +283,8 @@ class Funnel(_CollectiveVariable):
         if not isinstance(buffer, _Length):
             raise TypeError("'buffer' must be of type 'BioSimSpace.Types.Length'")
 
-        if buffer.magnitude() < 0:
-            raise ValueError("'buffer' must have a magnitude of > 0")
+        if buffer.value() < 0:
+            raise ValueError("'buffer' must have a value of > 0")
 
         # Convert to the internal unit.
         self._buffer = buffer.nanometers()
@@ -346,8 +346,8 @@ class Funnel(_CollectiveVariable):
         if not isinstance(inflection, _Length):
             raise TypeError("'inflection' must be of type 'BioSimSpace.Types.Length'")
 
-        if inflection.magnitude() < 0:
-            raise ValueError("'inflection' must have a magnitude of > 0")
+        if inflection.value() < 0:
+            raise ValueError("'inflection' must have a value of > 0")
 
         # Convert to the internal unit.
         self._inflection = inflection.nanometers()
@@ -387,8 +387,8 @@ class Funnel(_CollectiveVariable):
                 raise ValueError("'hill_width' must be a two-component tuple of of type 'BioSimSpace.Metadynamics.Length'")
 
         for width in hill_width:
-            if width.magnitude() < 0:
-                raise ValueError("'hill_width' must have a magnitude of > 0")
+            if width.value() < 0:
+                raise ValueError("'hill_width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._hill_width = tuple(x.nanometers() for x in hill_width)
@@ -516,27 +516,27 @@ class Funnel(_CollectiveVariable):
         import numpy as _np
 
         # Create an array of 0.01 nm spaced points between the lower and upper bounds.
-        coords = _np.arange(proj_min.nanometers().magnitude(),
-                            proj_max.nanometers().magnitude(),
-                            delta.nanometers().magnitude()).tolist()
+        coords = _np.arange(proj_min.nanometers().value(),
+                            proj_max.nanometers().value(),
+                            delta.nanometers().value()).tolist()
 
         # Get the extent values.
-        funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().magnitude() for x in coords]
+        funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().value() for x in coords]
 
         # Now integrate the data.
         result = 0
-        delta = delta.nanometers().magnitude()
+        delta = delta.nanometers().value()
         for x, y in zip(funnel[:-1], funnel[1:]):
-            result += (x**2 + y) * delta * 0.5
+            result += (x**2 + y**2) * delta * 0.5
 
         # Work out the volume of the unbound area.
         volume = _Volume(_math.pi*result, "nanometers cubed")
 
-        # Estimate the average area of the restraint.
-        area = volume / proj_max
+        # Estimate the average area of the restraint (in Angstrom squared).
+        area = (volume / proj_max).angstroms2()
 
         # Compute the correction.
-        correction = _Energy(_math.log((volume / 1600).magnitude()), "kt")
+        correction = _Energy(_math.log((area / 1660).value()), "kt")
 
         return correction
 
@@ -560,9 +560,9 @@ class Funnel(_CollectiveVariable):
         if not isinstance(projection, _Length):
             raise TypeError("'projection' must be of type 'BioSimSpace.Types.Length'.")
 
-        extent = self.getWidth().nanometers().magnitude() \
-            / (1 + _math.exp(self.getSteepness() * (projection - self.getInflection()).nanometers().magnitude())) \
-            + self.getBuffer().nanometers().magnitude()
+        extent = self.getWidth().nanometers().value() \
+            / (1 + _math.exp(self.getSteepness() * (projection - self.getInflection()).nanometers().value())) \
+            + self.getBuffer().nanometers().value()
 
         return _Length(extent, "nanometers")
 
@@ -609,12 +609,12 @@ class Funnel(_CollectiveVariable):
 
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid[0].getBins() is None:
-                grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).magnitude()
-                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).value()
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid[0].setBins(num_bins)
             if self._grid[1].getBins() is None:
-                grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).magnitude()
-                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).value()
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid[1].setBins(num_bins)
 
 def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
@@ -831,19 +831,19 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
 
     import numpy as _np
     # Loop over x grid points.
-    for x in _np.linspace(grid_min.x().angstroms().magnitude(),
-                          grid_max.x().angstroms().magnitude(),
+    for x in _np.linspace(grid_min.x().angstroms().value(),
+                          grid_max.x().angstroms().value(),
                           num_edge):
         # Loop over y grid points.
-        for y in _np.linspace(grid_min.y().angstroms().magnitude(),
-                              grid_max.y().angstroms().magnitude(),
+        for y in _np.linspace(grid_min.y().angstroms().value(),
+                              grid_max.y().angstroms().value(),
                               num_edge):
             # Loop over z grid points.
-            for z in _np.linspace(grid_min.z().angstroms().magnitude(),
-                                  grid_max.z().angstroms().magnitude(),
+            for z in _np.linspace(grid_min.z().angstroms().value(),
+                                  grid_max.z().angstroms().value(),
                                   num_edge):
                 # Generate the search string.
-                string = f"atoms within {search_radius.angstroms().magnitude()} of {x},{y},{z}"
+                string = f"atoms within {search_radius.angstroms().value()} of {x},{y},{z}"
 
                 # Search the protein for atoms with the search radius of the
                 # point x,y,z.
@@ -862,9 +862,9 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # Now select all alpha carbon atoms within 10 Angstrom of the ligand or grid.
 
     # Generate the search string.
-    x = binding_site.x().angstroms().magnitude()
-    y = binding_site.y().angstroms().magnitude()
-    z = binding_site.z().angstroms().magnitude()
+    x = binding_site.x().angstroms().value()
+    y = binding_site.y().angstroms().value()
+    z = binding_site.z().angstroms().value()
     string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
 
     # Perform the search.
@@ -1021,12 +1021,12 @@ def viewFunnel(system, collective_variable, property_map={}):
     n_angle_samples = 8
 
     # Extract collective variable data.
-    lower_wall = collective_variable.getLowerBound().getValue().angstroms().magnitude()
-    upper_wall = collective_variable.getUpperBound().getValue().angstroms().magnitude()
-    wall_width = collective_variable.getWidth().angstroms().magnitude()
+    lower_wall = collective_variable.getLowerBound().getValue().angstroms().value()
+    upper_wall = collective_variable.getUpperBound().getValue().angstroms().value()
+    wall_width = collective_variable.getWidth().angstroms().value()
     beta_cent = collective_variable.getSteepness()
-    s_cent = collective_variable.getInflection().angstroms().magnitude()
-    wall_buffer = collective_variable.getBuffer().angstroms().magnitude()
+    s_cent = collective_variable.getInflection().angstroms().value()
+    wall_buffer = collective_variable.getBuffer().angstroms().value()
 
     # Get the element property from the map.
     element = property_map.get("element", "element")

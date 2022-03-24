@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["generateNetwork",
            "matchAtoms",
-           "drawMapping",
+           "viewMapping",
            "rmsdAlign",
            "flexAlign",
            "merge"]
@@ -85,7 +85,7 @@ from BioSimSpace import _Utils
 _networkx = _try_import("networkx")
 
 if _have_imported(_rdkit) and _have_imported(_networkx):
-    from . import _lomap
+    import lomap as _lomap
 elif _have_imported(_rdkit):
     _lomap = _networkx
 elif _have_imported(_networkx):
@@ -339,6 +339,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
                                 name=f"{work_dir}/outputs/lomap",
                                 links_file=lf,
+                                output=True,
                                 output_no_graph=True,
                                 output_no_images=True,
                                 threed=True,
@@ -779,8 +780,8 @@ def matchAtoms(molecule0,
     mol0 = molecule0._getSireObject()
     mol1 = molecule1._getSireObject()
 
-    # Convert the timeout to seconds and take the magnitude as an integer.
-    timeout = int(timeout.seconds().magnitude())
+    # Convert the timeout to seconds and take the value as an integer.
+    timeout = int(timeout.seconds().value())
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
@@ -965,6 +966,8 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
         mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
     except Exception as e:
         msg = "Failed to align molecules based on mapping: %r" % mapping
+        if "Could not calculate the single value decomposition" in str(e):
+            msg += ". Try minimising your molecular coordinates prior to alignment."
         if _isVerbose():
             raise _AlignmentError(msg) from e
         else:
@@ -1214,20 +1217,21 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             allow_ring_size_change=allow_ring_size_change, force=force,
             property_map0=property_map0, property_map1=property_map1)
 
-def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
-    """Visualise the mapping between molecule0 and molecule1. This draws a 2D
-       depiction of the two molecules side-by-side, with the mapped atoms from
-       each molecule highlighted.
+def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
+        property_map1={}, style=None, orientation="horizontal", pixels=900):
+    """Visualise the mapping between molecule0 and molecule1. This draws a 3D
+       depiction of both molecules with the mapped atoms highlighted in green.
+       Labels specify the indices of the atoms, along with the indices of
+       the atoms to which they map in the other molecule.
 
        Parameters
        ----------
 
        molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule of interest. This is the molecule that will be
-           drawn.
+           The first molecule.
 
        molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule against which the mapping is made.
+           The second molecule.
 
        mapping : dict
            A dictionary mapping atoms in molecule0 to those in molecule1.
@@ -1241,12 +1245,27 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
            A dictionary that maps "properties" in molecule1 to their user
            defined values.
 
+       style : dict
+           Drawing style. See https://3dmol.csb.pitt.edu/doc/$3Dmol.GLViewer.html
+           for some examples.
+
+       orientation : str
+           Whether to display the two molecules in a "horizontal" or "vertical"
+           arrangement.
+
+       pixels : int
+           The size of the largest view dimension in pixel, i.e. either the
+           "horizontal" or "vertical" size.
+
        Returns
        -------
 
-       image : IPython.core.display.Image
-           An image of molecule0 with the mapping atoms highlighted.
+       view : py3Dmol.view
+           A view of the two molecules with the mapped atoms highlighted and
+           labelled.
     """
+
+    # Adapted from: https://gist.github.com/cisert/d05664d4c98ac1cf86ee70b8700e56a9
 
     # Only draw within a notebook.
     if not _is_notebook:
@@ -1266,6 +1285,27 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
+    if style is not None:
+        if not isinstance(style, dict):
+            raise TypeError("'style' must be of type 'dict'")
+
+    if not isinstance(orientation, str):
+        raise TypeError("'orientation' must be of type 'str'")
+    else:
+        # Convert to lower case and strip whitespace.
+        orientation = orientation.lower().replace(" ", "")
+
+        if orientation not in ["horizontal", "vertical"]:
+            raise ValueError("'orientation' must be equal to 'horizontal' "
+                             "or 'vertical'.")
+
+    if isinstance(pixels, float):
+        pixels = int(pixels)
+    if not type(pixels) is int:
+        raise TypeError("'pixels' must be of type 'int'")
+    if pixels <= 0:
+        raise ValueError("pixels' must be > 0!")
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if not isinstance(mapping, dict):
@@ -1284,31 +1324,77 @@ def drawMapping(molecule0, molecule1, mapping=None, property_map0={}, property_m
     tmp_dir = _tempfile.TemporaryDirectory()
     work_dir = tmp_dir.name
 
-    # Write the first molecule to PDB format.
-    _IO.saveMolecules(work_dir + "/molecule",
+    # Write the molecules to PDB format.
+    _IO.saveMolecules(work_dir + "/molecule0",
         molecule0, "pdb", property_map=property_map0)
+    _IO.saveMolecules(work_dir + "/molecule1",
+        molecule1, "pdb", property_map=property_map0)
 
-    from rdkit.Chem import AllChem as _AllChem
-    from rdkit.Chem.Draw import IPythonConsole as _IPythonConsole
-
-    # Set image properties.
-    _IPythonConsole.drawOptions.addAtomIndices = True
-    _IPythonConsole.molSize = 1200, 400
+    import py3Dmol as _py3Dmol
 
     # Load the molecules into RDKit.
-    rdmol = _Chem.MolFromPDBFile(work_dir + "/molecule.pdb",
+    rdmol0 = _Chem.MolFromPDBFile(work_dir + "/molecule0.pdb",
+        sanitize=False, removeHs=False)
+    rdmol1 = _Chem.MolFromPDBFile(work_dir + "/molecule1.pdb",
         sanitize=False, removeHs=False)
 
-    # Highlight atoms from the mapping.
-    rdmol.__sssAtoms = mapping.keys()
+    # Set grid view properties.
+    viewer0 = (0, 0)
+    if orientation == "horizontal":
+        viewergrid = (1, 2)
+        viewer1 = (0, 1)
+        width = pixels
+        height = pixels / 2
+    else:
+        viewergrid = (2, 1)
+        viewer1 = (1, 0)
+        width = pixels / 2
+        height = pixels
 
-    # Convert to 2D.
-    _AllChem.Compute2DCoords(rdmol)
+    # Create the view.
+    view = _py3Dmol.view(linked=False, width=width,
+            height=height, viewergrid=viewergrid)
 
-    # Convert to PNG bytes.
-    png = _IPythonConsole._toPNG(rdmol)
+    # Set default drawing style.
+    if style is None:
+        style = {"stick":{"colorscheme":"grayCarbon", "linewidth": 0.1}}
 
-    return _IPythonConsole.display.Image(png)
+    # Add the molecules to the views.
+    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
+    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol1", viewer=viewer1)
+
+    # Set the style.
+    view.setStyle({"model": 0}, style, viewer=viewer0)
+    view.setStyle({"model": 0}, style, viewer=viewer1)
+
+    # Highlight the atoms from the mapping.
+    for atom0, atom1 in mapping.items():
+        p = rdmol0.GetConformer().GetAtomPosition(atom0)
+        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
+                        "radius" : 0.5,
+                        "color"  : "green", "alpha": 0.8},
+                       viewer=viewer0)
+        view.addLabel(f"{atom0} \u2192 {atom1}",
+                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
+                      viewer=viewer0)
+        p = rdmol1.GetConformer().GetAtomPosition(atom1)
+        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
+                        "radius" : 0.5,
+                        "color"  : "green", "alpha": 0.8},
+                       viewer=viewer1)
+        view.addLabel(f"{atom1} \u2192 {atom0}",
+                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
+                      viewer=viewer1)
+
+    # Set background colour.
+    view.setBackgroundColor("white", viewer=viewer0)
+    view.setBackgroundColor("white", viewer=viewer1)
+
+    # Zoom to molecule.
+    view.zoomTo(viewer=viewer0)
+    view.zoomTo(viewer=viewer1)
+
+    return view
 
 def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
         mcs_smarts, prematch, scoring_function, max_scoring_matches, property_map0,
@@ -1401,6 +1487,9 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
     # Initialise a list of to hold the score for each mapping.
     scores = []
 
+    # Whether there was a GSL alignment error.
+    is_gsl_error = False
+
     # Loop over all matches from mol0.
     for x in range(len(matches0)):
         match0 = matches0[x]
@@ -1441,11 +1530,15 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
                         try:
                             molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
                         except Exception as e:
-                            msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
-                            if _isVerbose():
-                                raise _AlignmentError(msg) from e
+                            if "Could not calculate the single value decomposition" in str(e):
+                                is_gsl_error = True
+                                gsl_exception = e
                             else:
-                                raise _AlignmentError(msg) from None
+                                msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                                if _isVerbose():
+                                    raise _AlignmentError(msg) from e
+                                else:
+                                    raise _AlignmentError(msg) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
                         molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
@@ -1473,6 +1566,16 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
 
     # No mappings were found.
     if len(mappings) == 0:
+        # We failed to align mappings during scoring due to convergence issues
+        # during the GSL single value decomposition routine.
+        if is_gsl_error:
+            msg = "Failed to align molecules when scoring. " \
+                  "Try minimising your molecular coordinates prior calling matchAtoms."
+            if _isVerbose():
+                raise _AlignmentError(msg) from gsl_exception
+            else:
+                raise _AlignmentError(msg) from None
+
         if len(prematch) == 0:
             return ([{}], [])
         else:

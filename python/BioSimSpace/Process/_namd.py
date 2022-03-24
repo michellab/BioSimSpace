@@ -284,7 +284,7 @@ class Namd(_process.Process):
                 v2 = self._system._sire_object.property(prop).vector2()
 
             # Work out the minimum box size.
-            box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
+            box_size = min(v0.value(), v1.value(), v2.value())
 
             # Convert vectors to tuples.
             v0 = tuple(v0)
@@ -423,15 +423,15 @@ class Namd(_process.Process):
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
             else:
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -446,7 +446,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -483,16 +483,16 @@ class Namd(_process.Process):
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
-                            self._protocol.getStartTemperature().kelvin().magnitude())
+                denom = abs(self._protocol.getEndTemperature().kelvin().value() -
+                            self._protocol.getStartTemperature().kelvin().value())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
                 self.addToConfig("reassignTemp          %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig("reassignIncr          1.")
                 self.addToConfig("reassignHold          %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % restart_interval)
@@ -525,12 +525,12 @@ class Namd(_process.Process):
 
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -547,7 +547,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -680,14 +680,34 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                # Read the molecular system.
+                # Do we need to get coordinates for the lambda=1 state.
+                if "is_lambda1" in self._property_map:
+                    is_lambda1 = True
+                else:
+                    is_lambda1 = False
+
+                # Load the restart file.
                 new_system = _System(_SireIO.MoleculeParser.read(files, self._property_map))
 
-                # Copy the new coordinates back into the original system.
+                # Create a copy of the existing system object.
                 old_system = self._system.copy()
-                old_system._updateCoordinatesAndVelocities(new_system,
-                                                           self._property_map,
-                                                           self._property_map)
+
+                # Update the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
+
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
@@ -770,15 +790,36 @@ class Namd(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Load the latest trajectory frame.
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():

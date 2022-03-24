@@ -612,7 +612,7 @@ class System(_SireWrapper):
                     system = _SireIO.updateAndPreserveOrder(
                             system, mol._sire_object, idx)
 
-        # Udpate the Sire object.
+        # Update the Sire object.
         self._sire_object = system
 
         # Reset the index mappings.
@@ -931,7 +931,7 @@ class System(_SireWrapper):
 
                 indices.append(index)
 
-            # Residue.
+            # Molecule.
             elif isinstance(x, _Molecule):
                 # Only compute the molecule index mapping if it hasn't already
                 # been created.
@@ -1002,20 +1002,20 @@ class System(_SireWrapper):
             raise ValueError("'angles' must contain three items.")
 
         # Convert sizes to Anstrom.
-        vec = [x.angstroms().magnitude() for x in box]
+        vec = [x.angstroms().value() for x in box]
 
         # Whether the box is triclinic.
         is_triclinic = False
 
         # If any angle isn't 90 degrees, then the box is triclinic.
         for x in angles:
-            if abs(x.degrees().magnitude() - 90) > 1e-6:
+            if abs(x.degrees().value() - 90) > 1e-6:
                 is_triclinic = True
                 break
 
         if is_triclinic:
             # Convert angles to Sire units.
-            ang = [x.degrees().magnitude()*_SireUnits.degree for x in angles]
+            ang = [x.degrees().value()*_SireUnits.degree for x in angles]
 
             # Create a triclinic box object.
             space = _SireVol.TriclinicBox(vec[0], vec[1], vec[2],
@@ -1061,9 +1061,9 @@ class System(_SireWrapper):
 
             # TriclinicBox box.
             elif isinstance(space, _SireVol.TriclinicBox):
-                box = [_Length(space.vector0().magnitude(), "Angstrom"),
-                       _Length(space.vector1().magnitude(), "Angstrom"),
-                       _Length(space.vector2().magnitude(), "Angstrom")]
+                box = [_Length(space.vector0().value(), "Angstrom"),
+                       _Length(space.vector1().value(), "Angstrom"),
+                       _Length(space.vector2().value(), "Angstrom")]
                 angles = [_Angle(space.alpha(), "degree"),
                           _Angle(space.beta(), "degree"),
                           _Angle(space.gamma(), "degree")]
@@ -1101,7 +1101,7 @@ class System(_SireWrapper):
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")
@@ -1531,106 +1531,6 @@ class System(_SireWrapper):
 
         # Return the renumbered molecules.
         return new_molecules
-
-    def _updateCoordinatesAndVelocities(self, system, property_map0={}, property_map1={},
-            is_lambda1=False):
-        """Update the coordinates and velocities of atoms in the system.
-
-           Parameters
-           ----------
-
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A system containing the updated coordinates.
-
-           property_map0 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in this system.
-
-           property_map1 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in the passed system.
-
-           is_lambda1 : bool
-              Whether to update coordinates of perturbed molecules at lambda = 1.
-              By default, coordinates at lambda = 0 are used.
-        """
-
-        # Validate the system.
-        if not isinstance(system, System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        # Check that the passed system contains the same number of molecules.
-        if self.nMolecules() != system.nMolecules():
-            raise _IncompatibleError("The passed 'system' contains a different number of "
-                                     "molecules. Expected '%d', found '%d'"
-                                     % (self.nMolecules(), system.nMolecules()))
-
-        if not isinstance(property_map0, dict):
-            raise TypeError("'property_map0' must be of type 'dict'.")
-
-        if not isinstance(property_map1, dict):
-            raise TypeError("'property_map1' must be of type 'dict'.")
-
-        if not isinstance(is_lambda1, bool):
-            raise TypeError("'is_lambda1' must be of type 'bool'.")
-
-        # Check that each molecule in the system contains the same number of atoms.
-        for idx in range(0, self.nMolecules()):
-            # Extract the number of atoms in the molecules.
-            num_atoms0 = self._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
-            num_atoms1 = system._sire_object.molecule(_SireMol.MolIdx(idx)).nAtoms()
-
-            if num_atoms0 != num_atoms1:
-                raise _IncompatibleError("Mismatch in atom count for molecule '%d': "
-                                         "Expected '%d', found '%d'" % (num_atoms0, num_atoms1))
-
-        # Work out the name of the "coordinates" property.
-        prop_c0 = property_map0.get("coordinates0", "coordinates")
-        prop_c1 = property_map1.get("coordinates1", "coordinates")
-
-        # Work out the name of the "velocity" property.
-        prop_v0 = property_map0.get("velocity", "coordinates")
-        prop_v1 = property_map1.get("velocity", "coordinates")
-
-        # Loop over all molecules and update the coordinates.
-        for idx in range(0, self.nMolecules()):
-            # Extract the molecules from each system.
-            mol0 = self._sire_object.molecule(_SireMol.MolIdx(idx))
-            mol1 = system._sire_object.molecule(_SireMol.MolIdx(idx))
-
-            # Check whether the molecule is perturbable.
-            if mol0.hasProperty("is_perturbable"):
-                if is_lambda1:
-                    prop_c = "coordinates1"
-                else:
-                    prop_c = "coordinates0"
-            else:
-                prop_c = prop_c0
-
-            # Try to update the coordinates property.
-            try:
-                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
-            except Exception as e:
-                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                if _isVerbose():
-                    raise _IncompatibleError(msg) from e
-                else:
-                    raise _IncompatibleError(msg) from None
-
-            # Try to update the velocity property. This isn't always present so
-            # only try this when the passed system contains the property.
-            if mol1.hasProperty(prop_v1):
-                try:
-                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
-                except Exception as e:
-                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
-                    if _isVerbose():
-                        raise _IncompatibleError(msg) from e
-                    else:
-                        raise _IncompatibleError(msg) from None
-
-            # Update the molecule in the original system.
-            self._sire_object.update(mol0)
 
     @staticmethod
     def _createSireSystem(molecules):

@@ -520,7 +520,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         else:
             if not all(isinstance(x, _Length) for x in box):
                 raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
-            if not all(x.magnitude() >= 0 for x in box):
+            if not all(x.value() >= 0 for x in box):
                 raise ValueError("All box dimensions must be greater than zero.")
 
     if angles is not None:
@@ -637,16 +637,16 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         aabox_min, aabox_max = molecule.getAxisAlignedBoundingBox()
 
         # Work out the aabox center.
-        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().magnitude()
+        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().value()
                 for x in range(0, 3)]
 
         # Generate a TriclinicBox based on the box magnitudes and angles.
-        triclinic_box = _TriclinicBox(box[0].angstroms().magnitude(),
-                                      box[1].angstroms().magnitude(),
-                                      box[2].angstroms().magnitude(),
-                                      angles[0].degrees().magnitude()*_degree,
-                                      angles[1].degrees().magnitude()*_degree,
-                                      angles[2].degrees().magnitude()*_degree)
+        triclinic_box = _TriclinicBox(box[0].angstroms().value(),
+                                      box[1].angstroms().value(),
+                                      box[2].angstroms().value(),
+                                      angles[0].degrees().value()*_degree,
+                                      angles[1].degrees().value()*_degree,
+                                      angles[2].degrees().value()*_degree)
 
         # Work out the center of the triclinic cell.
         box_center = triclinic_box.cellMatrix()*_Vector(0.5, 0.5, 0.5)
@@ -694,13 +694,13 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 file.write("   0.00000  0.00000  0.00000\n")
 
         # Create the editconf command.
-        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe      \
-                + " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                      box[1].nanometers().magnitude(),
-                                      box[2].nanometers().magnitude())     \
-                + " -angles %f %f %f" % (angles[0].degrees().magnitude(),
-                                         angles[1].degrees().magnitude(),
-                                         angles[2].degrees().magnitude())  \
+        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe  \
+                + " -box %f %f %f" % (box[0].nanometers().value(),
+                                      box[1].nanometers().value(),
+                                      box[2].nanometers().value())     \
+                + " -angles %f %f %f" % (angles[0].degrees().value(),
+                                         angles[1].degrees().value(),
+                                         angles[2].degrees().value())  \
                 + " -noc -o box.gro"
 
         with open("README.txt", "w") as file:
@@ -732,7 +732,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
         # Add the shell information.
         if molecule is not None and shell is not None:
-            command += " -shell %f" % shell.nanometers().magnitude()
+            command += " -shell %f" % shell.nanometers().value()
 
         command += " -cp box.gro -o output.gro"
 
@@ -887,7 +887,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     charge = system.charge()
 
                     # Round to the nearest integer value.
-                    charge = round(charge.magnitude())
+                    charge = round(charge.value())
 
                     # Create the genion command.
                     command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe

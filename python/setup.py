@@ -73,9 +73,11 @@ finally:
                       "pydot",
                       "networkx",
                       "nglview",
+                      "py3dmol",
                       "pypdb",
                       "rdkit",
                       "parmed",
+                      "lomap2",
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit-base" # known not available on aarch64
@@ -108,7 +110,7 @@ finally:
         all_installed_ok = True
 
         try:
-            subprocess.run(shlex.split(command), shell=False, 
+            subprocess.run(shlex.split(command), shell=False,
                            stdout=stdout, stderr=stderr, check=True)
         except Exception:
             all_installed_ok = False

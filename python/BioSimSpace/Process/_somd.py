@@ -183,6 +183,10 @@ class Somd(_process.Process):
         # Initialise the buffering frequency.
         self._buffer_freq = 0
 
+        # Initialise the molecule index mapping. SOMD re-orders molecules on
+        # startup so we need to re-map to the original system.
+        self._mapping = {}
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -370,10 +374,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            temperature = self._protocol.getStartTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -391,7 +395,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Pressure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -434,10 +438,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -455,7 +459,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -511,10 +515,10 @@ class Somd(_process.Process):
                 buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -533,7 +537,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -656,16 +660,34 @@ class Somd(_process.Process):
 
         # Try to grab the latest coordinates from the binary restart file.
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system = _IO.readMolecules(self._restart_file)
 
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
 
-            old_system = self._updateCoordinatesAndVelocities(old_system,
-                                                              new_system,
-                                                              self._property_map,
-                                                              self._property_map)
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -746,15 +768,35 @@ class Somd(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule numbers in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -923,121 +965,6 @@ class Somd(_process.Process):
             if _os.path.isfile(file):
                 _os.remove(file)
 
-    def _updateCoordinatesAndVelocities(self, old_system, new_system,
-            property_map0={}, property_map1={}, is_lambda1=False):
-        """Update the coordinates and velocities of atoms in the system.
-
-           Parameters
-           ----------
-
-           old_system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The original molecular system.
-
-           new_system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A system containing the updated coordinates.
-
-           property_map0 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in this system.
-
-           property_map1 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in the passed system.
-
-           is_lambda1 : bool
-              Whether to update coordinates of perturbed molecules at lambda = 1.
-              By default, coordinates at lambda = 0 are used.
-        """
-
-        # Rather than using the _updateCoordinates of the system directly,
-        # this is a custom function for SOMD since it doesn't preserve
-        # molecular ordering on startup.
-
-        # Validate the systems.
-
-        if not isinstance(old_system, _System):
-            raise TypeError("'old_system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        if not isinstance(new_system, _System):
-            raise TypeError("'new_system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        # Check that the two systems contain the same number of molecules.
-        if old_system.nMolecules() != new_system.nMolecules():
-            raise _IncompatibleError("The two systems contains a different number of "
-                                     "molecules. Expected '%d', found '%d'"
-                                     % (old_system.nMolecules(), new_system.nMolecules()))
-
-        if not isinstance(property_map0, dict):
-            raise TypeError("'property_map0' must be of type 'dict'.")
-
-        if not isinstance(property_map1, dict):
-            raise TypeError("'property_map1' must be of type 'dict'.")
-
-        if not isinstance(is_lambda1, bool):
-            raise TypeError("'is_lambda1' must be of type 'bool'.")
-
-        # Work out the name of the "coordinates" property.
-        prop_c0 = property_map0.get("coordinates0", "coordinates")
-        prop_c1 = property_map1.get("coordinates1", "coordinates")
-
-        # Work out the name of the "velocity" property.
-        prop_v0 = property_map0.get("velocity", "coordinates")
-        prop_v1 = property_map1.get("velocity", "coordinates")
-
-        # Loop over all molecules and update the coordinates.
-        for idx, mol0 in enumerate(old_system.getMolecules()):
-            # Get the number of the first atom in the molecule.
-            num = mol0.getAtoms()[0]._sire_object.number().value()
-
-            # Get the underlying Sire object.
-            mol0 = mol0._sire_object
-
-            # Search for the molecule with the same atom number in the new system.
-            search = new_system._sire_object.search(f"mol with atomnum {num}")
-
-            if len(search) != 1:
-                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                raise _IncompatibleError(msg)
-
-            # Extract the matching molecule.
-            mol1 = search[0]
-
-            # Check whether the molecule is perturbable.
-            if mol0.hasProperty("is_perturbable"):
-                if is_lambda1:
-                    prop_c = "coordinates1"
-                else:
-                    prop_c = "coordinates0"
-            else:
-                prop_c = prop_c0
-
-            # Try to update the coordinates property.
-            try:
-                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
-            except Exception as e:
-                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                if _isVerbose():
-                    raise _IncompatibleError(msg) from e
-                else:
-                    raise _IncompatibleError(msg) from None
-
-            # Try to update the velocity property. This isn't always present so
-            # only try this when the passed system contains the property.
-            if mol1.hasProperty(prop_v1):
-                try:
-                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
-                except Exception as e:
-                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
-                    if _isVerbose():
-                        raise _IncompatibleError(msg) from e
-                    else:
-                        raise _IncompatibleError(msg) from None
-
-            # Update the molecule in the original system.
-            old_system._sire_object.update(mol0)
-
-        return old_system
-
 def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         zero_dummy_impropers=False, print_all_atoms=False, property_map={},
         perturbation_type="full"):
@@ -1143,15 +1070,11 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     # that the names must be unique. As such we need to count the number of
     # atoms with a particular name, then append an index to their name.
 
-    # A dictionary to track the atom names.
+    # Loop over all atoms in the molecule and tally the occurrence of each
+    # name.
     atom_names = {}
-
-    # Loop over all atoms in the molecule.
     for atom in mol.atoms():
-        if atom.name() in atom_names:
-            atom_names[atom.name()] += 1
-        else:
-            atom_names[atom.name()] = 1
+        atom_names[atom.name()] = atom_names.get(atom.name(), 1) + 1
 
     # Create a set from the atoms names seen so far.
     names = set(atom_names.keys())
@@ -2330,26 +2253,22 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
         # lambda = 0.
         for idx0 in impropers0_idx.keys():
-            is_shared = False
             for idx1 in impropers1_idx.keys():
                 if idx0.equivalent(idx1):
                     impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
         # lambda = 1.
         for idx1 in impropers1_idx.keys():
-            is_shared = False
             for idx0 in impropers0_idx.keys():
                 if idx1.equivalent(idx0):
                     # Don't store duplicates.
                     if not idx0 in impropers_shared_idx.keys():
                         impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers1_unique_idx[idx1] = impropers1_idx[idx1]
 
         # First create records for the impropers that are unique to lambda = 0 and 1.

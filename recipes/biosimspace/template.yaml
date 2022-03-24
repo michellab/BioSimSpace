@@ -20,11 +20,14 @@ requirements:
     - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
     - configargparse
     - fkcombu
+    - lomap2
     - mdtraj
     - mdanalysis
+    - networkx
     - nglview
     - openff-toolkit-base
     - parmed
+    - py3dmol
     - pydot
     - pygtail
     - pypdb
