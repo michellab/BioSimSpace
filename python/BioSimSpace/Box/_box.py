@@ -219,9 +219,9 @@ def _get_box_parameters(triclinic_box):
            The box vector magnitudes.
     """
 
-    box = [_Length(triclinic_box.vector0().value(), "angstrom"),
-           _Length(triclinic_box.vector1().value(), "angstrom"),
-           _Length(triclinic_box.vector2().value(), "angstrom")]
+    box = [_Length(triclinic_box.vector0().magnitude(), "angstrom"),
+           _Length(triclinic_box.vector1().magnitude(), "angstrom"),
+           _Length(triclinic_box.vector2().magnitude(), "angstrom")]
 
     angles = [_Angle(_Vector.angle(triclinic_box.vector1(), triclinic_box.vector2()).value(), "radians").degrees(),
               _Angle(_Vector.angle(triclinic_box.vector0(), triclinic_box.vector2()).value(), "radians").degrees(),
