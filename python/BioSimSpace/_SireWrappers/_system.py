@@ -386,7 +386,7 @@ class System(_SireWrapper):
 
         # A Molecule object.
         if isinstance(molecules, _Molecule):
-            molecules = [molecules]
+            molecules = _Molecules([molecules])
 
         # A Molecules object.
         if isinstance(molecules, _Molecules):
@@ -398,7 +398,7 @@ class System(_SireWrapper):
 
         # A list of Molecule objects.
         elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
-            pass
+            molecules = _Molecules(molecules)
 
         # Invalid argument.
         else:
@@ -409,35 +409,41 @@ class System(_SireWrapper):
         # Store the existing number of molecules.
         num_mols = self._sire_object.nMolecules()
 
-        # The system is empty: create a new Sire system from the molecules.
+        # The system is empty: create an empty Sire system.
         if num_mols == 0:
-            self._sire_object = self._createSireSystem(molecules)
+            self._sire_object = self._createSireSystem()
             self._mol_nums = []
 
-        # Now add the molecules to the existing "all" group.
+        # Only continue if there are molecules to add.
+        if len(molecules) > 0:
+            # Create a copy of the system.
+            system = self.copy()
 
-        # Initialise the offsets for renumbering (one indexed).
-        residue_offset = 1 + self.nResidues()
-        atom_offset = 1 + self.nAtoms()
-        for mol in molecules:
-            if mol._sire_object.number() in self._mol_nums:
+            # Add the molecules to the system.
+            system._sire_object.add(molecules._sire_object, _SireMol.MGName("all"))
+
+            # Extract the new molecule numbers.
+            mol_nums = system._sire_object.molNums()
+
+            # Check that the new system doesn't contain duplicate molecule numbers.
+            if len(mol_nums) != len(set(mol_nums)):
                 raise ValueError("'BioSimSpace._SireWrappers.System' can only "
                                  "contain unique molecules. Use the 'copy' method "
                                  "of 'BioSimSpace._SireWrappers.Molecule' to "
                                  "create a new version of a molecule.")
 
-            # Add the molecule to the system.
-            self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            # We're okay. Replace the underlying Sire object.
+            self._sire_object = system._sire_object
 
-        # Renumber all of the constituents in the system so that they are unique
-        # and in ascending order.
-        self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
+            # Renumber all of the constituents in the system so that they are unique
+            # and in ascending order.
+            self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
 
-        # Reset the index mappings.
-        self._reset_mappings()
+            # Reset the index mappings.
+            self._reset_mappings()
 
-        # Update the molecule numbers.
-        self._mol_nums = self._sire_object.molNums()
+            # Update the molecule numbers.
+            self._mol_nums = self._sire_object.molNums()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -1533,7 +1539,7 @@ class System(_SireWrapper):
         return new_molecules
 
     @staticmethod
-    def _createSireSystem(molecules):
+    def _createSireSystem():
         """Create an empty Sire system with a single molecule group called "all".
 
            Returns
