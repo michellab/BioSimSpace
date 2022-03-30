@@ -1065,9 +1065,9 @@ class System(_SireWrapper):
 
             # TriclinicBox box.
             elif isinstance(space, _SireVol.TriclinicBox):
-                box = [_Length(space.vector0().value(), "Angstrom"),
-                       _Length(space.vector1().value(), "Angstrom"),
-                       _Length(space.vector2().value(), "Angstrom")]
+                box = [_Length(space.vector0().magnitude(), "Angstrom"),
+                       _Length(space.vector1().magnitude(), "Angstrom"),
+                       _Length(space.vector2().magnitude(), "Angstrom")]
                 angles = [_Angle(space.alpha(), "degree"),
                           _Angle(space.beta(), "degree"),
                           _Angle(space.gamma(), "degree")]
