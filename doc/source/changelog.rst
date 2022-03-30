@@ -1,7 +1,13 @@
 Changelog
 =========
 
-`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.1.0>`_ - Mar 24 2022
+`2022.2.1 <https://github.com/michellab/BioSimSpace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
+------------------------------------------------------------------------------------------------
+
+* Fix performance issues when ensuring unique molecule numbering when adding molecules to ``BioSimSpace._SireWrappers.System`` and ``BioSimSpace._SireWrappers.Molecules`` objects.
+* Fix extraction of box vector magnitudes for triclinic boxes.
+
+`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
 ------------------------------------------------------------------------------------------------
 
 * Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.
