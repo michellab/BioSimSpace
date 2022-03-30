@@ -416,24 +416,22 @@ class System(_SireWrapper):
 
         # Only continue if there are molecules to add.
         if len(molecules) > 0:
-            # Create a copy of the system.
-            system = self.copy()
+            # Extract the molecule numbers for the current system and
+            # the molecules to add.
+            mol_nums0 = self._mol_nums
+            mol_nums1 = molecules._sire_object.molNums()
 
-            # Add the molecules to the system.
-            system._sire_object.add(molecules._sire_object, _SireMol.MGName("all"))
-
-            # Extract the new molecule numbers.
-            mol_nums = system._sire_object.molNums()
-
-            # Check that the new system doesn't contain duplicate molecule numbers.
-            if len(mol_nums) != len(set(mol_nums)):
+            # There are molecule numbers in both sets, or the molecules
+            # to add contains duplicates.
+            if (set(mol_nums0) & set(mol_nums1)) or \
+               (len(mol_nums1) != len(set(mol_nums1))):
                 raise ValueError("'BioSimSpace._SireWrappers.System' can only "
                                  "contain unique molecules. Use the 'copy' method "
-                                 "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                 "create a new version of a molecule.")
+                                 "of 'BioSimSpace._SireWrappers' objects to "
+                                 "create a new version of them.")
 
-            # We're okay. Replace the underlying Sire object.
-            self._sire_object = system._sire_object
+            # Add the molecules to the system.
+            self._sire_object.add(molecules._sire_object, _SireMol.MGName("all"))
 
             # Renumber all of the constituents in the system so that they are unique
             # and in ascending order.
