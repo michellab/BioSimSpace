@@ -60,9 +60,9 @@ class Coordinate():
             raise TypeError("'z' must be of type 'BioSimSpace.Types.Length'")
 
         # Set the vector.
-        self._vector = _Vector(x.angstroms().magnitude(),
-                               y.angstroms().magnitude(),
-                               z.angstroms().magnitude())
+        self._vector = _Vector(x.angstroms().value(),
+                               y.angstroms().value(),
+                               z.angstroms().value())
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "(%s, %s, %s)" % (self.x(), self.y(), self.z())
@@ -98,9 +98,9 @@ class Coordinate():
             return self._from_sire_vector(self._vector + other._vector)
 
         elif isinstance(other, _Length):
-            vector = self._vector + _Vector(other.angstroms().magnitude(),
-                                            other.angstroms().magnitude(),
-                                            other.angstroms().magnitude())
+            vector = self._vector + _Vector(other.angstroms().value(),
+                                            other.angstroms().value(),
+                                            other.angstroms().value())
             return self.fromVector(vector, _Length(1, "A"))
 
         else:
@@ -127,9 +127,9 @@ class Coordinate():
             return self._from_sire_vector(self._vector - other._vector)
 
         elif isinstance(other, _Length):
-            vector = self._vector - _Vector(other.angstroms().magnitude(),
-                                            other.angstroms().magnitude(),
-                                            other.angstroms().magnitude())
+            vector = self._vector - _Vector(other.angstroms().value(),
+                                            other.angstroms().value(),
+                                            other.angstroms().value())
             return self.fromVector(vector, _Length(1, "A"))
 
         else:
