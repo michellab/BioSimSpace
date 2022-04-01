@@ -411,12 +411,16 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["integrator"] = "steep"                                   # Minimisation simulation.
         else:
-            protocol_dict["dt"] = f"{self.protocol.getTimeStep().picoseconds().magnitude():.3f}"  # Time step.
+            timestep = self.protocol.getTimeStep().picoseconds().magnitude()        # Define the timestep in picoseconds
+            protocol_dict["dt"] = f"{timestep:.3f}"                                 # Integration time step.
         protocol_dict["nsteps"] = self._steps                                       # Number of integration steps.
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["constraints"] = "h-bonds"                                # Rigid bonded hydrogens.
+            if timestep >= 0.004:
+                protocol_dict["constraints"] = "all-bonds"                          # If HMR, all constraints
+            else:
+                protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
             protocol_dict["constraint-algorithm"] = "LINCS"                         # Linear constraint solver.
 
         # PBC.
@@ -451,7 +455,7 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["pcoupl"] = "berendsen"                       # Barostat type.
+                        protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
                     else:
                         protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
