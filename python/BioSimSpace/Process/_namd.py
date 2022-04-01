@@ -284,7 +284,7 @@ class Namd(_process.Process):
                 v2 = self._system._sire_object.property(prop).vector2()
 
             # Work out the minimum box size.
-            box_size = min(v0.value(), v1.value(), v2.value())
+            box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
 
             # Convert vectors to tuples.
             v0 = tuple(v0)
@@ -477,8 +477,10 @@ class Namd(_process.Process):
                                    "Perhaps there are no atoms matching the restraint?")
 
                 # Update the configuration file.
-                self.addToConfig("fixedAtoms            yes")
-                self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
+                self.addToConfig("constraints           yes")
+                self.addToConfig("consref               %s.restrained" % self._name)
+                self.addToConfig("conskfile             %s.restrained" % self._name)
+                self.addToConfig("conskcol              O")
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
@@ -1886,18 +1888,20 @@ class Namd(_process.Process):
             for x, mol in enumerate(s):
 
                 # Get the indices of the restrained atoms for this molecule.
-                atoms = s.getRestraintAtoms(restraint, x, is_relative=False)
+                atoms = s.getRestraintAtoms(restraint, x,
+                        is_absolute=False, allow_zero_matches=True)
 
                 # Extract the molecule and make it editable.
                 edit_mol = mol._sire_object.edit()
 
-                # First set all restraints to zero.
+                # First set all restraint force constants to 0, i.e. the restraint
+                # will be ignored.
                 for atom in edit_mol.atoms():
                     edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
 
                 # Now apply restraints to the selected atoms.
                 for idx in atoms:
-                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 1.0).molecule()
+                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 10.0).molecule()
 
                 # Update the system.
                 s._sire_object.update(edit_mol.commit())
