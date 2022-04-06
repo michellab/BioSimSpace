@@ -361,3 +361,14 @@ class Type():
 
         else:
             raise TypeError("'string' must be of type 'str'")
+
+    def _sire_unit(self):
+        """Return the internal Sire Unit object to which this type corresponds.
+
+           Returns
+           -------
+
+           sire_unit : Sire.Units.GeneralUnit
+               The internal Sire Unit object that is being wrapped.
+        """
+        return self._value * self._supported_units[self._unit]
