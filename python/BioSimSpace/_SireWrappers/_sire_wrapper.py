@@ -252,6 +252,7 @@ class SireWrapper():
            -------
 
            object : Sire.System.System, Sire.Mol.Molecule, Sire.Mol.Residue, Sire.Mol.Atom
+               The Sire object that is being wrapped.
         """
         return self._sire_object
 
