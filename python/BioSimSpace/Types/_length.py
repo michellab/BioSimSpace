@@ -155,6 +155,29 @@ class Length(_Type):
         # Multipliation is commutative: a*b = b*a
         return self.__mul__(other)
 
+    def __pow__(self, other):
+        """Power operator."""
+
+        if not isinstance(other, int):
+            raise ValueError("We can only raise to the power of integer values.")
+
+        if other < 1 or other > 3:
+            raise ValueError("We can only raise to the power of [1,3].")
+
+        # No change.
+        if other == 1:
+            return self
+
+        # Area.
+        if other == 2:
+            mag = self.angstroms().value()**2
+            return _Area(mag, "A2")
+
+        # Volume.
+        if other == 3:
+            mag = self.angstroms().value()**3
+            return _Volume(mag, "A3")
+
     def meters(self):
         """Return the length in meters.
 

@@ -285,6 +285,9 @@ class Area(_Type):
         # Strip "^" character.
         unit = unit.replace("^", "")
 
+        # Strip "**" characters.
+        unit = unit.replace("**", "")
+
         # Strip any "S" characters.
         unit = unit.replace("S", "")
 
