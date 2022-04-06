@@ -20,8 +20,7 @@
 #####################################################################
 
 """
-A collection of physical unit types.
-Author: Lester Hedges <lester.hedges@gmail.com>
+A base class for physical unit types.
 """
 
 __author__ = "Lester Hedges"
