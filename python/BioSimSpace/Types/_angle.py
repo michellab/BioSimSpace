@@ -52,7 +52,11 @@ class Angle(_Type):
                      "DEGREE" : "An angle in degrees." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "RADIAN"
+    _default_unit = "RADIAN"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    1,      0,      0,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -131,7 +135,7 @@ class Angle(_Type):
         """
         return Angle((self._value * self._supported_units[self._unit]).to(_SireUnits.degree), "DEGREE")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters

@@ -2395,7 +2395,7 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -2409,7 +2409,7 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
+                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
 
             except KeyError:
                 return None

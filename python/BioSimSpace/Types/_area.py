@@ -60,7 +60,11 @@ class Area(_Type):
                      "PICOMETER2"  : "An area in square picometers." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "ANGSTROM2"
+    _default_unit = "ANGSTROM2"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      2,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -226,7 +230,7 @@ class Area(_Type):
         """
         return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters

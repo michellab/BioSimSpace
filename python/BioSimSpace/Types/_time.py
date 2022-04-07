@@ -75,7 +75,11 @@ class Time(_Type):
                      "FEMTOSECOND" : "A time in femtoseconds." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "NANOSECOND"
+    _default_unit = "NANOSECOND"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      0,    0,        0,           0,    1)
 
     def __init__(self, *args):
         """Constructor.
@@ -224,7 +228,7 @@ class Time(_Type):
         """
         return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.femtosecond), "FEMTOSECOND")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters

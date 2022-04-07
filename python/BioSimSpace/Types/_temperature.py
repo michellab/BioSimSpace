@@ -56,7 +56,11 @@ class Temperature(_Type):
                      "FAHRENHEIT" : "A temperature in Fahrenheit." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "KELVIN"
+    _default_unit = "KELVIN"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      0,    0,        0,           1,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -289,7 +293,7 @@ class Temperature(_Type):
         """
         return Temperature((self._value * self._supported_units[self._unit]).to(_SireUnits.fahrenheit), "FAHRENHEIT")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -352,3 +356,45 @@ class Temperature(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    def _from_sire_unit(self, sire_unit):
+        """Convert from a Sire Units object.
+
+           Parameters
+           ----------
+
+           sire_unit : Sire.Units.GeneralUnit, Sire.Units.Celsius, Sire.Units.Fahrenheit
+               The temperature as a Sire Units object.
+        """
+
+        if isinstance(sire_unit, _SireUnits.GeneralUnit):
+            # Create a mask for the dimensions of the object.
+            dimensions = (sire_unit.ANGLE(),
+                          sire_unit.CHARGE(),
+                          sire_unit.LENGTH(),
+                          sire_unit.MASS(),
+                          sire_unit.QUANTITY(),
+                          sire_unit.TEMPERATURE(),
+                          sire_unit.TIME()
+                         )
+
+            # Make sure the dimensions match.
+            if dimensions != self._dimensions:
+                raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
+                                f"'{self.__class__.__qualname__}'")
+
+            # Get the value in the default Sire unit for this type.
+            value = sire_unit.to(self._supported_units[self._default_unit])
+
+            # Store the value and unit.
+            self._value = value
+            self._unit = self._default_unit
+
+        elif isinstance(sire_unit, (_SireUnits.Celsius, _SireUnits.Fahrenheit)):
+            # Store the value and unit.
+            self._value = sire_unit.value()
+            self._unit = self._default_unit
+
+        else:
+            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit', "
+                            "'Sire.Units.Celsius', or 'Sire.Units.Fahrenheit'")

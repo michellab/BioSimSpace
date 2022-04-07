@@ -969,7 +969,7 @@ class Namd(_process.Process):
             time_steps = self.getRecord("TS", time_series, None, block)
 
             # Convert the time step to the default unit.
-            timestep = self._protocol.getTimeStep()._default_unit()
+            timestep = self._protocol.getTimeStep()._to_default_unit()
 
             # Multiply by the integration time step.
             if time_steps is not None:
@@ -1992,7 +1992,7 @@ class Namd(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -2006,7 +2006,7 @@ class Namd(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
+                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
 
             except KeyError:
                 return None

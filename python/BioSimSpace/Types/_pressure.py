@@ -52,7 +52,11 @@ class Pressure(_Type):
                      "BAR"        : "A pressure in bar." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "ATMOSPHERE"
+    _default_unit = "ATMOSPHERE"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,     -1,    1,        0,           0,   -2)
 
     def __init__(self, *args):
         """Constructor.
@@ -118,7 +122,7 @@ class Pressure(_Type):
         """
         return Pressure((self._value * self._supported_units[self._unit]).to(_SireUnits.bar), "BAR")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters

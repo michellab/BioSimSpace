@@ -33,6 +33,7 @@ Classes
     Charge
     Coordinate
     Energy
+    GeneralUnit
     Length
     Pressure
     Temperature
@@ -46,6 +47,7 @@ from ._area import *
 from ._charge import *
 from ._coordinate import *
 from ._energy import *
+from ._general_unit import *
 from ._length import *
 from ._pressure import *
 from ._temperature import *

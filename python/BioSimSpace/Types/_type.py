@@ -30,6 +30,8 @@ __all__ = ["Type"]
 
 import re as _re
 
+from Sire import Units as _SireUnits
+
 class Type():
     """A base class for custom types."""
     def __init__(self, *args):
@@ -73,19 +75,28 @@ class Type():
 
         # The user has passed a string representation of the temperature.
         elif len(args) == 1:
-            if not isinstance(args[0], str):
-                raise TypeError("'string' must be of type 'str'")
+            if isinstance(args[0], (_SireUnits.GeneralUnit,
+                                    _SireUnits.Celsius,
+                                    _SireUnits.Fahrenheit)):
+                # Try to convert the Sire GeneralUnit to an object of this type.
+                self._from_sire_unit(args[0])
 
-            # Convert the string to an object of this type.
-            obj = self._from_string(args[0])
+            elif isinstance(args[0], str):
+                # Convert the string to an object of this type.
+                obj = self._from_string(args[0])
 
-            # Store the value and unit.
-            self._value = obj._value
-            self._unit = obj._unit
+                # Store the value and unit.
+                self._value = obj._value
+                self._unit = obj._unit
+
+            else:
+                raise TypeError("__init__() missing positional argument(s): "
+                                "'string' or 'Sire.Units.GeneralUnit'")
 
         # No arguments.
         else:
-            raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', or 'string'")
+            raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
+                            "or 'string' or 'Sire.Units.GeneralUnit'")
 
         # Set the documentation string.
         self.__doc__ = self._doc_strings[self._unit]
@@ -115,10 +126,10 @@ class Type():
         # Addition of another object of the same type.
         if type(other) is type(self):
             # Add the values in a common unit.
-            mag = self._default_unit().value() + other._default_unit().value()
+            mag = self._to_default_unit().value() + other._to_default_unit().value()
 
             # Return a new object of the same type with the original unit.
-            return self._default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(mag)._convert_to(self._unit)
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -135,10 +146,10 @@ class Type():
         # Subtraction of another object of the same type.
         if type(other) is type(self):
             # Subtract the values in a common unit.
-            mag = self._default_unit().value() - other._default_unit().value()
+            mag = self._to_default_unit().value() - other._to_default_unit().value()
 
             # Return a new object of the same type with the original unit.
-            return self._default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(mag)._convert_to(self._unit)
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -159,10 +170,10 @@ class Type():
         # Only support multiplication by float.
         if isinstance(other, float):
             # Convert to default unit and multiply.
-            mag = self._default_unit().value() * other
+            mag = self._to_default_unit().value() * other
 
             # Return a new object of the same type with the original unit.
-            return self._default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(mag)._convert_to(self._unit)
 
         else:
             raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
@@ -184,14 +195,14 @@ class Type():
         # Float division.
         if isinstance(other, float):
             # Convert to default unit and divide.
-            mag = self._default_unit().value() / other
+            mag = self._to_default_unit().value() / other
 
             # Return a new object of the same type with the original unit.
-            return self._default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(mag)._convert_to(self._unit)
 
         # Division by another object of the same type.
         elif type(other) is type(self):
-            return self._default_unit().value() / other._default_unit().value()
+            return self._to_default_unit().value() / other._to_default_unit().value()
 
         # Division by a string.
         elif isinstance(other, str):
@@ -207,11 +218,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() < other._default_unit().value()
+            return self._to_default_unit().value() < other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() < self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() < self._from_string(other)._to_default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' < '%s'"
@@ -222,11 +233,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() <= other._default_unit().value()
+            return self._to_default_unit().value() <= other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() <= self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() <= self._from_string(other)._to_default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' <= '%s'"
@@ -237,11 +248,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() == other._default_unit().value()
+            return self._to_default_unit().value() == other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() == self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() == self._from_string(other)._to_default_unit().value()
 
         else:
             return False
@@ -251,11 +262,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() != other._default_unit().value()
+            return self._to_default_unit().value() != other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() != self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() != self._from_string(other)._to_default_unit().value()
 
         else:
             return True
@@ -265,11 +276,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() >= other._default_unit().value()
+            return self._to_default_unit().value() >= other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() >= self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() >= self._from_string(other)._to_default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' >= '%s'"
@@ -280,11 +291,11 @@ class Type():
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._default_unit().value() > other._default_unit().value()
+            return self._to_default_unit().value() > other._to_default_unit().value()
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._default_unit().value() > self._from_string(other)._default_unit().value()
+            return self._to_default_unit().value() > self._from_string(other)._to_default_unit().value()
 
         else:
             raise TypeError("unorderable types: '%s' > '%s'"
@@ -329,7 +340,7 @@ class Type():
         """
 
         if string == "==SUPPRESS==":
-            return type(self)(0, self._null_unit)
+            return type(self)(0, self._default_unit)
 
         string_copy = string
 
@@ -361,7 +372,7 @@ class Type():
         else:
             raise TypeError("'string' must be of type 'str'")
 
-    def _sire_unit(self):
+    def _to_sire_unit(self):
         """Return the internal Sire Unit object to which this type corresponds.
 
            Returns
@@ -371,3 +382,38 @@ class Type():
                The internal Sire Unit object that is being wrapped.
         """
         return self._value * self._supported_units[self._unit]
+
+    def _from_sire_unit(self, sire_unit):
+        """Convert from a Sire GeneralUnit object.
+
+           Parameters
+           ----------
+
+           sire_unit : Sire.Units.GeneralUnit
+               A Sire GeneralUnit object.
+        """
+
+        if not isinstance(sire_unit, _SireUnits.GeneralUnit):
+            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit'")
+
+        # Create a mask for the dimensions of the object.
+        dimensions = (sire_unit.ANGLE(),
+                      sire_unit.CHARGE(),
+                      sire_unit.LENGTH(),
+                      sire_unit.MASS(),
+                      sire_unit.QUANTITY(),
+                      sire_unit.TEMPERATURE(),
+                      sire_unit.TIME()
+                     )
+
+        # Make sure the dimensions match.
+        if dimensions != self._dimensions:
+            raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
+                            f"'{self.__class__.__qualname__}'")
+
+        # Get the value in the default Sire unit for this type.
+        value = sire_unit.to(self._supported_units[self._default_unit])
+
+        # Store the value and unit.
+        self._value = value
+        self._unit = self._default_unit
