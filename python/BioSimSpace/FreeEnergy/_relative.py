@@ -1306,12 +1306,12 @@ class Relative():
         # Propagate the errors. (These add in quadrature.)
 
         # Measure.
-        error0 = _math.sqrt((pmf[-1][2].magnitude() * pmf[-1][2].magnitude()) +
-                            (pmf[ 0][2].magnitude() * pmf[ 0][2].magnitude()))
+        error0 = _math.sqrt((pmf[-1][2].value() * pmf[-1][2].value()) +
+                            (pmf[ 0][2].value() * pmf[ 0][2].value()))
 
         # Reference.
-        error1 = _math.sqrt((pmf_ref[-1][2].magnitude() * pmf_ref[-1][2].magnitude()) +
-                            (pmf_ref[ 0][2].magnitude() * pmf_ref[ 0][2].magnitude()))
+        error1 = _math.sqrt((pmf_ref[-1][2].value() * pmf_ref[-1][2].value()) +
+                            (pmf_ref[ 0][2].value() * pmf_ref[ 0][2].value()))
 
         # Error for free-energy difference.
         error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol

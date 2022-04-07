@@ -97,7 +97,7 @@ def cubic(image_distance):
     if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
-    if image_distance.magnitude() <=0:
+    if image_distance.value() <= 0:
         raise ValueError("'image_distance' must be greater than zero.")
 
     box = 3*[image_distance]
@@ -129,12 +129,12 @@ def rhombicDodecahedronSquare(image_distance):
     if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
-    if image_distance.magnitude() <=0:
+    if image_distance.value() <= 0:
         raise ValueError("'image_distance' must be greater than zero.")
 
     # Create the triclinic box.
 
-    triclinic_box = _TriclinicBox.rhombicDodecahedronSquare(image_distance.angstroms().magnitude())
+    triclinic_box = _TriclinicBox.rhombicDodecahedronSquare(image_distance.angstroms().value())
 
     return _get_box_parameters(triclinic_box)
 
@@ -162,12 +162,12 @@ def rhombicDodecahedronHexagon(image_distance):
     if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
-    if image_distance.magnitude() <=0:
+    if image_distance.value() <= 0:
         raise ValueError("'image_distance' must be greater than zero.")
 
     # Create the triclinic box.
 
-    triclinic_box = _TriclinicBox.rhombicDodecahedronHexagon(image_distance.angstroms().magnitude())
+    triclinic_box = _TriclinicBox.rhombicDodecahedronHexagon(image_distance.angstroms().value())
 
     return _get_box_parameters(triclinic_box)
 
@@ -195,12 +195,12 @@ def truncatedOctahedron(image_distance):
     if not isinstance(image_distance, _Length):
         raise TypeError("'image_distance' must be of type 'BioSimSpace.Types.Length'.")
 
-    if image_distance.magnitude() <=0:
+    if image_distance.value() <= 0:
         raise ValueError("'image_distance' must be greater than zero.")
 
     # Create the triclinic box.
 
-    triclinic_box = _TriclinicBox.truncatedOctahedron(image_distance.angstroms().magnitude())
+    triclinic_box = _TriclinicBox.truncatedOctahedron(image_distance.angstroms().value())
 
     return _get_box_parameters(triclinic_box)
 

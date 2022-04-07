@@ -65,14 +65,14 @@ class Volume(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the volume, e.g. "100 pm^3".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -106,7 +106,7 @@ class Volume(_Type):
         super().__init__(*args)
 
         # Don't support negative volumes.
-        if self._magnitude < 0:
+        if self._value < 0:
             raise ValueError("The volume cannot be negative!")
 
     def __truediv__(self, other):
@@ -118,21 +118,21 @@ class Volume(_Type):
 
         # Float division.
         if isinstance(other, float):
-            mag = self._magnitude / other
+            mag = self._value / other
             return Volume(mag, self._unit)
 
         # Division by another Volume.
         elif isinstance(other, Volume):
-            return self.angstroms3().magnitude() / other.angstroms3().magnitude()
+            return self.angstroms3().value() / other.angstroms3().value()
 
         # Division by an Area.
         elif isinstance(other, _Area):
-            mag = self.angstroms3().magnitude() / other.angstroms2().magnitude()
+            mag = self.angstroms3().value() / other.angstroms2().value()
             return _Length(mag, "A")
 
         # Division by a Length.
         elif isinstance(other, _Length):
-            mag = self.angstroms3().magnitude() / other.angstroms().magnitude()
+            mag = self.angstroms3().value() / other.angstroms().value()
             return _Area(mag, "A2")
 
         # Division by a string.
@@ -165,7 +165,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic meters.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter3), "METER3")
+        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.meter3), "METER3")
 
     def nanometers3(self):
         """Return the volume in cubic nanometers.
@@ -176,7 +176,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic nanometers.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer3), "NANOMETER3")
+        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer3), "NANOMETER3")
 
     def angstroms3(self):
         """Return the volume in cubic Angstrom.
@@ -187,7 +187,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic Angstrom.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom3), "ANGSTROM3")
+        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom3), "ANGSTROM3")
 
     def picometers3(self):
         """Return the volume in cubic picometers.
@@ -198,7 +198,7 @@ class Volume(_Type):
            volume : :class:`Volume <BioSimSpace.Types.Volume>`
                The volume in cubic picometers.
         """
-        return Volume((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer3), "PICOMETER3")
+        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer3), "PICOMETER3")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -207,7 +207,7 @@ class Volume(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

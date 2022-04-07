@@ -428,7 +428,7 @@ class Somd(_process.Process):
             # coordinates back into the original system.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
@@ -537,7 +537,7 @@ class Somd(_process.Process):
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule numbers in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
@@ -826,15 +826,11 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     # that the names must be unique. As such we need to count the number of
     # atoms with a particular name, then append an index to their name.
 
-    # A dictionary to track the atom names.
+    # Loop over all atoms in the molecule and tally the occurrence of each
+    # name.
     atom_names = {}
-
-    # Loop over all atoms in the molecule.
     for atom in mol.atoms():
-        if atom.name() in atom_names:
-            atom_names[atom.name()] += 1
-        else:
-            atom_names[atom.name()] = 1
+        atom_names[atom.name()] = atom_names.get(atom.name(), 1) + 1
 
     # Create a set from the atoms names seen so far.
     names = set(atom_names.keys())
@@ -2013,26 +2009,22 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
         # lambda = 0.
         for idx0 in impropers0_idx.keys():
-            is_shared = False
             for idx1 in impropers1_idx.keys():
                 if idx0.equivalent(idx1):
                     impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
         # lambda = 1.
         for idx1 in impropers1_idx.keys():
-            is_shared = False
             for idx0 in impropers0_idx.keys():
                 if idx1.equivalent(idx0):
                     # Don't store duplicates.
                     if not idx0 in impropers_shared_idx.keys():
                         impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers1_unique_idx[idx1] = impropers1_idx[idx1]
 
         # First create records for the impropers that are unique to lambda = 0 and 1.

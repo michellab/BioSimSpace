@@ -60,7 +60,7 @@ class Molecules(_SireWrapper):
         if isinstance(molecules, tuple):
             molecules = list(molecules)
 
-        # A Sire Molecules object.
+        # A Sire MoleculeGroup object.
         if isinstance(molecules, _SireMol.MoleculeGroup):
             super().__init__(molecules)
 
@@ -72,7 +72,7 @@ class Molecules(_SireWrapper):
         elif isinstance(molecules, _System):
             super().__init__(molecules._sire_object.group(_SireMol.MGName("all")))
 
-        # Another BioSimSpace Molecule object.
+        # A list of BioSimSpace molecules.
         elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             molgrp = _SireMol.MoleculeGroup("all")
             mol_nums = []
@@ -80,8 +80,8 @@ class Molecules(_SireWrapper):
                 if molecule._sire_object.number() in mol_nums:
                     raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
                                      "contain unique molecules. Use the 'copy' method "
-                                     "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                     "create a new version of a molecule.")
+                                     "of 'BioSimSpace._SireWrappers' objects to "
+                                     "create a new version of them.")
                 molgrp.add(molecule._sire_object)
                 mol_nums.append(molecule._sire_object.number())
             super().__init__(molgrp)
@@ -117,43 +117,47 @@ class Molecules(_SireWrapper):
         molecules = self._sire_object.__deepcopy__()
 
         # Extract the MolNums.
-        mol_nums = molecules.molNums()
+        mol_nums0 = molecules.molNums()
 
-        # Validate the input.
+        # Validate the input. Convert all valid input to another
+        # Molecules object.
 
         # A System object.
         if isinstance(other, _System):
-            molecules.add(other._sire_object.molecules())
+            other = other.getMolecules()
 
         # A Molecule object.
         elif isinstance(other, _Molecule):
-            if other._sire_object.number() in mol_nums:
-                raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
-                                 "contain unique molecules. Use the 'copy' method "
-                                 "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                 "to create a new version of a molecule.")
-            molecules.add(other._sire_object)
+            other = Molecules([other])
 
         # A Molecules object.
         elif isinstance(other, Molecules):
-            molecules.add(other._sire_object)
+            pass
 
         # A list of Molecule objects.
         elif isinstance(other, list) and all(isinstance(x, _Molecule) for x in other):
-            for molecule in other:
-                if molecule._sire_object.number() in mol_nums:
-                    raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
-                                     "contain unique molecules. Use the 'copy' method "
-                                     "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                     "create a new version of a molecule.")
-                molecules.add(molecule._sire_object)
-                mol_nums.append(molecule._sire_object.number())
+            other = Molecules(other)
 
         # Unsupported.
         else:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
                             "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
+
+        # Extract the molecule numbers for the current system and
+        # the molecules to add.
+        mol_nums1 = other._sire_object.molNums()
+
+        # There are molecule numbers in both sets, or the molecules
+        # to add contains duplicates.
+        if (set(mol_nums0) & set(mol_nums1)) or \
+           (len(mol_nums1) != len(set(mol_nums1))):
+            raise ValueError("'BioSimSpace._SireWrappers.System' can only "
+                             "contain unique molecules. Use the 'copy' method "
+                             "of 'BioSimSpace._SireWrappers.Molecule' to "
+                             "create a new version of a molecule.")
+
+        molecules.add(other._sire_object)
 
         # Create and return a new Molecules object.
         return Molecules(molecules)
@@ -317,7 +321,7 @@ class Molecules(_SireWrapper):
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")

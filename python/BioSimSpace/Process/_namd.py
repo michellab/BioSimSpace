@@ -423,15 +423,15 @@ class Namd(_process.Process):
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
             else:
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -446,7 +446,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -477,22 +477,24 @@ class Namd(_process.Process):
                                    "Perhaps there are no atoms matching the restraint?")
 
                 # Update the configuration file.
-                self.addToConfig("fixedAtoms            yes")
-                self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
+                self.addToConfig("constraints           yes")
+                self.addToConfig("consref               %s.restrained" % self._name)
+                self.addToConfig("conskfile             %s.restrained" % self._name)
+                self.addToConfig("conskcol              O")
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
-                            self._protocol.getStartTemperature().kelvin().magnitude())
+                denom = abs(self._protocol.getEndTemperature().kelvin().value() -
+                            self._protocol.getStartTemperature().kelvin().value())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
                 self.addToConfig("reassignTemp          %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig("reassignIncr          1.")
                 self.addToConfig("reassignHold          %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % restart_interval)
@@ -525,12 +527,12 @@ class Namd(_process.Process):
 
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -547,7 +549,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -692,7 +694,7 @@ class Namd(_process.Process):
                 # Create a copy of the existing system object.
                 old_system = self._system.copy()
 
-                # Udpate the coordinates and velocities and return a mapping between
+                # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                         old_system._sire_object,
@@ -804,7 +806,7 @@ class Namd(_process.Process):
             # Create a copy of the existing system object.
             old_system = self._system.copy()
 
-            # Udpate the coordinates and velocities and return a mapping between
+            # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
@@ -1886,18 +1888,20 @@ class Namd(_process.Process):
             for x, mol in enumerate(s):
 
                 # Get the indices of the restrained atoms for this molecule.
-                atoms = s.getRestraintAtoms(restraint, x, is_relative=False)
+                atoms = s.getRestraintAtoms(restraint, x,
+                        is_absolute=False, allow_zero_matches=True)
 
                 # Extract the molecule and make it editable.
                 edit_mol = mol._sire_object.edit()
 
-                # First set all restraints to zero.
+                # First set all restraint force constants to 0, i.e. the restraint
+                # will be ignored.
                 for atom in edit_mol.atoms():
                     edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
 
                 # Now apply restraints to the selected atoms.
                 for idx in atoms:
-                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 1.0).molecule()
+                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 10.0).molecule()
 
                 # Update the system.
                 s._sire_object.update(edit_mol.commit())

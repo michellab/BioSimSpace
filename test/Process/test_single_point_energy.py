@@ -49,18 +49,18 @@ def test_amber_gromacs(system):
     process_gmx.wait()
 
     # Compare bond energies. (In kJ / mol)
-    nrg_amb = process_amb.getBondEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getBondEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getBondEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getBondEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
     # Compare angle energies. (In kJ / mol)
-    nrg_amb = process_amb.getAngleEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getAngleEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getAngleEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getAngleEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
     # Compare dihedral energies. (In kJ / mol)
-    nrg_amb = process_amb.getDihedralEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getDihedralEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getDihedralEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getDihedralEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
 @pytest.mark.skipif(has_amber is False or has_gromacs is False,
@@ -96,16 +96,16 @@ def test_amber_gromacs_triclinic(system):
     process_gmx.wait()
 
     # Compare bond energies. (In kJ / mol)
-    nrg_amb = process_amb.getBondEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getBondEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getBondEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getBondEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
     # Compare angle energies. (In kJ / mol)
-    nrg_amb = process_amb.getAngleEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getAngleEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getAngleEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getAngleEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
     # Compare dihedral energies. (In kJ / mol)
-    nrg_amb = process_amb.getDihedralEnergy().kj_per_mol().magnitude()
-    nrg_gmx = process_gmx.getDihedralEnergy().kj_per_mol().magnitude()
+    nrg_amb = process_amb.getDihedralEnergy().kj_per_mol().value()
+    nrg_gmx = process_gmx.getDihedralEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)

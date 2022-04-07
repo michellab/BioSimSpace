@@ -386,7 +386,7 @@ class System(_SireWrapper):
 
         # A Molecule object.
         if isinstance(molecules, _Molecule):
-            molecules = [molecules]
+            molecules = _Molecules([molecules])
 
         # A Molecules object.
         if isinstance(molecules, _Molecules):
@@ -398,7 +398,7 @@ class System(_SireWrapper):
 
         # A list of Molecule objects.
         elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
-            pass
+            molecules = _Molecules(molecules)
 
         # Invalid argument.
         else:
@@ -409,35 +409,39 @@ class System(_SireWrapper):
         # Store the existing number of molecules.
         num_mols = self._sire_object.nMolecules()
 
-        # The system is empty: create a new Sire system from the molecules.
+        # The system is empty: create an empty Sire system.
         if num_mols == 0:
-            self._sire_object = self._createSireSystem(molecules)
+            self._sire_object = self._createSireSystem()
             self._mol_nums = []
 
-        # Now add the molecules to the existing "all" group.
+        # Only continue if there are molecules to add.
+        if len(molecules) > 0:
+            # Extract the molecule numbers for the current system and
+            # the molecules to add.
+            mol_nums0 = self._mol_nums
+            mol_nums1 = molecules._sire_object.molNums()
 
-        # Initialise the offsets for renumbering (one indexed).
-        residue_offset = 1 + self.nResidues()
-        atom_offset = 1 + self.nAtoms()
-        for mol in molecules:
-            if mol._sire_object.number() in self._mol_nums:
+            # There are molecule numbers in both sets, or the molecules
+            # to add contains duplicates.
+            if (set(mol_nums0) & set(mol_nums1)) or \
+               (len(mol_nums1) != len(set(mol_nums1))):
                 raise ValueError("'BioSimSpace._SireWrappers.System' can only "
                                  "contain unique molecules. Use the 'copy' method "
-                                 "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                 "create a new version of a molecule.")
+                                 "of 'BioSimSpace._SireWrappers' objects to "
+                                 "create a new version of them.")
 
-            # Add the molecule to the system.
-            self._sire_object.add(mol._sire_object, _SireMol.MGName("all"))
+            # Add the molecules to the system.
+            self._sire_object.add(molecules._sire_object, _SireMol.MGName("all"))
 
-        # Renumber all of the constituents in the system so that they are unique
-        # and in ascending order.
-        self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
+            # Renumber all of the constituents in the system so that they are unique
+            # and in ascending order.
+            self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
 
-        # Reset the index mappings.
-        self._reset_mappings()
+            # Reset the index mappings.
+            self._reset_mappings()
 
-        # Update the molecule numbers.
-        self._mol_nums = self._sire_object.molNums()
+            # Update the molecule numbers.
+            self._mol_nums = self._sire_object.molNums()
 
     def removeMolecules(self, molecules):
         """Remove a molecule, or list of molecules from the system.
@@ -611,7 +615,7 @@ class System(_SireWrapper):
                     # original molecular ordering.
                     system = _SireIO.updateAndPreserveOrder(system, mol._sire_object, idx)           
 
-        # Udpate the Sire object.
+        # Update the Sire object.
         self._sire_object = system
 
         # Reset the index mappings.
@@ -1001,20 +1005,20 @@ class System(_SireWrapper):
             raise ValueError("'angles' must contain three items.")
 
         # Convert sizes to Anstrom.
-        vec = [x.angstroms().magnitude() for x in box]
+        vec = [x.angstroms().value() for x in box]
 
         # Whether the box is triclinic.
         is_triclinic = False
 
         # If any angle isn't 90 degrees, then the box is triclinic.
         for x in angles:
-            if abs(x.degrees().magnitude() - 90) > 1e-6:
+            if abs(x.degrees().value() - 90) > 1e-6:
                 is_triclinic = True
                 break
 
         if is_triclinic:
             # Convert angles to Sire units.
-            ang = [x.degrees().magnitude()*_SireUnits.degree for x in angles]
+            ang = [x.degrees().value()*_SireUnits.degree for x in angles]
 
             # Create a triclinic box object.
             space = _SireVol.TriclinicBox(vec[0], vec[1], vec[2],
@@ -1100,7 +1104,7 @@ class System(_SireWrapper):
                 elif isinstance(x, float):
                     vec.append(x)
                 elif isinstance(x, _Length):
-                    vec.append(x.angstroms().magnitude())
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")
@@ -1532,7 +1536,7 @@ class System(_SireWrapper):
         return new_molecules
 
     @staticmethod
-    def _createSireSystem(molecules):
+    def _createSireSystem():
         """Create an empty Sire system with a single molecule group called "all".
 
            Returns

@@ -57,14 +57,14 @@ class Charge(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the charge, e.g. "0.2 e".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -106,7 +106,7 @@ class Charge(_Type):
            charge : :class:`Charge <BioSimSpace.Types.Charge>`
                The charge in electron charge.
         """
-        return Charge((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.e_charge), "ELECTRON CHARGE")
+        return Charge((self._value * self._supported_units[self._unit]).to(_SireUnits.e_charge), "ELECTRON CHARGE")
 
     def coulomb(self):
         """Return the charge in Coulomb.
@@ -117,7 +117,7 @@ class Charge(_Type):
            charge : :class:`Charge <BioSimSpace.Types.Charge>`
                The charge in Coulomb.
         """
-        return Charge((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.coulomb), "COULOMB")
+        return Charge((self._value * self._supported_units[self._unit]).to(_SireUnits.coulomb), "COULOMB")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -126,7 +126,7 @@ class Charge(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

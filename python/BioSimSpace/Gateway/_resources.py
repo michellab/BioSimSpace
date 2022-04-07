@@ -47,9 +47,9 @@ class ResourceManager():
                                                 add_help=False, allow_abbrev=False)
 
         # Add the arguments.
-        self._parser.add_argument("--nodes", type=int, help="The number of harwdare nodes.")
-        self._parser.add_argument("--cpus", type=int, help="The number of harwdare central processing units.")
-        self._parser.add_argument("--gpus", type=int, help="The number of harwdare graphics processors.")
+        self._parser.add_argument("--nodes", type=int, help="The number of hardware nodes.")
+        self._parser.add_argument("--cpus", type=int, help="The number of hardware central processing units.")
+        self._parser.add_argument("--gpus", type=int, help="The number of hardware graphics processors.")
 
     def _initialise(self):
         """Initialise the resource manager."""

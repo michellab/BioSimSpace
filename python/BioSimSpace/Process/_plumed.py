@@ -293,7 +293,7 @@ class Plumed():
 
                 if upper_bound is not None:
                     # Store the value of the bound in angstrom.
-                    value = upper_bound.getValue().angstroms().magnitude()
+                    value = upper_bound.getValue().angstroms().value()
 
                     # Get the user-defined "space" property.
                     space_prop = property_map.get("space", "space")
@@ -477,9 +477,9 @@ class Plumed():
                 # A coordinate of a fixed point.
                 elif isinstance(atom0, _Coordinate):
                     # Convert to nanometers.
-                    x = atom0.x().nanometers().magnitude()
-                    y = atom0.y().nanometers().magnitude()
-                    z = atom0.z().nanometers().magnitude()
+                    x = atom0.x().nanometers().value()
+                    y = atom0.y().nanometers().value()
+                    z = atom0.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -512,9 +512,9 @@ class Plumed():
                 # A coordinate of a fixed point.
                 elif isinstance(atom1, _Coordinate):
                     # Convert to nanometers.
-                    x = atom1.x().nanometers().magnitude()
-                    y = atom1.y().nanometers().magnitude()
-                    z = atom1.z().nanometers().magnitude()
+                    x = atom1.x().nanometers().value()
+                    y = atom1.y().nanometers().value()
+                    z = atom1.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -638,10 +638,10 @@ class Plumed():
                 # Add funnel parameters.
                 self._config.append("")
                 self._config.append("# Funnel parameters.")
-                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().magnitude()}")  # inflection
-                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")            # steepness
-                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().magnitude()}")   # width
-                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().magnitude()}") # total = width + buffer
+                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().value()}")  # inflection
+                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")        # steepness
+                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().value()}")   # width
+                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().value()}") # total = width + buffer
 
                 # Define the funnel calculation. This function returns the
                 # radius of the funnel at the current value of the collective
@@ -678,7 +678,7 @@ class Plumed():
                 lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name[0])
                 try:
                     # Unit based.
-                    lower_wall_string += ", AT=%s" % lower_wall.getValue().magnitude()
+                    lower_wall_string += ", AT=%s" % lower_wall.getValue().value()
                 except:
                     # Dimensionless.
                     lower_wall_string += ", AT=%s" % lower_wall.getValue()
@@ -695,7 +695,7 @@ class Plumed():
                 upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name[0])
                 try:
                     # Unit based.
-                    upper_wall_string += ", AT=%s" % upper_wall.getValue().magnitude()
+                    upper_wall_string += ", AT=%s" % upper_wall.getValue().value()
                 except:
                     # Dimensionless.
                     upper_wall_string += ", AT=%s" % upper_wall.getValue()
@@ -711,18 +711,18 @@ class Plumed():
                         grid_data.append(("-pi", "pi", grid.getBins()))
                 elif is_funnel:
                     # Grid for "projection" component.
-                    grid_data.append((grid[0].getMinimum().magnitude(),
-                                      grid[0].getMaximum().magnitude(),
+                    grid_data.append((grid[0].getMinimum().value(),
+                                      grid[0].getMaximum().value(),
                                       grid[0].getBins()))
                     # Grid for "extent" component.
-                    grid_data.append((grid[1].getMinimum().magnitude(),
-                                      grid[1].getMaximum().magnitude(),
+                    grid_data.append((grid[1].getMinimum().value(),
+                                      grid[1].getMaximum().value(),
                                       grid[1].getBins()))
                 else:
                     try:
                         # Unit based.
-                        grid_data.append((grid.getMinimum().magnitude(),
-                                          grid.getMaximum().magnitude(),
+                        grid_data.append((grid.getMinimum().value(),
+                                          grid.getMaximum().value(),
                                           grid.getBins()))
                     except:
                         # Dimensionless.
@@ -747,20 +747,20 @@ class Plumed():
             if isinstance(hill_width, tuple):
                 last_hill = len(hill_width) - 1
                 for idx1, width in enumerate(hill_width):
-                    metad_string += "%s" % width.magnitude()
+                    metad_string += "%s" % width.value()
                     if idx1 < last_hill:
                         metad_string += ","
             else:
                 # Handle dimensionless collective variables.
                 try:
-                    metad_string += "%s" % hill_width.magnitude()
+                    metad_string += "%s" % hill_width.value()
                 except:
                     metad_string += "%s" % hill_width
             if idx0 < self._num_colvar - 1:
                 metad_string += ","
 
         # Hill height.
-        metad_string += " HEIGHT=%s" % protocol.getHillHeight().magnitude()
+        metad_string += " HEIGHT=%s" % protocol.getHillHeight().value()
 
         # Hill frequency.
         metad_string += " PACE=%s" % protocol.getHillFrequency()
@@ -787,7 +787,7 @@ class Plumed():
             metad_string += " CALC_RCT"
 
         # Temperature and bias parameters.
-        metad_string += " TEMP=%s" % protocol.getTemperature().kelvin().magnitude()
+        metad_string += " TEMP=%s" % protocol.getTemperature().kelvin().value()
         if protocol.getBiasFactor() is not None:
             metad_string += " BIASFACTOR=%s" % protocol.getBiasFactor()
 
@@ -1015,9 +1015,9 @@ class Plumed():
                 # A coordinate of a fixed point.
                 elif isinstance(atom0, _Coordinate):
                     # Convert to nanometers.
-                    x = atom0.x().nanometers().magnitude()
-                    y = atom0.y().nanometers().magnitude()
-                    z = atom0.z().nanometers().magnitude()
+                    x = atom0.x().nanometers().value()
+                    y = atom0.y().nanometers().value()
+                    z = atom0.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -1050,9 +1050,9 @@ class Plumed():
                 # A coordinate of a fixed point.
                 elif isinstance(atom1, _Coordinate):
                     # Convert to nanometers.
-                    x = atom1.x().nanometers().magnitude()
-                    y = atom1.y().nanometers().magnitude()
-                    z = atom1.z().nanometers().magnitude()
+                    x = atom1.x().nanometers().value()
+                    y = atom1.y().nanometers().value()
+                    z = atom1.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -1169,11 +1169,11 @@ class Plumed():
             for idx, r in enumerate(restraints[x]):
                 # Get the value of the restraint.
                 val = r.getValue()
-                # Convert to correct unit and take magnitude.
+                # Convert to correct unit and take the value.
                 if isinstance(val, _Types.Length):
-                    val = val.nanometers().magnitude()
+                    val = val.nanometers().value()
                 elif isinstance(val, _Types.Angle):
-                    val = val.radians().magnitude()
+                    val = val.radians().value()
                 at    += f"{val:.6f}"
                 kappa += f"{r.getForceConstant():.2f}"
                 if idx < self._num_colvar - 1:
@@ -1316,11 +1316,11 @@ class Plumed():
         if not isinstance(kt, _Types.Energy):
             raise TypeError("'kt' must be of type 'BioSimSpace.Type.Energy'")
 
-        # Convert to default PLUMED unit and get the magnitude.
-        kt = kt.kj_per_mol().magnitude()
+        # Convert to default PLUMED unit and get the value.
+        kt = kt.kj_per_mol().value()
 
         if kt <= 0:
-            raise ValueError("'kt' must have magnitude > 0")
+            raise ValueError("'kt' must have value > 0")
 
         # Delete any existing FES directotry and create a new one.
         _shutil.rmtree(f"{self._work_dir}/fes", ignore_errors=True)

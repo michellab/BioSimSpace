@@ -262,8 +262,8 @@ class Equilibration(_Protocol):
         """
 
         if isinstance(temperature, _Types.Temperature):
-            if temperature.kelvin().magnitude() == _pytest.approx(0):
-                temperature._magnitude = 0.01
+            if temperature.kelvin().value() == _pytest.approx(0):
+                temperature._value = 0.01
             self._temperature_start = temperature
         else:
             raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
@@ -289,8 +289,8 @@ class Equilibration(_Protocol):
                The final temperature.
         """
         if isinstance(temperature, _Types.Temperature):
-            if temperature.kelvin().magnitude() == _pytest.approx(0):
-                temperature._magnitude = 0.01
+            if temperature.kelvin().value() == _pytest.approx(0):
+                temperature._value = 0.01
             self._temperature_end = temperature
         else:
             raise TypeError("'temperature_end' must be of type 'BioSimSpace.Types.Temperature'")

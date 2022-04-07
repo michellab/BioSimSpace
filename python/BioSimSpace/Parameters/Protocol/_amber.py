@@ -339,9 +339,9 @@ class GAFF(_protocol.Protocol):
                 % (charge_method, self._charge_methods))
 
         if net_charge is not None:
-            # Get the magnitude of the charge.
+            # Get the value of the charge.
             if isinstance(net_charge, _Charge):
-                net_charge = net_charge.magnitude()
+                net_charge = net_charge.value()
 
             if isinstance(net_charge, float):
                 if net_charge % 1 != 0:
@@ -472,7 +472,7 @@ class GAFF(_protocol.Protocol):
 
             # The molecule has a charge property.
             if new_mol._getSireObject().hasProperty(prop):
-                charge = new_mol.charge(property_map=_property_map).magnitude()
+                charge = new_mol.charge(property_map=_property_map).value()
 
                 # Charge is non-integer, try to fix it.
                 if abs(round(charge) - charge) > 0:
@@ -494,10 +494,10 @@ class GAFF(_protocol.Protocol):
                     prop = "formal_charge"
 
                 if new_mol._getSireObject().hasProperty(prop):
-                    charge = new_mol.charge(property_map=_property_map).magnitude()
+                    charge = new_mol.charge(property_map=_property_map).value()
 
                     # Compute the formal charge ourselves to check that it is consistent.
-                    formal_charge = _formalCharge(new_mol).magnitude()
+                    formal_charge = _formalCharge(new_mol).value()
 
                     if charge != formal_charge:
                         _warnings.warn("The formal charge on the molecule is %d "
@@ -707,9 +707,9 @@ class GAFF2(_protocol.Protocol):
                 % (charge_method, self._charge_methods))
 
         if net_charge is not None:
-            # Get the magnitude of the charge.
+            # Get the value of the charge.
             if isinstance(net_charge, _Charge):
-                net_charge = net_charge.magnitude()
+                net_charge = net_charge.value()
 
             if isinstance(net_charge, float):
                 if net_charge % 1 != 0:

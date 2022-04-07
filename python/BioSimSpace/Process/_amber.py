@@ -354,6 +354,72 @@ class Amber(_process.Process):
             config_options["plumed"] = 1
             config_options["plumedfile"] = "plumed.dat"
 
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+
+            # Get the report and restart intervals.
+            report_interval = self._protocol.getReportInterval()
+            restart_interval = self._protocol.getRestartInterval()
+
+            # Cap the intervals at the total number of steps.
+            if report_interval > steps:
+                report_interval = steps
+            if restart_interval > steps:
+                restart_interval = steps
+
+            # Set the random number seed.
+            if self._seed is None:
+                seed = -1
+            else:
+                seed = self._seed
+
+            # Convert the timestep to picoseconds.
+            timestep = self._protocol.getTimeStep().picoseconds().value()
+
+            self.addToConfig("Production.")
+            self.addToConfig(" &cntrl")
+            self.addToConfig("  ig=%d," % seed)                 # Random number seed.
+            self.addToConfig("  ntx=1,")                        # Only read coordinates.
+            self.addToConfig("  ntxo=1,")                       # Output coordinates in ASCII.
+            self.addToConfig("  ntpr=%d," % report_interval)    # Interval between reporting energies.
+            self.addToConfig("  ntwr=%d," % restart_interval)   # Interval between saving restart files.
+            self.addToConfig("  ntwx=%d," % restart_interval)   # Trajectory sampling frequency.
+            self.addToConfig("  irest=0,")                      # Don't restart.
+            self.addToConfig("  dt=%.3f," % timestep)           # Time step.
+            self.addToConfig("  nstlim=%d," % steps)            # Number of integration steps.
+            self.addToConfig("  ntc=2,")                        # Enable SHAKE.
+            self.addToConfig("  ntf=2,")                        # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntt=3,")                        # Langevin dynamics.
+            self.addToConfig("  gamma_ln=2,")                   # Collision frequency (ps).
+            if not has_box or not self._has_water:
+                self.addToConfig("  ntb=0,")                    # No periodic box.
+                self.addToConfig("  cut=999.,")                 # Non-bonded cut-off.
+                if is_pmemd:
+                    self.addToConfig("  igb=6,")                # Use vacuum generalised Born model.
+            else:
+                self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
+            self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
+                % self._protocol.getTemperature().kelvin().value())
+            self.addToConfig("  temp0=%.2f,"                    # Target temperature.
+                % self._protocol.getTemperature().kelvin().value())
+
+            # Constant pressure control.
+            if self._protocol.getPressure() is not None:
+                # Don't use barostat for vacuum simulations.
+                if has_box and self._has_water:
+                    self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
+                    self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
+                        % self._protocol.getPressure().bar().value())
+                else:
+                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+
+            # Activate PLUMED and locate the plumed.dat file.
+            self.addToConfig("  plumed=1,")
+            self.addToConfig("  plumedfile='plumed.dat',")
+
+            self.addToConfig(" /")
+
+            # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
             plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
                                                                        self._protocol,
@@ -617,6 +683,10 @@ class Amber(_process.Process):
                 # Store the mapping between the MolIdx in both systems so we don't
                 # need to recompute it next time.
                 self._mapping = mapping
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
 
             return old_system
 
@@ -1701,7 +1771,7 @@ class Amber(_process.Process):
 
             # BioSimSpace.Types.Time
             if isinstance(max_time, _Type):
-                max_time = max_time.minutes().magnitude()
+                max_time = max_time.minutes().value()
 
             # Float.
             elif isinstance(max_time, float):
@@ -1720,7 +1790,7 @@ class Amber(_process.Process):
 
             # The maximum run time has been exceeded, kill the job.
             if max_time is not None:
-                if self.runTime().magnitude() > max_time:
+                if self.runTime().value() > max_time:
                     self.kill()
                     return
 
