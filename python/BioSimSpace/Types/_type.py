@@ -73,14 +73,15 @@ class Type():
             # Check that the unit is supported.
             self._unit = self._validate_unit(unit)
 
-        # The user has passed a string representation of the temperature.
         elif len(args) == 1:
+            # The user has passed a Sire Unit object.
             if isinstance(args[0], (_SireUnits.GeneralUnit,
                                     _SireUnits.Celsius,
                                     _SireUnits.Fahrenheit)):
                 # Try to convert the Sire GeneralUnit to an object of this type.
                 self._from_sire_unit(args[0])
 
+            # The user has passed a string representation of the temperature.
             elif isinstance(args[0], str):
                 # Convert the string to an object of this type.
                 obj = self._from_string(args[0])
