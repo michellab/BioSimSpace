@@ -35,6 +35,14 @@ from ._type import Type as _Type
 class Length(_Type):
     """A length type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["meter",
+                   "centimeter",
+                   "millimeter",
+                   "nanometer",
+                   "angstrom",
+                   "picometer"]
+
     # Dictionary of allowed units.
     _supported_units = { "METER"      : _SireUnits.meter,
                          "CENTIMETER" : _SireUnits.centimeter,
@@ -138,6 +146,11 @@ class Length(_Type):
             mag = self.angstroms().value() * other.angstroms2().value()
             return _Volume(mag, "A3")
 
+        # Multiplication by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
+
         # Multiplication by a string.
         elif isinstance(other, str):
             try:
@@ -156,7 +169,7 @@ class Length(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
     def __pow__(self, other):
@@ -318,6 +331,25 @@ class Length(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        return unit
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area

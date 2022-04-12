@@ -35,6 +35,16 @@ from ._type import Type as _Type
 class Time(_Type):
     """A time type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["day",
+                   "hour",
+                   "minute",
+                   "second",
+                   "millisecond",
+                   "nanosecond",
+                   "picosecond",
+                   "femtosecond"]
+
     # Dictionary of allowed units.
     _supported_units = { "DAY"         : _SireUnits.day,
                          "HOUR"        : _SireUnits.hour,
@@ -299,3 +309,26 @@ class Time(_Type):
             return self._abbreviations[unit[:-1]]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("days", "day")
+        unit = unit.replace("seconds", "second")
+        unit = unit.replace("secs", "second")
+
+        return unit

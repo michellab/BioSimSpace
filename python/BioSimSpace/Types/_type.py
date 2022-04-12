@@ -79,7 +79,9 @@ class Type():
                                     _SireUnits.Celsius,
                                     _SireUnits.Fahrenheit)):
                 # Try to convert the Sire GeneralUnit to an object of this type.
-                self._from_sire_unit(args[0])
+                temp = self._from_sire_unit(args[0])
+                self._value = temp._value
+                self._unit = temp._unit
 
             # The user has passed a string representation of the temperature.
             elif isinstance(args[0], str):
@@ -127,10 +129,15 @@ class Type():
         # Addition of another object of the same type.
         if type(other) is type(self):
             # Add the values in a common unit.
-            mag = self._to_default_unit().value() + other._to_default_unit().value()
+            val = self._to_default_unit().value() + other._to_default_unit().value()
 
             # Return a new object of the same type with the original unit.
-            return self._to_default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(va)._convert_to(self._unit)
+
+        # Addition of a different type with the same dimensions.
+        elif isinstance(other, Type) and self._dimensions == other.dimensions:
+            # Invert the order of addition.
+            return other + self
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -147,10 +154,15 @@ class Type():
         # Subtraction of another object of the same type.
         if type(other) is type(self):
             # Subtract the values in a common unit.
-            mag = self._to_default_unit().value() - other._to_default_unit().value()
+            val = self._to_default_unit().value() - other._to_default_unit().value()
 
             # Return a new object of the same type with the original unit.
-            return self._to_default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(val)._convert_to(self._unit)
+
+        # Addition of a different type with the same dimensions.
+        elif isinstance(other, Type) and self._dimensions == other.dimensions:
+            # Negate other and add.
+            return -other + self
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -168,13 +180,18 @@ class Type():
         if type(other) is int:
             other = float(other)
 
-        # Only support multiplication by float.
+        # Multiplication by float.
         if isinstance(other, float):
             # Convert to default unit and multiply.
-            mag = self._to_default_unit().value() * other
+            val = self._to_default_unit().value() * other
 
             # Return a new object of the same type with the original unit.
-            return self._to_default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(val)._convert_to(self._unit)
+
+        # Multiplication by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
         else:
             raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
@@ -183,7 +200,7 @@ class Type():
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
     def __truediv__(self, other):
@@ -196,14 +213,19 @@ class Type():
         # Float division.
         if isinstance(other, float):
             # Convert to default unit and divide.
-            mag = self._to_default_unit().value() / other
+            val = self._to_default_unit().value() / other
 
             # Return a new object of the same type with the original unit.
-            return self._to_default_unit(mag)._convert_to(self._unit)
+            return self._to_default_unit(val)._convert_to(self._unit)
 
         # Division by another object of the same type.
         elif type(other) is type(self):
             return self._to_default_unit().value() / other._to_default_unit().value()
+
+        # Division by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
         elif isinstance(other, str):
@@ -288,7 +310,7 @@ class Type():
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
     def __gt__(self, other):
-        """Gretear than operator."""
+        """Greater than operator."""
 
         # Compare to another object of the same type.
         if type(other) is type(self):
@@ -324,7 +346,103 @@ class Type():
         """
         return self._unit
 
-    def _from_string(self, string):
+    @classmethod
+    def dimensions(cls):
+        """Return the dimensions of this type. This is a tuple
+           containing the power in each dimension.
+
+           Returns : (int, int, int, int, int, int)
+               The power in each dimension: 'angle', 'charge', 'length',
+               'mass', 'quantity', 'temperature', and 'time'.
+        """
+        return cls._dimensions
+
+    @classmethod
+    def angle(cls):
+        """Return the power in the 'angle' dimension.
+
+           Returns
+           -------
+
+           angle : int
+               The power in the 'angle' dimension.
+        """
+        return cls._dimensions[0]
+
+    @classmethod
+    def charge(cls):
+        """Return the power in the 'charge' dimension.
+
+           Returns
+           -------
+
+           charge : int
+               The power in the 'charge' dimension.
+        """
+        return cls._dimensions[1]
+
+    @classmethod
+    def length(cls):
+        """Return the power in the 'length' dimension.
+
+           Returns
+           -------
+
+           length : int
+               The power in the 'length' dimension.
+        """
+        return cls._dimensions[2]
+
+    @classmethod
+    def mass(cls):
+        """Return the power in the 'mass' dimension.
+
+           Returns
+           -------
+
+           mass : int
+               The power in the 'mass' dimension.
+        """
+        return cls._dimensions[3]
+
+    @classmethod
+    def quantity(cls):
+        """Return the power in the 'quantity' dimension.
+
+           Returns
+           -------
+
+           quantity : int
+               The power in the 'quantity' dimension.
+        """
+        return cls._dimensions[4]
+
+    @classmethod
+    def temperature(cls):
+        """Return the power in the 'temperature' dimension.
+
+           Returns
+           -------
+
+           temperature : int
+               The power in the 'temperature' dimension.
+        """
+        return cls._dimensions[5]
+
+    @classmethod
+    def time(cls):
+        """Return the power in the 'time' dimension.
+
+           Returns
+           -------
+
+           time : int
+               The power the 'time' dimension.
+        """
+        return cls._dimensions[6]
+
+    @classmethod
+    def _from_string(cls, string):
         """Convert a string to an object of the same type.
 
            Parameters
@@ -341,7 +459,7 @@ class Type():
         """
 
         if string == "==SUPPRESS==":
-            return type(self)(0, self._default_unit)
+            return cls(0, cls._default_unit)
 
         string_copy = string
 
@@ -359,7 +477,7 @@ class Type():
                 # No matches, raise an error.
                 if match is None:
                     raise ValueError("Could not interpret '%s' as '%s'"
-                        % (string_copy, self.__class__.__qualname__))
+                        % (string_copy, cls.__name__))
 
             # Extract the value and unit.
             value, unit = match.groups()
@@ -368,7 +486,7 @@ class Type():
             value = float(value)
 
             # Create and return a new object.
-            return type(self)(value, unit)
+            return cls(value, unit)
 
         else:
             raise TypeError("'string' must be of type 'str'")
@@ -384,7 +502,8 @@ class Type():
         """
         return self._value * self._supported_units[self._unit]
 
-    def _from_sire_unit(self, sire_unit):
+    @classmethod
+    def _from_sire_unit(cls, sire_unit):
         """Convert from a Sire GeneralUnit object.
 
            Parameters
@@ -408,13 +527,12 @@ class Type():
                      )
 
         # Make sure the dimensions match.
-        if dimensions != self._dimensions:
+        if dimensions != cls._dimensions:
             raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
-                            f"'{self.__class__.__qualname__}'")
+                            f"'{cls.__name__}'")
 
         # Get the value in the default Sire unit for this type.
-        value = sire_unit.to(self._supported_units[self._default_unit])
+        value = sire_unit.to(cls._supported_units[cls._default_unit])
 
-        # Store the value and unit.
-        self._value = value
-        self._unit = self._default_unit
+        # Return an object of this type using the value and unit.
+        return cls(value, cls._default_unit)

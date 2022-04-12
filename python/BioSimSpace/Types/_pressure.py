@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Pressure(_Type):
     """A pressure type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["atm", "bar"]
+
     # Dictionary of allowed units.
     _supported_units = { "ATMOSPHERE" : _SireUnits.atm,
                          "BAR"        : _SireUnits.bar }
@@ -187,3 +190,29 @@ class Pressure(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("pressure", "")
+        unit = unit.replace("press", "")
+        unit = unit.replace("pres", "")
+        unit = unit.replace("atmospheric", "atm")
+        unit = unit.replace("atmospheres", "atm")
+        unit = unit.replace("atmosphere", "atm")
+
+        return unit

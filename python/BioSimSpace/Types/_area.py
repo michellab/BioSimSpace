@@ -35,6 +35,12 @@ from ._type import Type as _Type
 class Area(_Type):
     """An area type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["meter2",
+                   "nanometer2",
+                   "angstrom2",
+                   "picometer2"]
+
     # Dictionary of allowed units.
     _supported_units = { "METER2"      : _SireUnits.meter2,
                          "NANOMETER2"  : _SireUnits.nanometer2,
@@ -130,6 +136,11 @@ class Area(_Type):
             mag = self.angstroms2().value() * other.angstroms().value()
             return _Volume(mag, "A3")
 
+        # Multiplication by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
+
         # Multiplication by a string.
         elif isinstance(other, str):
             try:
@@ -145,7 +156,7 @@ class Area(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
     def __truediv__(self, other):
@@ -168,6 +179,11 @@ class Area(_Type):
         elif isinstance(other, _Length):
             mag = self.angstroms2().value() / other.angstroms().value()
             return _Length(mag, "A")
+
+        # Division by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
         elif isinstance(other, str):
@@ -312,6 +328,27 @@ class Area(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("meters", "meter")
+
+        return unit
 
 # Import at bottom of module to avoid circular dependency.
 from ._length import Length as _Length

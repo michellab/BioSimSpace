@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Charge(_Type):
     """A charge type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["e_charge", "coulomb"]
+
     # Dictionary of allowed units.
     _supported_units = { "ELECTRON CHARGE" : _SireUnits.e_charge,
                          "COULOMB"         : _SireUnits.coulomb }
@@ -200,3 +203,26 @@ class Charge(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("coulombs", "couloumb")
+        unit = unit.replace("electroncharge", "e_charge")
+        unit = unit.replace("echarge", "e_charge")
+
+        return unit

@@ -35,6 +35,12 @@ from ._type import Type as _Type
 class Volume(_Type):
     """A volume type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["meter3",
+                   "nanometer3",
+                   "angstrom3",
+                   "picometer3"]
+
     # Dictionary of allowed units.
     _supported_units = { "METER3"      : _SireUnits.meter3,
                          "NANOMETER3"  : _SireUnits.nanometer3,
@@ -286,6 +292,27 @@ class Volume(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("meters", "meter")
+
+        return unit
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area

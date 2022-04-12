@@ -35,6 +35,11 @@ from ._type import Type as _Type
 class Temperature(_Type):
     """A temperature type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["kelvin",
+                   "celsius",
+                   "fahrenheit"]
+
     # Dictionary of allowed units.
     _supported_units = { "KELVIN"     : _SireUnits.kelvin,
                          "CELSIUS"    : _SireUnits.celsius,
@@ -199,13 +204,18 @@ class Temperature(_Type):
                 if type(other) is int:
                     other = float(other)
 
-                # Only support multiplication by float.
+                # Multiplication by float.
                 if isinstance(other, float):
                     # Multiply value.
                     mag = self._value * other
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
+
+                # Multiplication by another type.
+                elif isinstance(other, Type):
+                    from ._general_unit import GeneralUnit as _GeneralUnit
+                    return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
                 else:
                     raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
@@ -217,7 +227,7 @@ class Temperature(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
     def __truediv__(self, other):
@@ -244,6 +254,11 @@ class Temperature(_Type):
                 # Division by another object of the same type.
                 elif isinstance(other, self):
                     return self._value / other._convert_to(self._unit).value()
+
+                # Division by another type.
+                elif isinstance(other, Type):
+                    from ._general_unit import GeneralUnit as _GeneralUnit
+                    return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
                 # Division by a string.
                 elif isinstance(other, str):
@@ -357,7 +372,19 @@ class Temperature(_Type):
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
 
-    def _from_sire_unit(self, sire_unit):
+    def _to_sire_unit(self):
+        """Return the internal Sire Unit object to which this type corresponds.
+
+           Returns
+           -------
+
+           sire_unit : Sire.Units.GeneralUnit
+               The internal Sire Unit object that is being wrapped.
+        """
+        return self.kelvin().value() * _SireUnits.kelvin
+
+    @classmethod
+    def _from_sire_unit(cls, sire_unit):
         """Convert from a Sire Units object.
 
            Parameters
@@ -379,22 +406,46 @@ class Temperature(_Type):
                          )
 
             # Make sure the dimensions match.
-            if dimensions != self._dimensions:
+            if dimensions != cls._dimensions:
                 raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
-                                f"'{self.__class__.__qualname__}'")
+                                f"'{cls.__name__}'")
 
             # Get the value in the default Sire unit for this type.
-            value = sire_unit.to(self._supported_units[self._default_unit])
+            value = sire_unit.to(cls._supported_units[cls._default_unit])
 
-            # Store the value and unit.
-            self._value = value
-            self._unit = self._default_unit
+            # Return an object of this type using the value and unit.
+            return cls(value, cls._default_unit)
 
         elif isinstance(sire_unit, (_SireUnits.Celsius, _SireUnits.Fahrenheit)):
-            # Store the value and unit.
-            self._value = sire_unit.value()
-            self._unit = self._default_unit
+            # Return an object of this type using the value and unit.
+            return cls(sire_unit.value(), cls._default_unit)
 
         else:
             raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit', "
                             "'Sire.Units.Celsius', or 'Sire.Units.Fahrenheit'")
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        # Convert everything to Kelvin.
+        unit = unit.replace("celsius", "274.15*kelvin")
+        unit = unit.replace("fahrenheit", "255.9278*kelvin")
+
+        # Convert plural to singular.
+        unit = unit.replace("kelvins", "kelvin")
+
+        return unit

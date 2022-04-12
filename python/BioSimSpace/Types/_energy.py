@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Energy(_Type):
     """An energy type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["kcal_per_mol", "kJ_per_mol"]
+
     # Dictionary of allowed units.
     _supported_units = { "KILO CALORIES PER MOL" : _SireUnits.kcal_per_mol,
                          "KILO JOULES PER MOL"   : _SireUnits.kJ_per_mol,
@@ -208,3 +211,29 @@ class Energy(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("mole", "mol")
+        unit = unit.replace("calories", "cal")
+        unit = unit.replace("joules", "J")
+        unit = unit.replace("kilocal", "kcal")
+        unit = unit.replace("kiloJ", "kJ")
+        unit = unit.replace("kj", "kJ")
+
+        return unit
