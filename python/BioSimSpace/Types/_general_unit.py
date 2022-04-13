@@ -96,24 +96,8 @@ class GeneralUnit(_Type):
                 # Extract the string.
                 string = _args[0]
 
-                # Convert to lower case and strip whitespace.
-                string = string.lower().replace(" ", "")
-
-                # Convert powers to common format.
-                string = string.replace("squared", "2")
-                string = string.replace("**2", "2")
-                string = string.replace("^2", "2")
-                string = string.replace("cubed", "3")
-                string = string.replace("**3", "3")
-                string = string.replace("^3", "3")
-
-                for unit in _base_units:
-                    string = unit._to_sire_format(string)
-
-                try:
-                    general_unit = eval(string, {}, _sire_units_locals)
-                except:
-                    ValueError(f"Could not infer GneralUnit from string '{args[0]}'")
+                # Try to parse and evalute the string.
+                general_unit = cls._from_string(string)._sire_unit
 
             else:
                 raise TypeError("__new__() missing positional argument(s): "
@@ -198,24 +182,8 @@ class GeneralUnit(_Type):
                 # Extract the string.
                 string = _args[0]
 
-                # Convert to lower case and strip whitespace.
-                string = string.lower().replace(" ", "")
-
-                # Convert powers to common format.
-                string = string.replace("squared", "2")
-                string = string.replace("**2", "2")
-                string = string.replace("^2", "2")
-                string = string.replace("cubed", "3")
-                string = string.replace("**3", "3")
-                string = string.replace("^3", "3")
-
-                for unit in _base_units:
-                    string = unit._to_sire_format(string)
-
-                try:
-                    general_unit = eval(string, {}, _sire_units_locals)
-                except:
-                    ValueError(f"Could not infer GneralUnit from string '{args[0]}'")
+                # Try to parse and evalute the string.
+                general_unit = self._from_string(string)._sire_unit
 
             else:
                 raise TypeError("__init__() missing positional argument(s): "
@@ -685,7 +653,7 @@ class GeneralUnit(_Type):
                 ValueError(f"Could not infer GneralUnit from string '{string}'")
 
             # Create and return a new object.
-            return General(general_unit)
+            return GeneralUnit(general_unit)
 
         else:
             raise TypeError("'string' must be of type 'str'")
