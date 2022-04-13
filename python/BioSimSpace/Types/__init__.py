@@ -33,7 +33,6 @@ Classes
     Charge
     Coordinate
     Energy
-    GeneralUnit
     Length
     Pressure
     Temperature
@@ -47,10 +46,13 @@ from ._area import *
 from ._charge import *
 from ._coordinate import *
 from ._energy import *
-from ._general_unit import *
 from ._length import *
 from ._pressure import *
 from ._temperature import *
 from ._time import *
 from ._vector import *
 from ._volume import *
+
+# Hide GeneralUnit since it will be automatically created from combinations
+# of the unit based types above.
+from ._general_unit import GeneralUnit as _GeneralUnit
