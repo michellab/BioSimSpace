@@ -221,7 +221,7 @@ class Charge(_Type):
                The unit string in Sire compatible format.
         """
 
-        unit = unit.replace("coulombs", "couloumb")
+        unit = unit.replace("coulombs", "coulomb")
         unit = unit.replace("electroncharge", "e_charge")
         unit = unit.replace("echarge", "e_charge")
 
