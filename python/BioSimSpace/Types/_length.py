@@ -349,6 +349,9 @@ class Length(_Type):
                The unit string in Sire compatible format.
         """
 
+        unit = unit.replace("nm", "nanometer")
+        unit = unit.replace("pm", "picometer")
+
         return unit
 
 # Import at bottom of module to avoid circular dependency.

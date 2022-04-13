@@ -311,6 +311,8 @@ class Volume(_Type):
         """
 
         unit = unit.replace("meters", "meter")
+        unit = unit.replace("nm", "nanometer")
+        unit = unit.replace("pm", "picometer")
 
         return unit
 
