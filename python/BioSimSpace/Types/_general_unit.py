@@ -649,11 +649,12 @@ class GeneralUnit(_Type):
 
             try:
                 general_unit = eval(string, {}, _sire_units_locals)
-            except:
-                ValueError(f"Could not infer GneralUnit from string '{string}'")
 
-            # Create and return a new object.
-            return GeneralUnit(general_unit)
+                # Create and return a new object.
+                return GeneralUnit(general_unit)
+
+            except:
+                raise ValueError(f"Could not infer GneralUnit from string '{string}'")
 
         else:
             raise TypeError("'string' must be of type 'str'")
