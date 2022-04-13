@@ -235,5 +235,7 @@ class Energy(_Type):
         unit = unit.replace("kilocal", "kcal")
         unit = unit.replace("kiloJ", "kJ")
         unit = unit.replace("kj", "kJ")
+        unit = unit.replace("kcalpermol", "kcal_per_mol")
+        unit = unit.replace("kJpermol", "kJ_per_mol")
 
         return unit
