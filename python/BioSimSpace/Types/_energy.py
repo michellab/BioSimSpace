@@ -230,11 +230,14 @@ class Energy(_Type):
         """
 
         unit = unit.replace("mole", "mol")
+        unit = unit.replace("mols", "mol")
         unit = unit.replace("calories", "cal")
         unit = unit.replace("joules", "J")
         unit = unit.replace("kilocal", "kcal")
         unit = unit.replace("kiloJ", "kJ")
         unit = unit.replace("kj", "kJ")
+        unit = unit.replace("kcals", "kcal")
+        unit = unit.replace("kJs", "kJ")
         unit = unit.replace("kcalpermol", "kcal_per_mol")
         unit = unit.replace("kJpermol", "kJ_per_mol")
 
