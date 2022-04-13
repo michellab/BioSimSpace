@@ -132,7 +132,7 @@ class Type():
             val = self._to_default_unit().value() + other._to_default_unit().value()
 
             # Return a new object of the same type with the original unit.
-            return self._to_default_unit(va)._convert_to(self._unit)
+            return self._to_default_unit(val)._convert_to(self._unit)
 
         # Addition of a different type with the same dimensions.
         elif isinstance(other, Type) and self._dimensions == other.dimensions:
