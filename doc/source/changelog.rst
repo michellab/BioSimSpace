@@ -1,6 +1,42 @@
 Changelog
 =========
 
+`2022.2.1 <https://github.com/michellab/BioSimSpace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
+------------------------------------------------------------------------------------------------
+
+* Fix performance issues when ensuring unique molecule numbering when adding molecules to ``BioSimSpace._SireWrappers.System`` and ``BioSimSpace._SireWrappers.Molecules`` objects.
+* Fix extraction of box vector magnitudes for triclinic boxes.
+
+`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
+------------------------------------------------------------------------------------------------
+
+* Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.
+* Fix import issues caused by change in module layout for conda-forge OpenMM package.
+* Don't check for structural ions when parameterising with GAFF/GAFF2.
+* Fix errors in funnel correction calculation.
+* Switch to using conda-forge lomap2 package, removing need to vendor lomap code.
+* Use py3Dmol to visualise maximum common substructure mappings.
+* Rename ``.magnitude()`` method on ``BioSimSpace.Type`` objects to ``.value()`` to avoid confusion.
+* Handle trjconv frame extraction failures within ``BioSimSpace.Process.Gromacs.getSystem()``.
+* Catch and handle possible GSL error during singular valued decomposition routine used for molecular alignment.
+
+`2022.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
+------------------------------------------------------------------------------------------------
+
+* Added basic support for cleaning PDB files with `pdb4amber <https://github.com/Amber-MD/pdb4amber>`_ prior to read.
+* Added basic support for exporting BioSimSpace Nodes as Common Workflow Language wrappers.
+* Added support for parameterising molecules using OpenForceField.
+* Added support for using SMILES strings for input to parameterisation functions.
+* Added support for funnel metadynamics simulations (`@dlukauskis <https://github.com/dlukauskis>`_).
+* Added support for steered molecular dynamics simulations (`@AdeleLip <https://github.com/AdeleLip>`_).
+* Added support for generating perturbation networks using LOMAP (`@JenkeScheen <https://github.com/JenkeScheen>`_).
+* Fixed bug affecting certain improper/dihedral terms in SOMD perturbation file writer.
+* Numerous performance improvements, particularly involving the manipulation and
+  combination of molecular systems.
+* Native Python pickling support for wrapped Sire types (`@chryswoods <https://github.com/chryswoods>`_).
+* Numerous free-energy perturbation pipeline fixes and improvements. Thanks to `@kexul <https://github.com/kexul>`_ and `@msuruzhon <https://github.com/msuruzhon>`_ for their help testing and debugging.
+* Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
+
 `2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
 -------------------------------------------------------------------------------------------------
 
@@ -13,7 +49,6 @@ Changelog
 * Handle GROMACS simulations with non-periodic boxes.
 * Run vacuum simulations on a single thread when using GROMACS to avoid domain decomposition.
 * Make sure BioSimSpace is always built against the latest version of Sire during conda build.
-
 
 `2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
 ------------------------------------------------------------------------------------------------
@@ -52,8 +87,8 @@ Changelog
 * Fixed conda NetCDF issue on macOS. Yay for managing `python environments <https://xkcd.com/1987>`_\ !
 * Install conda `ambertools <https://anaconda.org/AmberMD/ambertools>`_ during `setup <python/setup.py>`_.
 * Search for bundled version of ``sander`` when running `AMBER <http://ambermd.org>`_ simulation processes.
-* Pass executable found by `BioSimSpace.MD <python/BioSimSpace/MD>`_ to `BioSimSpace.Process <python/BioSimSpace/Process>`_ constructor.
-* Fixed error in RMSD calculation within `BioSimSpace.Trajectory <python/BioSimSpace/Trajectory>`_ class.
+* Pass executable found by ``BioSimSpace.MD`` to ``BioSimSpace.Process`` constructor.
+* Fixed error in RMSD calculation within ``BioSimSpace.Trajectory`` class.
 * Improved example scripts and notebooks.
 
 2018.1.0 - May 01 2018

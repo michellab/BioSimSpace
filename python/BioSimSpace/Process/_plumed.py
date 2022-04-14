@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Plumed"]
 
+from BioSimSpace._Utils import _try_import
+
 import glob as _glob
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
+import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings
@@ -46,9 +49,9 @@ from BioSimSpace.Protocol import Metadynamics as _Metadynamics
 from BioSimSpace.Protocol import Steering as _Steering
 from BioSimSpace.Types import Coordinate as _Coordinate
 
-from BioSimSpace import _Exceptions as _Exceptions
+from BioSimSpace import _Exceptions
 from BioSimSpace import Types as _Types
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 from BioSimSpace import Units as _Units
 
 from ._process import _MultiDict
@@ -68,7 +71,7 @@ class Plumed():
         """
 
         # Check that the working directory is valid.
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
         else:
             if not _os.path.isdir(work_dir):
@@ -82,11 +85,17 @@ class Plumed():
                 "that PLUMED is installed: www.plumed.org")
 
         # Run a PLUMED as a background process to query the version number.
-        process = _subprocess.run("%s info --version" % self._exe, shell=True, stdout=_subprocess.PIPE)
-        self._plumed_version = float(process.stdout.decode("ascii").strip())
+        command = "%s info --version" % self._exe
+        process = _subprocess.run(_shlex.split(command), shell=False, stdout=_subprocess.PIPE)
 
-        if self._plumed_version < 2.5:
-            raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+        if process.returncode == 0:
+            self._plumed_version = float(process.stdout.decode("ascii").strip())
+
+            if self._plumed_version < 2.5:
+                raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+
+        else:
+            raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
 
         # Set the working directory of the process.
         self._work_dir = work_dir
@@ -155,15 +164,15 @@ class Plumed():
                files required by the collective variables.
         """
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
         # Create a metadynamics protocol.
-        if type(protocol) is _Metadynamics:
+        if isinstance(protocol, _Metadynamics):
             return self._createMetadynamicsConfig(system, protocol, property_map)
 
         # Create a steered molecular dynamics protocol.
-        if type(protocol) is _Steering:
+        if isinstance(protocol, _Steering):
             return self._createSteeringConfig(system, protocol, property_map)
 
         else:
@@ -195,13 +204,13 @@ class Plumed():
                files required by the collective variables.
         """
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(protocol) is not _Metadynamics:
+        if not isinstance(protocol, _Metadynamics):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Clear data.
@@ -256,26 +265,26 @@ class Plumed():
             atoms = []
 
             # Distance.
-            if type(colvar) is _CollectiveVariable.Distance:
+            if isinstance(colvar, _CollectiveVariable.Distance):
                 atom0 = colvar.getAtom0()
                 atom1 = colvar.getAtom1()
 
                 if type(atom0) is int:
                     atoms.append(atom0)
-                elif type(atom0) is list:
+                elif isinstance(atom0, list):
                     atoms.extend(atom0)
 
                 if type(atom1) is int:
                     atoms.append(atom1)
-                elif type(atom1) is list:
+                elif isinstance(atom1, list):
                     atoms.extend(atom1)
 
             # Torsion.
-            elif type(colvar) is _CollectiveVariable.Torsion:
+            elif isinstance(colvar, _CollectiveVariable.Torsion):
                 atoms = colvar.getAtoms()
 
             # Funnel.
-            elif type(colvar) is _CollectiveVariable.Funnel:
+            elif isinstance(colvar, _CollectiveVariable.Funnel):
                 # First we need to check that the funnel length is less
                 # than half the simulation box base length in any dimension.
 
@@ -284,7 +293,7 @@ class Plumed():
 
                 if upper_bound is not None:
                     # Store the value of the bound in angstrom.
-                    value = upper_bound.getValue().angstroms().magnitude()
+                    value = upper_bound.getValue().angstroms().value()
 
                     # Get the user-defined "space" property.
                     space_prop = property_map.get("space", "space")
@@ -297,7 +306,7 @@ class Plumed():
                         space = system._sire_object.property(space_prop)
 
                         # Handle PeriodicBox.
-                        if type(space) is _SireVol.PeriodicBox:
+                        if isinstance(space, _SireVol.PeriodicBox):
                             # Get the x,y,z dimensions of th box in angstrom.
                             dimensions = space.dimensions()
 
@@ -349,7 +358,7 @@ class Plumed():
                     self._aux_files.append(aux_file)
 
             # RMSD.
-            elif type(colvar) is _CollectiveVariable.RMSD:
+            elif isinstance(colvar, _CollectiveVariable.RMSD):
                 molecules = [system._mol_nums[colvar.getReferenceIndex()]]
 
             # Loop over all of the atoms. Make sure the index is valid and
@@ -419,7 +428,7 @@ class Plumed():
             is_funnel = False
 
             # Distance.
-            if type(colvar) is _CollectiveVariable.Distance:
+            if isinstance(colvar, _CollectiveVariable.Distance):
                 num_distance += 1
 
                 # Create the argument name.
@@ -448,7 +457,7 @@ class Plumed():
                     colvar_string += "%d" % (atom0 + 1)
 
                 # A list of atom indices.
-                elif type(atom0) is list:
+                elif isinstance(atom0, list):
                     num_center += 1
                     colvar_string += "c%d" % num_center
 
@@ -466,11 +475,11 @@ class Plumed():
                     self._config.append(center_string)
 
                 # A coordinate of a fixed point.
-                elif type(atom0) is _Coordinate:
+                elif isinstance(atom0, _Coordinate):
                     # Convert to nanometers.
-                    x = atom0.x().nanometers().magnitude()
-                    y = atom0.y().nanometers().magnitude()
-                    z = atom0.z().nanometers().magnitude()
+                    x = atom0.x().nanometers().value()
+                    y = atom0.y().nanometers().value()
+                    z = atom0.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -483,7 +492,7 @@ class Plumed():
                     colvar_string += ",%d" % (atom1 + 1)
 
                 # A list of atom indices.
-                elif type(atom1) is list:
+                elif type(atom1) is int:
                     num_center += 1
                     colvar_string += ",c%d" % num_center
 
@@ -501,11 +510,11 @@ class Plumed():
                     self._config.append(center_string)
 
                 # A coordinate of a fixed point.
-                elif type(atom1) is _Coordinate:
+                elif isinstance(atom1, _Coordinate):
                     # Convert to nanometers.
-                    x = atom1.x().nanometers().magnitude()
-                    y = atom1.y().nanometers().magnitude()
-                    z = atom1.z().nanometers().magnitude()
+                    x = atom1.x().nanometers().value()
+                    y = atom1.y().nanometers().value()
+                    z = atom1.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -533,7 +542,7 @@ class Plumed():
                 arg_name = [arg_name]
 
             # Torsion.
-            elif type(colvar) is _CollectiveVariable.Torsion:
+            elif isinstance(colvar, _CollectiveVariable.Torsion):
                 is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
@@ -557,7 +566,7 @@ class Plumed():
                 arg_name = [arg_name]
 
             # RMSD.
-            elif type(colvar) is _CollectiveVariable.RMSD:
+            elif isinstance(colvar, _CollectiveVariable.RMSD):
                 num_rmsd += 1
                 arg_name = "r%d" % num_rmsd
                 colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
@@ -585,7 +594,7 @@ class Plumed():
                 arg_name = [arg_name]
 
             # Funnel.
-            elif type(colvar) is _CollectiveVariable.Funnel:
+            elif isinstance(colvar, _CollectiveVariable.Funnel):
                 is_funnel = True
 
                 # Store the collective variable name and its unit.
@@ -629,10 +638,10 @@ class Plumed():
                 # Add funnel parameters.
                 self._config.append("")
                 self._config.append("# Funnel parameters.")
-                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().magnitude()}")  # inflection
-                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")            # steepness
-                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().magnitude()}")   # width
-                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().magnitude()}") # total = width + buffer
+                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().value()}")  # inflection
+                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")        # steepness
+                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().value()}")   # width
+                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().value()}") # total = width + buffer
 
                 # Define the funnel calculation. This function returns the
                 # radius of the funnel at the current value of the collective
@@ -669,7 +678,7 @@ class Plumed():
                 lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name[0])
                 try:
                     # Unit based.
-                    lower_wall_string += ", AT=%s" % lower_wall.getValue().magnitude()
+                    lower_wall_string += ", AT=%s" % lower_wall.getValue().value()
                 except:
                     # Dimensionless.
                     lower_wall_string += ", AT=%s" % lower_wall.getValue()
@@ -686,7 +695,7 @@ class Plumed():
                 upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name[0])
                 try:
                     # Unit based.
-                    upper_wall_string += ", AT=%s" % upper_wall.getValue().magnitude()
+                    upper_wall_string += ", AT=%s" % upper_wall.getValue().value()
                 except:
                     # Dimensionless.
                     upper_wall_string += ", AT=%s" % upper_wall.getValue()
@@ -702,18 +711,18 @@ class Plumed():
                         grid_data.append(("-pi", "pi", grid.getBins()))
                 elif is_funnel:
                     # Grid for "projection" component.
-                    grid_data.append((grid[0].getMinimum().magnitude(),
-                                      grid[0].getMaximum().magnitude(),
+                    grid_data.append((grid[0].getMinimum().value(),
+                                      grid[0].getMaximum().value(),
                                       grid[0].getBins()))
                     # Grid for "extent" component.
-                    grid_data.append((grid[1].getMinimum().magnitude(),
-                                      grid[1].getMaximum().magnitude(),
+                    grid_data.append((grid[1].getMinimum().value(),
+                                      grid[1].getMaximum().value(),
                                       grid[1].getBins()))
                 else:
                     try:
                         # Unit based.
-                        grid_data.append((grid.getMinimum().magnitude(),
-                                          grid.getMaximum().magnitude(),
+                        grid_data.append((grid.getMinimum().value(),
+                                          grid.getMaximum().value(),
                                           grid.getBins()))
                     except:
                         # Dimensionless.
@@ -735,23 +744,23 @@ class Plumed():
         metad_string += " SIGMA="
         for idx0, colvar in enumerate(colvars):
             hill_width = colvar.getHillWidth()
-            if type(hill_width) is tuple:
+            if isinstance(hill_width, tuple):
                 last_hill = len(hill_width) - 1
                 for idx1, width in enumerate(hill_width):
-                    metad_string += "%s" % width.magnitude()
+                    metad_string += "%s" % width.value()
                     if idx1 < last_hill:
                         metad_string += ","
             else:
                 # Handle dimensionless collective variables.
                 try:
-                    metad_string += "%s" % hill_width.magnitude()
+                    metad_string += "%s" % hill_width.value()
                 except:
                     metad_string += "%s" % hill_width
             if idx0 < self._num_colvar - 1:
                 metad_string += ","
 
         # Hill height.
-        metad_string += " HEIGHT=%s" % protocol.getHillHeight().magnitude()
+        metad_string += " HEIGHT=%s" % protocol.getHillHeight().value()
 
         # Hill frequency.
         metad_string += " PACE=%s" % protocol.getHillFrequency()
@@ -778,7 +787,7 @@ class Plumed():
             metad_string += " CALC_RCT"
 
         # Temperature and bias parameters.
-        metad_string += " TEMP=%s" % protocol.getTemperature().kelvin().magnitude()
+        metad_string += " TEMP=%s" % protocol.getTemperature().kelvin().value()
         if protocol.getBiasFactor() is not None:
             metad_string += " BIASFACTOR=%s" % protocol.getBiasFactor()
 
@@ -820,13 +829,13 @@ class Plumed():
                files required by the collective variables.
         """
 
-        if type(system) is not _System:
+        if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
-        if type(protocol) is not _Steering:
+        if not isinstance(protocol, _Steering):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Steering'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Clear data.
@@ -873,30 +882,30 @@ class Plumed():
             atoms = []
 
             # Distance.
-            if type(colvar) is _CollectiveVariable.Distance:
+            if isinstance(colvar, _CollectiveVariable.Distance):
                 atom0 = colvar.getAtom0()
                 atom1 = colvar.getAtom1()
 
                 if type(atom0) is int:
                     atoms.append(atom0)
-                elif type(atom0) is list:
+                elif isinstance(atom0, list):
                     atoms.extend(atom0)
 
                 if type(atom1) is int:
                     atoms.append(atom1)
-                elif type(atom1) is list:
+                elif isinstance(atom1, list):
                     atoms.extend(atom1)
 
             # Torsion.
-            elif type(colvar) is _CollectiveVariable.Torsion:
+            elif isinstance(colvar, _CollectiveVariable.Torsion):
                 atoms = colvar.getAtoms()
 
             # Funnel.
-            if type(colvar) is _CollectiveVariable.Funnel:
+            if isinstance(colvar, _CollectiveVariable.Funnel):
                 raise ValueError("'CollectiveVariable.Funnel' is not supported for steered molecular dynamics.")
 
             # RMSD.
-            elif type(colvar) is _CollectiveVariable.RMSD:
+            elif isinstance(colvar, _CollectiveVariable.RMSD):
                 molecules = [system._mol_nums[colvar.getReferenceIndex()]]
 
             # Loop over all of the atoms. Make sure the index is valid and
@@ -957,7 +966,7 @@ class Plumed():
             is_torsion = False
 
             # Distance.
-            if type(colvar) is _CollectiveVariable.Distance:
+            if isinstance(colvar, _CollectiveVariable.Distance):
                 num_distance += 1
 
                 # Create the argument name.
@@ -986,7 +995,7 @@ class Plumed():
                     colvar_string += "%d" % (atom0 + 1)
 
                 # A list of atom indices.
-                elif type(atom0) is list:
+                elif isinstance(atom0, list):
                     num_center += 1
                     colvar_string += "c%d" % num_center
 
@@ -1004,11 +1013,11 @@ class Plumed():
                     self._config.append(center_string)
 
                 # A coordinate of a fixed point.
-                elif type(atom0) is _Coordinate:
+                elif isinstance(atom0, _Coordinate):
                     # Convert to nanometers.
-                    x = atom0.x().nanometers().magnitude()
-                    y = atom0.y().nanometers().magnitude()
-                    z = atom0.z().nanometers().magnitude()
+                    x = atom0.x().nanometers().value()
+                    y = atom0.y().nanometers().value()
+                    z = atom0.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -1021,7 +1030,7 @@ class Plumed():
                     colvar_string += ",%d" % (atom1 + 1)
 
                 # A list of atom indices.
-                elif type(atom1) is list:
+                elif isinstance(atom1, list):
                     num_center += 1
                     colvar_string += ",c%d" % num_center
 
@@ -1039,11 +1048,11 @@ class Plumed():
                     self._config.append(center_string)
 
                 # A coordinate of a fixed point.
-                elif type(atom1) is _Coordinate:
+                elif isinstance(atom1, _Coordinate):
                     # Convert to nanometers.
-                    x = atom1.x().nanometers().magnitude()
-                    y = atom1.y().nanometers().magnitude()
-                    z = atom1.z().nanometers().magnitude()
+                    x = atom1.x().nanometers().value()
+                    y = atom1.y().nanometers().value()
+                    z = atom1.z().nanometers().value()
 
                     num_fixed += 1
                     self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
@@ -1071,7 +1080,7 @@ class Plumed():
                 arg_name = [arg_name]
 
             # Torsion.
-            elif type(colvar) is _CollectiveVariable.Torsion:
+            elif isinstance(colvar, _CollectiveVariable.Torsion):
                 is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
@@ -1095,7 +1104,7 @@ class Plumed():
                 arg_name = [arg_name]
 
             # RMSD.
-            elif type(colvar) is _CollectiveVariable.RMSD:
+            elif isinstance(colvar, _CollectiveVariable.RMSD):
                 num_rmsd += 1
                 arg_name = "r%d" % num_rmsd
                 colvar_string = "%s: RMSD REFERENCE=reference.pdb" % arg_name
@@ -1153,26 +1162,26 @@ class Plumed():
         for x in range(0, len(schedule)):
             # Initialise the strings.
             step  = f"STEP{x}={schedule[x]}"
-            at    = f"AT{x}="
+            at    = (16-len(str(schedule[x])))*" " + f"AT{x}="
             kappa = f"KAPPA{x}="
 
             # Loop over all restraints for this stage.
             for idx, r in enumerate(restraints[x]):
                 # Get the value of the restraint.
                 val = r.getValue()
-                # Convert to correct unit and take magnitude.
-                if type(val) is _Types.Length:
-                    val = val.nanometers().magnitude()
-                elif type(val) is _Types.Angle:
-                    val = val.radians().magnitude()
-                at    += str(val)
-                kappa += str(r.getForceConstant())
+                # Convert to correct unit and take the value.
+                if isinstance(val, _Types.Length):
+                    val = val.nanometers().value()
+                elif isinstance(val, _Types.Angle):
+                    val = val.radians().value()
+                at    += f"{val:.6f}"
+                kappa += f"{r.getForceConstant():.2f}"
                 if idx < self._num_colvar - 1:
                     at    += ","
                     kappa += ","
 
             # Add the stage to the config.
-            self._config.append(f"  {step}\t{at}\t{kappa}")
+            self._config.append(f"  {step}{at}\t{kappa}")
 
         # End the MOVINGRESTRAINT record.
         self._config.append("... MOVINGRESTRAINT")
@@ -1246,7 +1255,7 @@ class Plumed():
             msg = "No PLUMED configuration found! Please run 'createConfig' first."
             raise _Exceptions.IncompatibleError(msg)
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
         if index > self._num_components - 1 or index < -self._num_components:
             raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
@@ -1293,25 +1302,25 @@ class Plumed():
             raise _Exceptions.IncompatibleError(msg)
 
         if index is not None:
-            if type(index) is not int:
+            if not type(index) is int:
                 raise TypeError("'index' must be of type 'int'")
             if index > self._num_components - 1 or index < -self._num_components:
                 raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
 
         if stride is not None:
-            if type(stride) is not int:
+            if not type(stride) is int:
                 raise TypeError("'stride' must be of type 'int'")
             if stride < 0:
                 raise ValueError("'stride' must be >= 0")
 
-        if type(kt) is not _Types.Energy:
+        if not isinstance(kt, _Types.Energy):
             raise TypeError("'kt' must be of type 'BioSimSpace.Type.Energy'")
 
-        # Convert to default PLUMED unit and get the magnitude.
-        kt = kt.kj_per_mol().magnitude()
+        # Convert to default PLUMED unit and get the value.
+        kt = kt.kj_per_mol().value()
 
         if kt <= 0:
-            raise ValueError("'kt' must have magnitude > 0")
+            raise ValueError("'kt' must have value > 0")
 
         # Delete any existing FES directotry and create a new one.
         _shutil.rmtree(f"{self._work_dir}/fes", ignore_errors=True)
@@ -1334,7 +1343,7 @@ class Plumed():
         with _Utils.cd(self._work_dir + "/fes"):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(command, shell=True, text=True,
+            proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
             if proc.returncode != 0:
@@ -1498,10 +1507,10 @@ class Plumed():
         """
 
         # No data!
-        if len(self._colvar_dict) is 0:
+        if len(self._colvar_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
@@ -1561,10 +1570,10 @@ class Plumed():
         """
 
         # No data!
-        if len(self._hills_dict) is 0:
+        if len(self._hills_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 

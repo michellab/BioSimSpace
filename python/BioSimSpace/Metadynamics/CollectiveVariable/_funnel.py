@@ -182,12 +182,8 @@ class Funnel(_CollectiveVariable):
                of the funnel.
         """
 
-        # Convert tuples to a list.
-        if type(atoms0) is tuple:
-            atoms0 = list(atoms0)
-
-        # List of atom indices.
-        if type(atoms0) is list and all(isinstance(x, int) for x in atoms0):
+        # List/tuple of atom indices.
+        if isinstance(atoms0, (list, tuple)) and all(type(x) is int for x in atoms0):
             pass
 
         # Invalid type.
@@ -195,7 +191,7 @@ class Funnel(_CollectiveVariable):
             raise TypeError("'atoms0' must be of list of 'int' types.")
 
         # All okay, set the value.
-        self._atoms0 = atoms0
+        self._atoms0 = list(atoms0)
 
     def getAtoms0(self):
         """Return indices of the atoms whose center-of-mass defines the origin
@@ -222,12 +218,8 @@ class Funnel(_CollectiveVariable):
                inflection point of the funnel.
         """
 
-        # Convert tuples to a list.
-        if type(atoms1) is tuple:
-            atoms1 = list(atoms1)
-
-        # List of atom indices.
-        if type(atoms1) is list and all(isinstance(x, int) for x in atoms1):
+        # List/tuple of atom indices.
+        if isinstance(atoms1, (list, tuple)) and all(type(x) is int for x in atoms1):
             pass
 
         # Invalid type.
@@ -235,7 +227,7 @@ class Funnel(_CollectiveVariable):
             raise TypeError("'atoms1' must be of list of 'int' types.")
 
         # All okay, set the value.
-        self._atoms1 = atoms1
+        self._atoms1 = list(atoms1)
 
     def getAtoms1(self):
         """Return indices of the atoms whose center-of-mass defines the
@@ -259,11 +251,11 @@ class Funnel(_CollectiveVariable):
            width : :class:`Length <BioSimSpace.Types.Length>`
                The width of the funnel wall.
         """
-        if type(width) is not _Length:
+        if not isinstance(width, _Length):
             raise TypeError("'width' must be of type 'BioSimSpace.Types.Length'")
 
-        if width.magnitude() < 0:
-            raise ValueError("'width' must have a magnitude of > 0")
+        if width.value() < 0:
+            raise ValueError("'width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._width = width.nanometers()
@@ -288,11 +280,11 @@ class Funnel(_CollectiveVariable):
            buffer : :class:`Length <BioSimSpace.Types.Length>`
                The width of the funnel wall buffer.
         """
-        if type(buffer) is not _Length:
+        if not isinstance(buffer, _Length):
             raise TypeError("'buffer' must be of type 'BioSimSpace.Types.Length'")
 
-        if buffer.magnitude() < 0:
-            raise ValueError("'buffer' must have a magnitude of > 0")
+        if buffer.value() < 0:
+            raise ValueError("'buffer' must have a value of > 0")
 
         # Convert to the internal unit.
         self._buffer = buffer.nanometers()
@@ -321,7 +313,7 @@ class Funnel(_CollectiveVariable):
         if type(steepness) is int:
             steepness = float(steepness)
 
-        if type(steepness) is not float:
+        if not isinstance(steepness, float):
             raise TypeError("'steepness' must be of type 'float'")
 
         if steepness < 0:
@@ -351,11 +343,11 @@ class Funnel(_CollectiveVariable):
                The inflection point as avalue of the projection along the
                funnel axis.
         """
-        if type(inflection) is not _Length:
+        if not isinstance(inflection, _Length):
             raise TypeError("'inflection' must be of type 'BioSimSpace.Types.Length'")
 
-        if inflection.magnitude() < 0:
-            raise ValueError("'inflection' must have a magnitude of > 0")
+        if inflection.value() < 0:
+            raise ValueError("'inflection' must have a value of > 0")
 
         # Convert to the internal unit.
         self._inflection = inflection.nanometers()
@@ -387,16 +379,16 @@ class Funnel(_CollectiveVariable):
         """
 
         # Convert list to tuple.
-        if type(hill_width) is list:
+        if isinstance(hill_width, list):
             hill_width = tuple(hill_width)
 
-        if type(hill_width) is tuple:
+        if isinstance(hill_width, tuple):
             if len(hill_width) != 2 or not all(isinstance(x, _Length) for x in hill_width):
                 raise ValueError("'hill_width' must be a two-component tuple of of type 'BioSimSpace.Metadynamics.Length'")
 
         for width in hill_width:
-            if width.magnitude() < 0:
-                raise ValueError("'hill_width' must have a magnitude of > 0")
+            if width.value() < 0:
+                raise ValueError("'hill_width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._hill_width = tuple(x.nanometers() for x in hill_width)
@@ -435,7 +427,7 @@ class Funnel(_CollectiveVariable):
         if type(grid) is list:
             grid = tuple(grid)
 
-        if type(grid) is tuple:
+        if isinstance(grid, tuple):
             if len(grid) != 2 or not all(isinstance(x, _Grid) for x in grid):
                 raise ValueError("'grid' must be a two-component tuple of of type 'BioSimSpace.Metadynamics.Grid'")
 
@@ -494,14 +486,14 @@ class Funnel(_CollectiveVariable):
             if proj_max is None:
                 proj_max = self._upper_bound.getValue()
             else:
-                if type(proj_max) is not _Length:
+                if not isinstance(proj_max, _Length):
                     raise TypeError("'proj_max' must be of type 'BioSimSpace.Types.Length'.")
 
             # Default to the last 5 nanometers.
             proj_min = proj_max - _Length(5, "nanometers")
 
         else:
-            if type(proj_min) is not _Length:
+            if not isinstance(proj_min, _Length):
                 raise TypeError("'proj_min' must be of type 'BioSimSpace.Types.Length'.")
 
         if proj_max is None:
@@ -509,13 +501,13 @@ class Funnel(_CollectiveVariable):
             proj_max = self._upper_bound.getValue()
 
         else:
-            if type(proj_max) is not _Length:
+            if not isinstance(proj_max, _Length):
                 raise TypeError("'proj_max' must be of type 'BioSimSpace.Types.Length'.")
 
         if proj_min >= proj_max:
             raise ValueError("'proj_min' must be less than 'proj_max'.")
 
-        if type(delta) is not _Length:
+        if not isinstance(delta, _Length):
             raise TypeError("'delta' must be of type 'BioSimSpace.Types.Length'.")
 
         if delta >= (proj_max - proj_min):
@@ -524,27 +516,27 @@ class Funnel(_CollectiveVariable):
         import numpy as _np
 
         # Create an array of 0.01 nm spaced points between the lower and upper bounds.
-        coords = _np.arange(proj_min.nanometers().magnitude(),
-                            proj_max.nanometers().magnitude(),
-                            delta.nanometers().magnitude()).tolist()
+        coords = _np.arange(proj_min.nanometers().value(),
+                            proj_max.nanometers().value(),
+                            delta.nanometers().value()).tolist()
 
         # Get the extent values.
-        funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().magnitude() for x in coords]
+        funnel = [self.getExtent(_Length(x, "nanometers")).nanometers().value() for x in coords]
 
         # Now integrate the data.
         result = 0
-        delta = delta.nanometers().magnitude()
+        delta = delta.nanometers().value()
         for x, y in zip(funnel[:-1], funnel[1:]):
-            result += (x**2 + y) * delta * 0.5
+            result += (x**2 + y**2) * delta * 0.5
 
         # Work out the volume of the unbound area.
         volume = _Volume(_math.pi*result, "nanometers cubed")
 
-        # Estimate the average area of the restraint.
-        area = volume / proj_max
+        # Estimate the average area of the restraint (in Angstrom squared).
+        area = (volume / proj_max).angstroms2()
 
         # Compute the correction.
-        correction = _Energy(_math.log((volume / 1600).magnitude()), "kt")
+        correction = _Energy(_math.log((area / 1660).value()), "kt")
 
         return correction
 
@@ -565,12 +557,12 @@ class Funnel(_CollectiveVariable):
                The distance along the extent axis.
         """
 
-        if type(projection) is not _Length:
+        if not isinstance(projection, _Length):
             raise TypeError("'projection' must be of type 'BioSimSpace.Types.Length'.")
 
-        extent = self.getWidth().nanometers().magnitude() \
-            / (1 + _math.exp(self.getSteepness() * (projection - self.getInflection()).nanometers().magnitude())) \
-            + self.getBuffer().nanometers().magnitude()
+        extent = self.getWidth().nanometers().value() \
+            / (1 + _math.exp(self.getSteepness() * (projection - self.getInflection()).nanometers().value())) \
+            + self.getBuffer().nanometers().value()
 
         return _Length(extent, "nanometers")
 
@@ -578,12 +570,12 @@ class Funnel(_CollectiveVariable):
         """Internal function to check that the object is in a consistent state."""
 
         if self._lower_bound is not None:
-            if type(self._lower_bound.getValue()) is not _Length:
+            if not isinstance(self._lower_bound.getValue(), _Length):
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().nanometers())
         if self._upper_bound is not None:
-            if type(self._upper_bound.getValue()) is not _Length:
+            if not isinstance(self._upper_bound.getValue(), _Length):
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().nanometers())
@@ -593,16 +585,16 @@ class Funnel(_CollectiveVariable):
 
         if self._grid is not None:
             # Check the two components of the grid.
-            if type(self._grid[0].getMinimum()) is not _Length:
+            if not isinstance(self._grid[0].getMinimum(), _Length):
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
-            if type(self._grid[1].getMinimum()) is not _Length:
+            if not isinstance(self._grid[1].getMinimum(), _Length):
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._grid[0].setMinimum(self._grid[0].getMinimum().nanometers())
             self._grid[1].setMinimum(self._grid[1].getMinimum().nanometers())
-            if type(self._grid[0].getMaximum()) is not _Length:
+            if not isinstance(self._grid[0].getMaximum(), _Length):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
-            if type(self._grid[1].getMaximum()) is not _Length:
+            if not isinstance(self._grid[1].getMaximum(), _Length):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
             # Convert to default unit.
             self._grid[0].setMaximum(self._grid[0].getMaximum().nanometers())
@@ -617,12 +609,12 @@ class Funnel(_CollectiveVariable):
 
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid[0].getBins() is None:
-                grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).magnitude()
-                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid[0].getMaximum() - self._grid[0].getMinimum()).value()
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid[0].setBins(num_bins)
             if self._grid[1].getBins() is None:
-                grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).magnitude()
-                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid[1].getMaximum() - self._grid[1].getMinimum()).value()
+                num_bins = _math.ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid[1].setBins(num_bins)
 
 def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", property_map={}):
@@ -670,11 +662,11 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # Validate the input.
 
     # System.
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
 
     # Protein.
-    if type(protein) is _Molecule:
+    if isinstance(protein, _Molecule):
         # Make sure the molecule exists in the system.
         try:
             system.getIndex(protein)
@@ -689,7 +681,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
         except:
             ValueError(f"Couldn't find 'protein' index {protein} in the 'system'.")
 
-    elif type(protein) is _Coordinate:
+    elif isinstance(protein, _Coordinate):
         pass
 
     elif protein is None:
@@ -707,7 +699,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     else:
         raise TypeError("'protein' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'None'.")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'.")
 
     # Get the "coordinates" property from the user mapping.
@@ -716,7 +708,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
         raise ValueError(f"The 'protein' molecule doesn't have a {coordinates} property!")
 
     # Ligand.
-    if type(ligand) is _Molecule:
+    if isinstance(ligand, _Molecule):
         # Make sure the molecule exists in the system.
         try:
             system.getIndex(ligand)
@@ -730,7 +722,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
             ValueError(f"Couldn't find 'ligand' index {ligand} in the 'system'.")
         binding_site = ligand
 
-    elif type(ligand) is _Coordinate:
+    elif isinstance(ligand, _Coordinate):
         binding_site = ligand
         pass
 
@@ -750,7 +742,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
         raise TypeError("'ligand' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'None'.")
 
     # Alpha carbon name.
-    if type(alpha_carbon_name) is not str:
+    if not isinstance(alpha_carbon_name, str):
         raise TypeError("'alpha_carbon_name' must be of type 'str'.")
 
     # Get the "space" property from the user map.
@@ -771,7 +763,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # If the ligand is a Molecule, then assume the binding site is the ligand
     # center of mass. We do this manually since Sire's built-in evaluator doesn't
     # take into consideration molecules spanning the periodic boundary.
-    if type(ligand) is _Molecule:
+    if isinstance(ligand, _Molecule):
         # Get the "mass" property from the user map.
         mass_prop = property_map.get("mass", "mass")
         if mass_prop not in ligand._sire_object.propertyKeys():
@@ -839,19 +831,19 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
 
     import numpy as _np
     # Loop over x grid points.
-    for x in _np.linspace(grid_min.x().angstroms().magnitude(),
-                          grid_max.x().angstroms().magnitude(),
+    for x in _np.linspace(grid_min.x().angstroms().value(),
+                          grid_max.x().angstroms().value(),
                           num_edge):
         # Loop over y grid points.
-        for y in _np.linspace(grid_min.y().angstroms().magnitude(),
-                              grid_max.y().angstroms().magnitude(),
+        for y in _np.linspace(grid_min.y().angstroms().value(),
+                              grid_max.y().angstroms().value(),
                               num_edge):
             # Loop over z grid points.
-            for z in _np.linspace(grid_min.z().angstroms().magnitude(),
-                                  grid_max.z().angstroms().magnitude(),
+            for z in _np.linspace(grid_min.z().angstroms().value(),
+                                  grid_max.z().angstroms().value(),
                                   num_edge):
                 # Generate the search string.
-                string = f"atoms within {search_radius.angstroms().magnitude()} of {x},{y},{z}"
+                string = f"atoms within {search_radius.angstroms().value()} of {x},{y},{z}"
 
                 # Search the protein for atoms with the search radius of the
                 # point x,y,z.
@@ -870,9 +862,9 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     # Now select all alpha carbon atoms within 10 Angstrom of the ligand or grid.
 
     # Generate the search string.
-    x = binding_site.x().angstroms().magnitude()
-    y = binding_site.y().angstroms().magnitude()
-    z = binding_site.z().angstroms().magnitude()
+    x = binding_site.x().angstroms().value()
+    y = binding_site.y().angstroms().value()
+    z = binding_site.z().angstroms().value()
     string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
 
     # Perform the search.
@@ -962,10 +954,10 @@ def viewFunnel(system, collective_variable, property_map={}):
 
     # Validate the input.
 
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'.")
 
-    if type(collective_variable) is not Funnel:
+    if not isinstance(collective_variable, Funnel):
         raise TypeError("'collective_variable' must be of type "
                         "'BioSimSpace.Metadynamics.CollectiveVariable.Funnel'")
 
@@ -1029,12 +1021,12 @@ def viewFunnel(system, collective_variable, property_map={}):
     n_angle_samples = 8
 
     # Extract collective variable data.
-    lower_wall = collective_variable.getLowerBound().getValue().angstroms().magnitude()
-    upper_wall = collective_variable.getUpperBound().getValue().angstroms().magnitude()
-    wall_width = collective_variable.getWidth().angstroms().magnitude()
+    lower_wall = collective_variable.getLowerBound().getValue().angstroms().value()
+    upper_wall = collective_variable.getUpperBound().getValue().angstroms().value()
+    wall_width = collective_variable.getWidth().angstroms().value()
     beta_cent = collective_variable.getSteepness()
-    s_cent = collective_variable.getInflection().angstroms().magnitude()
-    wall_buffer = collective_variable.getBuffer().angstroms().magnitude()
+    s_cent = collective_variable.getInflection().angstroms().value()
+    wall_buffer = collective_variable.getBuffer().angstroms().value()
 
     # Get the element property from the map.
     element = property_map.get("element", "element")

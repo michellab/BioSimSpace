@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -31,7 +31,6 @@ __all__ = ["AlignmentError",
            "IncompatibleError",
            "MissingSoftwareError",
            "ParameterisationError",
-           "StreamError",
            "ThirdPartyError"]
 
 class AlignmentError(Exception):
@@ -51,10 +50,6 @@ class MissingSoftwareError(Exception):
 
 class ParameterisationError(Exception):
     """Exception thrown when molecular parameterisation fails."""
-    pass
-
-class StreamError(Exception):
-    """Exception thrown when streaming fails."""
     pass
 
 class ThirdPartyError(Exception):

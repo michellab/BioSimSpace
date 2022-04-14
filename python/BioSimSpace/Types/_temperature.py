@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -61,14 +61,14 @@ class Temperature(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the temperature, e.g. "298 K".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -110,15 +110,15 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Addition of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
                     if not allow_offset:
                         raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                     else:
-                        # Add the magnitudes in the original unit.
-                        mag = self._magnitude + other._magnitude
+                        # Add the value in the original unit.
+                        mag = self._value + other._value
 
                         # Return a new object of the same type with the original unit.
                         return Temperature(mag, self._unit)
@@ -129,13 +129,13 @@ class Temperature(_Type):
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
                     # Left-hand operand takes precedence.
-                    mag = self._magnitude + other._convert_to(self._unit).magnitude()
+                    mag = self._value + other._convert_to(self._unit).value()
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self + temp
 
@@ -149,15 +149,15 @@ class Temperature(_Type):
         from ..Units import allow_offset
 
         # Subtraction of another object of the same type.
-        if type(other) is type(self):
+        if isinstance(other, self):
             # The temperatures have the same unit.
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
                     if not allow_offset:
                         raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                     else:
-                        # Subtract the magnitudes in the original unit.
-                        mag = self._magnitude - other._magnitude
+                        # Subtract the value in the original unit.
+                        mag = self._value - other._value
 
                         # Return a new object of the same type with the original unit.
                         return Temperature(mag, self._unit)
@@ -168,13 +168,13 @@ class Temperature(_Type):
                     raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
                 else:
                     # Left-hand operand takes precedence.
-                    mag = self._magnitude - other._convert_to(self._unit).magnitude()
+                    mag = self._value - other._convert_to(self._unit).value()
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
 
         # Addition of a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             temp = self._from_string(other)
             return self - temp
 
@@ -196,9 +196,9 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Only support multiplication by float.
-                if type(other) is float:
-                    # Multiply magnitude.
-                    mag = self._magnitude * other
+                if isinstance(other, float):
+                    # Multiply value.
+                    mag = self._value * other
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
@@ -230,19 +230,19 @@ class Temperature(_Type):
                     other = float(other)
 
                 # Float division.
-                if type(other) is float:
-                    # Divide magnitude.
-                    mag = self._magnitude / other
+                if isinstance(other, float):
+                    # Divide value.
+                    mag = self._value / other
 
                     # Return a new object of the same type with the original unit.
                     return Temperature(mag, self._unit)
 
                 # Division by another object of the same type.
-                elif type(other) is type(self):
-                    return self._magnitude / other._convert_to(self._unit).magnitude()
+                elif isinstance(other, self):
+                    return self._value / other._convert_to(self._unit).value()
 
                 # Division by a string.
-                elif type(other) is str:
+                elif isinstance(other, str):
                     obj = self._from_string(other)
                     return self / obj
 
@@ -253,8 +253,8 @@ class Temperature(_Type):
             return super().__truediv__(other)
 
     def _kelvin(self):
-        """Return the magnitude of the temperature in Kelvin."""
-        return (self._magnitude * self._supported_units[self._unit]).value()
+        """Return the value of the temperature in Kelvin."""
+        return (self._value * self._supported_units[self._unit]).value()
 
     def kelvin(self):
         """Return the temperature in Kelvin.
@@ -265,7 +265,7 @@ class Temperature(_Type):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature in Kelvin.
         """
-        return Temperature((self._magnitude * self._supported_units[self._unit]).value(), "KELVIN")
+        return Temperature((self._value * self._supported_units[self._unit]).value(), "KELVIN")
 
     def celsius(self):
         """Return the temperature in Celsius.
@@ -276,7 +276,7 @@ class Temperature(_Type):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature in Celsius.
         """
-        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.celsius), "CELSIUS")
+        return Temperature((self._value * self._supported_units[self._unit]).to(_SireUnits.celsius), "CELSIUS")
 
     def fahrenheit(self):
         """Return the temperature in Fahrenheit.
@@ -287,7 +287,7 @@ class Temperature(_Type):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The temperature in Fahrenheit.
         """
-        return Temperature((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.fahrenheit), "FAHRENHEIT")
+        return Temperature((self._value * self._supported_units[self._unit]).to(_SireUnits.fahrenheit), "FAHRENHEIT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -296,7 +296,7 @@ class Temperature(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

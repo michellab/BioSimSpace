@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -34,10 +34,10 @@ Functions
 
     generateNetwork
     matchAtoms
-    drawMapping
     rmsdAlign
     flexAlign
     merge
+    viewMapping
 """
 
 from ._align import *

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["OpenMM"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import sys as _sys
 import shutil as _shutil
 import timeit as _timeit
@@ -51,9 +53,10 @@ from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Types as _Types
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
+
 from ._plumed import Plumed as _Plumed
 
 class OpenMM(_process.Process):
@@ -126,7 +129,7 @@ class OpenMM(_process.Process):
             else:
                 raise IOError("OpenMM Python interpreter doesn't exist: '%s'" % exe)
 
-        if type(platform) is not str:
+        if not isinstance(platform, str):
             raise TypeError("'platform' must be of type 'str'.")
         else:
             # Strip all whitespace and convert to upper case.
@@ -160,7 +163,7 @@ class OpenMM(_process.Process):
 
         # Set the path for the OpenMM Python script. (We use the concept of a
         # config file for consistency with other Process classes.)
-        self._config_file = "%s/%s.py" % (self._work_dir, name)
+        self._config_file = "%s/%s_script.py" % (self._work_dir, name)
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
@@ -223,7 +226,7 @@ class OpenMM(_process.Process):
                 raise IOError(msg) from None
 
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -253,7 +256,7 @@ class OpenMM(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             # Write the OpenMM import statements.
             self._add_config_imports()
 
@@ -304,7 +307,7 @@ class OpenMM(_process.Process):
             self.addToConfig("\n# Run the simulation.")
             self.addToConfig(f"simulation.step({self._protocol.getSteps()})")
 
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
             # Write the OpenMM import statements and monkey-patches.
             self._add_config_imports()
             self._add_config_monkey_patches()
@@ -327,7 +330,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            temperature = self._protocol.getStartTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -339,8 +342,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -356,7 +359,7 @@ class OpenMM(_process.Process):
             restraint = self._protocol.getRestraint()
             if restraint is not None:
                 # Search for the atoms to restrain by keyword.
-                if type(restraint) is str:
+                if isinstance(restraint, str):
                     restrained_atoms = self._system.getRestraintAtoms(restraint)
                 # Use the user-defined list of indices.
                 else:
@@ -379,7 +382,7 @@ class OpenMM(_process.Process):
                 self.addToConfig("    positions.append(positions[i])")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
@@ -445,8 +448,8 @@ class OpenMM(_process.Process):
                     temp_cycles = _math.ceil(steps / 100)
 
                     # Work out the temperature change per cycle.
-                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
-                                  self._protocol.getStartTemperature().kelvin().magnitude()) / temp_cycles
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().value() -
+                                  self._protocol.getStartTemperature().kelvin().value()) / temp_cycles
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {temp_cycles}):")
@@ -457,8 +460,8 @@ class OpenMM(_process.Process):
                     self.addToConfig( "    simulation.step(100)")
                 else:
                     # Work out the temperature change per step.
-                    delta_temp = (self._protocol.getEndTemperature().kelvin().magnitude() -
-                                  self._protocol.getStartTemperature().kelvin().magnitude()) / steps
+                    delta_temp = (self._protocol.getEndTemperature().kelvin().value() -
+                                  self._protocol.getStartTemperature().kelvin().value()) / steps
 
                     self.addToConfig(f"start_temperature = {temperature}")
                     self.addToConfig(f"for x in range(0, {steps}):")
@@ -468,7 +471,7 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"    barostat.setDefaultTemperature(temperature*kelvin)")
                     self.addToConfig( "    simulation.step(1)")
 
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
             # Write the OpenMM import statements.
             self._add_config_imports()
 
@@ -493,7 +496,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -505,8 +508,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -516,7 +519,7 @@ class OpenMM(_process.Process):
                     self.addToConfig("system.addForce(barostat)")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
@@ -597,9 +600,9 @@ class OpenMM(_process.Process):
             self.addToConfig(f"    simulation.step({steps_per_cycle})")
             self.addToConfig(f"    simulation.saveState('{self._name}.xml')")
 
-        elif type(self._protocol) is _Protocol.Metadynamics:
+        elif isinstance(self._protocol, _Protocol.Metadynamics):
             colvar = self._protocol.getCollectiveVariable()
-            if len(colvar) != 1 or (type(colvar[0]) is not _CollectiveVariable.Funnel):
+            if len(colvar) != 1 or not isinstance(colvar[0], _CollectiveVariable.Funnel):
                 raise _IncompatibleError("We currently only support '%s' collective variables for '%s' protocols"
                         % (_CollectiveVariable.Funnel.__name__, self._protocol.__class__.__name__))
 
@@ -642,7 +645,7 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
             pressure = self._protocol.getPressure()
 
             # Add a Monte Carlo barostat if the simulation is at constant pressure.
@@ -654,8 +657,8 @@ class OpenMM(_process.Process):
                 else:
                     is_const_pressure = True
 
-                    # Convert to bar and get the magnitude.
-                    pressure = pressure.bar().magnitude()
+                    # Convert to bar and get the value.
+                    pressure = pressure.bar().value()
 
                     # Create the barostat and add its force to the system.
                     self.addToConfig("\n# Add a barostat to run at constant pressure.")
@@ -687,7 +690,7 @@ class OpenMM(_process.Process):
             self.addToConfig(f"p2 = [{p2_string}]")
             self.addToConfig(f"lig = [x for x in range({idx_start}, {idx_end})]")
 
-            sigma_proj = colvar.getHillWidth()[0].nanometers().magnitude()
+            sigma_proj = colvar.getHillWidth()[0].nanometers().value()
             self.addToConfig( "\n# Create the bias variable for the funnel projection.")
             self.addToConfig( "projection = CustomCentroidBondForce(3, 'distance(g1,g2)*cos(angle(g1,g2,g3))')")
             self.addToConfig( "projection.addGroup(lig)")
@@ -701,11 +704,11 @@ class OpenMM(_process.Process):
                 lower_wall = 0.5
                 upper_wall = 4.5
             else:
-                lower_wall = colvar.getLowerBound().getValue().nanometers().magnitude()
-                upper_wall = colvar.getUpperBound().getValue().nanometers().magnitude()
+                lower_wall = colvar.getLowerBound().getValue().nanometers().value()
+                upper_wall = colvar.getUpperBound().getValue().nanometers().value()
             self.addToConfig(f"proj = BiasVariable(projection, {lower_wall-0.2}, {upper_wall+0.2}, {sigma_proj}, False, gridWidth=200)")
 
-            sigma_ext = colvar.getHillWidth()[1].nanometers().magnitude()
+            sigma_ext = colvar.getHillWidth()[1].nanometers().value()
             self.addToConfig("\n# Create the bias variable for the funnel extent.")
             self.addToConfig("extent = CustomCentroidBondForce(3, 'distance(g1,g2)*sin(angle(g1,g2,g3))')")
             self.addToConfig("extent.addGroup(lig)")
@@ -713,8 +716,8 @@ class OpenMM(_process.Process):
             self.addToConfig("extent.addGroup(p2)")
             self.addToConfig("extent.addBond([0,1,2])")
             self.addToConfig("extent.setUsesPeriodicBoundaryConditions(True)")
-            extent_max = colvar.getWidth().nanometers().magnitude()  \
-                       + colvar.getBuffer().nanometers().magnitude() \
+            extent_max = colvar.getWidth().nanometers().value()  \
+                       + colvar.getBuffer().nanometers().value() \
                        + 0.2
             self.addToConfig(f"sigma_ext = {sigma_ext}")
             self.addToConfig(f"ext = BiasVariable(extent, 0.0, {extent_max}, {sigma_ext}, False, gridWidth=200)")
@@ -739,10 +742,10 @@ class OpenMM(_process.Process):
             self.addToConfig("system.addForce(upper_wall_rest)")
 
             self.addToConfig("\n# Sides of the funnel.")
-            self.addToConfig(f"wall_width = {colvar.getWidth().nanometers().magnitude()}*nanometer")
-            self.addToConfig(f"wall_buffer = {colvar.getBuffer().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"wall_width = {colvar.getWidth().nanometers().value()}*nanometer")
+            self.addToConfig(f"wall_buffer = {colvar.getBuffer().nanometers().value()}*nanometer")
             self.addToConfig(f"beta_cent = {colvar.getSteepness()}")
-            self.addToConfig(f"s_cent = {colvar.getInflection().nanometers().magnitude()}*nanometer")
+            self.addToConfig(f"s_cent = {colvar.getInflection().nanometers().value()}*nanometer")
 
             self.addToConfig("dist_restraint = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*sin(angle(g1,g2,g3)) - (a/(1+exp(b*(distance(g1,g2)*cos(angle(g1,g2,g3))-c)))+d), 0)^2')")
             self.addToConfig("dist_restraint.addGroup(lig)")
@@ -817,12 +820,12 @@ class OpenMM(_process.Process):
             else:
                 bias = self._protocol.getBiasFactor()
             self.addToConfig(f"bias = {bias}")
-            height = self._protocol.getHillHeight().kj_per_mol().magnitude()
+            height = self._protocol.getHillHeight().kj_per_mol().value()
 
             self.addToConfig(f"meta = Metadynamics(system, [proj, ext], {temperature}*kelvin, bias, {height}*kilojoules_per_mole, {hill_freq}, biasDir = '.', saveFrequency = {report_interval})")
 
             # Get the integration time step from the protocol.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
@@ -1064,7 +1067,14 @@ class OpenMM(_process.Process):
         # Try to get the most recent trajectory frame.
         try:
             # Handle minimisation protocols separately.
-            if type(self._protocol) is _Protocol.Minimisation:
+            if isinstance(self._protocol, _Protocol.Minimisation):
+
+                # Do we need to get coordinates for the lambda=1 state.
+                if "is_lambda1" in self._property_map:
+                    is_lambda1 = True
+                else:
+                    is_lambda1 = False
+
                 traj = self.getTrajectory()
 
                 # If there is no trajectory, simply return None.
@@ -1074,11 +1084,25 @@ class OpenMM(_process.Process):
                 # Get the last frame.
                 new_system = traj.getFrames(-1)[0]
 
-                # Copy the new coordinates back into the original system.
+                # Make a copy of the existing molecular system.
                 old_system = self._system.copy()
-                old_system._updateCoordinatesAndVelocities(new_system,
-                                                           self._property_map,
-                                                           self._property_map)
+
+                # Update the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
+
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
@@ -1171,7 +1195,7 @@ class OpenMM(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -1185,15 +1209,36 @@ class OpenMM(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Create a copy of the existing system object.
+            old_system = self._system.copy()
+
+            # Get the latest trajectory frame.
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
-            # Copy the new coordinates back into the original system.
-            old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -1615,9 +1660,16 @@ class OpenMM(_process.Process):
         """Helper function to write the header (import statements) to the
            OpenMM Python script (config file).
         """
-        self.addToConfig("from simtk.openmm.app import *")
-        self.addToConfig("from simtk.openmm import *")
-        self.addToConfig("from simtk.unit import *")
+        # We should verify that openmm is available to prevent
+        # difficult-to-debug errors in the run script
+        from BioSimSpace._Utils import _try_import, _assert_imported
+
+        _openmm = _try_import("openmm")
+        _assert_imported(_openmm)
+
+        self.addToConfig("from openmm import *")
+        self.addToConfig("from openmm.app import *")
+        self.addToConfig("from openmm.unit import *")
 
     def _add_config_platform(self):
         """Helper function to add platform information to the OpenMM
@@ -1718,15 +1770,15 @@ class OpenMM(_process.Process):
            is_restart : bool
                Whether the simulation is a restart.
         """
-        if type(state_interval) is not int:
+        if not type(state_interval) is int:
             raise TypeError("'state_interval' must be of type 'int'.")
         if state_interval <= 0:
             raise ValueError("'state_interval' must be a positive integer.")
-        if type(traj_interval) is not int:
+        if not type(traj_interval) is int:
             raise TypeError("'traj_interval' must be of type 'int'.")
         if traj_interval <= 0:
             raise ValueError("'traj_interval' must be a positive integer.")
-        if type(is_restart) is not bool:
+        if not isinstance(is_restart, bool):
             raise TypeError("'is_restart' must be of type 'bool'.")
 
 		# Append to a trajectory file every 500 steps.
@@ -1867,10 +1919,10 @@ class OpenMM(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 

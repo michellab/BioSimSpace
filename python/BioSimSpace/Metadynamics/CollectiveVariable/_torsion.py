@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -128,12 +128,8 @@ class Torsion(_CollectiveVariable):
                will be measured from.
         """
 
-        # Convert tuples to a list.
-        if type(atoms) is tuple:
-            atoms = list(atoms)
-
-        # List of atom indices.
-        if type(atoms) is list and all(isinstance(x, int) for x in atoms):
+        # List/tuple of atom indices.
+        if isinstance(atoms, (list, tuple)) and all(type(x) is int for x in atoms):
             pass
         else:
             raise TypeError("'atoms' must be of list of 'int' types.")
@@ -142,7 +138,7 @@ class Torsion(_CollectiveVariable):
             raise ValueError("'atoms' must contain four indices.")
 
         # All okay, set the value.
-        self._atoms = atoms
+        self._atoms = list(atoms)
 
     def getAtoms(self):
         """Return list of atom indices involved in the torsion.
@@ -162,11 +158,11 @@ class Torsion(_CollectiveVariable):
            hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
                The width of the Gaussian hill.
         """
-        if type(hill_width) is not _Angle:
+        if not isinstance(hill_width, _Angle):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Angle'")
 
-        if hill_width.magnitude() < 0:
-            raise ValueError("'hill_width' must have a magnitude of > 0")
+        if hill_width.value() < 0:
+            raise ValueError("'hill_width' must have a value of > 0")
 
         # Convert to the internal unit.
         self._hill_width = hill_width.radians()
@@ -193,7 +189,7 @@ class Torsion(_CollectiveVariable):
            pbc : bool
                Whether to use periodic boundaries conditions.
         """
-        if type(pbc) is not bool:
+        if not isinstance(pbc, bool):
             raise TypeError("'pbc' must be of type 'bool'")
         self._pbc = pbc
 
@@ -213,12 +209,12 @@ class Torsion(_CollectiveVariable):
         """Internal function to check that the object is in a consistent state."""
 
         if self._lower_bound is not None:
-            if type(self._lower_bound.getValue()) is not _Angle:
+            if not isinstance(self._lower_bound.getValue(), _Angle):
                 raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().radians())
         if self._upper_bound is not None:
-            if type(self._upper_bound.getValue()) is not _Angle:
+            if not isinstance(self._upper_bound.getValue(), _Angle):
                 raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().radians())
@@ -227,11 +223,11 @@ class Torsion(_CollectiveVariable):
                 raise TypeError("'lower_bound' must less than 'upper_bound'")
 
         if self._grid is not None:
-            if type(self._grid.getMinimum()) is not _Angle:
+            if not isinstance(self._grid.getMinimum(), _Angle):
                 raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._grid.setMinimum(self._grid.getMinimum().radians())
-            if type(self._grid.getMaximum()) is not _Angle:
+            if not isinstance(self._grid.getMaximum(), _Angle):
                 raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().radians())
@@ -239,9 +235,9 @@ class Torsion(_CollectiveVariable):
             # Torsion is a periodic collective variable, so the grid must be defined
             # from -pi to pi. PLUMED allows no other grid, regardless of lower or
             # upper walls.
-            if (self._grid.getMinimum().magnitude() / _pi) != _approx(-1.0):
+            if (self._grid.getMinimum().value() / _pi) != _approx(-1.0):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians.")
-            if (self._grid.getMaximum().magnitude() / _pi) != _approx(1.0):
+            if (self._grid.getMaximum().value() / _pi) != _approx(1.0):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians.")
 
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
@@ -251,6 +247,6 @@ class Torsion(_CollectiveVariable):
 
             # If the number of bins isn't specified, estimate it out from the hill width.
             if self._grid.getBins() is None:
-                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).magnitude()
-                num_bins = _ceil(5.0 * (grid_range / self._hill_width.magnitude()))
+                grid_range = (self._grid.getMaximum() - self._grid.getMinimum()).value()
+                num_bins = _ceil(5.0 * (grid_range / self._hill_width.value()))
                 self._grid.setBins(num_bins)

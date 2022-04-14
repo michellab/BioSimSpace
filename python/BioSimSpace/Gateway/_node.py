@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,6 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Node"]
 
+from BioSimSpace._Utils import _try_import
+
 import configargparse as _argparse
 import collections as _collections
 import __main__
@@ -36,7 +38,7 @@ import shutil as _shutil
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
-import yaml as _yaml
+_yaml = _try_import("yaml")
 
 from BioSimSpace import _is_notebook
 from BioSimSpace import setVerbose
@@ -136,22 +138,22 @@ class CwlAction(_argparse.Action):
 
                 # Map the requirement to the appropriate CWL type.
 
-                if type(value) is _Boolean:
+                if isinstance(value, _Boolean):
                     cwl_type = "bool"
 
-                elif type(value) is _Integer:
+                elif isinstance(value, _Integer):
                     cwl_type = "int"
 
-                elif type(value) is _Float:
+                elif isinstance(value, _Float):
                     cwl_type = "float"
 
-                elif type(value) is _String:
+                elif isinstance(value, _String):
                     cwl_type = "string"
 
-                elif type(value) is _File:
+                elif isinstance(value, _File):
                     cwl_type = "File"
 
-                elif type(value) is _FileSet:
+                elif isinstance(value, _FileSet):
                     cwl_type = "array"
 
                 # Use a string for unit-based types since it gives
@@ -177,10 +179,10 @@ class CwlAction(_argparse.Action):
                 default = value.getDefault()
                 if default is not None:
                     if type(value) in _unit_types:
-                        magnitude = default.magnitude()
+                        value = default.value()
                         unit = default.unit()
                         unit = unit.lower()
-                        file.write(f"    default: {magnitude} {unit}\n")
+                        file.write(f"    default: {value} {unit}\n")
                     else:
                         file.write(f"    default: {default}\n")
 
@@ -272,7 +274,7 @@ class Node():
                The name of the node.
         """
 
-        if type(description) is not str:
+        if not isinstance(description, str):
             raise TypeError("The 'description' keyword must be of type 'str'.")
 
         # Set the node name.
@@ -282,7 +284,7 @@ class Node():
             except:
                 self._name = None
         else:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError("The 'name' keyword must be of type 'str'.")
             self._name = name
 
@@ -372,7 +374,7 @@ class Node():
                The input requirement object.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'.")
 
         if not isinstance(input, _Requirement):
@@ -428,7 +430,7 @@ class Node():
                     self._optional.add_argument(name, type=input.getArgType(), nargs='+',
                         help=self._create_help_string(input), default=input.getDefault())
                 else:
-                    if input.getArgType() is bool:
+                    if isinstance(input.getArgType(), bool):
                         self._optional.add_argument(name, type=_str2bool, nargs='?',
                             const=True, default=input.getDefault(), help=self._create_help_string(input))
                     else:
@@ -456,7 +458,7 @@ class Node():
                         help=self._create_help_string(input), required=True,
                         choices=input.getAllowedValues())
                 else:
-                    if input.getArgType() is bool:
+                    if isinstance(input.getArgType(), bool):
                         self._required.add_argument(name, type=_str2bool, nargs='?',
                             const=True, help=self._create_help_string(input))
                     else:
@@ -506,7 +508,7 @@ class Node():
         # Add a Jupyter widget for each of the supported requirement types.
 
         # Boolean.
-        if type(input) is _Boolean:
+        if isinstance(input, _Boolean):
             # Create a Jupyter toggle button.
             widget = _widgets.ToggleButton(
                 value=False,
@@ -542,7 +544,7 @@ class Node():
             self._widgets[name] = widget
 
         # Integer.
-        elif type(input) is _Integer:
+        elif isinstance(input, _Integer):
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -638,18 +640,18 @@ class Node():
             # Get the default value.
             default = input.getDefault()
 
-            # Get the magnitude of types with units.
+            # Get the value of types with units.
             if isinstance(default, _Type):
-                default = default.magnitude()
+                default = default.value()
 
             if allowed is not None:
                 # Set the default.
                 if default is None:
                     default = allowed[0]
 
-                    # Get the magnitude of types with units.
+                    # Get the value of types with units.
                     if isinstance(default, _Type):
-                        default = default.magnitude()
+                        default = default.value()
 
                 # Create a dropdown for the list of allowed values.
                 widget = _widgets.Dropdown(
@@ -665,11 +667,11 @@ class Node():
                 _min = input.getMin()
                 _max = input.getMax()
 
-                # Get the magnitude of types with units.
+                # Get the value of types with units.
                 if isinstance(_min, _Type):
-                    _min = _min.magnitude()
+                    _min = _min.value()
                 if isinstance(_max, _Type):
-                    _max = _max.magnitude()
+                    _max = _max.value()
 
                 # Whether the float is unbounded.
                 is_unbounded = True
@@ -734,7 +736,7 @@ class Node():
             self._widgets[name] = widget
 
         # String.
-        elif type(input) is _String:
+        elif isinstance(input, _String):
             # Get the list of allowed values.
             allowed = input.getAllowedValues()
 
@@ -798,10 +800,10 @@ class Node():
             self._widgets[name] = widget
 
         # File / File set.
-        elif type(input) is _File or type(input) is _FileSet:
+        elif isinstance(input, (_File, _FileSet)):
 
             # Create a fileupload widget.
-            if type(input) is _FileSet:
+            if isinstance(input, _FileSet):
                 widget = _widgets.FileUpload(multiple=True)
             else:
                 widget = _widgets.FileUpload(multiple=False)
@@ -844,7 +846,7 @@ class Node():
                The output requirement object.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'.")
 
         if not isinstance(output, _Requirement):
@@ -877,12 +879,12 @@ class Node():
             # Enforce strict naming for all file-based outputs. This ensures
             # that the prefix used matches the requirement name.
             if self._strict_file_naming:
-                if type(self._outputs[name]) in [_File, _FileSet]:
+                if isinstance(self._outputs[name], (_File, _FileSet)):
                     is_file = False
                     new_value = []
                     # For convenience, convert single file names to a list with
                     # one entry.
-                    if type(value) == str:
+                    if isinstance(value, str):
                         value = [value]
                         is_file = True
                     # Loop over each file.
@@ -932,7 +934,7 @@ class Node():
                The value of the named input requirement.
         """
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("The name must be of type 'str'")
 
         # Validate the inputs.
@@ -940,7 +942,7 @@ class Node():
 
         try:
             value = self._inputs[name].getValue()
-            if type(value) is list:
+            if isinstance(value, list):
                 return value.copy()
             else:
                 return value
@@ -972,7 +974,7 @@ class Node():
                The error message.
         """
 
-        if type(error) is not str:
+        if not isinstance(error, str):
             raise TypeError("The error message must be of type 'str'")
         else:
             self._errors.append(error)
@@ -996,13 +998,13 @@ class Node():
         if name is None:
             raise ValueError("Missing required 'name' keyword argument.")
 
-        if type(name) is not str:
+        if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
 
-        if email is not None and type(email) is not str:
+        if email is not None and not isinstance(email, str):
             raise TypeError("'email' must be of type 'str'")
 
-        if affiliation is not None and type(affiliation) is not str:
+        if affiliation is not None and not isinstance(affiliation, str):
             raise TypeError("'affiliation' must be of type 'str'")
 
         if self._authors is None:
@@ -1032,7 +1034,7 @@ class Node():
            license : str
                The license type.
         """
-        if type(license) is not str:
+        if not isinstance(license, str):
             raise TypeError("The license must be of type 'str'")
         else:
             self._license = license
@@ -1089,7 +1091,7 @@ class Node():
             label = _widgets.Label(value=string)
 
             # This is a FileSet requirement with multiple widgets.
-            if type(widget) is list:
+            if isinstance(widget, list):
                 items = [label] + widget
                 indicator = widget[0]._button
             else:
@@ -1174,9 +1176,9 @@ class Node():
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
-                if key is "verbose":
+                if key == "verbose":
                     setVerbose(value)
-                elif key is "strict_file_naming":
+                elif key == "strict_file_naming":
                     if value is True:
                         self._strict_file_naming = True
                 else:
@@ -1201,7 +1203,7 @@ class Node():
                the node output.
         """
 
-        if type(file_prefix) is not str:
+        if not isinstance(file_prefix, str):
             raise TypeError("The 'file_prefix' keyword must be of type 'str'.")
 
         # Flag that we have validated output.
@@ -1215,7 +1217,7 @@ class Node():
             if output.getValue() is None:
                 self._errors.append("Missing output for requirement '%s'" % name)
             else:
-                if type(output) is _File or type(output) is _FileSet:
+                if isinstance(output, (_File, _FileSet)):
                     file_outputs.append(output)
 
         # Node failed.
@@ -1239,7 +1241,7 @@ class Node():
                 with _zipfile.ZipFile(zipname, "w") as zip:
                     # Loop over all of the file outputs.
                     for output in file_outputs:
-                        if type(output) is _File:
+                        if isinstance(output, _File):
                             file = output.getValue()
                             zip.write(file, arcname=_os.path.basename(file))
                         else:
@@ -1462,7 +1464,7 @@ def _check_value(action, value):
         msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
 
         # If the value is a string, then strip whitespace and try a case insensitive search.
-        if type(value) is str:
+        if isinstance(value, str):
             new_value = value.replace(" ", "").upper()
             choices = [x.replace(" ", "").upper() for x in action.choices]
 

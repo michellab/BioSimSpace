@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -31,6 +31,7 @@ __all__ = ["solvate", "spc", "spce", "tip3p", "tip4p", "tip5p", "waterModels"]
 import os as _os
 import re as _re
 import subprocess as _subprocess
+import shlex as _shlex
 import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
@@ -54,7 +55,7 @@ from BioSimSpace.Types import Angle as _Angle
 from BioSimSpace.Types import Length as _Length
 
 from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
         shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
@@ -104,7 +105,7 @@ def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
            The solvated molecular system.
     """
 
-    if type(model) is not str:
+    if not isinstance(model, str):
         raise TypeError("'model' must be of type 'str'")
     else:
         # Strip whitespace and convert to lower case.
@@ -454,18 +455,18 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
     # Validate the molecule and create a local copy called _molecule to ensure
     # that the passed molecule is preserved.
     if molecule is not None:
-        if type(molecule) is _Molecule:
+        if isinstance(molecule, _Molecule):
             _molecule = _Molecule(molecule)
-        elif type(molecule) is _Molecules:
+        elif isinstance(molecule, _Molecules):
             _molecule = molecule.toSystem()
-        elif type(molecule) is _System:
+        elif isinstance(molecule, _System):
             _molecule = _System(molecule)
         else:
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
                             "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
 
         # Try to extract the box dimensions from the system.
-        if type(_molecule) is _System and box is None and shell is None:
+        if isinstance(_molecule, _System) and box is None and shell is None:
             try:
                 check_box = False
                 prop = property_map.get("space", "space")
@@ -481,7 +482,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
         # Warn the user if any of the molecules contain structural ions
         # parameterised for a different water model.
-        if type(_molecule) is _System:
+        if isinstance(_molecule, _System):
             for mol in _molecule:
                 ion_water_model = mol._ion_water_model
                 if ion_water_model is not None and ion_water_model != model:
@@ -506,11 +507,11 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
     if box is not None:
         # Convert tuple to list.
-        if type(box) is tuple:
+        if isinstance(box, tuple):
             box = list(box)
 
         # Convert Coordinate to list.
-        if type(box) is _Coordinate:
+        if isinstance(box, _Coordinate):
             box = [box.x(), box.y(), box.z()]
 
         # Validate.
@@ -519,12 +520,12 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         else:
             if not all(isinstance(x, _Length) for x in box):
                 raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
-            if not all(x.magnitude() >= 0 for x in box):
+            if not all(x.value() >= 0 for x in box):
                 raise ValueError("All box dimensions must be greater than zero.")
 
     if angles is not None:
         # Convert tuple to list.
-        if type(angles) is tuple:
+        if isinstance(angles, tuple):
             angles = list(angles)
 
         # Validate.
@@ -538,7 +539,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         angles=3*[_Angle(90, "degrees")]
 
     if shell is not None:
-        if type(shell) is not _Length:
+        if not isinstance(shell, _Length):
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
         if box is not None:
@@ -560,20 +561,20 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         box = 3*[base_length]
 
     # Check that the ion concentration is valid.
-    if type(ion_conc) is not float and type(ion_conc) is not int:
+    if not isinstance(ion_conc, float) and not type(ion_conc) is int:
         raise TypeError("'ion_conc' must be of type 'int' or 'float'.")
     elif ion_conc < 0:
         raise ValueError("'ion_conc' cannot be negative!")
 
-    if type(is_neutral) is not bool:
+    if not isinstance(is_neutral, bool):
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
     # Check that the working directory is valid.
-    if work_dir is not None and type(work_dir) is not str:
+    if work_dir is not None and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Check that the property map is valid.
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Check that the box is large enough to hold the molecule.
@@ -636,16 +637,16 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         aabox_min, aabox_max = molecule.getAxisAlignedBoundingBox()
 
         # Work out the aabox center.
-        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().magnitude()
+        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().value()
                 for x in range(0, 3)]
 
         # Generate a TriclinicBox based on the box magnitudes and angles.
-        triclinic_box = _TriclinicBox(box[0].angstroms().magnitude(),
-                                      box[1].angstroms().magnitude(),
-                                      box[2].angstroms().magnitude(),
-                                      angles[0].degrees().magnitude()*_degree,
-                                      angles[1].degrees().magnitude()*_degree,
-                                      angles[2].degrees().magnitude()*_degree)
+        triclinic_box = _TriclinicBox(box[0].angstroms().value(),
+                                      box[1].angstroms().value(),
+                                      box[2].angstroms().value(),
+                                      angles[0].degrees().value()*_degree,
+                                      angles[1].degrees().value()*_degree,
+                                      angles[2].degrees().value()*_degree)
 
         # Work out the center of the triclinic cell.
         box_center = triclinic_box.cellMatrix()*_Vector(0.5, 0.5, 0.5)
@@ -656,7 +657,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         # Center the solute in the box.
         molecule.translate(shift)
 
-        if type(molecule) is _System:
+        if isinstance(molecule, _System):
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template.
             molecule._set_water_topology("GROMACS")
@@ -693,13 +694,13 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 file.write("   0.00000  0.00000  0.00000\n")
 
         # Create the editconf command.
-        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe      \
-                + " -box %f %f %f" % (box[0].nanometers().magnitude(),
-                                      box[1].nanometers().magnitude(),
-                                      box[2].nanometers().magnitude())     \
-                + " -angles %f %f %f" % (angles[0].degrees().magnitude(),
-                                         angles[1].degrees().magnitude(),
-                                         angles[2].degrees().magnitude())  \
+        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe  \
+                + " -box %f %f %f" % (box[0].nanometers().value(),
+                                      box[1].nanometers().value(),
+                                      box[2].nanometers().value())     \
+                + " -angles %f %f %f" % (angles[0].degrees().value(),
+                                         angles[1].degrees().value(),
+                                         angles[2].degrees().value())  \
                 + " -noc -o box.gro"
 
         with open("README.txt", "w") as file:
@@ -712,7 +713,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("editconf.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -731,7 +732,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
         # Add the shell information.
         if molecule is not None and shell is not None:
-            command += " -shell %f" % shell.nanometers().magnitude()
+            command += " -shell %f" % shell.nanometers().value()
 
         command += " -cp box.gro -o output.gro"
 
@@ -745,7 +746,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("solvate.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -803,7 +804,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
-            if type(molecule) is _System:
+            if isinstance(molecule, _System):
                 system = molecule + water
             else:
                 system = molecule.toSystem() + water
@@ -857,7 +858,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             stderr = open("grommp.err", "w")
 
             # Run grompp as a subprocess.
-            proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -886,10 +887,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     charge = system.charge()
 
                     # Round to the nearest integer value.
-                    charge = round(charge.magnitude())
+                    charge = round(charge.value())
 
                     # Create the genion command.
-                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
+                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
 
                     # Add enough counter ions to neutralise the charge.
                     if charge > 0:
@@ -898,7 +899,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                         command += " -np %d" % abs(charge)
                 else:
                     # Create the genion command.
-                    command = "echo SOL | %s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
+                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
                         % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
 
                 with open("README.txt", "a") as file:
@@ -911,7 +912,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 stderr = open("genion.err", "w")
 
                 # Run genion as a subprocess.
-                proc = _subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+                proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
+                proc = _subprocess.run(_shlex.split(command), shell=False,
+                    stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
+                proc_echo.stdout.close()
                 stdout.close()
                 stderr.close()
 
@@ -930,14 +934,15 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     num_na = 0
                     num_cl = 0
 
-                    # We now need to loop through the GRO file to extract the lines
-                    # corresponding to water or ion atoms.
+                    # We now need to loop through the GRO file to extract
+                    # the lines corresponding to water or ion atoms.
                     water_ion_lines = []
 
                     with open("solvated_ions.gro", "r") as file:
-                        # Don't  for ions within the original system.
                         if molecule is None:
                             num_atoms = 0
+                        # Make sure we don't don't search for ions from the
+                        # original system.
                         else:
                             num_atoms = molecule.nAtoms()
                         for line in file.readlines()[num_atoms+2:]:
@@ -992,18 +997,17 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     # Load the water/ion box.
                     water_ions = _IO.readMolecules(["water_ions.gro", "water_ions.top"])
 
-                    # Create a new system by adding the water to the original molecule.
+                    # Create a new system by adding the water and ions to the original molecule.
                     if molecule is not None:
-                        if type(molecule) is _System:
+                        if isinstance(molecule, _System):
                             system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions
 
-                        # Add all of the water molecules' properties to the new system.
+                        # Add all of the system properties from the water molecules
+                        # to the new system.
                         for prop in water_ions._sire_object.propertyKeys():
                             prop = _property_map.get(prop, prop)
-
-                            # Add the space property from the water system.
                             system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
 
                     else:

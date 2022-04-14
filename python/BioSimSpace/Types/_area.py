@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -65,14 +65,14 @@ class Area(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the area, e.g. "30 nm^2".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -106,7 +106,7 @@ class Area(_Type):
         super().__init__(*args)
 
         # Don't support negative areas.
-        if self._magnitude < 0:
+        if self._value < 0:
             raise ValueError("The area cannot be negative!")
 
     def __mul__(self, other):
@@ -117,17 +117,17 @@ class Area(_Type):
             other = float(other)
 
         # Multiplication by float.
-        if type(other) is float:
-            mag = self._magnitude * other
+        if isinstance(other, float):
+            mag = self._value * other
             return Area(mag, self._unit)
 
         # Multiplication by a Length.
-        elif type(other) is _Length:
-            mag = self.angstroms2().magnitude() * other.angstroms().magnitude()
+        elif isinstance(other, _Length):
+            mag = self.angstroms2().value() * other.angstroms().value()
             return _Volume(mag, "A3")
 
         # Multiplication by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self * length
@@ -152,21 +152,21 @@ class Area(_Type):
             other = float(other)
 
         # Float division.
-        if type(other) is float:
-            mag = self._magnitude / other
+        if isinstance(other, float):
+            mag = self._value / other
             return Area(mag, self._unit)
 
         # Division by another Area.
-        elif type(other) is Area:
-            return self.angstroms2().magnitude() / other.angstroms2().magnitude()
+        elif isinstance(other, Area):
+            return self.angstroms2().value() / other.angstroms2().value()
 
         # Division by a Length.
-        elif type(other) is _Length:
-            mag = self.angstroms2().magnitude() / other.angstroms().magnitude()
+        elif isinstance(other, _Length):
+            mag = self.angstroms2().value() / other.angstroms().value()
             return _Length(mag, "A")
 
         # Division by a string.
-        elif type(other) is str:
+        elif isinstance(other, str):
             try:
                 length = _Length(other)
                 return self / length
@@ -191,7 +191,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square meters.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
 
     def nanometers2(self):
         """Return the area in square nanometers.
@@ -202,7 +202,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square nanometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
 
     def angstroms2(self):
         """Return the area in square Angstrom.
@@ -213,7 +213,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square Angstrom.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
 
     def picometers2(self):
         """Return the area in square picometers.
@@ -224,7 +224,7 @@ class Area(_Type):
            area : :class:`Area <BioSimSpace.Types.Area>`
                The area in square picometers.
         """
-        return Area((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
+        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -233,7 +233,7 @@ class Area(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

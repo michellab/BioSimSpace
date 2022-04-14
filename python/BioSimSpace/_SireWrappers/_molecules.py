@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -57,31 +57,31 @@ class Molecules(_SireWrapper):
         # Check that the molecules argument is valid.
 
         # Convert tuple to list.
-        if type(molecules) is tuple:
+        if isinstance(molecules, tuple):
             molecules = list(molecules)
 
-        # A Sire Molecules object.
-        if type(molecules) is _SireMol.MoleculeGroup:
+        # A Sire MoleculeGroup object.
+        if isinstance(molecules, _SireMol.MoleculeGroup):
             super().__init__(molecules)
 
         # A Sire System object.
-        elif type(molecules) is _SireSystem.System:
+        elif isinstance(molecules, _SireSystem.System):
             super().__init__(molecules.molecules())
 
         # A BioSimSpace System object.
-        elif type(molecules) is _System:
+        elif isinstance(molecules, _System):
             super().__init__(molecules._sire_object.group(_SireMol.MGName("all")))
 
-        # Another BioSimSpace Molecule object.
-        elif type(molecules) is list and all(isinstance(x, _Molecule) for x in molecules):
+        # A list of BioSimSpace molecules.
+        elif isinstance(molecules, list) and all(isinstance(x, _Molecule) for x in molecules):
             molgrp = _SireMol.MoleculeGroup("all")
             mol_nums = []
             for molecule in molecules:
                 if molecule._sire_object.number() in mol_nums:
                     raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
                                      "contain unique molecules. Use the 'copy' method "
-                                     "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                     "create a new version of a molecule.")
+                                     "of 'BioSimSpace._SireWrappers' objects to "
+                                     "create a new version of them.")
                 molgrp.add(molecule._sire_object)
                 mol_nums.append(molecule._sire_object.number())
             super().__init__(molgrp)
@@ -110,50 +110,54 @@ class Molecules(_SireWrapper):
         """Addition operator."""
 
         # Convert tuple to a list.
-        if type(other) is tuple:
+        if isinstance(other, tuple):
             other = list(other)
 
         # Extract the molecules.
         molecules = self._sire_object.__deepcopy__()
 
         # Extract the MolNums.
-        mol_nums = molecules.molNums()
+        mol_nums0 = molecules.molNums()
 
-        # Validate the input.
+        # Validate the input. Convert all valid input to another
+        # Molecules object.
 
         # A System object.
-        if type(other) is _System:
-            molecules.add(other._sire_object.molecules())
+        if isinstance(other, _System):
+            other = other.getMolecules()
 
         # A Molecule object.
-        elif type(other) is _Molecule:
-            if other._sire_object.number() in mol_nums:
-                raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
-                                 "contain unique molecules. Use the 'copy' method "
-                                 "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                 "to create a new version of a molecule.")
-            molecules.add(other._sire_object)
+        elif isinstance(other, _Molecule):
+            other = Molecules([other])
 
         # A Molecules object.
-        elif type(other) is Molecules:
-            molecules.add(other._sire_object)
+        elif isinstance(other, Molecules):
+            pass
 
         # A list of Molecule objects.
-        elif type(other) is list and all(isinstance(x, _Molecule) for x in other):
-            for molecule in other:
-                if molecule._sire_object.number() in mol_nums:
-                    raise ValueError("'BioSimSpace._SireWrappers.Molecules' can only "
-                                     "contain unique molecules. Use the 'copy' method "
-                                     "of 'BioSimSpace._SireWrappers.Molecule' to "
-                                     "create a new version of a molecule.")
-                molecules.add(molecule._sire_object)
-                mol_nums.append(molecule._sire_object.number())
+        elif isinstance(other, list) and all(isinstance(x, _Molecule) for x in other):
+            other = Molecules(other)
 
         # Unsupported.
         else:
             raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
                             "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
+
+        # Extract the molecule numbers for the current system and
+        # the molecules to add.
+        mol_nums1 = other._sire_object.molNums()
+
+        # There are molecule numbers in both sets, or the molecules
+        # to add contains duplicates.
+        if (set(mol_nums0) & set(mol_nums1)) or \
+           (len(mol_nums1) != len(set(mol_nums1))):
+            raise ValueError("'BioSimSpace._SireWrappers.System' can only "
+                             "contain unique molecules. Use the 'copy' method "
+                             "of 'BioSimSpace._SireWrappers.Molecule' to "
+                             "create a new version of a molecule.")
+
+        molecules.add(other._sire_object)
 
         # Create and return a new Molecules object.
         return Molecules(molecules)
@@ -162,7 +166,7 @@ class Molecules(_SireWrapper):
         """Get a molecule from the container."""
 
         # Slice.
-        if type(key) is slice:
+        if isinstance(key, slice):
 
             # Create a list to hold the molecules.
             molecules = []
@@ -305,26 +309,26 @@ class Molecules(_SireWrapper):
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
-                    vec.append(x.angstroms().magnitude())
+                elif isinstance(x, _Length):
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Translate each of the molecules in the container.
@@ -366,7 +370,7 @@ class Molecules(_SireWrapper):
            >>> result = molecule.search("atomidx 23")
         """
 
-        if type(query) is not str:
+        if not isinstance(query, str):
             raise TypeError("'query' must be of type 'str'")
 
         # Initialise a list to hold the search results.

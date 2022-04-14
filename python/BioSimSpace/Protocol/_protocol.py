@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -50,7 +50,7 @@ class Protocol():
            is_customised : bool
                Whether the protocol has been customised.
         """
-        if type(is_customised) is not bool:
+        if not isinstance(is_customised, bool):
             raise TypeError("'is_customised' must be of type 'bool'.")
 
         self._is_customised = is_customised

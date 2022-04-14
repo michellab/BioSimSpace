@@ -1,7 +1,7 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -188,11 +188,7 @@ class Metadynamics(_Protocol):
             self._collective_variable = [collective_variable]
             return
 
-        # Convert tuple to list.
-        if type(collective_variable) is tuple:
-            collective_variable = list(collective_variable)
-
-        if type(collective_variable) is list:
+        if isinstance(collective_variable, (list, tuple)):
             if not all(isinstance(x, _colvar_type) for x in collective_variable):
                 raise TypeError("'collective_variable' must all be of type "
                                 "'BioSimSpace.Metadynamics.CollectiveVariable'")
@@ -241,7 +237,7 @@ class Metadynamics(_Protocol):
            timestep : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -266,7 +262,7 @@ class Metadynamics(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -291,7 +287,7 @@ class Metadynamics(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The simulation temperature.
         """
-        if type(temperature) is _Types.Temperature:
+        if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
@@ -316,7 +312,7 @@ class Metadynamics(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -342,12 +338,12 @@ class Metadynamics(_Protocol):
                The hill height.
         """
 
-        if type(hill_height) is not _Types.Energy:
+        if not isinstance(hill_height, _Types.Energy):
             raise TypeError("'hill_height' must be of type 'BioSimSpace.Types.Energy'")
 
         # Check that heights is greater than zero.
-        if hill_height.magnitude() <= 0:
-            raise ValueError("Cannot have 'hill_height' with magnitude <= 0")
+        if hill_height.value() <= 0:
+            raise ValueError("Cannot have 'hill_height' with value <= 0")
 
         self._hill_height = hill_height.kj_per_mol()
 
@@ -443,7 +439,7 @@ class Metadynamics(_Protocol):
            report_interval : int
                The number of integration steps between reporting statistics.
         """
-        if type(report_interval) is not int:
+        if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
@@ -476,7 +472,7 @@ class Metadynamics(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if type(restart_interval) is not int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:

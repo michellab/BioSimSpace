@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -145,11 +145,11 @@ def _find_md_engines(system, protocol, engine="auto", gpu_support=False):
     is_metadynamics = False
     is_steering = False
 
-    if type(protocol) is _Protocol.FreeEnergy:
+    if isinstance(protocol, _Protocol.FreeEnergy):
         is_free_energy = True
-    elif type(protocol) is _Protocol.Metadynamics:
+    elif isinstance(protocol, _Protocol.Metadynamics):
         is_metadynamics = True
-    elif type(protocol) is _Protocol.Steering:
+    elif isinstance(protocol, _Protocol.Steering):
         is_steering = True
 
     # Create a list to store all of the engines and executables.
@@ -275,7 +275,7 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
     """
 
     # Check that the system is valid.
-    if type(system) is not _System:
+    if not isinstance(system, _System):
         raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     # Make sure the system is parameterised.
@@ -286,7 +286,7 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
 
     # Check that the protocol is valid.
     if not isinstance(protocol, _Protocol._protocol.Protocol):
-        if type(protocol) is str:
+        if isinstance(protocol, str):
             protocol = _Protocol.Custom(protocol)
         else:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol' "
@@ -294,34 +294,34 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
 
     # Validate optional arguments.
 
-    if type(engine) is not str:
+    if not isinstance(engine, str):
         raise TypeError("'engine' must be of type 'str'.")
     md_engine = engine.upper().replace(" ", "")
 
-    if type(gpu_support) is not bool:
+    if not isinstance(gpu_support, bool):
         raise TypeError("'gpu_support' must be of type 'bool'")
 
-    if type(auto_start) is not bool:
+    if not isinstance(auto_start, bool):
         raise TypeError("'auto_start' must be of type 'bool'")
 
-    if type(name) is not str:
+    if not isinstance(name, str):
         raise TypeError("'name' must be of type 'str'")
 
     if work_dir is not None:
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
     if seed is not None:
-        if type(seed) is not int:
+        if not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    if type(ignore_warnings) is not bool:
+    if not isinstance(ignore_warnings, bool):
         raise ValueError("'ignore_warnings' must be of type 'bool.")
 
-    if type(show_errors) is not bool:
+    if not isinstance(show_errors, bool):
         raise ValueError("'show_errors' must be of type 'bool.")
 
     # Find a molecular dynamics engine and executable.

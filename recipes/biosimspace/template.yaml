@@ -1,0 +1,91 @@
+{% set name = "biosimspace" %}
+
+package:
+  name: {{ name }}
+  version: BSS_VERSION
+
+source:
+  git_url: https://github.com/michellab/BioSimSpace.git
+  git_tag: BSS_BRANCH
+
+build:
+  number: BSS_BUILD
+  skip: true  # [win]
+
+requirements:
+  host:
+    - python
+  run:
+    - python
+    - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
+    - configargparse
+    - fkcombu
+    - lomap2
+    - mdtraj
+    - mdanalysis
+    - networkx
+    - nglview
+    - openff-toolkit-base
+    - parmed
+    - py3dmol
+    - pydot
+    - pygtail
+    - pypdb
+    - pytest
+    - pyyaml
+    - rdkit
+    - watchdog
+
+test:
+  script_env:
+    - HEAD_BRANCH
+    - SIRE_DONT_PHONEHOME
+    - SIRE_SILENT_PHONEHOME
+  requires:
+    - git
+    - pytest
+  imports:
+    - BioSimSpace
+  commands:
+    - git clone https://github.com/michellab/BioSimSpace && cd BioSimSpace && git checkout $HEAD_BRANCH && pytest -vvv test
+
+about:
+  home: https://biosimspace.org
+  license: GPL-2.0
+  license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
+  summary: "An interoperable Python framework for biomolecular simulation."
+  dev_url: https://github.com/michellab/BioSimSpace
+  doc_url: https://biosimspace.org
+  description: |
+                BioSimSpace is an interoperable Python framework for
+                biomolecular simulation. With it you can:
+
+                * Write robust and portable biomolecular workflow components
+                  that work on different hardware, with different software
+                  packages, and that can be run in different ways, e.g.
+                  command-line, Jupyter.
+                * Interact with molecular-simulation processes in real time.
+
+                To install:
+
+                `conda install -c conda-forge -c michellab biosimspace`
+
+                To install the development version:
+
+                `conda install -c conda-forge -c michellab/label/dev biosimspace`
+
+                When updating the development version it is generally advised to
+                update Sire at the same time:
+
+                `conda install -c conda-forge -c michellab/label/dev biosimspace sire`
+
+                Since BioSimSpace has many dependencies, an install or update
+                might not always give you the most recent version. If this is
+                the case, use, e.g.:
+
+                `conda install -c conda-forge -c michellab/label/dev biosimspace --all`
+
+extra:
+  recipe-maintainers:
+    - lohedges
+    - chryswoods

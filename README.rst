@@ -1,9 +1,9 @@
 `BioSimSpace <http://biosimspace.org>`__
 ========================================
 
-.. image:: https://dev.azure.com/michellab/BioSimSpace/_apis/build/status/michellab.BioSimSpace?branchName=devel
-   :target: https://dev.azure.com/michellab/BioSimSpace/_build
-   :alt: Build Status
+.. image:: https://github.com/michellab/BioSimSpace/workflows/Build/badge.svg
+   :target: https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild)
+   :alt: Build status
 
 .. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
    :target: https://anaconda.org/michellab/biosimspace
@@ -65,14 +65,14 @@ To create a new environment:
 
 .. code-block:: bash
 
-    conda create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
+    conda create -n biosimspace -c conda-forge -c michellab biosimspace
     conda activate biosimspace
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda create -n biosimspace-dev -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda create -n biosimspace-dev -c conda-forge -c michellab/label/dev biosimspace
     conda activate biosimspace-dev
 
 When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
@@ -80,7 +80,7 @@ at the same time:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace sire
+    conda update -c conda-forge -c michellab/label/dev biosimspace sire
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
@@ -94,7 +94,7 @@ need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c omnia -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c michellab/label/dev biosimspace
 
 If you find that Conda is particularly slow to install or upgrade BioSimSpace,
 then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
@@ -107,45 +107,7 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
-    mamba create -n biosimspace -c conda-forge -c omnia -c michellab biosimspace
-
-Using the prebuilt binaries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The latest self-extracting binary for the development version of BioSimSpace
-can be downloaded from one of the following links:
-
-* Linux: `biosimspace_devel_latest_linux.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_linux.run>`__
-* macOS: `biosimspace_devel_latest_osx.run <https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/hugs/b/biosimspace_releases/o/biosimspace_devel_latest_osx.run>`__
-
-Once downloaded, the binary can be unpacked as follows:
-
-.. code-block:: bash
-
-   chmod +x biosimspace_devel_latest_linux.run
-   ./biosimspace_devel_latest_linux.run
-
-Unless a different installation path was given, BioSimSpace can be found in:
-``$HOME/biosimspace.app``. BioSimSpace comes with a bundled with a Python
-interpreter, an interactive Python (IPython) shell, and `Jupyter <https://jupyter.org>`__.
-
-For example, to run a BioSimSpace Python script, use:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/python script.py
-
-To launch an interactive BioSimSpace session:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/ipython
-
-To run a BioSimSpace notebook:
-
-.. code-block:: bash
-
-   $HOME/biosimspace.app/bin/jupyter notebook notebook.ipynb
+    mamba create -n biosimspace -c conda-forge -c michellab biosimspace
 
 Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -187,43 +149,6 @@ Then try importing the BioSimSpace package:
 .. code-block:: python
 
    import BioSimSpace as BSS
-
-Docker images
--------------
-
-If you don't want to build or install, you can also run BioSimSpace via one of
-our docker images. The easy way to run the latest development image of
-BioSimSpace is via:
-
-.. code-block:: bash
-
-   docker run -it biosimspace/biosimspace-devel:latest
-
-This will download the latest BioSimSpace development container, and will run
-it, giving you a bash prompt inside the container.
-
-OpenMM compatibility
---------------------
-
-Some BioSimSpace functionality requires `OpenMM <http://openmm.org>`__. Although
-a bundled version is provided as part of the installation, this may not
-be appropriate for your GPU drivers. To automatically detect and install
-a suitable version of OpenMM, simply run the following command post-install::
-
-    optimise_openmm
-
-(Note that, depending on your installation method, ``optimise_openmm`` may
-be located in ``$HOME/sire.app/bin``.)
-
-Alternatively, to manually install a particular version of OpenMM you can
-use a specific Conda label, e.g.::
-
-    conda install -c omnia/label/cuda90 openmm
-
-If you have compiled Sire against a custom OpenMM installation, then you'll
-need to set the ``OPENMM_PLUGIN_DIR`` environment variable to point to the
-correct plugin location. By default this variable is set to the plugin
-directory of the bundled OpenMM package.
 
 Developers
 ----------

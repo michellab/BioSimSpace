@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import random as _random
 import string as _string
 import sys as _sys
@@ -52,7 +54,7 @@ from BioSimSpace._SireWrappers import System as _System
 from BioSimSpace import IO as _IO
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -110,7 +112,7 @@ class Somd(_process.Process):
         # This process can generate trajectory data.
         self._has_trajectory = True
 
-        if type(platform) is not str:
+        if not isinstance(platform, str):
             raise TypeError("'platform' must be of type 'str'.")
         else:
             # Strip all whitespace and convert to upper case.
@@ -133,7 +135,7 @@ class Somd(_process.Process):
                 somd_path = _os.path.join(_os.path.normpath(_SireBase.getShareDir()), "scripts")
                 somd_interpreter = _os.path.join(_os.path.normpath(_SireBase.getBinDir()), "sire_python.exe")
                 somd_suffix = ".py"
-            if type(self._protocol) is _Protocol.FreeEnergy:
+            if isinstance(self._protocol, _Protocol.FreeEnergy):
                 somd_exe = "somd-freenrg"
             else:
                 somd_exe = "somd"
@@ -181,6 +183,10 @@ class Somd(_process.Process):
         # Initialise the buffering frequency.
         self._buffer_freq = 0
 
+        # Initialise the molecule index mapping. SOMD re-orders molecules on
+        # startup so we need to re-map to the original system.
+        self._mapping = {}
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -209,7 +215,7 @@ class Somd(_process.Process):
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             if system.nPerturbableMolecules() == 1:
                 # Extract the perturbable molecule.
                 pert_mol = system.getPerturbableMolecules()[0]
@@ -262,7 +268,7 @@ class Somd(_process.Process):
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -309,7 +315,7 @@ class Somd(_process.Process):
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                   # GPU device ID.
             self.addToConfig("minimise = True")                         # Minimisation simulation.
@@ -332,7 +338,7 @@ class Somd(_process.Process):
         # MD drivers).
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
             # Only constant temperature equilibration simulations are supported.
             if not self._protocol.isConstantTemp():
                 raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
@@ -368,10 +374,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getStartTemperature().kelvin().magnitude()
+            temperature = self._protocol.getStartTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -389,7 +395,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Pressure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -403,7 +409,7 @@ class Somd(_process.Process):
                 self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -432,10 +438,10 @@ class Somd(_process.Process):
                 cycles_per_frame = _math.floor(cycles_per_frame)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -453,7 +459,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -467,7 +473,7 @@ class Somd(_process.Process):
                 self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
 
         # Add configuration variables for a free energy simulation.
-        elif type(self._protocol) is _Protocol.FreeEnergy:
+        elif isinstance(self._protocol, _Protocol.FreeEnergy):
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -509,10 +515,10 @@ class Somd(_process.Process):
                 buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
             # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().femtoseconds().value()
 
             # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().magnitude()
+            temperature = self._protocol.getTemperature().kelvin().value()
 
             if self._platform == "CUDA" or self._platform == "OPENCL":
                 self.addToConfig("gpu = %d" % gpu_id)                               # GPU device ID.
@@ -531,7 +537,7 @@ class Somd(_process.Process):
                 if self._has_water and has_box:
                     self.addToConfig("barostat = True")                             # Enable barostat.
                     self.addToConfig("pressure = %.5f atm"                          # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().magnitude())
+                        % self._protocol.getPressure().atm().value())
                 else:
                     self.addToConfig("barostat = False")                            # Disable barostat (constant volume).
             if self._has_water:
@@ -570,7 +576,7 @@ class Somd(_process.Process):
         # Add the default arguments.
         self.setArg("-c", "%s.rst7" % self._name)                       # Coordinate restart file.
         self.setArg("-t", "%s.prm7" % self._name)                       # Topology file.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             self.setArg("-m", "%s.pert" % self._name)                   # Perturbation file.
         self.setArg("-C", "%s.cfg" % self._name)                        # Config file.
         self.setArg("-p", self._platform)                               # Simulation platform.
@@ -654,16 +660,34 @@ class Somd(_process.Process):
 
         # Try to grab the latest coordinates from the binary restart file.
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system = _IO.readMolecules(self._restart_file)
 
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
 
-            old_system = self._updateCoordinatesAndVelocities(old_system,
-                                                              new_system,
-                                                              self._property_map,
-                                                              self._property_map)
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -734,7 +758,7 @@ class Somd(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -744,15 +768,35 @@ class Somd(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
             # Copy the new coordinates back into the original system.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule numbers in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -788,7 +832,7 @@ class Somd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         # Get the number of trajectory frames.
@@ -911,7 +955,7 @@ class Somd(_process.Process):
                 _os.remove(file)
 
         # Additional files for free energy simulations.
-        if type(self._protocol) is _Protocol.FreeEnergy:
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
 
             file = "%s/gradients.dat" % self._work_dir
             if _os.path.isfile(file):
@@ -920,121 +964,6 @@ class Somd(_process.Process):
             file = "%s/simfile.dat" % self._work_dir
             if _os.path.isfile(file):
                 _os.remove(file)
-
-    def _updateCoordinatesAndVelocities(self, old_system, new_system,
-            property_map0={}, property_map1={}, is_lambda1=False):
-        """Update the coordinates and velocities of atoms in the system.
-
-           Parameters
-           ----------
-
-           old_system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The original molecular system.
-
-           new_system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A system containing the updated coordinates.
-
-           property_map0 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in this system.
-
-           property_map1 : dict
-               A dictionary that maps system "properties" to their user defined
-               values in the passed system.
-
-           is_lambda1 : bool
-              Whether to update coordinates of perturbed molecules at lambda = 1.
-              By default, coordinates at lambda = 0 are used.
-        """
-
-        # Rather than using the _updateCoordinates of the system directly,
-        # this is a custom function for SOMD since it doesn't preserve
-        # molecular ordering on startup.
-
-        # Validate the systems.
-
-        if type(old_system) is not _System:
-            raise TypeError("'old_system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        if type(new_system) is not _System:
-            raise TypeError("'new_system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-        # Check that the two systems contain the same number of molecules.
-        if old_system.nMolecules() != new_system.nMolecules():
-            raise _IncompatibleError("The two systems contains a different number of "
-                                     "molecules. Expected '%d', found '%d'"
-                                     % (old_system.nMolecules(), new_system.nMolecules()))
-
-        if type(property_map0) is not dict:
-            raise TypeError("'property_map0' must be of type 'dict'.")
-
-        if type(property_map1) is not dict:
-            raise TypeError("'property_map1' must be of type 'dict'.")
-
-        if type(is_lambda1) is not bool:
-            raise TypeError("'is_lambda1' must be of type 'bool'.")
-
-        # Work out the name of the "coordinates" property.
-        prop_c0 = property_map0.get("coordinates0", "coordinates")
-        prop_c1 = property_map1.get("coordinates1", "coordinates")
-
-        # Work out the name of the "velocity" property.
-        prop_v0 = property_map0.get("velocity", "coordinates")
-        prop_v1 = property_map1.get("velocity", "coordinates")
-
-        # Loop over all molecules and update the coordinates.
-        for idx, mol0 in enumerate(old_system.getMolecules()):
-            # Get the number of the first atom in the molecule.
-            num = mol0.getAtoms()[0]._sire_object.number().value()
-
-            # Get the underlying Sire object.
-            mol0 = mol0._sire_object
-
-            # Search for the molecule with the same atom number in the new system.
-            search = new_system._sire_object.search(f"mol with atomnum {num}")
-
-            if len(search) != 1:
-                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                raise _IncompatibleError(msg)
-
-            # Extract the matching molecule.
-            mol1 = search[0]
-
-            # Check whether the molecule is perturbable.
-            if mol0.hasProperty("is_perturbable"):
-                if is_lambda1:
-                    prop_c = "coordinates1"
-                else:
-                    prop_c = "coordinates0"
-            else:
-                prop_c = prop_c0
-
-            # Try to update the coordinates property.
-            try:
-                mol0 = mol0.edit().setProperty(prop_c, mol1.property(prop_c1)).molecule().commit()
-            except Exception as e:
-                msg = "Unable to update 'coordinates' for molecule index '%d'" % idx
-                if _isVerbose():
-                    raise _IncompatibleError(msg) from e
-                else:
-                    raise _IncompatibleError(msg) from None
-
-            # Try to update the velocity property. This isn't always present so
-            # only try this when the passed system contains the property.
-            if mol1.hasProperty(prop_v1):
-                try:
-                    mol0 = mol0.edit().setProperty(prop_v0, mol1.property(prop_v1)).molecule().commit()
-                except Exception as e:
-                    msg = "Unable to update 'velocity' for molecule index '%d'" % idx
-                    if _isVerbose():
-                        raise _IncompatibleError(msg) from e
-                    else:
-                        raise _IncompatibleError(msg) from None
-
-            # Update the molecule in the original system.
-            old_system._sire_object.update(mol0)
-
-        return old_system
 
 def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         zero_dummy_impropers=False, print_all_atoms=False, property_map={},
@@ -1082,7 +1011,7 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
         molecule : :class:`System <BioSimSpace._SireWrappers.Molecule>`
             The molecule with properties corresponding to the lamda = 0 state.
     """
-    if type(molecule) is not _Molecule:
+    if not isinstance(molecule, _Molecule):
         raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
     if not molecule._is_perturbable:
@@ -1091,19 +1020,19 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     if not molecule._sire_object.property("forcefield0").isAmberStyle():
         raise _IncompatibleError("Can only write perturbation files for AMBER style force fields.")
 
-    if type(zero_dummy_dihedrals) is not bool:
+    if not isinstance(zero_dummy_dihedrals, bool):
         raise TypeError("'zero_dummy_dihedrals' must be of type 'bool'")
 
-    if type(zero_dummy_impropers) is not bool:
+    if not isinstance(zero_dummy_impropers, bool):
         raise TypeError("'zero_dummy_impropers' must be of type 'bool'")
 
-    if type(print_all_atoms) is not bool:
+    if not isinstance(print_all_atoms, bool):
         raise TypeError("'print_all_atoms' must be of type 'bool'")
 
-    if type(property_map) is not dict:
+    if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    if type(perturbation_type) is not str:
+    if not isinstance(perturbation_type, str):
         raise TypeError("'perturbation_type' must be of type 'str'")
 
     # Convert to lower case and strip whitespace.
@@ -1141,15 +1070,11 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
     # that the names must be unique. As such we need to count the number of
     # atoms with a particular name, then append an index to their name.
 
-    # A dictionary to track the atom names.
+    # Loop over all atoms in the molecule and tally the occurrence of each
+    # name.
     atom_names = {}
-
-    # Loop over all atoms in the molecule.
     for atom in mol.atoms():
-        if atom.name() in atom_names:
-            atom_names[atom.name()] += 1
-        else:
-            atom_names[atom.name()] = 1
+        atom_names[atom.name()] = atom_names.get(atom.name(), 1) + 1
 
     # Create a set from the atoms names seen so far.
     names = set(atom_names.keys())
@@ -2328,26 +2253,22 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
         # lambda = 0.
         for idx0 in impropers0_idx.keys():
-            is_shared = False
             for idx1 in impropers1_idx.keys():
                 if idx0.equivalent(idx1):
                     impropers_shared_idx[idx0] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers0_unique_idx[idx0] = impropers0_idx[idx0]
 
         # lambda = 1.
         for idx1 in impropers1_idx.keys():
-            is_shared = False
             for idx0 in impropers0_idx.keys():
                 if idx1.equivalent(idx0):
                     # Don't store duplicates.
                     if not idx0 in impropers_shared_idx.keys():
                         impropers_shared_idx[idx1] = (impropers0_idx[idx0], impropers1_idx[idx1])
-                    is_shared = True
                     break
-            if not is_shared:
+            else:
                 impropers1_unique_idx[idx1] = impropers1_idx[idx1]
 
         # First create records for the impropers that are unique to lambda = 0 and 1.

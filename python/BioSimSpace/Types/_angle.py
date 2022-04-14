@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -57,14 +57,14 @@ class Angle(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the angle, e.g. "3 radians".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -100,14 +100,14 @@ class Angle(_Type):
         """Return a human readable string representation of the object."""
 
         abbrev = self._print_format[self._unit]
-        if self._magnitude != 1:
+        if self._value != 1:
             if abbrev[-1] != "s":
                 abbrev = abbrev + "s"
 
-        if abs(self._magnitude) > 1e4 or abs(self._magnitude) < 1e-4:
-            return "%.4e %s" % (self._magnitude, abbrev)
+        if abs(self._value) > 1e4 or abs(self._value) < 1e-4:
+            return "%.4e %s" % (self._value, abbrev)
         else:
-            return "%5.4f %s" % (self._magnitude, abbrev)
+            return "%5.4f %s" % (self._value, abbrev)
 
     def radians(self):
         """Return the angle in radians.
@@ -118,7 +118,7 @@ class Angle(_Type):
            angle : :class:`Angle <BioSimSpace.Types.Angle>`
                The angle in radians.
         """
-        return Angle((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.radian), "RADIAN")
+        return Angle((self._value * self._supported_units[self._unit]).to(_SireUnits.radian), "RADIAN")
 
     def degrees(self):
         """Return the angle in degrees.
@@ -129,7 +129,7 @@ class Angle(_Type):
            angle : :class:`Angle <BioSimSpace.Types.Angle>`
                The angle in degrees.
         """
-        return Angle((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.degree), "DEGREE")
+        return Angle((self._value * self._supported_units[self._unit]).to(_SireUnits.degree), "DEGREE")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -138,7 +138,7 @@ class Angle(_Type):
            ----------
 
            mag : float
-              The magnitude (optional).
+              The value (optional).
 
            Returns
            -------

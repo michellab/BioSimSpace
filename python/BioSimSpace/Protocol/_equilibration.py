@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -145,7 +145,7 @@ class Equilibration(_Protocol):
         # Handle deprecated restraint option in event it is set and
         # new option is unset.
         if restraint is None:
-            if type(restrain_backbone) is bool and restrain_backbone:
+            if isinstance(restrain_backbone, bool) and restrain_backbone:
                 restraint = "backbone"
                 _warnings.warn("'restrain_backbone' is deprecated. Please use restraint='backbone'.")
 
@@ -203,7 +203,7 @@ class Equilibration(_Protocol):
            time : :class:`Time <BioSimSpace.Types.Time>`
                The integration time step.
         """
-        if type(timestep) is _Types.Time:
+        if isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
@@ -228,7 +228,7 @@ class Equilibration(_Protocol):
            runtime : :class:`Time <BioSimSpace.Types.Time>`
                The simulation run time.
         """
-        if type(runtime) is _Types.Time:
+        if isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
@@ -254,9 +254,9 @@ class Equilibration(_Protocol):
                The starting temperature.
         """
 
-        if type(temperature) is _Types.Temperature:
-            if temperature.kelvin().magnitude() == _pytest.approx(0):
-                temperature._magnitude = 0.01
+        if isinstance(temperature, _Types.Temperature):
+            if temperature.kelvin().value() == _pytest.approx(0):
+                temperature._value = 0.01
             self._temperature_start = temperature
         else:
             raise TypeError("'temperature_start' must be of type 'BioSimSpace.Types.Temperature'")
@@ -281,9 +281,9 @@ class Equilibration(_Protocol):
            temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
                The final temperature.
         """
-        if type(temperature) is _Types.Temperature:
-            if temperature.kelvin().magnitude() == _pytest.approx(0):
-                temperature._magnitude = 0.01
+        if isinstance(temperature, _Types.Temperature):
+            if temperature.kelvin().value() == _pytest.approx(0):
+                temperature._value = 0.01
             self._temperature_end = temperature
         else:
             raise TypeError("'temperature_end' must be of type 'BioSimSpace.Types.Temperature'")
@@ -308,7 +308,7 @@ class Equilibration(_Protocol):
            pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
                The pressure.
         """
-        if type(pressure) is _Types.Pressure:
+        if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
@@ -333,7 +333,7 @@ class Equilibration(_Protocol):
            report_interval : int
                The number of integration steps between reporting statistics.
         """
-        if type(report_interval) is not int:
+        if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
 
         if report_interval <= 0:
@@ -366,7 +366,7 @@ class Equilibration(_Protocol):
                The number of integration steps between saving restart
                configurations and/or trajectory frames.
         """
-        if type(restart_interval) is not int:
+        if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
 
         if restart_interval <= 0:
@@ -409,11 +409,7 @@ class Equilibration(_Protocol):
                more fine-grained control.
         """
 
-        # Convert tuple to list.
-        if type(restraint) is tuple:
-            restraint = list(restraint)
-
-        if type(restraint) is str:
+        if isinstance(restraint, str):
             # Convert to lower case and strip whitespace.
             restraint = restraint.lower().replace(" ", "")
             if restraint not in self._restraints:
@@ -423,8 +419,8 @@ class Equilibration(_Protocol):
             if restraint == "none":
                 restraint = None
 
-        elif type(restraint) is list:
-            if not all(isinstance(x, int) for x in restraint):
+        elif isinstance(restraint, (list, tuple)):
+            if not all(type(x) is int for x in restraint):
                 raise ValueError("'restraint' must be a list of 'int' types!")
             # Create a set to sort and ensure no duplicates, then convert back to a list.
             restraint = list(set(restraint))

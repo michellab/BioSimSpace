@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,6 +28,8 @@ __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
+
+import os as _os
 
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
@@ -117,10 +119,10 @@ class SireWrapper():
                The charge.
         """
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
-        if type(is_lambda1) is not bool:
+        if not isinstance(is_lambda1, bool):
             raise TypeError("'is_lambda1' must be of type 'bool'.")
 
         # Copy the map.
@@ -160,26 +162,26 @@ class SireWrapper():
         """
 
         # Convert tuple to a list.
-        if type(vector) is tuple:
+        if isinstance(vector, tuple):
             vector = list(vector)
 
         # Validate input.
-        if type(vector) is list:
+        if isinstance(vector, list):
             vec = []
             for x in vector:
                 if type(x) is int:
                     vec.append(float(x))
-                elif type(x) is float:
+                elif isinstance(x, float):
                     vec.append(x)
-                elif type(x) is _Length:
-                    vec.append(x.angstroms().magnitude())
+                elif isinstance(x, _Length):
+                    vec.append(x.angstroms().value())
                 else:
                     raise TypeError("'vector' must contain 'int', 'float', or "
                                     "'BioSimSpace.Types.Length' types only!")
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
-        if type(property_map) is not dict:
+        if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         try:
@@ -243,20 +245,6 @@ class SireWrapper():
 
         return box_min, box_max
 
-    def save(self, filebase):
-        """Stream a wrapped Sire object to file.
-
-           Parameters
-           ----------
-
-           sire_object : :class:`System <BioSimSpace._SireWrappers.SireWrapper>`
-               A wrapped Sire object.
-
-           filebase : str
-               The base name of the binary output file.
-        """
-        _save(self, filebase)
-
     def _getSireObject(self):
         """Return the underlying Sire object.
 
@@ -319,6 +307,3 @@ class SireWrapper():
 
         # Return the AABox for the coordinates.
         return _SireVol.AABox(coord)
-
-# Import at bottom of module to avoid circular dependency.
-from BioSimSpace.Stream import save as _save

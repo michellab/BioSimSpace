@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,8 +28,16 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
-from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
-from watchdog.observers import Observer as _Observer
+from BioSimSpace._Utils import _try_import, _have_imported
+
+_watchdog = _try_import("watchdog")
+
+if _have_imported(_watchdog):
+    from watchdog.events import PatternMatchingEventHandler as _PatternMatchingEventHandler
+    from watchdog.observers import Observer as _Observer
+else:
+    _PatternMatchingEventHandler = _watchdog
+    _Observer = _watchdog
 
 import math as _math
 import os as _os
@@ -52,9 +60,10 @@ from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
+
 from ._plumed import Plumed as _Plumed
 
 class _Watcher:
@@ -83,59 +92,62 @@ class _Watcher:
         self._observer.daemon = True
         self._observer.start()
 
-class _Handler(_PatternMatchingEventHandler):
-    """An event handler to trigger updates to the energy dictionary each time
-       the log file is changed.
-    """
-
-    def __init__(self, proc):
-        """Constructor.
-
-           Parameters
-           ----------
-
-           proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
-               The Amber Process object.
-        """
-        self._process = proc
-
-        super(_Handler, self).__init__(case_sensitive=False,
-                                       ignore_directories=True,
-                                       ignore_patterns=[],
-                                       patterns=["*.nrg"])
-
-    def on_any_event(self, event):
-        """Update the dictionary when the file is modified.
-
-           Parameters
-           ----------
-
-           event : str
-               The file system event.
+if _have_imported(_watchdog):
+    class _Handler(_PatternMatchingEventHandler):
+        """An event handler to trigger updates to the energy dictionary each time
+           the log file is changed.
         """
 
-        # N.B.
-        #
-        # Since the watchdog package is cross-platform it doesn't support
-        # detection of "close-write" operations, so multiple "modified" events
-        # can be triggered while the log file is being written. As such, we
-        # check whether the file has been updated by seeing if the NSTEP record
-        # is different to the most recent entry in the dictionary.
-        # So far, no issues have been found with processing partially written
-        # files, i.e. duplicate or missing records.
+        def __init__(self, proc):
+            """Constructor.
 
-        if event.event_type == "modified":
-            # If this is the first time the file has been modified since the
-            # process started, then wipe the dictionary and flag that the file
-            # is now being watched.
-            if not self._process._is_watching:
-                self._process._stdout_dict = _process._MultiDict()
-                self._process._is_watching = True
+               Parameters
+               ----------
 
-            # Make sure the file exists.
-            if _os.path.isfile(self._process._nrg_file):
-                # Now update the dictionary with any new records.
-                self._process._update_energy_dict()
+               proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
+                   The Amber Process object.
+            """
+            self._process = proc
+
+            super(_Handler, self).__init__(case_sensitive=False,
+                                           ignore_directories=True,
+                                           ignore_patterns=[],
+                                           patterns=["*.nrg"])
+
+        def on_any_event(self, event):
+            """Update the dictionary when the file is modified.
+
+               Parameters
+               ----------
+
+               event : str
+                   The file system event.
+            """
+
+            # N.B.
+            #
+            # Since the watchdog package is cross-platform it doesn't support
+            # detection of "close-write" operations, so multiple "modified" events
+            # can be triggered while the log file is being written. As such, we
+            # check whether the file has been updated by seeing if the NSTEP record
+            # is different to the most recent entry in the dictionary.
+            # So far, no issues have been found with processing partially written
+            # files, i.e. duplicate or missing records.
+
+            if event.event_type == "modified":
+                # If this is the first time the file has been modified since the
+                # process started, then wipe the dictionary and flag that the file
+                # is now being watched.
+                if not self._process._is_watching:
+                    self._process._stdout_dict = _process._MultiDict()
+                    self._process._is_watching = True
+
+                # Make sure the file exists.
+                if _os.path.isfile(self._process._nrg_file):
+                    # Now update the dictionary with any new records.
+                    self._process._update_energy_dict()
+else:
+    _Handler = _watchdog
 
 class Amber(_process.Process):
     """A class for running simulations using AMBER."""
@@ -268,7 +280,7 @@ class Amber(_process.Process):
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -308,7 +320,7 @@ class Amber(_process.Process):
         # for a given protocol in a single place.
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
 
             # Work out the number of steepest descent cycles.
             # This is 1000 or 10% of the number of steps, whichever is larger.
@@ -339,7 +351,7 @@ class Amber(_process.Process):
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -361,7 +373,7 @@ class Amber(_process.Process):
                 seed = -1
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
@@ -392,7 +404,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -400,7 +412,7 @@ class Amber(_process.Process):
             restraint = self._protocol.getRestraint()
             if restraint is not None:
                 # Get the indices of the atoms that are restrained.
-                if type(restraint) is str:
+                if isinstance(restraint, str):
                     atom_idxs = self._system.getRestraintAtoms(restraint)
                 else:
                     atom_idxs = restraint
@@ -417,7 +429,7 @@ class Amber(_process.Process):
                         # so it's easy to overflow if we are matching by index
                         # on a large protein. As such, handle "backbone" and
                         # "heavy" restraints using a non-interoperable name mask.
-                        if type(restraint) is str:
+                        if isinstance(restraint, str):
                             if restraint == "backbone":
                                 restraint_mask = "@CA,C,O,N"
                             elif restraint == "heavy":
@@ -436,22 +448,22 @@ class Amber(_process.Process):
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
-                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
-                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature().kelvin().magnitude())
+                self.addToConfig("  tempi=%.2f," % self._protocol.getStartTemperature().kelvin().value())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getEndTemperature().kelvin().value())
                 self.addToConfig("  nmropt=1,")
                 self.addToConfig(" /")
                 self.addToConfig("&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                    % (steps, self._protocol.getStartTemperature().kelvin().magnitude(),
-                       self._protocol.getEndTemperature().kelvin().magnitude()))
+                    % (steps, self._protocol.getStartTemperature().kelvin().value(),
+                       self._protocol.getEndTemperature().kelvin().value()))
                 self.addToConfig("&wt TYPE='END' /")
 
             # Constant temperature equilibration.
             else:
-                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature().kelvin().magnitude())
+                self.addToConfig("  temp0=%.2f," % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig(" /")
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -473,7 +485,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -505,9 +517,9 @@ class Amber(_process.Process):
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             if not self._protocol.isRestart():
                 self.addToConfig("  tempi=%.2f,"                # Initial temperature.
-                    % self._protocol.getTemperature().kelvin().magnitude())
+                    % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -515,14 +527,14 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
             self.addToConfig(" /")
 
         # Add configuration variables for a metadynamics simulation.
-        elif type(self._protocol) is _Protocol.Metadynamics:
+        elif isinstance(self._protocol, _Protocol.Metadynamics):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -544,7 +556,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -569,9 +581,9 @@ class Amber(_process.Process):
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -579,7 +591,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -611,7 +623,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Add configuration variables for a steered molecular dynamics simulation.
-        elif type(self._protocol) is _Protocol.Steering:
+        elif isinstance(self._protocol, _Protocol.Steering):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -633,7 +645,7 @@ class Amber(_process.Process):
                 seed = self._seed
 
             # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().magnitude()
+            timestep = self._protocol.getTimeStep().picoseconds().value()
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
@@ -658,9 +670,9 @@ class Amber(_process.Process):
             else:
                 self.addToConfig("  cut=8.0,")                  # Non-bonded cut-off.
             self.addToConfig("  tempi=%.2f,"                    # Initial temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("  temp0=%.2f,"                    # Target temperature.
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
@@ -668,7 +680,7 @@ class Amber(_process.Process):
                 if has_box and self._has_water:
                     self.addToConfig("  ntp=1,")                # Isotropic pressure scaling.
                     self.addToConfig("  pres0=%.5f,"            # Pressure in bar.
-                        % self._protocol.getPressure().bar().magnitude())
+                        % self._protocol.getPressure().bar().value())
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
 
@@ -719,15 +731,15 @@ class Amber(_process.Process):
         self.setArg("-inf", "%s.nrg" % self._name)          # Energy info file.
 
         # Skip if the user has passed a custom protocol.
-        if type(self._protocol) is not _Protocol.Custom:
+        if not isinstance(self._protocol, _Protocol.Custom):
 
             # Append a reference file if this a restrained equilibration.
-            if type(self._protocol) is _Protocol.Equilibration:
+            if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
             # Append a trajectory file if this anything other than a minimisation.
-            if type(self._protocol) is not _Protocol.Minimisation:
+            if not isinstance(self._protocol, _Protocol.Minimisation):
                 self.setArg("-x", "%s.nc" % self._name)
 
     def start(self):
@@ -814,14 +826,34 @@ class Amber(_process.Process):
 
         # Check that the file exists.
         if _os.path.isfile(restart):
-            # Read the molecular system.
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Create a new molecular system from the restart file.
             new_system = _System(_SireIO.MoleculeParser.read([restart, self._top_file], self._property_map))
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinatesAndVelocities(new_system,
-                                                       self._property_map,
-                                                       self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -892,7 +924,7 @@ class Amber(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -902,15 +934,36 @@ class Amber(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Get the latest trajectory frame.
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -1046,7 +1099,7 @@ class Amber(_process.Process):
         """
 
         # No time records for minimisation protocols.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         # Get the list of time steps.
@@ -1541,7 +1594,7 @@ class Amber(_process.Process):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
               The total energy.
         """
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return self.getRecord("ENERGY", time_series, _Units.Energy.kcal_per_mol, block)
         else:
             return self.getRecord("ETOT", time_series, _Units.Energy.kcal_per_mol, block)
@@ -1802,10 +1855,10 @@ class Amber(_process.Process):
             for line in file:
 
                 # Skip empty lines and summary reports.
-                if len(line) > 0 and line[0] is not "|":
+                if len(line) > 0 and line[0] != "|":
 
                     # The output format is different for minimisation protocols.
-                    if type(self._protocol) is _Protocol.Minimisation:
+                    if isinstance(self._protocol, _Protocol.Minimisation):
 
                         # No equals sign in the line.
                         if "=" not in line:
@@ -1890,10 +1943,10 @@ class Amber(_process.Process):
 
             # BioSimSpace.Types.Time
             if isinstance(max_time, _Type):
-                max_time = max_time.minutes().magnitude()
+                max_time = max_time.minutes().value()
 
             # Float.
-            elif type(max_time) is float:
+            elif isinstance(max_time, float):
                 if max_time <= 0:
                     raise ValueError("'max_time' cannot be negative!")
 
@@ -1909,7 +1962,7 @@ class Amber(_process.Process):
 
             # The maximum run time has been exceeded, kill the job.
             if max_time is not None:
-                if self.runTime().magnitude() > max_time:
+                if self.runTime().value() > max_time:
                     self.kill()
                     return
 
@@ -1940,10 +1993,10 @@ class Amber(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
@@ -1955,7 +2008,7 @@ class Amber(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "NSTEP":
+                if key == "NSTEP":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -1969,7 +2022,7 @@ class Amber(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "NSTEP":
+                if key == "NSTEP":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:
@@ -1997,13 +2050,10 @@ class Amber(_process.Process):
                The AMBER restraint mask.
         """
 
-        if type(atom_idxs) is tuple:
-            atom_idxs = list(atom_idxs)
-
-        if type(atom_idxs) is not list:
+        if not isinstance(atom_idxs, (list, tuple)):
             raise TypeError("'atom_idxs' must be a list of 'int' types.")
 
-        if not all(isinstance(x, int) for x in atom_idxs):
+        if not all(type(x) is int for x in atom_idxs):
             raise TypeError("'atom_idxs' must be a list of 'int' types.")
 
         # AMBER has a restriction on the number of characters in the restraint

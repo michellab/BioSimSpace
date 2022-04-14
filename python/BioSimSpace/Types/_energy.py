@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -61,14 +61,14 @@ class Energy(_Type):
     def __init__(self, *args):
         """Constructor.
 
-           ``*args`` can be a magnitude and unit, or a string representation
+           ``*args`` can be a value and unit, or a string representation
            of the energy, e.g. "78.4 kcal/mol".
 
            Parameters
            ----------
 
-           magnitude : float
-               The magnitude.
+           value : float
+               The value.
 
            unit : str
                The unit.
@@ -110,7 +110,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in kcal per mol.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.kcal_per_mol), "KILO CALORIES PER MOL")
+        return Energy((self._value * self._supported_units[self._unit]).to(_SireUnits.kcal_per_mol), "KILO CALORIES PER MOL")
 
     def kj_per_mol(self):
         """Return the energy in kJ per mol.
@@ -121,7 +121,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in kJ per mol.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(_SireUnits.kJ_per_mol), "KILO JOULES PER MOL")
+        return Energy((self._value * self._supported_units[self._unit]).to(_SireUnits.kJ_per_mol), "KILO JOULES PER MOL")
 
     def kt(self):
         """Return the energy in KT.
@@ -132,7 +132,7 @@ class Energy(_Type):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The energy in KT.
         """
-        return Energy((self._magnitude * self._supported_units[self._unit]).to(2.479 * _SireUnits.kJ_per_mol), "KT")
+        return Energy((self._value * self._supported_units[self._unit]).to(2.479 * _SireUnits.kJ_per_mol), "KT")
 
     def _default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
@@ -141,7 +141,7 @@ class Energy(_Type):
            ----------
 
            mag : float
-               The magnitude (optional).
+               The value (optional).
 
            Returns
            -------

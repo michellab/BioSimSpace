@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -47,9 +47,9 @@ class ResourceManager():
                                                 add_help=False, allow_abbrev=False)
 
         # Add the arguments.
-        self._parser.add_argument("--nodes", type=int, help="The number of harwdare nodes.")
-        self._parser.add_argument("--cpus", type=int, help="The number of harwdare central processing units.")
-        self._parser.add_argument("--gpus", type=int, help="The number of harwdare graphics processors.")
+        self._parser.add_argument("--nodes", type=int, help="The number of hardware nodes.")
+        self._parser.add_argument("--cpus", type=int, help="The number of hardware central processing units.")
+        self._parser.add_argument("--gpus", type=int, help="The number of hardware graphics processors.")
 
     def _initialise(self):
         """Initialise the resource manager."""
@@ -90,7 +90,7 @@ class ResourceManager():
                The number of nodes.
         """
 
-        if type(nodes) is not int:
+        if not type(nodes) is int:
             raise TypeError("'nodes' must be of type 'int'.")
 
         if nodes < 0:
@@ -119,7 +119,7 @@ class ResourceManager():
                The number of cpus.
         """
 
-        if type(cpus) is not int:
+        if not type(cpus) is int:
             raise TypeError("'cpus' must be of type 'int'.")
 
         if cpus < 0:
@@ -148,7 +148,7 @@ class ResourceManager():
                The number of GPUs.
         """
 
-        if type(gpus) is not int:
+        if not type(gpus) is int:
             raise TypeError("'gpus' must be of type 'int'.")
 
         if gpus < 0:

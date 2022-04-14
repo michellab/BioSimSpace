@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -28,9 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Namd"]
 
+from BioSimSpace._Utils import _try_import
+
 import math as _math
 import os as _os
-import pygtail as _pygtail
+_pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 
@@ -48,7 +50,7 @@ from BioSimSpace.Types._type import Type as _Type
 from BioSimSpace import Protocol as _Protocol
 from BioSimSpace import Trajectory as _Trajectory
 from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils as _Utils
+from BioSimSpace import _Utils
 
 from . import _process
 
@@ -243,7 +245,7 @@ class Namd(_process.Process):
             file.close()
 
         # Generate the NAMD configuration file.
-        if type(self._protocol) is _Protocol.Custom:
+        if isinstance(self._protocol, _Protocol.Custom):
             self.setConfig(self._protocol.getConfig())
         else:
             self._generate_config()
@@ -379,7 +381,7 @@ class Namd(_process.Process):
         self.addToConfig("binaryRestart         no")
 
         # Add configuration variables for a minimisation simulation.
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             # Output frequency.
             self.addToConfig("restartfreq           500")
             self.addToConfig("xstFreq               500")
@@ -396,7 +398,7 @@ class Namd(_process.Process):
             self.addToConfig("minimize              %d" % steps)
 
         # Add configuration variables for an equilibration simulation.
-        elif type(self._protocol) is _Protocol.Equilibration:
+        elif isinstance(self._protocol, _Protocol.Equilibration):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
@@ -421,15 +423,15 @@ class Namd(_process.Process):
             # Set the Tcl temperature variable.
             if self._protocol.isConstantTemp():
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
             else:
                 self.addToConfig("set temperature       %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -444,7 +446,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -475,22 +477,24 @@ class Namd(_process.Process):
                                    "Perhaps there are no atoms matching the restraint?")
 
                 # Update the configuration file.
-                self.addToConfig("fixedAtoms            yes")
-                self.addToConfig("fixedAtomsFile        %s.restrained" % self._name)
+                self.addToConfig("constraints           yes")
+                self.addToConfig("consref               %s.restrained" % self._name)
+                self.addToConfig("conskfile             %s.restrained" % self._name)
+                self.addToConfig("conskcol              O")
 
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
-                denom = abs(self._protocol.getEndTemperature().kelvin().magnitude() -
-                            self._protocol.getStartTemperature().kelvin().magnitude())
+                denom = abs(self._protocol.getEndTemperature().kelvin().value() -
+                            self._protocol.getStartTemperature().kelvin().value())
                 freq = _math.floor(steps / denom)
 
                 self.addToConfig("reassignFreq          %d" % freq)
                 self.addToConfig("reassignTemp          %.2f"
-                    % self._protocol.getStartTemperature().kelvin().magnitude())
+                    % self._protocol.getStartTemperature().kelvin().value())
                 self.addToConfig("reassignIncr          1.")
                 self.addToConfig("reassignHold          %.2f"
-                    % self._protocol.getEndTemperature().kelvin().magnitude())
+                    % self._protocol.getEndTemperature().kelvin().value())
 
             # Trajectory output frequency.
             self.addToConfig("DCDfreq               %d" % restart_interval)
@@ -499,7 +503,7 @@ class Namd(_process.Process):
             self.addToConfig("run                   %d" % steps)
 
         # Add configuration variables for a production simulation.
-        elif type(self._protocol) is _Protocol.Production:
+        elif isinstance(self._protocol, _Protocol.Production):
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
 
@@ -523,12 +527,12 @@ class Namd(_process.Process):
 
             # Set the Tcl temperature variable.
             self.addToConfig("set temperature       %.2f"
-                % self._protocol.getTemperature().kelvin().magnitude())
+                % self._protocol.getTemperature().kelvin().value())
             self.addToConfig("temperature           $temperature")
 
             # Integrator parameters.
             self.addToConfig("timestep              %.2f"
-                % self._protocol.getTimeStep().femtoseconds().magnitude())
+                % self._protocol.getTimeStep().femtoseconds().value())
             if self._protocol.getFirstStep() != 0:
                 self.addToConfig("firsttimestep         %d" % self._protocol.getFirstStep())
             self.addToConfig("rigidBonds            all")
@@ -545,7 +549,7 @@ class Namd(_process.Process):
             if self._protocol.getPressure() is not None:
                 self.addToConfig("langevinPiston        on")
                 self.addToConfig("langevinPistonTarget  %.5f"
-                    % self._protocol.getPressure().bar().magnitude())
+                    % self._protocol.getPressure().bar().value())
                 self.addToConfig("langevinPistonPeriod  100.")
                 self.addToConfig("langevinPistonDecay   50.")
                 self.addToConfig("langevinPistonTemp    $temperature")
@@ -678,14 +682,34 @@ class Namd(_process.Process):
 
             # Create and return the molecular system.
             try:
-                # Read the molecular system.
+                # Do we need to get coordinates for the lambda=1 state.
+                if "is_lambda1" in self._property_map:
+                    is_lambda1 = True
+                else:
+                    is_lambda1 = False
+
+                # Load the restart file.
                 new_system = _System(_SireIO.MoleculeParser.read(files, self._property_map))
 
-                # Copy the new coordinates back into the original system.
+                # Create a copy of the existing system object.
                 old_system = self._system.copy()
-                old_system._updateCoordinatesAndVelocities(new_system,
-                                                           self._property_map,
-                                                           self._property_map)
+
+                # Update the coordinates and velocities and return a mapping between
+                # the molecule indices in the two systems.
+                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                        old_system._sire_object,
+                        new_system._sire_object,
+                        self._mapping,
+                        is_lambda1,
+                        self._property_map,
+                        self._property_map)
+
+                # Update the underlying Sire object.
+                old_system._sire_object = sire_system
+
+                # Store the mapping between the MolIdx in both systems so we don't
+                # need to recompute it next time.
+                self._mapping = mapping
 
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
@@ -758,7 +782,7 @@ class Namd(_process.Process):
                The System object of the corresponding frame.
         """
 
-        if type(index) is not int:
+        if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
@@ -768,15 +792,36 @@ class Namd(_process.Process):
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Load the latest trajectory frame.
             new_system =  _Trajectory.getFrame(self._traj_file,
                                                self._top_file,
                                                index)
 
-            # Copy the new coordinates back into the original system.
+            # Create a copy of the existing system object.
             old_system = self._system.copy()
-            old_system._updateCoordinates(new_system,
-                                          self._property_map,
-                                          self._property_map)
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
 
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
@@ -916,7 +961,7 @@ class Namd(_process.Process):
                The current simulation time in nanoseconds.
         """
 
-        if type(self._protocol) is _Protocol.Minimisation:
+        if isinstance(self._protocol, _Protocol.Minimisation):
             return None
 
         else:
@@ -1837,30 +1882,32 @@ class Namd(_process.Process):
         s = system.copy()
 
         # Keyword restraint.
-        if type(restraint) is str:
+        if isinstance(restraint, str):
 
             # Loop over all molecules by number.
             for x, mol in enumerate(s):
 
                 # Get the indices of the restrained atoms for this molecule.
-                atoms = s.getRestraintAtoms(restraint, x, is_relative=False)
+                atoms = s.getRestraintAtoms(restraint, x,
+                        is_absolute=False, allow_zero_matches=True)
 
                 # Extract the molecule and make it editable.
                 edit_mol = mol._sire_object.edit()
 
-                # First set all restraints to zero.
+                # First set all restraint force constants to 0, i.e. the restraint
+                # will be ignored.
                 for atom in edit_mol.atoms():
                     edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
 
                 # Now apply restraints to the selected atoms.
                 for idx in atoms:
-                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 1.0).molecule()
+                    edit_mol = edit_mol.atom(_SireMol.AtomIdx(idx)).setProperty("restrained", 10.0).molecule()
 
                 # Update the system.
                 s._sire_object.update(edit_mol.commit())
 
         # A user-defined list of atoms.
-        elif type(restraint) is list:
+        elif isinstance(restraint, (list, tuple)):
 
             # Create an empty multi dict for each MolNum.
             mol_atoms = {}
@@ -1924,10 +1971,10 @@ class Namd(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) is 0:
+        if len(self._stdout_dict) == 0:
             return None
 
-        if type(time_series) is not bool:
+        if not isinstance(time_series, bool):
             _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
@@ -1939,7 +1986,7 @@ class Namd(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key is "TS":
+                if key == "TS":
                     return [int(x) for x in self._stdout_dict[key]]
                 else:
                     if unit is None:
@@ -1953,7 +2000,7 @@ class Namd(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key is "TS":
+                if key == "TS":
                     return int(self._stdout_dict[key][-1])
                 else:
                     if unit is None:

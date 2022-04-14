@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2021
+# Copyright: 2017-2022
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -35,6 +35,7 @@ __all__ = ["FF03", "FF99", "FF99SB", "FF99SBILDN", "FF14SB", "GAFF", "GAFF2"]
 
 import os as _os
 import queue as _queue
+import shlex as _shlex
 import subprocess as _subprocess
 import warnings as _warnings
 
@@ -83,17 +84,14 @@ class FF03(_protocol.Protocol):
         super().__init__(forcefield="ff03", property_map=property_map)
 
         # Validate the water model.
-        if water_model is not None and type(water_model) is not str:
+        if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
 
         # Validate the additional leap commands.
         if leap_commands is not None:
-            if type(leap_commands) is tuple:
-                # Convert tuple to list.
-                leap_commands = list(leap_commands)
-            if type(leap_commands) is not list:
+            if not isinstance(leap_commands, (list, tuple)):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
             else:
                 if not all(isinstance(x, str) for x in leap_commands):
@@ -136,17 +134,14 @@ class FF99(_protocol.Protocol):
         super().__init__(forcefield="ff99", property_map=property_map)
 
         # Validate the water model.
-        if water_model is not None and type(water_model) is not str:
+        if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
 
         # Validate the additional leap commands.
         if leap_commands is not None:
-            if type(leap_commands) is tuple:
-                # Convert tuple to list.
-                leap_commands = list(leap_commands)
-            if type(leap_commands) is not list:
+            if not isinstance(leap_commands, (list, tuple)):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
             else:
                 if not all(isinstance(x, str) for x in leap_commands):
@@ -189,17 +184,14 @@ class FF99SB(_protocol.Protocol):
         super().__init__(forcefield="ff99SB", property_map=property_map)
 
         # Validate the water model.
-        if water_model is not None and type(water_model) is not str:
+        if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
 
         # Validate the additional leap commands.
         if leap_commands is not None:
-            if type(leap_commands) is tuple:
-                # Convert tuple to list.
-                leap_commands = list(leap_commands)
-            if type(leap_commands) is not list:
+            if not isinstance(leap_commands, (list, tuple)):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
             else:
                 if not all(isinstance(x, str) for x in leap_commands):
@@ -240,17 +232,14 @@ class FF99SBILDN(_protocol.Protocol):
         super().__init__(forcefield="ff99SBildn", property_map=property_map)
 
         # Validate the water model.
-        if water_model is not None and type(water_model) is not str:
+        if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
 
         # Validate the additional leap commands.
         if leap_commands is not None:
-            if type(leap_commands) is tuple:
-                # Convert tuple to list.
-                leap_commands = list(leap_commands)
-            if type(leap_commands) is not list:
+            if not isinstance(leap_commands, (list, tuple)):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
             else:
                 if not all(isinstance(x, str) for x in leap_commands):
@@ -291,17 +280,14 @@ class FF14SB(_protocol.Protocol):
         super().__init__(forcefield="ff14SB", property_map=property_map)
 
         # Validate the water model.
-        if water_model is not None and type(water_model) is not str:
+        if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
 
         # Validate the additional leap commands.
         if leap_commands is not None:
-            if type(leap_commands) is tuple:
-                # Convert tuple to list.
-                leap_commands = list(leap_commands)
-            if type(leap_commands) is not list:
+            if not isinstance(leap_commands, (list, tuple)):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
             else:
                 if not all(isinstance(x, str) for x in leap_commands):
@@ -341,7 +327,7 @@ class GAFF(_protocol.Protocol):
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
-        if type(charge_method) is not str:
+        if not isinstance(charge_method, str):
             raise TypeError("'charge_method' must be of type 'str'")
 
         # Strip whitespace and convert to upper case.
@@ -353,11 +339,11 @@ class GAFF(_protocol.Protocol):
                 % (charge_method, self._charge_methods))
 
         if net_charge is not None:
-            # Get the magnitude of the charge.
-            if type(net_charge) is _Charge:
-                net_charge = net_charge.magnitude()
+            # Get the value of the charge.
+            if isinstance(net_charge, _Charge):
+                net_charge = net_charge.value()
 
-            if type(net_charge) is float:
+            if isinstance(net_charge, float):
                 if net_charge % 1 != 0:
                     raise ValueError("'net_charge' must be integer valued.")
 
@@ -435,13 +421,13 @@ class GAFF(_protocol.Protocol):
                The parameterised molecule.
         """
 
-        if type(molecule) is not _Molecule and type(molecule) is not str:
+        if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
 
-        if type(work_dir) is not None and type(work_dir) is not str:
+        if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
-        if type(queue) is not None and type(queue) is not _queue.Queue:
+        if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
 
         # Set work_dir to the current directory.
@@ -452,7 +438,7 @@ class GAFF(_protocol.Protocol):
         prefix = work_dir + "/"
 
         # Convert SMILES to a molecule.
-        if type(molecule) is str:
+        if isinstance(molecule, str):
             is_smiles = True
             try:
                 new_mol = self._smiles_to_molecule(molecule, work_dir)
@@ -486,7 +472,7 @@ class GAFF(_protocol.Protocol):
 
             # The molecule has a charge property.
             if new_mol._getSireObject().hasProperty(prop):
-                charge = new_mol.charge(property_map=_property_map).magnitude()
+                charge = new_mol.charge(property_map=_property_map).value()
 
                 # Charge is non-integer, try to fix it.
                 if abs(round(charge) - charge) > 0:
@@ -508,10 +494,10 @@ class GAFF(_protocol.Protocol):
                     prop = "formal_charge"
 
                 if new_mol._getSireObject().hasProperty(prop):
-                    charge = new_mol.charge(property_map=_property_map).magnitude()
+                    charge = new_mol.charge(property_map=_property_map).value()
 
                     # Compute the formal charge ourselves to check that it is consistent.
-                    formal_charge = _formalCharge(new_mol).magnitude()
+                    formal_charge = _formalCharge(new_mol).value()
 
                     if charge != formal_charge:
                         _warnings.warn("The formal charge on the molecule is %d "
@@ -559,7 +545,8 @@ class GAFF(_protocol.Protocol):
         stderr = open(prefix + "antechamber.err", "w")
 
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -582,7 +569,8 @@ class GAFF(_protocol.Protocol):
             stderr = open(prefix + "parmchk.err", "w")
 
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -620,7 +608,8 @@ class GAFF(_protocol.Protocol):
                 stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(command, cwd=work_dir, shell=True, stdout=stdout, stderr=stderr)
+                proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                    shell=False, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
 
@@ -718,11 +707,11 @@ class GAFF2(_protocol.Protocol):
                 % (charge_method, self._charge_methods))
 
         if net_charge is not None:
-            # Get the magnitude of the charge.
-            if type(net_charge) is _Charge:
-                net_charge = net_charge.magnitude()
+            # Get the value of the charge.
+            if isinstance(net_charge, _Charge):
+                net_charge = net_charge.value()
 
-            if type(net_charge) is float:
+            if isinstance(net_charge, float):
                 if net_charge % 1 != 0:
                     raise ValueError("'net_charge' must be integer valued.")
 
