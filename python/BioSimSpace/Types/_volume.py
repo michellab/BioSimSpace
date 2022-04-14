@@ -115,10 +115,6 @@ class Volume(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative volumes.
-        if self._value < 0:
-            raise ValueError("The volume cannot be negative!")
-
     def __truediv__(self, other):
         """Division operator."""
 
@@ -310,6 +306,7 @@ class Volume(_Type):
                The unit string in Sire compatible format.
         """
 
+        unit = unit.replace("angstroms", "angstrom")
         unit = unit.replace("meters", "meter")
         unit = unit.replace("nm", "nanometer")
         unit = unit.replace("pm", "picometer")

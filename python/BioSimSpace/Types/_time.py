@@ -133,10 +133,6 @@ class Time(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative times.
-        if self._value < 0:
-            raise ValueError("The time cannot be negative!")
-
     def __str__(self):
         """Return a human readable string representation of the object."""
 

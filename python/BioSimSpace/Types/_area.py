@@ -115,10 +115,6 @@ class Area(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative areas.
-        if self._value < 0:
-            raise ValueError("The area cannot be negative!")
-
     def __mul__(self, other):
         """Multiplication operator."""
 
@@ -346,6 +342,7 @@ class Area(_Type):
                The unit string in Sire compatible format.
         """
 
+        unit = unit.replace("angstroms", "angstrom")
         unit = unit.replace("meters", "meter")
         unit = unit.replace("nm", "nanometer")
         unit = unit.replace("pm", "picometer")

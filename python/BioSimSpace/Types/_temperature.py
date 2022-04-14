@@ -109,10 +109,6 @@ class Temperature(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Check that the temperature is above absolute zero.
-        if self._kelvin() < 0:
-            raise ValueError("The temperature cannot be less than absolute zero (0 Kelvin).")
-
     def __add__(self, other):
         """Addition operator."""
 
