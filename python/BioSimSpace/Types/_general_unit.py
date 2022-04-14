@@ -63,7 +63,7 @@ class GeneralUnit(_Type):
                A string representation of the unit type.
         """
 
-        value_set = False
+        value = 1
         _args = list(args)
 
         # The user has passed a value and a unit.
@@ -78,9 +78,6 @@ class GeneralUnit(_Type):
                 pass
             else:
                 raise TypeError("'value' must be of type 'int' or 'float'")
-
-            # Flag that the value has been set.
-            value_set = True
 
             # Delete the value so we can use the same logic below.
             del _args[0]
@@ -101,7 +98,7 @@ class GeneralUnit(_Type):
 
                 # We have converted to another type, return it immediately.
                 if type(general_unit) is not GeneralUnit:
-                    return general_unit
+                    return value * general_unit
                 else:
                     general_unit = general_unit._sire_unit
 
@@ -114,9 +111,8 @@ class GeneralUnit(_Type):
             raise TypeError("__new__() missing positional argument(s): 'value' and 'unit', "
                             "or 'string' or 'Sire.Units.GeneralUnit'")
 
-        # Scale the general unit if it was passed in (value, unit) form.
-        if value_set:
-            general_unit = value * general_unit
+        # Scale the general unit by the value.
+        general_unit = value * general_unit
 
         # Store the dimension mask.
         dimensions = (general_unit.ANGLE(),
@@ -155,7 +151,7 @@ class GeneralUnit(_Type):
                A string representation of the unit type.
         """
 
-        value_set = False
+        value = 1
         _args = list(args)
 
         # The user has passed a value and a unit.
@@ -170,9 +166,6 @@ class GeneralUnit(_Type):
                 self._value = value
             else:
                 raise TypeError("'value' must be of type 'int' or 'float'")
-
-            # Flag that the value has been set.
-            value_set = True
 
             # Delete the value so we can use the same logic below.
             del args[0]
@@ -200,15 +193,10 @@ class GeneralUnit(_Type):
             raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
                             "or 'string' or 'Sire.Units.GeneralUnit'")
 
-        # Store the value and unit.
-        if not value_set:
-            self._value = general_unit.value()
-            self._sire_unit = general_unit
-        else:
-            # Need to rescale the value since the units might have been
-            # converted to the default for this GeneralUnit.
-            self._sire_unit = value * general_unit
-            self._value = self._sire_unit.value()
+        # Need to rescale the value since the units might have been
+        # converted to the default for this GeneralUnit.
+        self._sire_unit = value * general_unit
+        self._value = self._sire_unit.value()
 
         # Store the dimension mask.
         self._dimensions = (general_unit.ANGLE(),
