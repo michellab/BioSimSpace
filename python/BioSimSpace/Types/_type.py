@@ -236,6 +236,36 @@ class Type():
             raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
+    def __rtruediv__(self, other):
+        """Reverse division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if isinstance(other, float):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(other / self._to_sire_unit())
+
+        # Division by another object of the same type.
+        elif type(other) is type(self):
+            return other._to_default_unit().value() / self._to_default_unit().value()
+
+        # Division by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(other._to_sire_unit() / self._to_sire_unit())
+
+        # Division by a string.
+        elif isinstance(other, str):
+            obj = self._from_string(other)
+            return obj / self
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (other.__class__.__qualname__, self.__class__.__qualname__))
+
     def __lt__(self, other):
         """Less than operator."""
 

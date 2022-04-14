@@ -360,6 +360,67 @@ class GeneralUnit(_Type):
             raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
 
+    def __rtruediv__(self, other):
+        """Reverse division operator."""
+
+        # Convert int to float.
+        if type(other) is int:
+            other = float(other)
+
+        # Float division.
+        if isinstance(other, float):
+            return GeneralUnit(other / self._sire_unit)
+
+        # Division by another Type.
+        elif isinstance(other, _Type):
+            # Divide the Sire unit objects.
+            temp = other._to_sire_unit() / self._sire_unit
+
+            # Create the dimension mask.
+            dimensions = (temp.ANGLE(),
+                          temp.CHARGE(),
+                          temp.LENGTH(),
+                          temp.MASS(),
+                          temp.QUANTITY(),
+                          temp.TEMPERATURE(),
+                          temp.TIME()
+                         )
+
+            # Return as an existing type if the dimensions match.
+            try:
+                return _base_dimensions[dimensions](temp)
+            except:
+                return GeneralUnit(temp)
+
+        # Division by a string.
+        elif isinstance(other, str):
+            obj = self._from_string(other)
+            return obj / self
+
+        else:
+            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+    def __pow__(self, other):
+        """Power operator."""
+
+        if type(other) is not int:
+            raise TypeError("unsupported operand type(s) for ^: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__))
+
+        if other == 0:
+            return GeneralUnit(self._sire_unit / self._sire_unit)
+
+        # Multiply the Sire GeneralUnit 'other' times.
+        temp = self._sire_unit
+        for x in range(0, abs(other)-1):
+            temp = temp * self._sire_unit
+
+        if other > 0:
+            return GeneralUnit(temp)
+        else:
+            return GeneralUnit(1/temp)
+
     def __lt__(self, other):
         """Less than operator."""
 
