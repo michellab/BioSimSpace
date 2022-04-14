@@ -280,6 +280,9 @@ class Molecule(_SireWrapper):
                The extracted molecule.
         """
 
+        # TODO: This method is slow for large molecules. Re-write in pure C++
+        # and provide a suitable wrapper function.
+
         # Convert tuple to list.
         if isinstance(indices, tuple):
             indices = list(indices)
