@@ -314,6 +314,12 @@ class Volume(_Type):
         unit = unit.replace("nm", "nanometer")
         unit = unit.replace("pm", "picometer")
 
+        # Convert powers.
+        unit = unit.replace("angstrom-3", "(1/angstrom3)")
+        unit = unit.replace("picometer-3", "(1/picometer3)")
+        unit = unit.replace("nanometer-3", "(1/nanometer3)")
+        unit = unit.replace("meter-3", "(1/meter3)")
+
         return unit
 
 # Import at bottom of module to avoid circular dependency.

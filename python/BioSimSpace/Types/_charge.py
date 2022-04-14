@@ -228,7 +228,13 @@ class Charge(_Type):
         # Convert powers. (Just 2nd and third for now.)
         unit = unit.replace("coloumb2", "(coulomb*coulomb)")
         unit = unit.replace("coloumb3", "(coulomb*coulomb*coulomb)")
+        unit = unit.replace("coloumb-1", "(1/coulomb)")
+        unit = unit.replace("coloumb-2", "(1/(coulomb*coulomb))")
+        unit = unit.replace("coloumb3", "(1/(coulomb*coulomb*coulomb))")
         unit = unit.replace("e_charge2", "(e_charge*e_charge)")
         unit = unit.replace("e_charge3", "(e_charge*e_charge*e_charge)")
+        unit = unit.replace("e_charge-1", "(1/e_charge)")
+        unit = unit.replace("e_charge-2", "(1/(e_charge*e_charge))")
+        unit = unit.replace("e_charge-3", "(1/(e_charge*e_charge*e_charge))")
 
         return unit

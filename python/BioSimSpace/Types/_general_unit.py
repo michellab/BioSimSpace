@@ -649,6 +649,12 @@ class GeneralUnit(_Type):
             string = string.replace("cubed", "3")
             string = string.replace("**3", "3")
             string = string.replace("^3", "3")
+            string = string.replace("**-1", "-1")
+            string = string.replace("^-1", "-1")
+            string = string.replace("**-2", "-2")
+            string = string.replace("^-2", "-2")
+            string = string.replace("**-3", "-3")
+            string = string.replace("^-3", "-3")
 
             for unit in _base_units:
                 string = unit._to_sire_format(string)

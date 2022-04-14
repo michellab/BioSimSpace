@@ -352,6 +352,14 @@ class Length(_Type):
         unit = unit.replace("nm", "nanometer")
         unit = unit.replace("pm", "picometer")
 
+        # Convert powers.
+        unit = unit.replace("angstrom-1", "(1/angstrom)")
+        unit = unit.replace("picometer-1", "(1/picometer)")
+        unit = unit.replace("nanometer-1", "(1/nanometer)")
+        unit = unit.replace("millimeter-1", "(1/millimeter)")
+        unit = unit.replace("centimeter-1", "(1/centimeter)")
+        unit = unit.replace("meter-1", "(1/meter)")
+
         return unit
 
 # Import at bottom of module to avoid circular dependency.

@@ -451,5 +451,8 @@ class Temperature(_Type):
         # Convert powers. (Just 2nd and third for now.)
         unit = unit.replace("kelvin2", "(kelvin*kelvin)")
         unit = unit.replace("kelvin3", "(kelvin*kelvin*kelvin)")
+        unit = unit.replace("kelvin-1", "(1/kelvin)")
+        unit = unit.replace("kelvin-2", "(1/(kelvin*kelvin))")
+        unit = unit.replace("kelvin-3", "(1/(kelvin*kelvin*kelvin))")
 
         return unit

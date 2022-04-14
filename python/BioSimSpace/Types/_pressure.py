@@ -218,7 +218,13 @@ class Pressure(_Type):
         # Convert powers. (Just 2nd and third for now.)
         unit = unit.replace("bar2", "(bar*bar)")
         unit = unit.replace("bar3", "(bar*bar*bar)")
+        unit = unit.replace("bar-1", "(1/bar)")
+        unit = unit.replace("bar-2", "(1/(bar*bar))")
+        unit = unit.replace("bar3", "(1/(bar*bar*bar))")
         unit = unit.replace("atm2", "(atm*atm)")
         unit = unit.replace("atm3", "(atm*atm*atm)")
+        unit = unit.replace("atm-1", "(1/atm)")
+        unit = unit.replace("atm-2", "(1/(atm*atm))")
+        unit = unit.replace("atm-3", "(1/(atm*atm*atm))")
 
         return unit

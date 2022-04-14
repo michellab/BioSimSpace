@@ -350,6 +350,12 @@ class Area(_Type):
         unit = unit.replace("nm", "nanometer")
         unit = unit.replace("pm", "picometer")
 
+        # Convert powers.
+        unit = unit.replace("angstrom-2", "(1/angstrom2)")
+        unit = unit.replace("picometer-2", "(1/picometer2)")
+        unit = unit.replace("nanometer-2", "(1/nanometer2)")
+        unit = unit.replace("meter-2", "(1/meter2)")
+
         return unit
 
 # Import at bottom of module to avoid circular dependency.

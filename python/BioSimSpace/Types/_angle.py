@@ -234,10 +234,16 @@ class Angle(_Type):
         # Now convert back to correct format.
         unit = unit.replace("rad", "radian")
 
-        # Convert powers. (Just 2nd and third for now.)
+        # Convert powers. (Limited selection, for now.)
         unit = unit.replace("radian2", "(radian*radian)")
         unit = unit.replace("radian3", "(radian*radian*radian)")
         unit = unit.replace("degree2", "(degree*degree)")
         unit = unit.replace("degree3", "(degree*degree*degree)")
+        unit = unit.replace("radian-1", "(1/(radian))")
+        unit = unit.replace("radian-2", "(1/(radian*radian))")
+        unit = unit.replace("radian-3", "(1/(radian*radian*radian))")
+        unit = unit.replace("degree-1", "(1/(degree))")
+        unit = unit.replace("degree-2", "(1/(degree*degree))")
+        unit = unit.replace("degree-3", "(1/(degree*degree*degree))")
 
         return unit
