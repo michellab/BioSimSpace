@@ -442,8 +442,12 @@ class Amber(_process.Process):
                         else:
                             raise ValueError("AMBER atom 'restraintmask' exceeds 256 character limit!")
 
+                    # Get the force constant value. The default is the same
+                    # units as AMBER, i.e. kcal_per_mol/angstrom**2
+                    force_constant = self._protocol.getForceConstant().value()
+
                     self.addToConfig( "  ntr=1,")
-                    self.addToConfig( "  restraint_wt=10,")
+                    self.addToConfig(f"  restraint_wt={force_constant},")
                     self.addToConfig(f"  restraintmask='{restraint_mask}',")
 
             # Heating/cooling protocol.

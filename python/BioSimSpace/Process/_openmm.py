@@ -40,6 +40,7 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
+from Sire import Units as _SireUnits
 
 from BioSimSpace import _isVerbose
 from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
@@ -365,21 +366,25 @@ class OpenMM(_process.Process):
                 else:
                     restrained_atoms = restraint
 
-                self.addToConfig("\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
-                self.addToConfig("restraint = HarmonicBondForce()")
-                self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
-                self.addToConfig("system.addForce(restraint)")
-                self.addToConfig("nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]")
-                self.addToConfig("dummy_indices = []")
-                self.addToConfig("positions = inpcrd.positions")
+                # Get the force constant in units of kJ_per_mol/nanometer**2
+                force_constant = self._protocol.getForceConstant()._sire_unit
+                force_constant = force_constant.to(_SireUnits.kJ_per_mol/_SireUnits.nanometer2)
+
+                self.addToConfig( "\n# Restrain the position of backbone atoms using zero-mass dummy atoms.")
+                self.addToConfig( "restraint = HarmonicBondForce()")
+                self.addToConfig( "restraint.setUsesPeriodicBoundaryConditions(True)")
+                self.addToConfig( "system.addForce(restraint)")
+                self.addToConfig( "nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]")
+                self.addToConfig( "dummy_indices = []")
+                self.addToConfig( "positions = inpcrd.positions")
                 self.addToConfig(f"restrained_atoms = {restrained_atoms}")
-                self.addToConfig("for i in restrained_atoms:")
-                self.addToConfig("    j = system.addParticle(0)")
-                self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
-                self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
-                self.addToConfig("    restraint.addBond(i, j, 0*nanometers, 100*kilojoules_per_mole/nanometer**2)")
-                self.addToConfig("    dummy_indices.append(j)")
-                self.addToConfig("    positions.append(positions[i])")
+                self.addToConfig( "for i in restrained_atoms:")
+                self.addToConfig( "    j = system.addParticle(0)")
+                self.addToConfig( "    nonbonded.addParticle(0, 1, 0)")
+                self.addToConfig( "    nonbonded.addException(i, j, 0, 1, 0)")
+                self.addToConfig(f"    restraint.addBond(i, j, 0*nanometers, {force_constant}*kilojoules_per_mole/nanometer**2)")
+                self.addToConfig( "    dummy_indices.append(j)")
+                self.addToConfig( "    positions.append(positions[i])")
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().value()
