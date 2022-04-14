@@ -97,7 +97,13 @@ class GeneralUnit(_Type):
                 string = _args[0]
 
                 # Try to parse and evalute the string.
-                general_unit = cls._from_string(string)._sire_unit
+                general_unit = cls._from_string(string)
+
+                # We have converted to another type, return it immediately.
+                if type(general_unit) is not GeneralUnit:
+                    return general_unit
+                else:
+                    general_unit = general_unit._sire_unit
 
             else:
                 raise TypeError("__new__() missing positional argument(s): "
