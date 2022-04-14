@@ -666,7 +666,7 @@ class GeneralUnit(_Type):
                 return GeneralUnit(general_unit)
 
             except:
-                raise ValueError(f"Could not infer GneralUnit from string '{string}'") from None
+                raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
 
         else:
             raise TypeError("'string' must be of type 'str'")
