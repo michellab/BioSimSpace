@@ -226,4 +226,12 @@ class Angle(_Type):
                The unit string in Sire compatible format.
         """
 
+        # First, handle plurals and abbreviations.
+        unit = unit.replace("radians", "rad")
+        unit = unit.replace("radian", "rad")
+        unit = unit.replace("rads", "rad")
+
+        # Now convert back to correct format.
+        unit = unit.replace("rad", "radian")
+
         return unit
