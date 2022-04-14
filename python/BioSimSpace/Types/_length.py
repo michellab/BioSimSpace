@@ -76,7 +76,7 @@ class Length(_Type):
                      "PICOMETER"  : "A length in picometers." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _default_unit = "NANOMETER"
+    _default_unit = "ANGSTROM"
 
     # The dimension mask.
     #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
