@@ -215,4 +215,10 @@ class Pressure(_Type):
         unit = unit.replace("atmospheres", "atm")
         unit = unit.replace("atmosphere", "atm")
 
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("bar2", "(bar*bar)")
+        unit = unit.replace("bar3", "(bar*bar*bar)")
+        unit = unit.replace("atm2", "(atm*atm)")
+        unit = unit.replace("atm3", "(atm*atm*atm)")
+
         return unit

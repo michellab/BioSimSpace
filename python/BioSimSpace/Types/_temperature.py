@@ -448,4 +448,8 @@ class Temperature(_Type):
         # Convert plural to singular.
         unit = unit.replace("kelvins", "kelvin")
 
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("kelvin2", "(kelvin*kelvin)")
+        unit = unit.replace("kelvin3", "(kelvin*kelvin*kelvin)")
+
         return unit

@@ -225,4 +225,10 @@ class Charge(_Type):
         unit = unit.replace("electroncharge", "e_charge")
         unit = unit.replace("echarge", "e_charge")
 
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("coloumb2", "(coulomb*coulomb)")
+        unit = unit.replace("coloumb3", "(coulomb*coulomb*coulomb)")
+        unit = unit.replace("e_charge2", "(e_charge*e_charge)")
+        unit = unit.replace("e_charge3", "(e_charge*e_charge*e_charge)")
+
         return unit

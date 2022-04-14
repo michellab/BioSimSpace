@@ -241,4 +241,10 @@ class Energy(_Type):
         unit = unit.replace("kcalpermol", "kcal_per_mol")
         unit = unit.replace("kJpermol", "kJ_per_mol")
 
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("kcal_per_mol2", "(kcal_per_mol*kcal_per_mol)")
+        unit = unit.replace("kcal_per_mol3", "(kcal_per_mol*kcal_per_mol*kcal_per_mol)")
+        unit = unit.replace("kJ_per_mol2", "(kJ_per_mol*kJ_per_mol)")
+        unit = unit.replace("kJ_per_mol3", "(kJ_per_mol*kJ_per_mol*kJ_per_mol)")
+
         return unit

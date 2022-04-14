@@ -331,4 +331,22 @@ class Time(_Type):
         unit = unit.replace("seconds", "second")
         unit = unit.replace("secs", "second")
 
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("day2", "(day*day)")
+        unit = unit.replace("day3", "(day*day*day)")
+        unit = unit.replace("hour2", "(hour*hour)")
+        unit = unit.replace("hour3", "(hour*hour*hour)")
+        unit = unit.replace("minute2", "(minute*minute)")
+        unit = unit.replace("minute3", "(minute*minute*minute)")
+        unit = unit.replace("femtosecond2", "(femtosecond*femtosecond)")
+        unit = unit.replace("femtosecond3", "(femtosecond*femtosecond*femtosecond)")
+        unit = unit.replace("picosecond2", "(picosecond*picosecond)")
+        unit = unit.replace("picosecond3", "(picosecond*picosecond*picosecond)")
+        unit = unit.replace("nanosecond2", "(nanosecond*nanosecond)")
+        unit = unit.replace("nanosecond3", "(nanosecond*nanosecond*nanosecond)")
+        unit = unit.replace("millisecond2", "(millisecond*millisecond)")
+        unit = unit.replace("millisecond3", "(millisecond*millisecond*millisecond)")
+        unit = unit.replace("second2", "(second*second)")
+        unit = unit.replace("second3", "(second*second*second)")
+
         return unit
