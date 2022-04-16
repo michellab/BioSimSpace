@@ -81,8 +81,14 @@ class Molecule(_SireWrapper):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
-                self._molecule0, _ = self._extractMolecule()
-                self._molecule1, _ = self._extractMolecule(is_lambda1=True)
+                if molecule.hasProperty("molecule0"):
+                    self._molecule = Molecule(molecule.property("molecule0"))
+                else:
+                    self._molecule0, _ = self._extractMolecule()
+                if molecule.hasProperty("molecule1"):
+                    self._molecule = Molecule(molecule.property("molecule1"))
+                else:
+                    self._molecule1, _ = self._extractMolecule(is_lambda1=True)
 
         # Another BioSimSpace Molecule object.
         elif isinstance(molecule, Molecule):
@@ -273,6 +279,9 @@ class Molecule(_SireWrapper):
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The extracted molecule.
         """
+
+        # TODO: This method is slow for large molecules. Re-write in pure C++
+        # and provide a suitable wrapper function.
 
         # Convert tuple to list.
         if isinstance(indices, tuple):

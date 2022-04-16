@@ -106,7 +106,7 @@ minimised = process.getSystem()
 protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.01, "nanosecond"),
                                       temperature_start=BSS.Types.Temperature(0, "kelvin"), 
                                       temperature_end=BSS.Types.Temperature(300, "kelvin"), 
-                                      restrain_backbone=True)
+                                      restraint="backbone")
 
 
 # In[15]:

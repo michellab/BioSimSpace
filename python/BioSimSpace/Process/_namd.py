@@ -969,7 +969,7 @@ class Namd(_process.Process):
             time_steps = self.getRecord("TS", time_series, None, block)
 
             # Convert the time step to the default unit.
-            timestep = self._protocol.getTimeStep()._default_unit()
+            timestep = self._protocol.getTimeStep()._to_default_unit()
 
             # Multiply by the integration time step.
             if time_steps is not None:
@@ -1878,6 +1878,10 @@ class Namd(_process.Process):
                 The molecular system with an added 'restrained' property.
         """
 
+        # Get the force constant value in the default units. This is
+        # the same as used by NAMD, i.e. kcal_per_mol/angstrom**2
+        force_constant = self._protocol.getForceConstant().value()
+
         # Copy the original system.
         s = system.copy()
 
@@ -1939,8 +1943,14 @@ class Namd(_process.Process):
                     edit_mol = edit_mol.atom(atom.index()).setProperty("restrained", 0.0).molecule()
 
                 # Now apply restraints to the selected atoms.
+                # TODO: The fixed-width PDB format means that the force
+                # constant can't exceed 999 kcal_per_mol/angstrom**2 when
+                # written in the standard 2dp floating point format. We
+                # could warn when the value is too large, or write as an
+                # integer instead. (This latter would require tweaking the
+                # PDB parser.
                 for idx in idxs:
-                    edit_mol = edit_mol.atom(idx).setProperty("restrained", 1.0).molecule()
+                    edit_mol = edit_mol.atom(idx).setProperty("restrained", force_constant).molecule()
 
                 # Update the system.
                 s._sire_object.update(edit_mol.commit())
@@ -1992,7 +2002,7 @@ class Namd(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -2006,7 +2016,7 @@ class Namd(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
+                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
 
             except KeyError:
                 return None

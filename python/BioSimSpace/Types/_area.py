@@ -35,6 +35,12 @@ from ._type import Type as _Type
 class Area(_Type):
     """An area type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["meter2",
+                   "nanometer2",
+                   "angstrom2",
+                   "picometer2"]
+
     # Dictionary of allowed units.
     _supported_units = { "METER2"      : _SireUnits.meter2,
                          "NANOMETER2"  : _SireUnits.nanometer2,
@@ -60,7 +66,11 @@ class Area(_Type):
                      "PICOMETER2"  : "An area in square picometers." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "ANGSTROM2"
+    _default_unit = "ANGSTROM2"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      2,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -105,10 +115,6 @@ class Area(_Type):
         # Call the base class constructor.
         super().__init__(*args)
 
-        # Don't support negative areas.
-        if self._value < 0:
-            raise ValueError("The area cannot be negative!")
-
     def __mul__(self, other):
         """Multiplication operator."""
 
@@ -126,6 +132,11 @@ class Area(_Type):
             mag = self.angstroms2().value() * other.angstroms().value()
             return _Volume(mag, "A3")
 
+        # Multiplication by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
+
         # Multiplication by a string.
         elif isinstance(other, str):
             try:
@@ -141,7 +152,7 @@ class Area(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
     def __truediv__(self, other):
@@ -164,6 +175,11 @@ class Area(_Type):
         elif isinstance(other, _Length):
             mag = self.angstroms2().value() / other.angstroms().value()
             return _Length(mag, "A")
+
+        # Division by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
         elif isinstance(other, str):
@@ -226,7 +242,7 @@ class Area(_Type):
         """
         return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -285,6 +301,9 @@ class Area(_Type):
         # Strip "^" character.
         unit = unit.replace("^", "")
 
+        # Strip "**" characters.
+        unit = unit.replace("**", "")
+
         # Strip any "S" characters.
         unit = unit.replace("S", "")
 
@@ -305,6 +324,36 @@ class Area(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("angstroms", "angstrom")
+        unit = unit.replace("meters", "meter")
+        unit = unit.replace("nm", "nanometer")
+        unit = unit.replace("pm", "picometer")
+
+        # Convert powers.
+        unit = unit.replace("angstrom-2", "(1/angstrom2)")
+        unit = unit.replace("picometer-2", "(1/picometer2)")
+        unit = unit.replace("nanometer-2", "(1/nanometer2)")
+        unit = unit.replace("meter-2", "(1/meter2)")
+
+        return unit
 
 # Import at bottom of module to avoid circular dependency.
 from ._length import Length as _Length
