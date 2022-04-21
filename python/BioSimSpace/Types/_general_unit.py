@@ -63,6 +63,11 @@ class GeneralUnit(_Type):
                A string representation of the unit type.
         """
 
+        # This operator may be called when unpickling an object. Catch empty
+        # *args by calling __init__ immediately.
+        if not args:
+            return super(GeneralUnit, cls).__new__(cls)
+
         value = 1
         _args = list(args)
 
