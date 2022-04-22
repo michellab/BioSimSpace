@@ -424,7 +424,7 @@ class Relative():
 
     @staticmethod
     def _somd_extract_u_nk(simfile, T):
-        """Return reduced potentials `u_nk` from Somd outputfile.
+        """Return reduced potentials `data` from Somd outputfile.
 
         Parameters
         ----------
@@ -436,12 +436,12 @@ class Relative():
 
         Returns
         -------
-        u_nk : DataFrame
+        data : DataFrame
             Reduced potential for each alchemical state (k) for each frame (n).
         """
         file = simfile
 
-        # find out which lambda window
+        # Find the lambda values for the simulation.
         found_lambda = False
         found_array = False
         found_time = False
@@ -486,23 +486,23 @@ class Relative():
             raise ValueError(
                 f"The simulation time was not detected in the SOMD output file, {file}")
 
-        # get header from things instead of like this
+        # TODO: get header from the file instead of like this
         header = ['step', 'potential_kcal/mol', 'gradient_kcal/mol',
                   'forward_Metropolis', 'backward_Metropolis']
         header.extend(lambda_array)
 
         file_df = _pd.read_fwf(
             file, skipinitialspace=True, skiprows=13, header=None, names=header)
-        # print(file_df)
 
         time_step = (sim_length/len(file_df['step']))
         time_rows = _np.arange(0, len(file_df['step']), 1)
         time = _np.arange(0, sim_length, time_step)
 
-        mbar_energies = []  # results in list of lists where each list is 0 to 1 window values
+        # Results in list of lists where each list is the 0 to 1 window values at that lambda value.
+        mbar_energies = []
 
-        # so for the energies for each lambda, append the kt to the data list of vals for all lambda wins
-        # then trun into df
+        # For the energies for each lambda window,
+        # append the kt to the data list of values for all lambda windows.
         for t in time_rows:
             row = file_df.loc[t][lambda_array].to_numpy()
             E_ref = row[lambda_array.index(str(lambda_win))]
@@ -512,6 +512,7 @@ class Relative():
                 energies.append((E_ - E_ref))
             mbar_energies.append(energies)
 
+        # Turn into a dataframe that can be processed by alchemlyb.
         df = (_pd.DataFrame(mbar_energies, columns=_np.array(lambda_array, dtype=_np.float64),
                             index=_pd.MultiIndex.from_arrays([time, _np.repeat(lambda_win, len(time))],
                                                              names=['time', 'lambdas']))
@@ -538,14 +539,13 @@ class Relative():
             dH/dl as a function of time for this lambda window.
 
         """
-        # open the file
         file = simfile
 
-        # for dhdl need to consider the T, as the gradient is in kcal/mol in the simfile.dat
-        T = 300
+        # For dhdl need to consider the T, as the gradient is in kcal/mol in the simfile.dat .
         k_b = R_kJmol * kJ2kcal
         beta = 1/(k_b * T)
 
+        # Find the lambda values for the simulation.
         found_lambda = False
         found_array = False
         found_time = False
@@ -602,15 +602,16 @@ class Relative():
         time_rows = _np.arange(0, len(file_df['step']), 1)
         time = _np.arange(0, sim_length, time_step)
 
-        gradient_energies = []  # results in list of the gradients at that lambda
+        # Results in list of the gradients at that lambda.
+        gradient_energies = []
 
-        # turn gradient into list of reduced gradients
+        # Turn gradient list into list of reduced gradients.
         for t in time_rows:
             gradient = file_df.loc[t]['gradient_kcal/mol']
             red_gradient = gradient * beta
             gradient_energies.append(red_gradient)
 
-        # df in the format needed for alchemlyb
+        # Turn into a dataframe that can be processed by alchemlyb.
         df = (_pd.DataFrame(gradient_energies, columns=['fep'],
                             index=_pd.MultiIndex.from_arrays([time, _np.repeat(lambda_win, len(time))],
                                                              names=['time', 'fep-lambda']))
@@ -688,6 +689,60 @@ class Relative():
         return Relative.analyse(self._work_dir)
 
     @staticmethod
+    def preprocessing_extracted_data(data):
+        """_summary_
+
+        Args:
+            data : dataframe
+            Dataframe of extracted dHdl or u_nk data.
+
+        Returns
+        -------
+
+            processed_data : dataframe
+            Dataframe of dHdl or u_nk data processed using automated equilibration
+            detection followed by statistical inefficiency.
+        """
+
+        # Subsample according to equilibration detection followed by statistical inefficiency.
+        eq_okay = False
+        sample_okay = False
+        try:
+            eq_data = [_equilibrium_detection(i, i.iloc[:, 0])
+                       for i in data]
+            eq_okay = True
+            sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
+                            for i in eq_data]
+            sample_okay = True
+        except:
+            pass
+
+        if not eq_okay:
+            _warnings.warn("Could not detect equilibration.")
+            try:
+                sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
+                                for i in data]
+                sample_okay = True
+            except:
+                _warnings.warn("Could not calculate statistical inefficiency.")
+                sampled_data = data
+
+        if eq_okay and not sample_okay:
+            _warnings.warn("Could not calculate statistical inefficiency.")
+            sampled_data = eq_data
+
+        if eq_okay or sample_okay:
+            for i in sampled_data:
+                if len(i.iloc[:, 0]) < 50:
+                    _warnings.warn(
+                        "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
+                    sampled_data = data
+
+        processed_data = _alchemlyb.concat(sampled_data)
+
+        return processed_data
+
+    @staticmethod
     def analyse_mbar(files, temperatures, lambdas, engine):
         """Analyse existing free-energy data using MBAR and the alchemlyb library.
 
@@ -725,53 +780,29 @@ class Relative():
             "AMBER": (_amber_extract_u_nk)
         }
 
-        # extract the data
+        # Extract the data.
         func = function_glob_dict[engine]
-        u_nk = [func(x, T=t) for x, t in zip(files, temperatures)]
-
-        # Subsample according to statistical inefficiency and then calculate the MBAR.
-        eq_okay = False
-        sample_okay = False
         try:
-            eq_u_nk = [_equilibrium_detection(i, i.iloc[:, 0])
-                       for i in u_nk]
-            eq_okay = True
-            sampled_u_nk = [_statistical_inefficiency(i, i.iloc[:, 0])
-                            for i in eq_u_nk]
-            sample_okay = True
+            u_nk = [func(x, T=t) for x, t in zip(files, temperatures)]
         except:
-            pass
+            raise _AnalysisError(
+                "Could not extract the data from the provided files!")
 
-        if not eq_okay:
-            print("Could not detect equilibration.")
-            try:
-                sampled_u_nk = [_statistical_inefficiency(i, i.iloc[:, 0])
-                                for i in u_nk]
-                sample_okay = True
-            except:
-                print("Could not calculate statistical inefficiency.")
-                sampled_u_nk = u_nk
-
-        if eq_okay and not sample_okay:
-            print("Could not calculate statistical inefficiency.")
-            sampled_u_nk = eq_u_nk
-
-        if eq_okay or sample_okay:
-            for i in sampled_u_nk:
-                if len(i.iloc[:, 0]) < 50:
-                    print(
-                        "Less than 50 samples as a result of preprocessing. MBAR will be calculated without preprocessing the data.")
-                    sampled_u_nk = u_nk
+        # Preprocess the data.
+        try:
+            processed_u_nk = Relative.preprocessing_extracted_data(u_nk)
+        except:
+            _warnings.warn("Could not preprocess the data.")
+            processed_u_nk = u_nk
 
         try:
-            processed_u_nk = _alchemlyb.concat(sampled_u_nk)
             mbar = _AutoMBAR().fit(processed_u_nk)
         except:
             raise _AnalysisError("MBAR free-energy analysis failed!")
 
         # Extract the data from the mbar results.
         data = []
-        # convert the data frames to kcal/mol
+        # Convert the data frames to kcal/mol.
         delta_f_ = _to_kcalmol(mbar.delta_f_)
         d_delta_f_ = _to_kcalmol(mbar.d_delta_f_)
         for lambda_, t in zip(lambdas, temperatures):
@@ -826,35 +857,31 @@ class Relative():
             "AMBER": (_amber_extract_dHdl)
         }
 
-        # extract the data
+        # Extract the data.
         func = function_glob_dict[engine]
-        dhdl = [func(x, T=t) for x, t in zip(files, temperatures)]
 
-        # Process the data files using the alchemlyb library.
-        # Subsample according to statistical inefficiency and then calculate the TI.
-        sample_okay = False
         try:
-            # TODO : decorrelate instead of stats ineff?
-            sampled_dhdl = _alchemlyb.concat(
-                [_statistical_inefficiency(i, i.iloc[:, 0]) for i in dhdl])
-            ti = _TI().fit(sampled_dhdl)
-            sample_okay = True
+            dhdl = [func(x, T=t) for x, t in zip(files, temperatures)]
         except:
-            print("Could not calculate statistical inefficiency.")
+            raise _AnalysisError(
+                "Could not extract the data from the provided files!")
 
-        if not sample_okay:
-            print(
-                "Running without calculating the statistical inefficiency and without subsampling...")
-            try:
-                dhdl = _alchemlyb.concat(
-                    [func(x, T=t) for x, t in zip(files, temperatures)])
-                ti = _TI().fit(dhdl)
-            except:
-                raise _AnalysisError("TI free-energy analysis failed!")
+        # Preprocess the data.
+        try:
+            processed_dhdl = Relative.preprocessing_extracted_data(dhdl)
+        except:
+            _warnings.warn("Could not preprocess the data.")
+            processed_dhdl = dhdl
 
-        # Extract the data from the ti results.
+        # Analyse using the TI from the alchemlyb library.
+        try:
+            ti = _TI().fit(processed_dhdl)
+        except:
+            raise _AnalysisError("TI free-energy analysis failed!")
+
+        # Extract the data from the TI results.
         data = []
-        # convert the data frames to kcal/mol
+        # Convert the data frames to kcal/mol.
         delta_f_ = _to_kcalmol(ti.delta_f_)
         d_delta_f_ = _to_kcalmol(ti.d_delta_f_)
         for lambda_ in lambdas:
