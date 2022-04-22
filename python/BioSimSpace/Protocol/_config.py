@@ -257,7 +257,7 @@ class ConfigFactory:
             timestep = 0.004
         else:
             # Define the timestep
-            timestep = self.protocol.getTimeStep().picoseconds().magnitude() # Get the time step in ps
+            timestep = self.protocol.getTimeStep().picoseconds().value() # Get the time step in ps
             protocol_dict["dt"] = f"{timestep:.3f}" # Time step.
             protocol_dict["nstlim"] = self._steps   # Number of integration steps.
 
@@ -321,7 +321,7 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     protocol_dict["ntp"] = 1        # Isotropic pressure scaling.
-                    protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().magnitude():.5f}"  # Pressure in bar.
+                    protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
                     if isinstance(self.protocol, _Protocol.Equilibration):
                         protocol_dict["barostat"] = 2         # Monte Carlo barostat.
                     else:
@@ -334,8 +334,8 @@ class ConfigFactory:
             protocol_dict["ntt"] = 3                # Langevin dynamics.
             protocol_dict["gamma_ln"] = 2           # Collision frequency (ps).
             if isinstance(self.protocol, _Protocol.Equilibration):
-                temp0 = self.protocol.getStartTemperature().kelvin().magnitude()
-                temp1 = self.protocol.getEndTemperature().kelvin().magnitude()
+                temp0 = self.protocol.getStartTemperature().kelvin().value()
+                temp1 = self.protocol.getEndTemperature().kelvin().value()
                 if not self.protocol.isConstantTemp():
                     protocol_dict["tempi"] = f"{temp0:.2f}"  # Initial temperature.
                     protocol_dict["temp0"] = f"{temp1:.2f}"  # Final temperature.
@@ -348,7 +348,7 @@ class ConfigFactory:
                         protocol_dict["tempi"] = f"{temp0:.2f}"  # Initial temperature.
                     protocol_dict["temp0"] = f"{temp0:.2f}"  # Constant temperature.
             else:
-                temp = self.protocol.getTemperature().kelvin().magnitude()
+                temp = self.protocol.getTemperature().kelvin().value()
                 if not self._restart:
                     protocol_dict["tempi"] = f"{temp:.2f}"   # Initial temperature.
                 protocol_dict["temp0"] = f"{temp:.2f}"       # Final temperature.
@@ -411,7 +411,7 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["integrator"] = "steep"                                   # Minimisation simulation.
         else:
-            timestep = self.protocol.getTimeStep().picoseconds().magnitude()        # Define the timestep in picoseconds
+            timestep = self.protocol.getTimeStep().picoseconds().value()            # Define the timestep in picoseconds
             protocol_dict["dt"] = f"{timestep:.3f}"                                 # Integration time step.
         protocol_dict["nsteps"] = self._steps                                       # Number of integration steps.
 
@@ -459,7 +459,7 @@ class ConfigFactory:
                     else:
                         protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
-                    protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().magnitude():.5f}"  # Pressure in bar.
+                    protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
                     protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
@@ -471,16 +471,16 @@ class ConfigFactory:
             protocol_dict["tau-t"] = 2                                              # Collision frequency (ps).
 
             if not isinstance(self.protocol, _Protocol.Equilibration):
-                protocol_dict["ref-t"] = "%.2f" % self.protocol.getTemperature().kelvin().magnitude()
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getTemperature().kelvin().value()
             elif self.protocol.isConstantTemp():
-                protocol_dict["ref-t"] = "%.2f" % self.protocol.getStartTemperature().kelvin().magnitude()
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
 
             # Heating/cooling protocol.
             elif not self.protocol.isConstantTemp():
                 #still need a reference temperature for each group, even when heating/cooling
-                protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().magnitude()
+                protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
                 # Work out the final time of the simulation.
-                timestep = self.protocol.getTimeStep().picoseconds().magnitude()
+                timestep = self.protocol.getTimeStep().picoseconds().value()
                 end_time = _math.floor(timestep * self._steps)
 
                 protocol_dict["annealing"] = "single"                               # Single sequence of annealing points.
@@ -489,8 +489,8 @@ class ConfigFactory:
                 # Linearly change temperature between start and end times.
                 protocol_dict["annealing-time"] = "0 %d" % end_time
                 protocol_dict["annealing-temp"] = "%.2f %.2f" % (
-                    self.protocol.getStartTemperature().kelvin().magnitude(),
-                    self.protocol.getEndTemperature().kelvin().magnitude(),
+                    self.protocol.getStartTemperature().kelvin().value(),
+                    self.protocol.getEndTemperature().kelvin().value(),
                 )
 
         # Free energies.
@@ -555,8 +555,8 @@ class ConfigFactory:
                 restart_interval = int(200 * _math.ceil(restart_interval / 200))
 
             # The number of moves per cycle - want about 1 cycle per 1 ns.
-            nmoves = int(max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond))))
-)
+            nmoves = int(max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond)))))
+
             # The number of cycles, so that nmoves * ncycles is equal to self._steps.
             ncycles = int(max(1, self._steps // nmoves))
 
@@ -570,12 +570,14 @@ class ConfigFactory:
             protocol_dict["nmoves"] = nmoves                                    # The number of moves per cycle.
             protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
             protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
-            timestep = self.protocol.getTimeStep().femtoseconds().magnitude()
+            timestep = self.protocol.getTimeStep().femtoseconds().value()
             protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
+            # Apply HMR if timestep is greater than 4 fs.
             if timestep >= 4.00:
                 protocol_dict["integrator_type"] = "langevinmiddle"             # Langevin middle integrator
+                protocol_dict["hydrogen mass repartitioning factor"] = "1.5"    # Repartitioning factor of 1.5
             else:
                 pass
 
@@ -599,7 +601,7 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     protocol_dict["barostat"] = True                            # Enable barostat.
-                    pressure = self.protocol.getPressure().atm().magnitude()
+                    pressure = self.protocol.getPressure().atm().value()
                     protocol_dict["pressure"] = "%.5f atm" % pressure           # Presure in atmosphere.
                 else:
                     _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
@@ -617,9 +619,9 @@ class ConfigFactory:
                 pass
 
             if not isinstance(self.protocol, _Protocol.Equilibration):
-                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature().kelvin().magnitude()
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature().kelvin().value()
             else:
-                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getStartTemperature().kelvin().magnitude()
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getStartTemperature().kelvin().value()
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
@@ -630,7 +632,7 @@ class ConfigFactory:
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
-            #protocol_dict["minimise"] = True                                   # minimise at each window
+            # protocol_dict["minimise"] = True                                   # minimise at each window
             # Find the ligand, which will have the name LIG if created using BSS.
             lig_res_num = self.system.search(f"resname LIG")[0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = lig_res_num
