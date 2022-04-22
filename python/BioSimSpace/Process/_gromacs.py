@@ -42,6 +42,7 @@ import warnings as _warnings
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
+from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
 from BioSimSpace import _gmx_exe
@@ -1991,6 +1992,10 @@ class Gromacs(_process.Process):
 
         if restraint is not None:
 
+            # Get the force constant in units of kJ_per_mol/nanometer**2
+            force_constant = self._protocol.getForceConstant()._sire_unit
+            force_constant = force_constant.to(_SireUnits.kJ_per_mol/_SireUnits.nanometer2)
+
             # Scale reference coordinates with the scaling matrix of the pressure coupling.
             config.append("refcoord-scaling = all")
 
@@ -2085,7 +2090,7 @@ class Gromacs(_process.Process):
 
                             # Write restraints for each atom.
                             for atom_idx in restrained_atoms:
-                                file.write(f"{atom_idx+1:4}    1       1000       1000       1000\n")
+                                file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
@@ -2161,7 +2166,7 @@ class Gromacs(_process.Process):
 
                             # Write restraints for each atom.
                             for atom_idx in atom_idxs:
-                                file.write(f"{atom_idx+1:4}    1       1000       1000       1000\n")
+                                file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
@@ -2366,7 +2371,7 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -2380,7 +2385,7 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
+                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
 
             except KeyError:
                 return None

@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Angle(_Type):
     """An angle type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["radian", "degree"]
+
     # Dictionary of allowed units.
     _supported_units = { "RADIAN" : _SireUnits.radian,
                          "DEGREE" : _SireUnits.degree }
@@ -52,7 +55,11 @@ class Angle(_Type):
                      "DEGREE" : "An angle in degrees." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "RADIAN"
+    _default_unit = "RADIAN"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    1,      0,      0,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -131,7 +138,7 @@ class Angle(_Type):
         """
         return Angle((self._value * self._supported_units[self._unit]).to(_SireUnits.degree), "DEGREE")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -201,3 +208,42 @@ class Angle(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        # First, handle plurals and abbreviations.
+        unit = unit.replace("radians", "rad")
+        unit = unit.replace("radian", "rad")
+        unit = unit.replace("rads", "rad")
+
+        # Now convert back to correct format.
+        unit = unit.replace("rad", "radian")
+
+        # Convert powers. (Limited selection, for now.)
+        unit = unit.replace("radian2", "(radian*radian)")
+        unit = unit.replace("radian3", "(radian*radian*radian)")
+        unit = unit.replace("degree2", "(degree*degree)")
+        unit = unit.replace("degree3", "(degree*degree*degree)")
+        unit = unit.replace("radian-1", "(1/(radian))")
+        unit = unit.replace("radian-2", "(1/(radian*radian))")
+        unit = unit.replace("radian-3", "(1/(radian*radian*radian))")
+        unit = unit.replace("degree-1", "(1/(degree))")
+        unit = unit.replace("degree-2", "(1/(degree*degree))")
+        unit = unit.replace("degree-3", "(1/(degree*degree*degree))")
+
+        return unit

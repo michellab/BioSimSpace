@@ -87,7 +87,7 @@ while restraining the positions of any backbone atoms.
 
    protocol = BSS.Protocol.Equilibration(temperature_start=0*BSS.Units.Temperature.kelvin,
                                          temperature_end=300*BSS.Units.Temperature.kelvin,
-                                         restrain_backbone=True)
+                                         restraint="backbone")
 """
 
 from ._config import *

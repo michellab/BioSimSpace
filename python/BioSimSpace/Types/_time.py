@@ -35,6 +35,16 @@ from ._type import Type as _Type
 class Time(_Type):
     """A time type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["day",
+                   "hour",
+                   "minute",
+                   "second",
+                   "millisecond",
+                   "nanosecond",
+                   "picosecond",
+                   "femtosecond"]
+
     # Dictionary of allowed units.
     _supported_units = { "DAY"         : _SireUnits.day,
                          "HOUR"        : _SireUnits.hour,
@@ -75,7 +85,11 @@ class Time(_Type):
                      "FEMTOSECOND" : "A time in femtoseconds." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "NANOSECOND"
+    _default_unit = "NANOSECOND"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      0,    0,        0,           0,    1)
 
     def __init__(self, *args):
         """Constructor.
@@ -118,10 +132,6 @@ class Time(_Type):
 
         # Call the base class constructor.
         super().__init__(*args)
-
-        # Don't support negative times.
-        if self._value < 0:
-            raise ValueError("The time cannot be negative!")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -224,7 +234,7 @@ class Time(_Type):
         """
         return Time((self._value * self._supported_units[self._unit]).to(_SireUnits.femtosecond), "FEMTOSECOND")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -295,3 +305,68 @@ class Time(_Type):
             return self._abbreviations[unit[:-1]]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("days", "day")
+        unit = unit.replace("seconds", "second")
+        unit = unit.replace("secs", "second")
+
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("day2", "(day*day)")
+        unit = unit.replace("day3", "(day*day*day)")
+        unit = unit.replace("day-1", "(1/day)")
+        unit = unit.replace("day-2", "(1/(day*day))")
+        unit = unit.replace("day-3", "(1/(day*day*day))")
+        unit = unit.replace("hour2", "(hour*hour)")
+        unit = unit.replace("hour3", "(hour*hour*hour)")
+        unit = unit.replace("hour-1", "(1/hour)")
+        unit = unit.replace("hour-2", "(1/(hour*hour))")
+        unit = unit.replace("hour-3", "(1/(hour*hour*hour))")
+        unit = unit.replace("minute2", "(minute*minute)")
+        unit = unit.replace("minute3", "(minute*minute*minute)")
+        unit = unit.replace("minute-1", "(1/minute)")
+        unit = unit.replace("minute-2", "(1/(minute*minute))")
+        unit = unit.replace("minute-3", "(1/(minute*minute*minute))")
+        unit = unit.replace("femtosecond2", "(femtosecond*femtosecond)")
+        unit = unit.replace("femtosecond3", "(femtosecond*femtosecond*femtosecond)")
+        unit = unit.replace("femtosecond-1", "(1/femtosecond)")
+        unit = unit.replace("femtosecond-2", "(1/(femtosecond*femtosecond))")
+        unit = unit.replace("femtosecond-3", "(1/(femtosecond*femtosecond*femtosecond))")
+        unit = unit.replace("picosecond2", "(picosecond*picosecond)")
+        unit = unit.replace("picosecond3", "(picosecond*picosecond*picosecond)")
+        unit = unit.replace("picosecond-1", "(1/picosecond)")
+        unit = unit.replace("picosecond-2", "(1/(picosecond*picosecond))")
+        unit = unit.replace("picosecond-3", "(1/(picosecond*picosecond*picosecond))")
+        unit = unit.replace("nanosecond2", "(nanosecond*nanosecond)")
+        unit = unit.replace("nanosecond3", "(nanosecond*nanosecond*nanosecond)")
+        unit = unit.replace("nanosecond-1", "(1/nanosecond)")
+        unit = unit.replace("nanosecond-2", "(1/(nanosecond*nanosecond))")
+        unit = unit.replace("nanosecond-3", "(1/(nanosecond*nanosecond*nanosecond))")
+        unit = unit.replace("millisecond2", "(millisecond*millisecond)")
+        unit = unit.replace("millisecond3", "(millisecond*millisecond*millisecond)")
+        unit = unit.replace("millisecond-1", "(1/millisecond)")
+        unit = unit.replace("millisecond-2", "(1/(millisecond*millisecond))")
+        unit = unit.replace("millisecond-3", "(1/(millisecond*millisecond*millisecond))")
+        unit = unit.replace("second2", "(second*second)")
+        unit = unit.replace("second3", "(second*second*second)")
+        unit = unit.replace("second-1", "(1/second)")
+        unit = unit.replace("second-2", "(1/(second*second))")
+        unit = unit.replace("second-3", "(1/(second*second*second))")
+
+        return unit

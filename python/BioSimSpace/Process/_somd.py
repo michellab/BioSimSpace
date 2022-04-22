@@ -599,7 +599,7 @@ class Somd(_process.Process):
 
         try:
             # Create the list of time records.
-            times = [(self._protocol.getRestartInterval() * self._protocol.getTimeStep()._default_unit()) * x for x in range(1, num_frames + 1)]
+            times = [(self._protocol.getRestartInterval() * self._protocol.getTimeStep().to_default_unit()) * x for x in range(1, num_frames + 1)]
         except:
             return None
 

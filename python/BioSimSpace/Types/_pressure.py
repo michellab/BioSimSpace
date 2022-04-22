@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Pressure(_Type):
     """A pressure type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["atm", "bar"]
+
     # Dictionary of allowed units.
     _supported_units = { "ATMOSPHERE" : _SireUnits.atm,
                          "BAR"        : _SireUnits.bar }
@@ -52,7 +55,11 @@ class Pressure(_Type):
                      "BAR"        : "A pressure in bar." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "ATMOSPHERE"
+    _default_unit = "ATMOSPHERE"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,     -1,    1,        0,           0,   -2)
 
     def __init__(self, *args):
         """Constructor.
@@ -118,7 +125,7 @@ class Pressure(_Type):
         """
         return Pressure((self._value * self._supported_units[self._unit]).to(_SireUnits.bar), "BAR")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -183,3 +190,41 @@ class Pressure(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("pressure", "")
+        unit = unit.replace("press", "")
+        unit = unit.replace("pres", "")
+        unit = unit.replace("atmospheric", "atm")
+        unit = unit.replace("atmospheres", "atm")
+        unit = unit.replace("atmosphere", "atm")
+
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("bar2", "(bar*bar)")
+        unit = unit.replace("bar3", "(bar*bar*bar)")
+        unit = unit.replace("bar-1", "(1/bar)")
+        unit = unit.replace("bar-2", "(1/(bar*bar))")
+        unit = unit.replace("bar3", "(1/(bar*bar*bar))")
+        unit = unit.replace("atm2", "(atm*atm)")
+        unit = unit.replace("atm3", "(atm*atm*atm)")
+        unit = unit.replace("atm-1", "(1/atm)")
+        unit = unit.replace("atm-2", "(1/(atm*atm))")
+        unit = unit.replace("atm-3", "(1/(atm*atm*atm))")
+
+        return unit

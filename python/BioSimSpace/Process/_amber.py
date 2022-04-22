@@ -936,9 +936,9 @@ class Amber(_process.Process):
         # Convert from picoseconds to nanoseconds.
         if time_steps is not None:
             if time_series:
-                return [(x * _Units.Time.picosecond)._default_unit() for x in time_steps]
+                return [(x * _Units.Time.picosecond)._to_default_unit() for x in time_steps]
             else:
-                return (time_steps * _Units.Time.picosecond)._default_unit()
+                return (time_steps * _Units.Time.picosecond)._to_default_unit()
 
     def getCurrentTime(self, time_series=False):
         """Get the current simulation time.
@@ -1842,7 +1842,7 @@ class Amber(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._default_unit() for x in self._stdout_dict[key]]
+                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
 
             except KeyError:
                 return None
@@ -1856,7 +1856,7 @@ class Amber(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._default_unit()
+                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
 
             except KeyError:
                 return None

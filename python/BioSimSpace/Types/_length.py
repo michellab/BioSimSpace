@@ -35,6 +35,14 @@ from ._type import Type as _Type
 class Length(_Type):
     """A length type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["meter",
+                   "centimeter",
+                   "millimeter",
+                   "nanometer",
+                   "angstrom",
+                   "picometer"]
+
     # Dictionary of allowed units.
     _supported_units = { "METER"      : _SireUnits.meter,
                          "CENTIMETER" : _SireUnits.centimeter,
@@ -68,7 +76,11 @@ class Length(_Type):
                      "PICOMETER"  : "A length in picometers." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "NANOMETER"
+    _default_unit = "ANGSTROM"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      1,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -134,6 +146,11 @@ class Length(_Type):
             mag = self.angstroms().value() * other.angstroms2().value()
             return _Volume(mag, "A3")
 
+        # Multiplication by another type.
+        elif isinstance(other, Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
+
         # Multiplication by a string.
         elif isinstance(other, str):
             try:
@@ -152,8 +169,31 @@ class Length(_Type):
     def __rmul__(self, other):
         """Multiplication operator."""
 
-        # Multipliation is commutative: a*b = b*a
+        # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
+
+    def __pow__(self, other):
+        """Power operator."""
+
+        if not isinstance(other, int):
+            raise ValueError("We can only raise to the power of integer values.")
+
+        if other < 1 or other > 3:
+            raise ValueError("We can only raise to the power of [1,3].")
+
+        # No change.
+        if other == 1:
+            return self
+
+        # Area.
+        if other == 2:
+            mag = self.angstroms().value()**2
+            return _Area(mag, "A2")
+
+        # Volume.
+        if other == 3:
+            mag = self.angstroms().value()**3
+            return _Volume(mag, "A3")
 
     def meters(self):
         """Return the length in meters.
@@ -221,7 +261,7 @@ class Length(_Type):
         """
         return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer), "PICOMETER")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -291,6 +331,36 @@ class Length(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("nm", "nanometer")
+        unit = unit.replace("pm", "picometer")
+
+        # Convert powers.
+        unit = unit.replace("angstrom-1", "(1/angstrom)")
+        unit = unit.replace("picometer-1", "(1/picometer)")
+        unit = unit.replace("nanometer-1", "(1/nanometer)")
+        unit = unit.replace("millimeter-1", "(1/millimeter)")
+        unit = unit.replace("centimeter-1", "(1/centimeter)")
+        unit = unit.replace("meter-1", "(1/meter)")
+
+        return unit
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area

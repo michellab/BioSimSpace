@@ -51,7 +51,10 @@ class Bound():
                collective variables.
 
            force_constant : float
-               The force constant (k) for the bias potential.
+               The force constant (k) for the bias potential. Note that the
+               units of the force constant aren't specified, i.e. the value
+               takes the units of the collective variable to which it is later
+               applied.
 
            exponent : float
                The exponent (e) for the bias potential.

@@ -19,40 +19,41 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-.. currentmodule:: BioSimSpace.Types
+# The set of supported base units. General unit based types can be created
+# by combining these, e.g. via multiplication or division.
 
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-
-    Angle
-    Area
-    Charge
-    Coordinate
-    Energy
-    Length
-    Pressure
-    Temperature
-    Time
-    Vector
-    Volume
-"""
+__all__ = ["_base_units",
+           "_base_dimensions",
+           "_sire_units_locals"]
 
 from ._angle import *
 from ._area import *
 from ._charge import *
-from ._coordinate import *
 from ._energy import *
 from ._length import *
 from ._pressure import *
 from ._temperature import *
 from ._time import *
-from ._vector import *
 from ._volume import *
 
-# Hide GeneralUnit since it will be automatically created from combinations
-# of the unit based types above.
-from ._general_unit import GeneralUnit as _GeneralUnit
+import sys as _sys
+_namespace = _sys.modules[__name__]
+
+# Create the list of base unit types.
+_base_units = [getattr(_namespace, var) for var in dir() if var[0] != "_"]
+
+_base_dimensions = {}
+for unit in _base_units:
+    _base_dimensions[unit._dimensions] = unit
+
+# Create a local namespace dictionary for the supported Sire units. This
+# maps between the unit name and the Sire unit object, allowing us to
+# use eval to parse arbitrary expressions based in these units from the
+# command-line.
+import Sire.Units as _SireUnits
+
+_sire_units_locals = {}
+
+for unit in _base_units:
+    for sire_unit in unit._sire_units:
+        _sire_units_locals[sire_unit] = getattr(_SireUnits, sire_unit)

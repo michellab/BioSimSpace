@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Energy(_Type):
     """An energy type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["kcal_per_mol", "kJ_per_mol"]
+
     # Dictionary of allowed units.
     _supported_units = { "KILO CALORIES PER MOL" : _SireUnits.kcal_per_mol,
                          "KILO JOULES PER MOL"   : _SireUnits.kJ_per_mol,
@@ -56,7 +59,11 @@ class Energy(_Type):
                      "KT"                    : "An energy in KT." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "KILO CALORIES PER MOL"
+    _default_unit = "KILO CALORIES PER MOL"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      0,      2,    1,       -1,           0,   -2)
 
     def __init__(self, *args):
         """Constructor.
@@ -134,7 +141,7 @@ class Energy(_Type):
         """
         return Energy((self._value * self._supported_units[self._unit]).to(2.479 * _SireUnits.kJ_per_mol), "KT")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -204,3 +211,46 @@ class Energy(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("mole", "mol")
+        unit = unit.replace("mols", "mol")
+        unit = unit.replace("calories", "cal")
+        unit = unit.replace("joules", "J")
+        unit = unit.replace("kilocal", "kcal")
+        unit = unit.replace("kiloJ", "kJ")
+        unit = unit.replace("kj", "kJ")
+        unit = unit.replace("kcals", "kcal")
+        unit = unit.replace("kJs", "kJ")
+        unit = unit.replace("kcalpermol", "kcal_per_mol")
+        unit = unit.replace("kJpermol", "kJ_per_mol")
+
+        # Convert powers.
+        unit = unit.replace("kcal_per_mol2", "(kcal_per_mol*kcal_per_mol)")
+        unit = unit.replace("kcal_per_mol3", "(kcal_per_mol*kcal_per_mol*kcal_per_mol)")
+        unit = unit.replace("kcal_per_mol-1", "(1/kcal_per_mol)")
+        unit = unit.replace("kcal_per_mol-2", "(1/(kcal_per_mol*kcal_per_mol))")
+        unit = unit.replace("kcal_per_mol-3", "(1/(kcal_per_mol*kcal_per_mol*kcal_per_mol))")
+        unit = unit.replace("kJ_per_mol2", "(kJ_per_mol*kJ_per_mol)")
+        unit = unit.replace("kJ_per_mol3", "(kJ_per_mol*kJ_per_mol*kJ_per_mol)")
+        unit = unit.replace("kJ_per_mol-1", "(1/kJ_per_mol)")
+        unit = unit.replace("kJ_per_mol-2", "(1/(kJ_per_mol*kJ_per_mol))")
+        unit = unit.replace("kJ_per_mol-3", "(1/(kJ_per_mol*kJ_per_mol*kJ_per_mol))")
+
+        return unit

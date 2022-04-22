@@ -35,6 +35,9 @@ from ._type import Type as _Type
 class Charge(_Type):
     """A charge type."""
 
+    # A list of the supported Sire unit names.
+    _sire_units = ["e_charge", "coulomb"]
+
     # Dictionary of allowed units.
     _supported_units = { "ELECTRON CHARGE" : _SireUnits.e_charge,
                          "COULOMB"         : _SireUnits.coulomb }
@@ -52,7 +55,11 @@ class Charge(_Type):
                      "COULOMB"         : "A charge in Coulomb." }
 
     # Null type unit for avoiding issue printing configargparse help.
-    _null_unit = "ELECTRON CHARGE"
+    _default_unit = "ELECTRON CHARGE"
+
+    # The dimension mask.
+    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (    0,      1,      0,    0,        0,           0,    0)
 
     def __init__(self, *args):
         """Constructor.
@@ -119,7 +126,7 @@ class Charge(_Type):
         """
         return Charge((self._value * self._supported_units[self._unit]).to(_SireUnits.coulomb), "COULOMB")
 
-    def _default_unit(self, mag=None):
+    def _to_default_unit(self, mag=None):
         """Internal method to return an object of the same type in the default unit.
 
            Parameters
@@ -196,3 +203,38 @@ class Charge(_Type):
             return self._abbreviations[unit]
         else:
             raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+
+    @staticmethod
+    def _to_sire_format(unit):
+        """Reformat the unit string so it adheres to the Sire unit formatting.
+
+           Parameters
+           ----------
+
+           unit : str
+               A string representation of the unit.
+
+           Returns
+           -------
+
+           sire_unit : str
+               The unit string in Sire compatible format.
+        """
+
+        unit = unit.replace("coulombs", "coulomb")
+        unit = unit.replace("electroncharge", "e_charge")
+        unit = unit.replace("echarge", "e_charge")
+
+        # Convert powers. (Just 2nd and third for now.)
+        unit = unit.replace("coloumb2", "(coulomb*coulomb)")
+        unit = unit.replace("coloumb3", "(coulomb*coulomb*coulomb)")
+        unit = unit.replace("coloumb-1", "(1/coulomb)")
+        unit = unit.replace("coloumb-2", "(1/(coulomb*coulomb))")
+        unit = unit.replace("coloumb3", "(1/(coulomb*coulomb*coulomb))")
+        unit = unit.replace("e_charge2", "(e_charge*e_charge)")
+        unit = unit.replace("e_charge3", "(e_charge*e_charge*e_charge)")
+        unit = unit.replace("e_charge-1", "(1/e_charge)")
+        unit = unit.replace("e_charge-2", "(1/(e_charge*e_charge))")
+        unit = unit.replace("e_charge-3", "(1/(e_charge*e_charge*e_charge))")
+
+        return unit
