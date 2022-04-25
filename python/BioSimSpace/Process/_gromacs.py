@@ -38,6 +38,7 @@ import shlex as _shlex
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
+import pexpect
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
@@ -2460,19 +2461,12 @@ class Gromacs(_process.Process):
                 command = "%s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
                     % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().value())
 
-                # Run the command as a pipeline.
-                proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_shlex.split(command), shell=False,
-                    stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-                proc_echo.stdout.close()
-
-                # For some reason, this doesn't always work the first time it's run
-                # as a subprocess, so try again if frame.gro isn't found.
-                if not _os.path.isfile("frame.gro"):
-                    proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                    proc = _subprocess.Popen(_shlex.split(command), shell=False,
-                        stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-                    proc_echo.stdout.close()
+                proc = pexpect.spawn(command, encoding='utf-8')
+                proc.expect('Select a group:')
+                proc.sendline('0')
+                proc.sendline()
+                proc.expect('GROMACS reminds you: ')
+                proc.close()
 
                 # Read the frame file.
                 new_system = _IO.readMolecules(["frame.gro", self._top_file],
