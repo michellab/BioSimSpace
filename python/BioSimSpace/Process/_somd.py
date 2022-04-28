@@ -232,7 +232,7 @@ class Somd(_process.Process):
 
             else:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
-                                 "perturbable molecule. The system has %d" \
+                                 "perturbable molecule. The system has %d." \
                                   % system.nPerturbableMolecules())
 
         # If this is a different protocol and the system still contains a
@@ -265,6 +265,18 @@ class Somd(_process.Process):
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
+
+        # Warn the user if the simulation is seeded and not running a FreeEnergy
+        # protocol.
+        if self._is_seeded:
+            if not isinstance(self._protocol, _Protocol.FreeEnergy):
+                _warnings.warn("Debug seeding is only supported for FreeEnergy protocols. Ignoring!")
+                self._is_seeded = False
+            else:
+                _warnings.warn("Seeding should only be used for debugging purposes. "
+                               "Sampling will be invalid.")
+                if self._seed == 0:
+                    _warnings.warn("SOMD will disable seeding when seed is 0!")
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
@@ -406,7 +418,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
 
         # Add configuration variables for a production simulation.
         elif isinstance(self._protocol, _Protocol.Production):
@@ -470,7 +482,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
 
         # Add configuration variables for a free energy simulation.
         elif isinstance(self._protocol, _Protocol.FreeEnergy):
@@ -548,7 +560,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
             self.addToConfig("constraint = hbonds-notperturbed")                    # Handle hydrogen perturbations.
             self.addToConfig("minimise = True")                                     # Perform a minimisation.
             self.addToConfig("equilibrate = False")                                 # Don't equilibrate.
