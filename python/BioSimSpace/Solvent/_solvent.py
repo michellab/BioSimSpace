@@ -915,6 +915,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
                 proc = _subprocess.run(_shlex.split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
+                proc.wait()
                 proc_echo.stdout.close()
                 stdout.close()
                 stderr.close()
