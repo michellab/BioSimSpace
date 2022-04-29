@@ -48,10 +48,6 @@ from BioSimSpace.Types import Time as _Time
 from BioSimSpace import IO as _IO
 from BioSimSpace import Units as _Units
 
-# A dictionary mapping the Sire file format extension to those expected by MDTraj.
-_extensions = { "Gro87" : "gro",
-                "PRM7"  : "parm7" }
-
 def getFrame(trajectory, topology, index):
     """Extract a single frame from a trajectory file.
 
@@ -87,27 +83,7 @@ def getFrame(trajectory, topology, index):
     try:
         frame = _mdtraj.load_frame(trajectory, index, top=topology)
     except:
-        # Get the file format of the topology file.
-        try:
-            # Load the topology file to determine the file format.
-            file_format = _IO.readMolecules(topology).fileFormat()
-
-            # Set the extension.
-            extension = _extensions.get(file_format, file_format.lower())
-
-            # Set the path to the temporary topology file.
-            top_file = _os.getcwd() + "/.topology." + extension
-
-            # Copy the topology to a file with the correct extension.
-            _shutil.copyfile(topology, top_file)
-
-            frame = _mdtraj.load_frame(trajectory, index, top=top_file)
-
-            # Remove the temporary topology file.
-            _os.remove(top_file)
-        except:
-            _os.remove(top_file)
-            raise IOError("MDTraj failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology))
+        raise IOError("MDTraj failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology))
 
     # The name of the frame coordinate file.
     frame_file = ".frame.nc"
@@ -234,9 +210,11 @@ class Trajectory():
         if self._process is not None:
             traj_file = self._process._traj_file
 
-            # Weirdly, the GRO file is used as the topology.
             if self._process_name.upper() == "GROMACS":
-                top_file = self._process._gro_file
+                if format == "mdtraj":
+                    top_file = self._process._gro_file
+                else:
+                    top_file = self._process._tpr_file
             else:
                 top_file = self._process._top_file
         else:
@@ -250,42 +228,35 @@ class Trajectory():
         if not _os.path.isfile(top_file):
             raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
-        # Load the topology file to determine the file format.
-        file_format = _IO.readMolecules(top_file).fileFormat()
-
-        # Set the extension.
-        extension = _extensions.get(file_format, file_format.lower())
-
-        # Set the path to the temporary topology file.
-        new_top_file = _os.getcwd() + "/.topology." + extension
-
-        # Copy the topology to a file with the correct extension.
-        _shutil.copyfile(top_file, new_top_file)
-
         # Return an MDTraj object.
         if format == "mdtraj":
-
             try:
-                traj = _mdtraj.load(traj_file, top=new_top_file)
+                traj = _mdtraj.load(traj_file, top=top_file)
             except:
                 _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 traj = None
-
-            # Remove the temporary topology file.
-            _os.remove(new_top_file)
 
             return traj
 
         # Return an MDAnalysis Universe.
         else:
+            # Check the file extension.
+            _, extension = _os.path.splitext(top_file)
+
+            # If this is a PRM7 file, copy to PARM7.
+            if extension == ".prm7":
+                # Set the path to the temporary topology file.
+                new_top_file = _os.getcwd() + "/.topology.parm7"
+
+                # Copy the topology to a file with the correct extension.
+                _shutil.copyfile(top_file, new_top_file)
+                top_file = new_top_file
+
             try:
-                universe = _mdanalysis.Universe(new_top_file, traj_file)
+                universe = _mdanalysis.Universe(top_file, traj_file)
             except:
                 _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 universe = None
-
-            # Remove the temporary topology file.
-            _os.remove(new_top_file)
 
             return universe
 
