@@ -50,7 +50,7 @@ from BioSimSpace import Units as _Units
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",
-                "PRM7"   : "parm7" }
+                "PRM7"  : "parm7" }
 
 def getFrame(trajectory, topology, index):
     """Extract a single frame from a trajectory file.
