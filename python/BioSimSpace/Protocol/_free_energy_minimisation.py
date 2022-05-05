@@ -14,8 +14,9 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
                  max_lam=1.0,
                  num_lam=11,
                  steps=10000,
+                 restraint=None,
                  perturbation_type="full"
-                ):
+                 ):
         """Constructor.
 
            Parameters
@@ -39,6 +40,22 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
            steps : int
                The maximum number of steps to perform.
 
+           restraint : str, [int]
+               The type of restraint to perform. This should be one of the
+               following options:
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
+               Alternatively, the user can pass a list of atom indices for
+               more fine-grained control. If None, then no restraints are used.
+
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 "full" : A full perturbation of all terms (default option).
@@ -53,7 +70,7 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         """
 
         # Call the base class constructors.
-        _Minimisation.__init__(self, steps=steps)
+        _Minimisation.__init__(self, steps=steps, restraint=restraint)
 
         _FreeEnergyMixin.__init__(self,
                                   lam=lam,
@@ -68,13 +85,13 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, lam=%5.4f, lam_vals=%r>" % (
-                self._steps, self._lambda, self._lambda_vals)
+            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, restraint=%r, lam=%5.4f, lam_vals=%r>" % (
+                self._steps, self._restraint, self._lambda, self._lambda_vals)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, lam=%5.4f, lam_vals=%r>" % (
-                self._steps, self._lambda, self._lambda_vals)
+            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, restraint=%r, lam=%5.4f, lam_vals=%r>" % (
+                self._steps, self._restraint, self._lambda, self._lambda_vals)

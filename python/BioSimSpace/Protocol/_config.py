@@ -33,7 +33,8 @@ class ConfigFactory:
         if "space" in self.system._sire_object.propertyKeys():
             has_box = True
         else:
-            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
+            _warnings.warn(
+                "No simulation box found. Assuming gas phase simulation.")
             has_box = False
         return has_box
 
@@ -79,7 +80,8 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             steps = self.protocol.getSteps()
         else:
-            steps = _math.ceil(self.protocol.getRunTime() / self.protocol.getTimeStep())
+            steps = _math.ceil(self.protocol.getRunTime() /
+                               self.protocol.getTimeStep())
         return steps
 
     def _amber_mask_from_indices(self, atom_idxs):
@@ -162,17 +164,24 @@ class ConfigFactory:
                                        if "du" not in atom._sire_object.property("ambertype1")]]
             else:
                 perturbable_mol_mask += [None]
-        mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        mols1 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
+        mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(
+            perturbable_mol_mask) if mask == 0]
+        mols1 = [squashed_system.getMolecule(i) for i, mask in enumerate(
+            perturbable_mol_mask) if mask == 1]
 
         # Find the perturbed atom indices withing the squashed system.
-        mols0_indices = [squashed_system.getIndex(atom) + 1 for mol in mols0 for atom in mol.getAtoms()]
-        mols1_indices = [squashed_system.getIndex(atom) + 1 for mol in mols1 for atom in mol.getAtoms()]
+        mols0_indices = [squashed_system.getIndex(
+            atom) + 1 for mol in mols0 for atom in mol.getAtoms()]
+        mols1_indices = [squashed_system.getIndex(
+            atom) + 1 for mol in mols1 for atom in mol.getAtoms()]
 
         # Find the dummy indices within the squashed system.
-        offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in squashed_system.getMolecules()))
-        offsets0 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        offsets1 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
+        offsets = [0] + list(_it.accumulate(mol.nAtoms()
+                             for mol in squashed_system.getMolecules()))
+        offsets0 = [offsets[i]
+                    for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
+        offsets1 = [offsets[i]
+                    for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
         dummy0_indices = [offset + idx_map.index(atom.index()) + 1
                           for mol, offset, idx_map in zip(mols_hybr, offsets0, nondummy_indices0)
                           for atom in mol.getAtoms()
@@ -183,10 +192,11 @@ class ConfigFactory:
                           if "du" in atom._sire_object.property("ambertype0")]
 
         # If it is HMR
-        if HMR_on == True :
+        if HMR_on == True:
             no_shake_mask = ""
         else:
-            no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
+            no_shake_mask = self._amber_mask_from_indices(
+                mols0_indices + mols1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
@@ -225,18 +235,24 @@ class ConfigFactory:
 
         # Define some miscellaneous defaults.
         protocol_dict = {
-            "ntpr": self._report_interval,          # Interval between reporting energies.
-            "ntwr": self._restart_interval,         # Interval between saving restart files.
-            "ntwx": self._restart_interval,         # Trajectory sampling frequency.
-            "ntxo": 2,                              # Output coordinates as NetCDF.
+            # Interval between reporting energies.
+            "ntpr": self._report_interval,
+            # Interval between saving restart files.
+            "ntwr": self._restart_interval,
+            # Trajectory sampling frequency.
+            "ntwx": self._restart_interval,
+            # Output coordinates as NetCDF.
+            "ntxo": 2,
             "irest": int(self._restart),            # Whether to restart.
         }
 
         # Input.
         if self._restart:
-            protocol_dict["ntx"] = 5                # Read coordinates and velocities.
+            # Read coordinates and velocities.
+            protocol_dict["ntx"] = 5
         else:
-            protocol_dict["ntx"] = 1                # Only read coordinates from file.
+            # Only read coordinates from file.
+            protocol_dict["ntx"] = 1
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
@@ -250,21 +266,23 @@ class ConfigFactory:
                     num_steep = 1000
 
             protocol_dict["imin"] = 1               # Minimisation simulation.
-            protocol_dict["ntmin"] = 2              # Set the minimisation method to XMIN
+            # Set the minimisation method to XMIN
+            protocol_dict["ntmin"] = 2
             protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
-            protocol_dict["ncyc"] = num_steep       # Set the number of steepest descent steps.
-            # FIX need to remove and fix this, only for initial testing
-            timestep = 0.004
+            # Set the number of steepest descent steps.
+            protocol_dict["ncyc"] = num_steep
         else:
             # Define the timestep
-            timestep = self.protocol.getTimeStep().picoseconds().value() # Get the time step in ps
-            protocol_dict["dt"] = f"{timestep:.3f}" # Time step.
-            protocol_dict["nstlim"] = self._steps   # Number of integration steps.
+            timestep = self.protocol.getTimeStep().picoseconds().value()  # Get the time step in ps
+            protocol_dict["dt"] = f"{timestep:.3f}"  # Time step.
+            # Number of integration steps.
+            protocol_dict["nstlim"] = self._steps
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["ntc"] = 2                # Enable SHAKE.
-            protocol_dict["ntf"] = 2                # Don't calculate forces for constrained bonds.
+            # Don't calculate forces for constrained bonds.
+            protocol_dict["ntf"] = 2
 
         # PBC.
         if not self._has_box or not self._has_water:
@@ -289,7 +307,8 @@ class ConfigFactory:
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = self._amber_mask_from_indices([i + 1 for i in atom_idxs])
+                    restraint_mask = self._amber_mask_from_indices(
+                        [i + 1 for i in atom_idxs])
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:
@@ -309,10 +328,11 @@ class ConfigFactory:
                         # We can't do anything about a custom restraint, since we don't
                         # know anything about the atoms.
                         else:
-                            raise ValueError("AMBER atom 'restraintmask' exceeds 256 character limit!")
+                            raise ValueError(
+                                "AMBER atom 'restraintmask' exceeds 256 character limit!")
 
                     protocol_dict["ntr"] = 1
-                    protocol_dict["restraint_wt"] = 10
+                    protocol_dict["restraint_wt"] = f"{self.protocol.getForceConstant().value():.1f}"
                     protocol_dict["restraintmask"] = f"\"{restraint_mask}\""
 
         # Pressure control.
@@ -320,14 +340,19 @@ class ConfigFactory:
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    protocol_dict["ntp"] = 1        # Isotropic pressure scaling.
-                    protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
+                    # Isotropic pressure scaling.
+                    protocol_dict["ntp"] = 1
+                    # Pressure in bar.
+                    protocol_dict["pres0"] = f"{self.protocol.getPressure().bar().value():.5f}"
                     if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["barostat"] = 2         # Monte Carlo barostat.
+                        # Monte Carlo barostat.
+                        protocol_dict["barostat"] = 2
                     else:
-                        protocol_dict["barostat"] = 2         # Monte Carlo barostat.
+                        # Monte Carlo barostat.
+                        protocol_dict["barostat"] = 2
                 else:
-                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                    _warnings.warn(
+                        "Cannot use a barostat for a vacuum or non-periodic simulation")
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -337,40 +362,57 @@ class ConfigFactory:
                 temp0 = self.protocol.getStartTemperature().kelvin().value()
                 temp1 = self.protocol.getEndTemperature().kelvin().value()
                 if not self.protocol.isConstantTemp():
-                    protocol_dict["tempi"] = f"{temp0:.2f}"  # Initial temperature.
-                    protocol_dict["temp0"] = f"{temp1:.2f}"  # Final temperature.
+                    # Initial temperature.
+                    protocol_dict["tempi"] = f"{temp0:.2f}"
+                    # Final temperature.
+                    protocol_dict["temp0"] = f"{temp1:.2f}"
                     protocol_dict["nmropt"] = 1
                     protocol_lines += [
                         f"&wt TYPE='TEMP0', istep1=0, istep2={self._steps}, value1={temp0:.2f}, value2={temp1:.2f} /"
                     ]
                 else:
                     if not self._restart:
-                        protocol_dict["tempi"] = f"{temp0:.2f}"  # Initial temperature.
-                    protocol_dict["temp0"] = f"{temp0:.2f}"  # Constant temperature.
+                        # Initial temperature.
+                        protocol_dict["tempi"] = f"{temp0:.2f}"
+                    # Constant temperature.
+                    protocol_dict["temp0"] = f"{temp0:.2f}"
             else:
                 temp = self.protocol.getTemperature().kelvin().value()
                 if not self._restart:
-                    protocol_dict["tempi"] = f"{temp:.2f}"   # Initial temperature.
-                protocol_dict["temp0"] = f"{temp:.2f}"       # Final temperature.
+                    # Initial temperature.
+                    protocol_dict["tempi"] = f"{temp:.2f}"
+                # Final temperature.
+                protocol_dict["temp0"] = f"{temp:.2f}"
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-            protocol_dict["icfe"] = 1                                               # Free energy mode.
-            protocol_dict["ifsc"] = 1                                               # Use softcore potentials.
-            protocol_dict["ntf"] = 1                                                # Remove SHAKE constraints.
+            # Free energy mode.
+            protocol_dict["icfe"] = 1
+            # Use softcore potentials.
+            protocol_dict["ifsc"] = 1
+            # Remove SHAKE constraints.
+            protocol_dict["ntf"] = 1
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
-            protocol_dict["mbar_states"] = len(protocol)                            # Number of lambda values.
-            protocol_dict["mbar_lambda"] = ", ".join(protocol)                      # Lambda values.
-            protocol_dict["clambda"] = self.protocol.getLambda()                    # Current lambda value.
+            # Number of lambda values.
+            protocol_dict["mbar_states"] = len(protocol)
+            # Lambda values.
+            protocol_dict["mbar_lambda"] = ", ".join(protocol)
+            # Current lambda value.
+            protocol_dict["clambda"] = self.protocol.getLambda()
             if isinstance(self.protocol, _Protocol.Production):
-                protocol_dict["ifmbar"] = 1                                         # Calculate MBAR energies.
-                protocol_dict["logdvdl"] = 1                                        # Output dVdl
-            protocol_dict = {**protocol_dict, **self._generate_amber_fep_masks(timestep)}   # Atom masks.
+                # Calculate MBAR energies.
+                protocol_dict["ifmbar"] = 1
+                # Output dVdl
+                protocol_dict["logdvdl"] = 1
+            # Atom masks.
+            protocol_dict = {**protocol_dict, **
+                             self._generate_amber_fep_masks(timestep)}
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
         dict_lines = [self.protocol.__class__.__name__, "&cntrl"]
-        dict_lines += [f"   {k}={v}," for k, v in total_dict.items() if v is not None] + ["/"]
+        dict_lines += [f"   {k}={v}," for k,
+                       v in total_dict.items() if v is not None] + ["/"]
         total_lines = protocol_lines + extra_lines
         if total_lines:
             total_lines += ["&wt TYPE='END' /"]
@@ -402,52 +444,78 @@ class ConfigFactory:
 
         # Define some miscellaneous defaults.
         protocol_dict = {
-            "nstlog": self._report_interval,                                        # Interval between writing to the log file.
-            "nstenergy": self._restart_interval,                                    # Interval between writing to the energy file.
-            "nstxout": self._restart_interval,                                      # Interval between writing to the trajectory file.
+            # Interval between writing to the log file.
+            "nstlog": self._report_interval,
+            # Interval between writing to the energy file.
+            "nstenergy": self._restart_interval,
+            # Interval between writing to the trajectory file.
+            "nstxout": self._restart_interval,
         }
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["integrator"] = "steep"                                   # Minimisation simulation.
+            # Minimisation simulation.
+            protocol_dict["integrator"] = "steep"
         else:
-            timestep = self.protocol.getTimeStep().picoseconds().value()            # Define the timestep in picoseconds
-            protocol_dict["dt"] = f"{timestep:.3f}"                                 # Integration time step.
-        protocol_dict["nsteps"] = self._steps                                       # Number of integration steps.
+            # Define the timestep in picoseconds
+            timestep = self.protocol.getTimeStep().picoseconds().value()
+            # Integration time step.
+            protocol_dict["dt"] = f"{timestep:.3f}"
+        # Number of integration steps.
+        protocol_dict["nsteps"] = self._steps
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if timestep >= 0.004:
-                protocol_dict["constraints"] = "all-bonds"                          # If HMR, all constraints
+                # If HMR, all constraints
+                protocol_dict["constraints"] = "all-bonds"
             else:
-                protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
-            protocol_dict["constraint-algorithm"] = "LINCS"                         # Linear constraint solver.
+                # Rigid bonded hydrogens.
+                protocol_dict["constraints"] = "h-bonds"
+            # Linear constraint solver.
+            protocol_dict["constraint-algorithm"] = "LINCS"
 
         # PBC.
-        protocol_dict["pbc"] = "xyz"                                                # Simulate a fully periodic box.
-        protocol_dict["cutoff-scheme"] = "Verlet"                                   # Use Verlet pair lists.
+        # Simulate a fully periodic box.
+        protocol_dict["pbc"] = "xyz"
+        # Use Verlet pair lists.
+        protocol_dict["cutoff-scheme"] = "Verlet"
         if self._has_box and self._has_water:
-            protocol_dict["ns-type"] = "grid"                                       # Use a grid to search for neighbours.
-            protocol_dict["nstlist"] = "20"                                         # Rebuild neighbour list every 20 steps. Recommended in the manual for parallel simulations and/or non-bonded force calculation on the GPU.
-            protocol_dict["rlist"] = "0.8"                                          # Set short-range cutoff.
-            protocol_dict["rvdw"] = "0.8"                                           # Set van der Waals cutoff.
-            protocol_dict["rcoulomb"] = "0.8"                                       # Set Coulomb cutoff.
-            protocol_dict["coulombtype"] = "PME"                                    # Fast smooth Particle-Mesh Ewald.
-            protocol_dict["DispCorr"] = "EnerPres"                                  # Dispersion corrections for energy and pressure.
+            # Use a grid to search for neighbours.
+            protocol_dict["ns-type"] = "grid"
+            # Rebuild neighbour list every 20 steps. Recommended in the manual for parallel simulations and/or non-bonded force calculation on the GPU.
+            protocol_dict["nstlist"] = "20"
+            # Set short-range cutoff.
+            protocol_dict["rlist"] = "0.8"
+            # Set van der Waals cutoff.
+            protocol_dict["rvdw"] = "0.8"
+            # Set Coulomb cutoff.
+            protocol_dict["rcoulomb"] = "0.8"
+            # Fast smooth Particle-Mesh Ewald.
+            protocol_dict["coulombtype"] = "PME"
+            # Dispersion corrections for energy and pressure.
+            protocol_dict["DispCorr"] = "EnerPres"
         else:
             # Perform vacuum simulations by implementing pseudo-PBC conditions,
             # i.e. run calculation in a near-infinite box (333.3 nm).
             # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-            protocol_dict["nstlist"] = "1"                                          # Single neighbour list (all particles interact).
-            protocol_dict["rlist"] = "333.3"                                        # "Infinite" short-range cutoff.
-            protocol_dict["rvdw"] = "333.3"                                         # "Infinite" van der Waals cutoff.
-            protocol_dict["rcoulomb"] = "333.3"                                     # "Infinite" Coulomb cutoff.
-            protocol_dict["coulombtype"] = "Cut-off"                                # Plain cut-off.
-        protocol_dict["vdwtype"] = "Cut-off"                                        # Twin-range van der Waals cut-off.
+            # Single neighbour list (all particles interact).
+            protocol_dict["nstlist"] = "1"
+            # "Infinite" short-range cutoff.
+            protocol_dict["rlist"] = "333.3"
+            # "Infinite" van der Waals cutoff.
+            protocol_dict["rvdw"] = "333.3"
+            # "Infinite" Coulomb cutoff.
+            protocol_dict["rcoulomb"] = "333.3"
+            # Plain cut-off.
+            protocol_dict["coulombtype"] = "Cut-off"
+        # Twin-range van der Waals cut-off.
+        protocol_dict["vdwtype"] = "Cut-off"
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict["refcoord-scaling"] = "all"                               # The actual restraints need to be defined elsewhere.
+            # The actual restraints need to be defined elsewhere.
+            protocol_dict["refcoord-scaling"] = "all"
 
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -455,20 +523,29 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
+                        # Barostat type.
+                        protocol_dict["pcoupl"] = "c-rescale"
                     else:
-                        protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
-                    protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
-                    protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
-                    protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
+                        # Barostat type.
+                        protocol_dict["pcoupl"] = "parrinello-rahman"
+                    # 1ps time constant for pressure coupling.
+                    protocol_dict["tau-p"] = 1
+                    # Pressure in bar.
+                    protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"
+                    # Compressibility of water.
+                    protocol_dict["compressibility"] = "4.5e-5"
                 else:
-                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                    _warnings.warn(
+                        "Cannot use a barostat for a vacuum or non-periodic simulation")
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["integrator"] = "sd"                                      # Langevin dynamics.
-            protocol_dict["tc-grps"] = "system"                                     # A single temperature group for the entire system.
-            protocol_dict["tau-t"] = 2                                              # Collision frequency (ps).
+            # Langevin dynamics.
+            protocol_dict["integrator"] = "sd"
+            # A single temperature group for the entire system.
+            protocol_dict["tc-grps"] = "system"
+            # Collision frequency (ps).
+            protocol_dict["tau-t"] = 2
 
             if not isinstance(self.protocol, _Protocol.Equilibration):
                 protocol_dict["ref-t"] = "%.2f" % self.protocol.getTemperature().kelvin().value()
@@ -477,14 +554,16 @@ class ConfigFactory:
 
             # Heating/cooling protocol.
             elif not self.protocol.isConstantTemp():
-                #still need a reference temperature for each group, even when heating/cooling
+                # still need a reference temperature for each group, even when heating/cooling
                 protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
                 # Work out the final time of the simulation.
                 timestep = self.protocol.getTimeStep().picoseconds().value()
                 end_time = _math.floor(timestep * self._steps)
 
-                protocol_dict["annealing"] = "single"                               # Single sequence of annealing points.
-                protocol_dict["annealing-npoints"] = 2                              # Two annealing points for "system" temperature group.
+                # Single sequence of annealing points.
+                protocol_dict["annealing"] = "single"
+                # Two annealing points for "system" temperature group.
+                protocol_dict["annealing-npoints"] = 2
 
                 # Linearly change temperature between start and end times.
                 protocol_dict["annealing-time"] = "0 %d" % end_time
@@ -495,19 +574,26 @@ class ConfigFactory:
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-            protocol_dict["free-energy"] = "yes"                                    # Free energy mode.
-            protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
+            # Free energy mode.
+            protocol_dict["free-energy"] = "yes"
+            # Calculate MBAR energies.
+            protocol_dict["calc-lambda-neighbors"] = -1
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
-            protocol_dict["fep-lambdas"] = " ".join(protocol)                       # Lambda values.
+            # Lambda values.
+            protocol_dict["fep-lambdas"] = " ".join(protocol)
             lam = self.protocol.getLambda()
             idx = self.protocol.getLambdaValues().index(lam)
-            protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
-            protocol_dict["nstcalcenergy"] = self._report_interval                  # Calculate energies every report interval steps.
-            protocol_dict["nstdhdl"] = self._report_interval                        # Write gradients every report interval steps.
+            # Current lambda value.
+            protocol_dict["init-lambda-state"] = idx
+            # Calculate energies every report interval steps.
+            protocol_dict["nstcalcenergy"] = self._report_interval
+            # Write gradients every report interval steps.
+            protocol_dict["nstdhdl"] = self._report_interval
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
-        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+        total_lines = [f"{k} = {v}" for k,
+                       v in total_dict.items() if v is not None] + extra_lines
 
         return total_lines
 
@@ -534,15 +620,21 @@ class ConfigFactory:
         extra_lines = extra_lines if extra_lines is not None else []
 
         # Define some miscellaneous defaults.
-        protocol_dict = {"save coordinates": True}                                  # Save molecular coordinates.
+        # Save molecular coordinates.
+        protocol_dict = {"save coordinates": True}
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["minimise"] = True                                        # Minimisation simulation.
-            protocol_dict["minimise maximum iterations"] = self._steps              # Maximum number of steps.
-            protocol_dict["minimise tolerance"] = 1                                 # Convergence tolerance.
-            protocol_dict["ncycles"] = 1                                            # Perform a single SOMD cycle.
-            protocol_dict["nmoves"] = 1                                             # Perform a single MD move.
+            # Minimisation simulation.
+            protocol_dict["minimise"] = True
+            # Maximum number of steps.
+            protocol_dict["minimise maximum iterations"] = self._steps
+            # Convergence tolerance.
+            protocol_dict["minimise tolerance"] = 1
+            # Perform a single SOMD cycle.
+            protocol_dict["ncycles"] = 1
+            # Perform a single MD move.
+            protocol_dict["nmoves"] = 1
         else:
             # Get the report and restart intervals.
             report_interval = self._report_interval
@@ -552,10 +644,12 @@ class ConfigFactory:
             # which is 200 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
                 report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(200 * _math.ceil(restart_interval / 200))
+                restart_interval = int(
+                    200 * _math.ceil(restart_interval / 200))
 
             # The number of moves per cycle - want about 1 cycle per 1 ns.
-            nmoves = int(max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond)))))
+            nmoves = int(
+                max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond)))))
 
             # The number of cycles, so that nmoves * ncycles is equal to self._steps.
             ncycles = int(max(1, self._steps // nmoves))
@@ -566,79 +660,105 @@ class ConfigFactory:
             # How many time steps need to pass before we write a trajectory frame.
             buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
-            protocol_dict["ncycles"] = ncycles                                  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = nmoves                                    # The number of moves per cycle.
-            protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
-            protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
+            # The number of SOMD cycles.
+            protocol_dict["ncycles"] = ncycles
+            # The number of moves per cycle.
+            protocol_dict["nmoves"] = nmoves
+            # Cycles per trajectory write.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame
+            # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq
             timestep = self.protocol.getTimeStep().femtoseconds().value()
-            protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
+            # Integration time step.
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             # Apply HMR if timestep is greater than 4 fs.
             if timestep >= 4.00:
-                protocol_dict["integrator_type"] = "langevinmiddle"             # Langevin middle integrator
-                protocol_dict["hydrogen mass repartitioning factor"] = "1.5"    # Repartitioning factor of 1.5
+                # Langevin middle integrator
+                protocol_dict["integrator_type"] = "langevinmiddle"
+                # Repartitioning factor of 1.5
+                protocol_dict["hydrogen mass repartitioning factor"] = "1.5"
             else:
                 pass
 
         # PBC.
         if self._has_water:
-            protocol_dict["reaction field dielectric"] = "78.3"                 # Solvated box.
+            # Solvated box.
+            protocol_dict["reaction field dielectric"] = "78.3"
         if not self._has_box or not self._has_water:
-            protocol_dict["cutoff type"] = "cutoffnonperiodic"                  # No periodic box.
+            # No periodic box.
+            protocol_dict["cutoff type"] = "cutoffnonperiodic"
         else:
-            protocol_dict["cutoff type"] = "cutoffperiodic"                     # Periodic box.
-        protocol_dict["cutoff distance"] = "8 angstrom"                        # Non-bonded cut-off.
+            # Periodic box.
+            protocol_dict["cutoff type"] = "cutoffperiodic"
+        # Non-bonded cut-off.
+        protocol_dict["cutoff distance"] = "8 angstrom"
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration) and self.protocol.getRestraint() is not None:
-            raise _IncompatibleError("We currently don't support restraints with SOMD.")
+            raise _IncompatibleError(
+                "We currently don't support restraints with SOMD.")
 
         # Pressure control.
-        protocol_dict["barostat"] = False                                       # Disable barostat (constant volume).
+        # Disable barostat (constant volume).
+        protocol_dict["barostat"] = False
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    protocol_dict["barostat"] = True                            # Enable barostat.
+                    # Enable barostat.
+                    protocol_dict["barostat"] = True
                     pressure = self.protocol.getPressure().atm().value()
-                    protocol_dict["pressure"] = "%.5f atm" % pressure           # Presure in atmosphere.
+                    # Presure in atmosphere.
+                    protocol_dict["pressure"] = "%.5f atm" % pressure
                 else:
-                    _warnings.warn("Cannot use a barostat for a vacuum or non-periodic simulation")
+                    _warnings.warn(
+                        "Cannot use a barostat for a vacuum or non-periodic simulation")
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if isinstance(self.protocol, _Protocol.Equilibration) and not self.protocol.isConstantTemp():
-                raise _IncompatibleError("SOMD only supports constant temperature equilibration.")
+                raise _IncompatibleError(
+                    "SOMD only supports constant temperature equilibration.")
 
-            protocol_dict["thermostat"] = "True"                                # Turn on the thermostat.
-            
-            if protocol_dict["integrator_type"] == "langevinmiddle" :         
-                protocol_dict["thermostat"] = "False"                           # Turn off the thermostat for langevin middle integrator.
+            # Turn on the thermostat.
+            protocol_dict["thermostat"] = "True"
+
+            if protocol_dict["integrator_type"] == "langevinmiddle":
+                # Turn off the thermostat for langevin middle integrator.
+                protocol_dict["thermostat"] = "False"
             else:
                 pass
 
             if not isinstance(self.protocol, _Protocol.Equilibration):
-                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature().kelvin().value()
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getTemperature(
+                ).kelvin().value()
             else:
-                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getStartTemperature().kelvin().value()
+                protocol_dict["temperature"] = "%.2f kelvin" % self.protocol.getStartTemperature(
+                ).kelvin().value()
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             if not isinstance(self.protocol, _Protocol.Minimisation):
-                protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
-                protocol_dict["energy frequency"] = self._report_interval       # Write gradients every report interval steps.
+                # Handle hydrogen perturbations.
+                protocol_dict["constraint"] = "hbonds-notperturbed"
+                # Write gradients every report interval steps.
+                protocol_dict["energy frequency"] = self._report_interval
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
-            protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
+            # Current lambda value.
+            protocol_dict["lambda_val"] = self.protocol.getLambda()
             # protocol_dict["minimise"] = True                                   # minimise at each window
             # Find the ligand, which will have the name LIG if created using BSS.
-            lig_res_num = self.system.search(f"resname LIG")[0]._sire_object.number().value()
+            lig_res_num = self.system.search(f"resname LIG")[
+                0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = lig_res_num
-        
+
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
-        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+        total_lines = [f"{k} = {v}" for k,
+                       v in total_dict.items() if v is not None] + extra_lines
 
         return total_lines

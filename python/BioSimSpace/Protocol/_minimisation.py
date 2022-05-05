@@ -32,10 +32,17 @@ import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
-class Minimisation(_Protocol):
+# import restraints from _equilibration.py
+from ._equilibration import Equilibration as _Equilibration
+
+
+class Minimisation(_Equilibration, _Protocol):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, steps=10000):
+    def __init__(self,
+                 steps=10000,
+                 restraint=None
+                 ):
         """Constructor.
 
            Parameters
@@ -43,6 +50,22 @@ class Minimisation(_Protocol):
 
            steps : int
                The maximum number of steps to perform.
+
+           restraint : str, [int]
+               The type of restraint to perform. This should be one of the
+               following options:
+                   "backbone"
+                        Protein backbone atoms. The matching is done by a name
+                        template, so is unreliable on conversion between
+                        molecular file formats.
+                   "heavy"
+                        All non-hydrogen atoms that aren't part of water
+                        molecules or free ions.
+                   "all"
+                        All atoms that aren't part of water molecules or free
+                        ions.
+               Alternatively, the user can pass a list of atom indices for
+               more fine-grained control. If None, then no restraints are used.
         """
 
         # Call the base class constructor.
@@ -50,6 +73,12 @@ class Minimisation(_Protocol):
 
         # Set the number of steps.
         self.setSteps(steps)
+
+        # Set the restraints, inherited from equilibration.
+        if restraint is not None:
+            self.setRestraint(restraint)
+        else:
+            self._restraint = None
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -89,7 +118,8 @@ class Minimisation(_Protocol):
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:
-            _warnings.warn("Number of steps must be greater than zero. Using default (10000).")
+            _warnings.warn(
+                "Number of steps must be greater than zero. Using default (10000).")
             self._steps = 10000
 
         else:
