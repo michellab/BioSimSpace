@@ -243,6 +243,9 @@ class Trajectory():
             # Check the file extension.
             _, extension = _os.path.splitext(top_file)
 
+            # Whether we've created a temporary duplicate topology file.
+            is_temp_file = False
+
             # If this is a PRM7 file, copy to PARM7.
             if extension == ".prm7":
                 # Set the path to the temporary topology file.
@@ -251,12 +254,19 @@ class Trajectory():
                 # Copy the topology to a file with the correct extension.
                 _shutil.copyfile(top_file, new_top_file)
                 top_file = new_top_file
+                is_temp_file = True
 
             try:
                 universe = _mdanalysis.Universe(top_file, traj_file)
+
+                if is_temp_file:
+                    _os.remove(top_file)
             except:
                 _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 universe = None
+
+                if is_temp_file:
+                    _os.remove(top_file)
 
             return universe
 
