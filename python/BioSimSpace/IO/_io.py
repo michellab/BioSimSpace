@@ -23,8 +23,28 @@
 Functionality for reading/writing molecular systems.
 """
 
+from BioSimSpace._SireWrappers import System as _System
+from BioSimSpace._SireWrappers import Molecules as _Molecules
+from BioSimSpace._SireWrappers import Molecule as _Molecule
+from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from BioSimSpace import _isVerbose
+from BioSimSpace import _gromacs_path
+from BioSimSpace import _amber_home
+from Sire import System as _SireSystem
+from Sire import Mol as _SireMol
+from Sire import IO as _SireIO
+from Sire import Base as _SireBase
+import warnings as _warnings
+import tempfile as _tempfile
+import subprocess as _subprocess
+import sys as _sys
+import shlex as _shlex
+import os as _os
+from io import StringIO as _StringIO
+from glob import glob as _glob
+from collections import OrderedDict as _OrderedDict
 __author__ = "Lester Hedges"
-__email__  = "lester.hedges@gmail.com"
+__email__ = "lester.hedges@gmail.com"
 
 __all__ = ["fileFormats",
            "formatInfo",
@@ -34,16 +54,6 @@ __all__ = ["fileFormats",
            "saveMolecules",
            "savePerturbableSystem"]
 
-from collections import OrderedDict as _OrderedDict
-from glob import glob as _glob
-from io import StringIO as _StringIO
-
-import os as _os
-import shlex as _shlex
-import sys as _sys
-import subprocess as _subprocess
-import tempfile as _tempfile
-import warnings as _warnings
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
 # we don't have a display running.
@@ -56,31 +66,22 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
-
-from BioSimSpace import _amber_home
-from BioSimSpace import _gromacs_path
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
 # Taken from:
 # https://stackoverflow.com/questions/16571150/how-to-capture-stdout-output-from-a-python-function-call
+
 class _Capturing(list):
     def __enter__(self):
         self._stdout = _sys.stdout
         _sys.stdout = self._stringio = _StringIO()
         return self
+
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
         del self._stringio
         _sys.stdout = self._stdout
+
 
 # Capture the supported format information
 with _Capturing() as format_info:
@@ -101,10 +102,12 @@ for index, line in enumerate(format_info):
 
         if format != "SUPPLEMENTARY":
             _formats.append(format)
-            _formats_dict[format.replace(" ", "").upper()] = (format, description)
+            _formats_dict[format.replace(" ", "").upper()] = (
+                format, description)
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
+
 
 def fileFormats():
     """Return a list of the supported formats.
@@ -116,6 +119,7 @@ def fileFormats():
            A list of the support file formats.
     """
     return _formats
+
 
 def formatInfo(format):
     """Return information for the specified file format.
@@ -153,6 +157,7 @@ def formatInfo(format):
     except KeyError:
         print("Unsupported format: '%s'" % format)
         return None
+
 
 def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     """Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
@@ -200,7 +205,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     """
 
     if not _has_pypdb:
-        _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+        _warnings.warn(
+            "BioSimSpace.IO: PyPDB could not be imported on this system.")
         return None
 
     if not isinstance(id, str):
@@ -234,7 +240,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     # ID from the Protein Data Bank.
     else:
         if not _has_pypdb:
-            _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
+            _warnings.warn(
+                "BioSimSpace.IO: PyPDB could not be imported on this system.")
             return None
 
         # Strip any whitespace from the PDB ID and convert to upper case.
@@ -242,7 +249,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
 
         # Attempt to download the PDB file. (Compression is currently broken!)
         with _warnings.catch_warnings(record=True) as w:
-            pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
+            pdb_string = _pypdb.get_pdb_file(
+                id, filetype="pdb", compression=False)
             if w:
                 raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
 
@@ -260,17 +268,20 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     if pdb4amber:
         # Check that pdb4amber exists.
         if _amber_home is None:
-            raise _MissingSoftwareError("Please install AmberTools for pdb4amber support: http://ambermd.org")
+            raise _MissingSoftwareError(
+                "Please install AmberTools for pdb4amber support: http://ambermd.org")
         else:
             _pdb4amber_exe = "%s/bin/pdb4amber" % _amber_home
             if not _os.path.isfile(_pdb4amber_exe):
-                raise IOError("Missing pdb4amber executable: '%s'" % _pdb4amber_exe)
+                raise IOError("Missing pdb4amber executable: '%s'" %
+                              _pdb4amber_exe)
 
                 # Create the file prefix.
         prefix = work_dir + "/"
 
         # Create the pdb4amber command.
-        command = "%s %s -o pdb4amber.pdb" % (_pdb4amber_exe, pdb_file)
+        command = "%s -i %s -o %s/pdb4amber.pdb" % (
+            _pdb4amber_exe, pdb_file, work_dir)
 
         # Create files for stdout/stderr.
         stdout = open(prefix + "pdb4amber.out", "w")
@@ -278,7 +289,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
 
         # Run pdb4amber as a subprocess.
         proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
-            shell=False, stdout=stdout, stderr=stderr)
+                               shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -287,10 +298,38 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         if _os.path.isfile("%s/pdb4amber.pdb" % work_dir):
             pdb_file = "%s/pdb4amber.pdb" % work_dir
         else:
-            raise IOError("pdb4amber failed!")
+            try:
+                # Pdb4amber could fail if the python environment for pdb4amber is wrong.
+                # This is a result of how it is compiled in Ubuntu20.
+                # Below sets the python environment needed for running pdb4amber incase
+                # this is different from the otherwise defined PYTHONPATH environment.
+                # First find the correct location using glob - there should only be one.
+                pdb4amber_env = _os.environ.copy()
+                pdb4amber_python_ver = _glob(
+                    f"{_amber_home}/lib/python3.*/site-packages")
+                pdb4amber_egg = _glob(
+                    f"{_amber_home}/lib/python3.*/site-packages/pdb4amber-*-py3.*.egg")
+                pdb4amber_pythonpath = f"{str(pdb4amber_python_ver[0])}:{str(pdb4amber_egg[0])}"
+                pdb4amber_env["PYTHONPATH"] = pdb4amber_pythonpath
+
+                # Run as before, but with the different environment.
+                stdout = open(prefix + "pdb4amber.out", "w")
+                stderr = open(prefix + "pdb4amber.err", "w")
+
+                proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                                       shell=False, stdout=stdout, stderr=stderr, env=pdb4amber_env)
+                stdout.close()
+                stderr.close()
+
+                if _os.path.isfile("%s/pdb4amber.pdb" % work_dir):
+                    pdb_file = "%s/pdb4amber.pdb" % work_dir
+
+            except:
+                raise IOError("pdb4amber failed!")
 
     # Read the file and return a molecular system.
     return readMolecules(pdb_file, property_map)
+
 
 def readMolecules(files, property_map={}):
     """Read a molecular system from file.
@@ -357,7 +396,8 @@ def readMolecules(files, property_map={}):
         if len(files) == 0:
             raise ValueError("The list of input files is empty!")
     else:
-        raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+        raise TypeError(
+            "'files' must be of type 'str', or a list of 'str' types.")
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -379,7 +419,7 @@ def readMolecules(files, property_map={}):
         if "There are no lead parsers!" in str(e):
             msg = ("Failed to read molecules from %s. "
                    "It looks like you failed to include a topology file."
-                  ) % files
+                   ) % files
             if _isVerbose():
                 raise IOError(msg) from e
             else:
@@ -399,6 +439,7 @@ def readMolecules(files, property_map={}):
                     raise IOError(msg) from None
 
     return _System(system)
+
 
 def saveMolecules(filebase, system, fileformat, property_map={}):
     """Save a molecular system to file.
@@ -490,11 +531,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     elif isinstance(fileformat, (list, tuple)):
         pass
     else:
-        raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
+        raise TypeError(
+            "'fileformat' must be a 'str' or a 'list' of 'str' types.")
 
     # Make sure all items in list or tuple are strings.
     if not all(isinstance(x, str) for x in fileformat):
-        raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
+        raise TypeError(
+            "'fileformat' must be a 'str' or a 'list' of 'str' types.")
 
     # Make a list of the matched file formats.
     formats = []
@@ -506,7 +549,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             formats.append(f)
         except KeyError:
             raise ValueError("Unsupported file format '%s'. Supported formats "
-                "are: %s." % (format, str(_formats)))
+                             "are: %s." % (format, str(_formats)))
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -589,11 +632,12 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
                 # Create the updated PDB file.
                 pdb_records = "\n".join(lines[:-2]) \
-                            + "\n" + conect + "\n"  \
-                            + "\n".join(lines[-2:])
+                    + "\n" + conect + "\n"  \
+                    + "\n".join(lines[-2:])
 
                 # Write the default file to get the full path.
-                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                file = _SireIO.MoleculeParser.save(
+                    system._sire_object, filebase, _property_map)
 
                 # Now overwrite the file the PDB file with the updated records.
                 with open(file[0], "w") as pdb_file:
@@ -606,11 +650,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 if format == "PRM7" or format == "RST7":
                     system = system.copy()
                     system._set_water_topology("AMBER", _property_map)
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                    file = _SireIO.MoleculeParser.save(
+                        system._sire_object, filebase, _property_map)
                 elif format == "GroTop":
                     system = system.copy()
                     system._set_water_topology("GROMACS")
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                    file = _SireIO.MoleculeParser.save(
+                        system._sire_object, filebase, _property_map)[0]
                     new_file = file.replace("grotop", "top")
                     _os.rename(file, new_file)
                     file = [new_file]
@@ -619,12 +665,14 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                     # requested by the user.
                     if "precision" not in _property_map:
                         _property_map["precision"] = _SireBase.wrap(3)
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                    file = _SireIO.MoleculeParser.save(
+                        system._sire_object, filebase, _property_map)[0]
                     new_file = file.replace("gro87", "gro")
                     _os.rename(file, new_file)
                     file = [new_file]
                 else:
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                    file = _SireIO.MoleculeParser.save(
+                        system._sire_object, filebase, _property_map)
 
             files += file
 
@@ -643,6 +691,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Return the list of files.
     return files
+
 
 def savePerturbableSystem(filebase, system, property_map={}):
     """Save a system containing a perturbable molecule. This will be written in
@@ -695,7 +744,7 @@ def savePerturbableSystem(filebase, system, property_map={}):
     pert_mols = system.getPerturbableMolecules()
     if len(pert_mols) != 1:
         raise ValueError("The 'system' must contain a single perturbable molecule. "
-                        f"Found {len(pert_mols)}!")
+                         f"Found {len(pert_mols)}!")
 
     # Extract the molecule
     pert_mol = pert_mols[0]
@@ -717,6 +766,7 @@ def savePerturbableSystem(filebase, system, property_map={}):
     # Save the coordinate files.
     saveMolecules(filebase + "0", system0, "rst7")
     saveMolecules(filebase + "1", system1, "rst7")
+
 
 def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     """Read a perturbable system from file.
@@ -792,7 +842,8 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
         else:
             raise IOError(msg) from None
     if parser.isEmpty():
-        raise ValueError(f"Unable to read topology file for lamba=0 end state: {top0}")
+        raise ValueError(
+            f"Unable to read topology file for lamba=0 end state: {top0}")
 
     # lamba = 1 topology.
     try:
@@ -804,7 +855,8 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
         else:
             raise IOError(msg) from None
     if parser.isEmpty():
-        raise ValueError(f"Unable to read topology file for lamba=1 end state: {top1}")
+        raise ValueError(
+            f"Unable to read topology file for lamba=1 end state: {top1}")
 
     # Try loading the two end states.
     system0 = readMolecules([coords0, top0], property_map=property_map)
@@ -812,7 +864,8 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
 
     # Make sure the systems have the same number of molecules.
     if system0.nMolecules() != system1.nMolecules():
-        raise ValueError("The two topologies contain a different number of molecules!")
+        raise ValueError(
+            "The two topologies contain a different number of molecules!")
 
     # Now loop through the molecules in each system to work out which
     # is the perturbable molecule. This will differ in the  'ambertype'
@@ -824,10 +877,10 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     for idx, (mol0, mol1) in enumerate(zip(system0.getMolecules(), system1.getMolecules())):
         for atom0, atom1 in zip(mol0.getAtoms(), mol1.getAtoms()):
             if atom0._sire_object.property(ambertype) != atom1._sire_object.property(ambertype) or \
-               atom0._sire_object.property(LJ)        != atom1._sire_object.property(LJ)        or \
-               atom0._sire_object.property(charge)    != atom1._sire_object.property(charge):
-                   has_pert = True
-                   break
+               atom0._sire_object.property(LJ) != atom1._sire_object.property(LJ) or \
+               atom0._sire_object.property(charge) != atom1._sire_object.property(charge):
+                has_pert = True
+                break
         if has_pert:
             break
 
@@ -879,6 +932,7 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
+
 
 def _bond_to_conect(bonds, info):
     """Helper function to create PDB CONECT records from bonding
