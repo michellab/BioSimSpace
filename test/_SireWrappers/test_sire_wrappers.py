@@ -3,7 +3,7 @@ import BioSimSpace as BSS
 import pytest
 
 # Glob the input files.
-files = BSS.IO.glob("test/io/amber/ala/*")
+files = BSS.IO.glob("test/input/amber/ala/*")
 
 # Load the molecular system.
 # This contains an alanin-dipeptide and 630 water molecules.

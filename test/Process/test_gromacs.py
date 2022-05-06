@@ -8,7 +8,7 @@ has_gromacs = BSS._gmx_exe is not None
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/io/amber/ala/*")
+    return BSS.IO.readMolecules("test/input/amber/ala/*")
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_minimise(system):

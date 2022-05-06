@@ -10,7 +10,7 @@ def test_no_arguments():
     with pytest.raises(ValueError):
         f = File()
 
-@pytest.mark.parametrize("value", ["test/io/amber/ala/ala.crd", "test/io/amber/ala/ala.top"])
+@pytest.mark.parametrize("value", ["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"])
 def test_value(value):
     """Test whether object is initialised correctly and value is set."""
 

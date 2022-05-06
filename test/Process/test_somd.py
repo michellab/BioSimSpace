@@ -8,7 +8,7 @@ import warnings as _warnings
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/io/amber/ala/*")
+    return BSS.IO.readMolecules("test/input/amber/ala/*")
 
 def test_minimise(system):
     """Test a minimisation protocol."""
@@ -38,7 +38,7 @@ def test_production(system):
     assert run_process(system, protocol)
 
 @pytest.mark.parametrize("morph, pert",
-    [("test/io/morphs/morph01.pickle", "test/io/morphs/morph01.pert")])
+    [("test/input/morphs/morph01.pickle", "test/input/morphs/morph01.pert")])
 def test_pert_file(morph, pert):
     """Test the perturbation file writer."""
 
