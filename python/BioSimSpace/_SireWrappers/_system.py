@@ -1098,6 +1098,8 @@ class System(_SireWrapper):
 
         # Validate input.
         if isinstance(vector, list):
+            if len(vector) != 3:
+                raise ValueError("'vector' must contain 3 items, i.e. x, y, z components!")
             vec = []
             for x in vector:
                 if type(x) is int:
