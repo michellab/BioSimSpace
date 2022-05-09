@@ -520,7 +520,7 @@ class System(_SireWrapper):
                The updated (or replacement) molecule.
         """
 
-        if not isinstance(index, int):
+        if type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
@@ -613,7 +613,8 @@ class System(_SireWrapper):
 
                     # Update the molecule in the system, preserving the
                     # original molecular ordering.
-                    system = _SireIO.updateAndPreserveOrder(system, mol._sire_object, idx)           
+                    system = _SireIO.updateAndPreserveOrder(
+                            system, mol._sire_object, idx)
 
         # Update the Sire object.
         self._sire_object = system
@@ -1097,6 +1098,8 @@ class System(_SireWrapper):
 
         # Validate input.
         if isinstance(vector, list):
+            if len(vector) != 3:
+                raise ValueError("'vector' must contain 3 items, i.e. x, y, z components!")
             vec = []
             for x in vector:
                 if type(x) is int:

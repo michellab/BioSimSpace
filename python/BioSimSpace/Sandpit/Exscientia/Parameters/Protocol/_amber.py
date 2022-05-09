@@ -651,6 +651,21 @@ class GAFF(_protocol.Protocol):
                     # the new properties from 'par_mol' to 'mol'.
                     if is_smiles:
                         new_mol = par_mol
+
+                        # We'll now add MolName and ResName info to the molecule, since
+                        # this will be missing.
+
+                        # Rename the molecule with the original SMILES string.
+                        edit_mol = new_mol._sire_object.edit()
+                        edit_mol = edit_mol.rename(molecule).molecule()
+
+                        # Rename the residue LIG.
+                        resname = _SireMol.ResName("LIG")
+                        edit_mol = edit_mol.residue(_SireMol.ResIdx(0)).rename(resname).molecule()
+
+                        # Commit the changes.
+                        new_mol._sire_object = edit_mol.commit()
+
                     else:
                         new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
