@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Bound"]
 
-from BioSimSpace.Types._type import Type as _Type
+from ..Types._type import Type as _Type
 
 class Bound():
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):

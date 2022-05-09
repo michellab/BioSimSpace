@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["meter3", "nanometer3", "angstrom3", "picometer3"]
 
-from BioSimSpace.Types import Volume as _Volume
+from ...Types import Volume as _Volume
 
 meter3 = _Volume(1, "meter3")
 nanometer3 = _Volume(1, "nanometer3")

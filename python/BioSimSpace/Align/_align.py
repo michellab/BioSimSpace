@@ -41,7 +41,7 @@ import shlex as _shlex
 import sys as _sys
 import tempfile as _tempfile
 
-from BioSimSpace._Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
@@ -72,14 +72,14 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
-from BioSimSpace import _is_notebook, _isVerbose
-from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from .. import _is_notebook, _isVerbose
+from .._Exceptions import AlignmentError as _AlignmentError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Units as _Units
+from .. import _Utils
 
 # lomap depends on RDKit and networkx
 _networkx = _try_import("networkx")
@@ -91,7 +91,7 @@ elif _have_imported(_rdkit):
 elif _have_imported(_networkx):
     _lomap = _rdkit
 else:
-    from BioSimSpace._Utils import _module_stub
+    from .._Utils import _module_stub
     _lomap = _module_stub(name="rdkit, networkx")
 
 from ._merge import merge as _merge

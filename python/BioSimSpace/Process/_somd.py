@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import math as _math
 import os as _os
@@ -45,16 +45,16 @@ from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import System as _System
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import _Utils
 
 from . import _process
 

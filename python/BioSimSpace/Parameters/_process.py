@@ -52,10 +52,10 @@ import threading as _threading
 import warnings as _warnings
 import zipfile as _zipfile
 
-from BioSimSpace import _is_notebook
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from .. import _is_notebook
+from .. import _isVerbose
+from .._Exceptions import ParameterisationError as _ParameterisationError
+from .._SireWrappers import Molecule as _Molecule
 
 from . import Protocol as _Protocol
 

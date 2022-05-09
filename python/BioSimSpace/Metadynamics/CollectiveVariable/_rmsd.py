@@ -34,10 +34,10 @@ from math import sqrt as _sqrt
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Align import rmsdAlign as _rmsdAlign
+from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._SireWrappers import Molecule as _Molecule
+from ..._SireWrappers import System as _System
+from ...Align import rmsdAlign as _rmsdAlign
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound

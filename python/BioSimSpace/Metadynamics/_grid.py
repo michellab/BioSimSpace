@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Grid"]
 
-from BioSimSpace.Types._type import Type as _Type
+from ..Types._type import Type as _Type
 
 class Grid():
     def __init__(self, minimum, maximum, num_bins=None):

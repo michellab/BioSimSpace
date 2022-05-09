@@ -36,8 +36,8 @@ __all__ = ["boxTypes",
 from Sire.Maths import Vector as _Vector
 from Sire.Vol import TriclinicBox as _TriclinicBox
 
-from BioSimSpace.Types import Angle as _Angle
-from BioSimSpace.Types import Length as _Length
+from ..Types import Angle as _Angle
+from ..Types import Length as _Length
 
 def generateBoxParameters(box_type, image_distance):
     """Generate parameters for the named box type with specified image distance.
