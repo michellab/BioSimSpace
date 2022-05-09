@@ -19,7 +19,7 @@ has_gromacs = BSS._gmx_exe is not None
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/io/amber/ubiquitin/*")
+    return BSS.IO.readMolecules("test/input/amber/ubiquitin/*")
 
 @pytest.mark.skipif(has_amber is False or has_gromacs is False,
     reason="Requires that both AMBER and GROMACS are installed.")

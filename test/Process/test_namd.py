@@ -14,7 +14,7 @@ except:
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/io/namd/alanin/*")
+    return BSS.IO.readMolecules("test/input/namd/alanin/*")
 
 @pytest.mark.skipif(has_namd is False, reason="Requires NAMD to be installed.")
 def test_minimise(system):

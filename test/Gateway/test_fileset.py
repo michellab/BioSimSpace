@@ -10,8 +10,8 @@ def test_no_arguments():
     with pytest.raises(ValueError):
         f = FileSet()
 
-@pytest.mark.parametrize("value", [["test/io/amber/ala/ala.crd", "test/io/amber/ala/ala.top"],
-    ["test/io/namd/alanin/alanin.pdb", "test/io/namd/alanin/alanin.psf", "test/io/namd/alanin/alanin.params"]])
+@pytest.mark.parametrize("value", [["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"],
+    ["test/input/namd/alanin/alanin.pdb", "test/input/namd/alanin/alanin.psf", "test/input/namd/alanin/alanin.params"]])
 def test_value(value):
     """Test whether object is initialised correctly and value is set."""
 
@@ -47,7 +47,7 @@ def test_missing_files():
     # One file missing.
     with pytest.raises(IOError):
         f = FileSet(help="Help!")
-        f.setValue(["test/io/amber/ala/ala.crd", "missing2.txt"])
+        f.setValue(["test/input/amber/ala/ala.crd", "missing2.txt"])
 
 @pytest.mark.parametrize("optional", [True, False])
 def test_optional(optional):

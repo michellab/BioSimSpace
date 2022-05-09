@@ -36,7 +36,7 @@ def test_amber():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Glob the input files.
-    files = BSS.IO.glob("test/io/amber/ala/*")
+    files = BSS.IO.glob("test/input/amber/ala/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
@@ -58,7 +58,7 @@ def test_gromacs():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Glob the input files.
-    files = BSS.IO.glob("test/io/gromacs/kigaki/*")
+    files = BSS.IO.glob("test/input/gromacs/kigaki/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
@@ -80,7 +80,7 @@ def test_namd():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Glob the input files.
-    files = BSS.IO.glob("test/io/namd/alanin/*")
+    files = BSS.IO.glob("test/input/namd/alanin/*")
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(files)
