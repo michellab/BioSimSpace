@@ -31,8 +31,8 @@ __all__ = ["Metadynamics"]
 import os as _os
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
-from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
+from .. import Types as _Types
+from ..Metadynamics import CollectiveVariable as _CollectiveVariable
 
 from ._protocol import Protocol as _Protocol
 

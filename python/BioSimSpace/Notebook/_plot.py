@@ -31,8 +31,8 @@ __all__ = ["plot", "plotContour", "plotOverlapMatrix"]
 from warnings import warn as _warn
 from os import environ as _environ
 
-from BioSimSpace import _is_interactive, _is_notebook
-from BioSimSpace.Types._type import Type as _Type
+from .. import _is_interactive, _is_notebook
+from ..Types._type import Type as _Type
 
 # Check to see if DISPLAY is set.
 if "DISPLAY" in _environ:

@@ -48,17 +48,17 @@ from Sire.Base import getShareDir as _getShareDir
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _gmx_exe
-from BioSimSpace import _is_notebook
-from BioSimSpace._Exceptions import AnalysisError as _AnalysisError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._Utils import cd as _cd
-from BioSimSpace import Process as _Process
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
+from .. import _gmx_exe
+from .. import _is_notebook
+from .._Exceptions import AnalysisError as _AnalysisError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
+from .._Utils import cd as _cd
+from .. import Process as _Process
+from .. import Protocol as _Protocol
+from .. import Types as _Types
+from .. import Units as _Units
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink

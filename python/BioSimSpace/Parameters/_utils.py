@@ -30,11 +30,11 @@ __all__ = ["formalCharge"]
 
 import tempfile as _tempfile
 
-from BioSimSpace import _is_notebook
-from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils
-from BioSimSpace.Units.Charge import electron_charge as _electron_charge
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from .. import _is_notebook
+from .. import IO as _IO
+from .. import _Utils
+from ..Units.Charge import electron_charge as _electron_charge
+from .._SireWrappers import Molecule as _Molecule
 
 def formalCharge(molecule):
     """Compute the formal charge on a molecule. This function requires that

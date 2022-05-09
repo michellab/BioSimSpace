@@ -38,10 +38,10 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _is_notebook, _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace.Process._process import Process as _Process
-from BioSimSpace._SireWrappers import System as _System
+from .. import _is_notebook, _isVerbose
+from .. import IO as _IO
+from ..Process._process import Process as _Process
+from .._SireWrappers import System as _System
 
 class View():
     """A class for handling interactive molecular visualisations."""

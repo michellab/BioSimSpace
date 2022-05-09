@@ -35,8 +35,8 @@ import string as _string
 
 from Sire import Mol as _SireMol
 
-from BioSimSpace.Types import Coordinate as _Coordinate
-from BioSimSpace.Types import Length as _Length
+from ..Types import Coordinate as _Coordinate
+from ..Types import Length as _Length
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 class Atom(_SireWrapper):

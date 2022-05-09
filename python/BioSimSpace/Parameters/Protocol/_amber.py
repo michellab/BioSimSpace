@@ -43,13 +43,13 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
-from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
-from BioSimSpace.Types import Charge as _Charge
+from ... import _isVerbose
+from ... import IO as _IO
+from ..._Exceptions import ParameterisationError as _ParameterisationError
+from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Molecule as _Molecule
+from ...Parameters._utils import formalCharge as _formalCharge
+from ...Types import Charge as _Charge
 
 from . import _protocol
 

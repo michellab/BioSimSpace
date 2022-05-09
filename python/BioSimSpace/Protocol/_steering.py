@@ -31,9 +31,9 @@ __all__ = ["Steering"]
 import math as _math
 import os as _os
 
-from BioSimSpace import Types as _Types
-from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
-from BioSimSpace.Metadynamics import Restraint as _Restraint
+from .. import Types as _Types
+from ..Metadynamics import CollectiveVariable as _CollectiveVariable
+from ..Metadynamics import Restraint as _Restraint
 
 from ._protocol import Protocol as _Protocol
 

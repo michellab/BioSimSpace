@@ -32,12 +32,12 @@ import os as _os
 
 from Sire import Base as _SireBase
 
-from BioSimSpace import _amber_home, _gmx_exe
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace import Process as _Process
-from BioSimSpace import Protocol as _Protocol
+from .. import _amber_home, _gmx_exe
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from .. import Process as _Process
+from .. import Protocol as _Protocol
 
 # A dictionary mapping MD engines to their executable names and GPU support.
 #                engine        EXE               GPU

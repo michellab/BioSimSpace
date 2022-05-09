@@ -21,7 +21,7 @@
 
 from glob import glob as _glob
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import os as _os
 import shlex as _shlex

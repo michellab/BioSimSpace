@@ -36,7 +36,7 @@ import tempfile as _tempfile
 import threading as _threading
 import zipfile as _zipfile
 
-from BioSimSpace import _is_notebook
+from .. import _is_notebook
 
 def _wrap_task(task):
     """A simple wrapper function to run a background tasks and catch exceptions.

@@ -33,7 +33,7 @@ import tempfile as _tempfile
 import threading as _threading
 import time as _time
 
-from BioSimSpace._SireWrappers import System as _System
+from .._SireWrappers import System as _System
 
 from ._process import Process as _Process
 

@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["electron_charge", "coulomb"]
 
-from BioSimSpace.Types import Charge as _Charge
+from ...Types import Charge as _Charge
 
 electron_charge = _Charge(1, "ELECTRON CHARGE")
 coulomb = _Charge(1, "COULOMB")

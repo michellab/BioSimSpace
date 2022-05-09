@@ -35,7 +35,7 @@ import string as _string
 
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _isVerbose
+from .. import _isVerbose
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 

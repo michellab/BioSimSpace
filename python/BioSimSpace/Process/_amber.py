@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
-from BioSimSpace._Utils import _try_import, _have_imported
+from .._Utils import _try_import, _have_imported
 
 _watchdog = _try_import("watchdog")
 
@@ -51,16 +51,16 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _amber_home, _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Types._type import Type as _Type
+from .. import _amber_home, _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
 
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Units as _Units
+from .. import _Utils
 
 from . import _process
 

@@ -32,9 +32,9 @@ __all__ = ["Molecules"]
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _isVerbose
-from BioSimSpace.Types import Length as _Length
-from BioSimSpace import Units as _Units
+from .. import _isVerbose
+from ..Types import Length as _Length
+from .. import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 

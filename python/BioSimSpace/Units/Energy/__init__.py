@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["kcal_per_mol", "kj_per_mol", "kt"]
 
-from BioSimSpace.Types import Energy as _Energy
+from ...Types import Energy as _Energy
 
 kcal_per_mol = _Energy(1, "KILO CALORIES PER MOL")
 kj_per_mol = _Energy(1, "KILO JOULES PER MOL")
