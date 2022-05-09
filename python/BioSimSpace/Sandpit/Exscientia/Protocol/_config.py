@@ -10,7 +10,6 @@ from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
 
-
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""

@@ -35,7 +35,6 @@ __all__ = ["_module_stub", "_try_import",
 
 _failed_modules = {}
 
-
 class _ModuleStub:
     def __init__(self, name: str, install_command: str):
         self._name = name
@@ -61,7 +60,6 @@ class _ModuleStub:
 
         raise ModuleNotFoundError(message)
 
-
 def _module_stub(name: str, install_command: str = None):
     """Return a ModuleStub that will raise a ModuleNotFoundError
        if it is used in any way.
@@ -85,7 +83,6 @@ def _module_stub(name: str, install_command: str = None):
     """
     return _ModuleStub(name=name,
                        install_command=install_command)
-
 
 def _try_import(name: str, install_command: str = None):
     """Try to import the module called 'name' and return
@@ -133,7 +130,6 @@ def _try_import(name: str, install_command: str = None):
 
     return m
 
-
 def _assert_imported(module):
     """Assert that the passed module has indeed been imported.
        This will raise a ModuleNotFoundError if the module
@@ -141,7 +137,6 @@ def _assert_imported(module):
     """
     if type(module) == _ModuleStub:
         module.this_will_break()
-
 
 def _have_imported(module) -> bool:
     """Return whether or not the passed module has indeed

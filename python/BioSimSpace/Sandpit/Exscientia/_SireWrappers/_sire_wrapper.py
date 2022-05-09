@@ -35,10 +35,10 @@ from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import Vol as _SireVol
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Types import Length as _Length
-from BioSimSpace import Units as _Units
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Types import Length as _Length
+from .. import Units as _Units
 
 class SireWrapper():
     """A base class for wrapping Sire objects."""

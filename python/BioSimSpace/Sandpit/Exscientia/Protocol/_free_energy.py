@@ -31,11 +31,10 @@ __all__ = ["FreeEnergy"]
 import math as _math
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
+from .. import Types as _Types
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
-
 
 class FreeEnergy(_Production, _FreeEnergyMixin):
     """A class for storing free energy production protocols."""

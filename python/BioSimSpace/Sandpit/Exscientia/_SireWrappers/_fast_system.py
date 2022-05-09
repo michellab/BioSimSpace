@@ -4,10 +4,9 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
-
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
 
 def _fastSystemInit(molecules):
     """Add a molecule, or list of molecules to the system.

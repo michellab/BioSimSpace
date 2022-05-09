@@ -36,11 +36,11 @@ from Sire import System as _SireSystem
 from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Types import Angle as _Angle
-from BioSimSpace.Types import Length as _Length
-from BioSimSpace import Units as _Units
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Types import Angle as _Angle
+from ..Types import Length as _Length
+from .. import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 

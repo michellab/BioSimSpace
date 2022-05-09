@@ -61,13 +61,13 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home
-from BioSimSpace import _gromacs_path
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
+from .. import _amber_home
+from .. import _gromacs_path
+from .. import _isVerbose
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
 
 # Context manager for capturing stdout.
 # Taken from:

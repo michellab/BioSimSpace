@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["getFrame", "Trajectory"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
@@ -39,14 +39,14 @@ import warnings as _warnings
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Process._process import Process as _Process
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Types import Time as _Time
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Process._process import Process as _Process
+from .._SireWrappers import System as _System
+from ..Types import Time as _Time
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Units as _Units
+from .. import IO as _IO
+from .. import Units as _Units
 
 # A dictionary mapping the Sire file format extension to those expected by MDTraj.
 _extensions = { "Gro87" : "gro",

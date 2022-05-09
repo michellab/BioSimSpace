@@ -34,7 +34,7 @@ import queue as _queue
 import shlex as _shlex
 import subprocess as _subprocess
 
-from BioSimSpace._Utils import _try_import, _have_imported
+from ..._Utils import _try_import, _have_imported
 
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
@@ -55,13 +55,13 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home, _gmx_exe, _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
-from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from ... import _amber_home, _gmx_exe, _isVerbose
+from ... import IO as _IO
+from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..._Exceptions import ParameterisationError as _ParameterisationError
+from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Molecule as _Molecule
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:

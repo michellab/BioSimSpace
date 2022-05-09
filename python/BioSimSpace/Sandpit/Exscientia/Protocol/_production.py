@@ -31,7 +31,7 @@ __all__ = ["Production"]
 import math as _math
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
+from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
 

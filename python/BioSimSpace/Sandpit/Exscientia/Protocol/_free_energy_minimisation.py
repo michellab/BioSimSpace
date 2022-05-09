@@ -3,7 +3,6 @@ __all__ = ["FreeEnergyMinimisation"]
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._minimisation import Minimisation as _Minimisation
 
-
 class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
     """A class for storing free energy minimisation protocols."""
 

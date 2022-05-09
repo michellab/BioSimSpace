@@ -1,11 +1,10 @@
 __all__ = ["FreeEnergyEquilibration"]
 
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
+from .. import Types as _Types
+from .. import Units as _Units
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._equilibration import Equilibration as _Equilibration
-
 
 class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
     """A class for storing free energy equilibration protocols."""

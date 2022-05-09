@@ -38,14 +38,14 @@ __all__ = ["parameterise",
            "amberForceFields",
            "openForceFields"]
 
-from BioSimSpace import _amber_home, _gmx_exe, _gromacs_path, _isVerbose
+from .. import _amber_home, _gmx_exe, _gromacs_path, _isVerbose
 
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace.Solvent import waterModels as _waterModels
-from BioSimSpace.Types import Charge as _Charge
-from BioSimSpace._Utils import _try_import, _have_imported
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from ..Solvent import waterModels as _waterModels
+from ..Types import Charge as _Charge
+from .._Utils import _try_import, _have_imported
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol

@@ -2,7 +2,6 @@ __all__ = ["_FreeEnergyMixin"]
 
 from ._protocol import Protocol as _Protocol
 
-
 class _FreeEnergyMixin(_Protocol):
     """A mixin for storing free energy protocols."""
 

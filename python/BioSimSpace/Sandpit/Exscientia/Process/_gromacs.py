@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import math as _math
 import os as _os
@@ -45,18 +45,18 @@ from Sire import Maths as _SireMaths
 from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
-from BioSimSpace import _gmx_exe
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Types._type import Type as _Type
+from .. import _gmx_exe
+from .. import _isVerbose
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
 
 from . import _process
 

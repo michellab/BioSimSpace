@@ -42,10 +42,10 @@ from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 from Sire import Units as _SireUnits
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Types import Coordinate as _Coordinate
-from BioSimSpace.Types import Length as _Length
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Types import Coordinate as _Coordinate
+from ..Types import Length as _Length
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 

@@ -39,7 +39,6 @@ from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 from .._SireWrappers._fast_system import _fastSystemInit
 
-
 def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         allow_ring_size_change=False, force=False,
         property_map0={}, property_map1={}):

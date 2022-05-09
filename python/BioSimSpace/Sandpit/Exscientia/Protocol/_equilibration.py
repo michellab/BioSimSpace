@@ -32,8 +32,8 @@ import math as _math
 import pytest as _pytest
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
+from .. import Types as _Types
+from .. import Units as _Units
 
 from ._protocol import Protocol as _Protocol
 

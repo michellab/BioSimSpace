@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Restraint"]
 
-from BioSimSpace.Types._type import Type as _Type
+from ..Types._type import Type as _Type
 
 class Restraint():
     def __init__(self, value, force_constant=100.0, slope=0.0):
