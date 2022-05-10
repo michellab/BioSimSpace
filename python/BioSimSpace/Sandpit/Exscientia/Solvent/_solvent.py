@@ -43,7 +43,7 @@ from Sire.Maths import Vector as _Vector
 from Sire.Vol import TriclinicBox as _TriclinicBox
 from Sire.Units import degree as _degree
 
-from .. import _gmx_exe, _gromacs_path
+from .. import _gmx_exe, _gmx_path
 from .. import _isVerbose
 
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -162,7 +162,7 @@ def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
            The solvated molecular system.
     """
 
-    if _gmx_exe is None or _gromacs_path is None:
+    if _gmx_exe is None or _gmx_path is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.spc' is not supported. "
                                     "Please install GROMACS (http://www.gromacs.org).")
 

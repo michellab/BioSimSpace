@@ -62,7 +62,7 @@ from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
 from .. import _amber_home
-from .. import _gromacs_path
+from .. import _gmx_path
 from .. import _isVerbose
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
@@ -341,7 +341,7 @@ def readMolecules(files, property_map={}):
     """
 
     global _has_gmx_warned
-    if _gromacs_path is None and not _has_gmx_warned:
+    if _gmx_path is None and not _has_gmx_warned:
         _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
                        "for GROMACS topology file support.")
         _has_gmx_warned = True
@@ -364,8 +364,8 @@ def readMolecules(files, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in property_map):
-        property_map["GROMACS_PATH"] = _gromacs_path
+    if _gmx_path is not None and ("GROMACS_PATH" not in property_map):
+        property_map["GROMACS_PATH"] = _gmx_path
 
     # Check that the files exist.
     for file in files:
@@ -452,7 +452,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     """
 
     global _has_gmx_warned
-    if _gromacs_path is None and not _has_gmx_warned:
+    if _gmx_path is None and not _has_gmx_warned:
         _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
                        "for GROMACS topology file support.")
         _has_gmx_warned = True
@@ -516,8 +516,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     _property_map = property_map.copy()
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in _property_map):
-        _property_map["GROMACS_PATH"] = _gromacs_path
+    if _gmx_path is not None and ("GROMACS_PATH" not in _property_map):
+        _property_map["GROMACS_PATH"] = _gmx_path
 
     # Get the directory name.
     dirname = _os.path.dirname(filebase)

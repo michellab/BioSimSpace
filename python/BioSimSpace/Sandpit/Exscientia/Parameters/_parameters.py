@@ -38,7 +38,7 @@ __all__ = ["parameterise",
            "amberForceFields",
            "openForceFields"]
 
-from .. import _amber_home, _gmx_exe, _gromacs_path, _isVerbose
+from .. import _amber_home, _gmx_exe, _gmx_path, _isVerbose
 
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -137,7 +137,7 @@ def ff99(molecule, water_model=None, leap_commands=None, work_dir=None, property
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
         raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) or "
                                     "GROMACS (http://www.gromacs.org).")
@@ -191,7 +191,7 @@ def ff99SB(molecule, water_model=None, leap_commands=None, work_dir=None, proper
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
         raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SB' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")
@@ -245,7 +245,7 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None, work_dir=None, pr
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
         raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")
@@ -299,7 +299,7 @@ def ff03(molecule, water_model=None, leap_commands=None, work_dir=None, property
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gromacs_path is None):
+    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
         raise _MissingSoftwareError("'BioSimSpace.Parameters.ff03' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")

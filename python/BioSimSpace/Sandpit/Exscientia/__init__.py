@@ -154,12 +154,12 @@ if _gmx_exe is None:
             pass
 
 # Set the bundled GROMACS topology file directory.
-_gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
+_gmx_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
 del _environ
 del _SireBase
 
-if not _path.isdir(_gromacs_path):
-    _gromacs_path = None
+if not _path.isdir(_gmx_path):
+    _gmx_path = None
 
     # Try using the GROMACS exe to get the location of the data directory.
     if _gmx_exe is not None:
@@ -182,14 +182,14 @@ if not _path.isdir(_gromacs_path):
             # Extract the "Data prefix" from the output.
             for _line in _proc.stderr.split("\n"):
                 if "Data prefix" in _line:
-                    _gromacs_path = _line.split(":")[1].strip() + "/share/gromacs/top"
+                    _gmx_path = _line.split(":")[1].strip() + "/share/gromacs/top"
                     break
             del _line
 
             # Check that the topology file directory exists.
-            if _gromacs_path is not None:
-                if not _path.isdir(_gromacs_path):
-                    _gromacs_path = None
+            if _gmx_path is not None:
+                if not _path.isdir(_gmx_path):
+                    _gmx_path = None
 
         del _path
         del _proc
