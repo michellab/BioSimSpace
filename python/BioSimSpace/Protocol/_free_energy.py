@@ -28,7 +28,6 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
-import math as _math
 import warnings as _warnings
 
 from .. import Types as _Types
