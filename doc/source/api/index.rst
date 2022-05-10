@@ -22,6 +22,7 @@ of packages.
    index_Parameters
    index_Process
    index_Protocol
+   index_Sandpit
    index_Solvent
    index_Trajectory
    index_Types
