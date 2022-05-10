@@ -64,10 +64,7 @@ import pandas as _pd
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-
-from .. import _gmx_exe
+from .. import _gmx_exe, _gmx_version
 from .. import _is_notebook
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -1004,29 +1001,8 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        # Figure out the gromacs version.
-        def gromacs_version():
-            p = _subprocess.run([_gmx_exe, '-version'],
-                                stdout=_subprocess.PIPE).stdout.decode('utf-8')
-            with _tempfile.TemporaryDirectory() as tmpdirname:
-                file = f'{tmpdirname}/version.txt'
-                with open(file, 'w') as f:
-                    print(p, file=f)
-                f = open(file, 'r')
-                for line in f:
-                    if "GROMACS version" in line:
-                        l = line.strip().split(':')
-                        l = l[1].strip()
-                        l = float(l)
-                        return(l)
-
-        # Check if gromacs version is available.
-        if gromacs_version() is False:
-            raise _AnalysisError(
-                "GROMACS free-energy analysis failed! Gromacs version couldn't be identified.")
-
         # For the newer gromacs version, analyse using alchemlyb.
-        if is_alchemlyb and gromacs_version() >= 2020:
+        if is_alchemlyb and _gmx_version >= 2020:
 
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
