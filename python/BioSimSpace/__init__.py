@@ -153,48 +153,49 @@ if _gmx_exe is None:
         except:
             pass
 
-# Set the bundled GROMACS topology file directory.
-_gromacs_path = _path.dirname(_SireBase.getBinDir()) + "/share/gromacs/top"
 del _environ
 del _SireBase
 
-if not _path.isdir(_gromacs_path):
-    _gromacs_path = None
+_gmx_path = None
+_gmx_version = None
 
-    # Try using the GROMACS exe to get the location of the data directory.
-    if _gmx_exe is not None:
+# Try using the GROMACS exe to get the vesion and data directory.
+if _gmx_exe is not None:
 
-        import shlex as _shlex
-        import subprocess as _subprocess
+    import shlex as _shlex
+    import subprocess as _subprocess
 
-        # Generate the shell command. (Run gmx -h.)
-        _command = "%s -h" % _gmx_exe
+    # Generate the shell command. (Run gmx -version.)
+    _command = "%s -version" % _gmx_exe
 
-        # Run the command.
-        _proc = _subprocess.run(_shlex.split(_command), shell=False,
-            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+    # Run the command.
+    _proc = _subprocess.run(_shlex.split(_command), shell=False,
+        text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
-        del _command
+    del _command
 
-        # Get the data prefix.
-        if _proc.returncode == 0:
+    # Get the data prefix.
+    if _proc.returncode == 0:
 
+        for _line in _proc.stdout.split("\n"):
             # Extract the "Data prefix" from the output.
-            for _line in _proc.stderr.split("\n"):
-                if "Data prefix" in _line:
-                    _gromacs_path = _line.split(":")[1].strip() + "/share/gromacs/top"
-                    break
-            del _line
+            if "Data prefix" in _line:
+                _gmx_path = _line.split(":")[1].strip() + "/share/gromacs/top"
+            # Extract the version from the output.
+            elif "GROMACS version" in _line:
+                _gmx_version = float(_line.split(":")[1].split("-")[0])
+                break
+        del _line
 
-            # Check that the topology file directory exists.
-            if _gromacs_path is not None:
-                if not _path.isdir(_gromacs_path):
-                    _gromacs_path = None
+        # Check that the topology file directory exists.
+        if _gmx_path is not None:
+            if not _path.isdir(_gmx_path):
+                _gmx_path = None
 
-        del _path
-        del _proc
-        del _shlex
-        del _subprocess
+    del _path
+    del _proc
+    del _shlex
+    del _subprocess
 
 from . import Align
 from . import Box
