@@ -43,19 +43,19 @@ from Sire.Maths import Vector as _Vector
 from Sire.Vol import TriclinicBox as _TriclinicBox
 from Sire.Units import degree as _degree
 
-from BioSimSpace import _gmx_exe, _gromacs_path
-from BioSimSpace import _isVerbose
+from .. import _gmx_exe, _gmx_path
+from .. import _isVerbose
 
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace.Types import Coordinate as _Coordinate
-from BioSimSpace.Types import Angle as _Angle
-from BioSimSpace.Types import Length as _Length
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import Molecules as _Molecules
+from ..Types import Coordinate as _Coordinate
+from ..Types import Angle as _Angle
+from ..Types import Length as _Length
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import _Utils
 
 def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
         shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
@@ -162,7 +162,7 @@ def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
            The solvated molecular system.
     """
 
-    if _gmx_exe is None or _gromacs_path is None:
+    if _gmx_exe is None or _gmx_path is None:
         raise _MissingSoftwareError("'BioSimSpace.Solvent.spc' is not supported. "
                                     "Please install GROMACS (http://www.gromacs.org).")
 

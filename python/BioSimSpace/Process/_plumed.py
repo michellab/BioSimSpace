@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Plumed"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import glob as _glob
 import os as _os
@@ -43,16 +43,16 @@ from Sire.Maths import Vector as _Vector
 from Sire.Mol import MolNum as _MolNum
 import Sire.Vol as _SireVol
 
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
-from BioSimSpace.Protocol import Metadynamics as _Metadynamics
-from BioSimSpace.Protocol import Steering as _Steering
-from BioSimSpace.Types import Coordinate as _Coordinate
+from .._SireWrappers import System as _System
+from ..Metadynamics import CollectiveVariable as _CollectiveVariable
+from ..Protocol import Metadynamics as _Metadynamics
+from ..Protocol import Steering as _Steering
+from ..Types import Coordinate as _Coordinate
 
-from BioSimSpace import _Exceptions
-from BioSimSpace import Types as _Types
-from BioSimSpace import _Utils
-from BioSimSpace import Units as _Units
+from .. import _Exceptions
+from .. import Types as _Types
+from .. import _Utils
+from .. import Units as _Units
 
 from ._process import _MultiDict
 

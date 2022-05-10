@@ -23,36 +23,40 @@
 Functionality for running simulations with SOMD.
 """
 
-from . import _process
-from BioSimSpace import _Utils
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import IO as _IO
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace import _isVerbose
-from Sire import Mol as _SireMol
-from Sire import MM as _SireMM
-from Sire import IO as _SireIO
-from Sire import CAS as _SireCAS
-from Sire import Base as _SireBase
-import warnings as _warnings
-import timeit as _timeit
-import sys as _sys
-import string as _string
 import random as _random
+import string as _string
+import sys as _sys
+import timeit as _timeit
+import warnings as _warnings
+
+from Sire import Base as _SireBase
+from Sire import CAS as _SireCAS
+from Sire import IO as _SireIO
+from Sire import MM as _SireMM
+from Sire import Mol as _SireMol
+
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
+
+from .. import _Utils
+from .. import Trajectory as _Trajectory
+from .. import Protocol as _Protocol
+from .. import IO as _IO
+
+from . import _process
+
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import os as _os
 _pygtail = _try_import("pygtail")
-
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""

@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Node"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import configargparse as _argparse
 import collections as _collections
@@ -40,8 +40,8 @@ import textwrap as _textwrap
 import warnings as _warnings
 _yaml = _try_import("yaml")
 
-from BioSimSpace import _is_notebook
-from BioSimSpace import setVerbose
+from .. import _is_notebook
+from .. import setVerbose
 
 # Enable Jupyter widgets.
 if _is_notebook:
@@ -50,7 +50,7 @@ if _is_notebook:
     import ipywidgets as _widgets
     import zipfile as _zipfile
 
-from BioSimSpace.Types._type import Type as _Type
+from ..Types._type import Type as _Type
 
 from ._requirements import Area as _Area
 from ._requirements import Boolean as _Boolean

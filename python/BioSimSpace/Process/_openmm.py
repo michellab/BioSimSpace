@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["OpenMM"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import math as _math
 import os as _os
@@ -42,19 +42,19 @@ from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Units as _SireUnits
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
-from BioSimSpace.Types._type import Type as _Type
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from ..Metadynamics import CollectiveVariable as _CollectiveVariable
+from ..Types._type import Type as _Type
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
 
 from . import _process
 
@@ -1667,7 +1667,7 @@ class OpenMM(_process.Process):
         """
         # We should verify that openmm is available to prevent
         # difficult-to-debug errors in the run script
-        from BioSimSpace._Utils import _try_import, _assert_imported
+        from .._Utils import _try_import, _assert_imported
 
         _openmm = _try_import("openmm")
         _assert_imported(_openmm)

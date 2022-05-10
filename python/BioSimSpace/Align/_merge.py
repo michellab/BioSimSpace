@@ -34,9 +34,9 @@ from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 from Sire import Units as _SireUnits
 
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import System as _System
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
 
 def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         allow_ring_size_change=False, force=False,

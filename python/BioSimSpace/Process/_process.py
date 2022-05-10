@@ -32,7 +32,7 @@ import collections as _collections
 import glob as _glob
 import os as _os
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
 
@@ -45,13 +45,13 @@ import zipfile as _zipfile
 
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _is_interactive, _is_notebook
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Protocol import Metadynamics as _Metadynamics
-from BioSimSpace.Protocol._protocol import Protocol as _Protocol
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Types._type import Type as _Type
-from BioSimSpace import Units as _Units
+from .. import _is_interactive, _is_notebook
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Protocol import Metadynamics as _Metadynamics
+from ..Protocol._protocol import Protocol as _Protocol
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
+from .. import Units as _Units
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
