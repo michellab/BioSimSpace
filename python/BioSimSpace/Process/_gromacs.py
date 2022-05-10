@@ -45,7 +45,7 @@ from Sire import Maths as _SireMaths
 from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
-from .. import _gmx_exe
+from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
@@ -370,7 +370,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version > 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -459,7 +462,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version > 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -542,7 +548,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version > 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -644,7 +653,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version > 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -749,7 +761,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version > 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
