@@ -370,7 +370,7 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                if _gmx_version > 2021:
+                if _gmx_version >= 2021:
                     config.append("pcoupl = C-rescale")     # C-rescale barostat.
                 else:
                     config.append("pcoupl = Berendsen")     # C-rescale barostat.
@@ -462,7 +462,7 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                if _gmx_version > 2021:
+                if _gmx_version >= 2021:
                     config.append("pcoupl = C-rescale")     # C-rescale barostat.
                 else:
                     config.append("pcoupl = Berendsen")     # C-rescale barostat.
@@ -548,7 +548,7 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                if _gmx_version > 2021:
+                if _gmx_version >= 2021:
                     config.append("pcoupl = C-rescale")     # C-rescale barostat.
                 else:
                     config.append("pcoupl = Berendsen")     # C-rescale barostat.
@@ -653,7 +653,7 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                if _gmx_version > 2021:
+                if _gmx_version >= 2021:
                     config.append("pcoupl = C-rescale")     # C-rescale barostat.
                 else:
                     config.append("pcoupl = Berendsen")     # C-rescale barostat.
@@ -761,7 +761,7 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                if _gmx_version > 2021:
+                if _gmx_version >= 2021:
                     config.append("pcoupl = C-rescale")     # C-rescale barostat.
                 else:
                     config.append("pcoupl = Berendsen")     # C-rescale barostat.
