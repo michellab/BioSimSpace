@@ -70,6 +70,9 @@ def run_process(system, protocol):
     # Initialise the GROMACS process.
     process = BSS.Process.Gromacs(system, protocol, name="test")
 
+    # Only run on a single MPI rank.
+    process.setArg("-ntmpi", 1)
+
     # Start the GROMACS simulation.
     process.start()
 
