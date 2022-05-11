@@ -714,6 +714,19 @@ class GeneralUnit(_Type):
                 string = unit._to_sire_format(string)
 
             try:
+                # Compile the eval expression to bytecode.
+                code = compile(string, "<string>", "eval")
+
+                # The bytecode must contain names.
+                if not code.co_names:
+                    raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+
+                # Make sure the co_names only contains names within the allowed
+                # sire_units_local dictionary.
+                for name in code.co_names:
+                    if name not in _sire_units_locals:
+                        raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+
                 general_unit = eval(string, {}, _sire_units_locals)
 
                 # Create and return a new object.
