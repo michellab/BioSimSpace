@@ -23,13 +23,24 @@
 Functionality for reading/writing molecular systems.
 """
 
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace import _isVerbose
-from BioSimSpace import _gmx_path
-from BioSimSpace import _amber_home
+__author__ = "Lester Hedges"
+__email__ = "lester.hedges@gmail.com"
+
+__all__ = ["fileFormats",
+           "formatInfo",
+           "readMolecules",
+           "readPDB",
+           "readPerturbableSystem",
+           "saveMolecules",
+           "savePerturbableSystem"]
+
+from .._SireWrappers import System as _System
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import Molecule as _Molecule
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .. import _isVerbose
+from .. import _gmx_path
+from .. import _amber_home
 from Sire import System as _SireSystem
 from Sire import Mol as _SireMol
 from Sire import IO as _SireIO
@@ -43,17 +54,6 @@ import os as _os
 from io import StringIO as _StringIO
 from glob import glob as _glob
 from collections import OrderedDict as _OrderedDict
-__author__ = "Lester Hedges"
-__email__ = "lester.hedges@gmail.com"
-
-__all__ = ["fileFormats",
-           "formatInfo",
-           "readMolecules",
-           "readPDB",
-           "readPerturbableSystem",
-           "saveMolecules",
-           "savePerturbableSystem"]
-
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
 # we don't have a display running.

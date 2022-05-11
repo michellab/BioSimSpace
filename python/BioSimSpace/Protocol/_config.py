@@ -144,7 +144,7 @@ class ConfigFactory:
         squashed_system = _squash(self.system)
 
         # define whether HMR is used based on the timestep
-        # When HMR is used, there can be no X
+        # When HMR is used, there can be no noshakemask
         if timestep >= 0.004:
             HMR_on = True
         else:

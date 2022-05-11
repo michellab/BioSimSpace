@@ -23,6 +23,15 @@
 Functionality for running simulations with SOMD.
 """
 
+__author__ = "Lester Hedges"
+__email__ = "lester.hedges@gmail.com"
+
+__all__ = ["Somd"]
+
+from .._Utils import _try_import
+
+import os as _os
+_pygtail = _try_import("pygtail")
 import random as _random
 import string as _string
 import sys as _sys
@@ -41,22 +50,14 @@ from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 
-from .. import _Utils
-from .. import Trajectory as _Trajectory
-from .. import Protocol as _Protocol
 from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import _Utils
 
 from . import _process
 
-__author__ = "Lester Hedges"
-__email__ = "lester.hedges@gmail.com"
-
 __all__ = ["Somd"]
-
-from .._Utils import _try_import
-
-import os as _os
-_pygtail = _try_import("pygtail")
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""
