@@ -159,7 +159,7 @@ del _SireBase
 _gmx_path = None
 _gmx_version = None
 
-# Try using the GROMACS exe to get the vesion and data directory.
+# Try using the GROMACS exe to get the version and data directory.
 if _gmx_exe is not None:
 
     import shlex as _shlex
