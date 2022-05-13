@@ -20,5 +20,9 @@ setup.err
 dist/
 build/
 BioSimSpace.egg-info
-.idea/
+
+# Test output.
 output.yaml
+
+# Scratch space.
+.idea/
