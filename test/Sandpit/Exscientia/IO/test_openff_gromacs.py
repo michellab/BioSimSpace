@@ -47,7 +47,7 @@ def test_molecule_combine():
 
     # Modify the GROMACS configuration to run zero steps.
     config = p0.getConfig()
-    config[1] = "nsteps = 0"
+    config[2] = "nsteps = 0"
     p0.setConfig(config)
     p1.setConfig(config)
     p01.setConfig(config)

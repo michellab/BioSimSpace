@@ -37,7 +37,7 @@ def test_amber_gromacs(system):
 
     # Modify the GROMACS configuration to run zero steps.
     config = process_gmx.getConfig()
-    config[1] = "nsteps = 0"
+    config[2] = "nsteps = 0"
     process_gmx.setConfig(config)
 
     # Run the AMBER process and wait for it to finish.
@@ -84,7 +84,7 @@ def test_amber_gromacs_triclinic(system):
 
     # Modify the GROMACS configuration to run zero steps.
     config = process_gmx.getConfig()
-    config[1] = "nsteps = 0"
+    config[2] = "nsteps = 0"
     process_gmx.setConfig(config)
 
     # Run the AMBER process and wait for it to finish.
