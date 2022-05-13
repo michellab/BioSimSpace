@@ -20,3 +20,5 @@ setup.err
 dist/
 build/
 BioSimSpace.egg-info
+.idea/
+output.yaml
