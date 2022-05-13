@@ -28,10 +28,11 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
 from glob import glob as _glob
 import math as _math
+import numpy as _np
+import pandas as _pd
 import shlex as _shlex
 import sys as _sys
 import os as _os
@@ -42,8 +43,14 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
+from .._Utils import _try_import, _have_imported
+
 try:
-    import alchemlyb as _alchemlyb
+    _alchemlyb = _try_import("alchemlyb")
+except:
+    is_alchemlyb = False
+
+if _have_imported(_alchemlyb):
     from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
     from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
     from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
@@ -55,12 +62,7 @@ try:
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
     is_alchemlyb = True
-except:
-    print('Please install alchemlyb via pip for analysis using it.')
-    is_alchemlyb = False
 
-import numpy as _np
-import pandas as _pd
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -428,7 +430,7 @@ class Relative():
 
     @staticmethod
     def _somd_extract_u_nk(simfile, T):
-        """Return reduced potentials `data` from Somd outputfile.
+        """Return reduced potentials `u_nk` from Somd outputfile.
 
         Parameters
         ----------
@@ -440,7 +442,7 @@ class Relative():
 
         Returns
         -------
-        data : DataFrame
+        u_nk : DataFrame
             Reduced potential for each alchemical state (k) for each frame (n).
         """
         file = simfile
@@ -696,7 +698,7 @@ class Relative():
 
     @staticmethod
     def preprocessing_extracted_data(data):
-        """_summary_
+        """Processes the data using the alchemlyb library to obtain uncorrelated samples.
 
         Args:
             data : dataframe
