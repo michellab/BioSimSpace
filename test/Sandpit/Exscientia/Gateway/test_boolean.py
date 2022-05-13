@@ -1,4 +1,4 @@
-from BioSimSpace.Gateway import Boolean
+from BioSimSpace.Sandpit.Exscientia.Gateway import Boolean
 
 import pytest
 
