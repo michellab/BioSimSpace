@@ -30,6 +30,9 @@ __all__ = ["FreeEnergy"]
 
 import warnings as _warnings
 
+import pandas
+import numpy
+
 from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
@@ -489,3 +492,109 @@ class FreeEnergy(_Protocol):
             restart_interval = 500
 
         self._restart_interval = restart_interval
+
+class MultiStateFE(FreeEnergy):
+    def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
+        """Set the list of lambda values.
+
+           Parameters
+           ----------
+
+           lam : float or pandas.Series
+               The perturbation parameter: [0.0, 1.0]
+
+           lam_vals : [float] or pandas.DataFrame
+               A list of lambda values.
+
+           min_lam : float or pandas.Series
+               The minimum lambda value.
+
+           max_lam : float or pandas.Series
+               The maximum lambda value.
+
+           num_lam : int
+               The number of lambda values.
+        """
+        if not isinstance(lam, pandas.Series):
+            # For pandas < 1.4, TypeError won't be raised if the type cannot
+            # be converted to float
+            lam = pandas.Series(data={'fep': lam}, dtype=float)
+
+        self._lambda = lam
+
+        # A list of lambda values takes precedence.
+        if lam_vals is not None:
+            if not isinstance(lam_vals, pandas.DataFrame):
+                # For pandas < 1.4, TypeError won't be raised if the type
+                # cannot be converted to float
+                lam_vals = pandas.DataFrame(data={'fep': lam_vals},
+                                            dtype=float)
+
+            # Make sure all values are in range [0.0, 1.0]
+            if not ((lam_vals <= 1).all() and (lam_vals >= 0).all()):
+                raise ValueError(
+                    "'lam_vals' must contain values in range [0.0, 1.0]")
+
+            # Sort the values.
+            lam_vals.sort(lam_vals.columns.names, inplace=True)
+
+            # Make sure there are no duplicates.
+            if lam_vals.duplicated().any():
+                raise ValueError("'lam_vals' cannot contain duplicate values!")
+
+            # Update the index to the sorted rows
+            lam_vals.reset_index(drop=True)
+
+            # Make sure the lambda value is in the list.
+            if not lam in lam_vals:
+                raise ValueError("'lam' is not a member of the 'lam_vals' list!")
+
+            # Set the values.
+            self._lambda_vals = lam_vals
+
+        else:
+            # Convert int to float.
+            if not isinstance(min_lam, pandas.Series):
+                # For pandas < 1.4, TypeError won't be raised if the type cannot
+                # be converted to float
+                min_lam = pandas.Series(data={'fep': min_lam}, dtype=float)
+
+            if not isinstance(max_lam, pandas.Series):
+                # For pandas < 1.4, TypeError won't be raised if the type cannot
+                # be converted to float
+                max_lam = pandas.Series(data={'fep': max_lam}, dtype=float)
+
+            if not type(num_lam) is int:
+                raise TypeError("'num_lam' must be of type 'int'.")
+
+            # Validate values.
+            if min_lam < 0 or min_lam > 1:
+                raise ValueError("'min_lam' must be in range [0.0, 1.0]")
+
+            if max_lam < 0 or max_lam > 1:
+                raise ValueError("'max_lam' must be in range [0.0, 1.0]")
+
+            if num_lam <=2:
+                raise ValueError("'num_lam' must be greater than 2!")
+
+            if min_lam >= max_lam:
+                raise ValueError("'min_lam' must be less than 'max_lam'!")
+
+            # Set values.
+            if not (min_lam.index == max_lam.index).all():
+                raise ValueError("'min_lam' and 'max_lam' must have the same index!")
+            lambda_vals = pandas.DataFrame(
+                data=numpy.linspace(min_lam, max_lam, num_lam),
+                columns=min_lam.index)
+
+            self._lambda_vals = lambda_vals.round(5)
+
+            # Make sure the lambda value is in the list.
+            if not self._lambda in self._lambda_vals:
+                raise ValueError("'lam' (%5.4f) is not a member of the 'lam_vals' list: %s" \
+                    % (self._lambda, self._lambda_vals))
+
+    def getLambdaIndex(self, lam=None):
+        if lam is None:
+            lam = self._lambda
+        return self._lambda_vals.index[(self._lambda_vals==lam).all(axis=1)].tolist()[0]
