@@ -1,4 +1,4 @@
-from BioSimSpace.Gateway import Float
+from BioSimSpace.Sandpit.Exscientia.Gateway import Float
 
 import pytest
 

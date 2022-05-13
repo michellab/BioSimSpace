@@ -1,4 +1,4 @@
-from BioSimSpace.Gateway import File
+from BioSimSpace.Sandpit.Exscientia.Gateway import File
 
 import pytest
 
