@@ -1,5 +1,10 @@
 __all__ = ["_FreeEnergyMixin"]
 
+import warnings
+
+import numpy as np
+import pandas as pd
+
 from ._protocol import Protocol as _Protocol
 
 class _FreeEnergyMixin(_Protocol):
@@ -18,16 +23,16 @@ class _FreeEnergyMixin(_Protocol):
            Parameters
            ----------
 
-           lam : float
+           lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [float]
-               The list of lambda parameters.
+           lam_vals : [float] or pandas.DataFrame
+               A list of lambda values.
 
-           min_lam : float
+           min_lam : float or pandas.Series
                The minimum lambda value.
 
-           max_lam : float
+           max_lam : float or pandas.Series
                The maximum lambda value.
 
            num_lam : int
@@ -60,16 +65,16 @@ class _FreeEnergyMixin(_Protocol):
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=%5.4f, lam_vals=%r>"
-                   ) % (self._lambda, self._lambda_vals)
+            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
+                   ) % (self._lambda.to_string(), self._lambda_vals.to_string())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=%5.4f, lam_vals=%r>"
-                    ) % (self._lambda, self._lambda_vals)
+            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
+                    ) % (self._lambda.to_string(), self._lambda_vals.to_string())
 
     def getPerturbationType(self):
         """Get the perturbation type.
@@ -115,27 +120,80 @@ class _FreeEnergyMixin(_Protocol):
 
         self._perturbation_type = perturbation_type
 
-    def getLambda(self):
+    @staticmethod
+    def _check_column_name(df):
+        '''Check if the dataframe or series has the right column name.'''
+        permitted_names = ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
+                           'temperature']
+        if isinstance(df, pd.Series):
+            for name in df.index:
+                if not name in permitted_names:
+                    warnings.warn(f'{name} not in the list of permitted names, '
+                                  f'so may not be supported by the MD Engine '
+                                  f'({" ".join(permitted_names)}).')
+        elif isinstance(df, pd.DataFrame):
+            for name in df.columns:
+                if not name in permitted_names:
+                    warnings.warn(f'{name} not in the list of permitted names, '
+                                  f'so may not be supported by the MD Engine '
+                                  f'({" ".join(permitted_names)}).')
+
+    def getLambda(self, type='float'):
         """Get the value of the perturbation parameter.
 
+           Parameters
+           ----------
+
+           type : string
+               The type of lambda to be returned. ('float', 'series')
+
            Returns
            -------
 
-           lam : float
+           lam : float or pd.Series
                The value of the perturbation parameter.
         """
-        return self._lambda
+        if type.lower() == 'float':
+            if len(self._lambda) == 1:
+                return float(self._lambda)
+            else:
+                warnings.warn(
+                    f'The {self._lambda} has more than one value, return as pd.Series.')
+                return self._lambda
+        elif type.lower() == 'series':
+            return self._lambda
+        else:
+            raise ValueError(f"{type} could only be 'float' or 'series'.")
 
-    def getLambdaValues(self):
-        """Get the list of lambda values.
+    def getLambdaValues(self, type='list'):
+        """Get the lambda values.
+
+           Parameters
+           ----------
+
+           type : string
+               The type of lambda values to be returned. ('list', 'dataframe')
 
            Returns
            -------
 
-           lam_vals : [float]
-               The list of lambda values.
+           lam_vals : [float, ] or pd.DataFrame
+               The lambda values.
         """
-        return self._lambda_vals
+        if type.lower() == 'list':
+            lambda_list = self._lambda_vals.values.tolist()
+            if len(lambda_list[0]) == 1:
+                # Ensure that return [float, ] when lambda_list only has one
+                # column
+                return [lam[0] for lam in lambda_list]
+            else:
+                warnings.warn(
+                    f'The {self._lambda_vals} has more than one column, return as pd.DataFrame.')
+                return self._lambda_vals
+        elif type.lower() == 'dataframe':
+            return self._lambda_vals
+        else:
+            raise ValueError(f"{type} could only be 'list' or 'dataframe'.")
 
     def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
         """Set the list of lambda values.
@@ -143,62 +201,57 @@ class _FreeEnergyMixin(_Protocol):
            Parameters
            ----------
 
-           lam : float
+           lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [float]
+           lam_vals : [float] or pandas.DataFrame
                A list of lambda values.
 
-           min_lam : float
+           min_lam : float or pandas.Series
                The minimum lambda value.
 
-           max_lam : float
+           max_lam : float or pandas.Series
                The maximum lambda value.
 
            num_lam : int
                The number of lambda values.
         """
-
-        # Convert int to float.
-        if type(lam) is int:
-            lam = float(lam)
-
-        # Validate the lambda parameter.
-        if type(lam) is not float:
-            raise TypeError("'lam' must be of type 'float'.")
+        if not isinstance(lam, pd.Series):
+            # For pandas < 1.4, TypeError won't be raised if the type cannot
+            # be converted to float
+            lam = pd.Series(data={'fep': lam}, dtype=float)
+        else:
+            self._check_column_name(lam)
 
         self._lambda = lam
 
         # A list of lambda values takes precedence.
         if lam_vals is not None:
-            # Convert tuple to list.
-            if type(lam_vals) is tuple:
-                lam_vals = list(lam_vals)
-
-            # Make sure list (or tuple) has been passed.
-            if type(lam_vals) is not list:
-                raise TypeError("'lam_vals' must be of type 'list'.")
-
-            # Make sure all lambda values are of type 'float'.
-            if not all(isinstance(x, float) for x in lam_vals):
-                raise TypeError("'lam_vals' must contain values of type 'float'.")
+            if not isinstance(lam_vals, pd.DataFrame):
+                # For pandas < 1.4, TypeError won't be raised if the type
+                # cannot be converted to float
+                lam_vals = pd.DataFrame(data={'fep': lam_vals},
+                                            dtype=float)
+            else:
+                self._check_column_name(lam_vals)
 
             # Make sure all values are in range [0.0, 1.0]
-            for lam in lam_vals:
-                if lam < 0:
-                    raise ValueError("'lam_vals' must contain values in range [0.0, 1.0]")
-                elif lam > 1:
-                    raise ValueError("'lam_vals' must contain values in range [0.0, 1.0]")
+            if not ((lam_vals <= 1).all(axis=None) and (lam_vals >= 0).all(axis=None)):
+                raise ValueError(
+                    "'lam_vals' must contain values in range [0.0, 1.0]")
 
             # Sort the values.
-            lam_vals.sort()
+            lam_vals.sort_values(lam_vals.columns.values.tolist(), inplace=True)
 
             # Make sure there are no duplicates.
-            if len(set(lam_vals)) < len(lam_vals):
+            if lam_vals.duplicated().any():
                 raise ValueError("'lam_vals' cannot contain duplicate values!")
 
+            # Update the index to the sorted rows
+            lam_vals.reset_index(drop=True, inplace=True)
+
             # Make sure the lambda value is in the list.
-            if not lam in lam_vals:
+            if not (lam==lam_vals).all(axis=1).any():
                 raise ValueError("'lam' is not a member of the 'lam_vals' list!")
 
             # Set the values.
@@ -206,47 +259,58 @@ class _FreeEnergyMixin(_Protocol):
 
         else:
             # Convert int to float.
+            if not isinstance(min_lam, pd.Series):
+                # For pandas < 1.4, TypeError won't be raised if the type cannot
+                # be converted to float
+                min_lam = pd.Series(data={'fep': min_lam}, dtype=float)
+            else:
+                self._check_column_name(lam_vals)
 
-            if type(min_lam) is int:
-                min_lam = float(min_lam)
+            if not isinstance(max_lam, pd.Series):
+                # For pandas < 1.4, TypeError won't be raised if the type cannot
+                # be converted to float
+                max_lam = pd.Series(data={'fep': max_lam}, dtype=float)
+            else:
+                self._check_column_name(lam_vals)
 
-            if type(max_lam) is int:
-                max_lam = float(max_lam)
-
-            # Validate type.
-
-            if type(min_lam) is not float:
-                raise TypeError("'min_lam' must be of type 'float'.")
-
-            if type(max_lam) is not float:
-                raise TypeError("'max_lam' must be of type 'float'.")
-
-            if type(num_lam) is not int:
+            if not type(num_lam) is int:
                 raise TypeError("'num_lam' must be of type 'int'.")
 
             # Validate values.
-
-            if min_lam < 0 or min_lam > 1:
+            if (min_lam < 0).any() or (min_lam > 1).any():
                 raise ValueError("'min_lam' must be in range [0.0, 1.0]")
 
-            if max_lam < 0 or max_lam > 1:
+            if (max_lam < 0).any() or (max_lam > 1).any():
                 raise ValueError("'max_lam' must be in range [0.0, 1.0]")
 
             if num_lam <=2:
                 raise ValueError("'num_lam' must be greater than 2!")
 
-            if min_lam >= max_lam:
+            if not (min_lam.index == max_lam.index).all():
+                raise ValueError("'min_lam' and 'max_lam' must have the same index!")
+
+            if (min_lam >= max_lam).any():
                 raise ValueError("'min_lam' must be less than 'max_lam'!")
 
             # Set values.
+            lambda_vals = pd.DataFrame(
+                data=np.linspace(min_lam, max_lam, num_lam),
+                columns=min_lam.index)
 
-            self._lambda_vals = []
-            step = (max_lam - min_lam) / (num_lam - 1)
-
-            for x in range(0, num_lam):
-                self._lambda_vals.append(round(min_lam + (x * step), 5))
+            self._lambda_vals = lambda_vals.round(5)
 
             # Make sure the lambda value is in the list.
-            if not self._lambda in self._lambda_vals:
-                raise ValueError("'lam' (%5.4f) is not a member of the 'lam_vals' list: %s" \
-                    % (self._lambda, self._lambda_vals))
+            if not (self._lambda==self._lambda_vals).all(axis=1).any():
+                raise ValueError("'lam' \n%s \n is not a member of the 'lam_vals': \n%s" \
+                    % (self._lambda.to_string(), self._lambda_vals.to_string()))
+
+    def getLambdaIndex(self):
+        '''Get the index of the current lambda window.
+
+           Returns
+           -------
+
+           index : int
+               The index of the lambda in lambda values.
+        '''
+        return self._lambda_vals.index[(self._lambda_vals==self._lambda).all(axis=1)].tolist()[0]
