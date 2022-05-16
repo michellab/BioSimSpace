@@ -102,3 +102,21 @@ def test_df_lam_vals():
                                     'coul':   [0.0, 0.0,  0.0, 0.5,  1.0, 1.0, 1.0],
                                     'vdw':    [0.0, 0.0,  0.0, 0.0,  0.0, 0.5, 1.0]}))
     assert protocol.getLambdaIndex() == 3
+
+def test_not_in_lam_vals():
+    '''Test The case where the lambda is not in lambda values'''
+    with pytest.raises(ValueError):
+        protocol = _FreeEnergyMixin(
+            lam=pd.Series(data={'bonded': 0.6, 'coul': 0.5, 'vdw': 0.0}),
+            lam_vals=pd.DataFrame(data={'bonded': [0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0],
+                                        'coul':   [0.0, 0.0,  0.0, 0.5,  1.0, 1.0, 1.0],
+                                        'vdw':    [0.0, 0.0,  0.0, 0.0,  0.0, 0.5, 1.0]}))
+
+def test_duplicated():
+    '''Test The case where lambda values has duplication'''
+    with pytest.raises(ValueError):
+        protocol = _FreeEnergyMixin(
+            lam=pd.Series(data={'bonded': 0.75, 'coul': 0.5, 'vdw': 0.0}),
+            lam_vals=pd.DataFrame(data={'bonded': [0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0],
+                                        'coul':   [0.0, 0.0, 0.0,  0.0, 0.5,  1.0, 1.0, 1.0],
+                                        'vdw':    [0.0, 0.0, 0.0,  0.0, 0.0,  0.0, 0.5, 1.0]}))
