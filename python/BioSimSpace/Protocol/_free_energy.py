@@ -37,7 +37,7 @@ from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
 
-class FreeEnergy(_Protocol):
+class FreeEnergy_Base(_Protocol):
     """A class for storing free energy protocols."""
 
     def __init__(self,
@@ -493,7 +493,7 @@ class FreeEnergy(_Protocol):
 
         self._restart_interval = restart_interval
 
-class MultiStateFE(FreeEnergy):
+class FreeEnergy(FreeEnergy_Base):
     def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
         """Set the list of lambda values.
 
