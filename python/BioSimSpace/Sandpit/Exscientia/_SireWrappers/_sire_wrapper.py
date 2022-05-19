@@ -59,6 +59,7 @@ class SireWrapper():
         # Initialise flags.
         self._is_multi_atom = False
         self._is_perturbable = False
+        self._is_decoupled = False
 
     def __eq__(self, other):
         """Equals to operator."""

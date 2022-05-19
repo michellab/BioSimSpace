@@ -449,6 +449,18 @@ class Molecule(_SireWrapper):
         """
         return self._is_perturbable
 
+    def isDecoupled(self):
+        """Whether this molecule is decoupled, i.e. it can be used in a
+           free-energy decoupling simulation.
+
+           Returns
+           -------
+
+           is_decoupled : bool
+               Whether the molecule is decoupled.
+        """
+        return self._is_decoupled
+
     def isWater(self, property_map={}):
         """Whether this is a water molecule.
 
