@@ -206,14 +206,34 @@ class _FreeEnergyMixin(_Protocol):
         else:
             raise ValueError(f"{type} could only be 'list' or 'dataframe'.")
 
-    def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
-        """Set the list of lambda values.
+    def setLambda(self, lam):
+        """Set the current lambda.
 
            Parameters
            ----------
 
            lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
+
+        """
+        if not isinstance(lam, pd.Series):
+            # For pandas < 1.4, TypeError won't be raised if the type cannot
+            # be converted to float
+            lam = pd.Series(data={'fep': lam}, dtype=float)
+        else:
+            self._check_column_name(lam)
+
+        # Make sure the lambda value is in the list.
+        if not (lam == self._lambda_vals).all(axis=1).any():
+            raise ValueError("'lam' is not a member of the 'lam_vals' list!")
+
+        self._lambda = lam
+
+    def _checkLambdaValues(self, lam_vals, min_lam, max_lam, num_lam):
+        """Sanity check of the list of lambda values.
+
+           Parameters
+           ----------
 
            lam_vals : [float] or pandas.DataFrame
                A list of lambda values.
@@ -226,16 +246,13 @@ class _FreeEnergyMixin(_Protocol):
 
            num_lam : int
                The number of lambda values.
+
+           Returns
+           -------
+           lam_vals : pandas.DataFrame
+               The pd.DataFrame representing the checked lambda values.
+
         """
-        if not isinstance(lam, pd.Series):
-            # For pandas < 1.4, TypeError won't be raised if the type cannot
-            # be converted to float
-            lam = pd.Series(data={'fep': lam}, dtype=float)
-        else:
-            self._check_column_name(lam)
-
-        self._lambda = lam
-
         # A list of lambda values takes precedence.
         if lam_vals is not None:
             if not isinstance(lam_vals, pd.DataFrame):
@@ -260,13 +277,6 @@ class _FreeEnergyMixin(_Protocol):
 
             # Update the index to the sorted rows
             lam_vals.reset_index(drop=True, inplace=True)
-
-            # Make sure the lambda value is in the list.
-            if not (lam==lam_vals).all(axis=1).any():
-                raise ValueError("'lam' is not a member of the 'lam_vals' list!")
-
-            # Set the values.
-            self._lambda_vals = lam_vals
 
         else:
             # Convert int to float.
@@ -308,11 +318,32 @@ class _FreeEnergyMixin(_Protocol):
                 data=np.linspace(min_lam, max_lam, num_lam),
                 columns=min_lam.index)
 
-            self._lambda_vals = lambda_vals.round(5)
+            lam_vals = lambda_vals.round(5)
+        return lam_vals
 
-            # Make sure the lambda value is in the list.
-            if not (self._lambda==self._lambda_vals).all(axis=1).any():
-                raise ValueError("'lam' \n%s \n is not a member of the 'lam_vals': \n%s" \
-                    % (self._lambda.to_string(), self._lambda_vals.to_string()))
+    def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
+        """Set the list of lambda values.
+
+           Parameters
+           ----------
+
+           lam : float or pandas.Series
+               The perturbation parameter: [0.0, 1.0]
+
+           lam_vals : [float] or pandas.DataFrame
+               A list of lambda values.
+
+           min_lam : float or pandas.Series
+               The minimum lambda value.
+
+           max_lam : float or pandas.Series
+               The maximum lambda value.
+
+           num_lam : int
+               The number of lambda values.
+        """
+        self._lambda_vals = self._checkLambdaValues(lam_vals, min_lam, max_lam,
+                                                    num_lam)
+        self.setLambda(lam)
 
 

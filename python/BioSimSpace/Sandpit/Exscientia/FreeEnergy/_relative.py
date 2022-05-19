@@ -278,7 +278,7 @@ class Relative():
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
         self.analyse = self._analyse
-        self.analyse_all_repeats = self._analyse_all_repeats
+        # self.analyse_all_repeats = self._analyse_all_repeats
         self.difference = self._difference
 
         # Initialise the process runner.
@@ -1366,10 +1366,10 @@ class Relative():
         # Setup all of the simulation processes for each leg.
 
         # Get the lambda values from the protocol for the first leg.
-        lam_vals = self._protocol.getLambdaValues()
+        lam_vals = self._protocol.getLambdaValues(type='dataframe')
 
         # Create a process for the first lambda value.
-        lam = lam_vals[0]
+        lam = lam_vals.loc[0]
 
         # Update the protocol lambda values.
         self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
@@ -1378,7 +1378,7 @@ class Relative():
         # Nest the working directories inside self._work_dir.
 
         # Name the first directory.
-        first_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
+        first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
         # SOMD.
         if self._engine == "SOMD":
@@ -1412,9 +1412,13 @@ class Relative():
             processes.append(first_process)
 
         # Loop over the rest of the lambda values.
-        for x, lam in enumerate(lam_vals[1:]):
+        for x, lam in lam_vals.iterrows():
+            if x == 0:
+                # Skip the zero-th window
+                continue
+            self._protocol.setLambda(lam)
             # Name the directory.
-            new_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
+            new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
             # Use the full path.
             if new_dir[0] != "/":
@@ -1426,9 +1430,6 @@ class Relative():
 
             # Copy the first directory to that of the current lambda value.
             _shutil.copytree(first_dir, new_dir)
-
-            # Update the protocol lambda values.
-            self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
 
             # Now update the lambda values in the config files.
 
@@ -1475,7 +1476,7 @@ class Relative():
                 with open(new_dir + "/gromacs.mdp", "r") as f:
                     for line in f:
                         if "init-lambda-state" in line:
-                            new_config.append("init-lambda-state = %d\n" % (x+1))
+                            new_config.append("init-lambda-state = %d\n" % (self._protocol.getLambdaIndex()))
                         else:
                             new_config.append(line)
                 with open(new_dir + "/gromacs.mdp", "w") as f:
