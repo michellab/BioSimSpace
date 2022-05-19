@@ -1,0 +1,49 @@
+name: Sandpit_exs_CI
+
+on:
+  # run once a day at noon UTC
+  schedule:
+    - cron: "0 12 * * *"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest", "macOS-latest",]
+        python-version: ["3.7", ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
+
+      - name: Install dependency
+        shell: bash -l {0}
+        run: |
+          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
+          mamba install -c conda-forge ambertools
+          mamba install -c bioconda gromacs
+
+      - name: Install the dev version
+        shell: bash -l {0}
+        run: |
+          cd python
+          python setup.py develop
+          cd ..
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: |
+          pytest -v --color=yes test/Sandpit/Exscientia/
