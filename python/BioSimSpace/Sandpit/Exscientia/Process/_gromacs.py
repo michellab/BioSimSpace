@@ -780,7 +780,7 @@ class Gromacs(_process.Process):
 
         # Warnings don't trigger an error. Set to a suitably large number.
         if self._ignore_warnings:
-            command += " --maxwarn 1000"
+            command += " --maxwarn -1"
 
         # Run the command.
         proc = _subprocess.run(_shlex.split(command), shell=False, text=True,

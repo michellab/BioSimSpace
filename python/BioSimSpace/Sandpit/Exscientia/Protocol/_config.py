@@ -407,7 +407,7 @@ class ConfigFactory:
         protocol_dict = {
             "nstlog": self._report_interval,                                        # Interval between writing to the log file.
             "nstenergy": self._restart_interval,                                    # Interval between writing to the energy file.
-            "nstxout": self._restart_interval,                                      # Interval between writing to the trajectory file.
+            "nstxout-compressed": self._restart_interval,                                      # Interval between writing to the trajectory file.
         }
 
         # Minimisation.
@@ -420,10 +420,7 @@ class ConfigFactory:
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            if timestep >= 0.004:
-                protocol_dict["constraints"] = "all-bonds"                          # If HMR, all constraints
-            else:
-                protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
+            protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
             protocol_dict["constraint-algorithm"] = "LINCS"                         # Linear constraint solver.
 
         # PBC.
@@ -450,17 +447,14 @@ class ConfigFactory:
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict["refcoord-scaling"] = "all"                               # The actual restraints need to be defined elsewhere.
+            protocol_dict["refcoord-scaling"] = "com"                               # The actual restraints need to be defined elsewhere.
 
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
-                    else:
-                        protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
+                    protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
                     protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
                     protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
@@ -469,7 +463,8 @@ class ConfigFactory:
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["integrator"] = "sd"                                      # Langevin dynamics.
+            protocol_dict["integrator"] = "md"                                      # leap-frog dynamics.
+            protocol_dict["tcoupl"] = "v-rescale"
             protocol_dict["tc-grps"] = "system"                                     # A single temperature group for the entire system.
             protocol_dict["tau-t"] = 2                                              # Collision frequency (ps).
 
@@ -500,11 +495,13 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             protocol_dict["free-energy"] = "yes"                                    # Free energy mode.
             protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
-            protocol_dict["fep-lambdas"] = " ".join(protocol)                       # Lambda values.
-            lam = self.protocol.getLambda()
-            idx = self.protocol.getLambdaValues().index(lam)
-            protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
+            LambdaValues = self.protocol.getLambdaValues(type='dataframe')
+            for name in ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
+                           'temperature']:
+                if name in LambdaValues:
+                    protocol_dict["{}-lambdas".format(name)] = \
+                        ' '.join(list(map(str, LambdaValues[name].to_list())))
+            protocol_dict["init-lambda-state"] = self.protocol.getLambdaIndex()     # Current lambda value.
             protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
             protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.
 
