@@ -494,6 +494,34 @@ class ConfigFactory:
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             protocol_dict["free-energy"] = "yes"                                    # Free energy mode.
+            nDecoupledMolecules = self.system.nDecoupledMolecules()
+            if nDecoupledMolecules == 1:
+                [mol, ] = self.system.getDecoupledMolecules()
+                protocol_dict["couple-moltype"] = mol._sire_object.name().value()
+                def tranform(charge, LJ):
+                    if charge and LJ:
+                        return 'vdw-q'
+                    elif charge and not LJ:
+                        return 'q'
+                    elif not charge and LJ:
+                        return 'vdw'
+                    else:
+                        return 'none'
+                protocol_dict["couple-lambda0"] = tranform(
+                    mol._sire_object.property('charge0').value(),
+                    mol._sire_object.property('LJ0').value()
+                )
+                protocol_dict["couple-lambda1"] = tranform(
+                    mol._sire_object.property('charge1').value(),
+                    mol._sire_object.property('LJ1').value()
+                )
+                if mol._sire_object.property('annihilated').value():
+                    # No intramol interactions and thus annihilated.
+                    protocol_dict["couple-intramol"] = 'no'
+                else:
+                    protocol_dict["couple-intramol"] = 'yes'
+            elif nDecoupledMolecules > 1:
+                raise ValueError('Gromacs cannot handle more than one decoupled molecule.')
             protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
             LambdaValues = self.protocol.getLambdaValues(type='dataframe')
             for name in ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',

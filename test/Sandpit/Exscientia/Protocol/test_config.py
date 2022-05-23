@@ -3,8 +3,9 @@ import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyMinimisation
+from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
-class TestGromacs():
+class TestGromacsRBFE():
     @staticmethod
     @pytest.fixture(scope='class')
     def system():
@@ -66,3 +67,47 @@ class TestGromacs():
             assert 'coul-lambdas = 0.0 0.0 0.0 0.5 1.0 1.0 1.0' in mdp_text
             assert 'vdw-lambdas = 0.0 0.0 0.0 0.0 0.0 0.5 1.0' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
+
+class TestGromacsABFE():
+    @staticmethod
+    @pytest.fixture(scope='class')
+    def system():
+        # Benzene.
+        m0 = BSS.Parameters.openff_unconstrained_2_0_0(
+            "c1ccccc1").getMolecule()
+        protocol = FreeEnergyMinimisation(lam=0.0,
+                 lam_vals=None,
+                 min_lam=0.0,
+                 max_lam=1.0,
+                 num_lam=11,
+                 steps=10000,
+                 perturbation_type="full")
+        return m0, protocol
+
+    def test_decouple_vdw_q(self, system):
+        m, protocol = system
+        '''Test the decoupling where lambda0 = vdw-q and lambda1=none'''
+        mol = decouple(m, property_map0={"charge": True, "LJ": True},
+                       property_map1={"charge": False, "LJ": False})
+        freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
+        with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
+            mdp_text = f.read()
+            assert 'couple-moltype = c1ccccc1' in mdp_text
+            assert 'couple-lambda0 = vdw-q' in mdp_text
+            assert 'couple-lambda1 = none' in mdp_text
+            assert 'couple-intramol = yes' in mdp_text
+
+    def test_annihilate_vdw2q(self, system):
+        '''Test the annihilation where lambda0 = vdw-q and lambda1=none'''
+        m, protocol = system
+        mol = decouple(m,
+                       property_map0={"charge": False, "LJ": True},
+                       property_map1={"charge": True, "LJ": False},
+                       intramol=False)
+        freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
+        with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
+            mdp_text = f.read()
+            assert 'couple-moltype = c1ccccc1' in mdp_text
+            assert 'couple-lambda0 = vdw' in mdp_text
+            assert 'couple-lambda1 = q' in mdp_text
+            assert 'couple-intramol = no' in mdp_text
