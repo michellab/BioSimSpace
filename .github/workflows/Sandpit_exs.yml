@@ -33,7 +33,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
-          mamba install -c conda-forge ambertools
+          mamba install -c conda-forge ambertools alchemlyb
           mamba install -c bioconda gromacs
 
       - name: Install the dev version

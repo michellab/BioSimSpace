@@ -216,7 +216,7 @@ class Relative():
                     raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
 
                 # The system must have a perturbable molecule.
-                if system.nPerturbableMolecules() == 0:
+                if system.nPerturbableMolecules() == 0 and system.nDecoupledMolecules() == 0:
                     raise ValueError("The system must contain a perturbable molecule! "
                                      "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 

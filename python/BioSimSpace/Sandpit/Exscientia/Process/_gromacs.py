@@ -178,7 +178,8 @@ class Gromacs(_process.Process):
 
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
-            if self._system.nPerturbableMolecules() == 0:
+            if self._system.nPerturbableMolecules() == 0 \
+                    and system.nDecoupledMolecules() == 0:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
                                  "perturbable molecule!")
 
