@@ -165,10 +165,10 @@ class Restraint():
             self._system = system.copy()
 
         if protocol is not None:
-            if isinstance(protocol, _Protocol.Equilibration):
+            if isinstance(protocol, _Protocol.Production):
                 self._protocol = protocol
             else:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Equilibration'")
+                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Production'")
         else:
             # Use a default protocol.
             self._protocol = _Protocol.Equilibration()
@@ -429,3 +429,18 @@ class Restraint():
 
         """
         pass
+
+    def toString(self, engine=None):
+        if engine is None:
+            engine = self._engine
+        else:
+            if not isinstance(engine, str):
+                raise TypeError("'engine' must be of type 'str'.")
+
+            # Strip whitespace from engine and convert to upper case.
+            engine = engine.replace(" ", "").upper()
+
+        if engine == 'GROMACS':
+            output_string = ['']
+
+            return '\n'.join(output_string)
