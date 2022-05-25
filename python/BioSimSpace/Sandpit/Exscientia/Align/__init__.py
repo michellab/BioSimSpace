@@ -38,7 +38,8 @@ Functions
     flexAlign
     merge
     viewMapping
+    decouple
 """
 
 from ._align import *
-from ._decouple import decouple
+from ._decouple import *

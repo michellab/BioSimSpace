@@ -169,11 +169,6 @@ class RestraintSearch():
         self._extra_options = extra_options if extra_options is not None else {}
         self._extra_lines = extra_lines if extra_lines is not None else []
 
-        if not isinstance(setup_only, bool):
-            raise TypeError("'setup_only' must be of type 'bool'.")
-        else:
-            self._setup_only = setup_only
-
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
             self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -222,10 +217,6 @@ class RestraintSearch():
                     _warnings.warn(f"Multiple AMBER engines were found. Proceeding with {exes[0]}...")
                 self._exe = exes[0]
 
-                if self._protocol.getPerturbationType() != "full":
-                    raise NotImplementedError("AMBER currently only supports the 'full' perturbation "
-                                              "type. Please use engine='SOMD' when running multistep "
-                                              "perturbation types.")
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -256,17 +247,11 @@ class RestraintSearch():
 
     def start(self):
         """Start the simulation."""
-        if self._setup_only:
-            _warnings.warn("No process exists! Object created in 'setup_only' mode.")
-        else:
-            self._process.start()
+        self._process.start()
 
     def wait(self):
         """Wait for the simulation to finish."""
-        if self._setup_only:
-            _warnings.warn("No processes exist! Object created in 'setup_only' mode.")
-        else:
-            self._process.wait()
+        self._process.wait()
 
     def kill(self):
         """Kill the process."""
@@ -285,6 +270,7 @@ class RestraintSearch():
 
     @staticmethod
     def analyse(work_dir, rest_type='Boresch', 
+                method='MDRestraintsGenerator',         
                 append_to_lig_selection="resname LIG and not name H*",
                 append_to_recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -301,6 +287,10 @@ class RestraintSearch():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
+           
+           method: str
+               The method to use to derive the restraints. Currently only MDRestraintsGenerator 
+               is supported.
 
            append_to_lig_selection: str
                Appends the supplied string to the default atom selection which chooses
@@ -356,10 +346,9 @@ class RestraintSearch():
         # anchors = getBoreschAnchors(low_var_pairs, ...)
         # restrainedDOF_obj = restrainedDOF(anchors=anchors, rest_type="Boresch", ...)
         # best_restraints = restrainedDOF_obj.getOptimalParams(...)
-        # 
-        # Could also have e.g. restrainedDOF_obj.plot()
 
     def _analyse(self, rest_type='Boresch', 
+                method='MDRestraintsGenerator',         
                 lig_selection="resname LIG and not name H*",
                 recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -372,6 +361,10 @@ class RestraintSearch():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
+
+           method: str
+               The method to use to derive the restraints. Currently only MDRestraintsGenerator 
+               is supported.
 
            append_to_lig_selection: str
                Appends the supplied string to the default atom selection which chooses
@@ -409,6 +402,7 @@ class RestraintSearch():
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return RestraintSearch.analyse(self._work_dir, rest_type=rest_type, 
+                method=method,
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
                 cutoff=cutoff) 
