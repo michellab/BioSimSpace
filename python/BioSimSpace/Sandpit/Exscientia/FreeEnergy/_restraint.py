@@ -100,7 +100,6 @@ class Restraint():
         '''The method for convert the restraint to a format that could be used
         by MD Engines'''
         if engine.lower() == 'gromacs':
-            atom_idx = '{:<10}'
             output = ['[ intermolecular_interactions ]',]
             output.append('[ bonds ]')
             output.append('#;ai         aj      type bA         kA         bB         kB')
