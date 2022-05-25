@@ -257,6 +257,10 @@ class RestraintSearch():
         """Kill the process."""
         self._process.kill()
 
+    def isRunning(self):
+        """Check if the process is running."""
+        self._process.isRunning()
+
     def workDir(self):
         """Return the working directory.
 
