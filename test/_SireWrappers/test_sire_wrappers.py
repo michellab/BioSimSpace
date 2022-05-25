@@ -95,3 +95,36 @@ def test_molecule_reindexing(system):
         assert system.getIndex(residue.toMolecule()) == index
 
         index += 1
+
+def test_contains(system):
+    # Extract the first molecule.
+    m = system[0]
+
+    # Make sure the molecule is in the system.
+    assert m in system
+
+    # Make sure a copy of the molecule isn't in the system.
+    assert m.copy() not in system
+
+    # Extract the first residue of the molecule.
+    r = m.getResidues()[0]
+
+    # Extract the first atom of the residue.
+    a = r[0]
+
+    # Make sure the residue and atom are in the system.
+    assert r in system
+    assert a in system
+
+    # Make sure the residue and atom are in the molecule.
+    assert r in m
+    assert a in m
+
+    # Make sure that the atom is in the residue.
+    assert a in r
+
+    # Get an atom from a different residue.
+    a = system[1].getResidues()[0][0]
+
+    # Make sure the atom isn't in the residue.
+    assert a not in r
