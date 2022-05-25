@@ -61,7 +61,13 @@ except:
 
 import numpy as _np
 import pandas as _pd
-import MDAnalysis as mda
+
+# TODO: Do we need checks on these?
+import MDAnalysis as _mda 
+from MDAnalysis.analysis.distances import dist as _dist
+from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
+from numpy.linalg import norm as _norm
+
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -70,6 +76,7 @@ from .. import _is_notebook
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
+from ..Trajectory._trajectory import Trajectory as _Trajectory
 from .._Utils import cd as _cd
 from .. import Process as _Process
 from .. import Protocol as _Protocol
@@ -275,10 +282,10 @@ class RestraintSearch():
         return self._work_dir
 
     @staticmethod
-    def analyse(work_dir, rest_type='Boresch', 
-                method='MDRestraintsGenerator',         
-                append_to_lig_selection="resname LIG and not name H*",
-                append_to_recept_selection="protein and not name H*",
+    def analyse(work_dir, system, traj, rest_type='Boresch', 
+                method='BSS',         
+                append_to_lig_selection="",
+                append_to_recept_selection="",
                 cutoff=10): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
@@ -290,13 +297,21 @@ class RestraintSearch():
            work_dir : str
                The working directory for the simulation.
 
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system for the perturbation leg. This must contain
+               a single perturbable molecule and is assumed to have already
+               been equilibrated.
+
+           traj : :class:`System <BioSimSpace.Trajectory._trajectory.Trajectory>`
+               The trajectory for analysis.
+
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
            
            method: str
-               The method to use to derive the restraints. Currently only MDRestraintsGenerator 
-               is supported.
+                The method to use to derive the restraints. 'BSS' or 'MDRestraintsGenerator'. 
+                BSS uses the native BioSimSpace derivation.
 
            append_to_lig_selection: str
                Appends the supplied string to the default atom selection which chooses
@@ -330,11 +345,21 @@ class RestraintSearch():
                The configuration of the system with the lowest restraint energy
                observed during the final percent_traj % of the trajectory.
         """
+        # Check all inputs
 
         if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
+
+        if not isinstance(system, _System):
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+        else:
+            # Store a copy of solvated system.
+            _system = system.copy()
+
+        if not isinstance(traj, _Trajectory):
+            raise TypeError("'traj' must be of type 'BioSimSpace.Trajectory._trajectory.Trajectory'")
 
         if not isinstance(rest_type, str):
             raise TypeError("'rest_type' must be of type 'str'.")
@@ -343,9 +368,9 @@ class RestraintSearch():
         
         if not isinstance(method, str):
             raise TypeError("'method' must be of type 'str'.")
-        if not method.lower() == 'mdrestraintsgenerator':
-            raise NotImplementedError("Deriving restraints using MDRestraintsGenerator is"
-                                      "the only option currently implemented.")
+        if not method.lower() in ['mdrestraintsgenerator', 'bss']:
+            raise NotImplementedError("Deriving restraints using MDRestraintsGenerator"
+                                      "or BSS are the only options implemented.")
                             
         if not isinstance(append_to_lig_selection, str):
             raise TypeError("'append_to_lig_selection' must be of type 'str'.")
@@ -355,8 +380,270 @@ class RestraintSearch():
         
         if not isinstance(cutoff, (int, float)):
             raise TypeError("'cutoff' must be of type 'int' or 'float'.")
+        
+        # There must be a single molecule to be decoupled (or annihilated).
+        if system.nDecoupledMolecules() != 1:
+            raise ValueError("The system must contain a single molecule to be decoupled! "
+                                "Use the 'BioSimSpace.Align.Decouple' function to mark a molecule"
+                                " to be decoupled.")
 
         # TODO Implement analysis. Outline of functions required
+
+        # Extract restraints from simulation
+
+        if method == "BSS":
+            # Get mdanalysis universe object
+            u = traj.getTrajectory(format='mdanalysis')
+            print(type(u))
+
+            if rest_type.lower() == 'boresch':
+
+                # Find decoupled molecule and use it to create ligand selection
+                decoupled_mol = _system.getDecoupledMolecules()[0]
+                decoupled_resname = decoupled_mol.getResidues()[0].name()
+
+                lig_selection_str = f'resname {decoupled_resname} and (not name H*)'
+                if append_to_lig_selection:
+                    lig_selection_str += ' and '
+                    lig_selection_str += append_to_lig_selection
+
+                recept_selection_str = 'protein and (not name H*)'
+                if append_to_recept_selection:
+                    recept_selection_str += ' and '
+                    recept_selection_str += append_to_recept_selection
+
+                lig_selection = u.select_atoms(lig_selection_str)
+
+                # anchors dict of dict. For each ligand heavy atom there is a dictionary of protein heavy atoms,
+                # for each of which there is a dictionary of average distances and standard deviation
+
+                anchors_dict = {}
+                for lig_atom in lig_selection:
+                    for prot_atom in u.select_atoms(f"{recept_selection_str} and (around {cutoff} index {lig_atom.index})"):
+                        anchors_dict[(lig_atom.index,prot_atom.index)]={}
+                        anchors_dict[(lig_atom.index, prot_atom.index)]["dists"]=[]
+
+                ### Compute Average Distance and SD
+
+                for frame in u.trajectory:
+                    for lig_atom_index, prot_atom_index in anchors_dict.keys():
+                        distance = _dist(_mda.AtomGroup([u.atoms[lig_atom_index]]), _mda.AtomGroup([u.atoms[prot_atom_index]]), box=frame.dimensions)[2][0]
+                        anchors_dict[(lig_atom_index,prot_atom_index)]["dists"].append(distance)
+
+                # change lists to numpy arrays
+                for pair in anchors_dict.keys():
+                    anchors_dict[pair]["dists"] = _np.array(anchors_dict[pair]["dists"])
+
+                # calculate average and SD
+                for pair in anchors_dict.keys():
+                    anchors_dict[pair]["avg_dist"] = anchors_dict[pair]["dists"].mean()
+                    anchors_dict[pair]["sd_dist"] = anchors_dict[pair]["dists"].std()
+
+                # get n pairs with lowest SD
+                pairs_ordered_sd=[]
+                for item in sorted(anchors_dict.items(), key=lambda item: item[1]["sd_dist"]):
+                    pairs_ordered_sd.append(item[0])
+                    #print(f'Pair: {item[0]}, av distance: {item[1]["avg_dist"]:.2f}, SD: {item[1]["sd_dist"]:.2f}')
+
+                # Print out pairs with lowest SD
+                #print("The ligand-protein atom pairs with the lowest SD in distance are:")
+                #for i in range(5):
+                #    print(f"{u.atoms[pairs_ordered_sd[i][0]]} and {u.atoms[pairs_ordered_sd[i][1]]}")
+
+                ### For Pairs with Lowest Pairwise RMSDs, find Adjacent Heavy Atoms
+
+                def get_anchor_ats(a1_idx,u):
+                    """Takes in index of anchor atom 1 and universe and returns
+                    list of all three anchor atoms, which are chosen to be bonded
+                    and not H"
+
+                    Args:
+                        a1_idx (int): Index of the first anchor atom
+                        u (mda universe): The mda universe
+
+                    Returns:
+                        ints: The indices of all three anchor points
+                    """
+
+                    a1_at = u.atoms[a1_idx]
+                    bonded_heavy_at = a1_at.bonded_atoms.select_atoms("not name H*")
+                    a2_idx = bonded_heavy_at[0].index
+
+                    if len(bonded_heavy_at)>1:
+                        # not at end of chain
+                        a3_idx = bonded_heavy_at[1].index
+                        # Might be better to return all possible combinations
+                    else:
+                        # at end of chain, get next heavy atom along
+                        a3_idx = bonded_heavy_at[0].bonded_atoms.select_atoms("not name H*")[0].index
+
+                    return a1_idx, a2_idx, a3_idx
+
+                ### Use These As Anchors and Plot Variance of Associated Degrees of Freedom
+
+                def get_distance(idx1, idx2, u):
+                    """ Distance in Angstrom"""
+                    distance = _dist(_mda.AtomGroup([u.atoms[idx1]]), _mda.AtomGroup([u.atoms[idx2]]), box=u.dimensions)[2][0]
+                    return distance
+
+                def get_angle(idx1, idx2, idx3, u):
+                    """Angle in rad"""
+                    C = u.atoms[idx1].position 
+                    B = u.atoms[idx2].position 
+                    A = u.atoms[idx3].position 
+                    BA = A - B
+                    BC = C - B
+                    angle = _np.arccos(_np.dot(BA, BC)/(_norm(BA)*_norm(BC)))
+                    return angle
+
+                def get_dihedral(idx1, idx2, idx3, idx4, u):
+                    """Dihedral in rad"""
+                    positions =[u.atoms[idx].position for idx in [idx1,idx2,idx3,idx4]]
+                    dihedral = _calc_dihedrals(positions[0], positions[1], positions[2], positions[3], box = u.dimensions)
+                    return dihedral
+
+                def get_boresch_dof(l1,l2,l3,r1,r2,r3,u):
+                    """Calculate Boresch degrees of freedom from indices of anchor atoms"""
+                    # Ordering of connection of anchors is r3,r2,r1,l1,l2,l3
+                    r = get_distance(r1,l1,u)
+                    thetaA = get_angle(r2,r1,l1,u)
+                    thetaB = get_angle(r1,l1,l2,u)
+                    phiA = get_dihedral(r3,r2,r1,l1,u)
+                    phiB = get_dihedral(r2,r1,l1,l2,u)
+                    phiC = get_dihedral(r1,l1,l2,l3,u)
+                    # Not restrained but distance from coolinearity must be checked
+                    thetaR = get_angle(r3,r2,r1,u) # Receptor internal angle
+                    thetaL = get_angle(l1,l2,l3,u) # Ligand internal angle
+                    return r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL
+
+                lig_anchors = get_anchor_ats(pairs_ordered_sd[0][0],u)
+                prot_anchors = get_anchor_ats(pairs_ordered_sd[0][1],u)
+                get_boresch_dof(lig_anchors[0],lig_anchors[1],lig_anchors[2],prot_anchors[0],prot_anchors[1],prot_anchors[2],u)
+
+                # get values of degrees of freedom for lowest SD pairs across whole trajectory
+
+                boresch_dof_dict = {}
+                for pair in pairs_ordered_sd[:200]:
+                    boresch_dof_dict[pair]={}
+                    l1_idx, r1_idx = pair
+                    _, l2_idx, l3_idx = get_anchor_ats(l1_idx,u)
+                    _, r2_idx, r3_idx = get_anchor_ats(r1_idx,u)
+                    boresch_dof_dict[pair]["anchor_ats"]=[l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx]
+
+                    boresch_dof_list = ["r","thetaA","thetaB","phiA","phiB","phiC","thetaR","thetaL"]
+
+                    # Add sub dictionaries for each Boresch degree of freedom
+                    for dof in boresch_dof_list:
+                        boresch_dof_dict[pair][dof]={}
+                        boresch_dof_dict[pair][dof]["values"]=[]
+
+                    # Populate these dictionaries with values from trajectory
+                    n_frames = len(u.trajectory)
+
+                    for i, frame in enumerate(u.trajectory):
+                        r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = get_boresch_dof(l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx,u)
+                        boresch_dof_dict[pair]["r"]["values"].append(r)
+                        boresch_dof_dict[pair]["thetaA"]["values"].append(thetaA)
+                        boresch_dof_dict[pair]["thetaB"]["values"].append(thetaB)
+                        boresch_dof_dict[pair]["phiA"]["values"].append(phiA)
+                        boresch_dof_dict[pair]["phiB"]["values"].append(phiB)
+                        boresch_dof_dict[pair]["phiC"]["values"].append(phiC)
+                        boresch_dof_dict[pair]["thetaR"]["values"].append(thetaR)
+                        boresch_dof_dict[pair]["thetaL"]["values"].append(thetaL)
+
+                        if i == n_frames-1:
+                            boresch_dof_dict[pair]["tot_var"]=0
+                            for dof in boresch_dof_list:
+                                boresch_dof_dict[pair][dof]["values"]=_np.array(boresch_dof_dict[pair][dof]["values"])
+                                boresch_dof_dict[pair][dof]["avg"]=boresch_dof_dict[pair][dof]["values"].mean()
+                                # For dihedrals, compute variance and mean based on list of values corrected for periodic boundary at 
+                                # pi radians, because there is no problem with dihedrals in this region
+                                if dof[:3] == "phi":
+                                    avg = boresch_dof_dict[pair][dof]["avg"]
+
+                                    # correct variance - fully rigorous
+                                    corrected_values_sd = []
+                                    for val in boresch_dof_dict[pair][dof]["values"]:
+                                        dtheta = abs(val - avg)
+                                        corrected_values_sd.append(min(dtheta, 2*_np.pi-dtheta))
+                                    corrected_values_sd = _np.array(corrected_values_sd) 
+                                    boresch_dof_dict[pair][dof]["sd"]=corrected_values_sd.std()
+
+                                    # Correct mean (will fail if very well split above and below 2pi)
+                                    # get middle of interval based on current mean
+                                    corrected_values_avg=[]
+                                    periodic_bound = avg - _np.pi
+                                    if periodic_bound < -_np.pi:
+                                        periodic_bound+=2*_np.pi
+                                    # shift vals from below periodic bound to above
+                                    for val in boresch_dof_dict[pair][dof]["values"]:
+                                        if val < periodic_bound:
+                                            corrected_values_avg.append(val+2*_np.pi)
+                                        else:
+                                            corrected_values_avg.append(val)
+                                    corrected_values_avg = _np.array(corrected_values_avg)
+                                    mean_corrected = corrected_values_avg.mean()
+                                    #shift mean back to normal range
+                                    if mean_corrected > _np.pi:
+                                        boresch_dof_dict[pair][dof]["avg"]=mean_corrected-2*_np.pi
+                                    else:
+                                        boresch_dof_dict[pair][dof]["avg"]=mean_corrected
+                                        
+                                else:
+                                    boresch_dof_dict[pair][dof]["sd"]=boresch_dof_dict[pair][dof]["values"].std()
+                                # Exclude variance of internal angles as these are not restrained
+                                if (dof != "thetaR" and dof != "thetaL"):
+                                    boresch_dof_dict[pair]["tot_var"]+=boresch_dof_dict[pair][dof]["sd"]**2
+                                # Assume Gaussian distributions and calculate force constants for harmonic potentials
+                                # so as to reproduce these distributions
+                                boresch_dof_dict[pair][dof]["k"]=0.593/(boresch_dof_dict[pair][dof]["sd"]**2) # RT at 289 K is 0.593 kcal mol-1
+
+                ### Filter, Pick Optimum Degrees of Freedom, and Select Force Constants Based on Variance, Select Equilibrium Values
+                # Order pairs according to variance 
+                pairs_ordered_boresch_var=[]
+                for item in sorted(boresch_dof_dict.items(), key=lambda item: item[1]["tot_var"]):
+                    pairs_ordered_boresch_var.append(item[0])
+                    #print(f'Pair: {item[0]}, total variance: {boresch_dof_dict[item[0]]["tot_var"]}')
+
+                # Filter out r <1, theta >150 or < 30 
+                selected_pairs_boresch = []
+                for pair in pairs_ordered_boresch_var:
+                    cond_dist = boresch_dof_dict[pair]["r"]["avg"] > 1
+                    avg_angles =[]
+                    #angles = ["thetaA", "thetaB", "thetaR","thetaL"] # also check internal angles
+                    angles = ["thetaA", "thetaB"] # May also be good to check internal angles
+                    for angle in angles:
+                        avg_angles.append(boresch_dof_dict[pair][angle]["avg"])
+                    cond_angles = list(map(lambda x: (x<2.62 and x >0.52),avg_angles))
+                    if cond_dist and all(cond_angles):
+                        selected_pairs_boresch.append(pair)
+
+                # Print out Boresch parameters
+                def print_boresch_params(pair):
+                    l1 = boresch_dof_dict[pair]["anchor_ats"][0]
+                    l2 = boresch_dof_dict[pair]["anchor_ats"][1]
+                    l3 = boresch_dof_dict[pair]["anchor_ats"][2]
+                    r1 = boresch_dof_dict[pair]["anchor_ats"][3]
+                    r2 = boresch_dof_dict[pair]["anchor_ats"][4]
+                    r3 = boresch_dof_dict[pair]["anchor_ats"][5]
+                    r0 = boresch_dof_dict[pair]["r"]["avg"]
+                    thetaA0 = boresch_dof_dict[pair]["thetaA"]["avg"]
+                    thetaB0 = boresch_dof_dict[pair]["thetaB"]["avg"]
+                    phiA0 = boresch_dof_dict[pair]["phiA"]["avg"]
+                    phiB0 = boresch_dof_dict[pair]["phiB"]["avg"]
+                    phiC0 = boresch_dof_dict[pair]["phiC"]["avg"]
+                    kr = boresch_dof_dict[pair]["r"]["k"]
+                    kthetaA = boresch_dof_dict[pair]["thetaA"]["k"]
+                    kthetaB = boresch_dof_dict[pair]["thetaB"]["k"]
+                    kphiA = boresch_dof_dict[pair]["phiA"]["k"]
+                    kphiB = boresch_dof_dict[pair]["phiB"]["k"]
+                    kphiC = boresch_dof_dict[pair]["phiC"]["k"]
+
+                    print(f'{{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, "l2":{l2}, "l3":{l3}}},\
+                    "equilibrium_values":{{"r0":{r0:.2f}, "thetaA0":{thetaA0:.2f}, "thetaB0":{thetaB0:.2f},"phiA0":{phiA0:.2f}, "phiB0":{phiB0:.2f}, "phiC0":{phiC0:.2f}}},\
+                    "force_constants":{{"kr":{kr:.2f}, "kthetaA":{kthetaA:.2f}, "kthetaB":{kthetaB:.2f}, "kphiA":{kphiA:.2f}, "kphiB":{kphiB:.2f}, "kphiC":{kphiC:.2f}}}}}')
+
+                print_boresch_params(selected_pairs_boresch[0])
 
         def getLowVariancePairs():
             pass
@@ -425,7 +712,9 @@ class RestraintSearch():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return RestraintSearch.analyse(self._work_dir, rest_type=rest_type, 
+        return RestraintSearch.analyse(self._work_dir, self._system,
+                self._process.getTrajectory(),
+                rest_type=rest_type, 
                 method=method,
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
