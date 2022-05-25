@@ -41,3 +41,4 @@ Functions
 """
 
 from ._align import *
+from ._decouple import decouple
