@@ -120,3 +120,25 @@ def test_neg_pow(unit_type):
     # Each dimension entry should be the inverse of the old value.
     for d0, d1 in zip(old_dimensions, new_dimensions):
         assert d1 == -d0
+
+@pytest.mark.parametrize("string",
+        ["degree",
+         "meters2",
+         "coulombs",
+         "kJ_per_mol",
+         "nanometer",
+         "bar",
+         "fahrenheit",
+         "days",
+         "picometers**3"
+        ])
+def test_dimensionless(string):
+    """Test that GeneralUnit objects convert to dimensionless float values
+       when divided by themself.
+    """
+
+    # Try to create the GeneralUnit from the string.
+    general_unit = Types._GeneralUnit(string)
+
+    # Check that we get back a float when divided by itself.
+    assert isinstance(general_unit / general_unit, float)
