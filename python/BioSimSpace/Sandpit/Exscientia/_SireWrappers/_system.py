@@ -181,6 +181,16 @@ class System(_SireWrapper):
         # Return the new system.
         return system
 
+    def __contains__(self, other):
+        """Return whether other is in self."""
+
+        if not isinstance(other, (_Molecule, _Atom, _Residue)):
+            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                            "'BioSimSpace._SireWrappers.Atom', or 'BioSimSpace._SireWrappers.Residue'.")
+
+        # Return whether the object is in the system.
+        return self._sire_object.contains(other._sire_object.molecule())
+
     def __getitem__(self, key):
         """Get a molecule from the system."""
 
