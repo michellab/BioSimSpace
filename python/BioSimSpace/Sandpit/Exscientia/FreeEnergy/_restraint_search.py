@@ -27,7 +27,7 @@ simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Restraint"]
+__all__ = ["RestraintSearch"]
 
 from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
@@ -91,7 +91,7 @@ if not _os.path.isfile(_analyse_freenrg):
 if _sys.platform == "win32":
     _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
-class Restraint():
+class RestraintSearch():
     """Class for running unrestrained simulations from which receptor-ligand 
     restraints are selected"""
 
@@ -99,7 +99,7 @@ class Restraint():
     _engines = ["AMBER", "GROMACS", "SOMD"]
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            gpu_support=False, setup_only=False, ignore_warnings=False,
+            gpu_support=False, ignore_warnings=False,
             show_errors=True, extra_options=None, extra_lines=None,
             property_map={}):
         """Constructor.
@@ -126,13 +126,6 @@ class Restraint():
 
            gpu_support : bool
                Whether the engine must have GPU support.
-
-           setup_only: bool
-               Whether to only support simulation setup. If True, then no
-               simulation processes objects will be created, only the directory
-               hierarchy and input files to run a simulation externally. This
-               can be useful when you don't intend to use BioSimSpace to run
-               the simulation. Note that a 'work_dir' must also be specified.
 
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file.
@@ -165,10 +158,10 @@ class Restraint():
             self._system = system.copy()
 
         if protocol is not None:
-            if isinstance(protocol, _Protocol.Equilibration):
+            if isinstance(protocol, _Protocol.Production):
                 self._protocol = protocol
             else:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Equilibration'")
+                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Production'")
         else:
             # Use a default protocol.
             self._protocol = _Protocol.Equilibration()
@@ -183,8 +176,6 @@ class Restraint():
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
-            if setup_only:
-                raise ValueError("A 'work_dir' must be specified when 'setup_only' is True!")
             self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
@@ -293,9 +284,9 @@ class Restraint():
         return self._work_dir
 
     @staticmethod
-    def analyse(work_dir, rest_type='Boresch', percent_traj=100,
-                lig_selection="resname LIG and not name H*",
-                recept_selection="protein and not name H*",
+    def analyse(work_dir, rest_type='Boresch', 
+                append_to_lig_selection="resname LIG and not name H*",
+                append_to_recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
@@ -311,18 +302,21 @@ class Restraint():
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
 
-           percent_traj: float
-               The final percentage of the trajectory to use for selection of the
-               restraints. The first 100 - percent_traj % of the trajectory is discarded.
-               Default is 100.
+           append_to_lig_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the ligand to consider as potential anchor points. The default
+               atom selection is f'resname {ligand_resname} and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name O*' will result
+               in an atom selection of f'resname {ligand_resname} and not name H* and not 
+               name O*'.
 
-           lig_selection: str
-               The atoms in the ligand to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
-
-           recept_selection: str
-               The atoms in the receptor to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_recept_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the receptor to consider as potential anchor points. The default
+               atom selection is 'protein and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name N*' will result
+               in an atom selection of 'protein and not name H* and not 
+               name N*'.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -332,9 +326,9 @@ class Restraint():
            Returns
            -------
 
-           restraint : dict
-               Dictionary containing the information required to set up the restraints.
-               #TODO Decide on format for restraints dictionary
+           restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
+               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               interactions.
 
            normal_frame : :class:`System <BioSimSpace._SireWrappers.System>`
                The configuration of the system with the lowest restraint energy
@@ -365,7 +359,7 @@ class Restraint():
         # 
         # Could also have e.g. restrainedDOF_obj.plot()
 
-    def _analyse(self, rest_type='Boresch', percent_traj=100,
+    def _analyse(self, rest_type='Boresch', 
                 lig_selection="resname LIG and not name H*",
                 recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -379,18 +373,21 @@ class Restraint():
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
 
-           percent_traj: float
-               The final percentage of the trajectory to use for selection of the
-               restraints. The first 100 - percent_traj % of the trajectory is discarded.
-               Default is 100.
+           append_to_lig_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the ligand to consider as potential anchor points. The default
+               atom selection is f'resname {ligand_resname} and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name O*' will result
+               in an atom selection of f'resname {ligand_resname} and not name H* and not 
+               name O*'.
 
-           lig_selection: str
-               The atoms in the ligand to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
-
-           recept_selection: str
-               The atoms in the receptor to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_recept_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the receptor to consider as potential anchor points. The default
+               atom selection is 'protein and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name N*' will result
+               in an atom selection of 'protein and not name H* and not 
+               name N*'.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -400,19 +397,18 @@ class Restraint():
            Returns
            -------
 
-           restraint : dict
-               Dictionary containing the information required to set up the restraints.
-               #TODO Decide on format for restraints dictionary
+           restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
+               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               interactions.
 
            normal_frame : :class:`System <BioSimSpace._SireWrappers.System>`
                The configuration of the system with the lowest restraint energy
-               observed during the final percent_traj % of the trajectory.
+               observed during the trajectory.
         """
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Restraint.analyse(self._work_dir, rest_type=rest_type, 
-                percent_traj=percent_traj,
+        return RestraintSearch.analyse(self._work_dir, rest_type=rest_type, 
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
                 cutoff=cutoff) 
@@ -428,4 +424,36 @@ class Restraint():
                The molecular system.
 
         """
-        pass
+
+        # Convert to an appropriate AMBER topology. (Required by SOMD for its
+        # FEP setup.)
+        if self._engine == "SOMD":
+            system._set_water_topology("AMBER", property_map=self._property_map)
+
+        # Setup all of the simulation processes.
+
+        # SOMD.
+        if self._engine == "SOMD":
+            # Check for GPU support.
+            if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                platform = "CUDA"
+            else:
+                platform = "CPU"
+
+            self._process = _Process.Somd(system, self._protocol,
+                platform=platform, work_dir=self._work_dir,
+                property_map=self._property_map, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
+
+        # GROMACS.
+        elif self._engine == "GROMACS":
+            self._process = _Process.Gromacs(system, self._protocol,
+                work_dir=self._work_dir, ignore_warnings=self._ignore_warnings,
+                show_errors=self._show_errors, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
+
+        # AMBER.
+        elif self._engine == "AMBER":
+            self._process = _Process.Amber(system, self._protocol, exe=self._exe,
+                work_dir=self._work_dir, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
