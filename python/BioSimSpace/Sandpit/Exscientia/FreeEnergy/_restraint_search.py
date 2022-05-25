@@ -335,9 +335,9 @@ class RestraintSearch():
            Returns
            -------
 
-           restraint : dict
-               Dictionary containing the information required to set up the restraints.
-               #TODO Decide on format for restraints dictionary
+           restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
+               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               interactions.
 
            normal_frame : :class:`System <BioSimSpace._SireWrappers.System>`
                The configuration of the system with the lowest restraint energy
@@ -406,13 +406,13 @@ class RestraintSearch():
            Returns
            -------
 
-           restraint : dict
-               Dictionary containing the information required to set up the restraints.
-               #TODO Decide on format for restraints dictionary
+           restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
+               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               interactions.
 
            normal_frame : :class:`System <BioSimSpace._SireWrappers.System>`
                The configuration of the system with the lowest restraint energy
-               observed during the final percent_traj % of the trajectory.
+               observed during the trajectory.
         """
 
         # Return the result of calling the staticmethod, passing in the working
