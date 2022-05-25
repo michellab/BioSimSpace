@@ -502,8 +502,7 @@ class ConfigFactory:
             protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["fep-lambdas"] = " ".join(protocol)                       # Lambda values.
-            lam = self.protocol.getLambda()
-            idx = self.protocol.getLambdaValues().index(lam)
+            idx = self._protocol.getLambdaIndex()
             protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
             protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
             protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.

@@ -207,6 +207,17 @@ class FreeEnergy(_Protocol):
         """
         return self._lambda
 
+    def getLambdaIndex(self):
+        """Get the index of the lambda value within the lambda array.
+
+           Returns
+           -------
+
+           index : int
+               The index of the lambda value in teh lambda array.
+        """
+        return self._lambda_vals.index(self._lambda)
+
     def getLambdaValues(self):
         """Get the list of lambda values.
 
