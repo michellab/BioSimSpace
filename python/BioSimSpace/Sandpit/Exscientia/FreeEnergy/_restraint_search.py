@@ -293,7 +293,7 @@ class Restraint():
         return self._work_dir
 
     @staticmethod
-    def analyse(work_dir, rest_type='Boresch', percent_traj=100,
+    def analyse(work_dir, rest_type='Boresch', 
                 lig_selection="resname LIG and not name H*",
                 recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -310,11 +310,6 @@ class Restraint():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
-
-           percent_traj: float
-               The final percentage of the trajectory to use for selection of the
-               restraints. The first 100 - percent_traj % of the trajectory is discarded.
-               Default is 100.
 
            lig_selection: str
                The atoms in the ligand to consider as potential anchor points. Uses the
@@ -365,7 +360,7 @@ class Restraint():
         # 
         # Could also have e.g. restrainedDOF_obj.plot()
 
-    def _analyse(self, rest_type='Boresch', percent_traj=100,
+    def _analyse(self, rest_type='Boresch', 
                 lig_selection="resname LIG and not name H*",
                 recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -378,11 +373,6 @@ class Restraint():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
-
-           percent_traj: float
-               The final percentage of the trajectory to use for selection of the
-               restraints. The first 100 - percent_traj % of the trajectory is discarded.
-               Default is 100.
 
            lig_selection: str
                The atoms in the ligand to consider as potential anchor points. Uses the
@@ -412,7 +402,6 @@ class Restraint():
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return Restraint.analyse(self._work_dir, rest_type=rest_type, 
-                percent_traj=percent_traj,
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
                 cutoff=cutoff) 
