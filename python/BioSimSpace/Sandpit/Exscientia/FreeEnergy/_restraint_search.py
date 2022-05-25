@@ -91,7 +91,7 @@ if not _os.path.isfile(_analyse_freenrg):
 if _sys.platform == "win32":
     _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
 
-class Restraint():
+class RestraintSearch():
     """Class for running unrestrained simulations from which receptor-ligand 
     restraints are selected"""
 
@@ -294,8 +294,8 @@ class Restraint():
 
     @staticmethod
     def analyse(work_dir, rest_type='Boresch', 
-                lig_selection="resname LIG and not name H*",
-                recept_selection="protein and not name H*",
+                append_to_lig_selection="resname LIG and not name H*",
+                append_to_recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
@@ -311,13 +311,21 @@ class Restraint():
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
 
-           lig_selection: str
-               The atoms in the ligand to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_lig_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the ligand to consider as potential anchor points. The default
+               atom selection is f'resname {ligand_resname} and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name O*' will result
+               in an atom selection of f'resname {ligand_resname} and not name H* and not 
+               name O*'.
 
-           recept_selection: str
-               The atoms in the receptor to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_recept_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the receptor to consider as potential anchor points. The default
+               atom selection is 'protein and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name N*' will result
+               in an atom selection of 'protein and not name H* and not 
+               name N*'.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -374,13 +382,21 @@ class Restraint():
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
 
-           lig_selection: str
-               The atoms in the ligand to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_lig_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the ligand to consider as potential anchor points. The default
+               atom selection is f'resname {ligand_resname} and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name O*' will result
+               in an atom selection of f'resname {ligand_resname} and not name H* and not 
+               name O*'.
 
-           recept_selection: str
-               The atoms in the receptor to consider as potential anchor points. Uses the
-               mdanalysis atom selection language.
+           append_to_recept_selection: str
+               Appends the supplied string to the default atom selection which chooses
+               the atoms in the receptor to consider as potential anchor points. The default
+               atom selection is 'protein and not name H*'. Uses the
+               mdanalysis atom selection language. For example, 'not name N*' will result
+               in an atom selection of 'protein and not name H* and not 
+               name N*'.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -401,7 +417,7 @@ class Restraint():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Restraint.analyse(self._work_dir, rest_type=rest_type, 
+        return RestraintSearch.analyse(self._work_dir, rest_type=rest_type, 
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
                 cutoff=cutoff) 
