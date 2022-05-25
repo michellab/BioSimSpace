@@ -27,7 +27,7 @@ simulations.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Restraint"]
+__all__ = ["RestraintSearch"]
 
 from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
@@ -165,10 +165,10 @@ class Restraint():
             self._system = system.copy()
 
         if protocol is not None:
-            if isinstance(protocol, _Protocol.Equilibration):
+            if isinstance(protocol, _Protocol.Production):
                 self._protocol = protocol
             else:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Equilibration'")
+                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Production'")
         else:
             # Use a default protocol.
             self._protocol = _Protocol.Equilibration()
