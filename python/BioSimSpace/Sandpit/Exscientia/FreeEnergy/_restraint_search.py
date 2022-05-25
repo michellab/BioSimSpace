@@ -81,6 +81,8 @@ from ..MD._md import _find_md_engines
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
+from ._restraint import Restraint
+
 # Check that the analyse_freenrg script exists.
 if _sys.platform != "win32":
     _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
@@ -334,7 +336,25 @@ class RestraintSearch():
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # TODO Implement checks on other inputs
+        if not isinstance(rest_type, str):
+            raise TypeError("'rest_type' must be of type 'str'.")
+        if not rest_type.lower() == 'boresch':
+            raise NotImplementedError("Only Boresch restraints are currently implemented")
+        
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        if not method.lower() == 'mdrestraintsgenerator':
+            raise NotImplementedError("Deriving restraints using MDRestraintsGenerator is"
+                                      "the only option currently implemented.")
+                            
+        if not isinstance(append_to_lig_selection, str):
+            raise TypeError("'append_to_lig_selection' must be of type 'str'.")
+
+        if not isinstance(append_to_recept_selection, str):
+            raise TypeError("'append_to_recept_selection' must be of type 'str'.")
+        
+        if not isinstance(cutoff, (int, float)):
+            raise TypeError("'cutoff' must be of type 'int' or 'float'.")
 
         # TODO Implement analysis. Outline of functions required
 
