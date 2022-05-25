@@ -64,3 +64,59 @@ def test_default_conversion(string, default_unit):
 
     # Assert that units match.
     assert general_unit.unit() == default_unit.unit()
+
+@pytest.mark.parametrize("unit_type",
+        [Units.Angle.radian,
+         Units.Area.angstrom2,
+         Units.Charge.electron_charge,
+         Units.Energy.kcal_per_mol,
+         Units.Length.angstrom,
+         Units.Pressure.atm,
+         Units.Temperature.kelvin,
+         Units.Time.nanosecond,
+         Units.Volume.angstrom3
+        ])
+def test_pos_pow(unit_type):
+    """Test that unit-based types can be raised to positive powers.
+    """
+
+    # Store the dimensions associated with the original type.
+    old_dimensions = unit_type.dimensions()
+
+    # Square the unit-based type.
+    unit_type = unit_type**2
+
+    # Store the new dimensions.
+    new_dimensions = unit_type.dimensions()
+
+    # Each dimension entry should be twice the old value.
+    for d0, d1 in zip(old_dimensions, new_dimensions):
+        assert d1 == 2*d0
+
+@pytest.mark.parametrize("unit_type",
+        [Units.Angle.radian,
+         Units.Area.angstrom2,
+         Units.Charge.electron_charge,
+         Units.Energy.kcal_per_mol,
+         Units.Length.angstrom,
+         Units.Pressure.atm,
+         Units.Temperature.kelvin,
+         Units.Time.nanosecond,
+         Units.Volume.angstrom3
+        ])
+def test_neg_pow(unit_type):
+    """Test that unit-based types can be raised to negative powers.
+    """
+
+    # Store the dimensions associated with the original type.
+    old_dimensions = unit_type.dimensions()
+
+    # Invert the unit-based type.
+    unit_type = unit_type**-1
+
+    # Store the new dimensions.
+    new_dimensions = unit_type.dimensions()
+
+    # Each dimension entry should be the inverse of the old value.
+    for d0, d1 in zip(old_dimensions, new_dimensions):
+        assert d1 == -d0
