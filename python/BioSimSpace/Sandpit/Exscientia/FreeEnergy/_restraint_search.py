@@ -274,6 +274,7 @@ class RestraintSearch():
 
     @staticmethod
     def analyse(work_dir, rest_type='Boresch', 
+                method='MDRestraintsGenerator',         
                 append_to_lig_selection="resname LIG and not name H*",
                 append_to_recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -290,6 +291,10 @@ class RestraintSearch():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
+           
+           method: str
+               The method to use to derive the restraints. Currently only MDRestraintsGenerator 
+               is supported.
 
            append_to_lig_selection: str
                Appends the supplied string to the default atom selection which chooses
@@ -347,6 +352,7 @@ class RestraintSearch():
         # best_restraints = restrainedDOF_obj.getOptimalParams(...)
 
     def _analyse(self, rest_type='Boresch', 
+                method='MDRestraintsGenerator',         
                 lig_selection="resname LIG and not name H*",
                 recept_selection="protein and not name H*",
                 cutoff=10): # In Angstrom
@@ -359,6 +365,10 @@ class RestraintSearch():
            rest_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is Boresch.
+
+           method: str
+               The method to use to derive the restraints. Currently only MDRestraintsGenerator 
+               is supported.
 
            append_to_lig_selection: str
                Appends the supplied string to the default atom selection which chooses
@@ -396,6 +406,7 @@ class RestraintSearch():
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return RestraintSearch.analyse(self._work_dir, rest_type=rest_type, 
+                method=method,
                 lig_selection=lig_selection,
                 recept_selection=recept_selection,
                 cutoff=cutoff) 
