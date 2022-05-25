@@ -169,11 +169,6 @@ class RestraintSearch():
         self._extra_options = extra_options if extra_options is not None else {}
         self._extra_lines = extra_lines if extra_lines is not None else []
 
-        if not isinstance(setup_only, bool):
-            raise TypeError("'setup_only' must be of type 'bool'.")
-        else:
-            self._setup_only = setup_only
-
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
             self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -256,17 +251,11 @@ class RestraintSearch():
 
     def start(self):
         """Start the simulation."""
-        if self._setup_only:
-            _warnings.warn("No process exists! Object created in 'setup_only' mode.")
-        else:
-            self._process.start()
+        self._process.start()
 
     def wait(self):
         """Wait for the simulation to finish."""
-        if self._setup_only:
-            _warnings.warn("No processes exist! Object created in 'setup_only' mode.")
-        else:
-            self._process.wait()
+        self._process.wait()
 
     def kill(self):
         """Kill the process."""
@@ -356,8 +345,6 @@ class RestraintSearch():
         # anchors = getBoreschAnchors(low_var_pairs, ...)
         # restrainedDOF_obj = restrainedDOF(anchors=anchors, rest_type="Boresch", ...)
         # best_restraints = restrainedDOF_obj.getOptimalParams(...)
-        # 
-        # Could also have e.g. restrainedDOF_obj.plot()
 
     def _analyse(self, rest_type='Boresch', 
                 lig_selection="resname LIG and not name H*",
