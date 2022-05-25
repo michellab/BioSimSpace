@@ -217,10 +217,6 @@ class RestraintSearch():
                     _warnings.warn(f"Multiple AMBER engines were found. Proceeding with {exes[0]}...")
                 self._exe = exes[0]
 
-                if self._protocol.getPerturbationType() != "full":
-                    raise NotImplementedError("AMBER currently only supports the 'full' perturbation "
-                                              "type. Please use engine='SOMD' when running multistep "
-                                              "perturbation types.")
         else:
             # Use SOMD as a default.
             engine = "SOMD"
