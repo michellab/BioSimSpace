@@ -99,7 +99,7 @@ class RestraintSearch():
     _engines = ["AMBER", "GROMACS", "SOMD"]
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            gpu_support=False, setup_only=False, ignore_warnings=False,
+            gpu_support=False, ignore_warnings=False,
             show_errors=True, extra_options=None, extra_lines=None,
             property_map={}):
         """Constructor.
@@ -126,13 +126,6 @@ class RestraintSearch():
 
            gpu_support : bool
                Whether the engine must have GPU support.
-
-           setup_only: bool
-               Whether to only support simulation setup. If True, then no
-               simulation processes objects will be created, only the directory
-               hierarchy and input files to run a simulation externally. This
-               can be useful when you don't intend to use BioSimSpace to run
-               the simulation. Note that a 'work_dir' must also be specified.
 
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file.
@@ -183,8 +176,6 @@ class RestraintSearch():
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
-            if setup_only:
-                raise ValueError("A 'work_dir' must be specified when 'setup_only' is True!")
             self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
@@ -433,4 +424,36 @@ class RestraintSearch():
                The molecular system.
 
         """
-        pass
+
+        # Convert to an appropriate AMBER topology. (Required by SOMD for its
+        # FEP setup.)
+        if self._engine == "SOMD":
+            system._set_water_topology("AMBER", property_map=self._property_map)
+
+        # Setup all of the simulation processes.
+
+        # SOMD.
+        if self._engine == "SOMD":
+            # Check for GPU support.
+            if "CUDA_VISIBLE_DEVICES" in _os.environ:
+                platform = "CUDA"
+            else:
+                platform = "CPU"
+
+            self._process = _Process.Somd(system, self._protocol,
+                platform=platform, work_dir=self._work_dir,
+                property_map=self._property_map, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
+
+        # GROMACS.
+        elif self._engine == "GROMACS":
+            self._process = _Process.Gromacs(system, self._protocol,
+                work_dir=self._work_dir, ignore_warnings=self._ignore_warnings,
+                show_errors=self._show_errors, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
+
+        # AMBER.
+        elif self._engine == "AMBER":
+            self._process = _Process.Amber(system, self._protocol, exe=self._exe,
+                work_dir=self._work_dir, extra_options=self._extra_options,
+                extra_lines=self._extra_lines)
