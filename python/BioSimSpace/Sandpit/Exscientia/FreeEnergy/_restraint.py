@@ -44,30 +44,15 @@ class Restraint():
     Dihedrals: r3-r2-r1-l1 (phiA0, kphiA), r2-r1-l1-l2 (phiB0, kphiB), r1-l1-l2-l3 (phiC0, kphiC)
 
     '''
-    def __init__(self, system, restraint_dict, type='Boresch'):
-        if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
-        else:
-            # Store a copy of solvated system.
-            self._system = system.copy()
-
-        if type.lower() == 'boresch':
-            self.type = 'boresch'
+    def __init__(self, system, restraint_dict, rest_type='Boresch'):
+        if rest_type.lower() == 'boresch':
+            self.rest_type = 'boresch'
             # Test if the atoms are of BioSimSpace._SireWrappers.Atom
             for key in ['r3', 'r2', 'r1', 'l1', 'l2', 'l3']:
                 if not isinstance(restraint_dict['anchor_points'][key], Atom):
                     raise ValueError(f"restraint_dict['anchor_points']['{key}'] "
                                      f"must be of type "
                                      f"'BioSimSpace._SireWrappers.Atom'")
-
-            # Check if the ligand atoms are decoupled.
-            # Find the decoupled molecule, assume that only one can be
-            # decoupled.
-            (decoupled_mol, ) = system.getDecoupledMolecules()
-            for key in ['l1', 'l2', 'l3']:
-                atom = restraint_dict['anchor_points'][key]
-                if not atom._sire_object.molecule().number() == decoupled_mol._sire_object.number():
-                    raise ValueError(f'The ligand atom {key} is not from decoupled moleucle.')
 
             # Test if the equilibrium length of the bond r1-l1 is a length unit
             # Such as angstrom or nanometer
@@ -99,132 +84,134 @@ class Restraint():
                     raise ValueError(
                         f"restraint_dict['force_constants']['{key}'] must be of type "
                         f"'BioSimSpace.Types.Energy'/'BioSimSpace.Types.Angle^2'")
-
-            self._content = restraint_dict
-
         else:
             raise NotImplementedError(f'Restraint type {type} not implemented '
                                       f'yet. Only boresch restraint is supported.')
+
+        self._content = restraint_dict
+        self.update_system(system)
+
+    def update_system(self, system):
+        '''Update the system object.'''
+        if not isinstance(system, _System):
+            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+        else:
+            if self.rest_type == 'boresch':
+                # Check if the ligand atoms are decoupled.
+                # Find the decoupled molecule, assume that only one can be
+                # decoupled.
+                (decoupled_mol,) = system.getDecoupledMolecules()
+                for key in ['l1', 'l2', 'l3']:
+                    atom = self._content['anchor_points'][key]
+                    if not atom._sire_object.molecule().number() == decoupled_mol._sire_object.number():
+                        raise ValueError(
+                            f'The ligand atom {key} is not from decoupled moleucle.')
+
+            # Store a copy of solvated system.
+            self._system = system.copy()
 
     def toString(self, engine='Gromacs'):
         '''The method for convert the restraint to a format that could be used
         by MD Engines'''
         if engine.lower() == 'gromacs':
-            if self.type == 'boresch':
+            if self.rest_type == 'boresch':
+                # Format the atoms into index list
+                def format_index(key_list):
+                    formated_index = []
+                    for key in key_list:
+                        formated_index.append('{:<10}'.format(
+                            self._system.getIndex(
+                                self._content['anchor_points'][key]) + 1))
+                    return ' '.join(formated_index)
+
+                parameters_string = '{eq0:<10} {fc0:<10} {eq1:<10} {fc1:<10}'
+                # Format the parameters for the bonds
+                def format_bond(equilibrium_values, force_constants):
+                    converted_equ_val = \
+                    self._content['equilibrium_values'][equilibrium_values] / nanometer
+                    converted_fc = \
+                        (self._content['force_constants'][force_constants] / (kj_per_mol / nanometer ** 2)).value()
+                    return parameters_string.format(
+                        eq0='{:.3f}'.format(converted_equ_val),
+                        fc0='{:.2f}'.format(0),
+                        eq1='{:.3f}'.format(converted_equ_val),
+                        fc1='{:.2f}'.format(converted_fc),
+                    )
+
+                # Format the parameters for the angles and dihedrals
+                def format_angle(equilibrium_values, force_constants):
+                    converted_equ_val = \
+                        self._content['equilibrium_values'][equilibrium_values] / degree
+                    converted_fc = \
+                        (self._content['force_constants'][force_constants] / (kj_per_mol / radian * radian)).value()
+                    return parameters_string.format(
+                        eq0='{:.3f}'.format(converted_equ_val),
+                        fc0='{:.2f}'.format(0),
+                        eq1='{:.3f}'.format(converted_equ_val),
+                        fc1='{:.2f}'.format(converted_fc),
+                    )
+
+                # basic format of the Gromacs string
+                master_string = '  {index} {func_type} {parameters}'
+
+                def write_bond(key_list, equilibrium_values, force_constants):
+                    return master_string.format(
+                        index=format_index(key_list),
+                        func_type=6,
+                        parameters=format_bond(equilibrium_values,
+                                               force_constants),
+                    )
+
+                def write_angle(key_list, equilibrium_values, force_constants):
+                    return master_string.format(
+                        index=format_index(key_list),
+                        func_type=1,
+                        parameters=format_angle(equilibrium_values,
+                                               force_constants),
+                        )
+
+                def write_dihedral(key_list, equilibrium_values, force_constants):
+                    return master_string.format(
+                        index=format_index(key_list),
+                        func_type=2,
+                        parameters=format_angle(equilibrium_values,
+                                                   force_constants),
+                        )
+
+                # Writing the string
                 output = ['[ intermolecular_interactions ]',]
+
                 output.append('[ bonds ]')
                 output.append('#;ai         aj      type bA         kA         bB         kB')
-                bond_string = '  {idx_0:<10} {idx_1:<10} 6 {eq0:<10} {fc0:<10} {eq1:<10} {fc1:<10}'
                 # Bonds: r1-l1 (r0, kr)
-                output.append(bond_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    eq0='{:.3f}'.format(
-                        (self._content['equilibrium_values']['r0'] / nanometer)),
-                    fc0='{:.2f}'.format(0),
-                    eq1='{:.3f}'.format(
-                        (self._content['equilibrium_values']['r0'] / nanometer)),
-                    fc1='{:.2f}'.format(
-                        (self._content['force_constants']['kr'] / (kj_per_mol / nanometer ** 2)).value()),
-                ))
+                output.append(
+                    write_bond(('r1', 'l1'), 'r0', 'kr'))
+
                 output.append('[ angles ]')
                 output.append('#;ai         aj         ak      type thA        fcA        thB        fcB')
-                angle_string = '  {idx_0:<10} {idx_1:<10} {idx_2:<10} 1 {thA:<10} {fcA:<10} {thB:<10} {fcB:<10}'
                 # Angles: r2-r1-l1 (thetaA0, kthetaA)
-                output.append(angle_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r2']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_2=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    thA='{:.3f}'.format(
-                        (self._content['equilibrium_values']['thetaA0'] / degree)),
-                    fcA='{:.2f}'.format(0),
-                    thB='{:.3f}'.format(
-                        (self._content['equilibrium_values']['thetaA0'] / degree)),
-                    fcB='{:.2f}'.format(
-                        (self._content['force_constants']['kthetaA'] / (kj_per_mol / radian * radian)).value()),
-                ))
+                output.append(
+                    write_angle(('r2', 'r1', 'l1'), 'thetaA0', 'kthetaA'))
                 # Angles: r1-l1-l2 (thetaB0, kthetaB)
-                output.append(angle_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    idx_2=self._system.getIndex(
-                        self._content['anchor_points']['l2']) + 1,
-                    thA='{:.3f}'.format(
-                        (self._content['equilibrium_values']['thetaB0'] / degree)),
-                    fcA='{:.2f}'.format(0),
-                    thB='{:.3f}'.format(
-                        (self._content['equilibrium_values']['thetaB0'] / degree)),
-                    fcB='{:.2f}'.format(
-                        (self._content['force_constants']['kthetaB'] / (kj_per_mol / radian * radian)).value()),
-                ))
+                output.append(
+                    write_angle(('r1', 'l1', 'l2'), 'thetaB0', 'kthetaB'))
+
                 output.append('[ dihedrals ]')
                 output.append('#;ai         aj         ak         al      type phiA       fcA        phiB       fcB')
-                dihedral_string = '  {idx_0:<10} {idx_1:<10} {idx_2:<10} {idx_3:<10} 2 {phiA:<10} {fcA:<10} {phiB:<10} {fcB:<10}'
                 # Dihedrals: r3-r2-r1-l1 (phiA0, kphiA)
-                output.append(dihedral_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r3']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['r2']) + 1,
-                    idx_2=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_3=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    phiA='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiA0'] / degree)),
-                    fcA='{:.2f}'.format(0),
-                    phiB='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiA0'] / degree)),
-                    fcB='{:.2f}'.format(
-                        (self._content['force_constants']['kphiA'] / (kj_per_mol / radian * radian)).value()),
-                ))
+                output.append(
+                    write_dihedral(('r3', 'r2', 'r1', 'l1'), 'phiA0', 'kphiA'))
                 # Dihedrals: r2-r1-l1-l2 (phiB0, kphiB)
-                output.append(dihedral_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r2']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_2=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    idx_3=self._system.getIndex(
-                        self._content['anchor_points']['l2']) + 1,
-                    phiA='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiB0'] / degree)),
-                    fcA='{:.2f}'.format(0),
-                    phiB='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiB0'] / degree)),
-                    fcB='{:.2f}'.format(
-                        (self._content['force_constants']['kphiB'] / (kj_per_mol / radian * radian)).value()),
-                ))
+                output.append(
+                    write_dihedral(('r2', 'r1', 'l1', 'l2'), 'phiB0', 'kphiB'))
                 # Dihedrals: r1-l1-l2-l3 (phiC0, kphiC)
-                output.append(dihedral_string.format(
-                    idx_0=self._system.getIndex(
-                        self._content['anchor_points']['r1']) + 1,
-                    idx_1=self._system.getIndex(
-                        self._content['anchor_points']['l1']) + 1,
-                    idx_2=self._system.getIndex(
-                        self._content['anchor_points']['l2']) + 1,
-                    idx_3=self._system.getIndex(
-                        self._content['anchor_points']['l3']) + 1,
-                    phiA='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiC0'] / degree)),
-                    fcA='{:.2f}'.format(0),
-                    phiB='{:.3f}'.format(
-                        (self._content['equilibrium_values']['phiC0'] / degree)),
-                    fcB='{:.2f}'.format(
-                        (self._content['force_constants']['kphiC'] / (kj_per_mol / radian * radian)).value()),
-                ))
+                output.append(
+                    write_dihedral(('r1', 'l1', 'l2', 'l3'),'phiC0', 'kphiC'))
+
                 return '\n'.join(output)
             else:
                 raise NotImplementedError(
-                    f'Restraint type {self.type} not implemented '
+                    f'Restraint type {self.rest_type} not implemented '
                     f'yet. Only boresch restraint is supported.')
         else:
             raise NotImplementedError(f'MD Engine {engine} not implemented '

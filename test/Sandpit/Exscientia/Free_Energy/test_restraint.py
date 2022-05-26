@@ -43,7 +43,7 @@ def restraint():
                            "kphiA":10 * kcal_per_mol / (radian * radian),
                            "kphiB":10 * kcal_per_mol / (radian * radian),
                            "kphiC":10 * kcal_per_mol / (radian * radian)}}
-    restraint = Restraint(system, restraint_dict, type='Boresch')
+    restraint = Restraint(system, restraint_dict, rest_type='Boresch')
     return restraint
 
 def test_sanity(restraint):
