@@ -557,12 +557,11 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Extract the lambda value and array.
-            lam = self._protocol.getLambda()
+            # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
 
             # Determine the index of the lambda value.
-            idx = lam_vals.index(lam)
+            idx = self._protocol.getLambdaIndex()
 
             # Free energy parameters.
             config.append("free-energy = yes")              # Free energy simulation.

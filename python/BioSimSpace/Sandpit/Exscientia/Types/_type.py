@@ -203,6 +203,22 @@ class Type():
         # Multiplication is commutative: a*b = b*a
         return self.__mul__(other)
 
+    def __pow__(self, other):
+        """Power operator."""
+
+        if not isinstance(other, int):
+            raise ValueError("We can only raise to the power of integer values.")
+
+        from ._general_unit import GeneralUnit as _GeneralUnit
+        default_unit = self._to_default_unit()
+        mag = default_unit.value()**other
+        unit = default_unit.unit().lower()
+        pow_to_mul = "*".join(abs(other)*[unit])
+        if other > 0:
+            return _GeneralUnit(f"{mag}*{pow_to_mul}")
+        else:
+            return _GeneralUnit(f"{mag}/({pow_to_mul})")
+
     def __truediv__(self, other):
         """Division operator."""
 

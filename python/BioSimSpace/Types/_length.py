@@ -178,9 +178,6 @@ class Length(_Type):
         if not isinstance(other, int):
             raise ValueError("We can only raise to the power of integer values.")
 
-        if other < 1 or other > 3:
-            raise ValueError("We can only raise to the power of [1,3].")
-
         # No change.
         if other == 1:
             return self
@@ -194,6 +191,9 @@ class Length(_Type):
         if other == 3:
             mag = self.angstroms().value()**3
             return _Volume(mag, "A3")
+
+        else:
+            return super().__pow__(other)
 
     def meters(self):
         """Return the length in meters.
