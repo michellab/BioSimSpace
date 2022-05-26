@@ -142,3 +142,13 @@ def test_dimensionless(string):
 
     # Check that we get back a float when divided by itself.
     assert isinstance(general_unit / general_unit, float)
+
+def test_dimensionless_value():
+    """Check that conversion to a dimensionless unit preserves the value
+       of the unit conversion.
+    """
+
+    value = (Units.Energy.kcal_per_mol / Units.Length.angstrom**2) / \
+            (Units.Energy.kj_per_mol / Units.Length.nanometer**2)
+
+    assert value == pytest.approx(418.4)
