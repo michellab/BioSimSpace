@@ -163,6 +163,16 @@ class Molecule(_SireWrapper):
         else:
             return _Molecules(molecules)
 
+    def __contains__(self, other):
+        """Return whether other is in self."""
+
+        if not isinstance(other, (_Atom, _Residue)):
+            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Atom' "
+                            "or 'BioSimSpace._SireWrappers.Residue'.")
+
+        # Return whether the object comes from this molecule.
+        return self._sire_object.molecule() == other._sire_object.molecule()
+
     def copy(self):
         """Return a copy of this Molecule.
 

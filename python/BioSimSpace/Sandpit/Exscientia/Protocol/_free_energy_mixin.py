@@ -165,6 +165,17 @@ class _FreeEnergyMixin(_Protocol):
         else:
             raise ValueError(f"{type} could only be 'float' or 'series'.")
 
+    def getLambdaIndex(self):
+        '''Get the index of the lambda value within the lambda array.
+
+           Returns
+           -------
+
+           index : int
+               The index of the lambda value in teh lambda array.
+        '''
+        return self._lambda_vals.index[(self._lambda_vals==self._lambda).all(axis=1)].tolist()[0]
+
     def getLambdaValues(self, type='list'):
         """Get the lambda values.
 
@@ -335,13 +346,4 @@ class _FreeEnergyMixin(_Protocol):
                                                     num_lam)
         self.setLambda(lam)
 
-    def getLambdaIndex(self):
-        '''Get the index of the current lambda window.
 
-           Returns
-           -------
-
-           index : int
-               The index of the lambda in lambda values.
-        '''
-        return self._lambda_vals.index[(self._lambda_vals==self._lambda).all(axis=1)].tolist()[0]
