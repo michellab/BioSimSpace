@@ -620,10 +620,14 @@ class RestraintSearch():
                     if cond_dist and all(cond_angles):
                         selected_pairs_boresch.append(pair)
 
-                # Plot histograms
-                fig, axs = _plt.subplots(1,6, figsize=(16,4))
+                # Plotting
+                dof_to_plot = ["r","thetaA","thetaB","phiA","phiB","phiC"] # Can also plot thetaR and thetaL
+                n_dof = len(dof_to_plot)
                 pair = selected_pairs_boresch[0]
-                for i, dof in enumerate(["r","thetaA","thetaB","phiA","phiB","phiC"]): # Can also plot thetaR and thetaL
+
+                # Plot histograms
+                fig, axs = _plt.subplots(1, n_dof, figsize=(16,4), dpi=500)
+                for i, dof in enumerate(dof_to_plot): 
                     axs[i].hist(boresch_dof_dict[pair][dof]["values"],bins=10)
                     axs[i].axvline(x=boresch_dof_dict[pair][dof]["avg"], color='r', linestyle='dashed', linewidth=2,label="mean")
                     if dof == "r":
@@ -633,9 +637,19 @@ class RestraintSearch():
                     axs[i].set_ylabel("Num Vals")
                     axs[i].legend()
                 fig.tight_layout()
-                fig.savefig(f'{work_dir}/boresch_dof_hist.png')
+                fig.savefig(f'{work_dir}/boresch_dof_hist.png', facecolor="white")
 
-
+                # Plot variation with time to see if there are slow DOF
+                fig, axs = _plt.subplots(1, n_dof, figsize=(16,4), dpi=500)
+                for i, dof in enumerate(dof_to_plot): 
+                    axs[i].plot([x for x in range(300)], boresch_dof_dict[pair][dof]["values"])
+                    if dof == "r":
+                        axs[i].set_ylabel("r ($\AA$)")
+                    else:
+                        axs[i].set_ylabel(f"{dof} (rad)")
+                    axs[i].set_xlabel("Frame No")
+                fig.tight_layout()
+                fig.savefig(f'{work_dir}/boresch_dof_time.png', facecolor="white")
 
                 # Print out Boresch parameters
                 def print_boresch_params(pair):
