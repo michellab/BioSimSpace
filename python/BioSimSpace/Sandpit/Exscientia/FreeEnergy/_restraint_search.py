@@ -457,7 +457,7 @@ class RestraintSearch():
 
                 ### For Pairs with Lowest Pairwise RMSDs, find Adjacent Heavy Atoms
 
-                def get_anchor_ats(a1_idx,u):
+                def getAnchorAts(a1_idx,u):
                     """Takes in index of anchor atom 1 and universe and returns
                     list of all three anchor atoms, which are chosen to be bonded
                     and not H"
@@ -486,12 +486,12 @@ class RestraintSearch():
 
                 ### Use These As Anchors and Plot Variance of Associated Degrees of Freedom
 
-                def get_distance(idx1, idx2, u):
+                def getDistance(idx1, idx2, u):
                     """ Distance in Angstrom"""
                     distance = _dist(_mda.AtomGroup([u.atoms[idx1]]), _mda.AtomGroup([u.atoms[idx2]]), box=u.dimensions)[2][0]
                     return distance
 
-                def get_angle(idx1, idx2, idx3, u):
+                def getAngle(idx1, idx2, idx3, u):
                     """Angle in rad"""
                     C = u.atoms[idx1].position 
                     B = u.atoms[idx2].position 
@@ -501,29 +501,29 @@ class RestraintSearch():
                     angle = _np.arccos(_np.dot(BA, BC)/(_norm(BA)*_norm(BC)))
                     return angle
 
-                def get_dihedral(idx1, idx2, idx3, idx4, u):
+                def getDihedral(idx1, idx2, idx3, idx4, u):
                     """Dihedral in rad"""
                     positions =[u.atoms[idx].position for idx in [idx1,idx2,idx3,idx4]]
                     dihedral = _calc_dihedrals(positions[0], positions[1], positions[2], positions[3], box = u.dimensions)
                     return dihedral
 
-                def get_boresch_dof(l1,l2,l3,r1,r2,r3,u):
+                def getBoreschDof(l1,l2,l3,r1,r2,r3,u):
                     """Calculate Boresch degrees of freedom from indices of anchor atoms"""
                     # Ordering of connection of anchors is r3,r2,r1,l1,l2,l3
-                    r = get_distance(r1,l1,u)
-                    thetaA = get_angle(r2,r1,l1,u)
-                    thetaB = get_angle(r1,l1,l2,u)
-                    phiA = get_dihedral(r3,r2,r1,l1,u)
-                    phiB = get_dihedral(r2,r1,l1,l2,u)
-                    phiC = get_dihedral(r1,l1,l2,l3,u)
+                    r = getDistance(r1,l1,u)
+                    thetaA = getAngle(r2,r1,l1,u)
+                    thetaB = getAngle(r1,l1,l2,u)
+                    phiA = getDihedral(r3,r2,r1,l1,u)
+                    phiB = getDihedral(r2,r1,l1,l2,u)
+                    phiC = getDihedral(r1,l1,l2,l3,u)
                     # Not restrained but distance from coolinearity must be checked
-                    thetaR = get_angle(r3,r2,r1,u) # Receptor internal angle
-                    thetaL = get_angle(l1,l2,l3,u) # Ligand internal angle
+                    thetaR = getAngle(r3,r2,r1,u) # Receptor internal angle
+                    thetaL = getAngle(l1,l2,l3,u) # Ligand internal angle
                     return r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL
 
-                lig_anchors = get_anchor_ats(pairs_ordered_sd[0][0],u)
-                prot_anchors = get_anchor_ats(pairs_ordered_sd[0][1],u)
-                get_boresch_dof(lig_anchors[0],lig_anchors[1],lig_anchors[2],prot_anchors[0],prot_anchors[1],prot_anchors[2],u)
+                lig_anchors = getAnchorAts(pairs_ordered_sd[0][0],u)
+                prot_anchors = getAnchorAts(pairs_ordered_sd[0][1],u)
+                getBoreschDof(lig_anchors[0],lig_anchors[1],lig_anchors[2],prot_anchors[0],prot_anchors[1],prot_anchors[2],u)
 
                 # get values of degrees of freedom for lowest SD pairs across whole trajectory
 
@@ -531,8 +531,8 @@ class RestraintSearch():
                 for pair in pairs_ordered_sd[:200]: # Check top 200 pairs
                     boresch_dof_dict[pair]={}
                     l1_idx, r1_idx = pair
-                    _, l2_idx, l3_idx = get_anchor_ats(l1_idx,u)
-                    _, r2_idx, r3_idx = get_anchor_ats(r1_idx,u)
+                    _, l2_idx, l3_idx = getAnchorAts(l1_idx,u)
+                    _, r2_idx, r3_idx = getAnchorAts(r1_idx,u)
                     boresch_dof_dict[pair]["anchor_ats"]=[l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx]
 
                     boresch_dof_list = ["r","thetaA","thetaB","phiA","phiB","phiC","thetaR","thetaL"]
@@ -546,7 +546,7 @@ class RestraintSearch():
                     n_frames = len(u.trajectory)
 
                     for i, frame in enumerate(u.trajectory): # TODO: Use MDA.analysis.base instead?
-                        r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = get_boresch_dof(l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx,u)
+                        r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = getBoreschDof(l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx,u)
                         boresch_dof_dict[pair]["r"]["values"].append(r)
                         boresch_dof_dict[pair]["thetaA"]["values"].append(thetaA)
                         boresch_dof_dict[pair]["thetaB"]["values"].append(thetaB)
