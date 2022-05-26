@@ -189,7 +189,7 @@ class System(_SireWrapper):
                             "'BioSimSpace._SireWrappers.Atom', or 'BioSimSpace._SireWrappers.Residue'.")
 
         # Return whether the object is in the system.
-        return self._sire_object.contains(other._sire_object.molecule())
+        return other._sire_object.molecule().number() in self._mol_nums
 
     def __getitem__(self, key):
         """Get a molecule from the system."""
