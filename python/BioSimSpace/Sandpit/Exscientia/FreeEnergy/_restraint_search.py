@@ -67,6 +67,7 @@ import MDAnalysis as _mda
 from MDAnalysis.analysis.distances import dist as _dist
 from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
 from numpy.linalg import norm as _norm
+import matplotlib.pyplot as _plt
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -394,7 +395,6 @@ class RestraintSearch():
         if method == "BSS":
             # Get mdanalysis universe object
             u = traj.getTrajectory(format='mdanalysis')
-            print(type(u))
 
             if rest_type.lower() == 'boresch':
 
@@ -523,7 +523,7 @@ class RestraintSearch():
                 # get values of degrees of freedom for lowest SD pairs across whole trajectory
 
                 boresch_dof_dict = {}
-                for pair in pairs_ordered_sd[:200]:
+                for pair in pairs_ordered_sd[:200]: # Check top 200 pairs
                     boresch_dof_dict[pair]={}
                     l1_idx, r1_idx = pair
                     _, l2_idx, l3_idx = get_anchor_ats(l1_idx,u)
@@ -540,7 +540,7 @@ class RestraintSearch():
                     # Populate these dictionaries with values from trajectory
                     n_frames = len(u.trajectory)
 
-                    for i, frame in enumerate(u.trajectory):
+                    for i, frame in enumerate(u.trajectory): # TODO: Use MDA.analysis.base instead?
                         r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = get_boresch_dof(l1_idx,l2_idx,l3_idx,r1_idx,r2_idx,r3_idx,u)
                         boresch_dof_dict[pair]["r"]["values"].append(r)
                         boresch_dof_dict[pair]["thetaA"]["values"].append(thetaA)
@@ -571,6 +571,7 @@ class RestraintSearch():
 
                                     # Correct mean (will fail if very well split above and below 2pi)
                                     # get middle of interval based on current mean
+                                    # TODO: Should use circular mean instead, see scipy
                                     corrected_values_avg=[]
                                     periodic_bound = avg - _np.pi
                                     if periodic_bound < -_np.pi:
@@ -599,24 +600,42 @@ class RestraintSearch():
                                 boresch_dof_dict[pair][dof]["k"]=0.593/(boresch_dof_dict[pair][dof]["sd"]**2) # RT at 289 K is 0.593 kcal mol-1
 
                 ### Filter, Pick Optimum Degrees of Freedom, and Select Force Constants Based on Variance, Select Equilibrium Values
+
                 # Order pairs according to variance 
                 pairs_ordered_boresch_var=[]
                 for item in sorted(boresch_dof_dict.items(), key=lambda item: item[1]["tot_var"]):
                     pairs_ordered_boresch_var.append(item[0])
                     #print(f'Pair: {item[0]}, total variance: {boresch_dof_dict[item[0]]["tot_var"]}')
 
-                # Filter out r <1, theta >150 or < 30 
+                # Filter out r < 1, theta >150 or < 30 
                 selected_pairs_boresch = []
                 for pair in pairs_ordered_boresch_var:
                     cond_dist = boresch_dof_dict[pair]["r"]["avg"] > 1
                     avg_angles =[]
                     #angles = ["thetaA", "thetaB", "thetaR","thetaL"] # also check internal angles
-                    angles = ["thetaA", "thetaB"] # May also be good to check internal angles
+                    angles = ["thetaA", "thetaB"] # May also be good to check internal angles, although will be much stiffer
                     for angle in angles:
                         avg_angles.append(boresch_dof_dict[pair][angle]["avg"])
                     cond_angles = list(map(lambda x: (x<2.62 and x >0.52),avg_angles))
                     if cond_dist and all(cond_angles):
                         selected_pairs_boresch.append(pair)
+
+                # Plot histograms
+                fig, axs = _plt.subplots(1,6, figsize=(16,4))
+                pair = selected_pairs_boresch[0]
+                for i, dof in enumerate(["r","thetaA","thetaB","phiA","phiB","phiC"]): # Can also plot thetaR and thetaL
+                    axs[i].hist(boresch_dof_dict[pair][dof]["values"],bins=10)
+                    axs[i].axvline(x=boresch_dof_dict[pair][dof]["avg"], color='r', linestyle='dashed', linewidth=2,label="mean")
+                    if dof == "r":
+                        axs[i].set_xlabel("r ($\AA$)")
+                    else:
+                        axs[i].set_xlabel(f"{dof} (rad)")
+                    axs[i].set_ylabel("Num Vals")
+                    axs[i].legend()
+                fig.tight_layout()
+                fig.savefig(f'{work_dir}/boresch_dof_hist.png')
+
+
 
                 # Print out Boresch parameters
                 def print_boresch_params(pair):
