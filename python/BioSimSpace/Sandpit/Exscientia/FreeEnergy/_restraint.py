@@ -125,9 +125,14 @@ class Restraint():
                 (decoupled_mol,) = system.getDecoupledMolecules()
                 for key in ['l1', 'l2', 'l3']:
                     atom = self._restraint_dict['anchor_points'][key]
-                    if not atom._sire_object.molecule().number() == decoupled_mol._sire_object.number():
+                    if not atom in decoupled_mol:
                         raise ValueError(
                             f'The ligand atom {key} is not from decoupled moleucle.')
+                for key in ['r1', 'r2', 'r3']:
+                    atom = self._restraint_dict['anchor_points'][key]
+                    if not atom in system:
+                        raise ValueError(
+                            f'The protein atom {key} is not in the system.')
 
             # Store a copy of solvated system.
             self._system = system.copy()
@@ -162,7 +167,7 @@ class Restraint():
                     converted_equ_val = \
                     self._restraint_dict['equilibrium_values'][equilibrium_values] / nanometer
                     converted_fc = \
-                        (self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / nanometer ** 2)).value()
+                        self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / nanometer ** 2)
                     return parameters_string.format(
                         eq0='{:.3f}'.format(converted_equ_val),
                         fc0='{:.2f}'.format(0),
@@ -175,7 +180,7 @@ class Restraint():
                     converted_equ_val = \
                         self._restraint_dict['equilibrium_values'][equilibrium_values] / degree
                     converted_fc = \
-                        (self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / radian * radian)).value()
+                        self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / (radian * radian))
                     return parameters_string.format(
                         eq0='{:.3f}'.format(converted_equ_val),
                         fc0='{:.2f}'.format(0),
