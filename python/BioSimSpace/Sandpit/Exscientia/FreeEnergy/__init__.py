@@ -29,6 +29,8 @@ Classes
     :toctree: generated/
 
     Relative
+    Restraint
+    RestraintSearch
 
 Functions
 =========

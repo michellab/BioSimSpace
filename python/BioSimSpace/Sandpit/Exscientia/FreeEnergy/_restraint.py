@@ -216,4 +216,3 @@ class Restraint():
         else:
             raise NotImplementedError(f'MD Engine {engine} not implemented '
                                       f'yet. Only Gromacs is supported.')
-
