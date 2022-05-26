@@ -43,6 +43,8 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
+from BioSimSpace.Sandpit.Exscientia.Units import Length
+
 try:
     import alchemlyb as _alchemlyb
     from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
@@ -83,6 +85,9 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
+from ..Units.Length import angstrom as _angstrom
+from ..Units.Angle import radian as _radian
+from ..Units.Energy import kcal_per_mol as _kcal_per_mol
 
 from ..MD._md import _find_md_engines
 
@@ -388,7 +393,7 @@ class RestraintSearch():
                                 "Use the 'BioSimSpace.Align.Decouple' function to mark a molecule"
                                 " to be decoupled.")
 
-        # TODO Implement analysis. Outline of functions required
+        # TODO Tidy this up and improve. Change algorithm to fit to match that discussed. 
 
         # Extract restraints from simulation
 
@@ -652,13 +657,30 @@ class RestraintSearch():
                 fig.savefig(f'{work_dir}/boresch_dof_time.png', facecolor="white")
 
                 # Print out Boresch parameters
-                def print_boresch_params(pair):
-                    l1 = boresch_dof_dict[pair]["anchor_ats"][0]
-                    l2 = boresch_dof_dict[pair]["anchor_ats"][1]
-                    l3 = boresch_dof_dict[pair]["anchor_ats"][2]
-                    r1 = boresch_dof_dict[pair]["anchor_ats"][3]
-                    r2 = boresch_dof_dict[pair]["anchor_ats"][4]
-                    r3 = boresch_dof_dict[pair]["anchor_ats"][5]
+                def getBoreschRestraint(pair):
+                    anchor_idxs = {'l1' : boresch_dof_dict[pair]["anchor_ats"][0],
+                    'l2':boresch_dof_dict[pair]["anchor_ats"][1],
+                    'l3':boresch_dof_dict[pair]["anchor_ats"][2],
+                    'r1':boresch_dof_dict[pair]["anchor_ats"][3],
+                    'r2':boresch_dof_dict[pair]["anchor_ats"][4],
+                    'r3':boresch_dof_dict[pair]["anchor_ats"][5]}
+
+                    anchor_ats = {}
+
+                    # Get atoms from system, excluding water and ions
+                    for mol in _system.search("not (resname WAT) or (resname CL) or (resname NA)"): # TODO: Expand this
+                        for anchor in list(anchor_idxs.keys()): # Change to list to avoid error due to changing dict size
+                            search = mol.search(f'atomidx {anchor_idxs[anchor]}')
+                            # see if we have found the anchor
+                            if len(search) == 1:
+                                anchor_ats[anchor] = search[0]
+                                del anchor_idxs[anchor]
+                    
+                    # Check we have found all anchors
+                    if not len(anchor_ats) == 6:
+                        raise _AnalysisError("Could not find all anchor atoms in system")
+
+                    # Get remaining parameters
                     r0 = boresch_dof_dict[pair]["r"]["avg"]
                     thetaA0 = boresch_dof_dict[pair]["thetaA"]["avg"]
                     thetaB0 = boresch_dof_dict[pair]["thetaB"]["avg"]
@@ -672,25 +694,31 @@ class RestraintSearch():
                     kphiB = boresch_dof_dict[pair]["phiB"]["k"]
                     kphiC = boresch_dof_dict[pair]["phiC"]["k"]
 
-                    print(f'{{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, "l2":{l2}, "l3":{l3}}},\
-                    "equilibrium_values":{{"r0":{r0:.2f}, "thetaA0":{thetaA0:.2f}, "thetaB0":{thetaB0:.2f},"phiA0":{phiA0:.2f}, "phiB0":{phiB0:.2f}, "phiC0":{phiC0:.2f}}},\
-                    "force_constants":{{"kr":{kr:.2f}, "kthetaA":{kthetaA:.2f}, "kthetaB":{kthetaB:.2f}, "kphiA":{kphiA:.2f}, "kphiB":{kphiB:.2f}, "kphiC":{kphiC:.2f}}}}}')
+                    restraint_dict = {
+                        "anchor_points":{"r1":anchor_ats["r1"], "r2":anchor_ats["r2"],
+                                         "r3":anchor_ats["r3"], "l1":anchor_ats["l1"],
+                                         "l2":anchor_ats["l2"], "l3":anchor_ats["l3"]},
+                        "equilibrium_values":{"r0":r0 * _Units.Length.angstrom,
+                                            "thetaA0":thetaA0 * _radian,
+                                            "thetaB0":thetaB0 * _radian,
+                                            "phiA0":phiA0 * _radian,
+                                            "phiB0":phiB0 * _radian,
+                                            "phiC0":phiC0 * _radian},
+                        "force_constants":{"kr":kr * _kcal_per_mol / _angstrom ** 2,
+                                        "kthetaA":kthetaA * _kcal_per_mol / (_radian * _radian),
+                                        "kthetaB":kthetaB * _kcal_per_mol / (_radian * _radian),
+                                        "kphiA":kphiA * _kcal_per_mol / (_radian * _radian),
+                                        "kphiB":kphiB * _kcal_per_mol / (_radian * _radian),
+                                        "kphiC":kphiC * _kcal_per_mol / (_radian * _radian)}}
 
-                print_boresch_params(selected_pairs_boresch[0])
+                    return Restraint(system, restraint_dict, type='Boresch')
 
-        def getLowVariancePairs():
-            pass
+                restraint = getBoreschRestraint(selected_pairs_boresch[0])
+                normal_frame = None
 
-        def getBoreschAnchors():
-            pass
+                return restraint, normal_frame #TODO: implement normal frame
 
-        # TODO Implement restrainedDOF class which holds relevant DOF? Implement in different module?
-        # Then do something like:
-        # low_var_pairs = getLowVariancePairs(...)
-        # anchors = getBoreschAnchors(low_var_pairs, ...)
-        # restrainedDOF_obj = restrainedDOF(anchors=anchors, rest_type="Boresch", ...)
-        # best_restraints = restrainedDOF_obj.getOptimalParams(...)
-
+    
     def _analyse(self, rest_type='Boresch', 
                 method='MDRestraintsGenerator',         
                 lig_selection="resname LIG and not name H*",
