@@ -33,29 +33,22 @@ from ..Units.Energy import kj_per_mol
 class Restraint():
     '''The Restraint class which holds the restraint information for the ABFE
     calculations. Currently only Boresch type restraint is supported.
-
     Boresch restraint is a set of harmonic restraints containing one bond, two
     angle and three dihedrals, which comes from three atoms in the ligand
     (l1, l2, l3) and three atoms in the protein (r1, r2, r3). The restraints
     are arranged in the format of atom1-atom2 (equilibrium value, force constant):
-
     Bonds: r1-l1 (r0, kr)
     Angles: r2-r1-l1 (thetaA0, kthetaA), r1-l1-l2 (thetaB0, kthetaB)
     Dihedrals: r3-r2-r1-l1 (phiA0, kphiA), r2-r1-l1-l2 (phiB0, kphiB), r1-l1-l2-l3 (phiC0, kphiC)
-
     '''
     def __init__(self, system, restraint_dict, rest_type='Boresch'):
         """Constructor.
-
            Parameters
            ----------
-
            system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
-
            restraint_dict : dict
                The dict for holding the restraint.
-
            rest_type : str
                The type of the restraint. (`Boresch`, )
         """
@@ -108,10 +101,8 @@ class Restraint():
 
     def update_system(self, system):
         """Update the system object.
-
            Parameters
            ----------
-
            system : :class:`System <BioSimSpace._SireWrappers.System>`
                The molecular system.
         """
@@ -140,10 +131,8 @@ class Restraint():
     def toString(self, engine='Gromacs'):
         """The method for convert the restraint to a format that could be used
         by MD Engines.
-
            Parameters
            ----------
-
            engine : str
                The molecular dynamics engine used to generate the restraint.
                Available options currently is "GROMACS" only. If this argument
