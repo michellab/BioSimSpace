@@ -24,8 +24,8 @@ Functionality for selecting receptor-ligand restraints from unrestrained
 simulations.
 """
 
-__author__ = "Lester Hedges"
-__email__ = "lester.hedges@gmail.com"
+__author__ = "Finlay Clark"
+__email__ = "finlay.clark@ed.ac.uk"
 
 __all__ = ["RestraintSearch"]
 
