@@ -11,32 +11,25 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     rest of the environment are removed, or annihilate, where the interactions
     within the molecule are removed as well (choose this mode with
     intramol=False).
-
         Parameters
         ----------
-
         molecule : BioSimSpace._SireWrappers.Molecule
             The molecule to be decoupled or annihilated.
-
         property_map0 : dict
             A dictionary that maps "properties" in this molecule to their
             user defined values at the start of the transformation. This allows
             user to selectively turn on or off the charge or the vdw
             interactions e.g. { "charge" : True, "LJ" : True}
-
         property_map1 : dict
             A dictionary that maps "properties" in this molecule to their
             user defined values at the end of the transformation. This allows
             user to selectively turn on or off the charge or the vdw
             interactions e.g. { "charge" : False, "LJ" : False}
-
         intramol : bool
             Whether to remove the intra-molecule forces, thereby annihilate the
             molecule instead of decouple it.
-
         Returns
         -------
-
         decoupled : Sire.Mol.Molecule
             The molecule marked as being decoupled.
     """
@@ -92,4 +85,3 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     mol._sire_object = mol_edit.commit()
 
     return mol
-

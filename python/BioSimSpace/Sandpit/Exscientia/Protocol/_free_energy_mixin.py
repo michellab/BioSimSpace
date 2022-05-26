@@ -19,25 +19,18 @@ class _FreeEnergyMixin(_Protocol):
                  perturbation_type="full"
                 ):
         """Constructor.
-
            Parameters
            ----------
-
            lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
-
            lam_vals : [float] or pandas.DataFrame
                A list of lambda values.
-
            min_lam : float or pandas.Series
                The minimum lambda value.
-
            max_lam : float or pandas.Series
                The maximum lambda value.
-
            num_lam : int
                The number of lambda values.
-
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 "full" : A full perturbation of all terms (default option).
@@ -46,7 +39,6 @@ class _FreeEnergyMixin(_Protocol):
                 "flip" : Perturb all hard atom terms as well as bonds/angles.
                 "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
                 "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
-
                 Currently perturubation_type != "full" is only supported by
                 BioSimSpace.Process.Somd.
         """
@@ -78,10 +70,8 @@ class _FreeEnergyMixin(_Protocol):
 
     def getPerturbationType(self):
         """Get the perturbation type.
-
            Returns
            -------
-
            perturbation_type : str
                The perturbation type.
         """
@@ -89,10 +79,8 @@ class _FreeEnergyMixin(_Protocol):
 
     def setPerturbationType(self, perturbation_type):
         """Set the perturbation type.
-
            Parameters
            ----------
-
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 "full" : A full perturbation of all terms (default option).
@@ -140,16 +128,12 @@ class _FreeEnergyMixin(_Protocol):
 
     def getLambda(self, type='float'):
         """Get the value of the perturbation parameter.
-
            Parameters
            ----------
-
            type : string
                The type of lambda to be returned. ('float', 'series')
-
            Returns
            -------
-
            lam : float or pd.Series
                The value of the perturbation parameter.
         """
@@ -167,10 +151,8 @@ class _FreeEnergyMixin(_Protocol):
 
     def getLambdaIndex(self):
         '''Get the index of the lambda value within the lambda array.
-
            Returns
            -------
-
            index : int
                The index of the lambda value in teh lambda array.
         '''
@@ -178,16 +160,12 @@ class _FreeEnergyMixin(_Protocol):
 
     def getLambdaValues(self, type='list'):
         """Get the lambda values.
-
            Parameters
            ----------
-
            type : string
                The type of lambda values to be returned. ('list', 'dataframe')
-
            Returns
            -------
-
            lam_vals : [float, ] or pd.DataFrame
                The lambda values.
         """
@@ -208,13 +186,10 @@ class _FreeEnergyMixin(_Protocol):
 
     def setLambda(self, lam):
         """Set the current lambda.
-
            Parameters
            ----------
-
            lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
-
         """
         if not isinstance(lam, pd.Series):
             # For pandas < 1.4, TypeError won't be raised if the type cannot
@@ -231,27 +206,20 @@ class _FreeEnergyMixin(_Protocol):
 
     def _checkLambdaValues(self, lam_vals, min_lam, max_lam, num_lam):
         """Sanity check of the list of lambda values.
-
            Parameters
            ----------
-
            lam_vals : [float] or pandas.DataFrame
                A list of lambda values.
-
            min_lam : float or pandas.Series
                The minimum lambda value.
-
            max_lam : float or pandas.Series
                The maximum lambda value.
-
            num_lam : int
                The number of lambda values.
-
            Returns
            -------
            lam_vals : pandas.DataFrame
                The pd.DataFrame representing the checked lambda values.
-
         """
         # A list of lambda values takes precedence.
         if lam_vals is not None:
@@ -323,27 +291,19 @@ class _FreeEnergyMixin(_Protocol):
 
     def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
         """Set the list of lambda values.
-
            Parameters
            ----------
-
            lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
-
            lam_vals : [float] or pandas.DataFrame
                A list of lambda values.
-
            min_lam : float or pandas.Series
                The minimum lambda value.
-
            max_lam : float or pandas.Series
                The maximum lambda value.
-
            num_lam : int
                The number of lambda values.
         """
         self._lambda_vals = self._checkLambdaValues(lam_vals, min_lam, max_lam,
                                                     num_lam)
         self.setLambda(lam)
-
-
