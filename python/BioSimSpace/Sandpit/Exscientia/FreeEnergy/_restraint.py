@@ -45,6 +45,21 @@ class Restraint():
 
     '''
     def __init__(self, system, restraint_dict, rest_type='Boresch'):
+        """Constructor.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+
+           restraint_dict : dict
+               The dict for holding the restraint.
+
+           rest_type : str
+               The type of the restraint. (`Boresch`, )
+        """
+
         if rest_type.lower() == 'boresch':
             self.rest_type = 'boresch'
             # Test if the atoms are of BioSimSpace._SireWrappers.Atom
@@ -88,11 +103,18 @@ class Restraint():
             raise NotImplementedError(f'Restraint type {type} not implemented '
                                       f'yet. Only boresch restraint is supported.')
 
-        self._content = restraint_dict
+        self._restraint_dict = restraint_dict
         self.update_system(system)
 
     def update_system(self, system):
-        '''Update the system object.'''
+        """Update the system object.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+        """
         if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
@@ -102,7 +124,7 @@ class Restraint():
                 # decoupled.
                 (decoupled_mol,) = system.getDecoupledMolecules()
                 for key in ['l1', 'l2', 'l3']:
-                    atom = self._content['anchor_points'][key]
+                    atom = self._restraint_dict['anchor_points'][key]
                     if not atom._sire_object.molecule().number() == decoupled_mol._sire_object.number():
                         raise ValueError(
                             f'The ligand atom {key} is not from decoupled moleucle.')
@@ -111,8 +133,18 @@ class Restraint():
             self._system = system.copy()
 
     def toString(self, engine='Gromacs'):
-        '''The method for convert the restraint to a format that could be used
-        by MD Engines'''
+        """The method for convert the restraint to a format that could be used
+        by MD Engines.
+
+           Parameters
+           ----------
+
+           engine : str
+               The molecular dynamics engine used to generate the restraint.
+               Available options currently is "GROMACS" only. If this argument
+               is omitted then BioSimSpace will choose an appropriate engine
+               for you.
+        """
         if engine.lower() == 'gromacs':
             if self.rest_type == 'boresch':
                 # Format the atoms into index list
@@ -121,16 +153,16 @@ class Restraint():
                     for key in key_list:
                         formated_index.append('{:<10}'.format(
                             self._system.getIndex(
-                                self._content['anchor_points'][key]) + 1))
+                                self._restraint_dict['anchor_points'][key]) + 1))
                     return ' '.join(formated_index)
 
                 parameters_string = '{eq0:<10} {fc0:<10} {eq1:<10} {fc1:<10}'
                 # Format the parameters for the bonds
                 def format_bond(equilibrium_values, force_constants):
                     converted_equ_val = \
-                    self._content['equilibrium_values'][equilibrium_values] / nanometer
+                    self._restraint_dict['equilibrium_values'][equilibrium_values] / nanometer
                     converted_fc = \
-                        (self._content['force_constants'][force_constants] / (kj_per_mol / nanometer ** 2)).value()
+                        (self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / nanometer ** 2)).value()
                     return parameters_string.format(
                         eq0='{:.3f}'.format(converted_equ_val),
                         fc0='{:.2f}'.format(0),
@@ -141,9 +173,9 @@ class Restraint():
                 # Format the parameters for the angles and dihedrals
                 def format_angle(equilibrium_values, force_constants):
                     converted_equ_val = \
-                        self._content['equilibrium_values'][equilibrium_values] / degree
+                        self._restraint_dict['equilibrium_values'][equilibrium_values] / degree
                     converted_fc = \
-                        (self._content['force_constants'][force_constants] / (kj_per_mol / radian * radian)).value()
+                        (self._restraint_dict['force_constants'][force_constants] / (kj_per_mol / radian * radian)).value()
                     return parameters_string.format(
                         eq0='{:.3f}'.format(converted_equ_val),
                         fc0='{:.2f}'.format(0),
