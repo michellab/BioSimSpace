@@ -189,7 +189,7 @@ class System(_SireWrapper):
                             "'BioSimSpace._SireWrappers.Atom', or 'BioSimSpace._SireWrappers.Residue'.")
 
         # Return whether the object is in the system.
-        return other._sire_object.molecule().number() in self._mol_nums
+        return self._sire_object.contains(other._sire_object.molecule())
 
     def __getitem__(self, key):
         """Get a molecule from the system."""
@@ -442,10 +442,6 @@ class System(_SireWrapper):
 
             # Add the molecules to the system.
             self._sire_object.add(molecules._sire_object, _SireMol.MGName("all"))
-
-            # Renumber all of the constituents in the system so that they are unique
-            # and in ascending order.
-            self._sire_object = _SireIO.renumberConstituents(self._sire_object, num_mols)
 
             # Reset the index mappings.
             self._reset_mappings()

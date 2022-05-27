@@ -171,7 +171,7 @@ class Molecule(_SireWrapper):
                             "or 'BioSimSpace._SireWrappers.Residue'.")
 
         # Return whether the object comes from this molecule.
-        return self._sire_object.molecule().number() == other._sire_object.molecule().number()
+        return self._sire_object.molecule() == other._sire_object.molecule()
 
     def copy(self):
         """Return a copy of this Molecule.
