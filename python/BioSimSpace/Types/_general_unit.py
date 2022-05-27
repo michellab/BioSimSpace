@@ -131,7 +131,7 @@ class GeneralUnit(_Type):
 
         # This is a dimensionless quantity, return the value as a float.
         if all(x == 0 for x in dimensions):
-            return float(value)
+            return general_unit.value()
 
         # Check to see if the dimensions correspond to a supported type.
         # If so, return an object of that type.
