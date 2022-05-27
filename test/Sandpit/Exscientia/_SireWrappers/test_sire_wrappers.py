@@ -128,3 +128,19 @@ def test_contains(system):
 
     # Make sure the atom isn't in the residue.
     assert a not in r
+
+def test_contains_combine(system):
+    # Extract the first two molecules.
+    m0 = system[0]
+    m1 = system[1]
+
+    # Combine the two molecules to make two systems, adding the
+    # molecules in opposite order.
+    s0 = (m0 + m1).toSystem()
+    s1 = (m1 + m0).toSystem()
+
+    # Make sure both molecules are in both systems.
+    assert m0 in s0
+    assert m0 in s1
+    assert m1 in s0
+    assert m1 in s1
