@@ -676,6 +676,86 @@ class System(_SireWrapper):
         # Return a molecules container.
         return _Molecules(molgrp)
 
+    def getAtom(self, index):
+        """Return the atom specified by the absolute index.
+
+           Parameters
+           ----------
+
+           index : int
+               The absolute index of the atom in the system.
+
+           Returns
+           -------
+
+           atom : :class:`Atom <BioSimSpace._SireWrappers.Atom>`
+               The atom at the specified index.
+        """
+        if not type(index) is int:
+            raise TypeError("'index' must be of type 'int'.")
+
+        # Set the MolNum to atom index mapping.
+        self._set_atom_index_tally()
+
+        # Work out the total number of atoms.
+        total_atoms = list(self._atom_index_tally.values())[-1] + self[-1].nAtoms()
+
+        if index < 0 or index >= total_atoms:
+            raise ValueError(f"'index' must be in range (0-{total_atoms}].")
+
+        # Loop backwards over the molecules until we find the one
+        # containing the index.
+        for mol_idx in range(self.nMolecules()-1, -1, -1):
+            mol_num = self._mol_nums[mol_idx]
+            if index >= self._atom_index_tally[mol_num]:
+                break
+
+        # Get the relative index of the atom in the molecule.
+        rel_idx = index - self._atom_index_tally[mol_num]
+
+        # Return the atom.
+        return self[mol_idx].getAtoms()[rel_idx]
+
+    def getResidue(self, index):
+        """Return the residue specified by the absolute index.
+
+           Parameters
+           ----------
+
+           index : int
+               The absolute index of the residue in the system.
+
+           Returns
+           -------
+
+           atom : :class:`Atom <BioSimSpace._SireWrappers.Residue>`
+               The residue at the specified index.
+        """
+        if not type(index) is int:
+            raise TypeError("'index' must be of type 'int'.")
+
+        # Set the MolNum to residue index mapping.
+        self._set_residue_index_tally()
+
+        # Work out the total number of residues.
+        total_residues = list(self._residue_index_tally.values())[-1] + self[-1].nResidues()
+
+        if index < 0 or index >= total_residues:
+            raise ValueError(f"'index' must be in range (0-{total_residues}].")
+
+        # Loop backwards over the molecules until we find the one
+        # containing the index.
+        for mol_idx in range(self.nMolecules()-1, -1, -1):
+            mol_num = self._mol_nums[mol_idx]
+            if index >= self._residue_index_tally[mol_num]:
+                break
+
+        # Get the relative index of the residue in the molecule.
+        rel_idx = index - self._residue_index_tally[mol_num]
+
+        # Return the atom.
+        return self[mol_idx].getResidues()[rel_idx]
+
     def getWaterMolecules(self, property_map={}):
         """Return a list containing all of the water molecules in the system.
 
@@ -895,15 +975,8 @@ class System(_SireWrapper):
         for x in item:
             # Atom.
             if isinstance(x, _Atom):
-                # Only compute the atom index mapping if it hasn't already
-                # been created.
-                if len(self._atom_index_tally) == 0:
-                    # Loop over all molecules in the system and keep track
-                    # of the cumulative number of atoms.
-                    num_atoms = 0
-                    for num in self._sire_object.molNums():
-                        self._atom_index_tally[num] = num_atoms
-                        num_atoms += self._sire_object.molecule(num).nAtoms()
+                # Create the MolNum to atom index mapping dictionary.
+                self._set_atom_index_tally()
 
                 # Get the AtomIdx and MolNum from the Atom.
                 index = x.index()
@@ -919,15 +992,8 @@ class System(_SireWrapper):
 
             # Residue.
             elif isinstance(x, _Residue):
-                # Only compute the residue index mapping if it hasn't already
-                # been created.
-                if len(self._residue_index_tally) == 0:
-                    # Loop over all molecules in the system and keep track
-                    # of the cumulative number of residues.
-                    num_residues = 0
-                    for num in self._sire_object.molNums():
-                        self._residue_index_tally[num] = num_residues
-                        num_residues += self._sire_object.molecule(num).nResidues()
+                # Create the MolNum to residue index mapping dictionary.
+                self._set_residue_index_tally()
 
                 # Get the ResIdx and MolNum from the Residue.
                 index = x.index()
@@ -943,13 +1009,8 @@ class System(_SireWrapper):
 
             # Molecule.
             elif isinstance(x, _Molecule):
-                # Only compute the molecule index mapping if it hasn't already
-                # been created.
-                if len(self._molecule_index) == 0:
-                    # Loop over all molecules in the system by index and map
-                    # the MolNum to index.
-                    for idx in range(0, self.nMolecules()):
-                        self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
+                # Create the MolNum to molecule index mapping dictionary.
+                self._set_molecule_index_tally()
 
                 # Get the MolNum from the molecule.
                 mol_num = x._sire_object.molecule().number()
@@ -1697,6 +1758,47 @@ class System(_SireWrapper):
             else:
                 self._sire_object = _SireIO.setGromacsWater(
                         self._sire_object, water_model, property_map)
+
+    def _set_atom_index_tally(self):
+        """Internal helper function to create a dictionary mapping molecule
+           numbers to the cumulative total of atoms in the system.
+        """
+        # Only compute the atom index mapping if it hasn't already
+        # been created.
+        if len(self._atom_index_tally) == 0:
+            # Loop over all molecules in the system and keep track
+            # of the cumulative number of atoms.
+            num_atoms = 0
+            for num in self._sire_object.molNums():
+                self._atom_index_tally[num] = num_atoms
+                num_atoms += self._sire_object.molecule(num).nAtoms()
+
+    def _set_residue_index_tally(self):
+        """Internal helper function to create a dictionary mapping molecule
+           numbers to the cumulative total of atoms in the system.
+        """
+        # Only compute the residue index mapping if it hasn't already
+        # been created.
+        if len(self._residue_index_tally) == 0:
+            # Loop over all molecules in the system and keep track
+            # of the cumulative number of residues.
+            num_residues = 0
+            for num in self._sire_object.molNums():
+                self._residue_index_tally[num] = num_residues
+                num_residues += self._sire_object.molecule(num).nResidues()
+
+    def _set_molecule_index_tally(self):
+        """Internal helper function to create a dictionary mapping molecule
+           numbers to the cumulative total of atoms in the system.
+        """
+
+        # Only compute the molecule index mapping if it hasn't already
+        # been created.
+        if len(self._molecule_index) == 0:
+            # Loop over all molecules in the system by index and map
+            # the MolNum to index.
+            for idx in range(0, self.nMolecules()):
+                self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

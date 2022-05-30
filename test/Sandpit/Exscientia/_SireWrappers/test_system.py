@@ -1,4 +1,4 @@
-import BioSimSpace as BSS
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
@@ -144,3 +144,17 @@ def test_contains_combine(system):
     assert m0 in s1
     assert m1 in s0
     assert m1 in s1
+
+def test_get_atom(system):
+    # Make sure atom extraction works using absolute or relative indices,
+    # i.e. absolute within the system, or relative to a molecule.
+    assert system.getAtom(0) == system[0].getAtoms()[0]
+    assert system.getAtom(22) == system[1].getAtoms()[0]
+    assert system.getAtom(1911) == system[-1].getAtoms()[-1]
+
+def test_get_residue(system):
+    # Make sure residue extraction works using absolute or relative indices,
+    # i.e. absolute within the system, or relative to a molecule.
+    assert system.getResidue(0) == system[0].getResidues()[0]
+    assert system.getResidue(3) == system[1].getResidues()[0]
+    assert system.getResidue(632) == system[-1].getResidues()[-1]
