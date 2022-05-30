@@ -262,6 +262,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)

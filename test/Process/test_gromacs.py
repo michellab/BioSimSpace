@@ -64,6 +64,20 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+def test_vacuum_water(system):
+    """Regression test for ensuring the water topology is swapped for vacuum simulations."""
+
+    # Create a short production protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Create a new system using the first two molecules of 'system'.
+    # This will be an alanine-dipeptide and water in vacuum.
+    new_system = (system[0] + system[1]).toSystem()
+
+    # Run the process and check that it finishes without error.
+    assert run_process(new_system, protocol)
+
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
