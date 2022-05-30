@@ -6,6 +6,8 @@ from .._SireWrappers import Molecule as _Molecule
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
+__all__ = ["decouple"]
+
 def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     """Make the molecule as being decoupled, where the interactions with the
     rest of the environment are removed, or annihilate, where the interactions

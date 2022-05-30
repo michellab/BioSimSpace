@@ -29,6 +29,7 @@ Classes
     :toctree: generated/
 
     Relative
+    Restraint
 
 Functions
 =========
@@ -42,3 +43,4 @@ Functions
 
 from ._relative import *
 from ._utils import *
+from ._restraint import *
