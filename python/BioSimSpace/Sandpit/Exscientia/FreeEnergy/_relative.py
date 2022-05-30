@@ -73,6 +73,7 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
+from ._restraint import Restraint as _Restraint
 
 from ..MD._md import _find_md_engines
 
@@ -98,7 +99,7 @@ class Relative():
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
             gpu_support=False, setup_only=False, ignore_warnings=False,
             show_errors=True, extra_options=None, extra_lines=None,
-            estimator='MBAR', property_map={}):
+            estimator='MBAR', restraint=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -149,6 +150,10 @@ class Relative():
            
            estimator : str
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
+
+           restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+               The Restraint object that contains information for the ABFE
+               calculations.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -274,6 +279,17 @@ class Relative():
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
         self._property_map = property_map
+
+        # Check that the restraint is valid.
+        if not restraint is None:
+            if engine not in ['GROMACS', ]:
+                raise NotImplementedError(f'Restraint for MD Engine {engine} not implemented.')
+            if not isinstance(restraint, _Restraint):
+                raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
+            else:
+                # Ensure that the system is compatible with the restraint
+                restraint.update_system(self._system)
+        self._restraint = restraint
 
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
@@ -1388,6 +1404,7 @@ class Relative():
             else:
                 platform = "CPU"
 
+            # TODO: Make the restraint valid for Somd
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map, extra_options=self._extra_options,
@@ -1398,9 +1415,10 @@ class Relative():
             first_process = _Process.Gromacs(system, self._protocol,
                 work_dir=first_dir, ignore_warnings=self._ignore_warnings,
                 show_errors=self._show_errors, extra_options=self._extra_options,
-                extra_lines=self._extra_lines)
+                extra_lines=self._extra_lines, restraint=self._restraint)
 
         # AMBER.
+        # TODO: Make the restraint valid for AMBER
         elif self._engine == "AMBER":
             first_process = _Process.Amber(system, self._protocol, exe=self._exe,
                 work_dir=first_dir, extra_options=self._extra_options,

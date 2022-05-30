@@ -67,8 +67,8 @@ class Gromacs(_process.Process):
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
             work_dir=None, seed=None, extra_options=None,
-            extra_lines=None, property_map={}, ignore_warnings=False,
-            show_errors=True):
+            extra_lines=None, property_map={}, restraint=None,
+            ignore_warnings=False, show_errors=True):
         """Constructor.
 
            Parameters
@@ -103,6 +103,10 @@ class Gromacs(_process.Process):
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
 
+           restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+               The Restraint object that contains information for the ABFE
+               calculations.
+
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file
                with 'gmx grompp'. By default, these warnings are elevated to
@@ -114,7 +118,7 @@ class Gromacs(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map, restraint)
 
         # Set the package name.
         self._package_name = "GROMACS"
@@ -204,6 +208,11 @@ class Gromacs(_process.Process):
         # TOP file.
         top = _SireIO.GroTop(system._sire_object, self._property_map)
         top.writeToFile(self._top_file)
+        # Write the restraint to the topology file
+        if self._restraint:
+            with open(self._top_file, 'a') as f:
+                f.write('\n')
+                f.write(self._restraint.toString(engine='GROMACS'))
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)

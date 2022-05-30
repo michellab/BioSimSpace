@@ -52,6 +52,7 @@ from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 from .. import Units as _Units
+from ..FreeEnergy._restraint import Restraint as _Restraint
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
@@ -67,7 +68,7 @@ class Process():
 
     # TODO: Make the extra options valid for engines other than AMBER
     def __init__(self, system, protocol, name=None, work_dir=None, seed=None, extra_options=None,
-                 extra_lines=None, property_map={}):
+                 extra_lines=None, property_map={}, restraint=None):
         """Constructor.
 
            Parameters
@@ -98,6 +99,10 @@ class Process():
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+
+           restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+               The Restraint object that contains information for the ABFE
+               calculations.
         """
 
         # Don't allow user to create an instance of this base class.
@@ -136,6 +141,15 @@ class Process():
             if not mol.isPerturbable():
                 if not mol._sire_object.hasProperty(prop):
                     raise _IncompatibleError("System object contains molecules without coordinates!")
+
+        # Check that the restraint is valid.
+        if not restraint is None:
+            if not isinstance(restraint, _Restraint):
+                raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
+            else:
+                # Ensure that the system is compatible with the restraint
+                restraint.update_system(system)
+        self._restraint = restraint
 
         # Set the process to None.
         self._process = None
