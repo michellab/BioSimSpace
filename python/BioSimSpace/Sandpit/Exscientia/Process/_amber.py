@@ -581,7 +581,6 @@ class Amber(_process.Process):
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                         old_system_squashed._sire_object,
-                        old_system_squashed._sire_object,
                         new_system._sire_object,
                         self._mapping,
                         is_lambda1,
@@ -675,7 +674,6 @@ class Amber(_process.Process):
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                        old_system._sire_object,
                         old_system._sire_object,
                         new_system._sire_object,
                         self._mapping,
@@ -785,7 +783,6 @@ class Amber(_process.Process):
             # Update the coordinates and velocities and return a mapping between
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                    old_system._sire_object,
                     old_system._sire_object,
                     new_system._sire_object,
                     self._mapping,
