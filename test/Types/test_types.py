@@ -105,3 +105,16 @@ def test_from_sire_unit(Type):
     for sire_unit in Type._supported_units.values():
         # Try to instantiate the type from the Sire unit.
         my_type = Type(sire_unit)
+
+@pytest.mark.parametrize("Type", types)
+def test_container_mul(Type):
+    """Test that types can applied to containers."""
+
+    # Attempt to instantiate an object.
+    my_type = Type(1.0, Type._default_unit)
+
+    # Apply the type to a list.
+    [1, 2, 3] * my_type
+
+    # Apply the type to a tuple.
+    (1, 2, 3) * my_type

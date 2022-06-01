@@ -141,6 +141,11 @@ class Volume(_Type):
             mag = self.angstroms3().value() / other.angstroms().value()
             return _Area(mag, "A2")
 
+        # Division by another type.
+        elif isinstance(other, _Type):
+            from ._general_unit import GeneralUnit as _GeneralUnit
+            return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
+
         # Division by a string.
         elif isinstance(other, str):
             try:

@@ -196,6 +196,14 @@ class Temperature(_Type):
                 raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
 
             else:
+                # Handle containers by converting each item in the container to
+                # this type.
+                if isinstance(other, (list, tuple)):
+                    container = []
+                    for item in other:
+                        container.append(self.__mul__(item))
+                    return container
+
                 # Convert int to float.
                 if type(other) is int:
                     other = float(other)
@@ -209,7 +217,7 @@ class Temperature(_Type):
                     return Temperature(mag, self._unit)
 
                 # Multiplication by another type.
-                elif isinstance(other, Type):
+                elif isinstance(other, _Type):
                     from ._general_unit import GeneralUnit as _GeneralUnit
                     return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
@@ -252,7 +260,7 @@ class Temperature(_Type):
                     return self._value / other._convert_to(self._unit).value()
 
                 # Division by another type.
-                elif isinstance(other, Type):
+                elif isinstance(other, _Type):
                     from ._general_unit import GeneralUnit as _GeneralUnit
                     return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
