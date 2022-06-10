@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["GeneralUnit"]
 
-from Sire import Units as _SireUnits
+import Sire as _Sire
 
 from ._base_units import *
 from ._type import Type as _Type
@@ -89,7 +89,7 @@ class GeneralUnit(_Type):
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
-            if isinstance(_args[0], _SireUnits.GeneralUnit):
+            if isinstance(_args[0], _Sire.Units.GeneralUnit):
                 general_unit = _args[0]
 
             # The user has passed a string representation of the temperature.
@@ -181,7 +181,7 @@ class GeneralUnit(_Type):
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
-            if isinstance(_args[0], _SireUnits.GeneralUnit):
+            if isinstance(_args[0], _Sire.Units.GeneralUnit):
                 general_unit = _args[0]
 
             # The user has passed a string representation of the temperature.
@@ -668,7 +668,7 @@ class GeneralUnit(_Type):
                A Sire GeneralUnit object.
         """
 
-        if not isinstance(sire_unit, _SireUnits.GeneralUnit):
+        if not isinstance(sire_unit, _Sire.Units.GeneralUnit):
             raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit'")
 
         return GeneralUnit(sire_unit)

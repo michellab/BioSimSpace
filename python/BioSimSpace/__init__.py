@@ -49,6 +49,13 @@ __all__ = ["Align",
            "Units"]
 
 # Make sure we're using the Sire python interpreter.
+# First, load new sire in mixed_api compatibility mode (if it is installed)
+try:
+    import sire as _sr
+    _sr.use_mixed_api()
+except ImportError:
+    pass
+
 try:
     import Sire
     del Sire

@@ -1,6 +1,15 @@
 import os
 import platform
 
+# import Sire in mixed_api compatibility mode
+try:
+    import sire as _sr
+    _sr.use_mixed_api()
+except ImportError:
+    # a new version of sire is not installed
+    pass
+
+
 if not os.getenv("BSS_CONDA_INSTALL"):
     # Set the minimum allowed Sire version.
     min_ver = "2019.1.0"

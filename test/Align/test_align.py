@@ -1,3 +1,10 @@
+
+try:
+    import sire as _sr
+    _sr.use_mixed_api()
+except ImportError:
+    pass
+
 from Sire.MM import InternalFF, IntraCLJFF, IntraFF
 from Sire.Mol import AtomIdx, PartialMolecule
 
