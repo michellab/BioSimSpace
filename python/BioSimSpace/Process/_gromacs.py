@@ -242,10 +242,66 @@ class Gromacs(_process.Process):
         # to re-compile the binary run input file each time.
         config = []
 
+<<<<<<< HEAD
         # Deal with PBC.
         if not has_box or not self._has_water:
             # Create a copy of the system.
             system = self._system.copy()
+=======
+        # While the configuration parameters below share a lot of overlap,
+        # we choose the keep them separate so that the user can modify options
+        # for a given protocol in a single place.
+
+        # Add configuration variables for a minimisation simulation.
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            config.append("integrator = steep")             # Use steepest descent.
+            config.append("nsteps = %d"
+                % self._protocol.getSteps())                # Set the number of steps.
+            config.append("nstxout = %d"
+                % self._protocol.getSteps())                # Only write the final coordinates.
+            if has_box and self._has_water:
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("ns-type = grid")             # Use a grid to search for neighbours.
+                config.append("rlist = 1.2")                # Set short-range cutoff.
+                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
+                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
+                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+            else:
+                # Perform vacuum simulations by implementing pseudo-PBC conditions,
+                # i.e. run calculation in a near-infinite box (333.3 nm).
+                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+
+                # Create a copy of the system.
+                system = self._system.copy()
+
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
+                # Create a 999.9 nm periodic box and apply to the system.
+                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+                # Re-write the GRO file.
+                gro = _SireIO.Gro87(system._sire_object, self._property_map)
+                gro.writeToFile(self._gro_file)
+
+                config.append("pbc = xyz")                  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
+                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")      # Plain cut-off.
+            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+
+        # Add configuration variables for an equilibration simulation.
+        elif isinstance(self._protocol, _Protocol.Equilibration):
+
+            # Work out the number of integration steps.
+            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+>>>>>>> devel
 
             # Create a 999.9 nm periodic box and apply to the system.
             space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
@@ -526,12 +582,11 @@ class Gromacs(_process.Process):
                     % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Extract the lambda value and array.
-            lam = self._protocol.getLambda()
+            # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
 
             # Determine the index of the lambda value.
-            idx = lam_vals.index(lam)
+            idx = self._protocol.getLambdaIndex()
 
             # Free energy parameters.
             config.append("free-energy = yes")              # Free energy simulation.
