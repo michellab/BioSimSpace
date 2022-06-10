@@ -242,12 +242,10 @@ class Gromacs(_process.Process):
         # to re-compile the binary run input file each time.
         config = []
 
-<<<<<<< HEAD
         # Deal with PBC.
         if not has_box or not self._has_water:
             # Create a copy of the system.
             system = self._system.copy()
-=======
         # While the configuration parameters below share a lot of overlap,
         # we choose the keep them separate so that the user can modify options
         # for a given protocol in a single place.
@@ -301,15 +299,6 @@ class Gromacs(_process.Process):
 
             # Work out the number of integration steps.
             steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
->>>>>>> devel
-
-            # Create a 999.9 nm periodic box and apply to the system.
-            space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-            system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-            # Re-write the GRO file.
-            gro = _SireIO.Gro87(system._sire_object, self._property_map)
-            gro.writeToFile(self._gro_file)
 
         config_options = {}
         if not isinstance(self._protocol, _Protocol.Minimisation):
