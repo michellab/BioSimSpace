@@ -36,9 +36,10 @@ from .. import Types as _Types
 from .. import Units as _Units
 
 from ._protocol import Protocol as _Protocol
+from ._hmr_mixin import _HmrMixin
 
 
-class Equilibration(_Protocol):
+class Equilibration(_HmrMixin, _Protocol):
     """A class for storing equilibration protocols."""
 
     # Supported restraint keywords.
@@ -55,7 +56,10 @@ class Equilibration(_Protocol):
                  restart_interval=1000,
                  restraint=None,
                  force_constant=10*_Units.Energy.kcal_per_mol/_Units.Area.angstrom2,
-                 restart=False
+                 restart=False,
+                 hmr="auto",
+                 hmr_factor="auto",
+                 hmr_water="auto"    
                  ):
         """Constructor.
 
@@ -112,7 +116,16 @@ class Equilibration(_Protocol):
 
            restart : bool
                Whether this is a continuation of a previous simulation.
+           
+           hmr : "auto" or bool
+               Whether HMR should be applied.
 
+           hmr_factor : "auto" or float
+               The factor used to repartition.
+               "auto" indicates the recommended factor for the engine will be used.
+
+           hmr_water : "auto" or bool
+               Whether the water molecules should also be repartitioned.
         """
 
         # Call the base class constructor.
@@ -167,6 +180,13 @@ class Equilibration(_Protocol):
 
         # Set the force constant.
         self.setForceConstant(force_constant)
+     
+        _HmrMixin.__init__(self,
+                           hmr=hmr,
+                           hmr_factor=hmr_factor,
+                           hmr_water=hmr_water,
+                           timestep=timestep
+                           )
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -419,7 +439,7 @@ class Equilibration(_Protocol):
             self._restart = False
 
     def getRestraint(self):
-        """Return the type of restraint..
+        """Return the type of restraint.
 
            Returns
            -------

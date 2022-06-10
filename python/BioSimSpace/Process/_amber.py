@@ -56,6 +56,7 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
+from ..Align._merge import _squash
 
 from .. import Protocol as _Protocol
 from .. import Trajectory as _Trajectory

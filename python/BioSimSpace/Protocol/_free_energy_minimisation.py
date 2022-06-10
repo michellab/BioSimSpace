@@ -2,9 +2,12 @@ __all__ = ["FreeEnergyMinimisation"]
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._minimisation import Minimisation as _Minimisation
+# import restraint and force constant from _equilibration.py
+from ._equilibration import Equilibration as _Equilibration
 
+from .. import Units as _Units
 
-class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
+class FreeEnergyMinimisation(_Minimisation, _Equilibration, _FreeEnergyMixin):
     """A class for storing free energy minimisation protocols."""
 
     def __init__(self,
@@ -15,6 +18,7 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
                  num_lam=11,
                  steps=10000,
                  restraint=None,
+                 force_constant=10*_Units.Energy.kcal_per_mol/_Units.Area.angstrom2,
                  perturbation_type="full"
                  ):
         """Constructor.
@@ -56,6 +60,11 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
                Alternatively, the user can pass a list of atom indices for
                more fine-grained control. If None, then no restraints are used.
 
+           force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+               The force constant for the restraint potential. If a 'float' is
+               passed, then default units of 'kcal_per_mol / angstrom**2' will
+               be used.
+
            perturbation_type : str
                The type of perturbation to perform. Options are:
                 "full" : A full perturbation of all terms (default option).
@@ -70,7 +79,11 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         """
 
         # Call the base class constructors.
-        _Minimisation.__init__(self, steps=steps, restraint=restraint)
+        _Minimisation.__init__(self,
+                               steps=steps,
+                               restraint=restraint,
+                               force_constant=force_constant
+                               )
 
         _FreeEnergyMixin.__init__(self,
                                   lam=lam,
@@ -85,13 +98,15 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, restraint=%r, lam=%5.4f, lam_vals=%r>" % (
-                self._steps, self._restraint, self._lambda, self._lambda_vals)
+            return ("<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, restraint=%r, "
+                    "force_constant=%3.2f kcal_per_mol/angstrom**2, lam=%5.4f, lam_vals=%r>"
+                    ) % (self._steps, self._restraint, self._force_constant.value(), self._lambda, self._lambda_vals)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.FreeEnergyMinimisation: steps=%d, restraint=%r, lam=%5.4f, lam_vals=%r>" % (
-                self._steps, self._restraint, self._lambda, self._lambda_vals)
+            return ("<BioSimSpace.Protocol.FreeEnergyMinimisation(steps=%d, restraint=%r, "
+                    "force_constant=%3.2f, lam=%5.4f, lam_vals=%r)"
+                    )% (self._steps, self._restraint, self._force_constant.value(), self._lambda, self._lambda_vals)

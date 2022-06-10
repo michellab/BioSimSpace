@@ -42,6 +42,11 @@ import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
+from pytest import approx
+from scipy.constants import proton_mass
+from scipy.constants import physical_constants
+
+hydrogen_amu = proton_mass/(physical_constants["atomic mass constant"][0])
 
 from .._Utils import _try_import, _have_imported
 
@@ -70,6 +75,7 @@ from .. import _gmx_exe, _gmx_version
 from .. import _is_notebook
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._SireWrappers import System as _System
 from .._Utils import cd as _cd
 from .. import Process as _Process
@@ -268,6 +274,101 @@ class Relative():
 
         # Set the engine.
         self._engine = engine
+
+        # HMR check
+        # by default, if the timestep is greater than 4 fs this should be true.
+        if self._protocol.getHmr():
+
+            # Set the expected HMR factor.
+            hmr_factor = self._protocol.getHmrFactor()
+            if hmr_factor == "auto":
+                if self._engine == "AMBER":
+                    hmr_factor = 3
+                elif self._engine == "GROMACS":
+                    hmr_factor = 4
+                elif self._engine == "SOMD":
+                    self._extra_options["hydrogen mass repartitioning factor"] = "1.5"
+            else:
+                if self._engine == "SOMD":
+                    self._extra_options["hydrogen mass repartitioning factor"] = str(hmr_factor)
+
+            # Extract the molecules to which HMR applies.
+            # set auto based on engine
+            if self._protocol.getHmrWater() == "auto" or self._protocol.getHmrWater() == False:
+                water = "no"
+                # water_mols = system.getWaterMolecules()
+                # molecules = system - water_mols
+                molecules = self._system.search("not water", property_map)
+            elif self._protocol.getHmrWater() == True:
+                water = "yes"
+                molecules = self._system.getMolecules()
+
+            # TODO update search to whole system and mass search term once this is updated in the Sire API
+            # use length of no of H to find average mass of H and if correctly repartitioned.
+            # mass = (molecules.search("{element H}[0]"))[0]._sire_object.evaluate().mass().value()
+            # Currently checking the mass (in g per mol) of the first H only.
+
+            for mol in molecules:
+                try:
+                    h = mol.search("{element H}[0]")
+                    # mass = h._sire_object.property(mass_prop).value()
+                    mass = h[0]._sire_object.evaluate().mass(property_map).value()
+                    found_h = True
+                except:
+                    found_h = False
+                if found_h:
+                    break
+            
+            if not found_h:
+                # in some cases, may not be able to find the mass based on element 
+                # if the only molecule is perturbable. Search for atom name with H.
+                # need mass0 as this is one of the perturbable molecule properties.
+                mass_prop = property_map.get("mass0", "mass0")
+                molecule = self._system.getPerturbableMolecules()[0]
+                for atom in molecule.getAtoms():
+                    if "H" in atom.name():
+                        mass = atom._sire_object.property(mass_prop).value()
+                        # check in case the mass at 0 is 0 as perturbable molecule.
+                        if mass > 1:
+                            found_h = True
+                    if found_h:
+                        break
+                    
+            # error if cant find a H mass
+            if not found_h:
+                    raise _IncompatibleError("Can't find the mass of a H in the system.")        
+            
+            # Check that the mass matches what is expected.
+            if self._engine == "SOMD":
+                # values should be in amu
+                if mass == approx(hydrogen_amu, rel=1e-2):
+                    repartition = False
+                else:
+                    raise _IncompatibleError("Please do not pass an already repartitioned system in for use with SOMD.")
+
+            # check for amber or gromacs repartitioning
+            elif self._engine == "AMBER" or self._engine == "GROMACS":
+                # check if the system has been repartitioned at all. If not, repartition.
+                if mass == approx(hydrogen_amu, rel=1e-2):
+                    repartition = True
+                # check if system as been repartitioned with the decided factor.               
+                elif mass == approx(hmr_factor * hydrogen_amu, rel=1e-2):
+                    repartition = False
+                # finally, check if the system is repartitioned with the wrong factor.
+                elif mass != approx(hmr_factor * hydrogen_amu, rel=1e-2):
+                    raise _IncompatibleError("""
+                    The system is repartitioned at a factor different from that specified in 'hmr_factor'
+                    or at the auto default for this engine (3 for AMBER and 4 for GROMACS).
+                    Please pass a correctly partitioned or entirely unpartitioned system.""")
+                    
+            # Repartition if necessary.
+            if repartition:
+                _warnings.warn(f"The passed system is being repartitioned according to a factor of '{hmr_factor}'.")
+                self._system.repartitionHydrogenMass(factor=hmr_factor, water=water, property_map=property_map)
+            else:
+                if self._engine != "SOMD":
+                    _warnings.warn("The passed system is already repartitioned. Proceeding without additional repartitioning.")
+
 
         if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool'.")

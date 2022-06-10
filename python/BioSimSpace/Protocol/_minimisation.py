@@ -32,8 +32,10 @@ import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
-# import restraints from _equilibration.py
+# import restraint and force constant from _equilibration.py
 from ._equilibration import Equilibration as _Equilibration
+
+from .. import Units as _Units
 
 
 class Minimisation(_Equilibration, _Protocol):
@@ -41,7 +43,8 @@ class Minimisation(_Equilibration, _Protocol):
 
     def __init__(self,
                  steps=10000,
-                 restraint=None
+                 restraint=None,
+                 force_constant=10*_Units.Energy.kcal_per_mol/_Units.Area.angstrom2
                  ):
         """Constructor.
 
@@ -66,6 +69,11 @@ class Minimisation(_Equilibration, _Protocol):
                         ions.
                Alternatively, the user can pass a list of atom indices for
                more fine-grained control. If None, then no restraints are used.
+           
+           force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+               The force constant for the restraint potential. If a 'float' is
+               passed, then default units of 'kcal_per_mol / angstrom**2' will
+               be used.               
         """
 
         # Call the base class constructor.
@@ -80,19 +88,26 @@ class Minimisation(_Equilibration, _Protocol):
         else:
             self._restraint = None
 
+        # Set the force constant.
+        self.setForceConstant(force_constant)
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
+            return ("<BioSimSpace.Protocol.Minimisation: steps=%d, restraint=%r, "
+                    "force_constant=%3.2f kcal_per_mol/angstrom**2 >"
+                   ) % (self._steps, self._restraint, self._force_constant.value())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
+            return ("BioSimSpace.Protocol.Minimisation(steps=%d, restraint=%r, "
+                    "force_constant=%3.2f)"
+                   ) % (self._steps, self._restraint, self._force_constant.value())
 
     def getSteps(self):
         """Return the maximum number of steps.

@@ -32,11 +32,12 @@ import warnings as _warnings
 
 from .. import Types as _Types
 
+from ._hmr_mixin import _HmrMixin
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
 
 
-class FreeEnergy(_Production, _FreeEnergyMixin):
+class FreeEnergy(_Production, _FreeEnergyMixin, _HmrMixin):
     """A class for storing free energy production protocols."""
 
     def __init__(self,
@@ -53,7 +54,10 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
                  restart_interval=1000,
                  first_step=0,
                  restart=False,
-                 perturbation_type="full"
+                 perturbation_type="full",
+                 hmr="auto",
+                 hmr_factor="auto",
+                 hmr_water="auto"                 
                 ):
         """Constructor.
 
@@ -110,6 +114,17 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
 
                 Currently perturubation_type != "full" is only supported by
                 BioSimSpace.Process.Somd.
+
+           hmr : "auto" or bool
+               Whether HMR should be applied.
+
+           hmr_factor : "auto" or float
+               The factor used to repartition.
+               "auto" indicates the recommended factor for the engine will be used.
+
+           hmr_water : "auto" or bool
+               Whether the water molecules should also be repartitioned.
+
         """
 
         # Call the base class constructors.
@@ -130,6 +145,13 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
                                   max_lam=max_lam,
                                   num_lam=num_lam,
                                   perturbation_type=perturbation_type)
+        
+        _HmrMixin.__init__(self,
+                           hmr=hmr,
+                           hmr_factor=hmr_factor,
+                           hmr_water=hmr_water,
+                           timestep=timestep
+                           )
 
     def __str__(self):
         """Return a human readable string representation of the object."""

@@ -264,7 +264,7 @@ class Gromacs(_process.Process):
                 seed = -1
             config_options["ld-seed"] = seed
 
-        if isinstance(self._protocol, _Protocol.Equilibration):
+        if isinstance(self._protocol, _Protocol.Equilibration) or isinstance(self._protocol, _Protocol.Minimisation):
             # Add any position restraints.
             self._add_position_restraints(config)
 

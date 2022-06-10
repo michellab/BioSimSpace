@@ -1,14 +1,15 @@
 __all__ = ["FreeEnergyEquilibration"]
 
-from BioSimSpace import Types as _Types
+from .. import Types as _Types
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._equilibration import Equilibration as _Equilibration
+from ._hmr_mixin import _HmrMixin
 
-from BioSimSpace import Units as _Units
+from .. import Units as _Units
 
 
-class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
+class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin, _HmrMixin):
     """A class for storing free energy equilibration protocols."""
 
     def __init__(self,
@@ -27,9 +28,11 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
                  restart_interval=1000,
                  restraint=None,
                  force_constant=10*_Units.Energy.kcal_per_mol/_Units.Area.angstrom2,
-                 restrain_backbone=False,
                  restart=False,
-                 perturbation_type="full"
+                 perturbation_type="full",
+                 hmr="auto",
+                 hmr_factor="auto",
+                 hmr_water="auto"                     
                  ):
         """Constructor.
 
@@ -99,10 +102,6 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
                passed, then default units of 'kcal_per_mol / angstrom**2' will
                be used.
 
-           restrain_backbone : bool
-               Restraint atoms in the protein backbone. This option is now
-               deprecated. Please use restraint = "backbone" instead.
-
            restart : bool
                Whether this is a continuation of a previous simulation.
 
@@ -117,6 +116,16 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
 
                 Currently perturubation_type != "full" is only supported by
                 BioSimSpace.Process.Somd.
+
+           hmr : "auto" or bool
+               Whether HMR should be applied.
+
+           hmr_factor : "auto" or float
+               The factor used to repartition.
+               "auto" indicates the recommended factor for the engine will be used.
+
+           hmr_water : "auto" or bool
+               Whether the water molecules should also be repartitioned.
         """
 
         # Call the base class constructors.
@@ -131,7 +140,6 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
                                 restart_interval=restart_interval,
                                 restraint=restraint,
                                 force_constant=force_constant,
-                                restrain_backbone=restrain_backbone,
                                 restart=restart)
 
         _FreeEnergyMixin.__init__(self,
@@ -141,7 +149,13 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
                                   max_lam=max_lam,
                                   num_lam=num_lam,
                                   perturbation_type=perturbation_type)
-
+        
+        _HmrMixin.__init__(self,
+                           hmr=hmr,
+                           hmr_factor=hmr_factor,
+                           hmr_water=hmr_water,
+                           timestep=timestep
+                           )
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
@@ -149,19 +163,20 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         else:
             return ("<BioSimSpace.Protocol.FreeEnergyEquilibration: lam=%5.4f, lam_vals=%r, timestep=%s, "
                     "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, restart_interval=%d, restraint=%r, force_constant=%f, restart=%r>"
+                    "restart_interval=%d, restart_interval=%d, restraint=%r, "
+                    "force_constant=%3.2f kcal_per_mol/angstrom**2, restart=%r>"
                     ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                          self._temperature_start, self._temperature_end, self._pressure, self._report_interval,
-                         self._restart_interval, self._restraint, self._force_constant, self._restart)
+                         self._restart_interval, self._restraint, self._force_constant.value(), self._restart)
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol.FreeEnergyEquilibration: lam=%5.4f, lam_vals=%r, timestep=%s, "
+            return ("<BioSimSpace.Protocol.FreeEnergyEquilibration(lam=%5.4f, lam_vals=%r, timestep=%s, "
                     "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, restart_interval=%d,restraint=%r, force_constant=%f, restart=%r>"
+                    "restart_interval=%d, restart_interval=%d,restraint=%r, force_constant=%3.2f, restart=%r)"
                     ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                          self._temperature_start, self._temperature_end, self._pressure, self._report_interval,
-                         self._restart_interval, self._restraint, self._force_constant, self._restart)
+                         self._restart_interval, self._restraint, self._force_constant.value(), self._restart)

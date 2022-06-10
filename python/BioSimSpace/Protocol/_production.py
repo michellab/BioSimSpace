@@ -34,6 +34,7 @@ import warnings as _warnings
 from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
+from ._hmr_mixin import _HmrMixin
 
 class Production(_Protocol):
     """A class for storing production protocols."""
@@ -46,7 +47,10 @@ class Production(_Protocol):
                  report_interval=200,
                  restart_interval=1000,
                  first_step=0,
-                 restart=False
+                 restart=False,
+                 hmr="auto",
+                 hmr_factor="auto",
+                 hmr_water="auto"  
                 ):
         """Constructor.
 
@@ -76,6 +80,16 @@ class Production(_Protocol):
 
            restart : bool
                Whether this is a continuation of a previous simulation.
+           
+           hmr : "auto" or bool
+               Whether HMR should be applied.
+
+           hmr_factor : "auto" or float
+               The factor used to repartition.
+               "auto" indicates the recommended factor for the engine will be used.
+
+           hmr_water : "auto" or bool
+               Whether the water molecules should also be repartitioned.
         """
 
         # Call the base class constructor.
@@ -107,6 +121,13 @@ class Production(_Protocol):
 
         # Set the first time step.
         self.setFirstStep(first_step)
+    
+        _HmrMixin.__init__(self,
+                           hmr=hmr,
+                           hmr_factor=hmr_factor,
+                           hmr_water=hmr_water,
+                           timestep=timestep
+                           )
 
     def __str__(self):
         """Return a human readable string representation of the object."""

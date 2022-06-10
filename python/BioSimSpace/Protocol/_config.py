@@ -2,11 +2,11 @@ import itertools as _it
 import math as _math
 import warnings as _warnings
 
-from BioSimSpace.Align._merge import _squash
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace.Units.Time import nanosecond as _nanosecond
+from ..Align._merge import _squash
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Units.Time import nanosecond as _nanosecond
 
-from BioSimSpace import Protocol as _Protocol
+from .. import Protocol as _Protocol
 
 
 class ConfigFactory:
@@ -124,14 +124,15 @@ class ConfigFactory:
 
         return mask
 
-    def _generate_amber_fep_masks(self, timestep):
+    def _generate_amber_fep_masks(self, hmr):
         """Internal helper function which generates timasks and scmasks based on the system.
 
            Parameters
            ----------
 
-           timestep : [float]
-               The timestep in ps for the FEP perturbation. Generates a different mask based on this.
+           hmr : bool
+               Whether HMR has been applied or not.
+               Generates a different mask based on this.
 
            Returns
            -------
@@ -143,12 +144,8 @@ class ConfigFactory:
         # Squash the system into an AMBER-friendly format.
         squashed_system = _squash(self.system)
 
-        # define whether HMR is used based on the timestep
         # When HMR is used, there can be no noshakemask
-        if timestep >= 0.004:
-            HMR_on = True
-        else:
-            HMR_on = False
+        HMR_on = hmr
 
         # Extract all perturbable molecules from both the squashed and the merged systems.
         perturbable_mol_mask = []
@@ -293,8 +290,9 @@ class ConfigFactory:
             protocol_dict["iwrap"] = 1              # Wrap the coordinates.
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
-            # Restrain the backbone.
+        if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
+            
+            # Get the restraint.
             restraint = self.protocol.getRestraint()
 
             if restraint is not None:
@@ -404,9 +402,14 @@ class ConfigFactory:
                 protocol_dict["ifmbar"] = 1
                 # Output dVdl
                 protocol_dict["logdvdl"] = 1
-            # Atom masks.
+            # Atom masks based on if HMR.
+            hmr = self.protocol.getHmr()
             protocol_dict = {**protocol_dict, **
-                             self._generate_amber_fep_masks(timestep)}
+                             self._generate_amber_fep_masks(hmr)}
+            # Do not wrap the coordinates for equilibration steps 
+            # as this can create issues for the free leg of FEP runs.
+            if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
+                protocol_dict["iwrap"] = 0
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -513,8 +516,9 @@ class ConfigFactory:
         protocol_dict["vdwtype"] = "Cut-off"
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
-            # The actual restraints need to be defined elsewhere.
+        # The actual restraints are added in _gromacs.py
+        # TODO check for min if need refcoord
+        if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["refcoord-scaling"] = "all"
 
         # Pressure control.
@@ -677,8 +681,7 @@ class ConfigFactory:
             if timestep >= 4.00:
                 # Langevin middle integrator
                 protocol_dict["integrator_type"] = "langevinmiddle"
-                # Repartitioning factor of 1.5
-                protocol_dict["hydrogen mass repartitioning factor"] = "1.5"
+                # Repartitioning factor done based on hmr protocol as extra option
             else:
                 pass
 
@@ -696,9 +699,10 @@ class ConfigFactory:
         protocol_dict["cutoff distance"] = "8 angstrom"
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration) and self.protocol.getRestraint() is not None:
-            raise _IncompatibleError(
-                "We currently don't support restraints with SOMD.")
+        if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
+            if self.protocol.getRestraint() is not None:
+                raise _IncompatibleError(
+                    "We currently don't support restraints with SOMD.")
 
         # Pressure control.
         # Disable barostat (constant volume).
