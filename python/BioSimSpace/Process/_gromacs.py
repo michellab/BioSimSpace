@@ -131,11 +131,11 @@ class Gromacs(_process.Process):
                                             "Please install GROMACS (http://www.gromacs.org).")
 
         if not isinstance(ignore_warnings, bool):
-            raise ValueError("'ignore_warnings' must be of type 'bool.")
+            raise ValueError("'ignore_warnings' must be of type 'bool'.")
         self._ignore_warnings = ignore_warnings
 
         if not isinstance(show_errors, bool):
-            raise ValueError("'show_errors' must be of type 'bool.")
+            raise ValueError("'show_errors' must be of type 'bool'.")
         self._show_errors = show_errors
 
         # Initialise the stdout dictionary and title header.
@@ -160,8 +160,16 @@ class Gromacs(_process.Process):
         # Initialise the PLUMED interface object.
         self._plumed = None
 		
-		# Set the path of Gromacs checkpoint file
-        self._prev_cpt = prev_cpt
+		# Set the path of Gromacs checkpoint file.
+        self._prev_cpt = None
+        if prev_cpt is not None:
+            if not isinstance(prev_cpt, str):
+                raise ValueError("'prev_cpt' must be of type 'str'.")
+            else:
+                if _os.path.isfile(prev_cpt):
+                    self._prev_cpt = prev_cpt
+                else:
+                    raise IOError("Gromacs checkpoint file doesn't exist: '%s'" % prev_cpt)
 
         # Now set up the working directory for the process.
         self._setup()
