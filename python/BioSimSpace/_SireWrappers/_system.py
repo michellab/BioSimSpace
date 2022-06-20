@@ -526,7 +526,7 @@ class System(_SireWrapper):
                The updated (or replacement) molecule.
         """
 
-        if type(index) is int:
+        if type(index) is not int:
             raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
@@ -534,7 +534,6 @@ class System(_SireWrapper):
 
         if not isinstance(molecule, _Molecule):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'.")
-
 
         # The molecule numbers match.
         if self[index].number() == molecule.number():
