@@ -530,7 +530,7 @@ class System(_SireWrapper):
                The updated (or replacement) molecule.
         """
 
-        if type(index) is int:
+        if type(index) is not int:
             raise TypeError("'index' must be of type 'int'")
 
         if index < -self.nMolecules() or index >= self.nMolecules():
