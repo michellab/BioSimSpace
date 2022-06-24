@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
+import Sire
 from Sire import Mol as _SireMol
 
 class SearchResult():
@@ -48,7 +49,7 @@ class SearchResult():
 
         if isinstance(select_result, SearchResult):
             select_result = select_result._sire_object
-        elif isinstance(select_result, _SireMol.SelectResult):
+        elif isinstance(select_result, Sire.Mol._Mol.SelectResult):
             pass
         else:
             raise TypeError("'select_result' must be of type 'BioSimSpace._SireWrappers.SearchResult' "

@@ -29,12 +29,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
-from Sire import IO as _SireIO
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
-from Sire import Units as _SireUnits
-from Sire import Vol as _SireVol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
+from sire.legacy import Units as _SireUnits
+from sire.legacy import Vol as _SireVol
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -897,8 +897,10 @@ class System(_SireWrapper):
 
         # Loop over all of the items.
         for x in item:
+            if x is None:
+                continue
             # Atom.
-            if isinstance(x, _Atom):
+            elif isinstance(x, _Atom):
                 # Only compute the atom index mapping if it hasn't already
                 # been created.
                 if len(self._atom_index_tally) == 0:
@@ -967,7 +969,7 @@ class System(_SireWrapper):
 
             # Unsupported.
             else:
-                raise TypeError("'item' must be of type 'BioSimSpace._SireWrappers.Atom' "
+                raise TypeError(f"'item' (class {type(x)}) must be of type 'BioSimSpace._SireWrappers.Atom' "
                                 "or 'BioSimSpace._SireWrappers.Residue'")
 
         # If this was a single object, then return a single index.
