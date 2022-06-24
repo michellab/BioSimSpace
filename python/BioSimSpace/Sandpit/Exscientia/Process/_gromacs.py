@@ -264,6 +264,24 @@ class Gromacs(_process.Process):
                 seed = -1
             config_options["ld-seed"] = seed
 
+        # Perform vacuum simulations by implementing pseudo-PBC conditions,
+        # i.e. run calculation in a near-infinite box (333.3 nm).
+        # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
+        if not (has_box and self._has_water):
+            # Create a copy of the system.
+            system = self._system.copy()
+
+            # Convert the water model topology so that it matches the GROMACS naming convention.
+            system._set_water_topology("GROMACS")
+
+            # Create a 999.9 nm periodic box and apply to the system.
+            space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
+            system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+
+            # Re-write the GRO file.
+            gro = _SireIO.Gro87(system._sire_object, self._property_map)
+            gro.writeToFile(self._gro_file)
+
         if isinstance(self._protocol, _Protocol.Equilibration):
             # Add any position restraints.
             self._add_position_restraints(config)
@@ -293,20 +311,6 @@ class Gromacs(_process.Process):
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
                 # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                # Create a copy of the system.
-                system = self._system.copy()
-
-                # Convert the water model topology so that it matches the GROMACS naming convention.
-                system._set_water_topology("GROMACS")
-
-                # Create a 999.9 nm periodic box and apply to the system.
-                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-                # Re-write the GRO file.
-                gro = _SireIO.Gro87(system._sire_object, self._property_map)
-                gro.writeToFile(self._gro_file)
 
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
@@ -400,17 +404,6 @@ class Gromacs(_process.Process):
                 # i.e. run calculation in a near-infinite box (333.3 nm).
                 # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
 
-                # Create a copy of the system.
-                system = self._system.copy()
-
-                # Create a 999.9 nm periodic box and apply to the system.
-                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-                # Re-write the GRO file.
-                gro = _SireIO.Gro87(system._sire_object, self._property_map)
-                gro.writeToFile(self._gro_file)
-
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
                 config.append("nstlist = 1")                # Single neighbour list (all particles interact).
@@ -482,17 +475,6 @@ class Gromacs(_process.Process):
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
                 # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                # Create a copy of the system.
-                system = self._system.copy()
-
-                # Create a 999.9 nm periodic box and apply to the system.
-                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-                # Re-write the GRO file.
-                gro = _SireIO.Gro87(system._sire_object, self._property_map)
-                gro.writeToFile(self._gro_file)
 
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
@@ -583,17 +565,6 @@ class Gromacs(_process.Process):
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
                 # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                # Create a copy of the system.
-                system = self._system.copy()
-
-                # Create a 999.9 nm periodic box and apply to the system.
-                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-                # Re-write the GRO file.
-                gro = _SireIO.Gro87(system._sire_object, self._property_map)
-                gro.writeToFile(self._gro_file)
 
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
@@ -688,17 +659,6 @@ class Gromacs(_process.Process):
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
                 # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                # Create a copy of the system.
-                system = self._system.copy()
-
-                # Create a 999.9 nm periodic box and apply to the system.
-                space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-                # Re-write the GRO file.
-                gro = _SireIO.Gro87(system._sire_object, self._property_map)
-                gro.writeToFile(self._gro_file)
 
                 config.append("pbc = xyz")                  # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
