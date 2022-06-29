@@ -138,11 +138,11 @@ class Gromacs(_process.Process):
                 raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
 
         if not isinstance(ignore_warnings, bool):
-            raise ValueError("'ignore_warnings' must be of type 'bool.")
+            raise ValueError("'ignore_warnings' must be of type 'bool'.")
         self._ignore_warnings = ignore_warnings
 
         if not isinstance(show_errors, bool):
-            raise ValueError("'show_errors' must be of type 'bool.")
+            raise ValueError("'show_errors' must be of type 'bool'.")
         self._show_errors = show_errors
 
         # Initialise the stdout dictionary and title header.
