@@ -122,18 +122,20 @@ class Gromacs(_process.Process):
         # This process can generate trajectory data.
         self._has_trajectory = True
 
-        if _gmx_exe is not None:
-            self._exe = _gmx_exe
-        else:
-            if exe is not None:
-                # Make sure executable exists.
-                if _os.path.isfile(exe):
-                    self._exe = exe
-                else:
-                    raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
+        # Use GROMACS executable from environment.
+        if exe is None:
+            if _gmx_exe is not None:
+                self._exe = _gmx_exe
             else:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
                                             "Please install GROMACS (http://www.gromacs.org).")
+        # Use user-specified executable.
+        else:
+            # Make sure executable exists.
+            if _os.path.isfile(exe):
+                self._exe = exe
+            else:
+                raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
 
         if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool.")
