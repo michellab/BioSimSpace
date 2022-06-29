@@ -30,7 +30,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["SearchResult"]
 
 import Sire
-from Sire import Mol as _SireMol
+
 
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
@@ -41,19 +41,14 @@ class SearchResult():
            Parameters
            ----------
 
-           select_result : Sire.Mol.SelectResult
-               The Sire select result object.
+           select_result : Output of a Sire search
+               The Sire result object.
         """
 
-        # Check that the select_result is valid.
-
-        if isinstance(select_result, SearchResult):
-            select_result = select_result._sire_object
-        elif isinstance(select_result, Sire.Mol._Mol.SelectResult):
-            pass
-        else:
-            raise TypeError("'select_result' must be of type 'BioSimSpace._SireWrappers.SearchResult' "
-                            "or 'Sire.Mol.SelectResult'")
+        # Note that the type of a sire search will now be
+        # whatever makes most sense for the result, e.g.
+        # SelectorMol if this is a list of molecules, 
+        # SelectorBond if this is a list of bonds etc.
 
         # Store the Sire select result.
         self._sire_object = select_result.__deepcopy__()
@@ -138,13 +133,13 @@ class SearchResult():
             result = self._sire_object[key]
 
             # Atom.
-            if isinstance(result, _SireMol.Atom):
+            if isinstance(result, Sire.Mol._Mol.Atom):
                 return _Atom(result)
             # Residue.
-            if isinstance(result, _SireMol.Residue):
+            if isinstance(result, Sire.Mol._Mol.Residue):
                 return _Residue(result)
             # Molecule.
-            if isinstance(result, _SireMol.Molecule):
+            if isinstance(result, Sire.Mol._Mol.Molecule):
                 # If the molecule contains a single atom, then convert to an atom.
                 if result.nAtoms() == 1:
                     return _Atom(result.atom())
