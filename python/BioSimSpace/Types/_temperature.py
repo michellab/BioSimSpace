@@ -365,8 +365,11 @@ class Temperature(_Type):
             return unit
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
+        elif len(unit) == 0:
+            raise ValueError(f"Unit is not given. You must supply the unit.")
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError("Unsupported unit '%s'. Supported units are: '%s'" % (
+                    unit, list(self._supported_units.keys())))
 
     def _to_sire_unit(self):
         """Return the internal Sire Unit object to which this type corresponds.

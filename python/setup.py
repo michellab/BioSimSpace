@@ -1,4 +1,5 @@
 import os
+import sys
 import platform
 
 # import Sire in mixed_api compatibility mode
@@ -8,6 +9,16 @@ try:
 except ImportError:
     # a new version of sire is not installed
     pass
+
+# Allow setting on the command line because setting
+# environment variables on Windows is painful!
+if "BSS_SKIP_DEPENDENCIES=1" in sys.argv:
+    os.environ["BSS_SKIP_DEPENDENCIES"] = "1"
+    sys.argv.remove("BSS_SKIP_DEPENDENCIES=1")
+    
+if "BSS_CONDA_INSTALL=1" in sys.argv:
+    os.environ["BSS_CONDA_INSTALL"] = "1"
+    sys.argv.remove("BSS_CONDA_INSTALL=1")
 
 
 if not os.getenv("BSS_CONDA_INSTALL"):
@@ -72,7 +83,6 @@ try:
 
 # Post setup configuration.
 finally:
-    import sys
     import os
 
     if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
