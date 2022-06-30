@@ -132,9 +132,7 @@ class Trajectory():
         self._process_name = None
         self._traj_file = None
         self._top_file = None
-
-        # Default to MDTraj as the backend.
-        self._backend = "MDTRAJ"
+        self._backend = None
 
         # Nothing to create a trajectory from.
         if process is None and trajectory is None:
@@ -173,31 +171,23 @@ class Trajectory():
             self._traj_file = trajectory
             self._top_file = topology
 
-            # See if the topology file is a GROMACS GRO or TPR file. If so, we need
-            # to use MDAnalysis as the backend.
-            ext = _os.path.splitext(topology)
-
-            if ext:
-                if ext[-1].lower() == ".tpr":
-                    self._backend = "MDANALYSIS"
-
         # Invalid arguments.
         else:
             raise ValueError("BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
                              "or a trajectory and topology file.")
 
         # Get the current trajectory.
-        self._trajectory = self.getTrajectory(format=self._backend.lower())
+        self._trajectory = self.getTrajectory(format="AUTO")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
-            % (self.nFrames(), self._backend.lower())
+            % (self.nFrames(), str(self._backend).lower())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
-            % (self.nFrames(), self._backend.lower())
+            % (self.nFrames(), str(self._backend).lower())
 
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
@@ -207,6 +197,9 @@ class Trajectory():
 
            format : str
                Whether to return an 'MDTraj' or 'MDAnalysis' object.
+               Use "auto" if you are happy with either format, i.e. it
+               will try each backend in sequence and return an object
+               from the first one that works.
 
            Returns
            -------
@@ -215,11 +208,14 @@ class Trajectory():
                The trajectory in MDTraj or MDAnalysis format.
         """
 
-        if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
-            _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
-            format = "mdtraj"
+        # Strip whitespace and convert to upper case.
+        format = format.replace(" ", "").upper()
 
-        if format == "mdtraj" and self._backend == "MDANALYSIS":
+        if format.replace(" ", "").upper() not in ["MDTRAJ", "MDANALYSIS", "AUTO"]:
+            _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
+            format = "MDTRAJ"
+
+        if format == "MDTRAJ" and self._backend == "MDANALYSIS":
             raise _IncompatibleError("This Trajectory object can only be used "
                                      "with the MDAnalysis backend.")
 
@@ -248,17 +244,18 @@ class Trajectory():
             raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
         # Return an MDTraj object.
-        if format == "mdtraj":
+        if format in ["MDTRAJ", "AUTO"]:
             try:
                 traj = _mdtraj.load(traj_file, top=top_file)
+                self._backend = "MDTRAJ"
+                return traj
             except:
-                _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
-                traj = None
-
-            return traj
+                if format == "MDTRAJ":
+                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    return None
 
         # Return an MDAnalysis Universe.
-        else:
+        if format in ["MDANALYSIS", "AUTO"]:
             # Check the file extension.
             _, extension = _os.path.splitext(top_file)
 
@@ -277,11 +274,15 @@ class Trajectory():
 
             try:
                 universe = _mdanalysis.Universe(top_file, traj_file)
+                self._backend = "MDANALYSIS"
 
                 if is_temp_file:
                     _os.remove(top_file)
             except:
-                _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                if format == "MDANALYSIS":
+                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                else:
+                    _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 universe = None
 
                 if is_temp_file:
