@@ -167,3 +167,14 @@ def test_get_residue(system):
     assert system.getResidue(0) == system[0].getResidues()[0]
     assert system.getResidue(3) == system[1].getResidues()[0]
     assert system.getResidue(632) == system[-1].getResidues()[-1]
+
+def test_molecule_reordering(system):
+    # Make sure that molecules are added to a container in the correct order.
+
+    # Create a new system via a Molecules container where the last
+    # molecule in the original system is placed in the first position
+    # in the new one.
+    new_system = (system[-1] + system[:-1]).toSystem()
+
+    # Make sure the molecules match.
+    assert new_system[0] == system[-1]
