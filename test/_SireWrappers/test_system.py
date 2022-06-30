@@ -150,7 +150,16 @@ def test_get_atom(system):
     # i.e. absolute within the system, or relative to a molecule.
     assert system.getAtom(0) == system[0].getAtoms()[0]
     assert system.getAtom(22) == system[1].getAtoms()[0]
-    assert system.getAtom(1911) == system[-1].getAtoms()[-1]
+    assert system.getAtom(1883) == system[-10].getAtoms()[1]
+
+    # Remove some molecules from the system.
+    system.removeMolecules([system[0], system[2], system[-2]])
+
+    # Check that the assertions still hold on the modified system,
+    # making sure we map to the molecules in their new positions.
+    assert system.getAtom(0) == system[0].getAtoms()[0]
+    assert system.getAtom(22) == system[7].getAtoms()[1]
+    assert system.getAtom(1883) == system[-1].getAtoms()[-1]
 
 def test_get_residue(system):
     # Make sure residue extraction works using absolute or relative indices,
