@@ -36,12 +36,24 @@ authors=("Lester Hedges <lester.hedges@gmail.com, "
          "Christopher Woods <chryswoods@gmail.com>, "
          "Antonia Mey <antonia.mey@gmail.com")
 
+_installed_list = None
+
 # Function to check if a conda dependency has been installed
 def is_installed(dep: str, conda: str):
-    p = subprocess.Popen([conda, "list", dep], stdout=subprocess.PIPE)
-    lines = str(p.stdout.read())
+    global _installed_list
 
-    return lines.find(dep) != -1
+    if _installed_list is None:
+        p = subprocess.Popen([conda, "list", dep], stdout=subprocess.PIPE)
+        lines = str(p.stdout.read())
+        _installed_list = lines
+
+    return _installed_list.find(dep) != -1
+
+
+# Function to clear the cache of installed packages
+def clear_installed_list():
+    global _installed_list
+    _installed_list = None
 
 
 # Run the setup.
@@ -61,6 +73,7 @@ try:
 # Post setup configuration.
 finally:
     import sys
+    import os
 
     if "install" in sys.argv and not (os.getenv("BSS_CONDA_INSTALL") or os.getenv("BSS_SKIP_DEPENDENCIES")):
         import shlex
@@ -97,29 +110,57 @@ finally:
 
         print("Checking for dependencies that are already installed...")
 
+        if sys.platform == "win32":
+            conda_exe = os.path.join(bin_dir, "Scripts", "mamba.exe")
+            real_conda_exe = os.path.join(bin_dir, "Scripts", "conda.exe")
+
+            if not os.path.exists(conda_exe):
+                conda_exe = real_conda_exe
+        else:
+            conda_exe = os.path.join(bin_dir, "mamba")
+            real_conda_exe = os.path.join(bin_dir, "conda")
+
+            if not os.path.exists(conda_exe):
+                conda_exe = real_conda_exe
+
         for dep in conda_deps:
-            if not is_installed(dep, conda="%s/conda" % bin_dir):
+            if not is_installed(dep, conda=conda_exe):
                 to_install_deps.append(dep)
+                print(f"Need to install {dep}")
             else:
                 print("Already installed %s" % dep)
 
+        clear_installed_list()
+
         conda_deps = to_install_deps
 
+        # Need to not use posix rules on windows with shlex.split, or path separator is escaped
+        posix = sys.platform != "win32"
+
         print("Adding conda-forge channel")
-        command = "%s/conda config --system --prepend channels conda-forge" % bin_dir
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        command = "%s config --system --prepend channels conda-forge" % real_conda_exe
+        print(command)
+        try:
+            subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
+        except Exception as e:
+            print(f"Something went wrong ({e}). Continuing regardless...")
 
         print("Disabling conda auto update")
-        command = "%s/conda config --system --set auto_update_conda false" % bin_dir
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        command = "%s config --system --set auto_update_conda false" % real_conda_exe
+        print(command)
+        try:
+            subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
+        except Exception as e:
+            print(f"Something went wrong ({e}). Continuing regardless...")
 
         print("Installing conda dependencies: %s" % ", ".join(conda_deps))
-        command = "%s/conda install -y -q %s" % (bin_dir, " ".join(conda_deps))
+        command = "%s install -y -q %s" % (conda_exe, " ".join(conda_deps))
+        print(command)
 
         all_installed_ok = True
 
         try:
-            subprocess.run(shlex.split(command), shell=False,
+            subprocess.run(shlex.split(command, posix=posix), shell=False,
                            stdout=stdout, stderr=stderr, check=True)
         except Exception:
             all_installed_ok = False
@@ -131,12 +172,12 @@ finally:
             failures = []
 
             for dep in conda_deps:
-                if not is_installed(dep, conda="%s/conda" % bin_dir):
+                if not is_installed(dep, conda=conda_exe):
                     print("Trying again to install '%s'" % dep)
-                    command = "%s/conda install -y -q %s" % (bin_dir, dep)
+                    command = "%s install -y -q %s" % (conda_exe, dep)
 
                     try:
-                        subprocess.run(shlex.split(command), shell=False,
+                        subprocess.run(shlex.split(command, posix=posix), shell=False,
                                        stdout=stdout, stderr=stderr, check=True)
                     except Exception:
                         failures.append(dep)
@@ -151,14 +192,18 @@ finally:
 
 
         print("Activating notebook extension: nglview")
+
+        if sys.platform == "win32":
+            bin_dir = os.path.join(bin_dir, "Scripts")
+
         command = "%s/jupyter-nbextension install nglview --py --sys-prefix --log-level=0" % bin_dir
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
         command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
 
         print("Cleaning conda environment")
-        command = "%s/conda clean --all --yes --quiet" % bin_dir
-        subprocess.run(shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        command = "%s clean --all --yes --quiet" % conda_exe
+        subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
 
         try:
             import BioSimSpace
