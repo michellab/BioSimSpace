@@ -89,8 +89,6 @@ class GeneralUnit(_Type):
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
-            print(_args[0], type(_args[0]))
-
             if isinstance(_args[0], _GeneralUnit):
                 general_unit = _args[0]
 
@@ -110,7 +108,6 @@ class GeneralUnit(_Type):
                     general_unit = general_unit._sire_unit
 
             else:
-                print(_args[0], type(_args[0]))
                 raise TypeError("__new__() missing positional argument(s): "
                                 "'string' or 'sire.units.GeneralUnit'. "
                                 f"Passed argument {_args[0]} is a {type(_args[0])}")
@@ -700,8 +697,6 @@ class GeneralUnit(_Type):
 
         if isinstance(string, str):
             # Convert to lower case and strip whitespace.
-            print(string)
-
             string = string.lower().replace(" ", "")
 
             # Convert powers to common format.
@@ -720,8 +715,6 @@ class GeneralUnit(_Type):
 
             for unit in _base_units:
                 string = unit._to_sire_format(string)
-
-            print("again", string)
 
             try:
                 # Compile the eval expression to bytecode.
@@ -743,7 +736,6 @@ class GeneralUnit(_Type):
                 return GeneralUnit(general_unit)
 
             except Exception as e:
-                print(e)
                 raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
 
         else:

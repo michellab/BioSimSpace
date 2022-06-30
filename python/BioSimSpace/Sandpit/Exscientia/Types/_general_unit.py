@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["GeneralUnit"]
 
-from sire import units as _SireUnits
+from sire.units import GeneralUnit as _GeneralUnit
 
 from ._base_units import *
 from ._type import Type as _Type
@@ -89,7 +89,7 @@ class GeneralUnit(_Type):
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
-            if isinstance(_args[0], _SireUnits.GeneralUnit):
+            if isinstance(_args[0], _GeneralUnit):
                 general_unit = _args[0]
 
             # The user has passed a string representation of the temperature.
@@ -109,12 +109,13 @@ class GeneralUnit(_Type):
 
             else:
                 raise TypeError("__new__() missing positional argument(s): "
-                                "'string' or 'sire.units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'. "
+                                f"Passed argument {_args[0]} is a {type(_args[0])}")
 
         # No arguments.
         else:
             raise TypeError("__new__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'sire.units.GeneralUnit'")
+                            "or 'string' or 'Sire.Units.GeneralUnit'")
 
         # Scale the general unit by the value.
         general_unit = value * general_unit
@@ -181,7 +182,7 @@ class GeneralUnit(_Type):
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
-            if isinstance(_args[0], _SireUnits.GeneralUnit):
+            if isinstance(_args[0], _GeneralUnit):
                 general_unit = _args[0]
 
             # The user has passed a string representation of the temperature.
@@ -195,7 +196,8 @@ class GeneralUnit(_Type):
 
             else:
                 raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'sire.units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'. "
+                                f"Passed value {_args[0]} is a {type(_args[0])}")
 
         # No arguments.
         else:
@@ -652,7 +654,7 @@ class GeneralUnit(_Type):
            Returns
            -------
 
-           sire_unit : sire.units.GeneralUnit
+           sire_unit : Sire.Units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self._sire_unit
@@ -664,12 +666,13 @@ class GeneralUnit(_Type):
            Parameters
            ----------
 
-           sire_unit : sire.units.GeneralUnit
+           sire_unit : Sire.Units.GeneralUnit
                A Sire GeneralUnit object.
         """
 
-        if not isinstance(sire_unit, _SireUnits.GeneralUnit):
-            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'")
+        if not isinstance(sire_unit, _GeneralUnit):
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'. "
+                            f"Value {sire_unit} is of type {type(sire_unit)}")
 
         return GeneralUnit(sire_unit)
 
@@ -732,7 +735,7 @@ class GeneralUnit(_Type):
                 # Create and return a new object.
                 return GeneralUnit(general_unit)
 
-            except:
+            except Exception as e:
                 raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
 
         else:
