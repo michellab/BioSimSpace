@@ -116,11 +116,17 @@ def test_container_mul(Type):
     # Apply the type to a list.
     container = [1, 2, 3] * my_type
 
+    # Make sure the container is a list.
+    assert isinstance(container, list)
+
     # Assert we have a container of the original type.
     assert all(isinstance(x, Type) for x in container)
 
     # Apply the type to a tuple.
     container = (1, 2, 3) * my_type
+
+    # Make sure the container is a tuple.
+    assert isinstance(container, tuple)
 
     # Assert we have a container of the original type.
     assert all(isinstance(x, Type) for x in container)
