@@ -42,7 +42,8 @@ from Sire import MM as _SireMM
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
-from Sire import Units as _SireUnits
+
+from sire import units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

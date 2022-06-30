@@ -70,7 +70,8 @@ with _warnings.catch_warnings():
 from Sire import Base as _SireBase
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
-from Sire import Units as _SireUnits
+
+from sire import units as _SireUnits
 
 from .. import _is_notebook, _isVerbose
 from .._Exceptions import AlignmentError as _AlignmentError
@@ -1876,7 +1877,7 @@ def _prune_perturbed_constraints(molecule0, molecule1, mapping):
 def _prune_crossing_constraints(molecule0, molecule1, mapping):
     """Prunes the maximum common substructure (MCS) mapping so that there are no
        constrained bonds between a common core and a softcore atom.
-       
+
        Parameters
        ----------
        molecule0 : BioSimSpace._SireWrappers.Molecule

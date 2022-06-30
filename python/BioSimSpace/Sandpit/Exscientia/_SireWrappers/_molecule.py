@@ -34,13 +34,16 @@ from warnings import warn as _warn
 
 import os.path as _path
 
+import Sire
+
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
-from Sire import Units as _SireUnits
+
+from sire import units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -77,7 +80,7 @@ class Molecule(_SireWrapper):
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
-        if isinstance(molecule, _SireMol.Molecule):
+        if isinstance(molecule, Sire.Mol._Mol.Molecule):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
@@ -102,7 +105,7 @@ class Molecule(_SireWrapper):
 
         # Invalid type.
         else:
-            raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule' "
+            raise TypeError(f"'molecule' (type {type(molecule)}) must be of type 'Sire.Mol.Molecule' "
                             "or 'BioSimSpace._SireWrappers.Molecule'.")
 
         # Flag that this object holds multiple atoms.

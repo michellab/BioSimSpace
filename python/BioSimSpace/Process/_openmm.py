@@ -40,7 +40,8 @@ import warnings as _warnings
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
-from Sire import Units as _SireUnits
+
+from sire import units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecules"]
 
+import Sire
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
@@ -61,11 +62,11 @@ class Molecules(_SireWrapper):
             molecules = list(molecules)
 
         # A Sire MoleculeGroup object.
-        if isinstance(molecules, _SireMol.MoleculeGroup):
+        if isinstance(molecules, Sire.Mol._Mol.MoleculeGroup):
             super().__init__(molecules)
 
         # A Sire System object.
-        elif isinstance(molecules, _SireSystem.System):
+        elif isinstance(molecules, Sire.System._System.System):
             super().__init__(molecules.molecules())
 
         # A BioSimSpace System object.

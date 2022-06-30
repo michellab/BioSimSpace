@@ -41,7 +41,8 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire.Maths import Vector as _Vector
 from Sire.Vol import TriclinicBox as _TriclinicBox
-from Sire.Units import degree as _degree
+
+from sire.units import degree as _degree
 
 from .. import _gmx_exe, _gmx_path
 from .. import _isVerbose

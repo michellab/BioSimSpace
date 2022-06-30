@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Area"]
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 from ._type import Type as _Type
 

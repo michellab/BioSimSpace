@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["GeneralUnit"]
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 from ._base_units import *
 from ._type import Type as _Type
@@ -109,12 +109,12 @@ class GeneralUnit(_Type):
 
             else:
                 raise TypeError("__new__() missing positional argument(s): "
-                                "'string' or 'Sire.Units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'")
 
         # No arguments.
         else:
             raise TypeError("__new__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'Sire.Units.GeneralUnit'")
+                            "or 'string' or 'sire.units.GeneralUnit'")
 
         # Scale the general unit by the value.
         general_unit = value * general_unit
@@ -195,12 +195,12 @@ class GeneralUnit(_Type):
 
             else:
                 raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'Sire.Units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'")
 
         # No arguments.
         else:
             raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'Sire.Units.GeneralUnit'")
+                            "or 'string' or 'sire.units.GeneralUnit'")
 
         # Need to rescale the value since the units might have been
         # converted to the default for this GeneralUnit.
@@ -652,7 +652,7 @@ class GeneralUnit(_Type):
            Returns
            -------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self._sire_unit
@@ -664,12 +664,12 @@ class GeneralUnit(_Type):
            Parameters
            ----------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                A Sire GeneralUnit object.
         """
 
         if not isinstance(sire_unit, _SireUnits.GeneralUnit):
-            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit'")
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'")
 
         return GeneralUnit(sire_unit)
 

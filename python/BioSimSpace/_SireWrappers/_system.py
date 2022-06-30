@@ -33,8 +33,9 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
-from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
+
+from sire import units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -43,6 +44,9 @@ from ..Types import Length as _Length
 from .. import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
+
+from sire.mol import Select as _Select
+
 
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
@@ -857,7 +861,7 @@ class System(_SireWrapper):
 
         try:
             # Query the Sire system.
-            search_result = _SireMol.Select(query)(self._sire_object, property_map)
+            search_result = _Select(query)(self._sire_object, property_map)
 
         except Exception as e:
             msg = "'Invalid search query: %r" % query

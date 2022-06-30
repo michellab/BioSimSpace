@@ -42,8 +42,9 @@ import warnings as _warnings
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
-from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
+
+from sire import units as _SireUnits
 
 from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
