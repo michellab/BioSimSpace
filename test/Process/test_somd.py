@@ -57,6 +57,52 @@ def test_pert_file(morph, pert):
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
 
+def test_pert_res_num():
+    """Test that the perturbable residue number is correct when
+       the molecules in the system are re-ordered.
+    """
+    import pickle
+
+    # Unpickle the system.
+    with open("test/input/morphs/perturbable_system.pickle", "rb") as file:
+        system = pickle.load(file)
+
+    # Create a default free energy protocol.
+    protocol = BSS.Protocol.FreeEnergy()
+
+    # Set up the intial process object.
+    process0 = BSS.Process.Somd(system, protocol)
+
+    # Now put the perturbable molecule last.
+    new_system = (system[1:] + system[0]).toSystem()
+
+    # Re-add the box info.
+    new_system.setBox(*system.getBox())
+
+    # Set up the new process object.
+    process1 = BSS.Process.Somd(new_system, protocol)
+
+    # Get the config for each process.
+    config0 = process0.getConfig()
+    config1 = process1.getConfig()
+
+    # Get the difference between the two configs.
+
+    # Items unique to config0.
+    unique0 = list(set(config0) - set(config1))
+    unique1 = list(set(config1) - set(config0))
+
+    # One item should be different.
+    assert len(unique0) == len(unique1) == 1
+
+    # Now check that the entries are as expected.
+
+    # For the first system, the perturbable residue is first.
+    assert unique0[0] == "perturbed residue number = 1"
+
+    # For the second system, the perturbable residue is second.
+    assert unique1[0] == "perturbed residue number = 2"
+
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
