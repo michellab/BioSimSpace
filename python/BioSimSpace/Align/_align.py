@@ -307,37 +307,39 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 writer.close()
     else:
         if names is not None:
-            for x, (molecule, name) in enumerate(zip(molecules, names)):
-                # If the molecule came from an SDF file, then use
-                # that as the format as it's generally more reliable.
-                is_sdf = False
-                if molecule._sire_object.hasProperty("fileformat"):
-                    if "SDF" in molecule._sire_object.property("fileformat").value():
-                        is_sdf = True
+            is_names = True
+            _names = names
+        else:
+            is_names = False
+            _names = ["txt" for x in range(len(molecules))]
+
+        for x, (molecule, name) in enumerate(zip(molecules, _names)):
+            # If the molecule came from an SDF file, then use
+            # that as the format as it's generally more reliable.
+            is_sdf = False
+            if molecule._sire_object.hasProperty("fileformat"):
+                if "SDF" in molecule._sire_object.property("fileformat").value():
+                    is_sdf = True
+                    if is_names:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
                             molecule, "sdf", property_map=property_map)
                         links_names[name] = f"{x:03d}_{name}.sdf"
                     else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "sdf", property_map=property_map)
+                else:
+                    if is_names:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
                             molecule, "mol2", property_map=property_map)
                         links_names[name] = f"{x:03d}_{name}.mol2"
-                else:
-                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                        molecule,  "mol2", property_map=property_map)
-                    links_names[name] = f"{x:03d}_{name}.mol2"
-        else:
-            for x, molecule in enumerate(molecules):
-                # If the molecule came from an SDF file, then use
-                # that as the format as it's generally more reliable.
-                is_sdf = False
-                if molecule._sire_object.hasProperty("fileformat"):
-                    if "SDF" in molecule._sire_object.property("fileformat").value():
-                        is_sdf = True
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                            molecule, "sdf", property_map=property_map)
                     else:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
                             molecule, "mol2", property_map=property_map)
+            else:
+                if is_names:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                        molecule,  "mol2", property_map=property_map)
+                    links_names[name] = f"{x:03d}_{name}.mol2"
                 else:
                     _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
                         molecule,  "mol2", property_map=property_map)
@@ -506,11 +508,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         # 1) Loop over each molecule and load into RDKit.
         try:
             rdmols = []
-            _names = names
             if names is not None:
                 is_names = True
+                _names = names
             else:
                 is_names = False
+                _names = ["txt" for x in range(len(molecules))]
 
             for x, name in zip(range(0, len(molecules)), _names):
                 if is_sdf:
