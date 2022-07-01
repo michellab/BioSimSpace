@@ -23,12 +23,20 @@
 A class for holding restraints.
 """
 
+import numpy as np
+from Sire.Units import k_boltz
+from Sire.Units import meter3 as Sire_meter3
+from Sire.Units import nanometer3 as Sire_nanometer3
+from Sire.Units import mole as Sire_mole
+
 from .._SireWrappers import Atom
-from ..Types import Length, Angle
+from ..Types import Length, Angle, Temperature
 from .._SireWrappers import System as _System
 from ..Units.Length import nanometer
+from ..Units.Area import nanometer2
+from ..Units.Temperature import kelvin
 from ..Units.Angle import degree, radian
-from ..Units.Energy import kj_per_mol
+from ..Units.Energy import kj_per_mol, kcal_per_mol
 
 class Restraint():
     '''The Restraint class which holds the restraint information for the ABFE
@@ -68,7 +76,7 @@ class Restraint():
                            "kphiC": BioSimSpace.Types.Energy / (BioSimSpace.Types.Area * BioSimSpace.Types.Area)}}
 
     '''
-    def __init__(self, system, restraint_dict, rest_type='Boresch'):
+    def __init__(self, system, restraint_dict, temperature, rest_type='Boresch'):
         """Constructor.
 
            Parameters
@@ -80,9 +88,17 @@ class Restraint():
            restraint_dict : dict
                The dict for holding the restraint.
 
+           temperature : :class:`System <BioSimSpace.Types.Temperature>`
+               The temperature of the system
+
            rest_type : str
                The type of the restraint. (`Boresch`, )
         """
+        if not isinstance(temperature, Temperature):
+            raise ValueError(
+                "temperature must be of type 'BioSimSpace.Types.Temperature'")
+        else:
+            self.T = temperature
 
         if rest_type.lower() == 'boresch':
             self._rest_type = 'boresch'
@@ -128,13 +144,14 @@ class Restraint():
                                       f'yet. Only boresch restraint is supported.')
 
         self._restraint_dict = restraint_dict
-        self.update_system(system)
+        self.system = system
 
     @property
-    def rest_type(self):
-        return self._rest_type
+    def system(self):
+        return self._system
 
-    def update_system(self, system):
+    @system.setter
+    def system(self, system):
         """Update the system object.
 
            Parameters
@@ -294,3 +311,33 @@ class Restraint():
         else:
             raise NotImplementedError(f'MD Engine {engine} not implemented '
                                       f'yet. Only Gromacs is supported.')
+
+    @property
+    def correction(self):
+        '''Give the free energy of removing the restraint.'''
+        if self._rest_type == 'boresch':
+            K = k_boltz * (kcal_per_mol / kelvin) / (kj_per_mol / kelvin) # Gas constant in kJ/mol/K
+            V = ((Sire_meter3 / 1000 / Sire_mole) / Sire_nanometer3).value() # standard volume in nm^3 (liter/N_A)
+
+            T = self.T / kelvin # Temperature in Kelvin
+            r0 = self._restraint_dict['equilibrium_values']['r0'] / nanometer # Distance in nm
+            thA = self._restraint_dict['equilibrium_values']['thetaA0'] / radian # Angle in radians
+            thB = self._restraint_dict['equilibrium_values']['thetaB0'] / radian  # Angle in radians
+
+            K_r = self._restraint_dict['force_constants']['kr'] / (kj_per_mol / nanometer2) # force constant for distance (kJ/mol/nm^2)
+            K_thA = self._restraint_dict['force_constants']['kthetaA'] / (kj_per_mol / (radian * radian))  # force constant for angle (kJ/mol/rad^2)
+            K_thB = self._restraint_dict['force_constants']['kthetaB'] / (kj_per_mol / (radian * radian))  # force constant for angle (kJ/mol/rad^2)
+            K_phiA = self._restraint_dict['force_constants']['kphiA'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
+            K_phiB = self._restraint_dict['force_constants']['kphiB'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
+            K_phiC = self._restraint_dict['force_constants']['kphiC'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
+
+            # Convert all the units to float before this calculation as BSS cannot handle root
+            arg = ((8.0 * np.pi ** 2 * V) /
+                   (r0 ** 2 * np.sin(thA) * np.sin(thB)) *
+                   (((K_r * K_thA * K_thB * K_phiA * K_phiB * K_phiC) ** 0.5) /
+                    ((2.0 * np.pi * K * T) ** 3)))
+
+            dG = - K * T * np.log(arg)
+            # Attach unit
+            dG *= kj_per_mol
+            return dG

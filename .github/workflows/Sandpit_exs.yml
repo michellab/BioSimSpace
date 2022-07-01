@@ -8,6 +8,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -30,19 +34,17 @@ jobs:
           use-mamba: true
 
       - name: Install dependency
-        shell: bash -l {0}
         run: |
           mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
           mamba install -c conda-forge ambertools alchemlyb gromacs
+          python -m pip install git+https://github.com/IAlibay/MDRestraintsGenerator.git 
 
       - name: Install the dev version
-        shell: bash -l {0}
         run: |
           cd python
           python setup.py develop
           cd ..
 
       - name: Run tests
-        shell: bash -l {0}
         run: |
           pytest -v --color=yes test/Sandpit/Exscientia/

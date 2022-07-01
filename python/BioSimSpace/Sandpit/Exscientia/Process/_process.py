@@ -148,7 +148,7 @@ class Process():
                 raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
             else:
                 # Ensure that the system is compatible with the restraint
-                restraint.update_system(system)
+                restraint.system = system
         self._restraint = restraint
 
         # Set the process to None.

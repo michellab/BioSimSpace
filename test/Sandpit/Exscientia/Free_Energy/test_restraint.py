@@ -1,11 +1,14 @@
 import pytest
 
+import numpy as np
+
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
-from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
+from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian, degree
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
+from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
 @pytest.fixture(scope='session')
 def restraint():
@@ -31,9 +34,9 @@ def restraint():
     restraint_dict = {
         "anchor_points":{"r1":protein_0, "r2":protein_1, "r3":protein_2,
                          "l1":ligand_0, "l2":ligand_1, "l3":ligand_2},
-        "equilibrium_values":{"r0":7.84 * angstrom,
-                              "thetaA0":0.81 * radian,
-                              "thetaB0":1.74 * radian,
+        "equilibrium_values":{"r0": 5.08 * angstrom,
+                              "thetaA0": 64.051 * degree,
+                              "thetaB0": 39.618 * degree,
                               "phiA0":2.59 * radian,
                               "phiB0":-1.20 * radian,
                               "phiC0":2.63 * radian},
@@ -43,7 +46,8 @@ def restraint():
                            "kphiA":10 * kcal_per_mol / (radian * radian),
                            "kphiB":10 * kcal_per_mol / (radian * radian),
                            "kphiC":10 * kcal_per_mol / (radian * radian)}}
-    restraint = Restraint(system, restraint_dict, rest_type='Boresch')
+    restraint = Restraint(system, restraint_dict, 300 * kelvin,
+                          rest_type='Boresch')
     return restraint
 
 def test_sanity(restraint):
@@ -64,8 +68,8 @@ class TestGromacsOutput():
         ai, aj, type, bA, kA, bB, kB = Topology[3].split()
         assert ai == '1'
         assert aj == '1496'
-        assert bA == '0.784'
-        assert bB == '0.784'
+        assert bA == '0.508'
+        assert bB == '0.508'
         assert kB == '4184.00'
 
     def test_angle(self, Topology):
@@ -73,8 +77,8 @@ class TestGromacsOutput():
         assert ai == '2'
         assert aj == '1'
         assert ak == '1496'
-        assert thA == '46.410'
-        assert thB == '46.410'
+        assert thA == '64.051'
+        assert thB == '64.051'
         assert kB == '41.84'
         ai, aj, ak, type, thA, kA, thB, kB = Topology[7].split()
         assert ai == '1'
@@ -100,3 +104,7 @@ class TestGromacsOutput():
         assert aj == '1496'
         assert ak == '1497'
         assert al == '1498'
+
+    def test_correction(self, restraint):
+        dG = restraint.correction / kcal_per_mol
+        assert np.isclose(-7.2, dG, atol=0.1)

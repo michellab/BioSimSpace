@@ -30,6 +30,7 @@ Classes
 
     Relative
     Restraint
+    RestraintSearch
 
 Functions
 =========
@@ -44,3 +45,4 @@ Functions
 from ._relative import *
 from ._utils import *
 from ._restraint import *
+from ._restraint_search import *

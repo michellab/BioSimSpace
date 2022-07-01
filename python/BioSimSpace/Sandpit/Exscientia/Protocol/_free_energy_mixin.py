@@ -229,7 +229,8 @@ class _FreeEnergyMixin(_Protocol):
 
         self._lambda = lam
 
-    def _checkLambdaValues(self, lam_vals, min_lam, max_lam, num_lam):
+    @staticmethod
+    def checkLambdaValues(lam_vals, min_lam=None, max_lam=None, num_lam=None):
         """Sanity check of the list of lambda values.
 
            Parameters
@@ -261,7 +262,7 @@ class _FreeEnergyMixin(_Protocol):
                 lam_vals = pd.DataFrame(data={'fep': lam_vals},
                                             dtype=float)
             else:
-                self._check_column_name(lam_vals)
+                _FreeEnergyMixin._check_column_name(lam_vals)
 
             # Make sure all values are in range [0.0, 1.0]
             if not ((lam_vals <= 1).all(axis=None) and (lam_vals >= 0).all(axis=None)):
@@ -285,14 +286,14 @@ class _FreeEnergyMixin(_Protocol):
                 # be converted to float
                 min_lam = pd.Series(data={'fep': min_lam}, dtype=float)
             else:
-                self._check_column_name(lam_vals)
+                _FreeEnergyMixin._check_column_name(lam_vals)
 
             if not isinstance(max_lam, pd.Series):
                 # For pandas < 1.4, TypeError won't be raised if the type cannot
                 # be converted to float
                 max_lam = pd.Series(data={'fep': max_lam}, dtype=float)
             else:
-                self._check_column_name(lam_vals)
+                _FreeEnergyMixin._check_column_name(lam_vals)
 
             if not type(num_lam) is int:
                 raise TypeError("'num_lam' must be of type 'int'.")
@@ -342,7 +343,7 @@ class _FreeEnergyMixin(_Protocol):
            num_lam : int
                The number of lambda values.
         """
-        self._lambda_vals = self._checkLambdaValues(lam_vals, min_lam, max_lam,
+        self._lambda_vals = self.checkLambdaValues(lam_vals, min_lam, max_lam,
                                                     num_lam)
         self.setLambda(lam)
 

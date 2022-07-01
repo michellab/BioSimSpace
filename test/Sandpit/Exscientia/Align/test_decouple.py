@@ -12,7 +12,7 @@ def mol():
     return mol
 
 def test_sanity(mol):
-    assert mol.isDecoupled() == False
+    assert mol.isDecoupled() is False
 
 @pytest.mark.parametrize("charge0", [True, False])
 @pytest.mark.parametrize("charge1", [True, False])
@@ -24,28 +24,28 @@ def test_set_property_map(mol, charge0, charge1, LJ0, LJ1):
     property_map1 = {"charge": charge1, "LJ": LJ1}
     new = decouple(mol, property_map0=property_map0,
                     property_map1=property_map1)
-    assert new._sire_object.property('charge0').value() == charge0
-    assert new._sire_object.property('charge1').value() == charge1
-    assert new._sire_object.property('LJ0').value() == LJ0
-    assert new._sire_object.property('LJ1').value() == LJ1
-    assert new.isDecoupled() == True
-    assert new._sire_object.property('annihilated').value() == False
+    assert new._sire_object.property('charge0').value() is charge0
+    assert new._sire_object.property('charge1').value() is charge1
+    assert new._sire_object.property('LJ0').value() is LJ0
+    assert new._sire_object.property('LJ1').value() is LJ1
+    assert new.isDecoupled() is True
+    assert new._sire_object.property('annihilated').value() is True
 
 def test_ommit_property_map(mol):
     '''Test if the charge and LJ are set to True by default'''
     new = decouple(mol)
-    assert new._sire_object.property('charge0').value() == True
-    assert new._sire_object.property('charge1').value() == False
-    assert new._sire_object.property('LJ0').value() == True
-    assert new._sire_object.property('LJ1').value() == False
-    assert new.isDecoupled() == True
-    assert new._sire_object.property('annihilated').value() == False
+    assert new._sire_object.property('charge0').value() is True
+    assert new._sire_object.property('charge1').value() is False
+    assert new._sire_object.property('LJ0').value() is True
+    assert new._sire_object.property('LJ1').value() is False
+    assert new.isDecoupled() is True
+    assert new._sire_object.property('annihilated').value() is True
 
 def test_intramol(mol):
     '''Test the case of intramol=False'''
     new = decouple(mol, intramol=False, property_map0={}, property_map1={})
-    assert new.isDecoupled() == True
-    assert new._sire_object.property('annihilated').value() == True
+    assert new.isDecoupled() is True
+    assert new._sire_object.property('annihilated').value() is False
 
 def test_getDecoupledMolecules(mol):
     '''Test the method of DecoupledMolecules'''

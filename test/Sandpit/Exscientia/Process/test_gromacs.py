@@ -4,6 +4,7 @@ from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
+from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
 import pytest
 
@@ -112,7 +113,7 @@ def test_restraint(system, tmp_path):
                            "kphiA":10 * kcal_per_mol / (radian * radian),
                            "kphiB":10 * kcal_per_mol / (radian * radian),
                            "kphiC":10 * kcal_per_mol / (radian * radian)}}
-    restraint = Restraint(system, restraint_dict, rest_type='Boresch')
+    restraint = Restraint(system, restraint_dict, 300 * kelvin, rest_type='Boresch')
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.0001, "nanoseconds"))

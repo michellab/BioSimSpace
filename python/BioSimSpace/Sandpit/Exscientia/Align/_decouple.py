@@ -33,8 +33,9 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
             interactions e.g. { "charge" : False, "LJ" : False}
 
         intramol : bool
-            Whether to remove the intra-molecule forces, thereby annihilate the
-            molecule instead of decouple it.
+            Whether to couple the intra-molecule forces. Setting to ``False``
+            means the intra-molecule forces will *not* be changed by the lambda
+            thereby decouple the molecule instead of annihilate it.
 
         Returns
         -------
@@ -85,7 +86,7 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     mol_edit.setProperty("LJ0", _SireBase.wrap(property_map0.get("LJ", True)))
     mol_edit.setProperty("LJ1", _SireBase.wrap(property_map1.get("LJ", True)))
 
-    mol_edit.setProperty("annihilated", _SireBase.wrap(not intramol))
+    mol_edit.setProperty("annihilated", _SireBase.wrap(intramol))
 
     # Flag that this molecule is decoupled.
     mol_edit.setProperty("is_decoupled", _SireBase.wrap(True))

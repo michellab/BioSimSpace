@@ -288,7 +288,7 @@ class Relative():
                 raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
             else:
                 # Ensure that the system is compatible with the restraint
-                restraint.update_system(self._system)
+                restraint.system = self._system
         self._restraint = restraint
 
         # Create fake instance methods for 'analyse' and 'difference'. These
@@ -683,6 +683,7 @@ class Relative():
                     if "GROMACS version" in line:
                         l = line.strip().split(':')
                         l = l[1].strip()
+                        l = l.split('-')[0] # handle '2022.1-conda_forge'
                         l = float(l)
                         return(l)
 
@@ -706,7 +707,7 @@ class Relative():
                         start = 'T ='
                         end = '(K)'
                         if start and end in line:
-                            t = int(((line.split(start)[1]).split(end)[0]).strip())
+                            t = float(((line.split(start)[1]).split(end)[0]).strip())
                             temperatures.append(t)
                             if t is not None:
                                 found_temperature = True
