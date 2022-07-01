@@ -122,9 +122,7 @@ def test_missing_file():
     invalid_command = command.replace("file=test/input/amber/ala/ala.crd", "file=missing.txt")
 
     # Run the command.
-    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
-
-    raise ValueError(f"return code '{proc.returncode}'")
+    proc = subprocess.run(BSS._Utils.command_split(invalid_command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
@@ -133,7 +131,7 @@ def test_missing_file():
     invalid_command = command.replace("test/input/amber/ala/ala.top", "file=missing.txt")
 
     # Run the command.
-    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(invalid_command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
