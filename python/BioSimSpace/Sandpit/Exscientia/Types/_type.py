@@ -176,6 +176,13 @@ class Type():
     def __mul__(self, other):
         """Multiplication operator."""
 
+        # Handle containers by converting each item in the container to
+        # this type.
+        if isinstance(other, list):
+            return [self.__mul__(item) for item in other]
+        if isinstance(other, tuple):
+            return tuple([self.__mul__(item) for item in other])
+
         # Convert int to float.
         if type(other) is int:
             other = float(other)

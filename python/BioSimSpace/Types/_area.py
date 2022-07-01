@@ -118,6 +118,13 @@ class Area(_Type):
     def __mul__(self, other):
         """Multiplication operator."""
 
+        # Handle containers by converting each item in the container to
+        # this type.
+        if isinstance(other, list):
+            return [self.__mul__(item) for item in other]
+        if isinstance(other, tuple):
+            return tuple([self.__mul__(item) for item in other])
+
         # Convert int to float.
         if type(other) is int:
             other = float(other)
@@ -133,7 +140,7 @@ class Area(_Type):
             return _Volume(mag, "A3")
 
         # Multiplication by another type.
-        elif isinstance(other, Type):
+        elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
             return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
@@ -177,7 +184,7 @@ class Area(_Type):
             return _Length(mag, "A")
 
         # Division by another type.
-        elif isinstance(other, Type):
+        elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
             return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 

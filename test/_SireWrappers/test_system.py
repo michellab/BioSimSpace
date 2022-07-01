@@ -1,4 +1,4 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
+import BioSimSpace as BSS
 
 import pytest
 
@@ -53,11 +53,8 @@ def test_atom_reindexing(system):
     # Starting index.
     index = 22
 
-    print(results)
-
     for atom in results:
         # Ensure the absolute index matches.
-        print(atom)
         assert system.getIndex(atom) == index
 
         # Increment the index. (3-point water.)
@@ -148,3 +145,37 @@ def test_contains_combine(system):
     assert m0 in s1
     assert m1 in s0
     assert m1 in s1
+
+def test_get_atom(system):
+    # Make sure atom extraction works using absolute or relative indices,
+    # i.e. absolute within the system, or relative to a molecule.
+    assert system.getAtom(0) == system[0].getAtoms()[0]
+    assert system.getAtom(22) == system[1].getAtoms()[0]
+    assert system.getAtom(1883) == system[-10].getAtoms()[1]
+
+    # Remove some molecules from the system.
+    system.removeMolecules([system[0], system[2], system[-2]])
+
+    # Check that the assertions still hold on the modified system,
+    # making sure we map to the molecules in their new positions.
+    assert system.getAtom(0) == system[0].getAtoms()[0]
+    assert system.getAtom(22) == system[7].getAtoms()[1]
+    assert system.getAtom(1883) == system[-1].getAtoms()[-1]
+
+def test_get_residue(system):
+    # Make sure residue extraction works using absolute or relative indices,
+    # i.e. absolute within the system, or relative to a molecule.
+    assert system.getResidue(0) == system[0].getResidues()[0]
+    assert system.getResidue(3) == system[1].getResidues()[0]
+    assert system.getResidue(632) == system[-1].getResidues()[-1]
+
+def test_molecule_reordering(system):
+    # Make sure that molecules are added to a container in the correct order.
+
+    # Create a new system via a Molecules container where the last
+    # molecule in the original system is placed in the first position
+    # in the new one.
+    new_system = (system[-1] + system[:-1]).toSystem()
+
+    # Make sure the molecules match.
+    assert new_system[0] == system[-1]
