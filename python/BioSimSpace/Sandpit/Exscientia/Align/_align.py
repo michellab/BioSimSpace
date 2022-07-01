@@ -308,13 +308,39 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     else:
         if names is not None:
             for x, (molecule, name) in enumerate(zip(molecules, names)):
-                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                    molecule, "mol2", property_map=property_map)
-                links_names[name] = f"{x:03d}_{name}.mol2"
+                # If the molecule came from an SDF file, then use
+                # that as the format as it's generally more reliable.
+                is_sdf = False
+                if molecule._sire_object.hasProperty("fileformat"):
+                    if "SDF" in molecule._sire_object.property("fileformat").value():
+                        is_sdf = True
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule, "sdf", property_map=property_map)
+                        links_names[name] = f"{x:03d}_{name}.sdf"
+                    else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule, "mol2", property_map=property_map)
+                        links_names[name] = f"{x:03d}_{name}.mol2"
+                else:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                        molecule,  "mol2", property_map=property_map)
+                    links_names[name] = f"{x:03d}_{name}.mol2"
         else:
             for x, molecule in enumerate(molecules):
-                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                    molecule, "mol2", property_map=property_map)
+                # If the molecule came from an SDF file, then use
+                # that as the format as it's generally more reliable.
+                is_sdf = False
+                if molecule._sire_object.hasProperty("fileformat"):
+                    if "SDF" in molecule._sire_object.property("fileformat").value():
+                        is_sdf = True
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "sdf", property_map=property_map)
+                    else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "mol2", property_map=property_map)
+                else:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                        molecule,  "mol2", property_map=property_map)
 
     # Create a local copy of the links file in the working directory,
     # replacing the original ligand names with their actual file names.
@@ -480,22 +506,47 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         # 1) Loop over each molecule and load into RDKit.
         try:
             rdmols = []
+            _names = names
             if names is not None:
-                for x, name in zip(range(0, len(molecules)), names):
-                    try:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-                    except OSError:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+                is_names = True
             else:
-                for x in range(0, len(molecules)):
-                    try:
-                        file = f"{work_dir}/inputs/{x:03d}.mol2"
-                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-                    except OSError:
+                is_names = False
+
+            for x, name in zip(range(0, len(molecules)), _names):
+                if is_sdf:
+                    if is_names:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
+                    else:
                         file = f"{work_dir}/inputs/{x:03d}.sdf"
-                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+                    suppl = _Chem.SDMolSupplier(file)
+                    mols = [x for x in suppl]
+
+                    # The file must contain a single molecule.
+                    if len(mols) != 1:
+                        raise _IncompatibleError("Zero or multiple molecules found in SDF!")
+
+                    # RDKit doesn't thrown an exception, rather returns None and
+                    # prints an error message.
+                    if mols[0] is None:
+                        raise OSError(f"RDKit was unable to read the SDF: {file}")
+
+                    # Store the first molecule.
+                    rdmols.append(mols[0])
+
+                else:
+                    if is_names:
+                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
+                    else:
+                        file = f"{work_dir}/inputs/{x:03d}.mol2"
+                    rdmol = _Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False)
+
+                    # RDKit doesn't thrown an exception, rather returns None and
+                    # prints an error message.
+                    if rdmol is None:
+                        raise OSError(f"RDKit is unable to read the Mol2: {file}")
+
+                    # Store the molecule.
+                    rdmols.append(rdmol)
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -1876,7 +1927,7 @@ def _prune_perturbed_constraints(molecule0, molecule1, mapping):
 def _prune_crossing_constraints(molecule0, molecule1, mapping):
     """Prunes the maximum common substructure (MCS) mapping so that there are no
        constrained bonds between a common core and a softcore atom.
-       
+
        Parameters
        ----------
        molecule0 : BioSimSpace._SireWrappers.Molecule

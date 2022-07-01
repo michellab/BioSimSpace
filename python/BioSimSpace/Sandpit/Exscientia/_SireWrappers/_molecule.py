@@ -142,7 +142,8 @@ class Molecule(_SireWrapper):
 
         # A Molecules object.
         elif isinstance(other, _Molecules):
-            is_sire_container = True
+            for molecule in other:
+                molecules.append(molecule)
 
         # A list of Molecule objects.
         elif isinstance(other, list) and all(isinstance(x, Molecule) for x in other):
@@ -155,13 +156,8 @@ class Molecule(_SireWrapper):
                             "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
                             "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
 
-        # Add this molecule to the container and return.
-        if is_sire_container:
-            return other + self
-
         # Create a new Molecules container.
-        else:
-            return _Molecules(molecules)
+        return _Molecules(molecules)
 
     def __contains__(self, other):
         """Return whether other is in self."""
