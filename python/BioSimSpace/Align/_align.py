@@ -1088,7 +1088,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that the output file exists.

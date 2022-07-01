@@ -68,6 +68,7 @@ from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
+from .. import _Utils
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -277,7 +278,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()

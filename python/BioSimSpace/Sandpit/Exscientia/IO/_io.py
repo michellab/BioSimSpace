@@ -64,6 +64,7 @@ from Sire import System as _SireSystem
 from .. import _amber_home
 from .. import _gmx_path
 from .. import _isVerbose
+from .. import _Utils
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
@@ -277,7 +278,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()

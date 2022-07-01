@@ -746,7 +746,7 @@ class Gromacs(_process.Process):
             command += " --maxwarn 1000"
 
         # Run the command.
-        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
@@ -2396,7 +2396,7 @@ class Gromacs(_process.Process):
 
                 # Run the command as a pipeline.
                 proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                 proc.wait()
                 proc_echo.stdout.close()

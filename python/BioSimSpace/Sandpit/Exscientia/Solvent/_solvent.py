@@ -714,7 +714,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("editconf.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -747,7 +747,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("solvate.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -859,7 +859,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             stderr = open("grommp.err", "w")
 
             # Run grompp as a subprocess.
-            proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -914,7 +914,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                 # Run genion as a subprocess.
                 proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
                 proc.wait()
                 proc_echo.stdout.close()

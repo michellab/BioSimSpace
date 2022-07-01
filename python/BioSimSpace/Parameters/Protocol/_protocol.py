@@ -57,6 +57,7 @@ from Sire import System as _SireSystem
 
 from ... import _amber_home, _gmx_exe, _isVerbose
 from ... import IO as _IO
+from ... import _Utils
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
@@ -406,7 +407,7 @@ class Protocol():
         stderr = open(prefix + "leap.err", "w")
 
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
@@ -508,7 +509,7 @@ class Protocol():
         stderr = open(prefix + "pdb2gmx.err", "w")
 
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()

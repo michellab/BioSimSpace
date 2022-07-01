@@ -168,8 +168,10 @@ if _gmx_exe is not None:
     # Generate the shell command. (Run gmx -version.)
     _command = "%s -version" % _gmx_exe
 
+    from ._Utils import command_split
+
     # Run the command.
-    _proc = _subprocess.run(_shlex.split(_command), shell=False,
+    _proc = _subprocess.run(command_split(_command), shell=False,
         text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
     del _command

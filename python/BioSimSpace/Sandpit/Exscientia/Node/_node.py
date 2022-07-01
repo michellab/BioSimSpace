@@ -22,6 +22,7 @@
 from glob import glob as _glob
 
 from .._Utils import _try_import
+from .. import _Utils
 
 import os as _os
 import shlex as _shlex
@@ -74,7 +75,7 @@ def help(name):
     command = "%s/python %s --help" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(_shlex.split(command), shell=False,
+    proc = _subprocess.run(_Utils.command_split(command), shell=False,
         text=True, stdout=_subprocess.PIPE)
 
     # Print the standard output, decoded as UTF-8.
@@ -128,7 +129,7 @@ def run(name, args={}):
         command = "%s/python %s" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(_shlex.split(command), shell=False,
+    proc = _subprocess.run(_Utils.command_split(command), shell=False,
         text=True, stderr=_subprocess.PIPE)
 
     if proc.returncode == 0:

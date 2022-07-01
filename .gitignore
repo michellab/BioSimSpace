@@ -26,3 +26,6 @@ output.yaml
 
 # Scratch space.
 .idea/
+
+# VSCode config
+.vscode/
