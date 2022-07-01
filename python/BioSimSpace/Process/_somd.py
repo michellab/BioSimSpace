@@ -218,6 +218,7 @@ class Somd(_process.Process):
         # We store the renumbered system to use as a template when mapping atoms
         # the those from the extracted trajectory frames in, e.g. getSystem().
         self._renumbered_system = _SireIO.renumberConstituents(system._sire_object)
+        system = _System(self._renumbered_system)
 
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
@@ -577,7 +578,8 @@ class Somd(_process.Process):
             self.addToConfig("lambda_val = %s" \
                 % self._protocol.getLambda())                                       # The value of lambda.
 
-            res_num = self._system.search("resname LIG")[0]._sire_object.number().value()
+            res_num = _System(self._renumbered_system) \
+                .search("perturbable")[0]._sire_object.number().value()
             self.addToConfig("perturbed residue number = %s" % res_num)             # Perturbed residue number.
 
         else:
