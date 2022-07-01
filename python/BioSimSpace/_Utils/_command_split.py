@@ -40,6 +40,7 @@ def command_split(command):
 
     if sys.platform != "win32":
         # We can just use shlex.split - it is only windows that is annoying!
+        import shlex
         return shlex.split(command)
 
     # thanks for inspiration to kxr on this stackoverflow post
