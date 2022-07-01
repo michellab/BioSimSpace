@@ -654,6 +654,8 @@ class ConfigFactory:
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
+            res_num = self.system.search("perturbable")[0]._sire_object.number().value()
+            protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
