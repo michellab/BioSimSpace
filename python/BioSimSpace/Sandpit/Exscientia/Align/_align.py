@@ -311,6 +311,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             _names = names
         else:
             is_names = False
+            # Create a dummy names list so that we can handle everything in a
+            # single loop.
             _names = ["txt" for x in range(len(molecules))]
 
         for x, (molecule, name) in enumerate(zip(molecules, _names)):
@@ -513,6 +515,8 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 _names = names
             else:
                 is_names = False
+                # Create a dummy names list so that we can handle everything in a
+                # single loop.
                 _names = ["txt" for x in range(len(molecules))]
 
             for x, name in zip(range(0, len(molecules)), _names):
