@@ -86,7 +86,7 @@ class Plumed():
 
         # Run a PLUMED as a background process to query the version number.
         command = "%s info --version" % self._exe
-        process = _subprocess.run(_shlex.split(command), shell=False, stdout=_subprocess.PIPE)
+        process = _subprocess.run(_Utils.command_split(command), shell=False, stdout=_subprocess.PIPE)
 
         if process.returncode == 0:
             self._plumed_version = float(process.stdout.decode("ascii").strip())
@@ -1343,7 +1343,7 @@ class Plumed():
         with _Utils.cd(self._work_dir + "/fes"):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+            proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
             if proc.returncode != 0:
