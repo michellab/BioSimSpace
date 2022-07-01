@@ -514,47 +514,35 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
             for x, name in zip(range(0, len(molecules)), _names):
                 if is_sdf:
-                    if is_names:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                    else:
-                        file = f"{work_dir}/inputs/{x:03d}.sdf"
-                    suppl = _Chem.SDMolSupplier(file)
-                    mols = [x for x in suppl]
-
-                    # The file must contain a single molecule.
-                    if len(mols) != 1:
-                        raise _IncompatibleError("Zero or multiple molecules found in SDF!")
-
-                    # RDKit doesn't thrown an exception, rather returns None and
-                    # prints an error message.
-                    if mols[0] is None:
-                        raise OSError(f"RDKit was unable to read the SDF: {file}")
-
-                    # Store the first molecule.
-                    rdmols.append(mols[0])
-
+                    ext = "sdf"
                 else:
-                    if is_names:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-                    else:
-                        file = f"{work_dir}/inputs/{x:03d}.mol2"
-                    rdmol = _Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False)
+                    ext = "mol2"
 
-                    # RDKit doesn't thrown an exception, rather returns None and
-                    # prints an error message.
-                    if rdmol is None:
-                        raise OSError(f"RDKit is unable to read the Mol2: {file}")
+                if is_names:
+                    file = f"{work_dir}/inputs/{x:03d}_{name}.{ext}"
+                else:
+                    file = f"{work_dir}/inputs/{x:03d}.{ext}"
 
-                    # Store the molecule.
-                    rdmols.append(rdmol)
+                if is_sdf:
+                    rdmol = _Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+                else:
+                    rdmol = _Chem.MolFromMol2File(file, sanitize=False, removeHs=False)
+
+                # RDKit doesn't thrown an exception, rather returns None and
+                # prints an error message.
+                if rdmol is None:
+                    raise OSError(f"RDKit was unable to read: {file}")
+
+                # Store the molecule.
+                rdmols.append(rdmol)
 
         except Exception as e:
-            msg = "Unable to load molecule into RDKit!"
+            msg = "RDKit was unable to load molecule!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _AlignmentError(msg) from e
             else:
-                raise _AlignmentError(msg) from None
+                raise _AlignmentError(str(e)) from None
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
