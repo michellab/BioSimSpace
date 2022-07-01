@@ -215,6 +215,14 @@ class Trajectory():
             _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
             format = "MDTRAJ"
 
+        # If this object isn't bound to a Process and the format matches the
+        # existing backend, then return the trajectory directly.
+        if self._process is None:
+            if format in ["MDTRAJ", "AUTO"] and self._backend == "MDTRAJ":
+                return self._trajectory
+            elif format in ["MDANALYSIS", "AUTO"] and self._backend == "MDANALYSIS":
+                return self._trajectory
+
         if format == "MDTRAJ" and self._backend == "MDANALYSIS":
             raise _IncompatibleError("This Trajectory object can only be used "
                                      "with the MDAnalysis backend.")
@@ -247,7 +255,8 @@ class Trajectory():
         if format in ["MDTRAJ", "AUTO"]:
             try:
                 traj = _mdtraj.load(traj_file, top=top_file)
-                self._backend = "MDTRAJ"
+                if self._backend is None:
+                    self._backend = "MDTRAJ"
                 return traj
             except:
                 if format == "MDTRAJ":
@@ -274,7 +283,8 @@ class Trajectory():
 
             try:
                 universe = _mdanalysis.Universe(top_file, traj_file)
-                self._backend = "MDANALYSIS"
+                if self._backend is None:
+                    self._backend = "MDANALYSIS"
 
                 if is_temp_file:
                     _os.remove(top_file)
