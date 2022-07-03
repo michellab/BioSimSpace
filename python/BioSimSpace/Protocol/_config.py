@@ -643,25 +643,39 @@ class ConfigFactory:
             # Get the report and restart intervals.
             report_interval = self._report_interval
             restart_interval = self._restart_interval
+            runtime = self.protocol.getRunTime()
 
             # The restart and report intervals must be a multiple of the energy frequency,
             # which is 200 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(
-                    200 * _math.ceil(restart_interval / 200))
-
+                if report_interval % 200 != 0:
+                    report_interval = int(200 * _math.ceil(report_interval / 200))
+                    _warnings.warn(f"The report interval is not a multiple of 200. Changing it to {report_interval}.")
+                if restart_interval % 200 != 0:
+                    restart_interval = int(
+                        200 * _math.ceil(restart_interval / 200))
+                    _warnings.warn(f"The restart interval is not a multiple of 200. Changing it to {restart_interval}.")
+                    
             # The number of moves per cycle - want about 1 cycle per 1 ns.
-            nmoves = int(
-                max(1, ((self._steps) // ((self.protocol.getRunTime())/(1*_nanosecond)))))
+            # if the run is less than 1 ns, want 1 cycle for this.
+            if runtime.nanoseconds().value() <= 1:
+                ncycles = int(1)       
+            else:
+                # calculate the number of cycles - rounds up to integer value
+                ncycles = _math.ceil((runtime)/(1*_nanosecond))
 
-            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = int(max(1, self._steps // nmoves))
+            # number of moves should be so that nmoves * ncycles is equal to self._steps.
+            nmoves = int(max(1, ((self._steps) // (ncycles))))
 
-            # How many cycles need to pass before we write a trajectory frame.
-            cycles_per_frame = max(1, restart_interval // nmoves)
+            if self._steps != (nmoves * ncycles):
+                _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self.protocol.getTimeStep().nanoseconds()}.")
+
+            # Work out how many cycles need to pass before we write a trajectory frame.
+            cycles_per_frame = restart_interval / report_interval
 
             # How many time steps need to pass before we write a trajectory frame.
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 200 steps.
             buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
             # The number of SOMD cycles.
