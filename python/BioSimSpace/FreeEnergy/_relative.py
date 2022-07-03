@@ -50,23 +50,16 @@ hydrogen_amu = proton_mass/(physical_constants["atomic mass constant"][0])
 
 from .._Utils import _try_import, _have_imported
 
-try:
-    _alchemlyb = _try_import("alchemlyb")
-except:
-    is_alchemlyb = False
-
-if _have_imported(_alchemlyb):
-    from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
-    from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-    from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
-    from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
-    from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
-    from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
-    from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-    from alchemlyb.estimators import TI as _TI
-    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-    is_alchemlyb = True
+from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
+from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
+from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
+from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
+from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
+from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
+from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+from alchemlyb.estimators import TI as _TI
+from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -1042,45 +1035,40 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        if is_alchemlyb:
-            files = _glob(work_dir + "/lambda_*/amber.out")
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        files = _glob(work_dir + "/lambda_*/amber.out")
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
-            # Find the temperature for each lambda window.
-            temperatures = []
-            for file, lambda_ in zip(files, lambdas):
-                found_temperature = False
-                with open(file) as f:
-                    for line in f.readlines():
-                        if not found_temperature:
-                            match = _re.search("temp0=([\d.]+)", line)
-                            if match is not None:
-                                temperatures += [float(match.group(1))]
-                                found_temperature = True
-                            elif found_temperature == True:
-                                pass
-
+        # Find the temperature for each lambda window.
+        temperatures = []
+        for file, lambda_ in zip(files, lambdas):
+            found_temperature = False
+            with open(file) as f:
+                for line in f.readlines():
                     if not found_temperature:
-                        raise ValueError(
-                            "The temperature was not detected in the AMBER output file.")
+                        match = _re.search("temp0=([\d.]+)", line)
+                        if match is not None:
+                            temperatures += [float(match.group(1))]
+                            found_temperature = True
+                        elif found_temperature == True:
+                            pass
 
-            if temperatures[0] != temperatures[-1]:
-                raise ValueError(
-                    "The temperatures at the endstates don't match!")
+                if not found_temperature:
+                    raise ValueError(
+                        "The temperature was not detected in the AMBER output file.")
 
-            if estimator == 'MBAR':
-                data, overlap = Relative.analyse_mbar(
-                    files, temperatures, lambdas, "AMBER")
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError(
+                "The temperatures at the endstates don't match!")
 
-            if estimator == 'TI':
-                data, overlap = Relative.analyse_ti(
-                    files, temperatures, lambdas, "AMBER")
+        if estimator == 'MBAR':
+            data, overlap = Relative.analyse_mbar(
+                files, temperatures, lambdas, "AMBER")
 
-            return (data, overlap)
+        if estimator == 'TI':
+            data, overlap = Relative.analyse_ti(
+                files, temperatures, lambdas, "AMBER")
 
-        else:
-            raise _AnalysisError(
-                "AMBER free energy analysis requires alchemlyb.")
+        return (data, overlap)
 
     @staticmethod
     def _analyse_gromacs(work_dir=None, estimator=None):
@@ -1117,7 +1105,7 @@ class Relative():
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
         # For the newer gromacs version, analyse using alchemlyb.
-        if is_alchemlyb and _gmx_version >= 2020:
+        if _gmx_version >= 2020:
 
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -1253,120 +1241,42 @@ class Relative():
             raise ValueError(
                 "'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
-        if is_alchemlyb:
-            files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
-            temperatures = []
-            for file in files:
-                found_temperature = False
-                with open(file, 'r') as f:
-                    for line in f.readlines():
-                        t = None
-                        start = '#Generating temperature is'
-                        if start in line:
-                            t = int(
-                                ((line.split(start)[1]).strip()).split(' ')[0])
-                            temperatures.append(t)
-                            if t is not None:
-                                found_temperature = True
-                                break
+        temperatures = []
+        for file in files:
+            found_temperature = False
+            with open(file, 'r') as f:
+                for line in f.readlines():
+                    t = None
+                    start = '#Generating temperature is'
+                    if start in line:
+                        t = int(
+                            ((line.split(start)[1]).strip()).split(' ')[0])
+                        temperatures.append(t)
+                        if t is not None:
+                            found_temperature = True
+                            break
 
-                if not found_temperature:
-                    raise ValueError(
-                        f"The temperature was not detected in the SOMD output file, {file}")
-
-            if temperatures[0] != temperatures[-1]:
+            if not found_temperature:
                 raise ValueError(
-                    "The temperatures at the endstates don't match!")
+                    f"The temperature was not detected in the SOMD output file, {file}")
 
-            if estimator == 'MBAR':
-                data, overlap = Relative.analyse_mbar(
-                    files, temperatures, lambdas, "SOMD")
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError(
+                "The temperatures at the endstates don't match!")
 
-            if estimator == 'TI':
-                data, overlap = Relative.analyse_ti(
-                    files, temperatures, lambdas, "SOMD")
+        if estimator == 'MBAR':
+            data, overlap = Relative.analyse_mbar(
+                files, temperatures, lambdas, "SOMD")
 
-            return (data, overlap)
+        if estimator == 'TI':
+            data, overlap = Relative.analyse_ti(
+                files, temperatures, lambdas, "SOMD")
 
-        # run without alchemlyb
-        else:
-            # Create the command.
-            command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (
-                _analyse_freenrg, work_dir, work_dir)
+        return (data, overlap)
 
-            # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
-                                   stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-            if proc.returncode != 0:
-                raise _AnalysisError("SOMD free-energy analysis failed!")
-
-            # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
-            with open("%s/mbar.txt" % work_dir) as file:
-                for line in file:
-                    if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
-                        _warnings.warn("Subsampling resulted in less than 50 samples, "
-                                       f"re-running without subsampling for '{work_dir}'")
-                        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (
-                            _analyse_freenrg, work_dir, work_dir)
-                        proc = _subprocess.run(_shlex.split(command), shell=False,
-                                               stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-                        if proc.returncode != 0:
-                            raise _AnalysisError(
-                                "SOMD free-energy analysis failed!")
-                        break
-
-            # Initialise list to hold the data.
-            data = []
-
-            # Initialise list to hold the overlap matrix.
-            overlap = []
-
-            # Extract the data from the output files.
-
-            # First leg.
-            with open("%s/mbar.txt" % work_dir) as file:
-
-                # Process the MBAR data.
-                for line in file:
-                    # Process the overlap matrix.
-                    if "#Overlap matrix" in line:
-
-                        # Get the next row.
-                        row = next(file)
-
-                        # Loop until we hit the next section.
-                        while not row.startswith("#DG"):
-                            # Extract the data for this row.
-                            records = [float(x) for x in row.split()]
-
-                            # Append to the overlap matrix.
-                            overlap.append(records)
-
-                            # Get the next line.
-                            row = next(file)
-
-                    # Process the PMF.
-                    elif "PMF from MBAR" in line:
-                        # Get the next row.
-                        row = next(file)
-
-                        # Loop until we hit the next section.
-                        while not row.startswith("#TI"):
-                            # Split the line.
-                            records = row.split()
-
-                            # Append the data.
-                            data.append((float(records[0]),
-                                        float(records[1]) *
-                                         _Units.Energy.kcal_per_mol,
-                                        float(records[2]) * _Units.Energy.kcal_per_mol))
-
-                            # Get the next line.
-                            row = next(file)
-
-            return (data, overlap)
 
     @staticmethod
     def difference(pmf, pmf_ref):

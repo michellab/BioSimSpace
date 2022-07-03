@@ -21,6 +21,7 @@ requirements:
     - configargparse
     - fkcombu
     - lomap2
+    - alchemlyb
     - mdtraj
     - mdanalysis
     - networkx
