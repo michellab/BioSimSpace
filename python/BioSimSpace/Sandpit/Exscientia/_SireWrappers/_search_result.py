@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
-import Sire
+import Sire as _Sire
 
 
 class SearchResult():
@@ -135,13 +135,13 @@ class SearchResult():
             result = self._sire_object[key]
 
             # Atom.
-            if isinstance(result, Sire.Mol._Mol.Atom):
+            if isinstance(result, _Sire.Mol._Mol.Atom):
                 return _Atom(result)
             # Residue.
-            if isinstance(result, Sire.Mol._Mol.Residue):
+            if isinstance(result, _Sire.Mol._Mol.Residue):
                 return _Residue(result)
             # Molecule.
-            if isinstance(result, Sire.Mol._Mol.Molecule):
+            if isinstance(result, _Sire.Mol._Mol.Molecule):
                 # If the molecule contains a single atom, then convert to an atom.
                 if result.nAtoms() == 1:
                     return _Atom(result.atom())

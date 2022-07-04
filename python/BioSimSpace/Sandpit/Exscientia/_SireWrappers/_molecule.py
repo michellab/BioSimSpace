@@ -34,7 +34,7 @@ from warnings import warn as _warn
 
 import os.path as _path
 
-import Sire
+import Sire as _Sire
 
 from Sire import Base as _SireBase
 from Sire import IO as _SireIO
@@ -80,7 +80,7 @@ class Molecule(_SireWrapper):
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
-        if isinstance(molecule, Sire.Mol._Mol.Molecule):
+        if isinstance(molecule, _Sire.Mol._Mol.Molecule):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()

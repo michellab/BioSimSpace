@@ -53,11 +53,8 @@ def test_atom_reindexing(system):
     # Starting index.
     index = 22
 
-    print(results)
-
     for atom in results:
         # Ensure the absolute index matches.
-        print(atom)
         assert system.getIndex(atom) == index
 
         # Increment the index. (3-point water.)

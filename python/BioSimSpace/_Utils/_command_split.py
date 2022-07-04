@@ -29,9 +29,6 @@ __email__ = "chryswoods@hey.com"
 __all__ = ["command_split"]
 
 
-from itertools import accumulate
-
-
 def command_split(command):
     """Cross platform version of 'shlex.split'. This will split the passed
        command into parts, doing the right thing on Linux, MacOS and Windows
@@ -78,4 +75,4 @@ def command_split(command):
         args.append(accumulated)
 
     return args
-    
+
