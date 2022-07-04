@@ -585,15 +585,20 @@ class Molecule(_SireWrapper):
         results = []
 
         try:
-            # Query the Sire molecule.
-            search_result = _SireMol.Select(query)(self._sire_object, property_map)
-
+            query = _SireMol.Select(query)
         except Exception as e:
-            msg = "'Invalid search query: %r" % query
+            msg = "'Invalid search query: %r (%s)" % (query, e)
             if _isVerbose():
                 raise ValueError(msg) from e
             else:
                 raise ValueError(msg) from None
+
+        try:
+            # Query the Sire molecule.
+            search_result = query(self._sire_object, property_map)
+        except KeyError:
+            # Nothing matched - return an empty result
+            search_result = _SireMol.SelectorMol()
 
         return _SearchResult(search_result)
 

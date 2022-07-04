@@ -37,6 +37,7 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+@pytest.mark.xfail(reason="Pickled object refers to the old Sire module names, so cannot load!")
 @pytest.mark.parametrize("morph, pert",
     [("test/input/morphs/morph01.pickle", "test/input/morphs/morph01.pert")])
 def test_pert_file(morph, pert):
@@ -57,6 +58,7 @@ def test_pert_file(morph, pert):
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
 
+@pytest.mark.xfail(reason="Pickled object refers to the old Sire module names, so cannot load!")
 def test_pert_res_num():
     """Test that the perturbable residue number is correct when
        the molecules in the system are re-ordered.

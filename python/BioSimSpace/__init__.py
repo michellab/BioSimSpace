@@ -52,7 +52,7 @@ __all__ = ["Align",
 # First, load new sire in mixed_api compatibility mode (if it is installed)
 try:
     import sire as _sr
-    _sr.use_mixed_api()
+    _sr.use_mixed_api(support_old_module_names=False)
 except ImportError:
     pass
 
