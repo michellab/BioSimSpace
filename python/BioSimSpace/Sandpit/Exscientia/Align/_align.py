@@ -606,7 +606,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # Create a dictionary mapping the edges to their scores.
             edge_dict = {}
             for x, (node0, node1) in enumerate(edges):
-                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
+                edge_dict[(names[node0], names[node1])] = str(round(scores[x], 2))
 
             # Loop over the nodes and add to the graph.
             for node in nodes:
