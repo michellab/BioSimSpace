@@ -530,7 +530,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
            The parameterised molecule.
     """
 
-    from Sire.Base import findExe as _findExe
+    from sire.legacy.Base import findExe as _findExe
 
     try:
         _findExe("antechamber")

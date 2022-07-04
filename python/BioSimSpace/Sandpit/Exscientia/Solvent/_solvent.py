@@ -36,11 +36,11 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire.Maths import Vector as _Vector
-from Sire.Vol import TriclinicBox as _TriclinicBox
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy.Maths import Vector as _Vector
+from sire.legacy.Vol import TriclinicBox as _TriclinicBox
 
 from sire.units import degree as _degree
 

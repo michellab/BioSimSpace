@@ -33,8 +33,8 @@ import os.path as _path
 import random as _random
 import string as _string
 
-import Sire as _Sire
-from Sire import Mol as _SireMol
+import sire.legacy as _Sire
+from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
 

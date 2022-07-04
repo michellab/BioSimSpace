@@ -50,8 +50,8 @@ __all__ = ["Align",
 
 # Make sure we're using the Sire python interpreter.
 try:
-    import Sire
-    del Sire
+    import sire
+    del sire
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire "
         + "Python interpreter: www.siremol.org")
@@ -126,7 +126,7 @@ else:
     _amber_home = None
 
 # Check to see if GROMACS is installed.
-from Sire import Base as _SireBase
+from sire.legacy import Base as _SireBase
 from os import path as _path
 
 # First, let the user tell us where to find GROMACS. This

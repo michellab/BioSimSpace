@@ -36,8 +36,8 @@ import os as _os
 import shutil as _shutil
 import warnings as _warnings
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

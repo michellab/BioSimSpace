@@ -67,9 +67,9 @@ with _warnings.catch_warnings():
         _rdFMCS = _rdkit
         _RDLogger = _rdkit
 
-from Sire import Base as _SireBase
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
+from sire.legacy import Base as _SireBase
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
 
 from sire import units as _SireUnits
 

@@ -30,7 +30,7 @@ __all__ = ["run"]
 
 import os as _os
 
-from Sire import Base as _SireBase
+from sire.legacy import Base as _SireBase
 
 from .. import _amber_home, _gmx_exe
 from .._Exceptions import IncompatibleError as _IncompatibleError

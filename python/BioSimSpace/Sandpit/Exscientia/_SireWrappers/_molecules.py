@@ -29,9 +29,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecules"]
 
-import Sire as _Sire
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+import sire.legacy as _Sire
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from .. import _isVerbose
 from ..Types import Length as _Length

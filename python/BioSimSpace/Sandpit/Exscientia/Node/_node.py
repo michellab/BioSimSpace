@@ -29,7 +29,7 @@ import shlex as _shlex
 import subprocess as _subprocess
 _yaml = _try_import("yaml")
 
-from Sire import Base as _SireBase
+from sire.legacy import Base as _SireBase
 
 # Set the default node directory.
 _node_dir = _os.path.dirname(__file__) + "/_nodes"

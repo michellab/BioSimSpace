@@ -35,7 +35,7 @@ from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
 from sire.legacy import Vol as _SireVol
 
-import Sire as _Sire
+import sire.legacy as _Sire
 
 from sire import units as _SireUnits
 

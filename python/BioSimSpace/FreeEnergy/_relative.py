@@ -42,11 +42,11 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
 from .. import _gmx_exe
 from .. import _is_notebook

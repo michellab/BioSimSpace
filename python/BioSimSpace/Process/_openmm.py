@@ -38,8 +38,8 @@ import shutil as _shutil
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
 
 from sire import units as _SireUnits
 

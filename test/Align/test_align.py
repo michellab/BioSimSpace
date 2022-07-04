@@ -5,8 +5,8 @@ try:
 except ImportError:
     pass
 
-from Sire.MM import InternalFF, IntraCLJFF, IntraFF
-from Sire.Mol import AtomIdx, PartialMolecule
+from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
+from sire.legacy.Mol import AtomIdx, PartialMolecule
 
 import BioSimSpace as BSS
 

@@ -35,9 +35,9 @@ from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
 from sire.legacy import Vol as _SireVol
 
-import Sire as _Sire
+import sire.legacy as _Sire
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

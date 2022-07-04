@@ -56,10 +56,10 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from .. import _amber_home
 from .. import _gmx_path

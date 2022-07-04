@@ -38,10 +38,10 @@ import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings
 
-from Sire.Base import findExe as _findExe
-from Sire.Maths import Vector as _Vector
-from Sire.Mol import MolNum as _MolNum
-import Sire.Vol as _SireVol
+from sire.legacy.Base import findExe as _findExe
+from sire.legacy.Maths import Vector as _Vector
+from sire.legacy.Mol import MolNum as _MolNum
+import sire.legacy.Vol as _SireVol
 
 from .._SireWrappers import System as _System
 from ..Metadynamics import CollectiveVariable as _CollectiveVariable

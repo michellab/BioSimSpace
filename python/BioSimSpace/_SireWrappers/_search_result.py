@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
-import Sire as _Sire
+import sire.legacy as _Sire
 
 
 class SearchResult():
