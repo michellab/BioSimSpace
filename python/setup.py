@@ -215,11 +215,12 @@ finally:
         command = "%s clean --all --yes --quiet" % conda_exe
         subprocess.run(shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr)
 
-        try:
-            import BioSimSpace
-        except:
-            print("\nPossible installation issues.")
-            sys.exit()
+        # We can't install BioSimSpace here because it confuses the Sire old/new/mixed API
+        #try:
+        #    import BioSimSpace
+        #except:
+        #    print("\nPossible installation issues.")
+        #    sys.exit()
 
         print("\nDone!")
 

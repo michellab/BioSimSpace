@@ -35,6 +35,8 @@ from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
 from sire.legacy import Vol as _SireVol
 
+import Sire as _Sire
+
 from sire import units as _SireUnits
 
 from .. import _isVerbose
@@ -75,6 +77,9 @@ class System(_SireWrapper):
         if isinstance(system, _SireSystem.System):
             super().__init__(system)
 
+        elif isinstance(system, _Sire.System.System):
+            super().__init__(system)
+
         # Another BioSimSpace System object.
         elif isinstance(system, System):
             super().__init__(system._sire_object)
@@ -110,7 +115,8 @@ class System(_SireWrapper):
         else:
             raise TypeError("'system' must be of type 'Sire.System.System', 'BioSimSpace._SireWrappers.System', "
                             " Sire.Mol.Molecule', 'BioSimSpace._SireWrappers.Molecule', "
-                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types. "
+                            f"The type {type(system)} is not supported.")
 
         # Flag that this object holds multiple atoms.
         self._is_multi_atom = True
@@ -939,7 +945,7 @@ class System(_SireWrapper):
             search_result = _Select(query)(self._sire_object, property_map)
 
         except Exception as e:
-            msg = "'Invalid search query: %r" % query
+            msg = "'Invalid search query: %r : %s" % (query, e)
             if _isVerbose():
                 raise ValueError(msg) from e
             else:
@@ -1131,18 +1137,23 @@ class System(_SireWrapper):
             space = self._sire_object.property(property_map.get("space", "space"))
 
             # Periodic box.
-            if isinstance(space, _SireVol.PeriodicBox):
+            if isinstance(space, _SireVol.PeriodicBox) or isinstance(space, _Sire.Vol.PeriodicBox):
                 box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
                 angles = 3*[_Angle(90, "degrees")]
 
             # TriclinicBox box.
-            elif isinstance(space, _SireVol.TriclinicBox):
+            elif isinstance(space, _SireVol.TriclinicBox) or isinstance(space, _Sire.Vol.TriclinicBox):
                 box = [_Length(space.vector0().magnitude(), "Angstrom"),
                        _Length(space.vector1().magnitude(), "Angstrom"),
                        _Length(space.vector2().magnitude(), "Angstrom")]
                 angles = [_Angle(space.alpha(), "degree"),
                           _Angle(space.beta(), "degree"),
                           _Angle(space.gamma(), "degree")]
+
+            else:
+                raise TypeError(f"Unsupported box type: {space} - {type(space)}")
+        except TypeError:
+            raise
         except:
             box = None
             angles = None
