@@ -307,37 +307,41 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 writer.close()
     else:
         if names is not None:
-            for x, (molecule, name) in enumerate(zip(molecules, names)):
-                # If the molecule came from an SDF file, then use
-                # that as the format as it's generally more reliable.
-                is_sdf = False
-                if molecule._sire_object.hasProperty("fileformat"):
-                    if "SDF" in molecule._sire_object.property("fileformat").value():
-                        is_sdf = True
+            is_names = True
+            _names = names
+        else:
+            is_names = False
+            # Create a dummy names list so that we can handle everything in a
+            # single loop.
+            _names = ["txt" for x in range(len(molecules))]
+
+        for x, (molecule, name) in enumerate(zip(molecules, _names)):
+            # If the molecule came from an SDF file, then use
+            # that as the format as it's generally more reliable.
+            is_sdf = False
+            if molecule._sire_object.hasProperty("fileformat"):
+                if "SDF" in molecule._sire_object.property("fileformat").value():
+                    is_sdf = True
+                    if is_names:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
                             molecule, "sdf", property_map=property_map)
                         links_names[name] = f"{x:03d}_{name}.sdf"
                     else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "sdf", property_map=property_map)
+                else:
+                    if is_names:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
                             molecule, "mol2", property_map=property_map)
                         links_names[name] = f"{x:03d}_{name}.mol2"
-                else:
-                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                        molecule,  "mol2", property_map=property_map)
-                    links_names[name] = f"{x:03d}_{name}.mol2"
-        else:
-            for x, molecule in enumerate(molecules):
-                # If the molecule came from an SDF file, then use
-                # that as the format as it's generally more reliable.
-                is_sdf = False
-                if molecule._sire_object.hasProperty("fileformat"):
-                    if "SDF" in molecule._sire_object.property("fileformat").value():
-                        is_sdf = True
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                            molecule, "sdf", property_map=property_map)
                     else:
                         _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
                             molecule, "mol2", property_map=property_map)
+            else:
+                if is_names:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                        molecule,  "mol2", property_map=property_map)
+                    links_names[name] = f"{x:03d}_{name}.mol2"
                 else:
                     _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
                         molecule,  "mol2", property_map=property_map)
@@ -506,47 +510,38 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         # 1) Loop over each molecule and load into RDKit.
         try:
             rdmols = []
-            _names = names
             if names is not None:
                 is_names = True
+                _names = names
             else:
                 is_names = False
+                # Create a dummy names list so that we can handle everything in a
+                # single loop.
+                _names = ["txt" for x in range(len(molecules))]
 
             for x, name in zip(range(0, len(molecules)), _names):
                 if is_sdf:
-                    if is_names:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                    else:
-                        file = f"{work_dir}/inputs/{x:03d}.sdf"
-                    suppl = _Chem.SDMolSupplier(file)
-                    mols = [x for x in suppl]
-
-                    # The file must contain a single molecule.
-                    if len(mols) != 1:
-                        raise _IncompatibleError("Zero or multiple molecules found in SDF!")
-
-                    # RDKit doesn't thrown an exception, rather returns None and
-                    # prints an error message.
-                    if mols[0] is None:
-                        raise OSError(f"RDKit was unable to read the SDF: {file}")
-
-                    # Store the first molecule.
-                    rdmols.append(mols[0])
-
+                    ext = "sdf"
                 else:
-                    if is_names:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-                    else:
-                        file = f"{work_dir}/inputs/{x:03d}.mol2"
-                    rdmol = _Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False)
+                    ext = "mol2"
 
-                    # RDKit doesn't thrown an exception, rather returns None and
-                    # prints an error message.
-                    if rdmol is None:
-                        raise OSError(f"RDKit is unable to read the Mol2: {file}")
+                if is_names:
+                    file = f"{work_dir}/inputs/{x:03d}_{name}.{ext}"
+                else:
+                    file = f"{work_dir}/inputs/{x:03d}.{ext}"
 
-                    # Store the molecule.
-                    rdmols.append(rdmol)
+                if is_sdf:
+                    rdmol = _Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+                else:
+                    rdmol = _Chem.MolFromMol2File(file, sanitize=False, removeHs=False)
+
+                # RDKit doesn't thrown an exception, rather returns None and
+                # prints an error message.
+                if rdmol is None:
+                    raise OSError(f"RDKit was unable to read: {file}")
+
+                # Store the molecule.
+                rdmols.append(rdmol)
 
         except Exception as e:
             msg = "Unable to load molecule into RDKit!"
@@ -554,7 +549,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _AlignmentError(msg) from e
             else:
-                raise _AlignmentError(msg) from None
+                raise _AlignmentError(str(e)) from None
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
@@ -611,7 +606,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # Create a dictionary mapping the edges to their scores.
             edge_dict = {}
             for x, (node0, node1) in enumerate(edges):
-                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
+                edge_dict[(names[node0], names[node1])] = str(round(scores[x], 2))
 
             # Loop over the nodes and add to the graph.
             for node in nodes:
