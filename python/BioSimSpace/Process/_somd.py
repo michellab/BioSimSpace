@@ -346,7 +346,7 @@ class Somd(_process.Process):
                 "Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
+        config = _Protocol.ConfigFactory(_System(self._renumbered_system), self._protocol)
         self.addToConfig(config.generateSomdConfig(extra_options={**config_options, **self._extra_options},
                                                    extra_lines=self._extra_lines))
 
