@@ -286,7 +286,7 @@ class RestraintSearch():
     def _analyse(self, rest_type='Boresch',
                 method='MDRestraintsGenerator',
                 append_to_lig_selection="",
-                append_to_recept_selection="",
+                recept_selection_str='protein and name CA C N',
                 cutoff=10, # In Angstrom
                 block='AUTO'):
         """Analyse trajectory and select restraints which best mimic strongest
@@ -311,13 +311,11 @@ class RestraintSearch():
                in an atom selection of f'resname {ligand_resname} and not name H* and not
                name O*'.
 
-           append_to_recept_selection: str
-               Appends the supplied string to the default atom selection which chooses
-               the atoms in the receptor to consider as potential anchor points. The default
-               atom selection is 'protein and name CA C N'. Uses the
-               mdanalysis atom selection language. For example, 'not name N*' will result
-               in an atom selection of 'protein and not name H* and not
-               name N*'.
+           recept_selection_str: str
+               The selection string for the atoms in the receptor to consider
+               as potential anchor points. The default atom selection is
+               'protein and name CA C N'. Uses the mdanalysis atom selection
+               language.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -346,7 +344,7 @@ class RestraintSearch():
                 rest_type=rest_type,
                 method=method,
                 append_to_lig_selection=append_to_lig_selection,
-                append_to_recept_selection=append_to_recept_selection,
+                recept_selection_str=recept_selection_str,
                 cutoff=cutoff)
 
     def _initialise_process(self, system, gpu_support, **kwargs):
@@ -406,7 +404,7 @@ class RestraintSearch():
     def analyse(work_dir, system, traj, temperature, rest_type='Boresch',
                 method='MDRestraintsGenerator',
                 append_to_lig_selection="",
-                append_to_recept_selection="",
+                recept_selection_str='protein and name CA C N',
                 cutoff=10): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
@@ -445,13 +443,11 @@ class RestraintSearch():
                in an atom selection of f'resname {ligand_resname} and not name H* and not 
                name O*'.
 
-           append_to_recept_selection: str
-               Appends the supplied string to the default atom selection which chooses
-               the atoms in the receptor to consider as potential anchor points. The default
-               atom selection is 'protein and and name CA C N'. Uses the
-               mdanalysis atom selection language. For example, 'not name N*' will result
-               in an atom selection of 'protein and not name H* and not 
-               name N*'.
+           recept_selection_str: str
+               The selection string for the atoms in the receptor to consider
+               as potential anchor points. The default atom selection is
+               'protein and name CA C N'. Uses the mdanalysis atom selection
+               language.
 
            cutoff: float
                The greatest distance between ligand and receptor anchor atoms, in
@@ -500,8 +496,8 @@ class RestraintSearch():
         if not isinstance(append_to_lig_selection, str):
             raise TypeError(f"append_to_lig_selection {type(append_to_lig_selection)} must be of type 'str'.")
 
-        if not isinstance(append_to_recept_selection, str):
-            raise TypeError(f"append_to_recept_selection {type(append_to_recept_selection)} must be of type 'str'.")
+        if not isinstance(recept_selection_str, str):
+            raise TypeError(f"append_to_recept_selection {type(recept_selection_str)} must be of type 'str'.")
         
         if not isinstance(cutoff, (int, float)):
             raise TypeError(f"cutoff {type(cutoff)} must be of type 'int' or 'float'.")
@@ -524,11 +520,6 @@ class RestraintSearch():
         if append_to_lig_selection:
             lig_selection_str += ' and '
             lig_selection_str += append_to_lig_selection
-
-        recept_selection_str = '(protein and name CA C N)'
-        if append_to_recept_selection:
-            recept_selection_str += ' and '
-            recept_selection_str += append_to_recept_selection
 
         if rest_type.lower() == 'boresch':
             return RestraintSearch._boresch_restraint(
@@ -560,8 +551,9 @@ class RestraintSearch():
                as potential anchor points.
 
            recept_selection_str: str
-               The selection string for the protein in the ligand to consider
-               as potential anchor points.
+               The selection string for the atoms in the receptor to consider
+               as potential anchor points. Uses the mdanalysis atom selection
+               language.
 
            method: str
                The method to use to derive the restraints. 'BSS' or 'MDRestraintsGenerator'.
