@@ -514,7 +514,6 @@ class Trajectory():
 
             # Extract the reference Universe.
             ref = self._trajectory.copy()
-            ref.trajectory.trajectory[frame]
 
             # Create the atom selection.
             if atoms is None:
@@ -523,7 +522,7 @@ class Trajectory():
                 select = "bynum " + " ".join([str(x+1) for x in atoms])
 
             # Instantiate the RMSD object.
-            R = _rms.RMSD(self._trajectory, ref, select)
+            R = _rms.RMSD(self._trajectory, ref, select, ref_frame=frame)
 
             # Run the analysis.
             R.run()
