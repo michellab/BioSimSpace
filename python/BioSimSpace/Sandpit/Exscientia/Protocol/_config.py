@@ -529,8 +529,8 @@ class ConfigFactory:
             for name in ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
                            'temperature']:
                 if name in LambdaValues:
-                    protocol_dict["{}-lambdas".format(name)] = \
-                        ' '.join(list(map(str, LambdaValues[name].to_list())))
+                    protocol_dict['{:<20}'.format("{}-lambdas".format(name))] = \
+                        ' '.join(list(map('{:.5f}'.format, LambdaValues[name].to_list())))
             protocol_dict["init-lambda-state"] = self.protocol.getLambdaIndex()     # Current lambda value.
             protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
             protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.

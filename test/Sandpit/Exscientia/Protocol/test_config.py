@@ -32,7 +32,7 @@ class TestGromacsRBFE():
         freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
-            assert 'fep-lambdas = 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0' in mdp_text
+            assert 'fep-lambdas          = 0.00000 0.10000 0.20000 0.30000 0.40000 0.50000 0.60000 0.70000 0.80000 0.90000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
     def test_fep_df(self, system):
@@ -48,7 +48,7 @@ class TestGromacsRBFE():
         freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
-            assert 'fep-lambdas = 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0' in mdp_text
+            assert 'fep-lambdas          = 0.00000 0.10000 0.20000 0.30000 0.40000 0.50000 0.60000 0.70000 0.80000 0.90000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
     def test_staged_fep_df(self, system):
@@ -63,9 +63,9 @@ class TestGromacsRBFE():
         freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
-            assert 'bonded-lambdas = 0.0 0.25 0.5 0.75 1.0 1.0 1.0' in mdp_text
-            assert 'coul-lambdas = 0.0 0.0 0.0 0.5 1.0 1.0 1.0' in mdp_text
-            assert 'vdw-lambdas = 0.0 0.0 0.0 0.0 0.0 0.5 1.0' in mdp_text
+            assert 'bonded-lambdas       = 0.00000 0.25000 0.50000 0.75000 1.00000 1.00000 1.00000' in mdp_text
+            assert 'coul-lambdas         = 0.00000 0.00000 0.00000 0.50000 1.00000 1.00000 1.00000' in mdp_text
+            assert 'vdw-lambdas          = 0.00000 0.00000 0.00000 0.00000 0.00000 0.50000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
 class TestGromacsABFE():
