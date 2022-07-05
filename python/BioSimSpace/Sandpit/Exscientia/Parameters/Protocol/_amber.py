@@ -623,15 +623,6 @@ class GAFF(_protocol.Protocol):
                                                      "make sure that your initial molecule has a "
                                                      "complete topology.")
 
-                    # If the original molecule was comprised of multiple chains, then we need
-                    # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
-                    # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
-                    if new_mol.nChains() > 1:
-                        with open(prefix + "leap.top", "a") as file:
-                            file.write("%FLAG ATOMS_PER_MOLECULE\n")
-                            file.write("%FORMAT(10I8)\n")
-                            file.write("    %d\n" % new_mol.nAtoms())
-
                     # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
                         par_mol = _IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])

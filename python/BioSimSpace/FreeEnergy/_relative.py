@@ -48,25 +48,17 @@ from scipy.constants import physical_constants
 
 hydrogen_amu = proton_mass/(physical_constants["atomic mass constant"][0])
 
-from .._Utils import _try_import, _have_imported
-
-try:
-    _alchemlyb = _try_import("alchemlyb")
-except:
-    is_alchemlyb = False
-
-if _have_imported(_alchemlyb):
-    from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
-    from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-    from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
-    from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
-    from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
-    from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
-    from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-    from alchemlyb.estimators import TI as _TI
-    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-    is_alchemlyb = True
+import alchemlyb as _alchemlyb
+from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
+from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
+from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
+from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
+from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
+from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
+from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+from alchemlyb.estimators import TI as _TI
+from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
@@ -290,7 +282,8 @@ class Relative():
                     self._extra_options["hydrogen mass repartitioning factor"] = "1.5"
             else:
                 if self._engine == "SOMD":
-                    self._extra_options["hydrogen mass repartitioning factor"] = str(hmr_factor)
+                    self._extra_options["hydrogen mass repartitioning factor"] = str(
+                        hmr_factor)
 
             # Extract the molecules to which HMR applies.
             # set auto based on engine
@@ -312,15 +305,16 @@ class Relative():
                 try:
                     h = mol.search("{element H}[0]")
                     # mass = h._sire_object.property(mass_prop).value()
-                    mass = h[0]._sire_object.evaluate().mass(property_map).value()
+                    mass = h[0]._sire_object.evaluate().mass(
+                        property_map).value()
                     found_h = True
                 except:
                     found_h = False
                 if found_h:
                     break
-            
+
             if not found_h:
-                # in some cases, may not be able to find the mass based on element 
+                # in some cases, may not be able to find the mass based on element
                 # if the only molecule is perturbable. Search for atom name with H.
                 # need mass0 as this is one of the perturbable molecule properties.
                 mass_prop = property_map.get("mass0", "mass0")
@@ -333,25 +327,27 @@ class Relative():
                             found_h = True
                     if found_h:
                         break
-                    
+
             # error if cant find a H mass
             if not found_h:
-                    raise _IncompatibleError("Can't find the mass of a H in the system.")        
-            
+                raise _IncompatibleError(
+                    "Can't find the mass of a H in the system.")
+
             # Check that the mass matches what is expected.
             if self._engine == "SOMD":
                 # values should be in amu
                 if mass == approx(hydrogen_amu, rel=1e-2):
                     repartition = False
                 else:
-                    raise _IncompatibleError("Please do not pass an already repartitioned system in for use with SOMD.")
+                    raise _IncompatibleError(
+                        "Please do not pass an already repartitioned system in for use with SOMD.")
 
             # check for amber or gromacs repartitioning
             elif self._engine == "AMBER" or self._engine == "GROMACS":
                 # check if the system has been repartitioned at all. If not, repartition.
                 if mass == approx(hydrogen_amu, rel=1e-2):
                     repartition = True
-                # check if system as been repartitioned with the decided factor.               
+                # check if system as been repartitioned with the decided factor.
                 elif mass == approx(hmr_factor * hydrogen_amu, rel=1e-2):
                     repartition = False
                 # finally, check if the system is repartitioned with the wrong factor.
@@ -360,15 +356,17 @@ class Relative():
                     The system is repartitioned at a factor different from that specified in 'hmr_factor'
                     or at the auto default for this engine (3 for AMBER and 4 for GROMACS).
                     Please pass a correctly partitioned or entirely unpartitioned system.""")
-                    
+
             # Repartition if necessary.
             if repartition:
-                _warnings.warn(f"The passed system is being repartitioned according to a factor of '{hmr_factor}'.")
-                self._system.repartitionHydrogenMass(factor=hmr_factor, water=water, property_map=property_map)
+                _warnings.warn(
+                    f"The passed system is being repartitioned according to a factor of '{hmr_factor}'.")
+                self._system.repartitionHydrogenMass(
+                    factor=hmr_factor, water=water, property_map=property_map)
             else:
                 if self._engine != "SOMD":
-                    _warnings.warn("The passed system is already repartitioned. Proceeding without additional repartitioning.")
-
+                    _warnings.warn(
+                        "The passed system is already repartitioned. Proceeding without additional repartitioning.")
 
         if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool'.")
@@ -858,14 +856,15 @@ class Relative():
            Parameters
            ----------
 
-           files : str
-               List of files for all lambda values to analyse.
+           files : list
+               List of files for all lambda values to analyse. Should be sorted.
 
-           temperatures : str
+           temperatures : list
                List of temperatures at which the simulation was carried out at for each lambda window.
+               Index of the temperature value should match it's corresponding lambda window index in files.
 
-           lambdas : str
-               List of lambda values used for the simulation.
+           lambdas : list
+               Sorted list of lambda values used for the simulation.
 
            engine : str
                Engine with which the simulation was run.
@@ -936,14 +935,15 @@ class Relative():
            Parameters
            ----------
 
-           files : str
-               List of files for all lambda values to analyse.
+           files : list
+               List of files for all lambda values to analyse. Should be sorted.
 
-           temperatures : str
+           temperatures : list
                List of temperatures at which the simulation was carried out at for each lambda window.
+               Index of the temperature value should match it's corresponding lambda window index in files.
 
-           lambdas : str
-               List of lambda values used for the simulation.
+           lambdas : list
+               Sorted list of lambda values used for the simulation.
 
            engine : str
                Engine with which the simulation was run.
@@ -1042,45 +1042,40 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        if is_alchemlyb:
-            files = _glob(work_dir + "/lambda_*/amber.out")
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        files = sorted(_glob(work_dir + "/lambda_*/amber.out"))
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
-            # Find the temperature for each lambda window.
-            temperatures = []
-            for file, lambda_ in zip(files, lambdas):
-                found_temperature = False
-                with open(file) as f:
-                    for line in f.readlines():
-                        if not found_temperature:
-                            match = _re.search("temp0=([\d.]+)", line)
-                            if match is not None:
-                                temperatures += [float(match.group(1))]
-                                found_temperature = True
-                            elif found_temperature == True:
-                                pass
-
+        # Find the temperature for each lambda window.
+        temperatures = []
+        for file, lambda_ in zip(files, lambdas):
+            found_temperature = False
+            with open(file) as f:
+                for line in f.readlines():
                     if not found_temperature:
-                        raise ValueError(
-                            "The temperature was not detected in the AMBER output file.")
+                        match = _re.search("temp0=([\d.]+)", line)
+                        if match is not None:
+                            temperatures += [float(match.group(1))]
+                            found_temperature = True
+                        elif found_temperature == True:
+                            pass
 
-            if temperatures[0] != temperatures[-1]:
-                raise ValueError(
-                    "The temperatures at the endstates don't match!")
+                if not found_temperature:
+                    raise ValueError(
+                        "The temperature was not detected in the AMBER output file.")
 
-            if estimator == 'MBAR':
-                data, overlap = Relative.analyse_mbar(
-                    files, temperatures, lambdas, "AMBER")
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError(
+                "The temperatures at the endstates don't match!")
 
-            if estimator == 'TI':
-                data, overlap = Relative.analyse_ti(
-                    files, temperatures, lambdas, "AMBER")
+        if estimator == 'MBAR':
+            data, overlap = Relative.analyse_mbar(
+                files, temperatures, lambdas, "AMBER")
 
-            return (data, overlap)
+        if estimator == 'TI':
+            data, overlap = Relative.analyse_ti(
+                files, temperatures, lambdas, "AMBER")
 
-        else:
-            raise _AnalysisError(
-                "AMBER free energy analysis requires alchemlyb.")
+        return (data, overlap)
 
     @staticmethod
     def _analyse_gromacs(work_dir=None, estimator=None):
@@ -1117,7 +1112,7 @@ class Relative():
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
         # For the newer gromacs version, analyse using alchemlyb.
-        if is_alchemlyb and _gmx_version >= 2020:
+        if _gmx_version >= 2020:
 
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -1253,120 +1248,41 @@ class Relative():
             raise ValueError(
                 "'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
-        if is_alchemlyb:
-            files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
-            temperatures = []
-            for file in files:
-                found_temperature = False
-                with open(file, 'r') as f:
-                    for line in f.readlines():
-                        t = None
-                        start = '#Generating temperature is'
-                        if start in line:
-                            t = int(
-                                ((line.split(start)[1]).strip()).split(' ')[0])
-                            temperatures.append(t)
-                            if t is not None:
-                                found_temperature = True
-                                break
+        temperatures = []
+        for file in files:
+            found_temperature = False
+            with open(file, 'r') as f:
+                for line in f.readlines():
+                    t = None
+                    start = '#Generating temperature is'
+                    if start in line:
+                        t = int(
+                            ((line.split(start)[1]).strip()).split(' ')[0])
+                        temperatures.append(t)
+                        if t is not None:
+                            found_temperature = True
+                            break
 
-                if not found_temperature:
-                    raise ValueError(
-                        f"The temperature was not detected in the SOMD output file, {file}")
-
-            if temperatures[0] != temperatures[-1]:
+            if not found_temperature:
                 raise ValueError(
-                    "The temperatures at the endstates don't match!")
+                    f"The temperature was not detected in the SOMD output file, {file}")
 
-            if estimator == 'MBAR':
-                data, overlap = Relative.analyse_mbar(
-                    files, temperatures, lambdas, "SOMD")
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError(
+                "The temperatures at the endstates don't match!")
 
-            if estimator == 'TI':
-                data, overlap = Relative.analyse_ti(
-                    files, temperatures, lambdas, "SOMD")
+        if estimator == 'MBAR':
+            data, overlap = Relative.analyse_mbar(
+                files, temperatures, lambdas, "SOMD")
 
-            return (data, overlap)
+        if estimator == 'TI':
+            data, overlap = Relative.analyse_ti(
+                files, temperatures, lambdas, "SOMD")
 
-        # run without alchemlyb
-        else:
-            # Create the command.
-            command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (
-                _analyse_freenrg, work_dir, work_dir)
-
-            # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
-                                   stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-            if proc.returncode != 0:
-                raise _AnalysisError("SOMD free-energy analysis failed!")
-
-            # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
-            with open("%s/mbar.txt" % work_dir) as file:
-                for line in file:
-                    if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
-                        _warnings.warn("Subsampling resulted in less than 50 samples, "
-                                       f"re-running without subsampling for '{work_dir}'")
-                        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (
-                            _analyse_freenrg, work_dir, work_dir)
-                        proc = _subprocess.run(_shlex.split(command), shell=False,
-                                               stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-                        if proc.returncode != 0:
-                            raise _AnalysisError(
-                                "SOMD free-energy analysis failed!")
-                        break
-
-            # Initialise list to hold the data.
-            data = []
-
-            # Initialise list to hold the overlap matrix.
-            overlap = []
-
-            # Extract the data from the output files.
-
-            # First leg.
-            with open("%s/mbar.txt" % work_dir) as file:
-
-                # Process the MBAR data.
-                for line in file:
-                    # Process the overlap matrix.
-                    if "#Overlap matrix" in line:
-
-                        # Get the next row.
-                        row = next(file)
-
-                        # Loop until we hit the next section.
-                        while not row.startswith("#DG"):
-                            # Extract the data for this row.
-                            records = [float(x) for x in row.split()]
-
-                            # Append to the overlap matrix.
-                            overlap.append(records)
-
-                            # Get the next line.
-                            row = next(file)
-
-                    # Process the PMF.
-                    elif "PMF from MBAR" in line:
-                        # Get the next row.
-                        row = next(file)
-
-                        # Loop until we hit the next section.
-                        while not row.startswith("#TI"):
-                            # Split the line.
-                            records = row.split()
-
-                            # Append the data.
-                            data.append((float(records[0]),
-                                        float(records[1]) *
-                                         _Units.Energy.kcal_per_mol,
-                                        float(records[2]) * _Units.Energy.kcal_per_mol))
-
-                            # Get the next line.
-                            row = next(file)
-
-            return (data, overlap)
+        return (data, overlap)
 
     @staticmethod
     def difference(pmf, pmf_ref):
@@ -1470,6 +1386,69 @@ class Relative():
 
         # Now call the staticmethod passing in both PMFs.
         return Relative.difference(pmf, pmf_ref)
+
+    @staticmethod
+    def check_overlap(overlap, estimator="MBAR"):
+        """Check the overlap of an FEP leg. 
+
+           Parameters
+           ----------
+
+           overlap : [ [ float, float, ... ] ], numpy.matrix
+               The overlap matrix. This gives the overlap between lambda windows.
+
+           estimator : str
+               Must be "MBAR" for checking the overlap matrix.
+
+           Returns
+           -------
+
+           Nothing - gives a warning if the overlap is less than 0.03 for any off-diagonal.
+
+        """
+        if not isinstance(overlap, _np.matrix):
+            raise TypeError("'overlap' must be of type 'numpy.matrix'.")
+
+        # estimator must be MBAR for overlap matrix or TI for dhdl plot.
+        if estimator not in ['MBAR']:
+            raise ValueError("'estimator' must be 'MBAR'.")
+
+        if estimator == "MBAR":
+            # check the overlap
+            # get all off diagonals
+            off_diagonal = (_np.diagonal(overlap, 1)).tolist()
+            for a in (_np.diagonal(overlap, -1)).tolist():
+                off_diagonal.append(a)
+
+            # check if the off diagonals are 0.03 or larger.
+            too_small = 0
+            for o in off_diagonal:
+                if o < 0.03:
+                    too_small += 1
+            if too_small > 0:
+                _warnings.warn(f"Overlap matrix is bad - {too_small} off-diagonals are less than 0.03.")
+
+        return ()
+
+    def _check_overlap(self):
+        """Check the overlap of an FEP leg. 
+
+           Parameters
+           ----------
+
+           Returns
+           -------
+
+           Nothing - gives a warning if the overlap is less than 0.03 for any off-diagonal.
+
+
+        """
+
+        # Calculate the overlap for this object.
+        _, overlap = self.analyse()
+
+        # Now call the staticmethod passing in the overlap and the work_dir of the run.
+        return Relative.check_overlap(overlap, estimator=self._estimator)
 
     def _initialise_runner(self, system):
         """Internal helper function to initialise the process runner.

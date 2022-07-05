@@ -420,15 +420,6 @@ class Protocol():
                                              "inconsistent with the original molecule. Please "
                                              "make sure that your initial molecule has a "
                                              "complete topology.")
-            if _molecule.nChains() > 1:
-                # If the original molecule was comprised of multiple chains, then we
-                # need to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
-                # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
-                with open(prefix + "leap.top", "a") as file:
-                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
-                    file.write("%FORMAT(10I8)\n")
-                    file.write("    %d\n" % _molecule.nAtoms())
-
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")

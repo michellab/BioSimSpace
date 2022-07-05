@@ -218,6 +218,14 @@ class Somd(_process.Process):
         # First create a copy of the system.
         system = self._system.copy()
 
+        # Renumber all of the constituents in the system so that they are unique
+        # and in ascending order. This is required since SOMD assumes that numbers
+        # are unique, i.e. the residue number of the perturbed molecule.
+        # We store the renumbered system to use as a template when mapping atoms
+        # the those from the extracted trajectory frames in, e.g. getSystem().
+        self._renumbered_system = _SireIO.renumberConstituents(system._sire_object)
+        system = _System(self._renumbered_system)
+
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
@@ -316,7 +324,7 @@ class Somd(_process.Process):
             raise _IncompatibleError("Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
+        config = _Protocol.ConfigFactory(_System(self._renumbered_system), self._protocol)
         self.addToConfig(config.generateSomdConfig(extra_options={**config_options, **self._extra_options},
                                                    extra_lines=self._extra_lines))
 
@@ -432,6 +440,7 @@ class Somd(_process.Process):
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
+                    self._renumbered_system,
                     new_system._sire_object,
                     self._mapping,
                     is_lambda1,
@@ -541,6 +550,7 @@ class Somd(_process.Process):
             # the molecule numbers in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
+                    self._renumbered_system,
                     new_system._sire_object,
                     self._mapping,
                     is_lambda1,

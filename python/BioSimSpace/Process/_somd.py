@@ -23,6 +23,26 @@
 Functionality for running simulations with SOMD.
 """
 
+from . import _process
+from .. import _Utils
+from .. import Trajectory as _Trajectory
+from .. import Protocol as _Protocol
+from .. import IO as _IO
+from .._SireWrappers import System as _System
+from .._SireWrappers import Molecule as _Molecule
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .. import _isVerbose
+from Sire import Mol as _SireMol
+from Sire import MM as _SireMM
+from Sire import IO as _SireIO
+from Sire import CAS as _SireCAS
+from Sire import Base as _SireBase
+import warnings as _warnings
+import timeit as _timeit
+import sys as _sys
+import string as _string
+import random as _random
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -32,32 +52,10 @@ from .._Utils import _try_import
 
 import os as _os
 _pygtail = _try_import("pygtail")
-import random as _random
-import string as _string
-import sys as _sys
-import timeit as _timeit
-import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import CAS as _SireCAS
-from Sire import IO as _SireIO
-from Sire import MM as _SireMM
-from Sire import Mol as _SireMol
-
-from .. import _isVerbose
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
-
-from .. import IO as _IO
-from .. import Protocol as _Protocol
-from .. import Trajectory as _Trajectory
-from .. import _Utils
-
-from . import _process
 
 __all__ = ["Somd"]
+
 
 class Somd(_process.Process):
     """A class for running simulations using SOMD."""
@@ -225,6 +223,15 @@ class Somd(_process.Process):
         # First create a copy of the system.
         system = self._system.copy()
 
+        # Renumber all of the constituents in the system so that they are unique
+        # and in ascending order. This is required since SOMD assumes that numbers
+        # are unique, i.e. the residue number of the perturbed molecule.
+        # We store the renumbered system to use as a template when mapping atoms
+        # the those from the extracted trajectory frames in, e.g. getSystem().
+        self._renumbered_system = _SireIO.renumberConstituents(
+            system._sire_object)
+        system = _System(self._renumbered_system)
+
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
@@ -339,7 +346,7 @@ class Somd(_process.Process):
                 "Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
+        config = _Protocol.ConfigFactory(_System(self._renumbered_system), self._protocol)
         self.addToConfig(config.generateSomdConfig(extra_options={**config_options, **self._extra_options},
                                                    extra_lines=self._extra_lines))
 
@@ -460,6 +467,7 @@ class Somd(_process.Process):
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                 old_system._sire_object,
+                self._renumbered_system,
                 new_system._sire_object,
                 self._mapping,
                 is_lambda1,
@@ -570,6 +578,7 @@ class Somd(_process.Process):
             # the molecule numbers in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                 old_system._sire_object,
+                self._renumbered_system,
                 new_system._sire_object,
                 self._mapping,
                 is_lambda1,

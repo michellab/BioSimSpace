@@ -8,7 +8,6 @@ from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
 
-
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
@@ -768,10 +767,9 @@ class ConfigFactory:
             protocol_dict["lambda array"] = ", ".join(protocol)
             # Current lambda value.
             protocol_dict["lambda_val"] = self.protocol.getLambda()
-            # protocol_dict["minimise"] = True                                   # minimise at each window
-            # Find the ligand, which will have the name LIG if created using BSS.
-            lig_res_num = self.system.search(f"resname LIG")[
-                0]._sire_object.number().value()
+            # Find the perturbed ligand.
+            lig_res_num = self.system.search("perturbable")[0]._sire_object.number().value()
+            # lig_res_num = self.system.search(f"resname LIG")[0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = lig_res_num
 
         # Put everything together in a line-by-line format.
