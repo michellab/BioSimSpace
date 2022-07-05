@@ -132,6 +132,7 @@ class Trajectory():
         self._process_name = None
         self._traj_file = None
         self._top_file = None
+        self._backend = None
 
         # Nothing to create a trajectory from.
         if process is None and trajectory is None:
@@ -176,15 +177,17 @@ class Trajectory():
                              "or a trajectory and topology file.")
 
         # Get the current trajectory.
-        self._trajectory = self.getTrajectory()
+        self._trajectory = self.getTrajectory(format="AUTO")
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
+            % (self.nFrames(), str(self._backend).lower())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Trajectory: nFrames=%d>" % self.nFrames()
+        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
+            % (self.nFrames(), str(self._backend).lower())
 
     def getTrajectory(self, format="mdtraj"):
         """Get the current trajectory object.
@@ -194,6 +197,9 @@ class Trajectory():
 
            format : str
                Whether to return an 'MDTraj' or 'MDAnalysis' object.
+               Use "auto" if you are happy with either format, i.e. it
+               will try each backend in sequence and return an object
+               from the first one that works.
 
            Returns
            -------
@@ -202,9 +208,24 @@ class Trajectory():
                The trajectory in MDTraj or MDAnalysis format.
         """
 
-        if format.upper() not in ["MDTRAJ", "MDANALYSIS"]:
+        # Strip whitespace and convert to upper case.
+        format = format.replace(" ", "").upper()
+
+        if format.replace(" ", "").upper() not in ["MDTRAJ", "MDANALYSIS", "AUTO"]:
             _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
-            format = "mdtraj"
+            format = "MDTRAJ"
+
+        # If this object isn't bound to a Process and the format matches the
+        # existing backend, then return the trajectory directly.
+        if self._process is None:
+            if format in ["MDTRAJ", "AUTO"] and self._backend == "MDTRAJ":
+                return self._trajectory
+            elif format in ["MDANALYSIS", "AUTO"] and self._backend == "MDANALYSIS":
+                return self._trajectory
+
+        if format == "MDTRAJ" and self._backend == "MDANALYSIS":
+            raise _IncompatibleError("This Trajectory object can only be used "
+                                     "with the MDAnalysis backend.")
 
         # Set the location of the trajectory and topology files.
         if self._process is not None:
@@ -215,6 +236,8 @@ class Trajectory():
                     top_file = self._process._gro_file
                 else:
                     top_file = self._process._tpr_file
+                    self._backend = "MDANALYSIS"
+                    format = "MDANALYSIS"
             else:
                 top_file = self._process._top_file
         else:
@@ -229,17 +252,19 @@ class Trajectory():
             raise IOError("Topology file doesn't exist: '%s'" % top_file)
 
         # Return an MDTraj object.
-        if format == "mdtraj":
+        if format in ["MDTRAJ", "AUTO"]:
             try:
                 traj = _mdtraj.load(traj_file, top=top_file)
+                if self._backend is None:
+                    self._backend = "MDTRAJ"
+                return traj
             except:
-                _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
-                traj = None
-
-            return traj
+                if format == "MDTRAJ":
+                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    return None
 
         # Return an MDAnalysis Universe.
-        else:
+        if format in ["MDANALYSIS", "AUTO"]:
             # Check the file extension.
             _, extension = _os.path.splitext(top_file)
 
@@ -258,11 +283,16 @@ class Trajectory():
 
             try:
                 universe = _mdanalysis.Universe(top_file, traj_file)
+                if self._backend is None:
+                    self._backend = "MDANALYSIS"
 
                 if is_temp_file:
                     _os.remove(top_file)
             except:
-                _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                if format == "MDANALYSIS":
+                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                else:
+                    _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 universe = None
 
                 if is_temp_file:
@@ -295,7 +325,7 @@ class Trajectory():
                 return None
 
         # Store the number of frames.
-        n_frames = self._trajectory.n_frames
+        n_frames = self.nFrames()
 
         # Work out the frame spacing in nanoseconds.
         # TODO:
@@ -306,13 +336,16 @@ class Trajectory():
                 time_interval = (self._process._protocol.getRunTime() / self._process._protocol.getRestartInterval())
                 time_interval = time_interval.nanoseconds().value()
             else:
-                time_interval = self._trajectory.timestep / 1000
+                if self._backend == "MDTRAJ":
+                    time_interval = self._trajectory.timestep / 1000
+                elif self._backend == "MDANALYSIS":
+                    time_interval = self._trajectory.trajectory.totaltime / 1000
 
         # Create the indices array.
 
         # Default to all frames.
         if indices is None:
-            indices = [x for x in range(0, self._trajectory.n_frames)]
+            indices = [x for x in range(0, n_frames)]
 
         # A single frame index.
         elif type(indices) is int:
@@ -325,7 +358,7 @@ class Trajectory():
                 indices = [round(indices.nanoseconds().value() / time_interval) - 1]
             else:
                 raise _IncompatibleError("Cannot determine time stamps for a trajectory "
-                                         "with only one frame!")
+                                        "with only one frame!")
 
         # A list of frame indices.
         elif all(type(x) is int for x in indices):
@@ -335,7 +368,7 @@ class Trajectory():
         elif all(isinstance(x, _Time) for x in indices):
             if n_frames <= 1:
                 raise _IncompatibleError("Cannot determine time stamps for a trajectory "
-                                         "with only one frame!")
+                                        "with only one frame!")
 
             # Round time stamps to nearest frame indices.
             indices = [round(x.nanoseconds().value() / time_interval) - 1 for x in indices]
@@ -343,11 +376,14 @@ class Trajectory():
         # Unsupported argument.
         else:
             raise ValueError("Unsupported argument. Indices or time stamps "
-                             "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
-                             "'BioSimSpace.Types.Time' types.")
+                            "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
+                            "'BioSimSpace.Types.Time' types.")
 
         # Initialise the list of frames.
         frames = []
+
+        # Sort the indices.
+        indices.sort()
 
         # Loop over all indices.
         for x in indices:
@@ -358,15 +394,24 @@ class Trajectory():
             elif x < -n_frames:
                 raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (x, n_frames))
 
-            # The name of the frame coordinate file.
-            frame_file = ".frame.nc"
-
             # Write the current frame as a NetCDF file.
-            self._trajectory[x].save(frame_file)
+
+            if self._backend == "MDTRAJ":
+                frame_file = ".frame.nc"
+                self._trajectory[x].save(frame_file)
+            elif self._backend == "MDANALYSIS":
+                frame_file = ".frame.pdb"
+                self._trajectory.trajectory[x]
+                with _warnings.catch_warnings():
+                    _warnings.simplefilter("ignore")
+                    self._trajectory.select_atoms("all").write(frame_file)
 
             # Load the frame and create a System object.
             try:
-                system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
+                if self._backend == "MDTRAJ":
+                    system = _System(_SireIO.MoleculeParser.read([self._top_file, frame_file]))
+                elif self._backend == "MDANALYSIS":
+                    system = _System(_SireIO.MoleculeParser.read(frame_file))
             except Exception as e:
                 _os.remove(frame_file)
                 msg = "Failed to read trajectory frame: '%s'" % frame_file
@@ -380,6 +425,10 @@ class Trajectory():
 
         # Remove the temporary frame coordinate file.
         _os.remove(frame_file)
+
+        # Rewind the trajectory if the backend is MDAnalysis.
+        if self._backend == "MDANALYSIS":
+            self._trajectory.trajectory.rewind
 
         # Return the frames.
         return frames
@@ -402,7 +451,10 @@ class Trajectory():
         if self._trajectory is None:
             return 0
         else:
-            return self._trajectory.n_frames
+            if self._backend == "MDTRAJ":
+                return self._trajectory.n_frames
+            elif self._backend == "MDANALYSIS":
+                return self._trajectory.trajectory.n_frames
 
     def rmsd(self, frame=None, atoms=None):
         """Compute the root mean squared displacement.
@@ -431,7 +483,7 @@ class Trajectory():
                 raise TypeError("'frame' must be of type 'int'")
             else:
                 # Store the number of frames.
-                n_frames = self._trajectory.n_frames
+                n_frames = self.nFrames()
 
                 # Make sure the frame index is within range.
                 if frame > 0 and frame >= n_frames:
@@ -444,17 +496,42 @@ class Trajectory():
             if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
 
-        # Use MDTraj to compute the RMSD.
-        try:
-            rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
-        except Exception as e:
-            msg = "Atom indices not found in the system."
-            if _isVerbose():
-                raise ValueError(msg) from e
+        if self._backend == "MDTRAJ":
+            try:
+                rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
+            except Exception as e:
+                msg = "Atom indices not found in the system."
+                if _isVerbose():
+                    raise ValueError(msg) from e
+                else:
+                    raise ValueError(msg) from None
+
+            # Convert to a list and add units.
+            rmsd = [_Units.Length.nanometer * float(x) for x in rmsd]
+
+        else:
+            _rms = _try_import("MDAnalysis.analysis.rms")
+
+            # Extract the reference Universe.
+            ref = self._trajectory.copy()
+            ref.trajectory.trajectory[frame]
+
+            # Create the atom selection.
+            if atoms is None:
+                select = "all"
             else:
-                raise ValueError(msg) from None
+                select = "bynum " + " ".join([str(x+1) for x in atoms])
 
-        # Convert to a list and add units.
-        rmsd = [_Units.Length.nanometer * float(x) for x in rmsd]
+            # Instantiate the RMSD object.
+            R = _rms.RMSD(self._trajectory, ref, select)
 
+            # Run the analysis.
+            R.run()
+
+            # Get the RMSD results.
+            results = R.results.rmsd
+
+            rmsd = [_Units.Length.nanometer * float(x[-1]/10) for x in results]
+
+        # Return the RMSD result.
         return rmsd

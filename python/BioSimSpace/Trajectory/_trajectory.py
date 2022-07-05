@@ -401,8 +401,7 @@ class Trajectory():
                 self._trajectory[x].save(frame_file)
             elif self._backend == "MDANALYSIS":
                 frame_file = ".frame.pdb"
-                while self._trajectory.trajectory.frame != x:
-                    self._trajectory.trajectory.next()
+                self._trajectory.trajectory[x]
                 with _warnings.catch_warnings():
                     _warnings.simplefilter("ignore")
                     self._trajectory.select_atoms("all").write(frame_file)
@@ -510,11 +509,29 @@ class Trajectory():
             # Convert to a list and add units.
             rmsd = [_Units.Length.nanometer * float(x) for x in rmsd]
 
-            return rmsd
-
         else:
-            msg = ("We currently only support the MDTraj backend for rudimentary "
-                  "RMSD calculations. To use MDAnalysis directly, use "
-                  "'getTrajectory' to obtain a 'MDAnalysis.core.universe.Universe' "
-                  "object.")
-            raise _IncompatibleError(msg)
+            _rms = _try_import("MDAnalysis.analysis.rms")
+
+            # Extract the reference Universe.
+            ref = self._trajectory.copy()
+            ref.trajectory.trajectory[frame]
+
+            # Create the atom selection.
+            if atoms is None:
+                select = "all"
+            else:
+                select = "bynum " + " ".join([str(x+1) for x in atoms])
+
+            # Instantiate the RMSD object.
+            R = _rms.RMSD(self._trajectory, ref, select)
+
+            # Run the analysis.
+            R.run()
+
+            # Get the RMSD results.
+            results = R.results.rmsd
+
+            rmsd = [_Units.Length.nanometer * float(x[-1]/10) for x in results]
+
+        # Return the RMSD result.
+        return rmsd
