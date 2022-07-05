@@ -671,7 +671,7 @@ class ConfigFactory:
                 _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self.protocol.getTimeStep().nanoseconds()}.")
 
             # Work out how many cycles need to pass before we write a trajectory frame.
-            cycles_per_frame = restart_interval / report_interval
+            cycles_per_frame = max(1, restart_interval // nmoves)
 
             # How many time steps need to pass before we write a trajectory frame.
             # The buffer frequency must be an integer multiple of the frequency
