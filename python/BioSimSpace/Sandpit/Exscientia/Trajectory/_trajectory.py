@@ -219,9 +219,9 @@ class Trajectory():
         # existing backend, then return the trajectory directly.
         if self._process is None:
             if format in ["MDTRAJ", "AUTO"] and self._backend == "MDTRAJ":
-                return self._trajectory
+                return _copy.deepcopy(self._trajectory)
             elif format in ["MDANALYSIS", "AUTO"] and self._backend == "MDANALYSIS":
-                return self._trajectory
+                return self._trajectory.copy()
 
         if format == "MDTRAJ" and self._backend == "MDANALYSIS":
             raise _IncompatibleError("This Trajectory object can only be used "
@@ -512,9 +512,6 @@ class Trajectory():
         else:
             _rms = _try_import("MDAnalysis.analysis.rms")
 
-            # Extract the reference Universe.
-            ref = self._trajectory.copy()
-
             # Create the atom selection.
             if atoms is None:
                 select = "all"
@@ -522,7 +519,7 @@ class Trajectory():
                 select = "bynum " + " ".join([str(x+1) for x in atoms])
 
             # Instantiate the RMSD object.
-            R = _rms.RMSD(self._trajectory, ref, select, ref_frame=frame)
+            R = _rms.RMSD(self._trajectory, self._trajectory, select, ref_frame=frame)
 
             # Run the analysis.
             R.run()
