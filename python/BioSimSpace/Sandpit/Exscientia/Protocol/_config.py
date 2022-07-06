@@ -541,7 +541,7 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None):
+    def generateSomdConfig(self, extra_options=None, extra_lines=None, restraint=None):
         """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
@@ -552,6 +552,10 @@ class ConfigFactory:
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+            The Restraint object that contains information for the ABFE
+            calculations.
 
         Returns
         -------
@@ -657,8 +661,13 @@ class ConfigFactory:
             res_num = self.system.search("perturbable")[0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
+        # Restraint
+        if restraint:
+            restraint_line = restraint.toString(engine='SOMD')
+
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
-        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None]
+        total_lines += extra_lines + restraint_line
 
         return total_lines

@@ -67,7 +67,7 @@ class Somd(_process.Process):
 
     def __init__(self, system, protocol, exe=None, name="somd",
             platform="CPU", work_dir=None, seed=None, extra_options=None,
-            extra_lines=None, property_map={}):
+            extra_lines=None, property_map={}, restraint=None):
         """Constructor.
 
            Parameters
@@ -107,10 +107,14 @@ class Somd(_process.Process):
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
+           
+           restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+               The Restraint object that contains information for the ABFE
+               calculations.
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map, restraint)
 
         # Set the package name.
         self._package_name = "SOMD"
@@ -326,7 +330,7 @@ class Somd(_process.Process):
         # Set the configuration.
         config = _Protocol.ConfigFactory(_System(self._renumbered_system), self._protocol)
         self.addToConfig(config.generateSomdConfig(extra_options={**config_options, **self._extra_options},
-                                                   extra_lines=self._extra_lines))
+                                                   extra_lines=self._extra_lines, restraint=self._restraint))
 
         # Flag that this isn't a custom protocol.
         self._protocol._setCustomised(False)
