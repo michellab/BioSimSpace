@@ -1,4 +1,4 @@
-import BioSimSpace as BSS
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
@@ -6,8 +6,8 @@ import pytest
 def traj_mdtraj(scope="session"):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
-            trajectory="test/input/trajectories/ala.trr",
-            topology="test/input/trajectories/ala.tpr")
+            trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
+            topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr")
 
 @pytest.fixture
 def traj_mdanalysis(scope="session"):
