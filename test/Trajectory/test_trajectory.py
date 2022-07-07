@@ -7,14 +7,14 @@ def traj_mdtraj(scope="session"):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
             trajectory="test/input/trajectories/ala.trr",
-            topology="test/input/trajectories/ala.tpr")
+            topology="test/input/trajectories/ala.gro")
 
 @pytest.fixture
 def traj_mdanalysis(scope="session"):
     """A trajectory object using the MDAnalysis backend."""
     return BSS.Trajectory.Trajectory(
             trajectory="test/input/trajectories/ala.trr",
-            topology="test/input/trajectories/ala.gro")
+            topology="test/input/trajectories/ala.tpr")
 
 def test_frames(traj_mdtraj, traj_mdanalysis):
     """Make sure that the number of frames loaded by each backend agree."""
