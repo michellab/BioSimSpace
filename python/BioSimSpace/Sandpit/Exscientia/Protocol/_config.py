@@ -517,6 +517,10 @@ class ConfigFactory:
                     mol._sire_object.property('charge1').value(),
                     mol._sire_object.property('LJ1').value()
                 )
+                # Add the soft-core parameters for the ABFE
+                protocol_dict['sc-alpha'] = 0.5
+                protocol_dict['sc-power'] = 1
+                protocol_dict['sc-sigma'] = 0.3
                 if mol._sire_object.property('annihilated').value():
                     # The intramol is being coupled to the lambda change and thus being annihilated.
                     protocol_dict["couple-intramol"] = 'yes'
