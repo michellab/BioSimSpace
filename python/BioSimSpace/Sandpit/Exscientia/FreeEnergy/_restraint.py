@@ -288,7 +288,41 @@ class Restraint():
 
         return '\n'.join(output)
 
-    def toString(self, engine='Gromacs'):
+    def _somd_boresch(self):
+        '''Format the SOMD string for the Boresch restraints.'''
+
+        # Indices
+        r1 = self._system.getIndex(self._restraint_dict['anchor_points']['r1']) + 1
+        r2 = self._system.getIndex(self._restraint_dict['anchor_points']['r2']) + 1
+        r3 = self._system.getIndex(self._restraint_dict['anchor_points']['r3']) + 1
+        l1 = self._system.getIndex(self._restraint_dict['anchor_points']['l1']) + 1
+        l2 = self._system.getIndex(self._restraint_dict['anchor_points']['l2']) + 1
+        l3 = self._system.getIndex(self._restraint_dict['anchor_points']['l3']) + 1
+        # Equilibrium values
+        r0 = self._restraint_dict['equilibrium_values']['r0']
+        thetaA0 = self._restraint_dict['equilibrium_values']['thetaA0']
+        thetaB0 = self._restraint_dict['equilibrium_values']['thetaB0']
+        phiA0 = self._restraint_dict['equilibrium_values']['phiA0']
+        phiB0 = self._restraint_dict['equilibrium_values']['phiB0']
+        phiC0 = self._restraint_dict['equilibrium_values']['phiC0']
+        # Force constants
+        kr = self._restraint_dict['force_constants']['kr']
+        kthetaA = self._restraint_dict['force_constants']['kthetaA']
+        kthetaB = self._restraint_dict['force_constants']['kthetaB']
+        kphiA = self._restraint_dict['force_constants']['kphiA']
+        kphiB = self._restraint_dict['force_constants']['kphiB']
+        kphiC = self._restraint_dict['force_constants']['kphiC']
+
+        restr_string = f'{{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, "l2":{l2}, "l3":{l3}}}, '
+        f'equilibrium_values":{{"r0":{r0:.2f}, "thetaA0":{thetaA0:.2f}, "thetaB0":{thetaB0:.2f},"phiA0":{phiA0:.2f}, '
+        f'"phiB0":{phiB0:.2f}, "phiC0":{phiC0:.2f}}}, '
+        f'"force_constants":{{"kr":{kr:.2f}, "kthetaA":{kthetaA:.2f}, "kthetaB":{kthetaB:.2f}, "kphiA":{kphiA:.2f}, '
+        f'"kphiB":{kphiB:.2f}, "kphiC":{kphiC:.2f}}}}}'
+
+        return restr_string
+
+
+    def toString(self, engine=None):
         """The method for convert the restraint to a format that could be used
         by MD Engines.
 
@@ -297,20 +331,23 @@ class Restraint():
 
            engine : str
                The molecular dynamics engine used to generate the restraint.
-               Available options currently is "GROMACS" only. If this argument
+               Available options currently is "GROMACS" and "SOMD". If this argument
                is omitted then BioSimSpace will choose an appropriate engine
                for you.
         """
         if engine.lower() == 'gromacs':
             if self._rest_type == 'boresch':
                 return self._gromacs_boresch()
+        elif engine.lower() == 'somd':
+            if self._rest_type == 'boresch':
+                return self._somd_boresch()
             else:
                 raise NotImplementedError(
                     f'Restraint type {self.rest_type} not implemented '
-                    f'yet. Only boresch restraint is supported.')
+                    f'yet. Only Boresch restraints are supported.')
         else:
             raise NotImplementedError(f'MD Engine {engine} not implemented '
-                                      f'yet. Only Gromacs is supported.')
+                                      f'yet. Only Gromacs and SOMD are supported.')
 
     @property
     def correction(self):
