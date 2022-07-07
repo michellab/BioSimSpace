@@ -111,3 +111,16 @@ class TestGromacsABFE():
             assert 'couple-lambda0 = vdw' in mdp_text
             assert 'couple-lambda1 = q' in mdp_text
             assert 'couple-intramol = no' in mdp_text
+
+    def test_sc_parameters(self, system):
+        '''Test if the soft core parameters have been written.
+        The default sc-alpha is 0, which means the soft-core of the vdw is not
+        turned on by default. This checks if the this value has been changed to
+        0.5.'''
+        m, protocol = system
+        mol = decouple(m)
+        freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
+
+        with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
+            mdp_text = f.read()
+            assert 'sc-alpha = 0.5' in mdp_text
