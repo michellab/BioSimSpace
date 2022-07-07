@@ -658,13 +658,15 @@ class ConfigFactory:
             res_num = self.system.search("perturbable")[0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
-        # Restraint
-        if restraint:
-            restraint_line = restraint.toString(engine='SOMD')
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
-        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None]
-        total_lines += extra_lines + restraint_line
+        total_lines = [f"{k} = {v}" for k, v in total_dict.items() if v is not None] + extra_lines
+
+        # Restraint
+        if restraint:
+            restraint_line = '\n' + restraint.toString(engine='SOMD')
+            total_lines += "\nuse boresch restraints = True"
+            total_lines += restraint_line
 
         return total_lines
