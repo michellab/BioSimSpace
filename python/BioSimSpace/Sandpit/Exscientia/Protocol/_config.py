@@ -668,8 +668,7 @@ class ConfigFactory:
 
         # Restraint
         if restraint:
-            restraint_line = '\n' + restraint.toString(engine='SOMD')
-            total_lines += "\nuse boresch restraints = True"
-            total_lines += restraint_line
+            total_lines.append("use boresch restraints = True")
+            total_lines.append(restraint.toString(engine='SOMD'))
 
         return total_lines
