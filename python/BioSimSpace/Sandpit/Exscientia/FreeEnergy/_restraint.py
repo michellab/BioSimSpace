@@ -33,6 +33,7 @@ from .._SireWrappers import Atom
 from ..Types import Length, Angle, Temperature
 from .._SireWrappers import System as _System
 from ..Units.Length import nanometer
+from ..Units.Length import angstrom
 from ..Units.Area import nanometer2
 from ..Units.Temperature import kelvin
 from ..Units.Angle import degree, radian
@@ -299,19 +300,19 @@ class Restraint():
         l2 = self._system.getIndex(self._restraint_dict['anchor_points']['l2']) + 1
         l3 = self._system.getIndex(self._restraint_dict['anchor_points']['l3']) + 1
         # Equilibrium values
-        r0 = self._restraint_dict['equilibrium_values']['r0'].value()
-        thetaA0 = self._restraint_dict['equilibrium_values']['thetaA0'].value()
-        thetaB0 = self._restraint_dict['equilibrium_values']['thetaB0'].value()
-        phiA0 = self._restraint_dict['equilibrium_values']['phiA0'].value()
-        phiB0 = self._restraint_dict['equilibrium_values']['phiB0'].value()
-        phiC0 = self._restraint_dict['equilibrium_values']['phiC0'].value()
+        r0 = (self._restraint_dict['equilibrium_values']['r0']/angstrom)
+        thetaA0 = (self._restraint_dict['equilibrium_values']['thetaA0']/radian)
+        thetaB0 = (self._restraint_dict['equilibrium_values']['thetaB0']/radian)
+        phiA0 = (self._restraint_dict['equilibrium_values']['phiA0']/radian)
+        phiB0 = (self._restraint_dict['equilibrium_values']['phiB0']/radian)
+        phiC0 = (self._restraint_dict['equilibrium_values']['phiC0']/radian)
         # Force constants.value()
-        kr = self._restraint_dict['force_constants']['kr'].value()
-        kthetaA = self._restraint_dict['force_constants']['kthetaA'].value()
-        kthetaB = self._restraint_dict['force_constants']['kthetaB'].value()
-        kphiA = self._restraint_dict['force_constants']['kphiA'].value()
-        kphiB = self._restraint_dict['force_constants']['kphiB'].value()
-        kphiC = self._restraint_dict['force_constants']['kphiC'].value()
+        kr = (self._restraint_dict['force_constants']['kr']/(kcal_per_mol / (angstrom*angstrom)))
+        kthetaA = (self._restraint_dict['force_constants']['kthetaA']/(kcal_per_mol / (radian*radian)))
+        kthetaB = (self._restraint_dict['force_constants']['kthetaB']/(kcal_per_mol / (radian*radian)))
+        kphiA = (self._restraint_dict['force_constants']['kphiA']/(kcal_per_mol / (radian*radian)))
+        kphiB = (self._restraint_dict['force_constants']['kphiB']/(kcal_per_mol / (radian*radian)))
+        kphiC = (self._restraint_dict['force_constants']['kphiC']/(kcal_per_mol / (radian*radian)))
 
         restr_string = f'boresch restraints dictionary = {{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, '
         restr_string += f'"l2":{l2}, "l3":{l3}}}, '
