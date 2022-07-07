@@ -299,25 +299,26 @@ class Restraint():
         l2 = self._system.getIndex(self._restraint_dict['anchor_points']['l2']) + 1
         l3 = self._system.getIndex(self._restraint_dict['anchor_points']['l3']) + 1
         # Equilibrium values
-        r0 = self._restraint_dict['equilibrium_values']['r0']
-        thetaA0 = self._restraint_dict['equilibrium_values']['thetaA0']
-        thetaB0 = self._restraint_dict['equilibrium_values']['thetaB0']
-        phiA0 = self._restraint_dict['equilibrium_values']['phiA0']
-        phiB0 = self._restraint_dict['equilibrium_values']['phiB0']
-        phiC0 = self._restraint_dict['equilibrium_values']['phiC0']
-        # Force constants
-        kr = self._restraint_dict['force_constants']['kr']
-        kthetaA = self._restraint_dict['force_constants']['kthetaA']
-        kthetaB = self._restraint_dict['force_constants']['kthetaB']
-        kphiA = self._restraint_dict['force_constants']['kphiA']
-        kphiB = self._restraint_dict['force_constants']['kphiB']
-        kphiC = self._restraint_dict['force_constants']['kphiC']
+        r0 = self._restraint_dict['equilibrium_values']['r0'].value()
+        thetaA0 = self._restraint_dict['equilibrium_values']['thetaA0'].value()
+        thetaB0 = self._restraint_dict['equilibrium_values']['thetaB0'].value()
+        phiA0 = self._restraint_dict['equilibrium_values']['phiA0'].value()
+        phiB0 = self._restraint_dict['equilibrium_values']['phiB0'].value()
+        phiC0 = self._restraint_dict['equilibrium_values']['phiC0'].value()
+        # Force constants.value()
+        kr = self._restraint_dict['force_constants']['kr'].value()
+        kthetaA = self._restraint_dict['force_constants']['kthetaA'].value()
+        kthetaB = self._restraint_dict['force_constants']['kthetaB'].value()
+        kphiA = self._restraint_dict['force_constants']['kphiA'].value()
+        kphiB = self._restraint_dict['force_constants']['kphiB'].value()
+        kphiC = self._restraint_dict['force_constants']['kphiC'].value()
 
-        restr_string = f'{{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, "l2":{l2}, "l3":{l3}}}, '
-        f'equilibrium_values":{{"r0":{r0:.2f}, "thetaA0":{thetaA0:.2f}, "thetaB0":{thetaB0:.2f},"phiA0":{phiA0:.2f}, '
-        f'"phiB0":{phiB0:.2f}, "phiC0":{phiC0:.2f}}}, '
-        f'"force_constants":{{"kr":{kr:.2f}, "kthetaA":{kthetaA:.2f}, "kthetaB":{kthetaB:.2f}, "kphiA":{kphiA:.2f}, '
-        f'"kphiB":{kphiB:.2f}, "kphiC":{kphiC:.2f}}}}}'
+        restr_string = f'boresch restraints dictionary = {{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, '
+        restr_string += f'"l2":{l2}, "l3":{l3}}}, '
+        restr_string += f'"equilibrium_values":{{"r0":{r0:.2f}, "thetaA0":{thetaA0:.2f}, "thetaB0":{thetaB0:.2f},"phiA0":{phiA0:.2f}, '
+        restr_string += f'"phiB0":{phiB0:.2f}, "phiC0":{phiC0:.2f}}}, '
+        restr_string += f'"force_constants":{{"kr":{kr:.2f}, "kthetaA":{kthetaA:.2f}, "kthetaB":{kthetaB:.2f}, "kphiA":{kphiA:.2f}, '
+        restr_string += f'"kphiB":{kphiB:.2f}, "kphiC":{kphiC:.2f}}}}}'
 
         return restr_string
 
