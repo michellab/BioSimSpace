@@ -282,7 +282,7 @@ class Relative():
 
         # Check that the restraint is valid.
         if not restraint is None:
-            if engine not in ['GROMACS', ]:
+            if engine not in ['GROMACS', 'SOMD']:
                 raise NotImplementedError(f'Restraint for MD Engine {engine} not implemented.')
             if not isinstance(restraint, _Restraint):
                 raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
@@ -1409,7 +1409,7 @@ class Relative():
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map, extra_options=self._extra_options,
-                extra_lines=self._extra_lines)
+                extra_lines=self._extra_lines, restraint=self._restraint)
 
         # GROMACS.
         elif self._engine == "GROMACS":
