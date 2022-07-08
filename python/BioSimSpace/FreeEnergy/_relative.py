@@ -320,7 +320,8 @@ class Relative():
                 mass_prop = property_map.get("mass0", "mass0")
                 molecule = self._system.getPerturbableMolecules()[0]
                 for atom in molecule.getAtoms():
-                    if "H" in atom.name():
+                    # check if the atom is a H atom
+                    if atom.name().startswith("H"):
                         mass = atom._sire_object.property(mass_prop).value()
                         # check in case the mass at 0 is 0 as perturbable molecule.
                         if mass > 1:
@@ -599,6 +600,7 @@ class Relative():
         file_df = _pd.read_fwf(
             file, skipinitialspace=True, skiprows=13, header=None, names=header)
 
+        # TODO fix so timestep still works if the simulation stops earlier
         time_step = (sim_length/len(file_df['step']))
         time_rows = _np.arange(0, len(file_df['step']), 1)
         time = _np.arange(0, sim_length, time_step)
