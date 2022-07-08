@@ -29,3 +29,6 @@ output.yaml
 
 # VSCode config
 .vscode/
+
+# Conda recipe (it is auto-generated)
+recipes/biosimspace/meta.yaml
