@@ -1255,7 +1255,8 @@ class Molecule(_SireWrapper):
         # Update the internal molecule object.
         self._sire_object = mol
 
-    def repartitionHydrogenMass(self, factor=4, water="no", property_map={}):
+    def repartitionHydrogenMass(self, factor=4, water="no",
+            use_coordinates=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -1272,6 +1273,12 @@ class Molecule(_SireWrapper):
                Whether to repartition masses for water molecules. Options are
                "yes", "no", and "exclusive", which can be used to repartition
                masses for water molecules only.
+
+           use_coordinates : bool
+               Whether to use the current molecular coordinates to work out
+               the connectivity before repartitioning. If False, the information
+               from the molecular topology, e.g. force field, will be used, if
+               present.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -1306,33 +1313,40 @@ class Molecule(_SireWrapper):
             water_string = ", ".join(f"'{x}'" for x in water_options)
             raise ValueError(f"'water' must be one of: {water_string}")
 
+        if not isinstance(use_coordinates, bool):
+            raise TypeError("'use_coordinates' must be of type 'bool'.")
+
         # Check property map.
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
+        # Update the property map to indicate that coordinates will be used
+        # to compute the connectivity.
+        pmap = property_map.copy()
+        if use_coordinates:
+            pmap["use_coordinates"] = _SireBase.wrap(True)
+
         # Handle perturbable molecules separately.
         if self.isPerturbable():
             # Repartition masses for the lambda=0 state.
-            property_map = { "mass"         : "mass0",
-                             "element"      : "element0",
-                             "connectivity" : "connectivity0",
-                             "coordinates"  : "coordinates0"
-                           }
+            pmap = { "mass"         : "mass0",
+                     "element"      : "element0",
+                     "coordinates"  : "coordinates0"
+                   }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], property_map)
+                    self._sire_object, factor, water_options[water], pmap)
 
             # Repartition masses for the lambda=1 state.
-            property_map = { "mass"         : "mass1",
-                             "element"      : "element1",
-                             "connectivity" : "connectivity1",
-                             "coordinates"  : "coordinates1"
-                           }
+            pmap = { "mass"         : "mass1",
+                     "element"      : "element1",
+                     "coordinates"  : "coordinates1"
+                   }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], property_map)
+                    self._sire_object, factor, water_options[water], pmap)
 
         else:
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], property_map)
+                    self._sire_object, factor, water_options[water], pmap)
 
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""
