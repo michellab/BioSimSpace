@@ -592,6 +592,8 @@ class ConfigFactory:
             protocol_dict["nstcalcenergy"] = self._report_interval
             # Write gradients every report interval steps.
             protocol_dict["nstdhdl"] = self._report_interval
+            # softcore alpha parameter - 0.5 
+            protocol_dict["sc-alpha"] = "0.5"
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
