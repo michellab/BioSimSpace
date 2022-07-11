@@ -339,7 +339,6 @@ class Gromacs(_process.Process):
 
         # Add the default arguments.
         self.setArg("mdrun", True)          # Use mdrun.
-        self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
 
         # Metadynamics and steered MD arguments.
