@@ -48,12 +48,3 @@ class Test_gmx_ABFE():
             assert u_nk.index.names == ['time', 'coul-lambda', 'vdw-lambda']
             assert np.isclose(u_nk.index.values[0][1], coul)
             assert np.isclose(u_nk.index.values[0][2], vdw)
-
-    def test_lambda_value(self, freenrg):
-        '''Test if the xvg files contain the correct value.'''
-        path = pathlib.Path(freenrg._work_dir)
-        u_nk = extract_u_nk(path / 'lambda_0' / 'gromacs.xvg', 300)
-        assert np.isclose(u_nk.to_numpy(),
-                          [0., 2.87115501, 5.74231018, -1099.93073758,
-                           -2205.60375848],
-                          rtol=0.1).all()
