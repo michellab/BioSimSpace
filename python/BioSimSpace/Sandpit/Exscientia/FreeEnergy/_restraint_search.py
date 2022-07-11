@@ -106,7 +106,7 @@ class RestraintSearch():
     restraints are selected"""
 
     # Create a list of supported molecular dynamics engines.
-    _engines = ["GROMACS", ] # TODO: "AMBER", "SOMD"
+    _engines = ["GROMACS", "SOMD"] # TODO: "SOMD"
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
             gpu_support=False, ignore_warnings=False,
