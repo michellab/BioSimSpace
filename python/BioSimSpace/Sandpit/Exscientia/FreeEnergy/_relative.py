@@ -253,9 +253,12 @@ class Relative():
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
+            if system.nPerturbableMolecules() != 1 and system.nDecoupledMolecules() != 1:
                 raise ValueError("The system must contain a single perturbable molecule! "
                                  "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+            # The system must not have a decoupled and perturbable molecule.
+            if system.nPerturbableMolecules() == 1 and system.nDecoupledMolecules() == 1:
+                raise ValueError("The system must not contain a perturbable molecule and a decoupled molecule!")
 
         # Set the engine.
         self._engine = engine
