@@ -94,6 +94,9 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     if not type(index) is int:
         raise TypeError("'index' must be of type 'int'")
 
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'")
+
     if system is not None:
         if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
@@ -103,8 +106,8 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         # molecule mapping between the frame and reference.
         mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
 
-    if not isinstance(property_map, dict):
-        raise TypeError("'property_map' must be of type 'dict'")
+        # Update the water topology to match topology/trajectory.
+        system = _update_water_topology(system, topology, trajectory)
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
@@ -250,7 +253,6 @@ class Trajectory():
 
         # Set default member variables.
         self._process = None
-        self._process_name = None
         self._traj_file = None
         self._top_file = None
         self._backend = None
@@ -270,10 +272,10 @@ class Trajectory():
         if process is not None:
             if isinstance(process, _Process):
                 self._process = process
-                self._process_name = process.__class__.__name__
+                process_name = process.__class__.__name__
                 # Check that the process can generate a trajectory.
                 if not self._process._has_trajectory:
-                    raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % self._process_name)
+                    raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % process_name)
             else:
                 raise TypeError("'process' must be of type 'BioSimSpace.Process'.")
 
@@ -304,6 +306,17 @@ class Trajectory():
             # We assume the molecules are in the same order, so create a one-to-one
             # molecule mapping between the frame and reference.
             self._mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+
+            if process is not None:
+                # If this is a GROMACS process, convert the water topology to
+                # GROMACS format. Use AMBER for everything else.
+                if process._package_name == "GROMACS":
+                    self._system._set_water_topology("GROMACS")
+                else:
+                    self._system._set_water_topology("AMBER")
+            else:
+                # Update the water topology to match topology/trajectory.
+                self._system = _update_water_topology(self._system, self._top_file, self._traj_file)
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -368,7 +381,7 @@ class Trajectory():
         if self._process is not None:
             traj_file = self._process._traj_file
 
-            if self._process._process_name.upper() == "GROMACS":
+            if self._process._package_name == "GROMACS":
                 if format == "mdtraj":
                     top_file = self._process._gro_file
                 else:
@@ -879,3 +892,74 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
         _os.remove(top_file)
 
     return split_system
+
+def _update_water_topology(system, topology, trajectory):
+    """Internal helper function to update the water topology of the system
+       so that it is consistent with the passed topology or trajectory.
+
+       Parameters
+       ----------
+
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
+           A BioSimSpace System object for reference topology.
+
+       trajectory : str
+           A trajectory file.
+
+       topology : str
+           A topology file.
+
+       Returns
+       -------
+
+       system : :class:`System <BioSimSpace._SireWrappers.System>`
+           The passed system with updated water topology.
+    """
+
+    if not isinstance(system, _System):
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+
+    if not isinstance(trajectory, str):
+        raise TypeError("'trajectory' must be of type 'str'")
+
+    if not isinstance(topology, str):
+        raise TypeError("'topology' must be of type 'str'")
+
+    # GROMACS topology file.
+    try:
+        top = _SireIO.GroTop(topology)
+        system._set_water_topology("GROMACS")
+        matched_topology = True
+    except:
+        # GROMACS coordinate file.
+        try:
+            top = _SireIO.Gro87(topology)
+            system._set_water_topology("GROMACS")
+            matched_topology = True
+        # Amber topology file.
+        except:
+            try:
+                top = _SireIO.AmberPrm(topology)
+                system._set_water_topology("AMBER")
+                if top.toString() != "AmberPrm::null":
+                    matched_topology = True
+                else:
+                    matched_topology = False
+            except:
+                matched_topology = False
+
+    # If we couldn't determine the topology format, try to guess
+    # from the extension.
+    if not matched_topology:
+        ext = _os.path.splitext(topology)
+        if len(ext) == 2:
+            ext = ext[1]
+            if ext.upper() == ".TPR":
+                system._set_water_topology("GROMACS")
+                matched_topology = True
+
+    # If nothing matched, default to AMBER water format.
+    if not matched_topology:
+        system._set_water_topology("AMBER")
+
+    return system

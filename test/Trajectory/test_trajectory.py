@@ -8,11 +8,12 @@ def system(scope="session"):
     return BSS.IO.readMolecules("test/input/amber/ala/*")
 
 @pytest.fixture
-def traj_mdtraj(scope="session"):
+def traj_mdtraj(system, scope="session"):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
             trajectory="test/input/trajectories/ala.trr",
-            topology="test/input/trajectories/ala.gro")
+            topology="test/input/trajectories/ala.gro",
+            system=system)
 
 @pytest.fixture
 def traj_mdanalysis(system, scope="session"):
