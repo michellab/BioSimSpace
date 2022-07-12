@@ -323,8 +323,8 @@ class Somd(_process.Process):
             if self._is_seeded:
                 seed = self._seed
             else:
-                seed = -1
-            config_options["random seed"] = seed
+                seed = 0 # Generate random seed
+            config_options["debug seed"] = seed
 
         if self._platform == "CUDA" or self._platform == "OPENCL":
             # Work out the GPU device ID. (Default to 0.)
