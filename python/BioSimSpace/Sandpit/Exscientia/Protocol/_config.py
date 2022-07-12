@@ -667,13 +667,20 @@ class ConfigFactory:
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             if not isinstance(self.protocol, _Protocol.Minimisation):
-                protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
+                protocol_dict["constraint"] = "none"                            # Handle hydrogen perturbations.
                 protocol_dict["energy frequency"] = 200                         # Write gradients every 200 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
-            res_num = self.system.getDecoupledMolecules()[0]._sire_object.number().value()
+            # TODO: Fix this
+            try: # RBFE
+                res_num = self.system.search("perturbable")[0]._sire_object.number().value()
+            except IndexError: # No pertrubable molecule - this is ABFE
+                for i, mol in enumerate(self.system):
+                    if mol.isDecoupled():
+                        res_num = i + 1
+                        break
             protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
 
