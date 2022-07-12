@@ -270,7 +270,7 @@ class RestraintSearch():
 
     def isRunning(self):
         """Check if the process is running."""
-        self._process.isRunning()
+        return self._process.isRunning()
 
     def workDir(self):
         """Return the working directory.
