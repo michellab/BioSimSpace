@@ -1375,7 +1375,7 @@ class Relative():
 
         """
 
-        # Initialise list to store the processe
+        # Initialise list to store the processes
         processes = []
 
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
@@ -1408,7 +1408,6 @@ class Relative():
             else:
                 platform = "CPU"
 
-            # TODO: Make the restraint valid for Somd
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map, extra_options=self._extra_options,
@@ -1434,10 +1433,11 @@ class Relative():
             processes.append(first_process)
 
         # Loop over the rest of the lambda values.
-        for x, lam in lam_vals.iterrows():
+        for x, row in lam_vals.iterrows():
             if x == 0:
                 # Skip the zero-th window
                 continue
+            lam = row.values[0]
             self._protocol.setLambda(lam)
             # Name the directory.
             new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
@@ -1485,9 +1485,9 @@ class Relative():
                     process._pert_file      = new_dir + "/somd.pert"
                     process._gradients_file = new_dir + "/gradients.dat"
                     process._input_files    = [process._config_file,
-                                               process._rst_file,
-                                               process._top_file,
-                                               process._pert_file]
+                                            process._rst_file,
+                                            process._top_file,
+                                            process._pert_file]
                     processes.append(process)
 
             # GROMACS.
@@ -1535,9 +1535,9 @@ class Relative():
                     process._config_file    = new_dir + "/gromacs.mdp"
                     process._tpr_file       = new_dir + "/gromacs.tpr"
                     process._input_files    = [process._config_file,
-                                               process._gro_file,
-                                               process._top_file,
-                                               process._tpr_file]
+                                            process._gro_file,
+                                            process._top_file,
+                                            process._tpr_file]
                     processes.append(process)
 
             # AMBER.
@@ -1568,8 +1568,8 @@ class Relative():
                     process._config_file    = new_dir + "/amber.cfg"
                     process._nrg_file       = new_dir + "/amber.nrg"
                     process._input_files    = [process._config_file,
-                                               process._rst_file,
-                                               process._top_file]
+                                            process._rst_file,
+                                            process._top_file]
                     processes.append(process)
 
         if not self._setup_only:
