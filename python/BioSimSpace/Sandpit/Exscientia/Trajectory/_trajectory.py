@@ -269,10 +269,11 @@ class Trajectory():
         # BioSimSpace process.
         if process is not None:
             if isinstance(process, _Process):
+                self._process = process
+                self._process_name = process.__class__.__name__
                 # Check that the process can generate a trajectory.
                 if not self._process._has_trajectory:
                     raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % self._process_name)
-                self._process = process
             else:
                 raise TypeError("'process' must be of type 'BioSimSpace.Process'.")
 
@@ -367,7 +368,7 @@ class Trajectory():
         if self._process is not None:
             traj_file = self._process._traj_file
 
-            if self._process_name.upper() == "GROMACS":
+            if self._process._process_name.upper() == "GROMACS":
                 if format == "mdtraj":
                     top_file = self._process._gro_file
                 else:
