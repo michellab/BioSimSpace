@@ -29,6 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
+from Sire import Base as _SireBase
 from Sire import IO as _SireIO
 from Sire import Maths as _SireMaths
 from Sire import Mol as _SireMol
@@ -814,7 +815,8 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
-    def repartitionHydrogenMass(self, factor=4, water="no", property_map={}):
+    def repartitionHydrogenMass(self, factor=4, water="no",
+            use_coordinates=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into
            the hydrogen atoms. This allows the use of larger simulation
            integration time steps without encountering instabilities related
@@ -831,6 +833,12 @@ class System(_SireWrapper):
                Whether to repartition masses for water molecules. Options are
                "yes", "no", and "exclusive", which can be used to repartition
                masses for water molecules only.
+
+           use_coordinates : bool
+               Whether to use the current molecular coordinates to work out
+               the connectivity before repartitioning. If False, the information
+               from the molecular topology, e.g. force field, will be used, if
+               present.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -865,13 +873,22 @@ class System(_SireWrapper):
             water_string = ", ".join(f"'{x}'" for x in water_options)
             raise ValueError(f"'water' must be one of: {water_string}")
 
+        if not isinstance(use_coordinates, bool):
+            raise TypeError("'use_coordinates' must be of type 'bool'.")
+
         # Check property map.
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
 
+        # Update the property map to indicate that coordinates will be used
+        # to compute the connectivity.
+        pmap = property_map.copy()
+        if use_coordinates:
+            pmap["use_coordinates"] = _SireBase.wrap(True)
+
         # Repartion hydrogen masses for all molecules in this system.
         self._sire_object = _SireIO.repartitionHydrogenMass(
-                self._sire_object, factor, water_options[water], property_map)
+                self._sire_object, factor, water_options[water], pmap)
 
     def search(self, query, property_map={}):
         """Search the system for atoms, residues, and molecules. Search results

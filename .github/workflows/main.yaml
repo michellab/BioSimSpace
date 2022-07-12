@@ -65,7 +65,7 @@ jobs:
       - name: Build documentation
         shell: bash -l {0}
         run: |
-          conda create -n bss_doc -c conda-forge -c michellab/label/dev -c file://"$CONDA_PREFIX"/conda-bld python="$PYTHON_VERSION" biosimspace
+          conda create -n bss_doc -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld -c michellab/label/dev python="$PYTHON_VERSION" biosimspace
           conda activate bss_doc
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2 jinja2==3.0.2
           cp BioSimSpace/actions/youtube.py "$CONDA_PREFIX"/lib/python3.7/site-packages/sphinxcontrib/youtube

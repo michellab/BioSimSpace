@@ -368,11 +368,14 @@ class Steering(_Protocol):
 
         # Convert string to list.
         if isinstance(verse, str):
-            verse = [verse]
+            # Use the same verse for all collective variables.
+            verse = [verse] * len(self.getCollectiveVariable())
 
         if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):
                 raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
+            elif len(verse) != len(self.getCollectiveVariable()):
+                raise ValueError("'verse' must be of same length as 'collective_variable'")
         else:
             raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
 
