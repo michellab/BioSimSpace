@@ -2,6 +2,7 @@ import warnings
 
 from Sire import Base as _SireBase
 from Sire import Units as _SireUnits
+from Sire import Mol as _SireMol
 from Sire import MM as _SireMM
 
 from .._SireWrappers import Molecule as _Molecule
@@ -60,6 +61,7 @@ def decouple(molecule, property_map={}, intramol=True):
     ff = inv_property_map.get("forcefield", "forcefield")
     LJ = inv_property_map.get("LJ", "LJ")
     charge = inv_property_map.get("charge", "charge")
+    element = inv_property_map.get("element", "element")
     ambertype = inv_property_map.get("ambertype", "ambertype")
 
     # Check for missing information
@@ -69,6 +71,8 @@ def decouple(molecule, property_map={}, intramol=True):
         raise _IncompatibleError("Cannot determine LJ terms for molecule")
     if not mol_sire.hasProperty(charge):
         raise _IncompatibleError("Cannot determine charges for molecule")
+    if not mol_sire.hasProperty(element):
+        raise _IncompatibleError("Cannot determine elements in molecule")
 
     # Check for ambertype property (optional)
     has_ambertype = True
@@ -81,16 +85,21 @@ def decouple(molecule, property_map={}, intramol=True):
     # Edit the molecule
     mol_edit = mol_sire.edit()
 
+    # Set the "forcefield0" property.
+    mol_edit.setProperty("forcefield0", molecule._sire_object.property(ff))
+
     # Set starting properties based on fully-interacting molecule
     mol_edit.setProperty("charge0", molecule._sire_object.property(charge))
     mol_edit.setProperty("LJ0", molecule._sire_object.property(LJ))
+    mol_edit.setProperty("element0", molecule._sire_object.property(element))
     if has_ambertype:
         mol_edit.setProperty("ambertype0", molecule._sire_object.property(ambertype))
 
-    # Set final charges and LJ terms to 0 and (if required) ambertypes to du
+    # Set final charges and LJ terms to 0, elements to "X" and (if required) ambertypes to du
     for atom in mol_sire.atoms():
             mol_edit = mol_edit.atom(atom.index()).setProperty("charge1", 0*_SireUnits.e_charge).molecule()
             mol_edit = mol_edit.atom(atom.index()).setProperty("LJ1", _SireMM.LJParameter()).molecule()
+            mol_edit = mol_edit.atom(atom.index()).setProperty("element1", _SireMol.Element(0)).molecule()
             if has_ambertype:
                 mol_edit = mol_edit.atom(atom.index()).setProperty("ambertype1", "du").molecule()
 
