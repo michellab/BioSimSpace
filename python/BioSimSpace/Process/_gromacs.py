@@ -66,7 +66,7 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, property_map={}, ignore_warnings=False, show_errors=True):
+            work_dir=None, seed=None, property_map={}, ignore_warnings=False, show_errors=True, prev_cpt=None):
         """Constructor.
 
            Parameters
@@ -103,6 +103,9 @@ class Gromacs(_process.Process):
            show_errors : bool
                Whether to show warning/error messages when generating the binary
                run file.
+		   
+		   prev_cpt: str
+		       The checkpoint file of previous run
         """
 
         # Call the base class constructor.
@@ -158,6 +161,17 @@ class Gromacs(_process.Process):
 
         # Initialise the PLUMED interface object.
         self._plumed = None
+		
+		# Set the path of Gromacs checkpoint file.
+        self._prev_cpt = None
+        if prev_cpt is not None:
+            if not isinstance(prev_cpt, str):
+                raise ValueError("'prev_cpt' must be of type 'str'.")
+            else:
+                if _os.path.isfile(prev_cpt):
+                    self._prev_cpt = prev_cpt
+                else:
+                    raise IOError("Gromacs checkpoint file doesn't exist: '%s'" % prev_cpt)
 
         # Now set up the working directory for the process.
         self._setup()
@@ -316,6 +330,8 @@ class Gromacs(_process.Process):
             config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
             config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
             config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            if self._prev_cpt is not None:
+                config.append("continuation=yes")
             if has_box and self._has_water:
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
@@ -836,7 +852,12 @@ class Gromacs(_process.Process):
                   "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
 
         # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+        if self._prev_cpt is not None:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" \
+            % (self._exe, self._config_file, mdp_out, self._gro_file,
+               self._top_file, self._gro_file, self._prev_cpt, self._tpr_file)
+        else:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
             % (self._exe, self._config_file, mdp_out, self._gro_file,
                self._top_file, self._gro_file, self._tpr_file)
 
