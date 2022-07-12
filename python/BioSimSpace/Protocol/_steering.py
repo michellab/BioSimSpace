@@ -368,7 +368,8 @@ class Steering(_Protocol):
 
         # Convert string to list.
         if isinstance(verse, str):
-            verse = [verse]*len(self.getCollectiveVariable())
+            # Use the same verse for all collective variables.
+            verse = [verse] * len(self.getCollectiveVariable())
 
         if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):

@@ -249,8 +249,8 @@ class RMSD(_CollectiveVariable):
         pdb = _SireIO.PDB2(molecule.toSystem()._sire_object)
         lines = pdb.toLines()
 
-        # Format for PLUMED.
-        new_indices = [idx.value()+1 for idx in selected] # match indices to system
+        # Format for PLUMED, making sure to use the same indices as in the system.
+        new_indices = [idx.value()+1 for idx in selected]
         self._reference_pdb = [line[:6]+str(idx).rjust(5)+line[11:] for line, idx in zip(lines[1:-2], new_indices)]
         self._reference_pdb.append(lines[-1])
 
