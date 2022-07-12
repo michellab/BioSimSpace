@@ -541,7 +541,7 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None, restraint=None):
+    def generateSomdConfig(self, extra_options=None, extra_lines=None, restraint=None, perturbation_type=None):
         """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
@@ -556,6 +556,17 @@ class ConfigFactory:
         restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
             The Restraint object that contains information for the ABFE
             calculations.
+
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly 
+                          scaling the force constants (0.0->value).
 
         Returns
         -------
@@ -658,7 +669,7 @@ class ConfigFactory:
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
-            res_num = self.system.search("perturbable")[0]._sire_object.number().value()
+            res_num = self.system.getDecoupledMolecules()[0]._sire_object.number().value()
             protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
 
@@ -670,5 +681,8 @@ class ConfigFactory:
         if restraint:
             total_lines.append("use boresch restraints = True")
             total_lines.append(restraint.toString(engine='SOMD'))
+            # If we are turning on the restraint, need to specify this in the config file
+            if perturbation_type == "restraint":
+                total_lines.append("turn on receptor-ligand restraints mode = True")
 
         return total_lines
