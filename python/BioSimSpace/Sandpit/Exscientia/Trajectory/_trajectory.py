@@ -113,10 +113,12 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     # Try to load the frame with MDTraj.
     errors = []
     is_mdanalysis = False
+    pdb_file = work_dir + "/frame.pdb"
     try:
-        frame_file = work_dir + "frame.rst7"
+        frame_file = work_dir + "/frame.rst7"
         frame = _mdtraj.load_frame(trajectory, index, top=topology)
-        frame.save(frame_file)
+        frame.save(frame_file, force_overwrite=True)
+        frame.save(pdb_file, force_overwrite=True)
     except Exception as e:
         is_mdanalysis = True
         errors.append(f"MDTraj: {str(e)}")
@@ -128,6 +130,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
             with _warnings.catch_warnings():
                 _warnings.simplefilter("ignore")
                 universe.select_atoms("all").write(frame_file)
+                universe.select_atoms("all").write(pdb_file)
         except Exception as e:
             errors.append(f"MDAnalysis: {str(e)}")
             if _os.path.isfile(frame_file):
@@ -154,10 +157,22 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
             else:
                 raise IOError(msg) from None
 
+        # Parse the PDB frame.
+        try:
+            pdb = _SireIO.PDB2(pdb_file)
+            _os.remove(pdb_file)
+        except Exception as e:
+            _os.remove(pdb_file)
+            msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
         # The new_system object will contain a single molecule with the
         # coordinates of all of the atoms in the reference. As such, we
         # will need to split the system into molecules.
-        new_system = _split_molecules(frame, system, work_dir, property_map)
+        new_system = _split_molecules(frame, pdb, system, work_dir, property_map)
         return _System(new_system)
         try:
             sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
@@ -515,17 +530,21 @@ class Trajectory():
             elif x < -n_frames:
                 raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (x, n_frames))
 
-            # Write the current frame as a NetCDF file.
+            # Write the current frame to file.
+
+            pdb_file = self._work_dir + "/frame.pdb"
 
             if self._backend == "MDTRAJ":
                 frame_file = self._work_dir + "/frame.rst7"
-                self._trajectory[x].save(frame_file)
+                self._trajectory[x].save(frame_file, force_overwrite=True)
+                self._trajectory[x].save(pdb_file, force_overwrite=True)
             elif self._backend == "MDANALYSIS":
                 frame_file = self._work_dir + "/frame.gro"
                 self._trajectory.trajectory[x]
                 with _warnings.catch_warnings():
                     _warnings.simplefilter("ignore")
                     self._trajectory.select_atoms("all").write(frame_file)
+                    self._trajectory.select_atoms("all").write(pdb_file)
 
             # Try to update the coordinates/velocities in the reference system.
             if self._system is not None:
@@ -543,10 +562,22 @@ class Trajectory():
                     else:
                         raise IOError(msg) from None
 
+                # Parse the PDB file.
+                try:
+                    pdb = _SireIO.PDB2(pdb_file)
+                    _os.remove(pdb_file)
+                except Exception as e:
+                    _os.remove(pdb_file)
+                    msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
+                    if _isVerbose():
+                        raise IOError(msg) from e
+                    else:
+                        raise IOError(msg) from None
+
                 # The new_system object will contain a single molecule with the
                 # coordinates of all of the atoms in the reference. As such, we
                 # will need to split the system into molecules.
-                new_system = _split_molecules(frame, self._system, self._work_dir, self._property_map)
+                new_system = _split_molecules(frame, pdb, self._system, self._work_dir, self._property_map)
                 try:
                     sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
                             self._system._sire_object,
@@ -692,7 +723,7 @@ class Trajectory():
         # Return the RMSD result.
         return rmsd
 
-def _split_molecules(frame, reference, work_dir, property_map={}):
+def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
     """Internal helper function to split molecules in a "squashed" system based
        on a reference, i.e. we use the number of atoms per molecule in the
        reference to break the system apart.
@@ -702,6 +733,9 @@ def _split_molecules(frame, reference, work_dir, property_map={}):
 
        frame : Sire.IO.AmberRst7, SireIO.Gro87
            The trajectory frame, parsed to AmberRst7 or Gro87 format.
+
+       pdb : Sire.IO.PDB2
+           A PDB representation of the frame.
 
        reference : :class:`System <BioSimSpace._SireWrappers.System>`
            A BioSimSpace System object for reference topology.
@@ -724,6 +758,9 @@ def _split_molecules(frame, reference, work_dir, property_map={}):
 
     if not isinstance(frame, (_SireIO.AmberRst7, _SireIO.Gro87)):
         raise TypeError("'frame' must be of type 'Sire.IO.AmberRst7' or 'Sire.IO.Gro87'")
+
+    if not isinstance(pdb, _SireIO.PDB2):
+        raise TypeError("'pdb' must be of type 'Sire.IO.PDB2'")
 
     if not isinstance(reference, _System):
         raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.System'")
@@ -798,13 +835,8 @@ def _split_molecules(frame, reference, work_dir, property_map={}):
     else:
         is_pdb = True
 
-        try:
-            pdb_coords = _SireIO.PDB2(frame.toSystem())
-        except:
-            raise IOError("Couldn't parse the 'frame' to PDB format.")
-
         # Get the PDB records.
-        pdb_lines = pdb_coords.toLines()
+        pdb_lines = pdb.toLines()
 
         # Create a list to hold the new lines.
         new_lines = []
@@ -823,10 +855,10 @@ def _split_molecules(frame, reference, work_dir, property_map={}):
             idx += mol.nAtoms()
 
         # Recreate the PDB object using the updated records.
-        pdb_coords = _SireIO.PDB2(new_lines)
+        pdb = _SireIO.PDB2(new_lines)
 
         # Convert to a system.
-        split_system = pdb_coords.toSystem()
+        split_system = pdb.toSystem()
 
     if not is_pdb:
         # Try to read the system back in, making sure that the numbering is unique.
