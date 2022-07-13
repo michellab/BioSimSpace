@@ -46,6 +46,7 @@ Classes
 
 from ._distance import *
 from ._funnel import *
+from ._expression import *
 from ._rmsd import *
 from ._torsion import *
 from ._utils import *
