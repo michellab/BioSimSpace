@@ -35,6 +35,7 @@ _mdtraj = _try_import("mdtraj")
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
+import uuid as _uuid
 import warnings as _warnings
 
 from Sire import IO as _SireIO
@@ -116,9 +117,9 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     # Try to load the frame with MDTraj.
     errors = []
     is_mdanalysis = False
-    pdb_file = work_dir + "/frame.pdb"
+    pdb_file = work_dir + f"/{str(_uuid.uuid4())}.pdb"
     try:
-        frame_file = work_dir + "/frame.rst7"
+        frame_file = work_dir + f"/{str(_uuid.uuid4())}.rst7"
         frame = _mdtraj.load_frame(trajectory, index, top=topology)
         frame.save(frame_file, force_overwrite=True)
         frame.save(pdb_file, force_overwrite=True)
@@ -127,7 +128,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         errors.append(f"MDTraj: {str(e)}")
         # Try to load the frame with MDAnalysis.
         try:
-            frame_file = work_dir + "/frame.gro"
+            frame_file = work_dir + f"/{str(_uuid.uuid4())}.gro"
             universe = _mdanalysis.Universe(topology, trajectory)
             universe.trajectory.trajectory[index]
             with _warnings.catch_warnings():
@@ -136,8 +137,6 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
                 universe.select_atoms("all").write(pdb_file)
         except Exception as e:
             errors.append(f"MDAnalysis: {str(e)}")
-            if _os.path.isfile(frame_file):
-                _os.remove(frame_file)
             msg = "MDTraj/MDAnalysis failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology)
             if _isVerbose():
                 raise IOError(msg + "\n" + "\n".join(errors))
@@ -153,7 +152,6 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
             else:
                 frame = _SireIO.AmberRst7(frame_file)
         except Exception as e:
-            _os.remove(frame_file)
             msg = "Failed to read trajectory frame: '%s'" % frame_file
             if _isVerbose():
                 raise IOError(msg) from e
@@ -163,9 +161,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         # Parse the PDB frame.
         try:
             pdb = _SireIO.PDB2(pdb_file)
-            _os.remove(pdb_file)
         except Exception as e:
-            _os.remove(pdb_file)
             msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
             if _isVerbose():
                 raise IOError(msg) from e
@@ -205,16 +201,11 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
             else:
                 new_system = _System(_SireIO.MoleculeParser.read([frame_file, topology]))
         except Exception as e:
-            if _os.path.isfile(frame_file):
-                _os.remove(frame_file)
             msg = "Failed to read trajectory frame: '%s'" % frame_file
             if _isVerbose():
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
-
-    # Remove the temporary frame coordinate file.
-    _os.remove(frame_file)
 
     # Return the system.
     return new_system
@@ -418,35 +409,26 @@ class Trajectory():
             # Check the file extension.
             _, extension = _os.path.splitext(top_file)
 
-            # Whether we've created a temporary duplicate topology file.
-            is_temp_file = False
-
             # If this is a PRM7 file, copy to PARM7.
             if extension == ".prm7":
                 # Set the path to the temporary topology file.
-                new_top_file = self._work_dir + "/.topology.parm7"
+                new_top_file = self._work_dir + f"/{str(_uuid.uuid4())}.parm7"
 
                 # Copy the topology to a file with the correct extension.
                 _shutil.copyfile(top_file, new_top_file)
                 top_file = new_top_file
-                is_temp_file = True
 
             try:
                 universe = _mdanalysis.Universe(top_file, traj_file)
                 if self._backend is None:
                     self._backend = "MDANALYSIS"
 
-                if is_temp_file:
-                    _os.remove(top_file)
             except:
                 if format == "MDANALYSIS":
                     _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 else:
                     _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
                 universe = None
-
-                if is_temp_file:
-                    _os.remove(top_file)
 
             return universe
 
@@ -546,14 +528,14 @@ class Trajectory():
 
             # Write the current frame to file.
 
-            pdb_file = self._work_dir + "/frame.pdb"
+            pdb_file = self._work_dir + f"/{str(_uuid.uuid4())}.pdb"
 
             if self._backend == "MDTRAJ":
-                frame_file = self._work_dir + "/frame.rst7"
+                frame_file = self._work_dir + f"/{str(_uuid.uuid4())}.rst7"
                 self._trajectory[x].save(frame_file, force_overwrite=True)
                 self._trajectory[x].save(pdb_file, force_overwrite=True)
             elif self._backend == "MDANALYSIS":
-                frame_file = self._work_dir + "/frame.gro"
+                frame_file = self._work_dir + f"/{str(_uuid.uuid4())}.gro"
                 self._trajectory.trajectory[x]
                 with _warnings.catch_warnings():
                     _warnings.simplefilter("ignore")
@@ -569,7 +551,6 @@ class Trajectory():
                     else:
                         frame = _SireIO.AmberRst7(frame_file)
                 except Exception as e:
-                    _os.remove(frame_file)
                     msg = "Failed to read trajectory frame: '%s'" % frame_file
                     if _isVerbose():
                         raise IOError(msg) from e
@@ -579,9 +560,7 @@ class Trajectory():
                 # Parse the PDB file.
                 try:
                     pdb = _SireIO.PDB2(pdb_file)
-                    _os.remove(pdb_file)
                 except Exception as e:
-                    _os.remove(pdb_file)
                     msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
                     if _isVerbose():
                         raise IOError(msg) from e
@@ -617,16 +596,11 @@ class Trajectory():
                     else:
                         new_system = _System(_SireIO.MoleculeParser.read([frame_file, self._top_file]))
                 except Exception as e:
-                    if _os.path.isfile(frame_file):
-                        _os.remove(frame_file)
                     msg = "Failed to read trajectory frame: '%s'" % frame_file
                     if _isVerbose():
                         raise IOError(msg) from e
                     else:
                         raise IOError(msg) from None
-
-            # Remove the temporary frame coordinate file.
-            _os.remove(frame_file)
 
             # Append the system to the list of frames.
             frames.append(new_system)
@@ -799,8 +773,8 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
     formats = reference.fileFormat()
 
     # Write the frame coordinates/velocities to file.
-    coord_file = work_dir + "/frame.coords"
-    top_file = work_dir + "/frame.top"
+    coord_file = work_dir + f"/{str(_uuid.uuid4())}.coords"
+    top_file = work_dir + f"/{str(_uuid.uuid4())}.top"
     frame.writeToFile(coord_file)
 
     # Whether we've parsed as a PDB file.
@@ -811,8 +785,6 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             top =  _SireIO.AmberPrm(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
-            _os.remove(coord_file)
-            _os.remove(top_file)
             msg = "Unable to write reference system to AmberPrm7 format!"
             if _isVerbose():
                 raise IOError(msg) from e
@@ -824,8 +796,6 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             top =  _SireIO.GroTop(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
-            _os.remove(coord_file)
-            _os.remove(top_file)
             msg = "Unable to write reference system to GroTop format!"
             if _isVerbose():
                 raise IOError(msg) from e
@@ -837,8 +807,6 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             top =  _SireIO.CharmmPSF(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
-            _os.remove(coord_file)
-            _os.remove(top_file)
             msg = "Unable to write reference system to CharmmPSF format!"
             if _isVerbose():
                 raise IOError(msg) from e
@@ -880,16 +848,11 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             split_system = _SireIO.MoleculeParser.read([coord_file, top_file])
 
         except Exception as e:
-            _os.remove(coord_file)
-            _os.remove(top_file)
             msg = "Unable to read trajectory frame!"
             if _isVerbose():
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
-
-        _os.remove(coord_file)
-        _os.remove(top_file)
 
     return split_system
 
