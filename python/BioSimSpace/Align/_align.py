@@ -1254,7 +1254,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
             _validate_roi(molecule0, molecule1, roi)
     
     if mut_idx is not None:
-        if not isinstance(mut_idx, int):
+        if type(mut_idx) is not int:
             raise TypeError("'mut_idx' must be of type 'int'.")
         elif mut_idx >= len(molecule0.getResidues()) or mut_idx >= len(molecule1.getResidues()):
             raise IndexError("'mut_idx' must be within range of number of residues")
@@ -1840,7 +1840,7 @@ def _validate_roi(molecule0, molecule1, roi):
         raise ValueError("The element of roi must be of type list")
     for mol_idx, ele in enumerate(roi):
         for atom_idx in ele:
-            if not isinstance(atom_idx, int):
+            if type(atom_idx) is not int:
                 raise ValueError(f"The element of roi[{mol_idx}] should be of type int")
             if atom_idx >= [molecule0, molecule1][mol_idx].nAtoms():
                 raise IndexError(f"The element of roi[{mol_idx}] should within range of number of atoms")
