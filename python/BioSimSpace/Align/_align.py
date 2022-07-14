@@ -1804,7 +1804,7 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
     """
 
     for idx0, idx1 in mapping.items():
-            if isinstance(idx0, int) and isinstance(idx1, int):
+            if type(idx0) is int and type(idx1) is int:
                 pass
             elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
                 idx0 = idx0.value()

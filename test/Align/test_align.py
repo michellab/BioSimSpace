@@ -68,7 +68,7 @@ def test_merge():
     # Store the number of atoms in m0.
     n0 = m0._sire_object.nAtoms()
 
-    # Test that the intramolecular energies area the same.
+    # Test that the intramolecular energies are the same.
 
     # IntraCLJFF:
     #  Old interface. Uses the "intrascale" matrix. Validate that this
