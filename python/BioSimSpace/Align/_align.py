@@ -1154,7 +1154,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
     return _Molecule(molecule0)
 
 def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        allow_ring_size_change=False, force=False,
+        allow_ring_size_change=False, force=False, roi=None, mut_idx=None,
         property_map0={}, property_map1={}):
     """Create a merged molecule from 'molecule0' and 'molecule1' based on the
        atom index 'mapping'. The merged molecule can be used in single topology
@@ -1187,6 +1187,12 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
            This will likely lead to an unstable perturbation. This option
            takes precedence over 'allow_ring_breaking' and
            'allow_ring_size_change'.
+        
+       roi : list
+           The region of interest to merge. Consist of two lists of atom indices. 
+        
+       mut_idx : int
+           The index of residue to be mutated. 
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -1240,6 +1246,19 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
     if not isinstance(force, bool):
         raise TypeError("'force' must be of type 'bool'")
+    
+    if roi is not None:
+        if not isinstance(roi, list):
+            raise TypeError("'roi' must be of type 'list'.")
+        else:
+            _validate_roi(molecule0, molecule1, roi)
+    
+    if mut_idx is not None:
+        if not isinstance(mut_idx, int):
+            raise TypeError("'mut_idx' must be of type 'int'.")
+        elif mut_idx >= len(molecule0.getResidues()) or mut_idx >= len(molecule1.getResidues()):
+            raise IndexError("'mut_idx' must be within range of number of residues")
+            
 
     # The user has passed an atom mapping.
     if mapping is not None:
@@ -1260,7 +1279,7 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
 
     # Create and return the merged molecule.
     return _merge(molecule0, molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            allow_ring_size_change=allow_ring_size_change, force=force,
+            allow_ring_size_change=allow_ring_size_change, force=force, roi=roi, mut_idx=mut_idx,
             property_map0=property_map0, property_map1=property_map1)
 
 def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
@@ -1785,7 +1804,7 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
     """
 
     for idx0, idx1 in mapping.items():
-            if type(idx0) is int and type(idx1) is int:
+            if isinstance(idx0, int) and isinstance(idx1, int):
                 pass
             elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
                 idx0 = idx0.value()
@@ -1798,6 +1817,35 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
                 raise ValueError("%r dictionary key:value pair '%s : %s' is out of range! "
                                  "The molecules contain %d and %d atoms."
                                  % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+
+def _validate_roi(molecule0, molecule1, roi):
+    """Internal function to validate that a mapping contains key:value pairs
+       of the correct type.
+
+       Parameters
+       ----------
+
+       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The molecule of interest.
+
+       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+           The reference molecule.
+
+       roi : list
+           The region of interest to merge. 
+    """
+    if len(roi) != 2:
+        raise ValueError("The length of roi list must be 2.")
+    if not isinstance(roi[0], list) or not isinstance(roi[1], list):
+        raise ValueError("The element of roi must be of type list")
+    for mol_idx, ele in enumerate(roi):
+        for atom_idx in ele:
+            if not isinstance(atom_idx, int):
+                raise ValueError(f"The element of roi[{mol_idx}] should be of type int")
+            if atom_idx >= [molecule0, molecule1][mol_idx].nAtoms():
+                raise IndexError(f"The element of roi[{mol_idx}] should within range of number of atoms")
+    
+    
 
 def _to_sire_mapping(mapping):
     """Internal function to convert a regular mapping to Sire AtomIdx format.
