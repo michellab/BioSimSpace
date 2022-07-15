@@ -112,10 +112,10 @@ class Expression(_CollectiveVariable):
     def __str__(self):
         """Return a human readable string representation of the object."""
         string = "<BioSimSpace.Metadynamics.CollectiveVariable.Expression: "
-        string += "collective variable(s)=%s " % ",".join(self._collective_variable)
+        string += "collective variable(s)=%s " % ",".join(str(cv) for cv in self._collective_variable)
         string += "function=%s " % self._expression
-        if self._args is not None:
-            string += "arguments=%s " % self._args
+        if self._arg is not None:
+            string += "arguments=%s " % self._arg
         if self._periodic is not None:
             string += "periodic=%s " % self._periodic
         string += "derivatives=%s " % self._derivatives
@@ -126,8 +126,6 @@ class Expression(_CollectiveVariable):
             string += ", upper_bound=%s" % self._upper_bound
         if self._grid is not None:
             string += ", grid=%s" % self._grid
-        string += ", alignment_type=%s"% self._alignment_type
-        string += ", pbc=%s"% self._pbc
         string += ">"
         return string
     

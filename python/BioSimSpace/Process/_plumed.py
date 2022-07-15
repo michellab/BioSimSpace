@@ -864,7 +864,21 @@ class Plumed():
             raise ValueError("The system contains no molecules?")
 
         # Store the collective variable(s).
-        colvars = protocol.getCollectiveVariable()
+        # Separate expressions from regular CVs and add 
+        # the expression CVs to the main list
+        colvars = []
+        no_arg = []
+        for cv in protocol.getCollectiveVariable():
+            # If an expression, write the collective variables
+            # part of the expression first
+            if isinstance(cv, _CollectiveVariable.Expression):
+                for expression_variable in cv.getCollectiveVariable():
+                    if expression_variable not in colvars:
+                        no_arg.append(expression_variable)
+                        colvars.append(expression_variable)
+            # Add the collective variable itself to colvars
+            colvars.append(cv)
+
         self._num_colvar = len(colvars)
         for cv in colvars:
             self._num_components += cv.nComponents()
@@ -954,8 +968,12 @@ class Plumed():
         num_distance = 0
         num_torsion = 0
         num_rmsd = 0
+        num_expression = 0
         num_center = 0
         num_fixed = 0
+
+        # Track collective variable names for expression
+        colvar_names = []
 
         # Initialise the ARG string.
         arg_string = "ARG="
@@ -1130,14 +1148,60 @@ class Plumed():
                 # Convert arg_name to a list so we can handle multi-component
                 # collective variables.
                 arg_name = [arg_name]
+            
+            # Expression
+            elif isinstance(colvar, _CollectiveVariable.Expression):
+                num_expression += 1
+                arg_name = "c%d" % num_expression
+
+                # Replace variable names in ARG of CUSTOM with cv names as
+                # previously defined
+                custom_arg = []
+                for arg, cv in zip(colvar.getArg(), colvar.getCollectiveVariable()):
+                    # Split in case components of variables used
+                    components = arg.split('.')
+                    cv_index = colvars.index(cv)
+                    cv_name = colvar_names[cv_index]
+                    custom_arg.append(cv_name+'.'.join(components[1:]))
+
+                colvar_string = "%s: CUSTOM ARG=%s " % (arg_name, ','.join(custom_arg))
+                colvar_string += "VAR=%s FUNC=%s" % (','.join(colvar.getVariableNames()), colvar.getExpression())
+
+                # Add periodicity
+                if colvar.getPeriodic() is not None:
+                    colvar_string += " PERIODIC=%s" % colvar.getPeriodic()
+                else:
+                    colvar_string += " PERIODIC=NO"
+
+                # Add derivatives
+                if colvar.getDerivatives():
+                    colvar_string += " NUMERICAL_DERIVATIVES=ON"
+
+                # Store the collective variable name and its unit.
+                self._colvar_name.append(arg_name)
+                self._colvar_unit[arg_name] = None
+
+                # Append the collective variable record.
+                self._config.append("\n# Define the custom expression.")
+                self._config.append(colvar_string)
+
+                # Convert arg_name to a list so we can handle multi-component
+                # collective variables.
+                arg_name = [arg_name]
 
             # Add the argument to the ARG record. We join argument names with
             # a "," to handle multi-component collective variables.
-            arg_string += "%s" % ",".join(arg_name)
+            # Only do this if the argument is explicitly part of the protocol
+            # and not just in an expression
+            if colvar not in no_arg:
+                arg_string += "%s" % ",".join(arg_name)
 
-            # Update the ARG record to separate the collective variable arguments.
-            if idx < self._num_colvar - 1:
-                arg_string += ","
+                # Update the ARG record to separate the collective variable arguments.
+                if idx < self._num_colvar - 1:
+                    arg_string += ","
+
+            # Add to name tracking
+            colvar_names.append(arg_name[0])
 
         # Get the steering schedule and restraints.
         schedule = protocol.getSchedule()
