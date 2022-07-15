@@ -105,8 +105,8 @@ class Gromacs(_process.Process):
                Whether to show warning/error messages when generating the binary
                run file.
 
-		   checkpoint_file : str
-		       The path to a checkpoint file from a previous run.
+           checkpoint_file : str
+               The path to a checkpoint file from a previous run.
         """
 
         # Call the base class constructor.
