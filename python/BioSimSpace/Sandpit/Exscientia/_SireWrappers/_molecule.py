@@ -465,8 +465,8 @@ class Molecule(_SireWrapper):
            is_decoupled : bool
                Whether the molecule is decoupled.
         """
-        if self._sire_object.hasProperty('is_decoupled'):
-            return self._sire_object.property('is_decoupled').value()
+        if self._sire_object.hasProperty('decouple'):
+            return True
         else:
             return False
 

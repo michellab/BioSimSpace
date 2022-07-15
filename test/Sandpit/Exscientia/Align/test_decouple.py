@@ -3,12 +3,10 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
-
 @pytest.fixture()
 def mol():
     # Benzene.
-    mol = BSS.Parameters.openff_unconstrained_2_0_0(
-        "c1ccccc1").getMolecule()
+    mol = BSS.IO.readMolecules("test/input/amber/ala/*").getMolecule(0)
     return mol
 
 def test_sanity(mol):
@@ -20,32 +18,32 @@ def test_sanity(mol):
 @pytest.mark.parametrize("LJ1", [True, False])
 def test_set_property_map(mol, charge0, charge1, LJ0, LJ1):
     '''Test if the charge and LJ are set properly'''
-    property_map0 = {"charge": charge0, "LJ": LJ0}
-    property_map1 = {"charge": charge1, "LJ": LJ1}
-    new = decouple(mol, property_map0=property_map0,
-                    property_map1=property_map1)
-    assert new._sire_object.property('charge0').value() is charge0
-    assert new._sire_object.property('charge1').value() is charge1
-    assert new._sire_object.property('LJ0').value() is LJ0
-    assert new._sire_object.property('LJ1').value() is LJ1
+    new = decouple(mol, charge=(charge0, charge1), LJ=(LJ0, LJ1))
+    decouple_dict = new._sire_object.property("decouple")
+    assert bool(decouple_dict["charge"][0]) is charge0
+    assert bool(decouple_dict["charge"][1]) is charge1
+    assert bool(decouple_dict["LJ"][0]) is LJ0
+    assert bool(decouple_dict["LJ"][1]) is LJ1
     assert new.isDecoupled() is True
-    assert new._sire_object.property('annihilated').value() is True
+    assert decouple_dict['intramol'].value() is True
 
 def test_ommit_property_map(mol):
     '''Test if the charge and LJ are set to True by default'''
     new = decouple(mol)
-    assert new._sire_object.property('charge0').value() is True
-    assert new._sire_object.property('charge1').value() is False
-    assert new._sire_object.property('LJ0').value() is True
-    assert new._sire_object.property('LJ1').value() is False
+    decouple_dict = new._sire_object.property("decouple")
+    assert bool(decouple_dict["charge"][0]) is True
+    assert bool(decouple_dict["charge"][1]) is False
+    assert bool(decouple_dict["LJ"][0]) is True
+    assert bool(decouple_dict["LJ"][1]) is False
     assert new.isDecoupled() is True
-    assert new._sire_object.property('annihilated').value() is True
+    assert decouple_dict['intramol'].value() is True
 
 def test_intramol(mol):
     '''Test the case of intramol=False'''
-    new = decouple(mol, intramol=False, property_map0={}, property_map1={})
+    new = decouple(mol, intramol=False)
+    decouple_dict = new._sire_object.property("decouple")
     assert new.isDecoupled() is True
-    assert new._sire_object.property('annihilated').value() is False
+    assert decouple_dict['intramol'].value() is False
 
 def test_getDecoupledMolecules(mol):
     '''Test the method of DecoupledMolecules'''

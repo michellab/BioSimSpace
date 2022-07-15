@@ -8,7 +8,7 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 
 __all__ = ["decouple"]
 
-def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
+def decouple(molecule, charge=(True, False), LJ=(True, False), intramol=True):
     """Make the molecule as being decoupled, where the interactions with the
     rest of the environment are removed, or annihilate, where the interactions
     within the molecule are removed as well (choose this mode with
@@ -20,17 +20,17 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
         molecule : BioSimSpace._SireWrappers.Molecule
             The molecule to be decoupled or annihilated.
 
-        property_map0 : dict
-            A dictionary that maps "properties" in this molecule to their
-            user defined values at the start of the transformation. This allows
-            user to selectively turn on or off the charge or the vdw
-            interactions e.g. { "charge" : True, "LJ" : True}
+        charge : Tuple[bool, bool]
+            A Tuple of length two defines the charge of the molecule at the
+            start and the end of the transformation. This allows user to
+            selectively turn on or off the charge interactions
+            e.g. (True, False)
 
-        property_map1 : dict
-            A dictionary that maps "properties" in this molecule to their
-            user defined values at the end of the transformation. This allows
-            user to selectively turn on or off the charge or the vdw
-            interactions e.g. { "charge" : False, "LJ" : False}
+        LJ : Tuple[bool, bool]
+            A Tuple of length two defines the LJ of the molecule at the
+            start and the end of the transformation. This allows user to
+            selectively turn on or off the LJ interactions
+            e.g. (True, False)
 
         intramol : bool
             Whether to couple the intra-molecule forces. Setting to ``False``
@@ -52,23 +52,12 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     if molecule.isDecoupled():
         raise _IncompatibleError("'molecule' has already been decoupled!")
 
-    if property_map0 is None and property_map1 is None:
-        property_map0 = {"charge": True, "LJ": True}
-        property_map1 = {"charge": False, "LJ": False}
-    if property_map0 is None:
-        property_map0 = {}
-    if property_map1 is None:
-        property_map1 = {}
-
-    # Check the keys in the property_map
-    for property_map in (property_map0, property_map1):
-        if not isinstance(property_map, dict):
-            raise TypeError("'property_map' must be of type 'dict'")
-        for key in property_map:
-            if not key in ('charge', 'LJ'):
-                warnings.warn(f'Key {key} not supported for decouple, will be '
-                              f'ignored. The recognised keys are '
-                              f'("charge", "LJ")')
+    for field, name in zip((charge, LJ), ('charge', 'LJ')):
+        if len(field) != 2:
+            raise ValueError(f"{name} must only have two values.")
+        for value in field:
+            if not isinstance(value, bool):
+                raise ValueError(f"{value} in {name} must be bool.")
 
     if not isinstance(intramol, bool):
         raise TypeError("'intramol' must be of type 'bool'")
@@ -80,19 +69,23 @@ def decouple(molecule, property_map0=None, property_map1=None, intramol=True):
     # Edit the molecule
     mol_edit = mol_sire.edit()
 
-    # Set the start and the end state
-    mol_edit.setProperty("charge0", _SireBase.wrap(property_map0.get("charge",True)))
-    mol_edit.setProperty("charge1", _SireBase.wrap(property_map1.get("charge", True)))
-    mol_edit.setProperty("LJ0", _SireBase.wrap(property_map0.get("LJ", True)))
-    mol_edit.setProperty("LJ1", _SireBase.wrap(property_map1.get("LJ", True)))
-
-    mol_edit.setProperty("annihilated", _SireBase.wrap(intramol))
-
-    # Flag that this molecule is decoupled.
-    mol_edit.setProperty("is_decoupled", _SireBase.wrap(True))
+    mol_edit.setProperty("decouple",
+                         {"charge": charge,
+                          "LJ": LJ,
+                          "intramol": intramol})
 
     # Update the Sire molecule object of the new molecule.
     mol._sire_object = mol_edit.commit()
 
     return mol
 
+
+    mol_edit = mol._sire_object.edit()
+
+    mol_edit.setProperty("decouple",
+                         {"charge": charge,
+                          "LJ": LJ,
+                          "intramol": intramol})
+
+    # Update the Sire molecule object of the new molecule.
+    mol._sire_object = mol_edit.commit()

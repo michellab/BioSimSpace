@@ -3,22 +3,27 @@ import pathlib
 import pytest
 import pandas as pd
 import numpy as np
-from alchemlyb.parsing.gmx import extract_u_nk
+try:
+    from alchemlyb.parsing.gmx import extract_u_nk
+    is_alchemlyb = True
+except ModuleNotFoundError:
+    is_alchemlyb = False
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyEquilibration
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia import Types as _Types
 
+# Make sure GROMSCS is installed.
+has_gromacs = BSS._gmx_exe is not None
+
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 class Test_gmx_ABFE():
     @staticmethod
     @pytest.fixture(scope='class')
     def freenrg():
-        m = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
-        decouple_m = decouple(m,
-                              property_map0={"charge": True, "LJ": True},
-                              property_map1={"charge": False, "LJ": False},
-                              intramol=False)
+        m = BSS.IO.readMolecules("test/input/amber/ala/*").getMolecule(0)
+        decouple_m = decouple(m)
         solvated = BSS.Solvent.tip3p(molecule=decouple_m,
                                      box=3 * [3 * BSS.Units.Length.nanometer])
         protocol = FreeEnergyEquilibration(
@@ -39,6 +44,7 @@ class Test_gmx_ABFE():
         for i in range(5):
             assert (path / f'lambda_{i}' / 'gromacs.xvg').is_file()
 
+    @pytest.mark.skipif(is_alchemlyb is False, reason='Need alchemlyb.')
     def test_lambda(self, freenrg):
         '''Test if the xvg files contain the correct lambda.'''
         path = pathlib.Path(freenrg._work_dir)

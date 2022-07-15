@@ -499,6 +499,7 @@ class ConfigFactory:
             nDecoupledMolecules = self.system.nDecoupledMolecules()
             if nDecoupledMolecules == 1:
                 [mol, ] = self.system.getDecoupledMolecules()
+                decouple_dict = mol._sire_object.property("decouple")
                 protocol_dict["couple-moltype"] = mol._sire_object.name().value()
                 def tranform(charge, LJ):
                     if charge and LJ:
@@ -510,18 +511,18 @@ class ConfigFactory:
                     else:
                         return 'none'
                 protocol_dict["couple-lambda0"] = tranform(
-                    mol._sire_object.property('charge0').value(),
-                    mol._sire_object.property('LJ0').value()
+                    decouple_dict["charge"][0],
+                    decouple_dict["LJ"][0]
                 )
                 protocol_dict["couple-lambda1"] = tranform(
-                    mol._sire_object.property('charge1').value(),
-                    mol._sire_object.property('LJ1').value()
+                    decouple_dict["charge"][1],
+                    decouple_dict["LJ"][1]
                 )
                 # Add the soft-core parameters for the ABFE
                 protocol_dict['sc-alpha'] = 0.5
                 protocol_dict['sc-power'] = 1
                 protocol_dict['sc-sigma'] = 0.3
-                if mol._sire_object.property('annihilated').value():
+                if decouple_dict['intramol'].value():
                     # The intramol is being coupled to the lambda change and thus being annihilated.
                     protocol_dict["couple-intramol"] = 'yes'
                 else:

@@ -9,12 +9,8 @@ class TestGromacsRBFE():
     @staticmethod
     @pytest.fixture(scope='class')
     def system():
-        # Benzene.
-        m0 = BSS.Parameters.openff_unconstrained_2_0_0(
-            "c1ccccc1").getMolecule()
-        # Toluene.
-        m1 = BSS.Parameters.openff_unconstrained_2_0_0(
-            "Cc1ccccc1").getMolecule()
+        m0 = BSS.IO.readMolecules("test/input/ligands/CAT-13a*").getMolecule(0)
+        m1 = BSS.IO.readMolecules("test/input/ligands/CAT-13c*").getMolecule(0)
         atom_mapping = BSS.Align.matchAtoms(m0, m1)
         m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
         merged = BSS.Align.merge(m0, m1)
@@ -87,8 +83,7 @@ class TestGromacsABFE():
     def test_decouple_vdw_q(self, system):
         m, protocol = system
         '''Test the decoupling where lambda0 = vdw-q and lambda1=none'''
-        mol = decouple(m, property_map0={"charge": True, "LJ": True},
-                       property_map1={"charge": False, "LJ": False})
+        mol = decouple(m)
         freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
@@ -100,9 +95,7 @@ class TestGromacsABFE():
     def test_annihilate_vdw2q(self, system):
         '''Test the annihilation where lambda0 = vdw-q and lambda1=none'''
         m, protocol = system
-        mol = decouple(m,
-                       property_map0={"charge": False, "LJ": True},
-                       property_map1={"charge": True, "LJ": False},
+        mol = decouple(m, charge=(False, True), LJ=(True, False),
                        intramol=False)
         freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
