@@ -96,11 +96,13 @@ else:
 
 from ._merge import merge as _merge
 
-# Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
-    _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
+    _fkcombu_exe = _SireBase.findExe("fkcombu_bss").absoluteFilePath()
 except:
-    _fkcombu_exe = None
+    try:
+        _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
+    except:
+        _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         links_file=None, property_map={}, n_edges_forced=None):
@@ -691,7 +693,7 @@ def matchAtoms(molecule0,
                  computing the above RMSD score.
              - "rmsd_flex_align"
                  Flexibly align molecule0 to molecule1 based on the mapping
-                 before computing the above RMSD score. (Requires the
+                 before computing the above RMSD score. (based on the
                  'fkcombu'. package: https://pdbj.org/kcombu)
 
        matches : int
