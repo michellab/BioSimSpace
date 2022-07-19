@@ -1,3 +1,0 @@
-[tool.pytest.ini_options]
-# Ensure that test/Sandpit/Exscientia could have the same name as the tests in test
-addopts = "--import-mode=importlib"
