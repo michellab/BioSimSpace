@@ -26,6 +26,7 @@ output.yaml
 
 # Trajectory artifacts.
 *_offsets.npz
+*.lock
 
 # Scratch space.
 .idea/
