@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Julien Michel
-# 
+#
 # email: julien.michel@ed.ac.uk
 
 # # PrepareFEP
@@ -13,7 +13,7 @@
 
 import os
 import zipfile
-from Sire.Mol import AtomIdx
+from sire.legacy.Mol import AtomIdx
 import BioSimSpace as BSS
 
 
@@ -59,7 +59,7 @@ def loadMapping(mapping_file):
         idx1 = int(elems[0])
         idx2 = int(elems[1])
         mapping[idx1] = idx2
-    
+
     return mapping
 
 
@@ -117,10 +117,10 @@ if custom_mapping is not None:
 # In[ ]:
 
 
-# Optional input, dictionary of Atom indices that should be matched in the search. 
+# Optional input, dictionary of Atom indices that should be matched in the search.
 prematch = {}
 prematchstring = node.getInput("prematch")
-if len(prematchstring) > 0: 
+if len(prematchstring) > 0:
     entries = prematchstring.split(",")
     for entry in entries:
         idxA, idxB = entry.split("-")

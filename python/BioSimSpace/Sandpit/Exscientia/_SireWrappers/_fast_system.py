@@ -1,8 +1,8 @@
 # TODO: remove this file when BSS performance is sufficient for large systems
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules

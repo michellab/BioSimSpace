@@ -50,7 +50,7 @@ for unit in _base_units:
 # maps between the unit name and the Sire unit object, allowing us to
 # use eval to parse arbitrary expressions based in these units from the
 # command-line.
-import Sire.Units as _SireUnits
+import sire.units as _SireUnits
 
 _sire_units_locals = {}
 

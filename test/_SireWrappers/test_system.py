@@ -34,11 +34,12 @@ def test_iterators(system):
 
     # Iterate over the search result and make sure we match all molecules.
     for idx, mol in enumerate(search_result):
-        # Single residue molecules will have been converted to a Residue object.
-        if type(mol) is BSS._SireWrappers.Residue:
-            assert mol.toMolecule() == system[idx] == molecules[idx] == system.getMolecule(idx)
-        else:
-            assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
+        # Sire automatically converts objects to their smallest types
+        # (e.g. residue, atom etc.)
+        if hasattr(mol, "toMolecule"):
+            mol = mol.toMolecule()
+
+        assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
 
 def test_atom_reindexing(system):
     # Search for all oxygen atoms in water molecules water molecules within

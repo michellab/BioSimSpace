@@ -33,8 +33,8 @@ __all__ = ["boxTypes",
            "rhombicDodecahedronHexagon",
            "truncatedOctahedron"]
 
-from Sire.Maths import Vector as _Vector
-from Sire.Vol import TriclinicBox as _TriclinicBox
+from sire.legacy.Maths import Vector as _Vector
+from sire.legacy.Vol import TriclinicBox as _TriclinicBox
 
 from ..Types import Angle as _Angle
 from ..Types import Length as _Length

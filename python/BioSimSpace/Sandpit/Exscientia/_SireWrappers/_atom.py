@@ -33,7 +33,8 @@ import os.path as _path
 import random as _random
 import string as _string
 
-from Sire import Mol as _SireMol
+import sire.legacy as _Sire
+from sire.legacy import Mol as _SireMol
 
 from ..Types import Coordinate as _Coordinate
 from ..Types import Length as _Length
@@ -55,7 +56,7 @@ class Atom(_SireWrapper):
         # Check that the atom is valid.
 
         # A Sire Atom object.
-        if isinstance(atom, _SireMol.Atom):
+        if isinstance(atom, _Sire.Mol._Mol.Atom):
             sire_object = atom
 
         # Another BioSimSpace Atom object.

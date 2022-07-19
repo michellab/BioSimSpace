@@ -67,10 +67,11 @@ with _warnings.catch_warnings():
         _rdFMCS = _rdkit
         _RDLogger = _rdkit
 
-from Sire import Base as _SireBase
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import Units as _SireUnits
+from sire.legacy import Base as _SireBase
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
+
+from sire import units as _SireUnits
 
 from .. import _is_notebook, _isVerbose
 from .._Exceptions import AlignmentError as _AlignmentError
@@ -1165,7 +1166,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that the output file exists.

@@ -1,5 +1,12 @@
-from Sire.MM import InternalFF, IntraCLJFF, IntraFF
-from Sire.Mol import AtomIdx, PartialMolecule
+
+try:
+    import sire as _sr
+    _sr.use_mixed_api()
+except ImportError:
+    pass
+
+from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
+from sire.legacy.Mol import AtomIdx, PartialMolecule
 
 import BioSimSpace as BSS
 

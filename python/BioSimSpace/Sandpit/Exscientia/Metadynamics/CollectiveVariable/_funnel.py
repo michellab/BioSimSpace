@@ -30,8 +30,8 @@ __all__ = ["Funnel", "makeFunnel", "viewFunnel"]
 
 import math as _math
 
-from Sire.Maths import Vector as _SireVector
-import Sire.Mol as _SireMol
+from sire.legacy.Maths import Vector as _SireVector
+import sire.legacy.Mol as _SireMol
 
 from ... import _is_notebook
 from ._collective_variable import CollectiveVariable as _CollectiveVariable

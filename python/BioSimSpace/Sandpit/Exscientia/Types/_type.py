@@ -30,7 +30,7 @@ __all__ = ["Type"]
 
 import re as _re
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 class Type():
     """A base class for custom types."""
@@ -94,12 +94,12 @@ class Type():
 
             else:
                 raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'Sire.Units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'")
 
         # No arguments.
         else:
             raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'Sire.Units.GeneralUnit'")
+                            "or 'string' or 'sire.units.GeneralUnit'")
 
         # Set the documentation string.
         self.__doc__ = self._doc_strings[self._unit]
@@ -550,7 +550,7 @@ class Type():
            Returns
            -------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self._value * self._supported_units[self._unit]
@@ -562,12 +562,12 @@ class Type():
            Parameters
            ----------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                A Sire GeneralUnit object.
         """
 
         if not isinstance(sire_unit, _SireUnits.GeneralUnit):
-            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit'")
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'")
 
         # Create a mask for the dimensions of the object.
         dimensions = (sire_unit.ANGLE(),

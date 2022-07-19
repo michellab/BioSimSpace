@@ -38,8 +38,8 @@ import tempfile as _tempfile
 import uuid as _uuid
 import warnings as _warnings
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -214,7 +214,7 @@ class Trajectory():
     """A class for reading a manipulating biomolecular trajectories."""
 
     def __init__(self, process=None, trajectory=None,
-            topology=None, system=None, property_map={}):
+                 topology=None, system=None, property_map={}):
         """Constructor.
 
            Parameters

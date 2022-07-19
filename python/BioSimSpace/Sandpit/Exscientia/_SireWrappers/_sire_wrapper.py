@@ -31,9 +31,9 @@ __all__ = ["SireWrapper"]
 
 import os as _os
 
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import Vol as _SireVol
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
+from sire.legacy import Vol as _SireVol
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

@@ -10,31 +10,15 @@ source:
 
 build:
   number: BSS_BUILD
-  skip: true  # [win]
 
 requirements:
+    BSS_BUILD_REQUIREMENTS
   host:
     - python
+    BSS_RUN_REQUIREMENTS
   run:
     - python
-    - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
-    - configargparse
-    - fkcombu
-    - lomap2
-    - mdtraj
-    - mdanalysis
-    - networkx
-    - nglview
-    - openff-toolkit-base
-    - parmed
-    - py3dmol
-    - pydot
-    - pygtail
-    - pypdb
-    - pytest
-    - pyyaml
-    - rdkit
-    - watchdog
+    BSS_RUN_REQUIREMENTS
 
 test:
   script_env:
@@ -42,12 +26,13 @@ test:
     - SIRE_DONT_PHONEHOME
     - SIRE_SILENT_PHONEHOME
   requires:
-    - git
     - pytest
   imports:
     - BioSimSpace
+  source_files:
+    - test
   commands:
-    - git clone https://github.com/michellab/BioSimSpace && cd BioSimSpace && git checkout $HEAD_BRANCH && pytest -vvv test
+    - pytest -vvv test
 
 about:
   home: https://biosimspace.org

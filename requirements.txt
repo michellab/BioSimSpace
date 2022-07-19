@@ -1,0 +1,21 @@
+sire ~=2023.0.0   # this matches >= 2023.0.0 && < 2023.1.0
+
+configargparse
+lomap2
+mdtraj
+mdanalysis
+networkx
+nglview
+openff-toolkit-base
+parmed
+py3dmol
+pydot
+pygtail
+pypdb
+pyyaml
+rdkit
+watchdog
+
+# This is not available on Windows or MacOS
+fkcombu ; sys_platform == "linux"
+

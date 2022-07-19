@@ -34,13 +34,16 @@ from warnings import warn as _warn
 
 import os.path as _path
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import MM as _SireMM
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
-from Sire import Units as _SireUnits
+import sire.legacy as _Sire
+
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import MM as _SireMM
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
+
+from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -77,7 +80,7 @@ class Molecule(_SireWrapper):
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
-        if isinstance(molecule, _SireMol.Molecule):
+        if isinstance(molecule, _Sire.Mol._Mol.Molecule):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()
@@ -102,7 +105,7 @@ class Molecule(_SireWrapper):
 
         # Invalid type.
         else:
-            raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule' "
+            raise TypeError(f"'molecule' (type {type(molecule)}) must be of type 'Sire.Mol.Molecule' "
                             "or 'BioSimSpace._SireWrappers.Molecule'.")
 
         # Flag that this object holds multiple atoms.
@@ -582,15 +585,20 @@ class Molecule(_SireWrapper):
         results = []
 
         try:
-            # Query the Sire molecule.
-            search_result = _SireMol.Select(query)(self._sire_object, property_map)
-
+            query = _SireMol.Select(query)
         except Exception as e:
-            msg = "'Invalid search query: %r" % query
+            msg = "'Invalid search query: %r (%s)" % (query, e)
             if _isVerbose():
                 raise ValueError(msg) from e
             else:
                 raise ValueError(msg) from None
+
+        try:
+            # Query the Sire molecule.
+            search_result = query(self._sire_object, property_map)
+        except KeyError:
+            # Nothing matched - return an empty result
+            search_result = _SireMol.SelectorMol()
 
         return _SearchResult(search_result)
 

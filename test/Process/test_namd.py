@@ -1,6 +1,6 @@
 import BioSimSpace as BSS
 
-from Sire.Base import findExe
+from sire.legacy.Base import findExe
 
 import pytest
 

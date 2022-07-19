@@ -2,7 +2,7 @@ import itertools as _it
 import math as _math
 import warnings as _warnings
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 from ..Align._merge import _squash
 from .._Exceptions import IncompatibleError as _IncompatibleError

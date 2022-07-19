@@ -46,6 +46,7 @@ from .._SireWrappers import Molecule as _Molecule
 from ..Solvent import waterModels as _waterModels
 from ..Types import Charge as _Charge
 from .._Utils import _try_import, _have_imported
+from .. import _Utils
 
 from ._process import Process as _Process
 from . import Protocol as _Protocol
@@ -529,7 +530,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
            The parameterised molecule.
     """
 
-    from Sire.Base import findExe as _findExe
+    from sire.legacy.Base import findExe as _findExe
 
     try:
         _findExe("antechamber")
@@ -552,7 +553,7 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
         command = "antechamber -v"
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.STDOUT)
 
         # Get stdout and split into lines.

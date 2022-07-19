@@ -39,12 +39,13 @@ import shlex as _shlex
 import subprocess as _subprocess
 import warnings as _warnings
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from ... import _isVerbose
 from ... import IO as _IO
+from ... import _Utils
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
@@ -545,7 +546,7 @@ class GAFF(_protocol.Protocol):
         stderr = open(prefix + "antechamber.err", "w")
 
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
@@ -569,7 +570,7 @@ class GAFF(_protocol.Protocol):
             stderr = open(prefix + "parmchk.err", "w")
 
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
                 shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
@@ -608,7 +609,7 @@ class GAFF(_protocol.Protocol):
                 stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
                     shell=False, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
