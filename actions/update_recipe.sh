@@ -15,7 +15,8 @@ TEMPLATE="$CONDA_DIR"/template.yaml
 cp "$TEMPLATE" "$RECIPE"
 
 # Get the Sire version. (Latest tag.)
-SIRE_VERSION=$(git --git-dir="$SIRE_SRC_DIR"/.git --work-tree="$SIRE_SRC_DIR" describe --tags --abbrev=0)
+#SIRE_VERSION=$(git --git-dir="$SIRE_SRC_DIR"/.git --work-tree="$SIRE_SRC_DIR" describe --tags --abbrev=0)
+SIRE_VERSION=2022.3.0
 
 # Get the next major Sire version number.
 NEXT_SIRE_VERSION=$(echo $SIRE_VERSION | cut -d '.' -f1)
