@@ -1,6 +1,7 @@
 sire ~=2023.0.0   # this matches >= 2023.0.0 && < 2023.1.0
 
 configargparse
+kcombu_bss
 lomap2
 mdtraj
 mdanalysis
@@ -15,7 +16,4 @@ pypdb
 pyyaml
 rdkit
 watchdog
-
-# This is not available on Windows or MacOS
-fkcombu ; sys_platform == "linux"
 
