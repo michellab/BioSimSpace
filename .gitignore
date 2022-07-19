@@ -24,6 +24,9 @@ BioSimSpace.egg-info
 # Test output.
 output.yaml
 
+# Trajectory artifacts.
+*_offsets.npz
+
 # Scratch space.
 .idea/
 
