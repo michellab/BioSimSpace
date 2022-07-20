@@ -1,5 +1,7 @@
 import BioSimSpace as BSS
 
+from Sire.Base import wrap
+
 import pytest
 
 @pytest.fixture
@@ -23,6 +25,16 @@ def traj_mdanalysis(system, scope="session"):
             topology="test/input/trajectories/ala.tpr",
             system=system)
 
+@pytest.fixture
+def traj_mdanalysis_pdb(system, scope="session"):
+    """A trajectory object using the MDAnalysis backend."""
+    new_system = system.copy()
+    new_system._sire_object.setProperty("fileformat", wrap("PDB"))
+    return BSS.Trajectory.Trajectory(
+            trajectory="test/input/trajectories/ala.trr",
+            topology="test/input/trajectories/ala.tpr",
+            system=new_system)
+
 def test_frames(traj_mdtraj, traj_mdanalysis):
     """Make sure that the number of frames loaded by each backend agree."""
     assert traj_mdtraj.nFrames() == traj_mdanalysis.nFrames()
@@ -33,6 +45,22 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
     # Extract the first and last frame from each trajectory.
     frames0 = traj_mdtraj.getFrames([0, -1])
     frames1 = traj_mdanalysis.getFrames([0, -1])
+
+    # Make sure that all coordinates are approximately the same.
+    for system0, system1 in zip(frames0, frames1):
+        for mol0, mol1 in zip(system0, system1):
+            for c0, c1 in zip(mol0.coordinates(), mol1.coordinates()):
+                assert c0.x().value() == pytest.approx(c1.x().value(), abs=1e-2)
+                assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
+                assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
+
+def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
+    """Make sure that frames from both backends have comparable coordinates
+       when a PDB intermediate topology is used for reconstruction."""
+
+    # Extract the first and last frame from each trajectory.
+    frames0 = traj_mdtraj.getFrames([0, -1])
+    frames1 = traj_mdanalysis_pdb.getFrames([0, -1])
 
     # Make sure that all coordinates are approximately the same.
     for system0, system1 in zip(frames0, frames1):
