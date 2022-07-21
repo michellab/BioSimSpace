@@ -106,10 +106,10 @@ class Gromacs(_process.Process):
                Whether to show warning/error messages when generating the binary
                run file.
 
-            checkpoint_file : str
-               The path to a checkpoint file from a previous run. This can be used
-               to continue an existing simulation. Currently we only support the
-               use of checkpoint files for Equilibration protocols.
+           checkpoint_file : str
+              The path to a checkpoint file from a previous run. This can be used
+              to continue an existing simulation. Currently we only support the
+              use of checkpoint files for Equilibration protocols.
         """
 
         # Call the base class constructor.

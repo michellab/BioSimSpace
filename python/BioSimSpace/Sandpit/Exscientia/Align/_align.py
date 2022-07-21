@@ -1440,7 +1440,7 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
 
     # Add the molecules to the views.
     view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
-    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol1", viewer=viewer1)
+    view.addModel(_Chem.MolToMolBlock(rdmol1), "mol1", viewer=viewer1)
 
     # Set the style.
     view.setStyle({"model": 0}, style, viewer=viewer0)
