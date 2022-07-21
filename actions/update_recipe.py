@@ -35,24 +35,6 @@ def run_cmd(cmd):
 
 gitdir = os.path.join(srcdir, ".git")
 
-# Get the BSS version. (Latest tag.)
-version = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} describe --tags --abbrev=0")
-print(version)
-
-# Return a list of commits messages since the most recent tag.
-build = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} log --oneline {version}..").split("\n")
-# Get the build number. (Number of commits since last tag.)
-# If there are no commits, then we'll get a single item list containing an
-# empty string. The logic below makes sure the build number is zero indexed.
-if len(build) == 1:
-    if build[0]:
-        build = 1
-    else:
-        build = 0
-else:
-    build = len(build)
-print(build)
-
 # Get the BSS branch.
 branch = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} rev-parse --abbrev-ref HEAD")
 print(branch)
@@ -84,8 +66,6 @@ with open(recipe, "w") as FILE:
         elif line.find("BSS_RUN_REQUIREMENTS") != -1:
             line = run_reqs
         else:
-            line = line.replace("BSS_VERSION", str(version))
-            line = line.replace("BSS_BUILD", str(build))
             line = line.replace("BSS_BRANCH", branch)
 
         FILE.write(line)
