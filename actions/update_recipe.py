@@ -39,8 +39,18 @@ gitdir = os.path.join(srcdir, ".git")
 version = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} describe --tags --abbrev=0")
 print(version)
 
+# Return a list of commits messages since the most recent tag.
+build = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} log --oneline {version}..").split("\n")
 # Get the build number. (Number of commits since last tag.)
-build = len(run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} log --oneline {version}..").split("\n"))
+# If there are no commits, then we'll get a single item list containing an
+# empty string. The logic below makes sure the build number is zero indexed.
+if len(build) == 1:
+    if build[0]:
+        build = 1
+    else:
+        build = 0
+else:
+    build = len(build)
 print(build)
 
 # Get the BSS branch.
