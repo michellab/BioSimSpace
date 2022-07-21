@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Molecule"]
 
-from pytest import approx as _approx
+from math import isclose as _isclose
 from warnings import warn as _warn
 
 import os.path as _path
@@ -1422,7 +1422,7 @@ class Molecule(_SireWrapper):
         delta = round(charge) - charge
 
         # The difference is too small to care about.
-        if charge + delta == _approx(charge):
+        if _isclose(charge + delta, charge, rel_tol=1e-6):
             return
 
         # Normalise by the number of atoms.

@@ -99,7 +99,6 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = ["configargparse",
                       "pygtail",
-                      "pytest",
                       "pyyaml",
                       "watchdog",
                       "pydot",
