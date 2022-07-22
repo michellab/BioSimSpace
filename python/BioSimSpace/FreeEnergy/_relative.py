@@ -53,6 +53,8 @@ from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equili
 from alchemlyb.estimators import AutoMBAR as _AutoMBAR
 from alchemlyb.estimators import TI as _TI
 from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
+from alchemlyb.visualisation import plot_mbar_overlap_matrix as _plot_mbar_overlap_matrix
+from alchemlyb.visualisation import plot_ti_dhdl as _plot_ti_dhdl
 
 import numpy as _np
 import pandas as _pd
@@ -265,6 +267,7 @@ class Relative():
         self.analyse = self._analyse
         self.difference = self._difference
         self.check_overlap = self._check_overlap
+        self.plot = self._plot
 
         # Initialise the process runner.
         self._initialise_runner(self._system)
@@ -1336,6 +1339,93 @@ class Relative():
 
         # Now call the staticmethod passing in the overlap and the work_dir of the run.
         return Relative.check_overlap(overlap, estimator=self._estimator)
+
+    @staticmethod
+    def plot(overlap, estimator=None, work_dir=None):
+        """Plot either the overlap or the dhdl of the transformation. 
+
+           Parameters
+           ----------
+
+           overlap : [ [ float, float, ... ] ], numpy.matrix
+               For MBAR, the overlap matrix. This gives the overlap between lambda windows.
+               For TI, the dhdl.
+
+           estimator : str
+               The estimator ('MBAR' or 'TI') used.
+
+           work_dir : str
+               The working directory for the free-energy perturbation
+               simulation.
+
+           Returns
+           -------
+
+           Overlap matrix plot or dhdl graph.
+
+        """
+        
+        # estimator must be MBAR for overlap matrix or TI for dhdl plot.
+        if estimator not in ['MBAR', 'TI', None]:
+            raise ValueError("'estimator' must be 'MBAR' or 'TI'. If 'None, data type will be inferred.")
+
+        if estimator is None:
+            if isinstance(overlap, _np.matrix):
+                estimator = "MBAR"
+            elif isinstance(overlap, _alchemlyb.estimators.ti_.TI) or isinstance(overlap, list):
+                estimator = "TI"
+            else:
+                raise TypeError("Data type for estimator = 'None' could not be inferred / does not match allowed data types.")
+
+        if estimator == "MBAR":
+            if not isinstance(overlap, _np.matrix):
+                        raise TypeError("'overlap' must be of type 'numpy.matrix' for 'MBAR'.\
+                            This is obtained from running analysis using estimator='MBAR'.")
+
+            # use the alchemlyb functionality to plot the overlap matrix
+            ax = _plot_mbar_overlap_matrix(overlap)
+            ax.set_title(f"overlap matrix")
+
+            if work_dir is not None:
+                ax.figure.savefig(
+                    f"{work_dir}/overlap_MBAR.png", bbox_inches='tight', pad_inches=0.0)      
+
+        elif estimator == 'TI':
+            if not isinstance(overlap, _alchemlyb.estimators.ti_.TI):
+                if not isinstance(overlap, list):
+                        raise TypeError("'overlap' must be of type 'alchemlyb.estimators.ti_.TI' for 'TI'.\
+                                          This is obtained from running analysis using estimator='TI'.\
+                                          Alternatively, it may also be of type 'list'.")
+
+            # use the alchemlyb functionality to plot the dhdl
+            ax = _plot_ti_dhdl(overlap)
+            ax.set_title(f"dhdl plot")
+            
+            if work_dir is not None:
+                ax.figure.savefig(
+                    f"{work_dir}/dHdl_TI.png")
+
+        return ()
+
+    def _plot(self):
+        """Plot either the overlap or the dhdl of the transformation. 
+
+           Parameters
+           ----------
+
+           Returns
+           -------
+
+           Overlap matrix plot or dhdl graph.
+
+
+        """
+
+        # Calculate the overlap for this object.
+        _, overlap = self.analyse()
+
+        # Now call the staticmethod passing in the overlap, estimator and the work_dir of the run.
+        return Relative.plot(overlap, estimator=self._estimator, work_dir=self._work_dir)
 
     def _initialise_runner(self, system):
         """Internal helper function to initialise the process runner.
