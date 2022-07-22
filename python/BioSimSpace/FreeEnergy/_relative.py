@@ -36,6 +36,7 @@ import math as _math
 import shlex as _shlex
 import sys as _sys
 import os as _os
+import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
 import tempfile as _tempfile
@@ -94,9 +95,8 @@ class Relative():
     _engines = ["GROMACS", "SOMD"]
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
-                 gpu_support=False, setup_only=False, ignore_warnings=False,
-                 show_errors=True, extra_options=None, extra_lines=None,
-                 estimator='MBAR', property_map={}):
+                 setup_only=False, ignore_warnings=False,
+                 show_errors=True, estimator='MBAR', property_map={}):
         """Constructor.
 
            Parameters
@@ -135,12 +135,6 @@ class Relative():
                Whether to show warning/error messages when generating the binary
                run file. This option is specific to GROMACS and will be ignored
                when a different molecular dynamics engine is chosen.
-
-           extra_options : dict
-               A dictionary containing extra options. Overrides the ones generated from the protocol.
-
-           extra_lines : list
-               A list of extra lines to be put at the end of the script.
 
            estimator : str
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
@@ -222,16 +216,8 @@ class Relative():
                 self._exe = _gmx_exe
             
             elif engine == "AMBER":
-                # Find a molecular dynamics engine and executable.
-                engines, exes = _find_md_engines(
-                    system, protocol, engine, gpu_support)
-                if not exes:
-                    raise _MissingSoftwareError(
-                        "Cannot use AMBER engine as AMBER is not installed!")
-                elif len(exes) > 1:
-                    _warnings.warn(
-                        f"Multiple AMBER engines were found. Proceeding with {exes[0]}...")
-                self._exe = exes[0]
+                _warnings.warn(
+                    "In this branch, AMBER is currently only available for analysis of AMBER output.")                
 
                 # The system must have a perturbable molecule.
                 if system.nPerturbableMolecules() == 0:
@@ -274,10 +260,11 @@ class Relative():
             raise TypeError("'property_map' must be of type 'dict'")
         self._property_map = property_map
 
-        # Create fake instance methods for 'analyse' and 'difference'. These
-        # pass instance data through to the staticmethod versions.
+        # Create fake instance methods for 'analyse' and 'difference' and 'check overlap'.
+        # These pass instance data through to the staticmethod versions.
         self.analyse = self._analyse
         self.difference = self._difference
+        self.check_overlap = self._check_overlap
 
         # Initialise the process runner.
         self._initialise_runner(self._system)
@@ -622,6 +609,9 @@ class Relative():
 
            work_dir : str
                The working directory for the simulation.
+ 
+           estimator : str
+               The estimator ('MBAR' or 'TI') used. Default is MBAR.
 
            Returns
            -------
@@ -708,7 +698,8 @@ class Relative():
             sample_okay = True
         except:
             pass
-
+        
+        # Throw errors if either failed
         if not eq_okay:
             _warnings.warn("Could not detect equilibration.")
             try:
@@ -723,6 +714,7 @@ class Relative():
             _warnings.warn("Could not calculate statistical inefficiency.")
             sampled_data = eq_data
 
+        # make sure there are more than 50 samples for the analysis
         if eq_okay or sample_okay:
             for i in sampled_data:
                 if len(i.iloc[:, 0]) < 50:
@@ -730,6 +722,7 @@ class Relative():
                         "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
                     sampled_data = data
 
+        # concatanate in alchemlyb format
         processed_data = _alchemlyb.concat(sampled_data)
 
         return processed_data
@@ -972,6 +965,9 @@ class Relative():
            work_dir : str
                The path to the working directory.
 
+           estimator : str
+               The estimator ('MBAR' or 'TI') used.
+
            Returns
            -------
 
@@ -1104,7 +1100,7 @@ class Relative():
         return (data, None)
 
     @staticmethod
-    def _analyse_somd(work_dir=None):
+    def _analyse_somd(work_dir=None, estimator=None):
         """Analyse the SOMD free energy data.
 
            Parameters
@@ -1112,6 +1108,9 @@ class Relative():
 
            work_dir : str
                The path to the working directory.
+
+           estimator : str
+               The estimator ('MBAR' or 'TI') used.
 
            Returns
            -------
@@ -1385,15 +1384,13 @@ class Relative():
 
             first_process = _Process.Somd(system, self._protocol,
                                           platform=platform, work_dir=first_dir,
-                                          property_map=self._property_map, extra_options=self._extra_options,
-                                          extra_lines=self._extra_lines)
+                                          property_map=self._property_map)
 
         # GROMACS.
         elif self._engine == "GROMACS":
             first_process = _Process.Gromacs(system, self._protocol,
                                              work_dir=first_dir, ignore_warnings=self._ignore_warnings,
-                                             show_errors=self._show_errors, extra_options=self._extra_options,
-                                             extra_lines=self._extra_lines)
+                                             show_errors=self._show_errors)
 
         # Loop over the rest of the lambda values.
         for x, lam in enumerate(lam_vals[1:]):
