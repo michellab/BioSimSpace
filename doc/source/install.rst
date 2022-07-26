@@ -73,33 +73,26 @@ For developers
 The following documents a full installation of BioSimSpace from source. Before
 starting, you'll need a working `Git <https://git-scm.com>`__ installation.
 
-1. BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`__
-   molecular simulation framework. To download and install Sire:
+BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`__
+molecular simulation framework. To download and install Sire, follow the
+instructions `here <https://github.com/michellab/Sire#installation>`__, making
+sure that BioSimSpace's dependencies are installed into the Sire conda
+environment at the point at which Sire is installed.
 
-.. code-block:: bash
-
-   git clone https://github.com/michellab/Sire
-   cd Sire
-   ./compile_sire.sh
-
-Assuming the default installation path, this will install Sire into ``$HOME/sire.app``.
-
-(Note that the installation is slow and can take in excess of an hour.)
-
-2. Next you will need to download BioSimSpace and install it into your Sire
-   application. (The following assumes the default Sire installation path.)
+Next you will need to download BioSimSpace and install it into your Sire
+Conda environment.
 
 .. code-block:: bash
 
    git clone https://github.com/michellab/BioSimSpace
    cd BioSimSpace/python
-   $HOME/sire.app/bin/python setup.py install
+   python setup.py install
 
 Once finished, you can test the installation by running:
 
 .. code-block:: bash
 
-   $HOME/sire.app/bin/ipython
+   python
 
 Then try importing the BioSimSpace package:
 
@@ -113,20 +106,20 @@ e.g.
 
 .. code-block:: bash
 
-   PYTHONPATH=$HOME/Code/BioSimSpace/python $HOME/sire.app/bin/python script.py
+   PYTHONPATH=$HOME/Code/BioSimSpace/python python script.py
 
 or use the ``develop`` argument when running the ``setup.py`` script, i.e.
 
 .. code-block:: bash
 
-   PYTHONPATH=$HOME/sire.app/bin/python setup.py develop
+   python setup.py develop
 
 You can also skip installation of external dependencies by setting the
 environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 
 .. code-block:: bash
 
-   BSS_SKIP_DEPENDENCIES=True $HOME/sire.app/bin/python setup.py install
+   BSS_SKIP_DEPENDENCIES=True python setup.py install
 
 Common issues
 =============
