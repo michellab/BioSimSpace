@@ -14,7 +14,7 @@ class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
-    def __init__(self, system, protocol):
+    def __init__(self, system, protocol, squashed_system=None):
         """Constructor.
 
            Parameters
@@ -24,9 +24,13 @@ class ConfigFactory:
                The molecular system.
 
            protocol : :class:`Protocol <BioSimSpace.Protocol>`
+
+           squashed_system : :class:`System <BioSimSpace._SireWrappers.System>`
+               (Optional) an AMBER-compatible squashed system.
         """
         self.system = system
         self.protocol = protocol
+        self.squashed_system = squashed_system
 
     @property
     def _has_box(self):
@@ -105,7 +109,8 @@ class ConfigFactory:
         # separate contiguous blocks of indices, e.g. 1-23,34-47,...
 
         if atom_idxs:
-            atom_idxs = sorted(list(set(atom_idxs)))
+            # AMBER masks are 1-indexed, while BioSimSpace indices are 0-indexed.
+            atom_idxs = [x + 1 for x in sorted(list(set(atom_idxs)))]
             if not all(isinstance(x, int) for x in atom_idxs):
                 raise TypeError("'atom_idxs' must be a list of 'int' types.")
             groups = []
@@ -138,53 +143,40 @@ class ConfigFactory:
            option_dict : dict
                A dictionary of AMBER-compatible options.
         """
-
         # Squash the system into an AMBER-friendly format.
-        squashed_system = _squash(self.system)
+        if self.squashed_system is None:
+            self.squashed_system, _ = _squash(self.system)
 
-        # define whether HMR is used based on the timestep
-        # When HMR is used, there can be no X
-        if timestep >= 0.004:
-            HMR_on = True
-        else:
-            HMR_on = False
-
-        # Extract all perturbable molecules from both the squashed and the merged systems.
-        perturbable_mol_mask = []
-        mols_hybr = []
-        nondummy_indices0, nondummy_indices1 = [], []
-        for mol in self.system.getMolecules():
-            if mol._is_perturbable:
-                perturbable_mol_mask += [0, 1]
-                mols_hybr += [mol]
-                nondummy_indices0 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype0")]]
-                nondummy_indices1 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype1")]]
-            else:
-                perturbable_mol_mask += [None]
-        mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        mols1 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
+        # Get the perturbed molecules and the corresponding squashed molecules.
+        pertmols = self.system.getPerturbableMolecules()
+        pertmol_offset = len(self.system) - len(pertmols)
+        squashed_pertmols = self.squashed_system[pertmol_offset:]
+        atom_offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in self.squashed_system.getMolecules()))
 
         # Find the perturbed atom indices withing the squashed system.
-        mols0_indices = [squashed_system.getIndex(atom) + 1 for mol in mols0 for atom in mol.getAtoms()]
-        mols1_indices = [squashed_system.getIndex(atom) + 1 for mol in mols1 for atom in mol.getAtoms()]
+        mols0_indices, mols1_indices = [], []
+        dummy0_indices, dummy1_indices = [], []
+        for i, pertmol in enumerate(pertmols):
+            mol0 = squashed_pertmols[2 * i]
+            mol1 = squashed_pertmols[2 * i + 1]
+            atom_offset0 = atom_offsets[pertmol_offset + 2 * i]
+            atom_offset1 = atom_offset0 + mol0.nAtoms()
+            mols0_indices += list(range(atom_offset0, atom_offset1))
+            mols1_indices += list(range(atom_offset1, atom_offset1 + mol1.nAtoms()))
+            nondummy_indices0 = [atom.index() for atom in pertmol.getAtoms()
+                                 if "du" not in atom._sire_object.property("ambertype0")]
+            nondummy_indices1 = [atom.index() for atom in pertmol.getAtoms()
+                                 if "du" not in atom._sire_object.property("ambertype1")]
+            dummy0_indices += [atom_offset0 + nondummy_indices0.index(atom.index())
+                               for atom in pertmol.getAtoms()
+                               if "du" in atom._sire_object.property("ambertype1")]
+            dummy1_indices += [atom_offset1 + nondummy_indices1.index(atom.index())
+                               for atom in pertmol.getAtoms()
+                               if "du" in atom._sire_object.property("ambertype0")]
 
-        # Find the dummy indices within the squashed system.
-        offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in squashed_system.getMolecules()))
-        offsets0 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        offsets1 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
-        dummy0_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets0, nondummy_indices0)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype1")]
-        dummy1_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets1, nondummy_indices1)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype0")]
-
-        # If it is HMR
-        if HMR_on == True :
+        # Define whether HMR is used based on the timestep.
+        # When HMR is used, there can be no SHAKE.
+        if timestep >= 0.004:
             no_shake_mask = ""
         else:
             no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
