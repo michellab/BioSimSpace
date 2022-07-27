@@ -808,7 +808,7 @@ class System(_SireWrapper):
 
         molecules = []
 
-        for mol in self._sire_object.search("perturbable"):
+        for mol in self._sire_object.search("perturbable").molecules():
             molecules.append(_Molecule(mol))
 
         return molecules

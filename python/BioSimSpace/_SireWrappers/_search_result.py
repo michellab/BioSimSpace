@@ -32,21 +32,6 @@ __all__ = ["SearchResult"]
 import sire.legacy as _Sire
 
 
-def _from_select_result(obj):
-    print(obj)
-    import sire
-    try:
-        obj = sire.mol.__from_select_result(obj)
-    except Exception:
-        obj = sire.mol.__from_select_result(sire.legacy.Mol.SelectResult(obj))
-
-    for atom in obj:
-        print(atom)
-
-    print(obj)
-    return obj
-
-
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
 
@@ -166,6 +151,7 @@ class SearchResult():
                     return _Molecule(result)
             # Unsupported.
             else:
+                print(f"WARNING: Type {type(result)} is not supported.")
                 return None
 
     def __setitem__(self, key, value):
@@ -263,11 +249,15 @@ class SearchResult():
             search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
                 A copy of the object viewed via its molecules.
         """
-        return SearchResult(self._sire_object.molecules())
+        try:
+            return SearchResult(self._sire_object.molecules())
+        except Exception:
+            # this is a single molecule view
+            from sire.mol import SelectorMol
+            return SearchResult(SelectorMol(self._sire_object.molecule()))
 
     def bonds(self):
-        """Return all of the bonds that contain the results of this
-           search.
+        """Return all of the bonds in this result
 
             Returns
             -------
@@ -275,7 +265,12 @@ class SearchResult():
             search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
                 A copy of the object viewed via its bonds.
         """
-        return SearchResult(self._sire_object.bonds())
+        try:
+            from sire.mm import SelectorMBond
+            return SearchResult(SelectorMBond(self._sire_object))
+        except Exception:
+            from sire.mm import SelectorBond
+            return SearchResult(SelectorBond(self._sire_object))
 
     def nResults(self):
         """Return the number of results.
