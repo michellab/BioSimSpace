@@ -53,8 +53,6 @@ class SearchResult():
         # Store the Sire select result.
         self._sire_object = select_result.__deepcopy__()
 
-        print(self._sire_object)
-
         # Store the number of results.
         self._num_results = len(self._sire_object)
 
