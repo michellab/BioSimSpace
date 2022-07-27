@@ -32,6 +32,21 @@ __all__ = ["SearchResult"]
 import sire.legacy as _Sire
 
 
+def _from_select_result(obj):
+    print(obj)
+    import sire
+    try:
+        obj = sire.mol.__from_select_result(obj)
+    except Exception:
+        obj = sire.mol.__from_select_result(sire.legacy.Mol.SelectResult(obj))
+
+    for atom in obj:
+        print(atom)
+
+    print(obj)
+    return obj
+
+
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
 
@@ -189,6 +204,78 @@ class SearchResult():
                A copy of the object.
         """
         return SearchResult(self)
+
+    def atoms(self):
+        """Return all of the atoms that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its atoms.
+        """
+        return SearchResult(self._sire_object.atoms())
+
+    def residues(self):
+        """Return all of the residues that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its residues.
+        """
+        return SearchResult(self._sire_object.residues())
+
+    def chains(self):
+        """Return all of the chains that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its chains.
+        """
+        return SearchResult(self._sire_object.chains())
+
+    def segments(self):
+        """Return all of the segments that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its segments.
+        """
+        return SearchResult(self._sire_object.segments())
+
+    def molecules(self):
+        """Return all of the molecules that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its molecules.
+        """
+        return SearchResult(self._sire_object.molecules())
+
+    def bonds(self):
+        """Return all of the bonds that contain the results of this
+           search.
+
+            Returns
+            -------
+
+            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+                A copy of the object viewed via its bonds.
+        """
+        return SearchResult(self._sire_object.bonds())
 
     def nResults(self):
         """Return the number of results.

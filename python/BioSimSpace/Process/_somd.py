@@ -579,7 +579,7 @@ class Somd(_process.Process):
                 % self._protocol.getLambda())                                       # The value of lambda.
 
             res_num = _System(self._renumbered_system) \
-                .search("perturbable")[0]._sire_object.number().value()
+                .search("perturbable").residues()[0]._sire_object.number().value()
             self.addToConfig("perturbed residue number = %s" % res_num)             # Perturbed residue number.
 
         else:
