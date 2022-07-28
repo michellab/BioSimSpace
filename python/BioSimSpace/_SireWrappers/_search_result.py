@@ -136,10 +136,10 @@ class SearchResult():
             if isinstance(result, _Sire.Mol._Mol.Atom):
                 return _Atom(result)
             # Residue.
-            if isinstance(result, _Sire.Mol._Mol.Residue):
+            elif isinstance(result, _Sire.Mol._Mol.Residue):
                 return _Residue(result)
             # Molecule.
-            if isinstance(result, _Sire.Mol._Mol.Molecule):
+            elif isinstance(result, _Sire.Mol._Mol.Molecule):
                 # If the molecule contains a single atom, then convert to an atom.
                 if result.nAtoms() == 1:
                     return _Atom(result.atom())
@@ -149,6 +149,9 @@ class SearchResult():
                 # Otherwise, append the molecule.
                 else:
                     return _Molecule(result)
+            # Bond
+            elif isinstance(result, _Sire.MM._MM.Bond):
+                return _Bond(result)
             # Unsupported.
             else:
                 print(f"WARNING: Type {type(result)} is not supported.")
@@ -318,3 +321,4 @@ class SearchResult():
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
 from ._residue import Residue as _Residue
+from ._bond import Bond as _Bond
