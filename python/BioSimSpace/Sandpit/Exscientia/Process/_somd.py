@@ -233,6 +233,14 @@ class Somd(_process.Process):
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+
+            # Check we have the correct number of decoupled/ perturbable molecules.
+            n_pert_or_decoupled = system.nPerturbableMolecules() + system.nDecoupledMolecules()
+            if n_pert_or_decoupled != 1:
+                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
+                                 "perturbable or decoupled molecule. The system has " \
+                                 f"{n_pert_or_decoupled}.")
+
             if system.nPerturbableMolecules() == 1:
                 # Extract the perturbable molecule.
                 pert_mol = system.getPerturbableMolecules()[0]
@@ -247,7 +255,7 @@ class Somd(_process.Process):
                 # Remove the perturbable molecule.
                 system.updateMolecules(pert_mol)
 
-            if system.nDecoupledMolecules() == 1:
+            elif system.nDecoupledMolecules() == 1:
                 # Extract the decoupled molecule.
                 decoupled_mol = system.getDecoupledMolecules()[0]
 
@@ -258,14 +266,8 @@ class Somd(_process.Process):
 
                 self._input_files.append(self._pert_file)
 
-                # Remove the perturbable molecule.
+                # Remove the decoupled molecule.
                 system.updateMolecules(decoupled_mol)
-
-            else:
-                n_pert_or_decoupled = system.nPerturbableMolecules() + system.nDecoupledMolecules()
-                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
-                                 "perturbable or decoupled molecule. The system has " \
-                                 f"{n_pert_or_decoupled}.")
 
         # If this is a different protocol and the system still contains a
         # perturbable molecule, then we'll warn the user and simulate the
