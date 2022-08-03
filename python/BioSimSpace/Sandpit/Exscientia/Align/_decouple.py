@@ -10,7 +10,7 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 
 __all__ = ["decouple"]
 
-def decouple(molecule, charge=(True, False), LJ=(True, False), property_map={} intramol=True):
+def decouple(molecule, charge=(True, False), LJ=(True, False), property_map={}, intramol=True):
     """Make the molecule as being decoupled, where the interactions with the
     rest of the environment are removed, or annihilate, where the interactions
     within the molecule are removed as well (choose this mode with
