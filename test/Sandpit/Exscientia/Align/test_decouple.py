@@ -2,6 +2,9 @@ import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
+from Sire import Units as _SireUnits
+from Sire import Mol as _SireMol
+from Sire import MM as _SireMM
 
 @pytest.fixture()
 def mol():
@@ -61,3 +64,18 @@ def test_topology(mol, tmp_path):
     new = decouple(mol)
     BSS.IO.saveMolecules(str(tmp_path / 'topol'), new.toSystem(), 'grotop')
     assert (tmp_path / 'topol.top').is_file()
+
+def test_end_types(mol):
+    '''Check that the correct properties have been set at either
+    end of the perturbation.'''
+
+    decoupled_mol = decouple(mol)
+    assert decoupled_mol._sire_object.property("charge0") == mol._sire_object.property("charge")
+    assert decoupled_mol._sire_object.property("LJ0") == mol._sire_object.property("LJ")
+    assert decoupled_mol._sire_object.property("element0") == mol._sire_object.property("element")
+    assert decoupled_mol._sire_object.property("ambertype0") == mol._sire_object.property("ambertype")
+    for atom in decoupled_mol._sire_object.atoms():
+        assert atom.property("charge1") == 0*_SireUnits.e_charge
+        assert atom.property("LJ1") == _SireMM.LJParameter()
+        assert atom.property("element1") == _SireMol.Element(0)
+        assert atom.property("ambertype1") == "du"
