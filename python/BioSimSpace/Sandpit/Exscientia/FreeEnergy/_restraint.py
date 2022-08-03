@@ -306,13 +306,13 @@ class Restraint():
         phiA0 = (self._restraint_dict['equilibrium_values']['phiA0']/radian)
         phiB0 = (self._restraint_dict['equilibrium_values']['phiB0']/radian)
         phiC0 = (self._restraint_dict['equilibrium_values']['phiC0']/radian)
-        # Force constants.value()
-        kr = (self._restraint_dict['force_constants']['kr']/(kcal_per_mol / (angstrom*angstrom)))
-        kthetaA = (self._restraint_dict['force_constants']['kthetaA']/(kcal_per_mol / (radian*radian)))
-        kthetaB = (self._restraint_dict['force_constants']['kthetaB']/(kcal_per_mol / (radian*radian)))
-        kphiA = (self._restraint_dict['force_constants']['kphiA']/(kcal_per_mol / (radian*radian)))
-        kphiB = (self._restraint_dict['force_constants']['kphiB']/(kcal_per_mol / (radian*radian)))
-        kphiC = (self._restraint_dict['force_constants']['kphiC']/(kcal_per_mol / (radian*radian)))
+        # Force constants. Halve these as SOMD defines force constants as E = kx**2
+        kr = (self._restraint_dict['force_constants']['kr']/(kcal_per_mol / (angstrom*angstrom)))/2
+        kthetaA = (self._restraint_dict['force_constants']['kthetaA']/(kcal_per_mol / (radian*radian)))/2
+        kthetaB = (self._restraint_dict['force_constants']['kthetaB']/(kcal_per_mol / (radian*radian)))/2
+        kphiA = (self._restraint_dict['force_constants']['kphiA']/(kcal_per_mol / (radian*radian)))/2
+        kphiB = (self._restraint_dict['force_constants']['kphiB']/(kcal_per_mol / (radian*radian)))/2
+        kphiC = (self._restraint_dict['force_constants']['kphiC']/(kcal_per_mol / (radian*radian)))/2
 
         restr_string = f'boresch restraints dictionary = {{"anchor_points":{{"r1":{r1}, "r2":{r2}, "r3":{r3}, "l1":{l1}, '
         restr_string += f'"l2":{l2}, "l3":{l3}}}, '
