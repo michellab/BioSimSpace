@@ -1386,7 +1386,12 @@ class Relative():
         # Setup all of the simulation processes for each leg.
 
         # Get the lambda values from the protocol for the first leg.
-        lam_vals = self._protocol.getLambdaValues(type='dataframe')
+        lam_vals = self._protocol.getLambdaValues(type='list')
+
+        # If lam vals stored as a dataframe with more than 1 row, the above will 
+        # return a dataframe. Check for this and raise an error.
+        if type(lam_vals) == _pd.core.frame.DataFrame:
+            raise TypeError("SOMD can only handle a single set of lambda values for a given perturbation.")
 
         # Create a process for the first lambda value.
         lam = lam_vals.loc[0]
