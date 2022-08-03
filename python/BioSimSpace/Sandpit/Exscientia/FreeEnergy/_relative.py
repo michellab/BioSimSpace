@@ -1408,6 +1408,10 @@ class Relative():
             else:
                 platform = "CPU"
 
+            # Check against passing multiple sets of lam vals to SOMD
+            if lam_vals.shape[1] != 1:
+                raise ValueError("SOMD can only handle a single set of lambda values for a given perturbation.")
+
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map, extra_options=self._extra_options,
