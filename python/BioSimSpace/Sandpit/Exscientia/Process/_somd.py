@@ -262,9 +262,10 @@ class Somd(_process.Process):
                 system.updateMolecules(decoupled_mol)
 
             else:
+                n_pert_or_decoupled = system.nPerturbableMolecules() + system.nDecoupledMolecules()
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
                                  "perturbable or decoupled molecule. The system has " \
-                                 f"{system.nPerturbableMolecules() + system.nDecoupledMolecules()}.")
+                                 f"{n_pert_or_decoupled}.")
 
         # If this is a different protocol and the system still contains a
         # perturbable molecule, then we'll warn the user and simulate the
