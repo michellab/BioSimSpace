@@ -1437,11 +1437,10 @@ class Relative():
             processes.append(first_process)
 
         # Loop over the rest of the lambda values.
-        for x, row in lam_vals.iterrows():
+        for x, lam in lam_vals.iterrows():
             if x == 0:
                 # Skip the zero-th window
                 continue
-            lam = row.values[0]
             self._protocol.setLambda(lam)
             # Name the directory.
             new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
@@ -1465,7 +1464,8 @@ class Relative():
                 with open(new_dir + "/somd.cfg", "r") as f:
                     for line in f:
                         if "lambda_val" in line:
-                            new_config.append("lambda_val = %s\n" % lam)
+                            # Get lam val from the Series
+                            new_config.append("lambda_val = %s\n" % lam.values[0])
                         else:
                             new_config.append(line)
                 with open(new_dir + "/somd.cfg", "w") as f:
