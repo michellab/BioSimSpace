@@ -10,7 +10,7 @@ from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian, degree
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def restraint():
     '''Generate the Boresch restaint object.'''
     ligand = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*")).getMolecule(0)
