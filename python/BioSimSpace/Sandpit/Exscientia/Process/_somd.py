@@ -259,6 +259,14 @@ class Somd(_process.Process):
                 # Extract the decoupled molecule.
                 decoupled_mol = system.getDecoupledMolecules()[0]
 
+                # ABFE with SOMD can only currently handle complete annihilation
+                # of the Coulombic and LJ interactions. Check that the user has not
+                # requested preservation of intramolecular interactions.
+                if decoupled_mol._sire_object.property("decouple")['intramol'].value() == False:
+                    raise ValueError("SOMD cannot preserve intramolecular interactions "
+                                     "in the decoupled molecule. Please set 'intramol' to "
+                                     "True when marking the molecule as decoupled.")
+
                 # Write the perturbation file and get the molecule corresponding
                 # to the lambda = 0 state.
                 decoupled_mol = _to_pert_file(decoupled_mol, self._pert_file, property_map=self._property_map,
