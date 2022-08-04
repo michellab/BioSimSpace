@@ -24,7 +24,7 @@ from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 has_gromacs = BSS._gmx_exe is not None
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-class Test_gmx_RBFE():
+class Test_gmx_ABFE():
     @staticmethod
     @pytest.fixture(scope='class')
     def freenrg():
