@@ -1,5 +1,4 @@
 import pathlib
-from os.path import exists
 
 import pytest
 import pandas as pd
