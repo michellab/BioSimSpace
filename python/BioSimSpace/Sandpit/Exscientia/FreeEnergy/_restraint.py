@@ -351,9 +351,28 @@ class Restraint():
             raise NotImplementedError(f'MD Engine {engine} not implemented '
                                       f'yet. Only Gromacs and SOMD are supported.')
 
-    @property
-    def correction(self):
-        '''Give the free energy of removing the restraint.'''
+    def getCorrection(self, unit="kj_per_mol"):
+        """Calculate the free energy of releasing the restraint
+        to the standard state volume.'''
+
+           Parameters
+           ----------
+           unit : str
+               The unit in which to return the energy
+               ("kj_per_mol" or "kcal_per_mol"). Defaults to "kj_per_mol".
+
+           Returns
+           ----------
+           dG : float
+            Free energy of releasing the restraint to the standard state volume.
+        """
+
+        allowed_units = ['kj_per_mol', 'kcal_per_mol']
+        unit = unit.lower()
+        if unit not in allowed_units:
+            raise ValueError(f'Unit {unit} not allowed. Allowed units are '
+                             f'{allowed_units}')
+
         if self._rest_type == 'boresch':
             K = k_boltz * (kcal_per_mol / kelvin) / (kj_per_mol / kelvin) # Gas constant in kJ/mol/K
             V = ((Sire_meter3 / 1000 / Sire_mole) / Sire_nanometer3).value() # standard volume in nm^3 (liter/N_A)
@@ -378,5 +397,14 @@ class Restraint():
 
             dG = - K * T * np.log(arg)
             # Attach unit
-            dG *= kj_per_mol
+            if unit == "kj_per_mol":
+                dG *= kj_per_mol
+            elif unit == "kcal_per_mol":
+                dG *= (kj_per_mol/kcal_per_mol)*kcal_per_mol
             return dG
+
+
+    @property
+    def correction(self):
+        '''Give the free energy of removing the restraint.'''
+        return self.getCorrection(unit="kj_per_mol")
