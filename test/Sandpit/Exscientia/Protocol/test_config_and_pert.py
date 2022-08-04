@@ -168,7 +168,7 @@ class TestSomdABFE():
         '''Test for turning on the restraint'''
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="restraint")
-        freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
         with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
@@ -204,7 +204,7 @@ class TestSomdABFE():
         '''Test for discharging the ligand'''
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="discharge_soft")
-        freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
         with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
@@ -240,7 +240,7 @@ class TestSomdABFE():
         '''Test for vanishing the ligand'''
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="vanish_soft")
-        freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
         with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
@@ -276,7 +276,7 @@ class TestSomdABFE():
         '''Test for simultaneously discharging and vanishing the ligand'''
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="full")
-        freenrg = BSS.FreeEnergy.Relative(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
         with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
