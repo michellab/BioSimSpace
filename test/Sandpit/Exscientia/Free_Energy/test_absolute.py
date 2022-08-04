@@ -1,5 +1,6 @@
 import pathlib
 
+import time
 import pytest
 import pandas as pd
 import numpy as np
@@ -136,16 +137,17 @@ class Test_Somd_ABFE():
         freenrg.wait()
         return freenrg
 
+    @pytest.mark.xfail(reason="freenrg.wait() doesn't work for SOMD, so files aren't created in time.")
     def test_files_exist(self, freenrg):
         '''Test if all the files have been created.'''
         path = pathlib.Path(freenrg._work_dir)
-        # TODO: Fix _process_runner.wait so this works with range(3)
-        for i in range(1):
+        for i in range(3):
             assert (path / f'lambda_{i}' / 'simfile.dat').is_file()
             assert (path / f'lambda_{i}' / 'sim_restart.s3').is_file()
             assert (path / f'lambda_{i}' / 'traj000000001.dcd').is_file()
             assert (path / f'lambda_{i}' / 'gradients.dat').is_file()
 
+    @pytest.mark.xfail(reason="freenrg.wait() doesn't work for SOMD, so files aren't created in time.")
     def test_correct_simfile(self, freenrg):
         '''Check if correct numbers of entries in simfile.dat'''
         path = pathlib.Path(freenrg._work_dir)
