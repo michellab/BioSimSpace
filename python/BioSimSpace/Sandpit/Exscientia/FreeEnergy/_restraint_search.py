@@ -1105,7 +1105,7 @@ class RestraintSearch():
                                     "kphiC": kphiC * _kcal_per_mol / (
                                                 _radian * _radian)}}
 
-            return Restraint(system, restraint_dict, type='Boresch')
+            return Restraint(system, restraint_dict, temperature=temperature, rest_type='Boresch')
 
         restraint = getBoreschRestraint(selected_pairs_boresch[0])
         normal_frame = None
