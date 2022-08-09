@@ -62,8 +62,9 @@ except:
 import numpy as _np
 import MDAnalysis as _mda 
 from MDAnalysis.analysis.distances import dist as _dist
+from MDAnalysis.lib.distances import calc_angles as _calc_angles
 from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
-from numpy.linalg import norm as _norm
+from scipy.stats import circmean as _circmean
 import matplotlib.pyplot as _plt
 
 from Sire.Base import getBinDir as _getBinDir
@@ -106,7 +107,7 @@ class RestraintSearch():
     restraints are selected"""
 
     # Create a list of supported molecular dynamics engines.
-    _engines = ["GROMACS", "SOMD"] # TODO: "SOMD"
+    _engines = ["GROMACS", "SOMD"] 
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
             gpu_support=False, ignore_warnings=False,
@@ -910,9 +911,7 @@ class RestraintSearch():
             C = u.atoms[idx1].position
             B = u.atoms[idx2].position
             A = u.atoms[idx3].position
-            BA = A - B
-            BC = C - B
-            angle = _np.arccos(_np.dot(BA, BC) / (_norm(BA) * _norm(BC)))
+            angle = _calc_angles(C, B, A, box=u.dimensions)
             return angle
 
 
@@ -935,7 +934,7 @@ class RestraintSearch():
             phiA = getDihedral(r3, r2, r1, l1, u)
             phiB = getDihedral(r2, r1, l1, l2, u)
             phiC = getDihedral(r1, l1, l2, l3, u)
-            # Not restrained but distance from coolinearity must be checked
+            # Not restrained but distance from collinearity must be checked
             thetaR = getAngle(r3, r2, r1, u)  # Receptor internal angle
             thetaL = getAngle(l1, l2, l3, u)  # Ligand internal angle
             return r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL
@@ -1014,61 +1013,39 @@ class RestraintSearch():
                         for dof in boresch_dof_list:
                             boresch_dof_data[pair][dof]["values"] = _np.array(
                                 boresch_dof_data[pair][dof]["values"])
-                            boresch_dof_data[pair][dof]["avg"] = \
-                            boresch_dof_data[pair][dof]["values"].mean()
-                            # For dihedrals, compute variance and mean based on list of values corrected for periodic boundary at
-                            # pi radians, because there is no problem with dihedrals in this region
-                            if dof[:3] == "phi":
-                                avg = boresch_dof_data[pair][dof]["avg"]
-
-                                # correct variance - fully rigorous
-                                corrected_values_sd = []
-                                for val in boresch_dof_data[pair][dof]["values"]:
-                                    dtheta = abs(val - avg)
-                                    corrected_values_sd.append(
-                                        min(dtheta, 2 * _np.pi - dtheta))
-                                corrected_values_sd = _np.array(
-                                    corrected_values_sd)
-                                boresch_dof_data[pair][dof][
-                                    "sd"] = corrected_values_sd.std()
-
-                                # Correct mean (will fail if very well split above and below 2pi)
-                                # get middle of interval based on current mean
-                                # TODO: Should use circular mean instead, see scipy
-                                corrected_values_avg = []
-                                periodic_bound = avg - _np.pi
-                                if periodic_bound < -_np.pi:
-                                    periodic_bound += 2 * _np.pi
-                                # shift vals from below periodic bound to above
-                                for val in boresch_dof_data[pair][dof]["values"]:
-                                    if val < periodic_bound:
-                                        corrected_values_avg.append(
-                                            val + 2 * _np.pi)
-                                    else:
-                                        corrected_values_avg.append(val)
-                                corrected_values_avg = _np.array(
-                                    corrected_values_avg)
-                                mean_corrected = corrected_values_avg.mean()
-                                # shift mean back to normal range
-                                if mean_corrected > _np.pi:
-                                    boresch_dof_data[pair][dof][
-                                        "avg"] = mean_corrected - 2 * _np.pi
-                                else:
-                                    boresch_dof_data[pair][dof][
-                                        "avg"] = mean_corrected
-
+                            # Check not dihedral
+                            if not dof[:3] == "phi":
+                                boresch_dof_data[pair][dof]["avg"] = \
+                                boresch_dof_data[pair][dof]["values"].mean()
+                                boresch_dof_data[pair][dof]["var"] = \
+                                boresch_dof_data[pair][dof]["values"].var()
+                            # If dihedral, have to calculate circular stats
                             else:
-                                boresch_dof_data[pair][dof]["sd"] = \
-                                boresch_dof_data[pair][dof]["values"].std()
+                                circmean = _circmean(boresch_dof_data[pair][dof]["values"], 
+                                            high=_np.pi, low=-_np.pi)
+                                boresch_dof_data[pair][dof]["avg"] = circmean
+
+                                # Cannot use scipy's circvar as later than v 1.8
+                                # as this is calculated in the range 0 - 1
+                                corrected_values = []
+                                for val in boresch_dof_data[pair][dof]["values"]:
+                                    dtheta = abs(val - circmean)
+                                    corrected_values.append(
+                                        min(dtheta, 2 * _np.pi - dtheta))
+                                corrected_values = _np.array(
+                                    corrected_values)
+                                boresch_dof_data[pair][dof][
+                                    "var"] = corrected_values.var()
+
                             # Exclude variance of internal angles as these are not restrained
                             if (dof != "thetaR" and dof != "thetaL"):
                                 boresch_dof_data[pair]["tot_var"] += \
-                                boresch_dof_data[pair][dof]["sd"] ** 2
+                                boresch_dof_data[pair][dof]["var"]
                             # Assume Gaussian distributions and calculate force constants for harmonic potentials
-                            # so as to reproduce these distributions
+                            # so as to reproduce these distributions at 298 K
                             boresch_dof_data[pair][dof]["k"] = 0.593 / (
                                         boresch_dof_data[pair][dof][
-                                            "sd"] ** 2)  # RT at 289 K is 0.593 kcal mol-1
+                                            "var"])  # RT at 298 K is 0.593 kcal mol-1
 
             ### Filter, Pick Optimum Degrees of Freedom, and Select Force Constants Based on Variance, Select Equilibrium Values
 
