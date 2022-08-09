@@ -547,20 +547,24 @@ class Gromacs(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+            block = True
 
         # Warn the user if the process has exited with an error.
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        # Minimisation trajectories have a single frame, i.e. the final state.
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            time = 0*_Units.Time.nanosecond
-        # Get the current simulation time.
+        if block is True:
+            return self._getFinalFrame()
         else:
-            time = self.getTime()
+            # Minimisation trajectories have a single frame, i.e. the final state.
+            if isinstance(self._protocol, _Protocol.Minimisation):
+                time = 0*_Units.Time.nanosecond
+            # Get the current simulation time.
+            else:
+                time = self.getTime()
 
-        # Grab the most recent frame from the trajectory file.
-        return self._getFrame(time)
+            # Grab the most recent frame from the trajectory file.
+            return self._getFrame(time)
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -1992,6 +1996,62 @@ class Gromacs(_process.Process):
             except KeyError:
                 return None
 
+    def _getFinalFrame(self):
+        """Get the frame from the GRO file generated at the end of the
+        simulation.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system from the final frame.
+        """
+        # Grab the last frame from the GRO file.
+        with _Utils.cd(self._work_dir):
+
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Locate the trajectory file.
+            crd_file = self._find_coordinate_file()
+
+            if crd_file is None:
+                return None
+
+            # Read the frame file.
+            new_system = _IO.readMolecules([crd_file, self._top_file],
+                                           property_map=self._property_map)
+
+            # Create a copy of the existing system object.
+            old_system = self._system.copy()
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
+
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
+
     def _getFrame(self, time):
         """Get the trajectory frame closest to a specific time value.
 
@@ -2117,6 +2177,31 @@ class Gromacs(_process.Process):
                     return None
         else:
             return self._traj_file
+
+    def _find_coordinate_file(self):
+        """Helper function to find the coordinate file generated at the end of the
+           process.
+
+           Returns
+           -------
+
+           crd_file : str
+               The path to the coordinate GRO file.
+        """
+        # Check for any GRO extension.
+        crd_file = _IO.glob("%s/*.gro" % self._work_dir)
+
+        # Store the number of GRO files.
+        num_crd = len(crd_file)
+
+        # Only accept if a single GRO file is present.
+        if num_crd == 1:
+            return crd_file[0]
+        else:
+            _warnings.warn("Invalid coordinate file! "
+                           "%d gro files found,."
+                           % (num_crd))
+            return None
 
 def _is_minimisation(config):
     """Helper function to check whether a custom configuration
