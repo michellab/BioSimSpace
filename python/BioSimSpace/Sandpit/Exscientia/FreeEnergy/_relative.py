@@ -1387,7 +1387,10 @@ class Relative():
         # Nest the working directories inside self._work_dir.
 
         # Name the first directory.
-        first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+        if self._engine == "SOMD":
+            first_dir = f"{self._work_dir}/lambda_{lam.values[0]:.3f}"
+        else:
+            first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
         # SOMD.
         if self._engine == "SOMD":
@@ -1432,7 +1435,12 @@ class Relative():
                 continue
             self._protocol.setLambda(lam)
             # Name the directory.
-            new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+            if self._engine == "SOMD":
+                new_dir = f"{self._work_dir}/lambda_{lam.values[0]:.3f}"
+            # If using GROMACS, doesn't make sense to use single value of lambda
+            # when using lambda array.
+            else:
+                new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
             # Use the full path.
             if new_dir[0] != "/":
