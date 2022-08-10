@@ -978,7 +978,7 @@ class RestraintSearch():
             return config_vol
 
 
-        def findOrderedBoresch(u, pair_list, temp, no_pairs=20):
+        def findOrderedBoresch(u, pair_list, temp, no_pairs=200):
             """Calculate a list of Boresch restraints and associated 
             statistics over the trajectory.
 
