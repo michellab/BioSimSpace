@@ -385,6 +385,8 @@ class RestraintSearch():
             if "CUDA_VISIBLE_DEVICES" in _os.environ:
                 platform = "CUDA"
             else:
+                if gpu_support:
+                    raise ValueError("gpu_support cannot be True if CUDA_VISIBLE_DEVICES is not set.")
                 platform = "CPU"
 
             self._process = _Process.Somd(system, self._protocol,
