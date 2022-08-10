@@ -1158,7 +1158,7 @@ class RestraintSearch():
             # Plot variation with time to see if there are slow DOF
             fig, axs = _plt.subplots(1, n_dof, figsize=(16, 4), dpi=500)
             for i, dof in enumerate(dof_to_plot):
-                axs[i].plot([x for x in range(300)],
+                axs[i].plot([x for x in range(len(dof_data[label][dof]["values"]))],
                             dof_data[label][dof]["values"])
                 if dof[0] == "r":
                     axs[i].set_ylabel("r ($\AA$)")
@@ -1191,18 +1191,7 @@ class RestraintSearch():
                            'r2': boresch_dof_data[pair]["anchor_ats"][4],
                            'r3': boresch_dof_data[pair]["anchor_ats"][5]}
 
-            anchor_ats = {}
-
-            # Get atoms from system, excluding water and ions
-            for mol in system.search(
-                    "not (resname WAT) or (resname CL) or (resname NA)"):  # TODO: Expand this
-                for anchor in list(
-                        anchor_idxs.keys()):  # Change to list to avoid error due to changing dict size
-                    search = mol.search(f'atomidx {anchor_idxs[anchor]}')
-                    # see if we have found the anchor
-                    if len(search) == 1:
-                        anchor_ats[anchor] = search[0]
-                        del anchor_idxs[anchor]
+            anchor_ats = {k: system.getAtom(int(v)) for k, v in anchor_idxs.items()}
 
             # Check we have found all anchors
             if not len(anchor_ats) == 6:
@@ -1264,4 +1253,4 @@ class RestraintSearch():
         # Convert to BSS compatible dictionary
         restraint = getBoreschRestraint(pairs_ordered_boresch[restraint_idx], boresch_dof_data)
 
-        return restraint  # TODO: implement normal frame
+        return restraint  # TODO: implement normal frame - waiting for traj.getFrames() to be fixed.
