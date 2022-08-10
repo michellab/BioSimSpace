@@ -138,7 +138,8 @@ def run_process(system, protocol, **kwargs):
     process.start()
 
     # Wait for the process to end.
-    process.wait()
+    system = process.getSystem(block=True)
+    assert system is not None
 
     # Return the process exit code.
     return not process.isError()
