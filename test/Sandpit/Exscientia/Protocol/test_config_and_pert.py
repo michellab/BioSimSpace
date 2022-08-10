@@ -171,7 +171,7 @@ class TestSomdABFE():
         freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.cfg", 'r') as f:
             cfg_text = f.read()
             assert 'use boresch restraints = True' in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
@@ -182,7 +182,7 @@ class TestSomdABFE():
             assert 'turn on receptor-ligand restraints mode = True' in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.pert", 'r') as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}x" for i in range(1, 7)]
@@ -207,7 +207,7 @@ class TestSomdABFE():
         freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.cfg", 'r') as f:
             cfg_text = f.read()
             assert 'use boresch restraints = True' in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
@@ -218,7 +218,7 @@ class TestSomdABFE():
             assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.pert", 'r') as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}x" for i in range(1, 7)]
@@ -243,7 +243,7 @@ class TestSomdABFE():
         freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.cfg", 'r') as f:
             cfg_text = f.read()
             assert 'use boresch restraints = True' in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
@@ -254,7 +254,7 @@ class TestSomdABFE():
             assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.pert", 'r') as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}x" for i in range(1, 7)]
@@ -279,7 +279,7 @@ class TestSomdABFE():
         freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.cfg", 'r') as f:
             cfg_text = f.read()
             assert 'use boresch restraints = True' in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
@@ -290,7 +290,7 @@ class TestSomdABFE():
             assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.000/somd.pert", 'r') as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}x" for i in range(1, 7)]
