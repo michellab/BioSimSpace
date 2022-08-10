@@ -69,6 +69,7 @@ import matplotlib.pyplot as _plt
 
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
+from Sire.Units import k_boltz # kcal / (mol K)
 
 from .. import _gmx_exe
 from .. import _is_notebook
@@ -907,7 +908,6 @@ class RestraintSearch():
 
         def getAngle(idx1, idx2, idx3, u):
             """Angle in rad"""
-            #TODO: Use mda.lib.distances.calc_angle to speed up
             C = u.atoms[idx1].position
             B = u.atoms[idx2].position
             A = u.atoms[idx3].position
@@ -940,7 +940,45 @@ class RestraintSearch():
             return r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL
 
 
-        def findOrderedBoresch(u, pair_list, no_pairs=20):
+        def getConfigVol(equil_vals, force_consts, temp):
+            """Find the configurational volume accessible to the 
+            decoupled restrained ligand based on the Boresch restraint.
+            Based on part of Eqn 32 of J. Phys. Chem. B 2003, 107, 35, 9535–9551.
+            
+            Parameters
+            ----------
+
+            equil_vals : dict
+                Dictionary of equilibrium values for the Boresch restraint. Must have units
+                of Angstrom and radians. Of the form {"r": r0, "thetaA": thetaA0, 
+                "thetaB": thetaB0, "phiA": phiA0, "phiB": phiB0, "phiC": phiC0}.
+
+            force_consts : dict
+                Dictionary of force constants for the Boresch restraint. Force constants
+                must have units of kcal /mol. Of the form {"r": kr, "thetaA": kthetaA,
+                "thetaB": kthetaB, "phiA": kphiA0, "phiB": kphiB, "phiC": kphiC}.
+
+            temp : float
+                The temperature, in K.
+
+            Returns
+            -------
+
+            config_vol : float
+                The configurational volume accessible to the restrained decoupled ligand,
+                in Angstrom^3.
+            """
+            RT = k_boltz * temp # in kcal / mol
+            numerator1 = (equil_vals["r"] ** 2) * _np.sin(equil_vals["thetaA"]) * \
+                            _np.sin(equil_vals["thetaB"]) # Units: A**2
+            numerator2 = (2 * _np.pi * RT) **3 # Units: (kcal / mol )**3
+            denominator = _np.sqrt(_np.array([val for val in force_consts.values()]).prod()) 
+            # Units: (kcal / mol)**3 A**-1
+            config_vol = numerator1 * numerator2 / denominator # Units: A**3
+            return config_vol
+
+
+        def findOrderedBoresch(u, pair_list, temp, no_pairs=20):
             """Calculate a list of Boresch restraints and associated 
             statistics over the trajectory.
 
@@ -954,6 +992,9 @@ class RestraintSearch():
             pair_list : List of tuples
                 List of receptor-ligand atom pairs to be used as the r1 and l1
                 anchor points in candidate Boresch restraints.
+
+            temp : float
+                The temperature, in K.
 
             no_pairs : int
                 Number of pairs to be used in the calculation. Pairs in pair_list
@@ -971,6 +1012,9 @@ class RestraintSearch():
                 Dictionary of statistics for the Boresch restraints obtained over the
                 trajectory. Keys are the pair tuples supplied in pair_list.
             """
+            boresch_dof_list = ["r", "thetaA", "thetaB", "phiA", "phiB",
+                                "phiC", "thetaR", "thetaL"] #thetaR and thetaL are the internal
+                                                            # angles of the receptor and ligand
 
             # get values of degrees of freedom for lowest SD pairs across whole trajectory
 
@@ -983,19 +1027,13 @@ class RestraintSearch():
                 boresch_dof_data[pair]["anchor_ats"] = [l1_idx, l2_idx, l3_idx,
                                                         r1_idx, r2_idx, r3_idx]
 
-                boresch_dof_list = ["r", "thetaA", "thetaB", "phiA", "phiB",
-                                    "phiC", "thetaR", "thetaL"] #thetaR and thetaL are the internal
-                                                                # angles of the receptor and ligand
 
                 # Add sub dictionaries for each Boresch degree of freedom
                 for dof in boresch_dof_list:
                     boresch_dof_data[pair][dof] = {}
                     boresch_dof_data[pair][dof]["values"] = []
 
-                # Populate these dictionaries with values from trajectory
-                n_frames = len(u.trajectory)
-
-                for i, frame in enumerate(
+                for i, _ in enumerate(
                         u.trajectory):  # TODO: Use MDA.analysis.base instead?
                     r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = getBoreschDof(
                         l1_idx, l2_idx, l3_idx, r1_idx, r2_idx, r3_idx, u)
@@ -1008,67 +1046,65 @@ class RestraintSearch():
                     boresch_dof_data[pair]["thetaR"]["values"].append(thetaR)
                     boresch_dof_data[pair]["thetaL"]["values"].append(thetaL)
 
-                    if i == n_frames - 1:
-                        boresch_dof_data[pair]["tot_var"] = 0
-                        for dof in boresch_dof_list:
-                            boresch_dof_data[pair][dof]["values"] = _np.array(
-                                boresch_dof_data[pair][dof]["values"])
-                            # Check not dihedral
-                            if not dof[:3] == "phi":
-                                boresch_dof_data[pair][dof]["avg"] = \
-                                boresch_dof_data[pair][dof]["values"].mean()
-                                boresch_dof_data[pair][dof]["var"] = \
-                                boresch_dof_data[pair][dof]["values"].var()
-                            # If dihedral, have to calculate circular stats
-                            else:
-                                circmean = _circmean(boresch_dof_data[pair][dof]["values"], 
-                                            high=_np.pi, low=-_np.pi)
-                                boresch_dof_data[pair][dof]["avg"] = circmean
+                # Calculate statistics for each Boresch degree of freedom
+                for dof in boresch_dof_list:
+                    boresch_dof_data[pair][dof]["values"] = _np.array(
+                        boresch_dof_data[pair][dof]["values"])
+                    # Check not dihedral
+                    if not dof[:3] == "phi":
+                        boresch_dof_data[pair][dof]["avg"] = \
+                        boresch_dof_data[pair][dof]["values"].mean()
+                        boresch_dof_data[pair][dof]["var"] = \
+                        boresch_dof_data[pair][dof]["values"].var()
+                    # If dihedral, have to calculate circular stats
+                    else:
+                        circmean = _circmean(boresch_dof_data[pair][dof]["values"], 
+                                    high=_np.pi, low=-_np.pi)
+                        boresch_dof_data[pair][dof]["avg"] = circmean
 
-                                # Cannot use scipy's circvar as later than v 1.8
-                                # as this is calculated in the range 0 - 1
-                                corrected_values = []
-                                for val in boresch_dof_data[pair][dof]["values"]:
-                                    dtheta = abs(val - circmean)
-                                    corrected_values.append(
-                                        min(dtheta, 2 * _np.pi - dtheta))
-                                corrected_values = _np.array(
-                                    corrected_values)
+                        # Cannot use scipy's circvar as later than v 1.8
+                        # as this is calculated in the range 0 - 1
+                        corrected_values = []
+                        for val in boresch_dof_data[pair][dof]["values"]:
+                            dtheta = abs(val - circmean)
+                            corrected_values.append(
+                                min(dtheta, 2 * _np.pi - dtheta))
+                        corrected_values = _np.array(
+                            corrected_values)
+                        boresch_dof_data[pair][dof][
+                            "var"] = corrected_values.var()
+
+                    # Assume Gaussian distributions and calculate force constants for harmonic potentials
+                    # so as to reproduce these distributions at 298 K
+                    boresch_dof_data[pair][dof]["k"] = k_boltz * temp / (
                                 boresch_dof_data[pair][dof][
-                                    "var"] = corrected_values.var()
+                                    "var"])  # Force constants in kcal mol-1 A-2 [rad-2]
 
-                            # Exclude variance of internal angles as these are not restrained
-                            if (dof != "thetaR" and dof != "thetaL"):
-                                boresch_dof_data[pair]["tot_var"] += \
-                                boresch_dof_data[pair][dof]["var"]
-                            # Assume Gaussian distributions and calculate force constants for harmonic potentials
-                            # so as to reproduce these distributions at 298 K
-                            boresch_dof_data[pair][dof]["k"] = 0.593 / (
-                                        boresch_dof_data[pair][dof][
-                                            "var"])  # RT at 298 K is 0.593 kcal mol-1
+                # Calculate the configurational volume accessible based on each restraint
+                equil_vals = {dof:boresch_dof_data[pair][dof]["avg"] for dof in boresch_dof_list}
+                force_consts = {dof:boresch_dof_data[pair][dof]["k"] for dof in boresch_dof_list}
+                boresch_dof_data[pair]["config_vol"] = getConfigVol(equil_vals, force_consts, temp)
 
-            ### Filter, Pick Optimum Degrees of Freedom, and Select Force Constants Based on Variance, Select Equilibrium Values
-
-            # Order pairs according to variance
-            # TODO: Order by Boresch correction
+            # Order pairs according to configurational volume - smaller volume indicates stronger
+            # restraints mimicking stronger native interactions
             pairs_ordered_boresch_var = []
             for item in sorted(boresch_dof_data.items(),
-                            key=lambda item: item[1]["tot_var"]):
+                            key=lambda item: item[1]["config_vol"]):
                 pairs_ordered_boresch_var.append(item[0])
-                # print(f'Pair: {item[0]}, total variance: {boresch_dof_dict[item[0]]["tot_var"]}')
 
             # Filter out r < 1, theta >150 or < 30
             pairs_ordered_boresch = []
             for pair in pairs_ordered_boresch_var:
+                # Might be an improvement to filter by kT to collinearity, rather than distance,
+                # although this also could be problematic when the distrubutions are far
+                # from Gaussian
                 cond_dist = boresch_dof_data[pair]["r"]["avg"] > 1
                 avg_angles = []
-                # angles = ["thetaA", "thetaB", "thetaR","thetaL"] # also check internal angles
                 angles = ["thetaA",
                         "thetaB"]  # May also be good to check internal angles, although will be much stiffer
                 for angle in angles:
                     avg_angles.append(boresch_dof_data[pair][angle]["avg"])
                 cond_angles = list(
-                    # TODO: Filter by kT to collinearity, rather than distance
                     map(lambda x: (x < 2.62 and x > 0.52), avg_angles)) # 150 and 30 degrees
                 if cond_dist and all(cond_angles):
                     pairs_ordered_boresch.append(pair)
@@ -1220,7 +1256,7 @@ class RestraintSearch():
         pairs_ordered_sd = findOrderedPairs(u, lig_selection_str, recept_selection_str, cutoff)
 
         # Convert to Boresch anchors, order by correction, and filter
-        pairs_ordered_boresch, boresch_dof_data = findOrderedBoresch(u, pairs_ordered_sd)
+        pairs_ordered_boresch, boresch_dof_data = findOrderedBoresch(u, pairs_ordered_sd, temperature.value())
 
         # Plot
         plotDOF(pairs_ordered_boresch, boresch_dof_data, restraint_idx = restraint_idx)
