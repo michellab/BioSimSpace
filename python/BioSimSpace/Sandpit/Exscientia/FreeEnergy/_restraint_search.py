@@ -289,7 +289,7 @@ class RestraintSearch():
                 method='MDRestraintsGenerator',
                 append_to_lig_selection="",
                 recept_selection_str='protein and name CA C N',
-                cutoff=10, # In Angstrom
+                cutoff=5, # In Angstrom
                 restraint_idx=0,
                 block='AUTO'):
         """Analyse trajectory and select restraints which best mimic strongest
@@ -415,7 +415,7 @@ class RestraintSearch():
                 method='MDRestraintsGenerator',
                 append_to_lig_selection="",
                 recept_selection_str='protein and name CA C N',
-                cutoff=10,
+                cutoff=5,
                 restraint_idx=0): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
@@ -980,7 +980,7 @@ class RestraintSearch():
             return config_vol
 
 
-        def findOrderedBoresch(u, pair_list, temp, no_pairs=200):
+        def findOrderedBoresch(u, pair_list, temp, no_pairs=50):
             """Calculate a list of Boresch restraints and associated 
             statistics over the trajectory.
 
