@@ -167,13 +167,12 @@ class Absolute(_Relative):
 
         # Strip whitespace from engine and convert to upper case.
         engine = engine.replace(" ", "").upper()
+        if engine not in ['GROMACS', 'SOMD']:
+            raise NotImplementedError(f'ABFE functionality for MD Engine {engine} not implemented.')
 
-        # Check that the restraint is passed and is valid.
-        if restraint is None:
-            raise ValueError("A restraint must be specified for absolute binding free energy calculations.")
-        else:
-            if engine not in ['GROMACS', 'SOMD']:
-                raise NotImplementedError(f'Restraint for MD Engine {engine} not implemented.')
+        # Check that if a restraint is passed (bound leg simulation) it is valid.
+        # For free leg simulations, the restraint will be None.
+        if restraint is not None:
             if not isinstance(restraint, _Restraint):
                 raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
             else:
