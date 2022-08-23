@@ -293,12 +293,12 @@ class Restraint():
         '''Format the SOMD string for the Boresch restraints.'''
 
         # Indices
-        r1 = self._system.getIndex(self._restraint_dict['anchor_points']['r1']) + 1
-        r2 = self._system.getIndex(self._restraint_dict['anchor_points']['r2']) + 1
-        r3 = self._system.getIndex(self._restraint_dict['anchor_points']['r3']) + 1
-        l1 = self._system.getIndex(self._restraint_dict['anchor_points']['l1']) + 1
-        l2 = self._system.getIndex(self._restraint_dict['anchor_points']['l2']) + 1
-        l3 = self._system.getIndex(self._restraint_dict['anchor_points']['l3']) + 1
+        r1 = self._system.getIndex(self._restraint_dict['anchor_points']['r1']) 
+        r2 = self._system.getIndex(self._restraint_dict['anchor_points']['r2']) 
+        r3 = self._system.getIndex(self._restraint_dict['anchor_points']['r3']) 
+        l1 = self._system.getIndex(self._restraint_dict['anchor_points']['l1']) 
+        l2 = self._system.getIndex(self._restraint_dict['anchor_points']['l2']) 
+        l3 = self._system.getIndex(self._restraint_dict['anchor_points']['l3']) 
         # Equilibrium values
         r0 = (self._restraint_dict['equilibrium_values']['r0']/angstrom)
         thetaA0 = (self._restraint_dict['equilibrium_values']['thetaA0']/radian)
