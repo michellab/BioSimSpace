@@ -1006,7 +1006,6 @@ class Relative():
                 df.attrs['temperature'] = T
                 df.attrs['energy_unit'] = 'kT' 
                 
-                print(df)
                 return(df)
 
             def _somd_extract_dHdl(simfile, T):
