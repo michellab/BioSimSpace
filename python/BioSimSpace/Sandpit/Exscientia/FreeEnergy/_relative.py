@@ -532,7 +532,7 @@ class Relative():
                 with open(file) as f:
                     for line in f.readlines():
                         if not found_temperature:
-                            match = _re.search("temp0=([\d.]+)", line)
+                            match = _re.search(r"temp0=([\d.]+)", line)
                             if match is not None:
                                 temperatures += [float(match.group(1))]
                                 found_temperature = True
@@ -887,6 +887,7 @@ class Relative():
         if estimator not in ['MBAR','TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
+        #if False:
         if is_alchemlyb:
             files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -1005,6 +1006,7 @@ class Relative():
                 df.attrs['temperature'] = T
                 df.attrs['energy_unit'] = 'kT' 
                 
+                print(df)
                 return(df)
 
             def _somd_extract_dHdl(simfile, T):
@@ -1102,22 +1104,18 @@ class Relative():
             if estimator == 'MBAR':
                 # Process the data files using the alchemlyb library.
                 # Subsample according to statistical inefficiency and then calculate the MBAR.
-                sample_okay = False
                 try:
-                    u_nk = [_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
-                    sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
-                    mbar = _AutoMBAR().fit(sampled_u_nk)
-                    sample_okay = True
-                except:
-                    print("Could not calculate statistical inefficiency.")
-
-                if not sample_okay:
-                    print("Running without calculating the statistical inefficiency and without subsampling...")
                     try:
-                        u_nk = _alchemlyb.concat([_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
-                        mbar = _AutoMBAR().fit(u_nk)
+                        u_nk = [_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
+                        sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
+                        mbar = _AutoMBAR().fit(sampled_u_nk)
                     except:
-                        raise _AnalysisError("MBAR free-energy analysis failed!")
+                        print("Could not calculate statistical inefficiency.")
+                        print("Running without calculating the statistical inefficiency and without subsampling...")
+                        u_nk = _alchemlyb.concat(u_nk)
+                        mbar = _AutoMBAR().fit(u_nk)
+                except:
+                    raise _AnalysisError("MBAR free-energy analysis failed!")
 
                 # Extract the data from the mbar results.
                 data = []
