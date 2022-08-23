@@ -1149,7 +1149,7 @@ class RestraintSearch():
                 axs[i].axvline(x=dof_data[label][dof]["avg"], color='r',
                             linestyle='dashed', linewidth=2, label="mean")
                 if dof[0] == "r":
-                    axs[i].set_xlabel("r ($\AA$)")
+                    axs[i].set_xlabel(r"r ($\AA$)")
                 else:
                     axs[i].set_xlabel(f"{dof} (rad)")
                 axs[i].set_ylabel("Num Vals")
@@ -1163,7 +1163,7 @@ class RestraintSearch():
                 axs[i].plot([x for x in range(len(dof_data[label][dof]["values"]))],
                             dof_data[label][dof]["values"])
                 if dof[0] == "r":
-                    axs[i].set_ylabel("r ($\AA$)")
+                    axs[i].set_ylabel(r"r ($\AA$)")
                 else:
                     axs[i].set_ylabel(f"{dof} (rad)")
                 axs[i].set_xlabel("Frame No")
