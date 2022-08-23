@@ -887,7 +887,6 @@ class Relative():
         if estimator not in ['MBAR','TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
-        #if False:
         if is_alchemlyb:
             files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
