@@ -29,7 +29,6 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Amber"]
 
 from .._Utils import _try_import, _have_imported
-from .._SireWrappers._fast_system import _fastSystemInit
 
 _watchdog = _try_import("watchdog")
 
@@ -42,7 +41,6 @@ else:
 
 import os as _os
 import re as _re
-import shutil as _shutil
 import time as _time
 import shutil as _shutil
 import timeit as _timeit
@@ -53,10 +51,9 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
-from ..Align._merge import _squash
+from ..Align._merge import _squash, _unsquash
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
@@ -266,12 +263,11 @@ class Amber(_process.Process):
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Represent the perturbed system in an AMBER-friendly format.
-            system = _squash(system)
+            system, mapping = _squash(system)
         else:
             system = self._checkPerturbable(system)
-
-        # Initialise the molecule index mapping based on the transformed system/
-        self._mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+            mapping = {_SireMol.MolIdx(x): _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+        self._squashed_system, self._mapping = system, mapping
 
         # RST file (coordinates).
         try:
@@ -443,7 +439,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
+        config = _Protocol.ConfigFactory(self._system, self._protocol, squashed_system=self._squashed_system)
         self.addToConfig(config.generateAmberConfig(extra_options={**config_options, **self._extra_options},
                                                     extra_lines=self._extra_lines))
 
@@ -574,102 +570,19 @@ class Amber(_process.Process):
             old_system = self._system.copy()
 
             if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-                # Read the coordinates into the squashed system.
-                old_system_squashed = _squash(old_system)
-
                 # Udpate the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
-                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                        old_system_squashed._sire_object,
+                mapping = {_SireMol.MolIdx(x): _SireMol.MolIdx(x) for x in range(0, self._squashed_system.nMolecules())}
+                self._squashed_system._sire_object, _ = _SireIO.updateCoordinatesAndVelocities(
+                        self._squashed_system._sire_object,
                         new_system._sire_object,
-                        self._mapping,
+                        mapping,
                         is_lambda1,
                         self._property_map,
                         self._property_map)
 
-                # Update the underlying Sire object.
-                old_system_squashed._sire_object = sire_system
-
-                # Store the mapping between the MolIdx in both systems so we don't
-                # need to recompute it next time.
-                self._mapping = mapping
-
-                # Even though the two molecules should have the same coordinates, they might be PBC wrapped differently.
-                # Here we take the first common core atom and translate the second molecule.
-                pertmol_idx, pertmol = next((i, molecule) for i, molecule in enumerate(old_system.getMolecules())
-                                            if molecule._is_perturbable)
-                pertatom_idx0, pertatom_idx1 = 0, 0
-                for i, atom in enumerate(pertmol.getAtoms()):
-                    is_dummy0 = "du" in atom._sire_object.property("ambertype0")
-                    is_dummy1 = "du" in atom._sire_object.property("ambertype1")
-                    if not is_dummy0 and not is_dummy1:
-                        break
-                    pertatom_idx0 += not is_dummy0
-                    pertatom_idx1 += not is_dummy1
-                old_system_squashed_pertatom0 = old_system_squashed[pertmol_idx].getAtoms()[pertatom_idx0]
-                old_system_squashed_pertatom1 = old_system_squashed[pertmol_idx + 1].getAtoms()[pertatom_idx1]
-                pertatom_coords0 = old_system_squashed_pertatom0._sire_object.property("coordinates")
-                pertatom_coords1 = old_system_squashed_pertatom1._sire_object.property("coordinates")
-                translation_vec = pertatom_coords1 - pertatom_coords0
-
-                # Update the velocities.
-                update_velocities = True
-                for idx in range(0, old_system_squashed.nMolecules()):
-                    # Extract the molecules from each system.
-                    mol0 = old_system_squashed._sire_object.molecule(_SireMol.MolIdx(idx))
-                    mol1 = new_system._sire_object.molecule(_SireMol.MolIdx(idx))
-
-                    try:
-                        # Update the velocities.
-                        mol0 = mol0.edit().setProperty("velocity", mol1.property("velocity")).molecule().commit()
-                    except:
-                        # There are actually no velocities.
-                        update_velocities = False
-                        break
-
-                    # Update the molecule.
-                    old_system_squashed._sire_object.update(mol0)
-
-                # Convert the squashed system coordinates into merged system coordinates.
-                mol_idx = 0
-                molecules = []
-                for i, molecule in enumerate(old_system.getMolecules()):
-                    if not molecule._is_perturbable:
-                        # Just copy the molecule.
-                        molecules.append(old_system_squashed[mol_idx].copy())
-                        mol_idx += 1
-                    else:
-                        # Extract the non-dummy atom coordinates and velocities from the squashed system.
-                        idx0, idx1 = 0, 0
-                        editor = molecule._sire_object.edit()
-                        for j in range(0, molecule._sire_object.nAtoms()):
-                            atom = editor.atom(_SireMol.AtomIdx(j))
-                            coordinates = None
-                            velocities = None
-                            if "du" not in atom.property("ambertype0"):
-                                new_atom = old_system_squashed[mol_idx].getAtoms()[idx0]
-                                coordinates = new_atom._sire_object.property("coordinates")
-                                if update_velocities:
-                                    velocities = new_atom._sire_object.property("velocity")
-                                idx0 += 1
-                            if "du" not in atom.property("ambertype1"):
-                                new_atom = old_system_squashed[mol_idx + 1].getAtoms()[idx1]
-                                if coordinates is None:
-                                    coordinates = new_atom._sire_object.property("coordinates") - translation_vec
-                                if update_velocities and velocities is None:
-                                    velocities = new_atom._sire_object.property("velocity")
-                                idx1 += 1
-
-                            # Set the properties
-                            if velocities:
-                                atom.setProperty("velocity0", velocities)
-                                atom.setProperty("velocity1", velocities)
-                            atom.setProperty("coordinates0", coordinates)
-                            editor = atom.setProperty("coordinates1", coordinates).molecule()
-                        molecule._sire_object = editor.commit()
-                        molecules.append(molecule)
-                        mol_idx += 2
-                old_system = _fastSystemInit(molecules)
+                # Update the unsquashed system based on the updated squashed system.
+                old_system = _unsquash(old_system, self._squashed_system, self._mapping)
             else:
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.

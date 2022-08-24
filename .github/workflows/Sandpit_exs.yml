@@ -1,0 +1,50 @@
+name: Sandpit_exs_CI
+
+on:
+  # run once a day at noon UTC
+  schedule:
+    - cron: "0 12 * * *"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest", "macOS-latest",]
+        python-version: ["3.7", ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
+
+      - name: Install dependency
+        run: |
+          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
+          mamba install -c conda-forge ambertools alchemlyb gromacs
+          python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
+
+      - name: Install the dev version
+        run: |
+          cd python
+          python setup.py develop
+          cd ..
+
+      - name: Run tests
+        run: |
+          pytest -v --color=yes test/Sandpit/Exscientia/

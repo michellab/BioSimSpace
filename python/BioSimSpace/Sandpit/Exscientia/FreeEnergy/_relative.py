@@ -216,7 +216,7 @@ class Relative():
                     raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
 
                 # The system must have a perturbable molecule.
-                if system.nPerturbableMolecules() == 0:
+                if system.nPerturbableMolecules() == 0 and system.nDecoupledMolecules() == 0:
                     raise ValueError("The system must contain a perturbable molecule! "
                                      "Use the 'BioSimSpace.Align' package to map and merge molecules.")
 
@@ -248,9 +248,12 @@ class Relative():
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
+            if system.nPerturbableMolecules() != 1 and system.nDecoupledMolecules() != 1:
                 raise ValueError("The system must contain a single perturbable molecule! "
                                  "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+            # The system must not have a decoupled and perturbable molecule.
+            if system.nPerturbableMolecules() == 1 and system.nDecoupledMolecules() == 1:
+                raise ValueError("The system must not contain a perturbable molecule and a decoupled molecule!")
 
         # Set the engine.
         self._engine = engine
@@ -275,10 +278,15 @@ class Relative():
             raise TypeError("'property_map' must be of type 'dict'.")
         self._property_map = property_map
 
+        # The restraint is only intended to be used with the derived class
+        # Absolute, but is set to None here to avoid having to duplicate
+        # _initialise_runner() in Absolute
+        self._restraint = None
+
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
         self.analyse = self._analyse
-        self.analyse_all_repeats = self._analyse_all_repeats
+        # self.analyse_all_repeats = self._analyse_all_repeats
         self.difference = self._difference
 
         # Initialise the process runner.
@@ -524,7 +532,7 @@ class Relative():
                 with open(file) as f:
                     for line in f.readlines():
                         if not found_temperature:
-                            match = _re.search("temp0=([\d.]+)", line)
+                            match = _re.search(r"temp0=([\d.]+)", line)
                             if match is not None:
                                 temperatures += [float(match.group(1))]
                                 found_temperature = True
@@ -667,6 +675,7 @@ class Relative():
                     if "GROMACS version" in line:
                         l = line.strip().split(':')
                         l = l[1].strip()
+                        l = l.split('-')[0] # handle '2022.1-conda_forge'
                         l = float(l)
                         return(l)
 
@@ -690,7 +699,7 @@ class Relative():
                         start = 'T ='
                         end = '(K)'
                         if start and end in line:
-                            t = int(((line.split(start)[1]).split(end)[0]).strip())
+                            t = float(((line.split(start)[1]).split(end)[0]).strip())
                             temperatures.append(t)
                             if t is not None:
                                 found_temperature = True
@@ -974,7 +983,7 @@ class Relative():
 
                 time_step = (sim_length/len(file_df['step']))
                 time_rows = _np.arange(0, len(file_df['step']), 1)
-                time = _np.arange(0, sim_length, time_step)
+                time = _np.arange(time_step, sim_length + time_step, time_step)
 
                 mbar_energies = [] # results in list of lists where each list is 0 to 1 window values
 
@@ -1068,7 +1077,7 @@ class Relative():
 
                 time_step = (sim_length/len(file_df['step']))
                 time_rows = _np.arange(0, len(file_df['step']), 1)
-                time = _np.arange(0, sim_length, time_step)
+                time = _np.arange(time_step, sim_length + time_step, time_step)
 
                 gradient_energies = [] # results in list of the gradients at that lambda
 
@@ -1093,22 +1102,18 @@ class Relative():
             if estimator == 'MBAR':
                 # Process the data files using the alchemlyb library.
                 # Subsample according to statistical inefficiency and then calculate the MBAR.
-                sample_okay = False
                 try:
-                    u_nk = [_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
-                    sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
-                    mbar = _AutoMBAR().fit(sampled_u_nk)
-                    sample_okay = True
-                except:
-                    print("Could not calculate statistical inefficiency.")
-
-                if not sample_okay:
-                    print("Running without calculating the statistical inefficiency and without subsampling...")
                     try:
-                        u_nk = _alchemlyb.concat([_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)])
-                        mbar = _AutoMBAR().fit(u_nk)
+                        u_nk = [_somd_extract_u_nk(x, T=t) for x,t in zip(files, temperatures)]
+                        sampled_u_nk = _alchemlyb.concat([_statistical_inefficiency(i, i.iloc[:, 0]) for i in u_nk])
+                        mbar = _AutoMBAR().fit(sampled_u_nk)
                     except:
-                        raise _AnalysisError("MBAR free-energy analysis failed!")
+                        print("Could not calculate statistical inefficiency.")
+                        print("Running without calculating the statistical inefficiency and without subsampling...")
+                        u_nk = _alchemlyb.concat(u_nk)
+                        mbar = _AutoMBAR().fit(u_nk)
+                except:
+                    raise _AnalysisError("MBAR free-energy analysis failed!")
 
                 # Extract the data from the mbar results.
                 data = []
@@ -1355,7 +1360,7 @@ class Relative():
 
         """
 
-        # Initialise list to store the processe
+        # Initialise list to store the processes
         processes = []
 
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
@@ -1366,10 +1371,10 @@ class Relative():
         # Setup all of the simulation processes for each leg.
 
         # Get the lambda values from the protocol for the first leg.
-        lam_vals = self._protocol.getLambdaValues()
+        lam_vals = self._protocol.getLambdaValues(type='dataframe')
 
         # Create a process for the first lambda value.
-        lam = lam_vals[0]
+        lam = lam_vals.loc[0]
 
         # Update the protocol lambda values.
         self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
@@ -1378,7 +1383,10 @@ class Relative():
         # Nest the working directories inside self._work_dir.
 
         # Name the first directory.
-        first_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
+        if self._engine == "SOMD":
+            first_dir = f"{self._work_dir}/lambda_{lam.values[0]:.3f}"
+        else:
+            first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
         # SOMD.
         if self._engine == "SOMD":
@@ -1388,19 +1396,24 @@ class Relative():
             else:
                 platform = "CPU"
 
+            # Check against passing multiple sets of lam vals to SOMD
+            if lam_vals.shape[1] != 1:
+                raise ValueError("SOMD can only handle a single set of lambda values for a given perturbation.")
+
             first_process = _Process.Somd(system, self._protocol,
                 platform=platform, work_dir=first_dir,
                 property_map=self._property_map, extra_options=self._extra_options,
-                extra_lines=self._extra_lines)
+                extra_lines=self._extra_lines, restraint=self._restraint)
 
         # GROMACS.
         elif self._engine == "GROMACS":
             first_process = _Process.Gromacs(system, self._protocol,
                 work_dir=first_dir, ignore_warnings=self._ignore_warnings,
                 show_errors=self._show_errors, extra_options=self._extra_options,
-                extra_lines=self._extra_lines)
+                extra_lines=self._extra_lines, restraint=self._restraint)
 
         # AMBER.
+        # TODO: Make the restraint valid for AMBER
         elif self._engine == "AMBER":
             first_process = _Process.Amber(system, self._protocol, exe=self._exe,
                 work_dir=first_dir, extra_options=self._extra_options,
@@ -1412,9 +1425,18 @@ class Relative():
             processes.append(first_process)
 
         # Loop over the rest of the lambda values.
-        for x, lam in enumerate(lam_vals[1:]):
+        for x, lam in lam_vals.iterrows():
+            if x == 0:
+                # Skip the zero-th window
+                continue
+            self._protocol.setLambda(lam)
             # Name the directory.
-            new_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
+            if self._engine == "SOMD":
+                new_dir = f"{self._work_dir}/lambda_{lam.values[0]:.3f}"
+            # If using GROMACS, doesn't make sense to use single value of lambda
+            # when using lambda array.
+            else:
+                new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
             # Use the full path.
             if new_dir[0] != "/":
@@ -1427,9 +1449,6 @@ class Relative():
             # Copy the first directory to that of the current lambda value.
             _shutil.copytree(first_dir, new_dir)
 
-            # Update the protocol lambda values.
-            self._protocol.setLambdaValues(lam=lam, lam_vals=lam_vals)
-
             # Now update the lambda values in the config files.
 
             # SOMD.
@@ -1438,7 +1457,8 @@ class Relative():
                 with open(new_dir + "/somd.cfg", "r") as f:
                     for line in f:
                         if "lambda_val" in line:
-                            new_config.append("lambda_val = %s\n" % lam)
+                            # Get lam val from the Series
+                            new_config.append("lambda_val = %s\n" % lam.values[0])
                         else:
                             new_config.append(line)
                 with open(new_dir + "/somd.cfg", "w") as f:
@@ -1462,9 +1482,9 @@ class Relative():
                     process._pert_file      = new_dir + "/somd.pert"
                     process._gradients_file = new_dir + "/gradients.dat"
                     process._input_files    = [process._config_file,
-                                               process._rst_file,
-                                               process._top_file,
-                                               process._pert_file]
+                                            process._rst_file,
+                                            process._top_file,
+                                            process._pert_file]
                     processes.append(process)
 
             # GROMACS.
@@ -1475,7 +1495,7 @@ class Relative():
                 with open(new_dir + "/gromacs.mdp", "r") as f:
                     for line in f:
                         if "init-lambda-state" in line:
-                            new_config.append("init-lambda-state = %d\n" % (x+1))
+                            new_config.append("init-lambda-state = %d\n" % (self._protocol.getLambdaIndex()))
                         else:
                             new_config.append(line)
                 with open(new_dir + "/gromacs.mdp", "w") as f:
@@ -1512,9 +1532,9 @@ class Relative():
                     process._config_file    = new_dir + "/gromacs.mdp"
                     process._tpr_file       = new_dir + "/gromacs.tpr"
                     process._input_files    = [process._config_file,
-                                               process._gro_file,
-                                               process._top_file,
-                                               process._tpr_file]
+                                            process._gro_file,
+                                            process._top_file,
+                                            process._tpr_file]
                     processes.append(process)
 
             # AMBER.
@@ -1545,8 +1565,8 @@ class Relative():
                     process._config_file    = new_dir + "/amber.cfg"
                     process._nrg_file       = new_dir + "/amber.nrg"
                     process._input_files    = [process._config_file,
-                                               process._rst_file,
-                                               process._top_file]
+                                            process._rst_file,
+                                            process._top_file]
                     processes.append(process)
 
         if not self._setup_only:
