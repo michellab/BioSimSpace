@@ -576,47 +576,71 @@ class ConfigFactory:
         extra_lines = extra_lines if extra_lines is not None else []
 
         # Define some miscellaneous defaults.
-        protocol_dict = {"save coordinates": True}                                  # Save molecular coordinates.
+        # Save molecular coordinates.
+        protocol_dict = {"save coordinates": True}
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["minimise"] = True                                        # Minimisation simulation.
-            protocol_dict["minimise maximum iterations"] = self._steps              # Maximum number of steps.
-            protocol_dict["minimise tolerance"] = 1                                 # Convergence tolerance.
-            protocol_dict["ncycles"] = 1                                            # Perform a single SOMD cycle.
-            protocol_dict["nmoves"] = 1                                             # Perform a single MD move.
+            # Minimisation simulation.
+            protocol_dict["minimise"] = True
+            # Maximum number of steps.
+            protocol_dict["minimise maximum iterations"] = self._steps
+            # Convergence tolerance.
+            protocol_dict["minimise tolerance"] = 1
+            # Perform a single SOMD cycle.
+            protocol_dict["ncycles"] = 1
+            # Perform a single MD move.
+            protocol_dict["nmoves"] = 1
         else:
             # Get the report and restart intervals.
             report_interval = self._report_interval
             restart_interval = self._restart_interval
+            runtime = self.protocol.getRunTime()
 
             # The restart and report intervals must be a multiple of the energy frequency,
             # which is 200 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(200 * _math.ceil(restart_interval / 200))
+                if report_interval % 200 != 0:
+                    report_interval = int(200 * _math.ceil(report_interval / 200))
+                    _warnings.warn(f"The report interval is not a multiple of 200. Changing it to {report_interval}.")
+                if restart_interval % 200 != 0:
+                    restart_interval = int(
+                        200 * _math.ceil(restart_interval / 200))
+                    _warnings.warn(f"The restart interval is not a multiple of 200. Changing it to {restart_interval}.")
+                    
+            # The number of moves per cycle - want about 1 cycle per 1 ns.
+            # if the run is less than 1 ns, want 1 cycle for this.
+            if runtime.nanoseconds().value() <= 1:
+                ncycles = int(1)       
+            else:
+                # calculate the number of cycles - rounds up to integer value
+                ncycles = _math.ceil((runtime)/(1*_nanosecond))
 
-            # The number of moves per cycle.
-            nmoves = report_interval
+            # number of moves should be so that nmoves * ncycles is equal to self._steps.
+            nmoves = int(max(1, ((self._steps) // (ncycles))))
 
-            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = max(1, self._steps // nmoves)
-            print(report_interval)
-            print(nmoves)
-            print(ncycles)
+            if self._steps != (nmoves * ncycles):
+                _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self.protocol.getTimeStep().nanoseconds()}.")
 
-            # How many cycles need to pass before we write a trajectory frame.
+            # Work out how many cycles need to pass before we write a trajectory frame.
             cycles_per_frame = max(1, restart_interval // nmoves)
 
             # How many time steps need to pass before we write a trajectory frame.
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 200 steps.
             buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
-            protocol_dict["ncycles"] = ncycles                                  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = nmoves                                    # The number of moves per cycle.
-            protocol_dict["ncycles_per_snap"] = cycles_per_frame                # Cycles per trajectory write.
-            protocol_dict["buffered coordinates frequency"] = buffer_freq       # Buffering frequency.
+            # The number of SOMD cycles.
+            protocol_dict["ncycles"] = ncycles
+            # The number of moves per cycle.
+            protocol_dict["nmoves"] = nmoves
+            # Cycles per trajectory write.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame
+            # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq
             timestep = self.protocol.getTimeStep().femtoseconds().value()
-            protocol_dict["timestep"] = "%.2f femtosecond" % timestep           # Integration time step.
+            # Integration time step.
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             if timestep >= 4.00:
