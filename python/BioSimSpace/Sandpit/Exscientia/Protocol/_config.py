@@ -601,6 +601,9 @@ class ConfigFactory:
 
             # The number of cycles, so that nmoves * ncycles is equal to self._steps.
             ncycles = max(1, self._steps // nmoves)
+            print(report_interval)
+            print(nmoves)
+            print(ncycles)
 
             # How many cycles need to pass before we write a trajectory frame.
             cycles_per_frame = max(1, restart_interval // nmoves)
@@ -666,14 +669,10 @@ class ConfigFactory:
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict["lambda_val"] = self.protocol.getLambda()             # Current lambda value.
-            # TODO: Fix this
             try: # RBFE
-                res_num = self.system.search("perturbable")[0]._sire_object.number().value()
-            except IndexError: # No pertrubable molecule - this is ABFE
-                for i, mol in enumerate(self.system):
-                    if mol.isDecoupled():
-                        res_num = i + 1
-                        break
+                res_num = self.system.getIndex(self.system.getPerturbableMolecules()[0]) + 1
+            except IndexError: # No perturbable molecule - this is ABFE
+                res_num = self.system.getIndex(self.system.getDecoupledMolecules()[0]) + 1
             protocol_dict["perturbed residue number"] = res_num                 # Perturbed residue number.
 
 
