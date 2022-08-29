@@ -663,7 +663,7 @@ class ConfigFactory:
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             if not isinstance(self.protocol, _Protocol.Minimisation):
-                protocol_dict["constraint"] = "none"                            # Handle hydrogen perturbations.
+                protocol_dict["constraint"] = "hbonds-notperturbed"             # Handle hydrogen perturbations.
                 protocol_dict["energy frequency"] = 200                         # Write gradients every 200 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
