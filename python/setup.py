@@ -73,6 +73,7 @@ finally:
                       "pydot",
                       "networkx",
                       "nglview",
+                      "ipywidgets<8",
                       "py3dmol",
                       "pypdb",
                       "rdkit",
