@@ -1398,8 +1398,8 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
         height = pixels
 
     # Create the view.
-    view = _py3Dmol.view(linked=False, width=width,
-            height=height, viewergrid=viewergrid)
+    view = _py3Dmol.view(linked=False, width=int(width),
+            height=int(height), viewergrid=viewergrid)
 
     # Set default drawing style.
     if style is None:
