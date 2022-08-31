@@ -628,7 +628,7 @@ class ConfigFactory:
             # How many time steps need to pass before we write a trajectory frame.
             # The buffer frequency must be an integer multiple of the frequency
             # at which free energies are written, which is 200 steps.
-            buffer_freq = int(nmoves * (restart_interval // nmoves))
+            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
             # The number of SOMD cycles.
             protocol_dict["ncycles"] = ncycles
