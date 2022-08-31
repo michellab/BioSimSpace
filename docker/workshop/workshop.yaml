@@ -28,7 +28,8 @@ cull:
 prePuller:
   continuous:
     enabled: true
-auth:
-  type: custom
-  custom:
-    className: tmpauthenticator.TmpAuthenticator
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: tmpauthenticator.TmpAuthenticator
+
