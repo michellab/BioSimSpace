@@ -35,16 +35,42 @@ Push the docker file to dockerhub
 Installing into k8s
 -------------------
 
+Install the jupyterhub helm chart
+
 .. code-block:: bash
 
-    helm install jupyterhub/jupyterhub --version=0.8.0 --timeout=36000 --debug --install=workshop --namespace=workshop --values workshop.yaml
+    helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+    helm repo update
+
+Remember to update `workshop.yaml` to set the TAG for the workshop image you want,
+plus to set a SECRET_KEY. You can generate the secret key using the command
+
+.. code-block:: bash
+
+    openssl rand -hex 32
+
+Once you are ready, you can install jupyterhub.
+
+.. code-block:: bash
+
+    helm install workshop jupyterhub/jupyterhub --version=1.0.0 --timeout=36000s --debug --values workshop.yaml
+
+Once it has installed, you need to get the IP address of the server, e.g. via
+
+.. code-block:: bash
+
+    kubectl get services
+
+Then, assign this IP address to the domain name that you've set in `workshop.yaml`.
+
+Note that it may take some time for letsencrypt to create a SSL certificate for you. Be patient.
 
 Upgrading jupyterhub
 --------------------
 
 .. code-block:: bash
 
-    helm upgrade --install workshop --namespace workshop jupyterhub/jupyterhub --timeout=36000 --debug --version=0.8.0 --values workshop.yaml
+    helm upgrade workshop jupyterhub/jupyterhub --timeout=36000 --debug --version=1.0.0 --values workshop.yaml
 
 Deleting user pods
 ------------------
