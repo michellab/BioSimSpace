@@ -22,7 +22,7 @@ singleuser:
   defaultUrl: "/lab"
   image:
     name: biosimspace/biosimspace-workshop
-    tag: v3
+    tag: v4
   storage:
     type: none
   memory:
