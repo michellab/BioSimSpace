@@ -1,12 +1,15 @@
 # Start from the base jupyterhub image.
-ARG BASE_CONTAINER=jupyter/base-notebook
+ARG BASE_CONTAINER=jupyter/base-notebook:python-3.9.12
 FROM $BASE_CONTAINER
 
-LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>, Lester Hedges <lester.hedges@gmail.com>"
+LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>, Lester Hedges 
+<lester.hedges@gmail.com>"
 
 # Variables holding links to download dependencies
-ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
-ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
+ENV 
+GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
+ENV 
+PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
 
 USER root
 WORKDIR /home
@@ -44,8 +47,10 @@ USER $NB_USER
 WORKDIR $HOME
 
 # Install BioSimSpace via Conda and dependencies for PLUMED.
-RUN conda install -y -c conda-forge -c michellab/label/dev biosimspace && \
-    conda install -y -c conda-forge ambertools libgfortran=3 nodejs openmpi-mpicxx openssh patch
+RUN conda install -y mamba
+
+RUN mamba install -y -c conda-forge -c michellab/label/dev "biosimspace<2023.0" && \
+    mamba install -y -c conda-forge ambertools libgfortran=3 nodejs openmpi-mpicxx openssh patch
 
 RUN pip install --upgrade pip && \
     pip install jupyterhub-tmpauthenticator
@@ -63,11 +68,7 @@ RUN conda remove cudatoolkit --force && \
     rm -rf $HOME/.cache $HOME/.jupyter $HOME/.local/share/jupyter
 
 # Clone source and workshop repositories.
-RUN git clone https://github.com/michellab/biosimspace && \
-    mkdir workshops && \
-    git clone https://github.com/CCPBioSim/python_and_data_workshop workshops/python && \
-    git clone https://github.com/CCPBioSim/biosimspace-workshop workshops/introduction && \
-    git clone https://github.com/CCPBioSim/biosimspace-advanced-simulation workshops/advanced
+RUN git clone https://github.com/michellab/biosimspace
 
 # Link the right directories into the right places.
 RUN rmdir work && \
@@ -79,7 +80,8 @@ ADD patches .patches
 # Patch the BioSimSpace install so that we restrict GROMACS to use a single
 # MPI thread and four OpenMP thread per MPI thread.
 RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Process/_gromacs.py .patches/_gromacs.py.patch
-RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Metadynamics/_metadynamics.py .patches/_metadynamics.py.patch
+RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Metadynamics/_metadynamics.py 
+.patches/_metadynamics.py.patch
 
 # Copy the example nodes into the Python library.
 RUN mkdir /opt/conda/lib/python3.9/site-packages/BioSimSpace/Node/_nodes && \
@@ -87,7 +89,8 @@ RUN mkdir /opt/conda/lib/python3.9/site-packages/BioSimSpace/Node/_nodes && \
 
 # Change the executable name so that BioSimSpace workshop usage statistics
 # can be tracked separately.
-RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (workshop)"/g' /opt/conda/lib/python3.9/site-packages/Sire/__init__.py
+RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (workshop)"/g' 
+/opt/conda/lib/python3.9/site-packages/Sire/__init__.py
 
 # Add in our custom workshop config.
 USER root
@@ -105,3 +108,4 @@ RUN /usr/bin/update_biosimspace
 # End as the User to make sure that we don't
 # accidentally run the container as root.
 USER $NB_USER
+
