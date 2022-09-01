@@ -79,6 +79,7 @@ finally:
                       "rdkit",
                       "parmed",
                       "lomap2",
+                      "alchemlyb",
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit-base" # known not available on aarch64
