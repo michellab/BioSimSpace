@@ -2,14 +2,11 @@
 ARG BASE_CONTAINER=jupyter/base-notebook:python-3.9.12
 FROM $BASE_CONTAINER
 
-LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>, Lester Hedges 
-<lester.hedges@gmail.com>"
+LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>, Lester Hedges <lester.hedges@gmail.com>"
 
 # Variables holding links to download dependencies
-ENV 
-GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
-ENV 
-PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
+ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
+ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
 
 USER root
 WORKDIR /home
@@ -80,8 +77,7 @@ ADD patches .patches
 # Patch the BioSimSpace install so that we restrict GROMACS to use a single
 # MPI thread and four OpenMP thread per MPI thread.
 RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Process/_gromacs.py .patches/_gromacs.py.patch
-RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Metadynamics/_metadynamics.py 
-.patches/_metadynamics.py.patch
+RUN patch /opt/conda/lib/python3.9/site-packages/BioSimSpace/Metadynamics/_metadynamics.py .patches/_metadynamics.py.patch
 
 # Copy the example nodes into the Python library.
 RUN mkdir /opt/conda/lib/python3.9/site-packages/BioSimSpace/Node/_nodes && \
@@ -89,8 +85,7 @@ RUN mkdir /opt/conda/lib/python3.9/site-packages/BioSimSpace/Node/_nodes && \
 
 # Change the executable name so that BioSimSpace workshop usage statistics
 # can be tracked separately.
-RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (workshop)"/g' 
-/opt/conda/lib/python3.9/site-packages/Sire/__init__.py
+RUN sed -i 's/= "BioSimSpace"/= "BioSimSpace (workshop)"/g' /opt/conda/lib/python3.9/site-packages/Sire/__init__.py
 
 # Add in our custom workshop config.
 USER root
@@ -105,7 +100,24 @@ COPY update_biosimspace /usr/bin
 # pushed to Conda.
 RUN /usr/bin/update_biosimspace
 
+# Allow anyone to run `sudo update_biosimspace`
+RUN echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+COPY install_workshop /usr/bin
+COPY update_workshop /usr/bin
+
+# Install the workshop as it is very large, and too large
+# for every attendee to download and install their own copy...
+USER $NB_USER
+RUN /usr/bin/install_workshop
+
+USER root
+
+# Install extra packages needed by the workshop
+# (doing it here so that we don't have to relayer the image
+#  - especially the above workshop data!)
+RUN mamba install -y alchemlyb
+
 # End as the User to make sure that we don't
 # accidentally run the container as root.
 USER $NB_USER
-
