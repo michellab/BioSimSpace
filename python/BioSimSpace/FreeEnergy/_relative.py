@@ -1405,7 +1405,7 @@ class Relative():
            Returns
            -------
 
-           Nothing - gives a warning if the overlap is less than 0.03 for any off-diagonal.
+           Message - gives a warning if the overlap is less than 0.03 for any off-diagonal.
 
         """
         if not isinstance(overlap, _np.matrix):
@@ -1428,9 +1428,12 @@ class Relative():
                 if o < 0.03:
                     too_small += 1
             if too_small > 0:
-                _warnings.warn(f"Overlap matrix is bad - {too_small} off-diagonals are less than 0.03.")
+                message = f"Overlap matrix is bad - {too_small} off-diagonals are less than 0.03."
+                _warnings.warn(f"{message}")
+            else:
+                message = "Overlap matrix is okay."
 
-        return ()
+        return (message)
 
     def _check_overlap(self):
         """Check the overlap of an FEP leg. 
@@ -1441,7 +1444,7 @@ class Relative():
            Returns
            -------
 
-           Nothing - gives a warning if the overlap is less than 0.03 for any off-diagonal.
+           Message - gives a warning if the overlap is less than 0.03 for any off-diagonal.
 
 
         """
