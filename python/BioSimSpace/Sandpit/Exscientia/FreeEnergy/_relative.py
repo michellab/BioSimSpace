@@ -421,7 +421,7 @@ class Relative():
             return zipname
 
     @staticmethod
-    def analyse(work_dir, estimator='MBAR'):
+    def analyse(work_dir, estimator='MBAR', method="alchemlyb"):
         """Analyse existing free-energy data from a simulation working directory.
 
            Parameters
@@ -463,11 +463,11 @@ class Relative():
         for engine, (func, mask) in function_glob_dict.items():
             data = _glob(work_dir + mask)
             if data:
-                return func(work_dir, estimator)
+                return func(work_dir, estimator, method)
 
         raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
 
-    def _analyse(self):
+    def _analyse(self, method="alchemlyb"):
         """Analyse free-energy data for this object using MBAR.
 
            Returns
@@ -485,10 +485,10 @@ class Relative():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory and estimator of this object.
-        return Relative.analyse(self._work_dir, self._estimator)
+        return Relative.analyse(self._work_dir, self._estimator, method)
 
     @staticmethod
-    def _analyse_amber(work_dir=None, estimator=None):
+    def _analyse_amber(work_dir=None, estimator=None, method=None):
         """Analyse the AMBER free energy data.
 
            Parameters
@@ -630,7 +630,7 @@ class Relative():
 
 
     @staticmethod
-    def _analyse_gromacs(work_dir=None, estimator=None):
+    def _analyse_gromacs(work_dir=None, estimator=None, method=None):
         """Analyse the GROMACS free energy data.
 
            Parameters
@@ -854,7 +854,7 @@ class Relative():
 
 
     @staticmethod
-    def _analyse_somd(work_dir=None, estimator=None):
+    def _analyse_somd(work_dir=None, estimator=None, method=None):
         """Analyse the SOMD free energy data.
 
            Parameters
@@ -887,7 +887,9 @@ class Relative():
         if estimator not in ['MBAR','TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
-        if is_alchemlyb:
+
+        if method == "alchemlyb":
+
             files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
@@ -1173,10 +1175,7 @@ class Relative():
                 # For TI, dHdl graph.
                 overlap = ti
 
-                return (data, overlap)
-
-        # run without alchemlyb
-        else:
+        elif method == "old":
             # Create the command.
             command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 

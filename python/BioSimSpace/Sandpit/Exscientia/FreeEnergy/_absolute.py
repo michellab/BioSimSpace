@@ -183,6 +183,9 @@ class Absolute(_Relative):
 
         # Re-initialise the process runner to overwrite self._restraint = None (set in Relative)
         self._initialise_runner(self._system)
+    
+    def analyse(work_dir, estimator="MBAR", method="old"):
+        return _Relative.analyse(work_dir, estimator=estimator, method=method)
 
 def getData(name="data", file_link=False, work_dir=None):
     """Return a link to a zip file containing the data files required for
