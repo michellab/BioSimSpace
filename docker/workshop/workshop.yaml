@@ -9,14 +9,20 @@
 https://github.com/jupyterhub/zero-to-jupyterhub-k8s/blob/HEAD/jupyterhub/values.yaml
 # Available chart versions: https://jupyterhub.github.io/helm-chart/
 #
-
+proxy:
+  https:
+    enabled: true
+    hosts:
+      - workshop.biosimspace.org
+    letsencrypt:
+      contactEmail: Christopher.Woods@bristol.ac.uk
 rbac:
   enabled: true
 singleuser:
   defaultUrl: "/lab"
   image:
     name: biosimspace/biosimspace-workshop
-    tag: v1
+    tag: v4
   storage:
     type: none
   memory:
