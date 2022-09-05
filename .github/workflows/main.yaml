@@ -28,6 +28,9 @@ jobs:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - name: Clone repositories
         run: |
           git clone https://github.com/michellab/Sire
@@ -41,7 +44,7 @@ jobs:
         if: github.event_name == 'pull_request'
       - name: Setup Conda
         shell: bash -l {0}
-        run: conda install -y -c conda-forge conda-build anaconda-client
+        run: mamba install -y -c conda-forge boa anaconda-client
       - name: Update Conda recipe
         run: BioSimSpace/actions/update_recipe.sh
         env:
@@ -49,7 +52,7 @@ jobs:
           SIRE_SRC_DIR: ${{ github.workspace }}/Sire
       - name: Build Conda package
         shell: bash -l {0}
-        run: conda-build -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
+        run: conda mambabuild -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
       - name: Upload Conda package
@@ -62,7 +65,7 @@ jobs:
       - name: Build documentation
         shell: bash -l {0}
         run: |
-          conda create -n bss_doc -c conda-forge -c michellab/label/dev -c file://"$CONDA_PREFIX"/conda-bld python="$PYTHON_VERSION" biosimspace
+          conda create -n bss_doc -c conda-forge -c file://"$CONDA_PREFIX"/conda-bld -c michellab/label/dev python="$PYTHON_VERSION" biosimspace
           conda activate bss_doc
           pip install docutils==0.17.1 sphinx==2.2.2 sphinx_issues sphinx_rtd_theme sphinxcontrib-youtube==0.1.2 jinja2==3.0.2
           cp BioSimSpace/actions/youtube.py "$CONDA_PREFIX"/lib/python3.7/site-packages/sphinxcontrib/youtube

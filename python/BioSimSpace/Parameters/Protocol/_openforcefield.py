@@ -33,7 +33,7 @@ __all__ = ["OpenForceField"]
 # To override any protocols, just implement a custom "run" method in any
 # of the classes.
 
-from BioSimSpace._Utils import _try_import, _have_imported
+from ..._Utils import _try_import, _have_imported
 
 import os as _os
 _parmed = _try_import("parmed")
@@ -92,11 +92,11 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from ... import _isVerbose
+from ... import IO as _IO
+from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Molecule as _Molecule
 
 from . import _protocol
 
@@ -333,6 +333,21 @@ class OpenForceField(_protocol.Protocol):
         # Make the parameterised molecule compatible with the original topology.
         if is_smiles:
             new_mol = par_mol
+
+            # We'll now add MolName and ResName info to the molecule, since
+            # this will be missing.
+
+            # Rename the molecule with the original SMILES string.
+            edit_mol = new_mol._sire_object.edit()
+            edit_mol = edit_mol.rename(molecule).molecule()
+
+            # Rename the residue LIG.
+            resname = _SireMol.ResName("LIG")
+            edit_mol = edit_mol.residue(_SireMol.ResIdx(0)).rename(resname).molecule()
+
+            # Commit the changes.
+            new_mol._sire_object = edit_mol.commit()
+
         else:
             new_mol = molecule.copy()
             new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)

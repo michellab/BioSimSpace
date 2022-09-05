@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Bound"]
 
-from BioSimSpace.Types._type import Type as _Type
+from ..Types._type import Type as _Type
 
 class Bound():
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
@@ -51,7 +51,10 @@ class Bound():
                collective variables.
 
            force_constant : float
-               The force constant (k) for the bias potential.
+               The force constant (k) for the bias potential. Note that the
+               units of the force constant aren't specified, i.e. the value
+               takes the units of the collective variable to which it is later
+               applied.
 
            exponent : float
                The exponent (e) for the bias potential.

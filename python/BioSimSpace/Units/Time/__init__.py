@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["day", "hour", "minute", "second", "millisecond",
            "nanosecond", "picosecond", "femtosecond"]
 
-from BioSimSpace.Types import Time as _Time
+from ...Types import Time as _Time
 
 day = _Time(1, "day")
 hour = _Time(1, "hour")

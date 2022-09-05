@@ -2,7 +2,7 @@
 import BioSimSpace as BSS
 
 def test_sire_properties():
-    s = BSS.IO.readMolecules("test/io/amber/ala/*")
+    s = BSS.IO.readMolecules("test/input/amber/ala/*")
 
     m = s[0]._sire_object
 

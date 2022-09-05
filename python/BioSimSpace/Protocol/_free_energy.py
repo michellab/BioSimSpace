@@ -28,10 +28,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
-import math as _math
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
+from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
 
@@ -207,6 +206,17 @@ class FreeEnergy(_Protocol):
                The value of the perturbation parameter.
         """
         return self._lambda
+
+    def getLambdaIndex(self):
+        """Get the index of the lambda value within the lambda array.
+
+           Returns
+           -------
+
+           index : int
+               The index of the lambda value in teh lambda array.
+        """
+        return self._lambda_vals.index(self._lambda)
 
     def getLambdaValues(self):
         """Get the list of lambda values.

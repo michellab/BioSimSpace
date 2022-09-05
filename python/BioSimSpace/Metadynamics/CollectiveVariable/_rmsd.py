@@ -34,10 +34,10 @@ from math import sqrt as _sqrt
 from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Align import rmsdAlign as _rmsdAlign
+from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._SireWrappers import Molecule as _Molecule
+from ..._SireWrappers import System as _System
+from ...Align import rmsdAlign as _rmsdAlign
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
@@ -249,8 +249,9 @@ class RMSD(_CollectiveVariable):
         pdb = _SireIO.PDB2(molecule.toSystem()._sire_object)
         lines = pdb.toLines()
 
-        # Format for PLUMED.
-        self._reference_pdb = lines[1:-2]
+        # Format for PLUMED, making sure to use the same indices as in the system.
+        new_indices = [idx.value()+1 for idx in selected]
+        self._reference_pdb = [line[:6]+str(idx).rjust(5)+line[11:] for line, idx in zip(lines[1:-2], new_indices)]
         self._reference_pdb.append(lines[-1])
 
         # Set the "settable" parameters.

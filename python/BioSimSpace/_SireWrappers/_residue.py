@@ -35,7 +35,7 @@ import string as _string
 
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _isVerbose
+from .. import _isVerbose
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
@@ -91,6 +91,15 @@ class Residue(_SireWrapper):
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
             % (self.name(), self.moleculeNumber(), self.index(), self.nAtoms())
+
+    def __contains__(self, other):
+        """Return whether other is in self."""
+
+        if not isinstance(other, _Atom):
+            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Atom'.")
+
+        # Return whether the residue contains the atom.
+        return self._sire_object.contains(other._sire_object.atom().number())
 
     def __getitem__(self, key):
         """Get an atom from the residue."""

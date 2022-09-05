@@ -31,9 +31,9 @@ __all__ = ["Steering"]
 import math as _math
 import os as _os
 
-from BioSimSpace import Types as _Types
-from BioSimSpace.Metadynamics import CollectiveVariable as _CollectiveVariable
-from BioSimSpace.Metadynamics import Restraint as _Restraint
+from .. import Types as _Types
+from ..Metadynamics import CollectiveVariable as _CollectiveVariable
+from ..Metadynamics import Restraint as _Restraint
 
 from ._protocol import Protocol as _Protocol
 
@@ -368,11 +368,14 @@ class Steering(_Protocol):
 
         # Convert string to list.
         if isinstance(verse, str):
-            verse = [verse]
+            # Use the same verse for all collective variables.
+            verse = [verse] * len(self.getCollectiveVariable())
 
         if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):
                 raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
+            elif len(verse) != len(self.getCollectiveVariable()):
+                raise ValueError("'verse' must be of same length as 'collective_variable'")
         else:
             raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
 

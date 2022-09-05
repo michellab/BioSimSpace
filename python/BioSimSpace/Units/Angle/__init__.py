@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["radian", "degree"]
 
-from BioSimSpace.Types import Angle as _Angle
+from ...Types import Angle as _Angle
 
 radian = _Angle(1, "radian")
 degree = _Angle(1, "degree")

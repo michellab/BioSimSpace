@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import math as _math
 import os as _os
@@ -45,16 +45,16 @@ from Sire import IO as _SireIO
 from Sire import MM as _SireMM
 from Sire import Mol as _SireMol
 
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import System as _System
+from .. import _isVerbose
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import _Utils
 
 from . import _process
 
@@ -212,6 +212,14 @@ class Somd(_process.Process):
         # First create a copy of the system.
         system = self._system.copy()
 
+        # Renumber all of the constituents in the system so that they are unique
+        # and in ascending order. This is required since SOMD assumes that numbers
+        # are unique, i.e. the residue number of the perturbed molecule.
+        # We store the renumbered system to use as a template when mapping atoms
+        # the those from the extracted trajectory frames in, e.g. getSystem().
+        self._renumbered_system = _SireIO.renumberConstituents(system._sire_object)
+        system = _System(self._renumbered_system)
+
         # If the we are performing a free energy simulation, then check that
         # the system contains a single perturbable molecule. If so, then create
         # and write a perturbation file to the work directory.
@@ -232,7 +240,7 @@ class Somd(_process.Process):
 
             else:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a single "
-                                 "perturbable molecule. The system has %d" \
+                                 "perturbable molecule. The system has %d." \
                                   % system.nPerturbableMolecules())
 
         # If this is a different protocol and the system still contains a
@@ -265,6 +273,18 @@ class Somd(_process.Process):
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
+
+        # Warn the user if the simulation is seeded and not running a FreeEnergy
+        # protocol.
+        if self._is_seeded:
+            if not isinstance(self._protocol, _Protocol.FreeEnergy):
+                _warnings.warn("Debug seeding is only supported for FreeEnergy protocols. Ignoring!")
+                self._is_seeded = False
+            else:
+                _warnings.warn("Seeding should only be used for debugging purposes. "
+                               "Sampling will be invalid.")
+                if self._seed == 0:
+                    _warnings.warn("SOMD will disable seeding when seed is 0!")
 
         # Generate the SOMD configuration file.
         # Skip if the user has passed a custom config.
@@ -406,7 +426,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
 
         # Add configuration variables for a production simulation.
         elif isinstance(self._protocol, _Protocol.Production):
@@ -470,7 +490,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
 
         # Add configuration variables for a free energy simulation.
         elif isinstance(self._protocol, _Protocol.FreeEnergy):
@@ -548,7 +568,7 @@ class Somd(_process.Process):
                 self.addToConfig("cutoff type = cutoffperiodic")                    # Periodic box.
             self.addToConfig("cutoff distance = 10 angstrom")                       # Non-bonded cut-off.
             if self._is_seeded:
-                self.addToConfig("random seed = %d" % self._seed)                   # Random number seed.
+                self.addToConfig("debug seed = %d" % self._seed)                    # Random number seed for debugging.
             self.addToConfig("constraint = hbonds-notperturbed")                    # Handle hydrogen perturbations.
             self.addToConfig("minimise = True")                                     # Perform a minimisation.
             self.addToConfig("equilibrate = False")                                 # Don't equilibrate.
@@ -558,7 +578,8 @@ class Somd(_process.Process):
             self.addToConfig("lambda_val = %s" \
                 % self._protocol.getLambda())                                       # The value of lambda.
 
-            res_num = self._system.search("resname LIG")[0]._sire_object.number().value()
+            res_num = _System(self._renumbered_system) \
+                .search("perturbable")[0]._sire_object.number().value()
             self.addToConfig("perturbed residue number = %s" % res_num)             # Perturbed residue number.
 
         else:
@@ -676,6 +697,7 @@ class Somd(_process.Process):
             # the molecule indices in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
+                    self._renumbered_system,
                     new_system._sire_object,
                     self._mapping,
                     is_lambda1,
@@ -785,6 +807,7 @@ class Somd(_process.Process):
             # the molecule numbers in the two systems.
             sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
                     old_system._sire_object,
+                    self._renumbered_system,
                     new_system._sire_object,
                     self._mapping,
                     is_lambda1,

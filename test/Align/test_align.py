@@ -12,8 +12,8 @@ import pytest
                                       {1 : 0}])
 def test_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -34,8 +34,8 @@ def test_prematch(prematch):
                                       { 1 : -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -48,8 +48,8 @@ def test_invalid_prematch(prematch):
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -177,8 +177,8 @@ def test_merge():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_three_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-13a*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/CAT-17g*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-13a*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-17g*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -200,8 +200,8 @@ def test_ring_breaking_three_membered():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_five_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand04*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand04*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -223,8 +223,8 @@ def test_ring_breaking_five_membered():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_six_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -249,8 +249,8 @@ def test_ring_breaking_six_membered():
                         )
 def test_ring_size_change(ligands):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/%s.*" % ligands[0]))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/%s.*" % ligands[1]))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[0]))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[1]))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -313,8 +313,8 @@ def test_ring_size_change(ligands):
                                                 10: 17})])
 def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[0]}*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/io/ligands/{ligands[1]}*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[0]}*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[1]}*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -328,8 +328,8 @@ def test_grow_whole_ring(ligands, mapping):
 
 def test_hydrogen_mass_repartitioning():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/io/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]

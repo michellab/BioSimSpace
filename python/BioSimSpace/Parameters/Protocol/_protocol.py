@@ -34,7 +34,7 @@ import queue as _queue
 import shlex as _shlex
 import subprocess as _subprocess
 
-from BioSimSpace._Utils import _try_import, _have_imported
+from ..._Utils import _try_import, _have_imported
 
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
@@ -55,13 +55,13 @@ from Sire import IO as _SireIO
 from Sire import Mol as _SireMol
 from Sire import System as _SireSystem
 
-from BioSimSpace import _amber_home, _gmx_exe, _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
-from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from ... import _amber_home, _gmx_exe, _isVerbose
+from ... import IO as _IO
+from ..._Exceptions import IncompatibleError as _IncompatibleError
+from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..._Exceptions import ParameterisationError as _ParameterisationError
+from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Molecule as _Molecule
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:
@@ -234,6 +234,21 @@ class Protocol():
         # the new properties from 'par_mol' to 'mol'.
         if is_smiles:
             new_mol = par_mol
+
+            # We'll now add MolName and ResName info to the molecule, since
+            # this will be missing.
+
+            # Rename the molecule with the original SMILES string.
+            edit_mol = new_mol._sire_object.edit()
+            edit_mol = edit_mol.rename(molecule).molecule()
+
+            # Rename the residue LIG.
+            resname = _SireMol.ResName("LIG")
+            edit_mol = edit_mol.residue(_SireMol.ResIdx(0)).rename(resname).molecule()
+
+            # Commit the changes.
+            new_mol._sire_object = edit_mol.commit()
+
         else:
             new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 
@@ -405,15 +420,6 @@ class Protocol():
                                              "inconsistent with the original molecule. Please "
                                              "make sure that your initial molecule has a "
                                              "complete topology.")
-            if _molecule.nChains() > 1:
-                # If the original molecule was comprised of multiple chains, then we
-                # need to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
-                # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
-                with open(prefix + "leap.top", "a") as file:
-                    file.write("%FLAG ATOMS_PER_MOLECULE\n")
-                    file.write("%FORMAT(10I8)\n")
-                    file.write("    %d\n" % _molecule.nAtoms())
-
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")

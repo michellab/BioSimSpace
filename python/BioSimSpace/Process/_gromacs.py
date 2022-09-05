@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
-from BioSimSpace._Utils import _try_import
+from .._Utils import _try_import
 
 import math as _math
 import os as _os
@@ -45,18 +45,18 @@ from Sire import Maths as _SireMaths
 from Sire import Units as _SireUnits
 from Sire import Vol as _SireVol
 
-from BioSimSpace import _gmx_exe
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace.Types._type import Type as _Type
+from .. import _gmx_exe, _gmx_version
+from .. import _isVerbose
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Trajectory as _Trajectory
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
 
 from . import _process
 
@@ -66,7 +66,8 @@ class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, property_map={}, ignore_warnings=False, show_errors=True):
+            work_dir=None, seed=None, property_map={}, ignore_warnings=False,
+            show_errors=True, checkpoint_file=None):
         """Constructor.
 
            Parameters
@@ -103,6 +104,11 @@ class Gromacs(_process.Process):
            show_errors : bool
                Whether to show warning/error messages when generating the binary
                run file.
+
+           checkpoint_file : str
+              The path to a checkpoint file from a previous run. This can be used
+              to continue an existing simulation. Currently we only support the
+              use of checkpoint files for Equilibration protocols.
         """
 
         # Call the base class constructor.
@@ -114,25 +120,27 @@ class Gromacs(_process.Process):
         # This process can generate trajectory data.
         self._has_trajectory = True
 
-        if _gmx_exe is not None:
-            self._exe = _gmx_exe
-        else:
-            if exe is not None:
-                # Make sure executable exists.
-                if _os.path.isfile(exe):
-                    self._exe = exe
-                else:
-                    raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
+        # Use GROMACS executable from environment.
+        if exe is None:
+            if _gmx_exe is not None:
+                self._exe = _gmx_exe
             else:
                 raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
                                             "Please install GROMACS (http://www.gromacs.org).")
+        # Use user-specified executable.
+        else:
+            # Make sure executable exists.
+            if _os.path.isfile(exe):
+                self._exe = exe
+            else:
+                raise IOError("GROMACS executable doesn't exist: '%s'" % exe)
 
         if not isinstance(ignore_warnings, bool):
-            raise ValueError("'ignore_warnings' must be of type 'bool.")
+            raise ValueError("'ignore_warnings' must be of type 'bool'.")
         self._ignore_warnings = ignore_warnings
 
         if not isinstance(show_errors, bool):
-            raise ValueError("'show_errors' must be of type 'bool.")
+            raise ValueError("'show_errors' must be of type 'bool'.")
         self._show_errors = show_errors
 
         # Initialise the stdout dictionary and title header.
@@ -156,6 +164,17 @@ class Gromacs(_process.Process):
 
         # Initialise the PLUMED interface object.
         self._plumed = None
+
+		# Set the path of Gromacs checkpoint file.
+        self._checkpoint_file = None
+        if checkpoint_file is not None:
+            if not isinstance(checkpoint_file, str):
+                raise ValueError("'checkpoint_file' must be of type 'str'.")
+            else:
+                if _os.path.isfile(checkpoint_file):
+                    self._checkpoint_file = checkpoint_file
+                else:
+                    raise IOError("GROMACS checkpoint file doesn't exist: '%s'" % checkpoint_file)
 
         # Now set up the working directory for the process.
         self._setup()
@@ -262,6 +281,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)
@@ -311,6 +333,8 @@ class Gromacs(_process.Process):
             config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
             config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
             config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            if self._checkpoint_file is not None:
+                config.append("continuation=yes")
             if has_box and self._has_water:
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
@@ -327,6 +351,9 @@ class Gromacs(_process.Process):
 
                 # Create a copy of the system.
                 system = self._system.copy()
+
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
@@ -370,7 +397,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version >= 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -431,6 +461,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)
@@ -459,7 +492,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version >= 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -514,6 +550,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)
@@ -542,18 +581,20 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version >= 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
                 config.append("compressibility = 4.5e-5")   # Compressibility of water.
 
-            # Extract the lambda value and array.
-            lam = self._protocol.getLambda()
+            # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
 
             # Determine the index of the lambda value.
-            idx = lam_vals.index(lam)
+            idx = self._protocol.getLambdaIndex()
 
             # Free energy parameters.
             config.append("free-energy = yes")              # Free energy simulation.
@@ -616,6 +657,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)
@@ -644,7 +688,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version >= 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -721,6 +768,9 @@ class Gromacs(_process.Process):
                 # Create a copy of the system.
                 system = self._system.copy()
 
+                # Convert the water model topology so that it matches the GROMACS naming convention.
+                system._set_water_topology("GROMACS")
+
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
                 system._sire_object.setProperty(self._property_map.get("space", "space"), space)
@@ -749,7 +799,10 @@ class Gromacs(_process.Process):
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
+                if _gmx_version >= 2021:
+                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                else:
+                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
                 config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
                 config.append("ref-p = %.5f"                # Pressure in bar.
                     % self._protocol.getPressure().bar().value())
@@ -788,7 +841,6 @@ class Gromacs(_process.Process):
 
         # Add the default arguments.
         self.setArg("mdrun", True)          # Use mdrun.
-        self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
 
         # Metadynamics and steered MD arguments.
@@ -803,7 +855,12 @@ class Gromacs(_process.Process):
                   "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
 
         # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+        if self._checkpoint_file is not None:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" \
+            % (self._exe, self._config_file, mdp_out, self._gro_file,
+               self._top_file, self._gro_file, self._checkpoint_file, self._tpr_file)
+        else:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
             % (self._exe, self._config_file, mdp_out, self._gro_file,
                self._top_file, self._gro_file, self._tpr_file)
 
@@ -2464,15 +2521,8 @@ class Gromacs(_process.Process):
                 proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
                 proc = _subprocess.Popen(_shlex.split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc.wait()
                 proc_echo.stdout.close()
-
-                # For some reason, this doesn't always work the first time it's run
-                # as a subprocess, so try again if frame.gro isn't found.
-                if not _os.path.isfile("frame.gro"):
-                    proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                    proc = _subprocess.Popen(_shlex.split(command), shell=False,
-                        stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-                    proc_echo.stdout.close()
 
                 # Read the frame file.
                 new_system = _IO.readMolecules(["frame.gro", self._top_file],

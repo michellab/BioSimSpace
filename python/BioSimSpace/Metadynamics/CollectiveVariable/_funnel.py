@@ -33,7 +33,7 @@ import math as _math
 from Sire.Maths import Vector as _SireVector
 import Sire.Mol as _SireMol
 
-from BioSimSpace import _is_notebook
+from ... import _is_notebook
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid

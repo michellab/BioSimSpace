@@ -63,6 +63,11 @@ class GeneralUnit(_Type):
                A string representation of the unit type.
         """
 
+        # This operator may be called when unpickling an object. Catch empty
+        # *args by calling __init__ immediately.
+        if not args:
+            return super(GeneralUnit, cls).__new__(cls)
+
         value = 1
         _args = list(args)
 
@@ -123,6 +128,10 @@ class GeneralUnit(_Type):
                       general_unit.TEMPERATURE(),
                       general_unit.TIME()
                      )
+
+        # This is a dimensionless quantity, return the value as a float.
+        if all(x == 0 for x in dimensions):
+            return general_unit.value()
 
         # Check to see if the dimensions correspond to a supported type.
         # If so, return an object of that type.
@@ -207,10 +216,6 @@ class GeneralUnit(_Type):
                             general_unit.TEMPERATURE(),
                             general_unit.TIME()
                            )
-
-        # Check to see if the dimensions correspond to a supported type.
-        if self._dimensions in _base_dimensions:
-            return _base_dimensions[self._dimensions](self._sire_unit)
 
         # Create the unit string.
         self._unit = ""
@@ -709,6 +714,19 @@ class GeneralUnit(_Type):
                 string = unit._to_sire_format(string)
 
             try:
+                # Compile the eval expression to bytecode.
+                code = compile(string, "<string>", "eval")
+
+                # The bytecode must contain names.
+                if not code.co_names:
+                    raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+
+                # Make sure the co_names only contains names within the allowed
+                # sire_units_local dictionary.
+                for name in code.co_names:
+                    if name not in _sire_units_locals:
+                        raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+
                 general_unit = eval(string, {}, _sire_units_locals)
 
                 # Create and return a new object.

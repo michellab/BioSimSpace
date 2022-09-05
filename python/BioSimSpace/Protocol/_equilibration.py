@@ -32,8 +32,8 @@ import math as _math
 import pytest as _pytest
 import warnings as _warnings
 
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
+from .. import Types as _Types
+from .. import Units as _Units
 
 from ._protocol import Protocol as _Protocol
 
@@ -459,7 +459,7 @@ class Equilibration(_Protocol):
 
         if isinstance(force_constant, float):
             # Use default units.
-            force_constant *= Units.kcal_per_mol / Units.angstrom2
+            force_constant *= _Units.Energy.kcal_per_mol / _Units.Area.angstrom2
 
         elif isinstance(force_constant, _Types._GeneralUnit):
             # Validate the dimensions.
