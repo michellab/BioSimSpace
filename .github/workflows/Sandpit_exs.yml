@@ -36,7 +36,7 @@ jobs:
       - name: Install dependency
         run: |
           mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
-          mamba install -c conda-forge ambertools alchemlyb gromacs
+          mamba install -c conda-forge ambertools alchemlyb gromacs tqdm
           python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
 
       - name: Install the dev version
