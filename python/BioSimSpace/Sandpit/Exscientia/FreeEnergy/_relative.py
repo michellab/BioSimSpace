@@ -664,6 +664,13 @@ class Relative():
 
         for engine, (func, mask) in function_glob_dict.items():
             data = _glob(work_dir + mask)
+            if data and engine == "AMBER":
+                if method is not "alchemlyb":
+                    raise _AnalysisError(f"{engine} requires alchemlyb.")
+            if data and engine == "SOMD" and estimator == "TI" and method == "native":
+                raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
+            if data and engine == "GROMACS" and method == "native":
+                _warnings.warn(f"{engine} with {method} cannot do MBAR/TI. BAR will be used.")
             if data:
                 return func(work_dir, estimator, method)
 
@@ -1009,8 +1016,11 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        # For the newer gromacs version, analyse using alchemlyb.
-        if _gmx_version >= 2020:
+        if _gmx_version <= 2020:
+            _warnings.warn("Analysing using 'native' gmx bar and BAR as the gromacs version is older...")
+            method = "native"
+
+        if method == "alchemlyb":
 
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -1050,9 +1060,9 @@ class Relative():
 
             return (data, overlap)
 
-        # For the older gromacs versions use the gmx bar analysis.
-        else:
-            print("Analysing using gmx bar and BAR as the gromacs version is older...")
+        # For the older gromacs versions and native use the gmx bar analysis.
+        elif method == "native":
+            _warnings.warn("using 'native' for GROMACS does not return an overlap/dHdl.")
             # Create the command.
             command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (
                 _gmx_exe, work_dir, work_dir)
@@ -1066,58 +1076,58 @@ class Relative():
             # Initialise list to hold the data.
             data = []
 
-        # Run the first command.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-        if proc.returncode != 0:
-            raise _AnalysisError("GROMACS free-energy analysis failed!")
+            # Run the first command.
+            proc = _subprocess.run(_shlex.split(command), shell=False,
+                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            if proc.returncode != 0:
+                raise _AnalysisError("GROMACS free-energy analysis failed!")
 
-        # Initialise list to hold the data.
-        data = []
+            # Initialise list to hold the data.
+            data = []
 
-        # Extract the data from the output files.
+            # Extract the data from the output files.
 
-        # First leg.
-        with open("%s/bar.xvg" % work_dir) as file:
+            # First leg.
+            with open("%s/bar.xvg" % work_dir) as file:
 
-            # Read all of the lines into a list.
-            lines = []
-            for line in file:
-                # Ignore comments and xmgrace directives.
-                if line[0] != "#" and line[0] != "@":
-                    lines.append(line.rstrip())
+                # Read all of the lines into a list.
+                lines = []
+                for line in file:
+                    # Ignore comments and xmgrace directives.
+                    if line[0] != "#" and line[0] != "@":
+                        lines.append(line.rstrip())
 
-            # Store the initial free energy reading.
-            data.append((0.0,
-                         0.0 * _Units.Energy.kcal_per_mol,
-                         0.0 * _Units.Energy.kcal_per_mol))
+                # Store the initial free energy reading.
+                data.append((0.0,
+                            0.0 * _Units.Energy.kcal_per_mol,
+                            0.0 * _Units.Energy.kcal_per_mol))
 
-            # Zero the accumulated error.
-            total_error = 0
+                # Zero the accumulated error.
+                total_error = 0
 
-            # Zero the accumulated free energy difference.
-            total_freenrg = 0
+                # Zero the accumulated free energy difference.
+                total_freenrg = 0
 
-            # Process the BAR data.
-            for x, line in enumerate(lines):
-                # Extract the data from the line.
-                records = line.split()
+                # Process the BAR data.
+                for x, line in enumerate(lines):
+                    # Extract the data from the line.
+                    records = line.split()
 
-                # Update the total free energy difference.
-                total_freenrg += float(records[1])
+                    # Update the total free energy difference.
+                    total_freenrg += float(records[1])
 
-                # Extract the error.
-                error = float(records[2])
+                    # Extract the error.
+                    error = float(records[2])
 
-                # Update the accumulated error.
-                total_error = _math.sqrt(total_error*total_error + error*error)
+                    # Update the accumulated error.
+                    total_error = _math.sqrt(total_error*total_error + error*error)
 
-                # Append the data.
-                data.append(((x + 1) / (len(lines)),
-                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
-                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+                    # Append the data.
+                    data.append(((x + 1) / (len(lines)),
+                                (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                                (total_error * _Units.Energy.kt).kcal_per_mol()))
 
-        return (data, None)
+            return (data, None)
 
     @staticmethod
     def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb"):
