@@ -605,7 +605,7 @@ class Relative():
         return(df)
 
     @staticmethod
-    def analyse(work_dir, estimator='MBAR'):
+    def analyse(work_dir, estimator='MBAR', method="alchemlyb"):
         """Analyse existing free-energy data from a simulation working directory.
 
            Parameters
@@ -648,7 +648,7 @@ class Relative():
         for engine, (func, mask) in function_glob_dict.items():
             data = _glob(work_dir + mask)
             if data:
-                return func(work_dir, estimator)
+                return func(work_dir, estimator, method)
 
         raise ValueError(
             "Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
@@ -672,7 +672,7 @@ class Relative():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Relative.analyse(self._work_dir)
+        return Relative.analyse(self._work_dir, self._estimator)
 
     @staticmethod
     def _preprocessing_extracted_data(data):
@@ -890,7 +890,7 @@ class Relative():
         return (data, ti)
 
     @staticmethod
-    def _analyse_amber(work_dir=None, estimator=None):
+    def _analyse_amber(work_dir=None, estimator=None, method="alchemlyb"):
         """Analyse the AMBER free energy data.
 
            Parameters
@@ -959,7 +959,7 @@ class Relative():
         return (data, overlap)
 
     @staticmethod
-    def _analyse_gromacs(work_dir=None, estimator=None):
+    def _analyse_gromacs(work_dir=None, estimator=None, method="alchemlyb"):
         """Analyse the GROMACS free energy data.
 
            Parameters
@@ -1103,7 +1103,7 @@ class Relative():
         return (data, None)
 
     @staticmethod
-    def _analyse_somd(work_dir=None, estimator=None):
+    def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb"):
         """Analyse the SOMD free energy data.
 
            Parameters
@@ -1137,39 +1137,113 @@ class Relative():
             raise ValueError(
                 "'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
 
-        files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
-        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        if method == "alchemlyb":
 
-        temperatures = []
-        for file in files:
-            found_temperature = False
-            with open(file, 'r') as f:
-                for line in f.readlines():
-                    t = None
-                    start = '#Generating temperature is'
-                    if start in line:
-                        t = int(
-                            ((line.split(start)[1]).strip()).split(' ')[0])
-                        temperatures.append(t)
-                        if t is not None:
-                            found_temperature = True
-                            break
+            files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
-            if not found_temperature:
+            temperatures = []
+            for file in files:
+                found_temperature = False
+                with open(file, 'r') as f:
+                    for line in f.readlines():
+                        t = None
+                        start = '#Generating temperature is'
+                        if start in line:
+                            t = int(
+                                ((line.split(start)[1]).strip()).split(' ')[0])
+                            temperatures.append(t)
+                            if t is not None:
+                                found_temperature = True
+                                break
+
+                if not found_temperature:
+                    raise ValueError(
+                        f"The temperature was not detected in the SOMD output file, {file}")
+
+            if temperatures[0] != temperatures[-1]:
                 raise ValueError(
-                    f"The temperature was not detected in the SOMD output file, {file}")
+                    "The temperatures at the endstates don't match!")
 
-        if temperatures[0] != temperatures[-1]:
-            raise ValueError(
-                "The temperatures at the endstates don't match!")
+            if estimator == 'MBAR':
+                data, overlap = Relative._analyse_mbar(
+                    files, temperatures, lambdas, "SOMD")
 
-        if estimator == 'MBAR':
-            data, overlap = Relative._analyse_mbar(
-                files, temperatures, lambdas, "SOMD")
+            if estimator == 'TI':
+                data, overlap = Relative._analyse_ti(
+                    files, temperatures, lambdas, "SOMD")
 
-        if estimator == 'TI':
-            data, overlap = Relative._analyse_ti(
-                files, temperatures, lambdas, "SOMD")
+        elif method == "native":
+
+            # Create the command.
+            command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
+
+            # Run the first command.
+            proc = _subprocess.run(_shlex.split(command), shell=False,
+                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            if proc.returncode != 0:
+                raise _AnalysisError("SOMD free-energy analysis failed!")
+
+            # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
+            with open("%s/mbar.txt" % work_dir) as file:
+                for line in file:
+                    if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
+                        _warnings.warn("Subsampling resulted in less than 50 samples, "
+                                    f"re-running without subsampling for '{work_dir}'")
+                        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
+                        proc = _subprocess.run(_shlex.split(command), shell=False,
+                            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                        if proc.returncode != 0:
+                            raise _AnalysisError("SOMD free-energy analysis failed!")
+                        break
+
+            # Initialise list to hold the data.
+            data = []
+
+            # Initialise list to hold the overlap matrix.
+            overlap = []
+
+            # Extract the data from the output files.
+
+            # First leg.
+            with open("%s/mbar.txt" % work_dir) as file:
+
+                # Process the MBAR data.
+                for line in file:
+                    # Process the overlap matrix.
+                    if "#Overlap matrix" in line:
+
+                        # Get the next row.
+                        row = next(file)
+
+                        # Loop until we hit the next section.
+                        while not row.startswith("#DG"):
+                            # Extract the data for this row.
+                            records = [float(x) for x in row.split()]
+
+                            # Append to the overlap matrix.
+                            overlap.append(records)
+
+                            # Get the next line.
+                            row = next(file)
+
+                    # Process the PMF.
+                    elif "PMF from MBAR" in line:
+                        # Get the next row.
+                        row = next(file)
+
+                        # Loop until we hit the next section.
+                        while not row.startswith("#TI"):
+                            # Split the line.
+                            records = row.split()
+
+                            # Append the data.
+                            data.append((float(records[0]),
+                                        float(records[1]) * _Units.Energy.kcal_per_mol,
+                                        float(records[2]) * _Units.Energy.kcal_per_mol))
+
+                            # Get the next line.
+                            row = next(file)
 
         return (data, overlap)
 
@@ -1425,7 +1499,7 @@ class Relative():
            Returns
            -------
            the plot : matplotlib.axes._subplots.AxesSubplot
-           
+
         """
 
         # Calculate the overlap for this object.
