@@ -29,8 +29,20 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Relative", "getData"]
 
 from collections import OrderedDict as _OrderedDict
-from email.policy import default
 from glob import glob as _glob
+from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+from alchemlyb.estimators import TI as _TI
+from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
+from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
+from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
+from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
+from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
+from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
+from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
+from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
+from alchemlyb.visualisation import plot_mbar_overlap_matrix as _plot_mbar_overlap_matrix
+from alchemlyb.visualisation import plot_ti_dhdl as _plot_ti_dhdl
 
 import copy as _copy
 import math as _math
@@ -43,22 +55,10 @@ import subprocess as _subprocess
 import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
-import alchemlyb as _alchemlyb
-from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
-from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
-from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
-from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
-from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
-from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
-from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-from alchemlyb.estimators import TI as _TI
-from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-from alchemlyb.visualisation import plot_mbar_overlap_matrix as _plot_mbar_overlap_matrix
-from alchemlyb.visualisation import plot_ti_dhdl as _plot_ti_dhdl
-
 import numpy as _np
 import pandas as _pd
+import alchemlyb as _alchemlyb
+
 from Sire.Base import getBinDir as _getBinDir
 from Sire.Base import getShareDir as _getShareDir
 
@@ -406,15 +406,15 @@ class Relative():
 
     @staticmethod
     def _somd_extract_u_nk(simfile, T):
-        """Return reduced potentials `data` from Somd outputfile.
+        """Return reduced potentials `data` from Somd output file (simfile.dat).
 
         Parameters
         ----------
-        outfile : str
+        simfile : str
             Path to simfile.dat file to extract data from.
         T : float
             Temperature in Kelvin at which the simulations were performed;
-            needed to generated the reduced potential (in units of kT)
+            needed to generated the reduced potential (in units of kT).
 
         Returns
         -------
@@ -506,11 +506,11 @@ class Relative():
 
     @staticmethod
     def _somd_extract_dHdl(simfile, T):
-        """Return gradients ``dH/dl`` from Somd outputfile.
+        """Return gradients ``dH/dl`` from Somd output file (simfile.dat).
 
         Parameters
         ----------
-        outfile : str
+        simfile : str
             Path to simfile.dat file to extract data from.
         T : float
             Temperature in Kelvin at which the simulations were performed.
@@ -523,8 +523,8 @@ class Relative():
         """
         file = simfile
 
-        # For dhdl need to consider the T, as the gradient is in kcal/mol in the simfile.dat .
-        k_b = R_kJmol * kJ2kcal
+        # For dhdl need to consider the temperature, as the gradient is in kcal/mol in the simfile.dat .
+        k_b = _R_kJmol * _kJ2kcal
         beta = 1/(k_b * T)
 
         # Find the lambda values for the simulation.
@@ -675,17 +675,19 @@ class Relative():
         return Relative.analyse(self._work_dir)
 
     @staticmethod
-    def preprocessing_extracted_data(data):
+    def _preprocessing_extracted_data(data):
         """_summary_
 
-        Args:
-            data : dataframe
-            Dataframe of extracted dHdl or u_nk data.
+        Parameters
+        ----------
+
+            data : pandas.DataFrame
+                Dataframe of extracted dHdl or u_nk data.
 
         Returns
         -------
 
-            processed_data : dataframe
+            processed_data : pandas.DataFrame
             Dataframe of dHdl or u_nk data processed using automated equilibration
             detection followed by statistical inefficiency.
         """
@@ -732,7 +734,7 @@ class Relative():
         return processed_data
 
     @staticmethod
-    def analyse_mbar(files, temperatures, lambdas, engine):
+    def _analyse_mbar(files, temperatures, lambdas, engine):
         """Analyse existing free-energy data using MBAR and the alchemlyb library.
 
            Parameters
@@ -759,7 +761,7 @@ class Relative():
                where each tuple contains the lambda value, the PMF, and the
                standard error.
 
-           overlap : [ [ float, float, ... ] ]
+           overlap : numpy.matrix 
                The overlap matrix. This gives the overlap between each lambda
                window.
         """
@@ -780,7 +782,7 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_u_nk = Relative.preprocessing_extracted_data(u_nk)
+            processed_u_nk = Relative._preprocessing_extracted_data(u_nk)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_u_nk = u_nk
@@ -811,7 +813,7 @@ class Relative():
         return (data, overlap)
 
     @staticmethod
-    def analyse_ti(files, temperatures, lambdas, engine):
+    def _analyse_ti(files, temperatures, lambdas, engine):
         """Analyse existing free-energy data using TI and the alchemlyb library.
 
            Parameters
@@ -838,7 +840,7 @@ class Relative():
                where each tuple contains the lambda value, the PMF, and the
                standard error.
 
-           overlap : [ [ float, float, ... ] ]
+           dHdl : alchemlyb.estimators.ti_.TI
                The TI gradients for plotting a graph.
         """
 
@@ -859,7 +861,7 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_dhdl = Relative.preprocessing_extracted_data(dhdl)
+            processed_dhdl = Relative._preprocessing_extracted_data(dhdl)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_dhdl = dhdl
@@ -885,10 +887,7 @@ class Relative():
                         (ti_value) * _Units.Energy.kcal_per_mol,
                         (ti_error) * _Units.Energy.kcal_per_mol))
 
-        # For TI, dHdl graph.
-        overlap = ti
-
-        return (data, overlap)
+        return (data, ti)
 
     @staticmethod
     def _analyse_amber(work_dir=None, estimator=None):
@@ -911,9 +910,9 @@ class Relative():
                where each tuple contains the lambda value, the PMF, and the
                standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window. For TI, this gives the dhdl.
+           overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+               For MBAR, this returns the overlap matrix for the overlap between each lambda window.
+               For TI, this returns the gradients for plotting a graph.
         """
 
         if type(work_dir) is not str:
@@ -950,11 +949,11 @@ class Relative():
                 "The temperatures at the endstates don't match!")
 
         if estimator == 'MBAR':
-            data, overlap = Relative.analyse_mbar(
+            data, overlap = Relative._analyse_mbar(
                 files, temperatures, lambdas, "AMBER")
 
         if estimator == 'TI':
-            data, overlap = Relative.analyse_ti(
+            data, overlap = Relative._analyse_ti(
                 files, temperatures, lambdas, "AMBER")
 
         return (data, overlap)
@@ -980,9 +979,9 @@ class Relative():
                where each tuple contains the lambda value, the PMF, and the
                standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window. For TI, this gives the dhdl.
+           overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+               For MBAR, this returns the overlap matrix for the overlap between each lambda window.
+               For TI, this returns the gradients for plotting a graph.
         """
 
         if not isinstance(work_dir, str):
@@ -1025,11 +1024,11 @@ class Relative():
                     "The temperatures at the endstates don't match!")
 
             if estimator == 'MBAR':
-                data, overlap = Relative.analyse_mbar(
+                data, overlap = Relative._analyse_mbar(
                     files, temperatures, lambdas, "GROMACS")
 
             if estimator == 'TI':
-                data, overlap = Relative.analyse_ti(
+                data, overlap = Relative._analyse_ti(
                     files, temperatures, lambdas, "GROMACS")
 
             return (data, overlap)
@@ -1124,10 +1123,9 @@ class Relative():
                where each tuple contains the lambda value, the PMF, and the
                standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+           overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+               For MBAR, this returns the overlap matrix for the overlap between each lambda window.
+               For TI, this returns the gradients for plotting a graph.
         """
 
         if not isinstance(work_dir, str):
@@ -1166,11 +1164,11 @@ class Relative():
                 "The temperatures at the endstates don't match!")
 
         if estimator == 'MBAR':
-            data, overlap = Relative.analyse_mbar(
+            data, overlap = Relative._analyse_mbar(
                 files, temperatures, lambdas, "SOMD")
 
         if estimator == 'TI':
-            data, overlap = Relative.analyse_ti(
+            data, overlap = Relative._analyse_ti(
                 files, temperatures, lambdas, "SOMD")
 
         return (data, overlap)
@@ -1279,7 +1277,7 @@ class Relative():
         return Relative.difference(pmf, pmf_ref)
 
     @staticmethod
-    def check_overlap(overlap, estimator="MBAR"):
+    def checkOverlap(overlap, estimator="MBAR"):
         """Check the overlap of an FEP leg. 
 
            Parameters
@@ -1294,7 +1292,8 @@ class Relative():
            Returns
            -------
 
-           Message - gives a warning if the overlap is less than 0.03 for any off-diagonal.
+           overlap_okay : boolean
+                True if the overlap is okay, False if any off-diagonals are less than 0.03.
 
         """
         if not isinstance(overlap, _np.matrix):
@@ -1313,16 +1312,16 @@ class Relative():
 
             # check if the off diagonals are 0.03 or larger.
             too_small = 0
+            overlap_okay = False
             for o in off_diagonal:
                 if o < 0.03:
                     too_small += 1
             if too_small > 0:
-                message = f"Overlap matrix is bad - {too_small} off-diagonals are less than 0.03."
-                _warnings.warn(f"{message}")
+                _warnings.warn(f"Overlap matrix is bad - {too_small} off-diagonals are less than 0.03.")
             else:
-                message = "Overlap matrix is okay."
+                overlap_okay = True
 
-        return (message)
+        return (overlap_okay)
 
     def _check_overlap(self):
         """Check the overlap of an FEP leg. 
@@ -1333,8 +1332,8 @@ class Relative():
            Returns
            -------
 
-           Message - gives a warning if the overlap is less than 0.03 for any off-diagonal.
-
+           overlap_okay : boolean
+                True if the overlap is okay, False if any off-diagonals are less than 0.03.
 
         """
 
@@ -1342,52 +1341,59 @@ class Relative():
         _, overlap = self.analyse()
 
         # Now call the staticmethod passing in the overlap and the work_dir of the run.
-        return Relative.check_overlap(overlap, estimator=self._estimator)
+        return Relative.checkOverlap(overlap, estimator=self._estimator)
 
     @staticmethod
-    def plot(overlap, estimator=None, work_dir=None):
+    def plot(overlap_dhdl, estimator=None, work_dir=None):
         """Plot either the overlap or the dhdl of the transformation. 
 
            Parameters
            ----------
 
-           overlap : [ [ float, float, ... ] ], numpy.matrix
-               For MBAR, the overlap matrix. This gives the overlap between lambda windows.
-               For TI, the dhdl.
+           overlap_dhdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+               For MBAR, this is the overlap matrix for the overlap between each lambda window.
+               For TI, this the dHdl gradients from the alchemlyb analysis.
 
            estimator : str
                The estimator ('MBAR' or 'TI') used.
 
            work_dir : str
-               The working directory for the free-energy perturbation
-               simulation.
+               The working directory for the free-energy perturbation simulation.
+               If this is specified, the plot will be saved there.
 
            Returns
            -------
-
-           Overlap matrix plot or dhdl graph.
+           the plot : matplotlib.axes._subplots.AxesSubplot
 
         """
-        
+
+        if work_dir:
+            if not isinstance(work_dir, str):
+                raise TypeError("'work_dir' must be of type 'str'.")
+            if not _os.path.isdir(work_dir):
+                raise ValueError("'work_dir' doesn't exist!")
+        else:
+            pass
+      
         # estimator must be MBAR for overlap matrix or TI for dhdl plot.
         if estimator not in ['MBAR', 'TI', None]:
             raise ValueError("'estimator' must be 'MBAR' or 'TI'. If 'None, data type will be inferred.")
 
         if estimator is None:
-            if isinstance(overlap, _np.matrix):
+            if isinstance(overlap_dhdl, _np.matrix):
                 estimator = "MBAR"
-            elif isinstance(overlap, _alchemlyb.estimators.ti_.TI) or isinstance(overlap, list):
+            elif isinstance(overlap_dhdl, _alchemlyb.estimators.ti_.TI):
                 estimator = "TI"
             else:
                 raise TypeError("Data type for estimator = 'None' could not be inferred / does not match allowed data types.")
 
         if estimator == "MBAR":
-            if not isinstance(overlap, _np.matrix):
+            if not isinstance(overlap_dhdl, _np.matrix):
                         raise TypeError("'overlap' must be of type 'numpy.matrix' for 'MBAR'.\
                             This is obtained from running analysis using estimator='MBAR'.")
 
             # use the alchemlyb functionality to plot the overlap matrix
-            ax = _plot_mbar_overlap_matrix(overlap)
+            ax = _plot_mbar_overlap_matrix(overlap_dhdl)
             ax.set_title(f"overlap matrix")
 
             if work_dir is not None:
@@ -1395,34 +1401,31 @@ class Relative():
                     f"{work_dir}/overlap_MBAR.png", bbox_inches='tight', pad_inches=0.0)      
 
         elif estimator == 'TI':
-            if not isinstance(overlap, _alchemlyb.estimators.ti_.TI):
-                if not isinstance(overlap, list):
-                        raise TypeError("'overlap' must be of type 'alchemlyb.estimators.ti_.TI' for 'TI'.\
-                                          This is obtained from running analysis using estimator='TI'.\
-                                          Alternatively, it may also be of type 'list'.")
+            if not isinstance(overlap_dhdl, _alchemlyb.estimators.ti_.TI):
+                raise TypeError("'overlap' must be of type 'alchemlyb.estimators.ti_.TI' for 'TI'.\
+                                    This is obtained from running analysis using estimator='TI'.")
 
             # use the alchemlyb functionality to plot the dhdl
-            ax = _plot_ti_dhdl(overlap)
+            ax = _plot_ti_dhdl(overlap_dhdl)
             ax.set_title(f"dhdl plot")
             
             if work_dir is not None:
                 ax.figure.savefig(
                     f"{work_dir}/dHdl_TI.png")
-
-        return ()
+            
+        return(ax)
 
     def _plot(self):
-        """Plot either the overlap or the dhdl of the transformation. 
+        """Plot either the overlap or the dhdl of the transformation.
+           Saves the plot in the working directory of the run.
 
            Parameters
            ----------
 
            Returns
            -------
-
-           Overlap matrix plot or dhdl graph.
-
-
+           the plot : matplotlib.axes._subplots.AxesSubplot
+           
         """
 
         # Calculate the overlap for this object.
@@ -1523,18 +1526,18 @@ class Relative():
                 # Create a copy of the process and update the working
                 # directory.
                 if not self._setup_only:
-                    process = _copy.copy(first_process)
-                    process._system = first_process._system.copy()
-                    process._protocol = self._protocol
-                    process._work_dir = new_dir
-                    process._std_out_file = new_dir + "/somd.out"
-                    process._std_err_file = new_dir + "/somd.err"
-                    process._rst_file = new_dir + "/somd.rst7"
-                    process._top_file = new_dir + "/somd.prm7"
-                    process._traj_file = new_dir + "/traj000000001.dcd"
-                    process._restart_file = new_dir + "/latest.rst"
-                    process._config_file = new_dir + "/somd.cfg"
-                    process._pert_file = new_dir + "/somd.pert"
+                    process                 = _copy.copy(first_process)
+                    process._system         = first_process._system.copy()
+                    process._protocol       = self._protocol
+                    process._work_dir       = new_dir
+                    process._std_out_file   = new_dir + "/somd.out"
+                    process._std_err_file   = new_dir + "/somd.err"
+                    process._rst_file       = new_dir + "/somd.rst7"
+                    process._top_file       = new_dir + "/somd.prm7"
+                    process._traj_file      = new_dir + "/traj000000001.dcd"
+                    process._restart_file   = new_dir + "/latest.rst"
+                    process._config_file    = new_dir + "/somd.cfg"
+                    process._pert_file      = new_dir + "/somd.pert"
                     process._gradients_file = new_dir + "/gradients.dat"
                     process._input_files = [process._config_file,
                                             process._rst_file,

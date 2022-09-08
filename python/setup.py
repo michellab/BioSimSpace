@@ -65,20 +65,20 @@ finally:
         stderr = sys.stderr
 
         # Create a list of the conda dependencies.
-        conda_deps = ["configargparse",
+        conda_deps = ["alchemlyb",
+                      "configargparse",
+                      "lomap2",
+                      "networkx",
+                      "nglview",
                       "pygtail",
                       "pytest",
                       "pyyaml",
-                      "watchdog",
                       "pydot",
-                      "networkx",
-                      "nglview",
                       "py3dmol",
                       "pypdb",
-                      "rdkit",
                       "parmed",
-                      "lomap2",
-                      "alchemlyb",
+                      "rdkit",
+                      "watchdog",
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit-base" # known not available on aarch64
