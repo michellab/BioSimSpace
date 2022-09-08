@@ -100,7 +100,7 @@ class Relative():
 
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
                  setup_only=False, ignore_warnings=False,
-                 show_errors=True, estimator='MBAR', property_map={}):
+                 show_errors=True, estimator='MBAR', method='alchemlyb', property_map={}):
         """Constructor.
 
            Parameters
@@ -142,6 +142,11 @@ class Relative():
 
            estimator : str
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
+
+          method : str
+               The method to be used for analysis ('alchemlyb' or 'native').
+               Alchemlyb refers to using the alchemlyb library, whilst
+               native refers to the analysis implemented within the engine itself.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -258,6 +263,10 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
         self._estimator = estimator
+
+        if method not in ['alchemlyb', 'native']:
+            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
+        self._method = method
 
         # Check that the map is valid.
         if not isinstance(property_map, dict):
@@ -618,6 +627,11 @@ class Relative():
            estimator : str
                The estimator ('MBAR' or 'TI') used. Default is MBAR.
 
+          method : str
+               The method to be used for analysis ('alchemlyb' or 'native').
+               Alchemlyb refers to using the alchemlyb library, whilst
+               native refers to the analysis implemented within the engine itself.
+
            Returns
            -------
 
@@ -639,6 +653,9 @@ class Relative():
 
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if method not in ['alchemlyb', 'native']:
+            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
 
         function_glob_dict = {
             "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat"),
@@ -680,7 +697,7 @@ class Relative():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Relative.analyse(self._work_dir, self._estimator)
+        return Relative.analyse(self._work_dir, self._estimator, self._method)
 
     @staticmethod
     def _preprocessing_extracted_data(data):
@@ -910,6 +927,11 @@ class Relative():
            estimator : str
                The estimator ('MBAR' or 'TI') used.
 
+           method : str
+               The method to be used for analysis ('alchemlyb').
+               Alchemlyb refers to using the alchemlyb library, which is the
+               only method implemented for Amber.
+
            Returns
            -------
 
@@ -930,6 +952,9 @@ class Relative():
 
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if method not in ['alchemlyb']:
+            raise ValueError("'method' must be either 'alchemlyb' for Amber.")
 
         files = sorted(_glob(work_dir + "/lambda_*/amber.out"))
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
@@ -978,6 +1003,11 @@ class Relative():
 
            estimator : str
                The estimator ('MBAR' or 'TI') used.
+ 
+          method : str
+               The method to be used for analysis ('alchemlyb' or 'native').
+               Alchemlyb refers to using the alchemlyb library, whilst
+               native refers to the analysis implemented within the engine itself.
 
            Returns
            -------
@@ -999,6 +1029,10 @@ class Relative():
 
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if method not in ['alchemlyb', 'native']:
+            raise ValueError(
+                "'method' must be either 'alchemlyb' or 'native' for Gromacs output.")
 
         if _gmx_version <= 2020:
             _warnings.warn("Analysing using 'native' gmx bar and BAR as the gromacs version is older...")
@@ -1125,6 +1159,11 @@ class Relative():
 
            estimator : str
                The estimator ('MBAR' or 'TI') used.
+          
+          method : str
+               The method to be used for analysis ('alchemlyb' or 'native').
+               Alchemlyb refers to using the alchemlyb library, whilst
+               native refers to the analysis implemented within the engine itself.
 
            Returns
            -------
@@ -1147,6 +1186,10 @@ class Relative():
         if estimator not in ['MBAR', 'TI']:
             raise ValueError(
                 "'estimator' must be either 'MBAR' or 'TI' for SOMD output.")
+
+        if method not in ['alchemlyb', 'native']:
+            raise ValueError(
+                "'method' must be either 'alchemlyb' or 'native' for SOMD output.")
 
         if method == "alchemlyb":
 
@@ -1255,6 +1298,8 @@ class Relative():
 
                             # Get the next line.
                             row = next(file)
+            
+            overlap = _np.matrix(overlap)
 
         return (data, overlap)
 
