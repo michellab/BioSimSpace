@@ -67,6 +67,7 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = ["alchemlyb",
                       "configargparse",
+                      "ipywidgets<8",
                       "lomap2",
                       "networkx",
                       "nglview",

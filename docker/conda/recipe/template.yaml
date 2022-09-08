@@ -20,6 +20,7 @@ requirements:
     - mdtraj
     - mdanalysis
     - nglview
+    - ipywidgets<8
     - openff-toolkit-base
     - parmed
     - pydot
