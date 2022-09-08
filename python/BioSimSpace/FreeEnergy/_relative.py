@@ -672,7 +672,7 @@ class Relative():
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Relative.analyse(self._work_dir)
+        return Relative.analyse(self._work_dir, self._estimator)
 
     @staticmethod
     def _preprocessing_extracted_data(data):
