@@ -60,16 +60,16 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
            Parameters
            ----------
 
-           lam : float
+           lam : float or pandas.Series
                The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [float]
-               The list of lambda parameters.
+           lam_vals : [float] or pandas.DataFrame
+               A list of lambda values.
 
-           min_lam : float
+           min_lam : float or pandas.Series
                The minimum lambda value.
 
-           max_lam : float
+           max_lam : float or pandas.Series
                The maximum lambda value.
 
            num_lam : int
