@@ -98,7 +98,7 @@ class Absolute(_Relative):
     def __init__(self, system, protocol=None, work_dir=None, engine=None,
             gpu_support=False, setup_only=False, ignore_warnings=False,
             show_errors=True, extra_options=None, extra_lines=None,
-            estimator='MBAR', restraint=None, property_map={}):
+            estimator='MBAR', method="native", restraint=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -148,6 +148,11 @@ class Absolute(_Relative):
                A list of extra lines to be put at the end of the script.
            
            estimator : str
+
+           method : str
+               The method to be used for analysis ('alchemlyb' or 'native').
+               Alchemlyb refers to using the alchemlyb library, whilst
+               native refers to the analysis implemented within the engine itself.
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
 
            restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
@@ -163,7 +168,7 @@ class Absolute(_Relative):
         super().__init__(system, protocol, work_dir, engine,
                          gpu_support, setup_only, ignore_warnings,
                          show_errors, extra_options, extra_lines,
-                         estimator, property_map)
+                         estimator, method, property_map)
 
         # Strip whitespace from engine and convert to upper case.
         engine = engine.replace(" ", "").upper()
