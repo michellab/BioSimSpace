@@ -526,7 +526,7 @@ class Relative():
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
+        command = "%s mbar -i %s/lambda_*/simfile.dat* -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
         # Run the first command.
         proc = _subprocess.run(_shlex.split(command), shell=False,
@@ -540,7 +540,7 @@ class Relative():
                 if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
                     _warnings.warn("Subsampling resulted in less than 50 samples, "
                                   f"re-running without subsampling for '{work_dir}'")
-                    command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
+                    command = "%s mbar -i %s/lambda_*/simfile.dat* -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
                     proc = _subprocess.run(_shlex.split(command), shell=False,
                         stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                     if proc.returncode != 0:
