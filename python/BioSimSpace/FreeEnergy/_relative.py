@@ -669,13 +669,13 @@ class Relative():
                 if method is not "alchemlyb":
                     raise _AnalysisError(f"{engine} requires alchemlyb.")
             if data and engine == "SOMD" and estimator == "TI" and method == "native":
+                raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
             if data and engine == "SOMD":
                 fmt = data[0][-3:]
                 if fmt not in ["bz2", "dat"]:
                     raise ValueError("simfiles must be supplied in .dat or .bz2 format")
                 if method == "alchemlyb" and fmt == "bz2":
                     raise ValueError("simfiles must not be compressed when using alchemlyb for analysis.")
-                raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
             if data and engine == "GROMACS" and method == "native":
                 _warnings.warn(f"{engine} with {method} cannot do MBAR/TI. BAR will be used.")
             if data:
