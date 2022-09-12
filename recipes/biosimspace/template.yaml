@@ -18,6 +18,7 @@ requirements:
   run:
     - python
     - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
+    - alchemlyb
     - configargparse
     - fkcombu
     - lomap2

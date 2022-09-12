@@ -34,6 +34,19 @@ import os as _os
 import tempfile as _tempfile
 import warnings as _warnings
 
+# Import tqdm for progress bars for BSS restraints derivation. 
+# The import needs to be different depending on
+# whether we are running in a notebook or not
+
+try:
+    shell = get_ipython().__class__.__name__
+    if shell == 'ZMQInteractiveShell': # This is a notebook
+        from tqdm.notebook import tqdm 
+    else:
+        from tqdm import tqdm
+except NameError: # Import progress bars to work in terminal
+    from tqdm import tqdm
+
 try:
     import alchemlyb as _alchemlyb
     from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
@@ -835,7 +848,7 @@ class RestraintSearch():
                     pair_variance_dict[(lig_atom.index, prot_atom.index)]["dists"] = []
 
             # Compute Average Distance and SD
-            for frame in u.trajectory:
+            for frame in tqdm(u.trajectory, desc="Searching for low variance pairs. Frame no: "):
                 for lig_atom_index, prot_atom_index in pair_variance_dict.keys():
                     distance = _dist(_mda.AtomGroup([u.atoms[lig_atom_index]]),
                                     _mda.AtomGroup([u.atoms[prot_atom_index]]),
@@ -1021,7 +1034,7 @@ class RestraintSearch():
             # get values of degrees of freedom for lowest SD pairs across whole trajectory
 
             boresch_dof_data = {}
-            for pair in pair_list[:no_pairs]:  # Check no_pair pairs
+            for pair in tqdm(pair_list[:no_pairs], desc="Scoring candidate Boresch anchor points. Anchor set no: "):
                 boresch_dof_data[pair] = {}
                 l1_idx, r1_idx = pair
                 _, l2_idx, l3_idx = getAnchorAts(l1_idx, u)

@@ -118,6 +118,18 @@ USER root
 #  - especially the above workshop data!)
 RUN mamba install -y alchemlyb
 
+# We need to downgrade to ipywidgets < 8
+RUN mamba install -y "ipywidgets<8"
+
+# We need to install the Exscientia version of MDRestraintsGenerator
+RUN python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git
+
+# We need to install the feature_workshop branch of Sire
+COPY sire-2022.3.0-py39h3fd9d12_73.tar.bz2 /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2
+
+RUN mamba install -y /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2 && \
+    rm /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2
+
 # End as the User to make sure that we don't
 # accidentally run the container as root.
 USER $NB_USER
