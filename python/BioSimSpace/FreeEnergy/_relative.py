@@ -658,7 +658,7 @@ class Relative():
             raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
 
         function_glob_dict = {
-            "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat"),
+            "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat*"),
             "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
             "AMBER": (Relative._analyse_amber, "/lambda_*/amber.out")
         }
@@ -670,6 +670,12 @@ class Relative():
                     raise _AnalysisError(f"{engine} requires alchemlyb.")
             if data and engine == "SOMD" and estimator == "TI" and method == "native":
                 raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
+            if data and engine == "SOMD":
+                fmt = data[0][-3:]
+                if fmt not in ["bz2", "dat"]:
+                    raise ValueError("simfiles must be supplied in .dat or .bz2 format")
+                if method == "alchemlyb" and fmt == "bz2":
+                    raise ValueError("simfiles must not be compressed when using alchemlyb for analysis.")
             if data and engine == "GROMACS" and method == "native":
                 _warnings.warn(f"{engine} with {method} cannot do MBAR/TI. BAR will be used.")
             if data:
