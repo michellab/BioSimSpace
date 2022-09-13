@@ -667,7 +667,7 @@ class Relative():
         for engine, (func, mask) in function_glob_dict.items():
             data = _glob(work_dir + mask)
             if data and engine == "AMBER":
-                if method is not "alchemlyb":
+                if method != "alchemlyb":
                     raise _AnalysisError(f"{engine} requires alchemlyb.")
             if data and engine == "SOMD" and estimator == "TI" and method == "native":
                 raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
