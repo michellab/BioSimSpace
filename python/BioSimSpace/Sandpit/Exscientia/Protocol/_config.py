@@ -4,6 +4,7 @@ import warnings as _warnings
 
 from Sire import Units as _SireUnits
 
+from .. import _gmx_version
 from ..Align._merge import _squash
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Units.Time import nanosecond as _nanosecond
@@ -446,6 +447,10 @@ class ConfigFactory:
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
+                    if _gmx_version >= 2021:
+                        protocol_dict["pcoupl"] =  "C-rescale"                  # C-rescale barostat.
+                    else:
+                        protocol_dict["pcoupl"] =  "Berendsen"                  # Berendsen barostat.
                     protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
                     protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
