@@ -451,7 +451,6 @@ class ConfigFactory:
                         protocol_dict["pcoupl"] =  "C-rescale"                  # C-rescale barostat.
                     else:
                         protocol_dict["pcoupl"] =  "Berendsen"                  # Berendsen barostat.
-                    protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
                     protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
                     protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
