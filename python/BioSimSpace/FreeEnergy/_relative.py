@@ -725,36 +725,22 @@ class Relative():
             detection followed by statistical inefficiency.
         """
 
-        # Subsample according to equilibration detection followed by statistical inefficiency.
+        # Subsample according to equilibration detection.
         eq_okay = False
-        sample_okay = False
         try:
-            eq_data = [_equilibrium_detection(i, i.iloc[:, 0])
+            sampled_data = [_equilibrium_detection(i, i.iloc[:, 0])
                        for i in data]
             eq_okay = True
-            sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
-                            for i in eq_data]
-            sample_okay = True
         except:
             pass
         
         # Throw errors if either failed
         if not eq_okay:
             _warnings.warn("Could not detect equilibration.")
-            try:
-                sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
-                                for i in data]
-                sample_okay = True
-            except:
-                _warnings.warn("Could not calculate statistical inefficiency.")
-                sampled_data = data
-
-        if eq_okay and not sample_okay:
-            _warnings.warn("Could not calculate statistical inefficiency.")
-            sampled_data = eq_data
+            sampled_data = data
 
         # make sure there are more than 50 samples for the analysis
-        if eq_okay or sample_okay:
+        if eq_okay:
             for i in sampled_data:
                 if len(i.iloc[:, 0]) < 50:
                     _warnings.warn(
@@ -1238,7 +1224,7 @@ class Relative():
         elif method == "native":
 
             # Create the command.
-            command = "%s mbar -i %s/lambda_*/simfile.dat* -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
+            command = "%s mbar -i %s/lambda_*/simfile.dat* -o %s/mbar.txt --overlap --percent 5" % (_analyse_freenrg, work_dir, work_dir)
 
             # Run the first command.
             proc = _subprocess.run(_shlex.split(command), shell=False,
