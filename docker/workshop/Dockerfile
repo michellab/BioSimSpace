@@ -130,6 +130,9 @@ COPY sire-2022.3.0-py39h3fd9d12_73.tar.bz2 /home/jovyan/sire-2022.3.0-py39h3fd9d
 RUN mamba install -y /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2 && \
     rm /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2
 
+# We need tqdm for the RestraintSearch progress bars
+RUN mamba install -y -c conda-forge tqdm
+
 # End as the User to make sure that we don't
 # accidentally run the container as root.
 USER $NB_USER

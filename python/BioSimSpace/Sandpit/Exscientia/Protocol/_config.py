@@ -655,7 +655,7 @@ class ConfigFactory:
             protocol_dict["cutoff type"] = "cutoffnonperiodic"                  # No periodic box.
         else:
             protocol_dict["cutoff type"] = "cutoffperiodic"                     # Periodic box.
-        protocol_dict["cutoff distance"] = "8 angstrom"                        # Non-bonded cut-off.
+        protocol_dict["cutoff distance"] = "10 angstrom"                        # Non-bonded cut-off.
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration) and self.protocol.getRestraint() is not None:
