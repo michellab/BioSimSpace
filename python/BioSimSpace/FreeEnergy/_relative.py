@@ -638,7 +638,8 @@ class Relative():
            pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
-               standard error.
+               standard error. Note that when method == "native" and the engine is SOMD,
+               errors will be returned as the 95 % C.I.s.
 
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
@@ -693,7 +694,8 @@ class Relative():
            pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
-               standard error.
+               standard error. Note that when method == "native" and the engine is SOMD,
+               errors will be returned as the 95 % C.I.s.
 
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
