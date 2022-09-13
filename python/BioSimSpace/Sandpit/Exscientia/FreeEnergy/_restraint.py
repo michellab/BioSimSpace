@@ -351,7 +351,7 @@ class Restraint():
             raise NotImplementedError(f'MD Engine {engine} not implemented '
                                       f'yet. Only Gromacs and SOMD are supported.')
 
-    def getCorrection(self, unit="kj_per_mol"):
+    def getCorrection(self, unit="kcal_per_mol"):
         """Calculate the free energy of releasing the restraint
         to the standard state volume.'''
 
@@ -359,7 +359,7 @@ class Restraint():
            ----------
            unit : str
                The unit in which to return the energy
-               ("kj_per_mol" or "kcal_per_mol"). Defaults to "kj_per_mol".
+               ("kj_per_mol" or "kcal_per_mol"). Defaults to "kcal_per_mol".
 
            Returns
            ----------
@@ -407,4 +407,4 @@ class Restraint():
     @property
     def correction(self):
         '''Give the free energy of removing the restraint.'''
-        return self.getCorrection(unit="kj_per_mol")
+        return self.getCorrection(unit="kcal_per_mol")
