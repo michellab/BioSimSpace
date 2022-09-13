@@ -1150,7 +1150,13 @@ class RestraintSearch():
 
             restraint_idx : int
                 Index of the restraint in ordered_restraint_labels to use.
+
+            dof_to_plot : list
+                List of DOF to plot.
             """
+            # The labels for each DOF to use on the plots
+            dof_labels = {"r": r"$r$ / $\mathrm{\AA}$", "thetaA": r"$\theta_A$ / rad", "thetaB": r"$\theta_B$ / rad",
+                          "phiA": r"$\phi_A$ / rad", "phiB": r"$\phi_B$ / rad", "phiC": r"$\phi_C$ / rad"}
 
             n_dof = len(dof_to_plot)
             label = ordered_restraint_labels[restraint_idx]
@@ -1161,10 +1167,7 @@ class RestraintSearch():
                 axs[i].hist(dof_data[label][dof]["values"], bins=10)
                 axs[i].axvline(x=dof_data[label][dof]["avg"], color='r',
                             linestyle='dashed', linewidth=2, label="mean")
-                if dof[0] == "r":
-                    axs[i].set_xlabel(r"r ($\AA$)")
-                else:
-                    axs[i].set_xlabel(f"{dof} (rad)")
+                axs[i].set_xlabel(dof_labels[dof])
                 axs[i].set_ylabel("Num Vals")
                 axs[i].legend()
             fig.tight_layout()
@@ -1175,10 +1178,7 @@ class RestraintSearch():
             for i, dof in enumerate(dof_to_plot):
                 axs[i].plot([x for x in range(len(dof_data[label][dof]["values"]))],
                             dof_data[label][dof]["values"])
-                if dof[0] == "r":
-                    axs[i].set_ylabel(r"r ($\AA$)")
-                else:
-                    axs[i].set_ylabel(f"{dof} (rad)")
+                axs[i].set_ylabel(dof_labels[dof])
                 axs[i].set_xlabel("Frame No")
             fig.tight_layout()
             fig.savefig(f'{work_dir}/restraint_idx{restraint_idx}_dof_time.png', facecolor="white")
