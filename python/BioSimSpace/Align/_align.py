@@ -297,7 +297,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, (molecule, name) in enumerate(zip(molecules, names)):
                 file_name = f"{x:03d}_{name}.sdf"
                 links_names[name] = file_name
-                writer =  _Chem.SDWriter(work_dir/inputs/ + file_name)
+                writer =  _Chem.SDWriter(f"{work_dir}/inputs/{file_name}")
                 writer.write(molecule)
                 writer.close()
         else:

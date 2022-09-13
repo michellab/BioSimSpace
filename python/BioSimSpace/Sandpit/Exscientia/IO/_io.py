@@ -577,7 +577,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # CONECT record from the bonding information.
                 if system[0]._sire_object.hasProperty("is_perturbable") or \
                    system[0]._sire_object.hasProperty("was_perturbable"):
-                    bond = _property_map.get("bond", "bond")
+                    bond = _property_map.get("bond", "bond0")
                     conect = _bond_to_conect(system[0]._sire_object.property(bond),
                                              system[0]._sire_object.info())
 
