@@ -73,6 +73,7 @@ finally:
                       "pydot",
                       "networkx",
                       "nglview",
+                      "ipywidgets<8",
                       "py3dmol",
                       "pypdb",
                       "rdkit",
@@ -81,6 +82,7 @@ finally:
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit-base" # known not available on aarch64
+                      "openff-interchage"   # known not available on aarch64
                      ]
 
         # Don't try to install things that are already installed...
