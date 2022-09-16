@@ -5,8 +5,10 @@ FROM $BASE_CONTAINER
 LABEL maintainer="Christopher Woods <Christopher.Woods@bristol.ac.uk>, Lester Hedges <lester.hedges@gmail.com>"
 
 # Variables holding links to download dependencies
-ENV GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
-ENV PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
+ENV 
+GROMACS_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/kjTvvBQ__y2d_svdfejffT6NnViSipXPA-mwY0Ve57aHk3OHDpXwQQz0uuBZC_fa/n/hugs/b/notebook/o/gromacs.tar.bz2
+ENV 
+PLUMED_DOWNLOAD=https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/hjUMKuIo2FNNiW3gcGtvcLyN6IfZEmMMMO7RP4VvR2qfClOgeGHxV8Di1Cv6s7zl/n/hugs/b/notebook/o/plumed.tar.bz2
 
 USER root
 WORKDIR /home
@@ -130,9 +132,16 @@ COPY sire-2022.3.0-py39h3fd9d12_73.tar.bz2 /home/jovyan/sire-2022.3.0-py39h3fd9d
 RUN mamba install -y /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2 && \
     rm /home/jovyan/sire-2022.3.0-py39h3fd9d12_73.tar.bz2
 
-# We need tqdm for the RestraintSearch progress bars
-RUN mamba install -y -c conda-forge tqdm
+# This is the only change since feature_workshop was last compiled and installed
+COPY OpenMMMD.py /opt/conda/lib/python3.9/site-packages/Sire/Tools/OpenMMMD.py 
 
-# End as the User to make sure that we don't
-# accidentally run the container as root.
+RUN /usr/bin/update_biosimspace
+
 USER $NB_USER
+
+RUN /usr/bin/update_workshop
+
+USER root
+RUN mamba install -y -c conda-forge tqdm
+USER $NB_USER
+
