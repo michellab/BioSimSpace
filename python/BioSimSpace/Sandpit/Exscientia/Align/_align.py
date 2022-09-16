@@ -297,7 +297,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, (molecule, name) in enumerate(zip(molecules, names)):
                 file_name = f"{x:03d}_{name}.sdf"
                 links_names[name] = file_name
-                writer =  _Chem.SDWriter(work_dir/inputs/ + file_name)
+                writer =  _Chem.SDWriter(f"{work_dir}/inputs/{file_name}")
                 writer.write(molecule)
                 writer.close()
         else:
@@ -1437,7 +1437,7 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
 
     # Add the molecules to the views.
     view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
-    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol1", viewer=viewer1)
+    view.addModel(_Chem.MolToMolBlock(rdmol1), "mol1", viewer=viewer1)
 
     # Set the style.
     view.setStyle({"model": 0}, style, viewer=viewer0)

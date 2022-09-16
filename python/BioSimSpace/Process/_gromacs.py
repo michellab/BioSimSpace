@@ -68,9 +68,8 @@ class Gromacs(_process.Process):
     def __init__(self, system, protocol, exe=None, name="gromacs",
             work_dir=None, seed=None, extra_options=None,
             extra_lines=None, property_map={}, ignore_warnings=False,
-            show_errors=True):
-        """Constructor.
-
+            show_errors=True, checkpoint_file=None):
+        """
            Parameters
            ----------
 
@@ -111,6 +110,11 @@ class Gromacs(_process.Process):
            show_errors : bool
                Whether to show warning/error messages when generating the binary
                run file.
+
+           checkpoint_file : str
+              The path to a checkpoint file from a previous run. This can be used
+              to continue an existing simulation. Currently we only support the
+              use of checkpoint files for Equilibration protocols.
         """
 
         # Call the base class constructor.
@@ -166,6 +170,17 @@ class Gromacs(_process.Process):
 
         # Initialise the PLUMED interface object.
         self._plumed = None
+
+		# Set the path of Gromacs checkpoint file.
+        self._checkpoint_file = None
+        if checkpoint_file is not None:
+            if not isinstance(checkpoint_file, str):
+                raise ValueError("'checkpoint_file' must be of type 'str'.")
+            else:
+                if _os.path.isfile(checkpoint_file):
+                    self._checkpoint_file = checkpoint_file
+                else:
+                    raise IOError("GROMACS checkpoint file doesn't exist: '%s'" % checkpoint_file)
 
         # Now set up the working directory for the process.
         self._setup()
@@ -327,6 +342,8 @@ class Gromacs(_process.Process):
             config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
             config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
             config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            if self._checkpoint_file is not None:
+                config.append("continuation=yes")
             if has_box and self._has_water:
                 config.append("pbc = xyz")                      # Simulate a fully periodic box.
                 config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
@@ -835,7 +852,6 @@ class Gromacs(_process.Process):
 
         # Add the default arguments.
         self.setArg("mdrun", True)          # Use mdrun.
-        self.setArg("-v", True)             # Verbose output.
         self.setArg("-deffnm", self._name)  # Output file prefix.
 
         # Metadynamics and steered MD arguments.
@@ -850,7 +866,12 @@ class Gromacs(_process.Process):
                   "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
 
         # Use grompp to generate the portable binary run input file.
-        command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
+        if self._checkpoint_file is not None:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" \
+            % (self._exe, self._config_file, mdp_out, self._gro_file,
+               self._top_file, self._gro_file, self._checkpoint_file, self._tpr_file)
+        else:
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
             % (self._exe, self._config_file, mdp_out, self._gro_file,
                self._top_file, self._gro_file, self._tpr_file)
 

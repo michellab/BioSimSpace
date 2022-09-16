@@ -26,6 +26,7 @@ requirements:
     - mdanalysis
     - networkx
     - nglview
+    - openff-interchange
     - openff-toolkit-base
     - parmed
     - py3dmol
