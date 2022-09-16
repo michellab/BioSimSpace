@@ -16,10 +16,10 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macOS-latest",]
-        python-version: ["3.7", ]
+        python-version: ["3.8", ]
 
     steps:
       - uses: actions/checkout@v2
@@ -35,12 +35,13 @@ jobs:
 
       - name: Install dependency
         run: |
-          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.7 --only-deps
-          mamba install -c conda-forge ambertools alchemlyb gromacs
+          # gromacs=2022.2 as gromacs=2022.3 is not available on OSX ATM
+          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.8 ambertools alchemlyb gromacs=2022.2 openff-interchange
           python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
 
       - name: Install the dev version
         run: |
+          conda remove --force biosimspace
           cd python
           python setup.py develop
           cd ..
