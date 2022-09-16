@@ -26,11 +26,11 @@ singleuser:
   storage:
     type: none
   memory:
-    limit: 5.0G
-    guarantee: 1.0G
+    limit: 10.0G
+    guarantee: 2.0G
   cpu:
-    limit: 10.0
-    guarantee: 0.2
+    limit: 8.0
+    guarantee: 0.5
 cull:
   timeout: 2400
   every: 600
