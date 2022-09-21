@@ -29,5 +29,9 @@ def test_bonds():
 
         assert d2.value() == pytest.approx(bond.length().value()**2)
 
-        # none of these bonds have zero energy
-        assert bond.energy().value() != 0
+        # some of these bonds have zero energy
+        if bond._sire_object.energy().value() == 0:
+            import sire
+            amber_bond = sire.legacy.MM.AmberBond(bond._sire_object.potential(),
+                                                  sire.legacy.CAS.Symbol("r"))
+            assert amber_bond.r0() == pytest.approx(bond.length().value())

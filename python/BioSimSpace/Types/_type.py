@@ -62,6 +62,9 @@ class Type():
             value = args[0]
             unit = args[1]
 
+            if hasattr(value, "to_default"):
+                value = value.to_default()
+
             # Check that the value is valid.
             if type(value) is int:
                 self._value = float(value)
@@ -579,10 +582,15 @@ class Type():
                       sire_unit.TIME()
                      )
 
+        # make sure that this isn't zero
+        if hasattr(sire_unit, "is_zero"):
+            if sire_unit.is_zero():
+                dimensions = cls._dimensions
+
         # Make sure the dimensions match.
         if dimensions != cls._dimensions:
-            raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
-                            f"'{cls.__name__}'")
+            raise ValueError(f"The dimensions of the passed 'sire_unit' {sire_unit} are incompatible with "
+                             f"'{cls.__name__}'")
 
         # Get the value in the default Sire unit for this type.
         value = sire_unit.to(cls._supported_units[cls._default_unit])
