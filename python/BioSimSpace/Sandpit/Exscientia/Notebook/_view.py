@@ -46,7 +46,7 @@ from .._SireWrappers import System as _System
 class View():
     """A class for handling interactive molecular visualisations."""
 
-    def __init__(self, handle):
+    def __init__(self, handle, property_map={}, is_lambda1=False):
         """Constructor.
 
            Parameters
@@ -59,12 +59,32 @@ class View():
                     str, [str]
                A handle to a process, system, molecule, or molecule container,
                or the path to molecular input file(s).
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           is_lambda1 : bool
+               Whether to use the lambda = 1 end state when visualising
+               perturbable molecules. By default, the state at lambda = 0
+               is used.
         """
 
         # Make sure we're running inside a Jupyter notebook.
         if not _is_notebook:
             _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
             return None
+
+        # Validate the map.
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+        self._property_map = property_map
+
+        # Check the end state flag.
+        if not isinstance(is_lambda1, bool):
+            raise TypeError("'is_lambda1' must be of type 'bool'")
+        self._is_lamba1 = is_lambda1
 
         # Check the handle.
 
@@ -78,7 +98,7 @@ class View():
 
         # List of strings (file paths).
         if isinstance(handle, list) and all(isinstance(x, str) for x in handle):
-            system = _IO.readMolecules(handle)
+            system = _IO.readMolecules(handle, property_map=property_map)
             self._handle = system._getSireObject()
             self._is_process = False
 
@@ -89,7 +109,7 @@ class View():
 
         # BioSimSpace system.
         elif isinstance(handle, _System):
-            self._handle = handle._getSireObject()
+            self._handle = handle.copy()._getSireObject()
             self._is_process = False
 
         else:
@@ -110,6 +130,10 @@ class View():
 
         # Zero the number of views.
         self._num_views = 0
+
+        # Reconstruct a system representing the chosen lambda end state.
+        if not self._is_process:
+            self._handle = self._reconstruct_system(self._handle, self._is_lamba1)
 
     def system(self, gui=True):
         """View the entire molecular system.
@@ -134,6 +158,10 @@ class View():
                 return
             else:
                 system = system._getSireObject()
+
+            # Reconstruct the chosen lambda end state if perturbable molecules
+            # are present.
+            system = self._reconstruct_system(system, self._is_lamba1)
 
         else:
             system = self._handle
@@ -180,6 +208,10 @@ class View():
             # No system.
             if system is None:
                 return
+
+            # Reconstruct the chosen lambda end state if perturbable molecules
+            # are present.
+            system = self._reconstruct_system(system, self._is_lamba1)
 
         else:
             system = self._handle
@@ -235,6 +267,11 @@ class View():
             # No system.
             if system is None:
                 return
+
+            # Reconstruct the chosen lambda end state if perturbable molecules
+            # are present.
+            system = self._reconstruct_system(system, self._is_lamba1)
+
         else:
             system = self._handle
 
@@ -390,7 +427,7 @@ class View():
         # Create a PDB object and write to file.
         if system is not None:
             try:
-                pdb = _SireIO.PDB2(system)
+                pdb = _SireIO.PDB2(system, self._property_map)
                 pdb.writeToFile(filename)
             except Exception as e:
                 msg = "Failed to write system to 'PDB' format."
@@ -408,3 +445,36 @@ class View():
 
         # Return the view and display it.
         return view.display(gui=gui)
+
+    def _reconstruct_system(self, system, is_lambda1=False):
+        """Helper function to reconstruct a lambda end state for a perturbable
+           system.
+
+           Parameters
+           ----------
+
+           system : Sire.System.System
+               A Sire molecular system.
+
+           is_lambda1 : bool
+               Whether to use the lambda = 1 end state for reconstructing
+               perturbable molecules. By default, the state at lambda = 0
+        """
+
+        # Convert to a BioSimSpace system.
+        system = _System(system)
+
+        # Get a list of perturbable molecules.
+        pert_mols = system.getPerturbableMolecules()
+
+        # If there are no perturbable molecules, simply return the original system.
+        if len(pert_mols) == 0:
+            return system._sire_object
+
+        # Convert all perturbable molecules to the chosen end state, updating
+        # them in the system.
+        else:
+            for mol in pert_mols:
+                system.updateMolecules(mol._toRegularMolecule(is_lambda1=is_lambda1))
+
+        return system._sire_object
