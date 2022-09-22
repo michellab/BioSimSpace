@@ -8,8 +8,8 @@ on:
 
 # Note that push and pull-request builds are automatically
 # now skipped by GitHub if
-# [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
-# are in the commit message. We don't need to check for this ourselves.
+# [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+# are in the commit message. We don't need to check for this ourselves.
 
 jobs:
   build:

@@ -22,7 +22,6 @@ requirements:
 
 test:
   script_env:
-    - HEAD_BRANCH
     - SIRE_DONT_PHONEHOME
     - SIRE_SILENT_PHONEHOME
   requires:
