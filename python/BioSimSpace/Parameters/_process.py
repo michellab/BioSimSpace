@@ -131,7 +131,7 @@ class Process():
         # Warn the user if the molecule contains no hydrogens.
         if isinstance(molecule, _Molecule):
             try:
-                molecule.search("element H")
+                molecule.search("element H", property_map=protocol._property_map)
             except:
                 _warnings.warn("Attempting to parameterise a molecule without hydrogen atoms!")
 

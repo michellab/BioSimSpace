@@ -789,7 +789,7 @@ def _validate_water_model(water_model):
     else:
         return False
 
-def _has_ions(molecule):
+def _has_ions(molecule, property_map={}):
     """Internal helper function to check whether a molecule contains ions.
 
        Parameters
@@ -797,6 +797,11 @@ def _has_ions(molecule):
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            A molecule object.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
 
        Returns
        -------
@@ -891,8 +896,11 @@ def _has_ions(molecule):
             if element.upper() in molecule:
                 ions.append(element)
         else:
-            if molecule.search(f"element {element}").nResults() > 0:
+            try:
+                molecule.search(f"element {element}", property_map=property_map)
                 ions.append(element)
+            except:
+                pass
 
     # Check whether we found any ions.
     if len(ions) > 0:
@@ -947,7 +955,7 @@ def _validate(molecule=None, water_model=None, check_ions=False,
             water_models = ", ".join(_waterModels())
             raise ValueError(f"'{water_model}' is unsupported. Supported models are: {water_models}")
     elif check_ions:
-        has_ions, ions = _has_ions(molecule)
+        has_ions, ions = _has_ions(molecule, property_map=property_map)
         if has_ions:
             ion_string = ", ".join(ions)
             raise ValueError(f"The molecule contains the following ions: {ion_string}. "
