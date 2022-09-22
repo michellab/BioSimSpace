@@ -31,7 +31,6 @@ __all__ = ["SearchResult"]
 
 import sire.legacy as _Sire
 
-
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
 

@@ -29,11 +29,6 @@ __email__ = "Christopher.Woods@bristol.ac.uk"
 
 __all__ = ["Bond"]
 
-import os.path as _path
-import random as _random
-import string as _string
-
-import sire.legacy as _Sire
 from sire.legacy import Mol as _SireMol
 from sire.legacy import MM as _SireMM
 
@@ -57,7 +52,7 @@ class Bond(_SireWrapper):
         # Check that the bond is valid.
 
         # A Sire Bond object.
-        if isinstance(bond, _Sire.MM._MM.Bond):
+        if isinstance(bond, _SireMM._MM.Bond):
             sire_object = bond
 
         # Another BioSimSpace Bond object.

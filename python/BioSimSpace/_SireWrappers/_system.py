@@ -34,10 +34,7 @@ from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
 from sire.legacy import Vol as _SireVol
-
-import sire.legacy as _Sire
-
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -48,7 +45,6 @@ from .. import Units as _Units
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 from sire.mol import Select as _Select
-
 
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
@@ -75,9 +71,6 @@ class System(_SireWrapper):
 
         # A Sire System object.
         if isinstance(system, _SireSystem.System):
-            super().__init__(system)
-
-        elif isinstance(system, _Sire.System.System):
             super().__init__(system)
 
         # Another BioSimSpace System object.
