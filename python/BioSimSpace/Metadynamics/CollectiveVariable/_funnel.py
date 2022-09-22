@@ -847,11 +847,12 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
 
                 # Search the protein for atoms with the search radius of the
                 # point x,y,z.
-                search = protein.search(string, property_map=search_map)
+                try:
+                    search = protein.search(string, property_map=search_map)
 
                 # If there are no protein atoms then add the grid coordinate
                 # to our running total.
-                if search.nResults() == 0:
+                except:
                     non_protein += _SireVector(x, y, z)
                     num_non_protein += 1
 
@@ -868,10 +869,11 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
 
     # Perform the search.
-    search = system.search(string, property_map=search_map)
+    try:
+        search = system.search(string, property_map=search_map)
 
     # Raise exception if no atoms were found.
-    if search.nResults() == 0:
+    except:
         raise ValueError("No alpha carbon atoms found within 10 Angstrom of "
                          "the binding pocket center. Try explicitly setting "
                          "the center using a 'BioSimSpace.Types.Coordinate' "
@@ -901,10 +903,11 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     string = f"atoms within 7 of {x},{y},{z} and atomname {alpha_carbon_name}"
 
     # Perform the search.
-    search = system.search(string)
+    try:
+        search = system.search(string)
 
     # Raise exception if no atoms were found.
-    if search.nResults() == 0:
+    except:
         raise ValueError("No alpha carbon atoms found within 10 Angstrom of "
                          "the binding pocket center. Try explicitly setting "
                          "the center using a 'BioSimSpace.Types.Coordinate' "
