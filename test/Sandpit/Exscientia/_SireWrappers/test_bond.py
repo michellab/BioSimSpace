@@ -1,8 +1,6 @@
 import BioSimSpace as BSS
 
-import math
 import pytest
-
 
 def test_bonds():
     system = BSS.IO.readMolecules("test/input/amber/ala/*")
@@ -29,7 +27,7 @@ def test_bonds():
 
         assert d2.value() == pytest.approx(bond.length().value()**2)
 
-        # some of these bonds have zero energy
+        # Some of these bonds have zero energy.
         if bond._sire_object.energy().value() == 0:
             import sire
             amber_bond = sire.legacy.MM.AmberBond(bond._sire_object.potential(),

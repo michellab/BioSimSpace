@@ -582,7 +582,7 @@ class Type():
                       sire_unit.TIME()
                      )
 
-        # make sure that this isn't zero
+        # Make sure that this isn't zero.
         if hasattr(sire_unit, "is_zero"):
             if sire_unit.is_zero():
                 dimensions = cls._dimensions
