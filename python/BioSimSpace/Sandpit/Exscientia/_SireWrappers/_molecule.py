@@ -1534,7 +1534,10 @@ class Molecule(_SireWrapper):
             element = property_map.get("element", "element")
             if mol.hasProperty(amber_type) and mol.hasProperty(element):
                 # Search for any dummy atoms.
-                search = mol.search("element Xx")
+                try:
+                    search = mol.search("element Xx")
+                except:
+                    search = []
 
                 # Replace the ambertype.
                 for dummy in search:
@@ -1590,7 +1593,10 @@ class Molecule(_SireWrapper):
 
         # Now find any non-dummy atoms in the molecule.
         query = "not element Xx"
-        search_result = mol.search(query, property_map)
+        try:
+            search_result = mol.search(query, property_map)
+        except:
+            search_result = []
 
         # If there are no dummies, then simply return this molecule.
         if len(search_result) == mol.nAtoms():
@@ -1604,7 +1610,10 @@ class Molecule(_SireWrapper):
 
             # Now search for the dummy atoms.
             query = "element Xx"
-            search_result = mol.search(query, property_map)
+            try:
+                search_result = mol.search(query, property_map)
+            except:
+                search_result = []
 
             # Store the indices of the dummy atoms.
             dummies = []
