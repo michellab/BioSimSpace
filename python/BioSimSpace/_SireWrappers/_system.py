@@ -1314,7 +1314,7 @@ class System(_SireWrapper):
                 # Backbone restraints.
                 if restraint == "backbone":
                     # Find all N, CA, C, and O atoms in protein residues.
-                    string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
+                    string = "(not water) and (resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
                     try:
                         search = self.search(string, property_map)
                     except:
@@ -1324,7 +1324,7 @@ class System(_SireWrapper):
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
-                    string = f"(atoms in not water) and not element {ion_string}"
+                    string = f"(not water) and (not element {ion_string})"
                     try:
                         search = self.search(string, property_map)
                     except:
@@ -1334,7 +1334,7 @@ class System(_SireWrapper):
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
-                    string = f"(atoms in not water) and not element {ion_string}"
+                    string = f"(not water) and (not element {ion_string})"
                     try:
                         search = self.search(string, property_map)
                     except:
@@ -1364,7 +1364,7 @@ class System(_SireWrapper):
                     if restraint == "backbone":
                         if not mol.isWater():
                             # Find all N, CA, C, and O atoms in protein residues.
-                            string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                            string = "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
                             try:
                                 search = mol.search(string, _property_map)
                             except:
@@ -1416,7 +1416,7 @@ class System(_SireWrapper):
             if restraint == "backbone":
                 if not mol.isWater():
                     # Find all N, CA, C, and O atoms in protein residues.
-                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
+                    string = "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
                     try:
                         search = mol.search(string, _property_map)
                     except:
