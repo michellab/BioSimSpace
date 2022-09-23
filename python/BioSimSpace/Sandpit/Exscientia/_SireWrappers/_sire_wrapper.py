@@ -29,8 +29,6 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SireWrapper"]
 
-import os as _os
-
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
 from sire.legacy import Vol as _SireVol

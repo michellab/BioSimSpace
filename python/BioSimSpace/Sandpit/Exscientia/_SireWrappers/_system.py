@@ -34,9 +34,6 @@ from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
 from sire.legacy import Vol as _SireVol
-
-import sire.legacy as _Sire
-
 from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
@@ -48,7 +45,6 @@ from .. import Units as _Units
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
 from sire.mol import Select as _Select
-
 
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
@@ -75,9 +71,6 @@ class System(_SireWrapper):
 
         # A Sire System object.
         if isinstance(system, _SireSystem.System):
-            super().__init__(system)
-
-        elif isinstance(system, _Sire.System.System):
             super().__init__(system)
 
         # Another BioSimSpace System object.
@@ -782,7 +775,6 @@ class System(_SireWrapper):
            molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
                A container of water molecule objects.
         """
-
         return _Molecules(self._sire_object.search("water").toGroup())
 
     def nWaterMolecules(self):
@@ -805,13 +797,7 @@ class System(_SireWrapper):
            molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of perturbable molecules.
         """
-
-        molecules = []
-
-        for mol in self._sire_object.search("perturbable").molecules():
-            molecules.append(_Molecule(mol))
-
-        return molecules
+        return _Molecules(self._sire_object.search("perturbable").toGroup())
 
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
@@ -1329,21 +1315,30 @@ class System(_SireWrapper):
                 if restraint == "backbone":
                     # Find all N, CA, C, and O atoms in protein residues.
                     string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
-                    search = self.search(string, property_map)
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
                 elif restraint == "heavy":
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"(atoms in not water) and not element {ion_string}"
-                    search = self.search(string, property_map)
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
                 elif restraint == "all":
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
                     string = f"(atoms in not water) and not element {ion_string}"
-                    search = self.search(string, property_map)
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
             # Search each molecule individually, using the property map to specify the
             # correct name for the "element" property in any perturble molecules.
@@ -1370,7 +1365,10 @@ class System(_SireWrapper):
                         if not mol.isWater():
                             # Find all N, CA, C, and O atoms in protein residues.
                             string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                            search = mol.search(string, _property_map)
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     elif restraint == "heavy":
                         if not mol.isWater():
@@ -1378,7 +1376,10 @@ class System(_SireWrapper):
                             ion_string = ",".join(ions + ["H,Xx"])
                             # Find all non-water, non-hydrogen, non-ion elements.
                             string = f"not element {ion_string}"
-                            search = mol.search(string, _property_map)
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     elif restraint == "all":
                         if not mol.isWater():
@@ -1386,7 +1387,10 @@ class System(_SireWrapper):
                             ion_string = ",".join(ions)
                             # Find all non-water, non-ion elements.
                             string = f"not element {ion_string}"
-                            search = mol.search(string, _property_map)
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     # Append the search result for this molecule.
                     if len(search) > 0:
@@ -1413,7 +1417,10 @@ class System(_SireWrapper):
                 if not mol.isWater():
                     # Find all N, CA, C, and O atoms in protein residues.
                     string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                    search = mol.search(string, _property_map)
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
             elif restraint == "heavy":
                 if not mol.isWater():
@@ -1421,7 +1428,10 @@ class System(_SireWrapper):
                     ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string, _property_map)
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
             elif restraint == "all":
                 if not mol.isWater():
@@ -1429,7 +1439,10 @@ class System(_SireWrapper):
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string, _property_map)
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
         if is_perturbable_system:
             # Raise an exception if no atoms match the restraint.

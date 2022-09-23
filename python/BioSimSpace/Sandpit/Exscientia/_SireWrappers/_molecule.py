@@ -32,17 +32,12 @@ __all__ = ["Molecule"]
 from math import isclose as _isclose
 from warnings import warn as _warn
 
-import os.path as _path
-
-import sire.legacy as _Sire
-
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import MM as _SireMM
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
 from sire.legacy import System as _SireSystem
-
 from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
@@ -80,7 +75,7 @@ class Molecule(_SireWrapper):
         # Check that the molecule is valid.
 
         # A Sire Molecule object.
-        if isinstance(molecule, _Sire.Mol._Mol.Molecule):
+        if isinstance(molecule, _SireMol._Mol.Molecule):
             super().__init__(molecule)
             if self._sire_object.hasProperty("is_perturbable"):
                 self._convertFromMergedMolecule()

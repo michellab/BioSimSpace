@@ -31,7 +31,6 @@ __all__ = ["SearchResult"]
 
 import sire.legacy as _Sire
 
-
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
 
@@ -198,11 +197,11 @@ class SearchResult():
         """Return all of the atoms that contain the results of this
            search.
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its atoms.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its atoms.
         """
         return SearchResult(self._sire_object.atoms())
 
@@ -210,11 +209,11 @@ class SearchResult():
         """Return all of the residues that contain the results of this
            search.
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its residues.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its residues.
         """
         return SearchResult(self._sire_object.residues())
 
@@ -222,11 +221,11 @@ class SearchResult():
         """Return all of the chains that contain the results of this
            search.
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its chains.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its chains.
         """
         return SearchResult(self._sire_object.chains())
 
@@ -234,11 +233,11 @@ class SearchResult():
         """Return all of the segments that contain the results of this
            search.
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its segments.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its segments.
         """
         return SearchResult(self._sire_object.segments())
 
@@ -246,11 +245,11 @@ class SearchResult():
         """Return all of the molecules that contain the results of this
            search.
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its molecules.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its molecules.
         """
         try:
             return SearchResult(self._sire_object.molecules())
@@ -262,11 +261,11 @@ class SearchResult():
     def bonds(self):
         """Return all of the bonds in this result
 
-            Returns
-            -------
+           Returns
+           -------
 
-            search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-                A copy of the object viewed via its bonds.
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its bonds.
         """
         try:
             from sire.mm import SelectorMBond
@@ -303,7 +302,8 @@ class SearchResult():
 
            result : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Bond <BioSimSpace._SireWrappers.Bond>`
         """
         return self[index]
 
@@ -319,6 +319,6 @@ class SearchResult():
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom
-from ._bond import Bond as _Bond
 from ._molecule import Molecule as _Molecule
 from ._residue import Residue as _Residue
+from ._bond import Bond as _Bond
