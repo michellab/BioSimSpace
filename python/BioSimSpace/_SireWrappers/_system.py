@@ -773,7 +773,8 @@ class System(_SireWrapper):
            -------
 
            molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
-               A container of water molecule objects.
+               A container of water molecule objects. The container will be
+               empty if no water molecules are present.
         """
         return _Molecules(self._sire_object.search("water").toGroup())
 
@@ -794,8 +795,9 @@ class System(_SireWrapper):
            Returns
            -------
 
-           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-               A list of perturbable molecules.
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
+               A container of perturbable molecule objects. The container will
+               be empty if no perturbable molecules are present.
         """
         return _Molecules(self._sire_object.search("perturbable").toGroup())
 
