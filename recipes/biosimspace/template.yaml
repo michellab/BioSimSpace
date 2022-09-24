@@ -25,8 +25,7 @@ requirements:
     - mdanalysis
     - networkx
     - nglview
-    - openff-interchange
-    - openff-toolkit-base
+    - openff-toolkit
     - parmed
     - py3dmol
     - pydot
@@ -39,16 +38,16 @@ requirements:
 
 test:
   script_env:
-    - HEAD_BRANCH
     - SIRE_DONT_PHONEHOME
     - SIRE_SILENT_PHONEHOME
   requires:
-    - git
     - pytest
   imports:
     - BioSimSpace
+  source_files:
+    - test
   commands:
-    - git clone https://github.com/michellab/BioSimSpace && cd BioSimSpace && git checkout $HEAD_BRANCH && pytest -vvv test
+    - pytest -vvv --import-mode=importlib test
 
 about:
   home: https://biosimspace.org

@@ -53,8 +53,6 @@ jobs:
       - name: Build Conda package
         shell: bash -l {0}
         run: conda mambabuild -c conda-forge -c michellab/label/dev BioSimSpace/recipes/biosimspace
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
       - name: Upload Conda package
         shell: bash -l {0}
         run: BioSimSpace/actions/upload_package.sh
