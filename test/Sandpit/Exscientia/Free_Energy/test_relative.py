@@ -116,7 +116,7 @@ class TestRelativeAnalysis():
         outdir = amber_data
         complex, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / 'complex_decharge'),
-            temperature=310 * BSS.Units.Temperature.kelvin)
+            temperature=298 * BSS.Units.Temperature.kelvin)
         return complex
 
     @staticmethod
@@ -125,7 +125,7 @@ class TestRelativeAnalysis():
         outdir = amber_data
         complex, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / 'solvated_vdw'),
-            temperature=310 * BSS.Units.Temperature.kelvin)
+            temperature=298 * BSS.Units.Temperature.kelvin)
         return complex
 
     @pytest.mark.parametrize('fixture,length,energy',
