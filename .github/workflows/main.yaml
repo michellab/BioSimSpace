@@ -64,7 +64,6 @@ jobs:
         if: github.event_name == 'pull_request'
 #
       - name: Setup Conda
-        shell: bash -l {0}
         run: mamba install -y -c conda-forge boa anaconda-client pip-requirements-parser
 #
       - name: Update Conda recipe
@@ -103,7 +102,6 @@ jobs:
         if: ${{ failure() }}
 #
       - name: Upload Conda package
-        shell: bash -l {0}
         run: python ${{ github.workspace }}/BioSimSpace/actions/upload_package.py
         env:
           SRC_DIR: ${{ github.workspace }}/BioSimSpace
@@ -112,7 +110,6 @@ jobs:
         if: github.event_name != 'pull_request'
 #
       - name: Build documentation
-        shell: bash -l {0}
         run: |
           conda create -n bss_doc -c conda-forge -c michellab/label/dev python="$PYTHON_VERSION" biosimspace
           conda activate bss_doc
