@@ -107,6 +107,7 @@ jobs:
         run: python ${{ github.workspace }}/BioSimSpace/actions/upload_package.py
         env:
           SRC_DIR: ${{ github.workspace }}/BioSimSpace
+          BUILD_DIR: ${{ github.workspace }}/build
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         if: github.event_name != 'pull_request'
 #
