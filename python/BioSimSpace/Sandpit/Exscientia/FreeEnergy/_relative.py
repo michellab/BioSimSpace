@@ -59,9 +59,9 @@ except:
     is_alchemlyb = False
 
 import numpy as _np
-import pandas as _pd 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+import pandas as _pd
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
 from .. import _gmx_exe
 from .. import _is_notebook
@@ -73,6 +73,7 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
+from .. import _Utils
 
 from ..MD._md import _find_md_engines
 
@@ -146,7 +147,7 @@ class Relative():
 
            extra_lines : list
                A list of extra lines to be put at the end of the script.
-           
+
            estimator : str
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
 
@@ -499,7 +500,7 @@ class Relative():
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
                standard error.
-            
+
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
                window. For TI, this gives the dhdl.
@@ -516,7 +517,7 @@ class Relative():
         if is_alchemlyb:
             files = _glob(work_dir + "/lambda_*/amber.out")
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
-            
+
             # Find the temperature for each lambda window.
             temperatures = []
             for file, lambda_ in zip(files, lambdas):
@@ -566,12 +567,12 @@ class Relative():
                     x = lambdas.index(lambda_)
                     mbar_value = delta_f_.iloc[0,x]
                     mbar_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (mbar_value) * _Units.Energy.kcal_per_mol,
-                                (mbar_error) * _Units.Energy.kcal_per_mol))    
-                
+                                (mbar_error) * _Units.Energy.kcal_per_mol))
+
                 # Calculate overlap matrix.
                 overlap = mbar.overlap_matrix
 
@@ -606,11 +607,11 @@ class Relative():
                     x = lambdas.index(lambda_)
                     ti_value = delta_f_.iloc[0,x]
                     ti_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (ti_value) * _Units.Energy.kcal_per_mol,
-                                (ti_error) * _Units.Energy.kcal_per_mol))    
+                                (ti_error) * _Units.Energy.kcal_per_mol))
 
                 # For TI, dHdl graph.
                 overlap = ti
@@ -641,7 +642,7 @@ class Relative():
                The potential of mean force (PMF). The data is a list of tuples,
                where each tuple contains the lambda value, the PMF, and the
                standard error.
-            
+
            overlap : [ [ float, float, ... ] ]
                The overlap matrix. This gives the overlap between each lambda
                window. For TI, this gives the dhdl.
@@ -656,7 +657,7 @@ class Relative():
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
         # Figure out the gromacs version.
-        def gromacs_version():    
+        def gromacs_version():
             p = _subprocess.run([_gmx_exe,'-version'], stdout=_subprocess.PIPE).stdout.decode('utf-8')
             with _tempfile.TemporaryDirectory() as tmpdirname:
                 file = f'{tmpdirname}/version.txt'
@@ -673,10 +674,10 @@ class Relative():
         # Check if gromacs version is available.
         if gromacs_version() is False:
             raise _AnalysisError("GROMACS free-energy analysis failed! Gromacs version couldn't be identified.")
-        
+
         # For the newer gromacs version, analyse using alchemlyb.
         if is_alchemlyb and gromacs_version() >= 2020:
-            
+
             files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
             lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
@@ -732,12 +733,12 @@ class Relative():
                     x = lambdas.index(lambda_)
                     mbar_value = delta_f_.iloc[0,x]
                     mbar_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (mbar_value) * _Units.Energy.kcal_per_mol,
                                 (mbar_error) * _Units.Energy.kcal_per_mol))
-                
+
                 # Calculate overlap matrix.
                 overlap = mbar.overlap_matrix
 
@@ -772,11 +773,11 @@ class Relative():
                     x = lambdas.index(lambda_)
                     ti_value = delta_f_.iloc[0,x]
                     ti_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (ti_value) * _Units.Energy.kcal_per_mol,
-                                (ti_error) * _Units.Energy.kcal_per_mol))    
+                                (ti_error) * _Units.Energy.kcal_per_mol))
 
                 # For TI, dHdl graph.
                 overlap = ti
@@ -790,7 +791,7 @@ class Relative():
             command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
 
             # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=True,
+            proc = _subprocess.run(_Utils.command_split(command), shell=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
                 raise _AnalysisError("GROMACS free-energy analysis failed!")
@@ -894,7 +895,7 @@ class Relative():
                             temperatures.append(t)
                             if t is not None:
                                 found_temperature = True
-                                break   
+                                break
 
                 if not found_temperature:
                     raise ValueError(f"The temperature was not detected in the SOMD output file, {file}")
@@ -917,7 +918,7 @@ class Relative():
                 -------
                 u_nk : DataFrame
                     Reduced potential for each alchemical state (k) for each frame (n).
-                """              
+                """
                 #open the file - check if it is okay, if not raise an error
                 file = simfile
 
@@ -955,7 +956,7 @@ class Relative():
                             if found_array:
                                 if found_time:
                                     break
-                
+
                 if not found_lambda:
                     raise ValueError(f"The lambda window was not detected in the SOMD output file, {file}")
 
@@ -994,8 +995,8 @@ class Relative():
                                                                         names=['time', 'lambdas']))
                                                                         )
                 df.attrs['temperature'] = T
-                df.attrs['energy_unit'] = 'kT' 
-                
+                df.attrs['energy_unit'] = 'kT'
+
                 return(df)
 
             def _somd_extract_dHdl(simfile, T):
@@ -1016,7 +1017,7 @@ class Relative():
                 """
                 # open the file
                 file = simfile
-                
+
                 # for dhdl need to consider the T, as the gradient is in kcal/mol in the simfile.dat
                 T = 300
                 k_b = R_kJmol * kJ2kcal
@@ -1050,7 +1051,7 @@ class Relative():
                             if found_array:
                                 if found_time:
                                     break
-                
+
                 if not found_lambda:
                     raise ValueError(f"The lambda window was not detected in the SOMD output file, {file}")
 
@@ -1119,12 +1120,12 @@ class Relative():
                     x = lambdas.index(lambda_)
                     mbar_value = delta_f_.iloc[0,x]
                     mbar_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (mbar_value) * _Units.Energy.kcal_per_mol,
                                 (mbar_error) * _Units.Energy.kcal_per_mol))
-                
+
                 # Calculate overlap matrix.
                 overlap = mbar.overlap_matrix
 
@@ -1159,11 +1160,11 @@ class Relative():
                     x = lambdas.index(lambda_)
                     ti_value = delta_f_.iloc[0,x]
                     ti_error = d_delta_f_.iloc[1,x]
-                    
+
                     # Append the data.
                     data.append((lambda_,
                                 (ti_value) * _Units.Energy.kcal_per_mol,
-                                (ti_error) * _Units.Energy.kcal_per_mol))    
+                                (ti_error) * _Units.Energy.kcal_per_mol))
 
                 # For TI, dHdl graph.
                 overlap = ti
@@ -1176,7 +1177,7 @@ class Relative():
             command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
             # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
+            proc = _subprocess.run(_Utils.command_split(command), shell=False,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
                 raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -1188,7 +1189,7 @@ class Relative():
                         _warnings.warn("Subsampling resulted in less than 50 samples, "
                                     f"re-running without subsampling for '{work_dir}'")
                         command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
-                        proc = _subprocess.run(_shlex.split(command), shell=False,
+                        proc = _subprocess.run(_Utils.command_split(command), shell=False,
                             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                         if proc.returncode != 0:
                             raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -1494,7 +1495,7 @@ class Relative():
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+                proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Create a copy of the process and update the working

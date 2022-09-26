@@ -34,11 +34,12 @@ def test_iterators(system):
 
     # Iterate over the search result and make sure we match all molecules.
     for idx, mol in enumerate(search_result):
-        # Single residue molecules will have been converted to a Residue object.
-        if type(mol) is BSS._SireWrappers.Residue:
-            assert mol.toMolecule() == system[idx] == molecules[idx] == system.getMolecule(idx)
-        else:
-            assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
+        # Sire automatically converts objects to their smallest types
+        # (e.g. residue, atom etc.)
+        if hasattr(mol, "toMolecule"):
+            mol = mol.toMolecule()
+
+        assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
 
 def test_atom_reindexing(system):
     # Search for all oxygen atoms in water molecules water molecules within
@@ -178,3 +179,23 @@ def test_molecule_reordering(system):
 
     # Make sure the molecules match.
     assert new_system[0] == system[-1]
+
+
+# Parameterise the function with a set of molecule indices.
+@pytest.mark.parametrize("restraint, expected",
+                       [("backbone", [4, 5, 6, 8, 14, 15, 16]),
+                        ("heavy", [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]),
+                        ("all", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+                       ])
+def test_restraint_atoms(system, restraint, expected):
+    # Get the restraint atoms for the specicied restraint.
+    atoms = system.getRestraintAtoms(restraint)
+
+    # Make sure the indices are as expected.
+    assert atoms == expected
+
+    # Execute the restraint search at the molecular level.
+    atoms = system.getRestraintAtoms(restraint, 0)
+
+    # Make sure the indices are as expected.
+    assert atoms == expected

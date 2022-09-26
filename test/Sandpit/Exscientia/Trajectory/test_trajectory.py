@@ -1,6 +1,10 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from Sire.Base import wrap
+try:
+    from Sire.Base import wrap
+except Exception:
+    def wrap(arg):
+        return arg
 
 import pytest
 

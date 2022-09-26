@@ -29,11 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Residue"]
 
-import os.path as _path
-import random as _random
-import string as _string
-
-from Sire import Mol as _SireMol
+from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
 
@@ -55,7 +51,7 @@ class Residue(_SireWrapper):
         # Check that the residue is valid.
 
         # A Sire Residue object.
-        if isinstance(residue, _SireMol.Residue):
+        if isinstance(residue, _SireMol._Mol.Residue):
             sire_object = residue
 
         # Another BioSimSpace Residue object.
