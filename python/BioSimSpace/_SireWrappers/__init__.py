@@ -29,6 +29,7 @@ Classes
     :toctree: generated/
 
     Atom
+    Bond
     Molecule
     Molecules
     Residue
@@ -37,6 +38,7 @@ Classes
 """
 
 from ._atom import *
+from ._bond import *
 from ._molecule import *
 from ._molecules import *
 from ._residue import *

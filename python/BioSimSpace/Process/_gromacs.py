@@ -39,11 +39,12 @@ import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Maths as _SireMaths
-from Sire import Units as _SireUnits
-from Sire import Vol as _SireVol
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Vol as _SireVol
+
+from sire import units as _SireUnits
 
 from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
@@ -880,7 +881,7 @@ class Gromacs(_process.Process):
             command += " --maxwarn 1000"
 
         # Run the command.
-        proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
@@ -2530,7 +2531,7 @@ class Gromacs(_process.Process):
 
                 # Run the command as a pipeline.
                 proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                 proc.wait()
                 proc_echo.stdout.close()

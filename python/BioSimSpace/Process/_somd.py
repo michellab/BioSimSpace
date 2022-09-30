@@ -33,11 +33,7 @@ from .._SireWrappers import Molecule as _Molecule
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .. import _isVerbose
-from Sire import Mol as _SireMol
-from Sire import MM as _SireMM
-from Sire import IO as _SireIO
-from Sire import CAS as _SireCAS
-from Sire import Base as _SireBase
+
 import warnings as _warnings
 import timeit as _timeit
 import sys as _sys
@@ -53,6 +49,11 @@ from .._Utils import _try_import
 import os as _os
 _pygtail = _try_import("pygtail")
 
+from sire.legacy import Base as _SireBase
+from sire.legacy import CAS as _SireCAS
+from sire.legacy import IO as _SireIO
+from sire.legacy import MM as _SireMM
+from sire.legacy import Mol as _SireMol
 
 __all__ = ["Somd"]
 

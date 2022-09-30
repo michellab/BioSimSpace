@@ -49,9 +49,16 @@ __all__ = ["Align",
            "Units"]
 
 # Make sure we're using the Sire python interpreter.
+# First, load new sire in mixed_api compatibility mode (if it is installed)
 try:
-    import Sire
-    del Sire
+    import sire as _sr
+    _sr.use_mixed_api(support_old_module_names=False)
+except ImportError:
+    pass
+
+try:
+    import sire
+    del sire
 except ModuleNotFoundError:
     raise ModuleNotFoundError("BioSimSpace currently requires the Sire "
         + "Python interpreter: www.siremol.org")
@@ -126,7 +133,7 @@ else:
     _amber_home = None
 
 # Check to see if GROMACS is installed.
-from Sire import Base as _SireBase
+from sire.legacy import Base as _SireBase
 from os import path as _path
 
 # First, let the user tell us where to find GROMACS. This
@@ -168,8 +175,10 @@ if _gmx_exe is not None:
     # Generate the shell command. (Run gmx -version.)
     _command = "%s -version" % _gmx_exe
 
+    from ._Utils import command_split
+
     # Run the command.
-    _proc = _subprocess.run(_shlex.split(_command), shell=False,
+    _proc = _subprocess.run(command_split(_command), shell=False,
         text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
     del _command

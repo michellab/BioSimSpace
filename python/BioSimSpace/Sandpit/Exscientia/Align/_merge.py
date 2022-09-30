@@ -28,11 +28,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["merge"]
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import MM as _SireMM
-from Sire import Mol as _SireMol
-from Sire import Units as _SireUnits
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import MM as _SireMM
+from sire.legacy import Mol as _SireMol
+
+from sire import units as _SireUnits
 
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._SireWrappers import Molecule as _Molecule

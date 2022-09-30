@@ -65,8 +65,8 @@ import warnings as _warnings
 import zipfile as _zipfile
 import alchemlyb as _alchemlyb
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
 from .. import _gmx_exe, _gmx_version
 from .. import _is_notebook
@@ -79,6 +79,7 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
+from .. import _Utils
 
 from BioSimSpace.MD._md import _find_md_engines
 
@@ -1789,8 +1790,8 @@ class Relative():
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
-                                       stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
+                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Create a copy of the process and update the working
                 # directory.

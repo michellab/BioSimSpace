@@ -36,10 +36,10 @@ _pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire.Maths import Vector as _Vector
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy.Maths import Vector as _Vector
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError

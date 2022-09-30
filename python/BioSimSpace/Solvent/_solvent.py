@@ -36,12 +36,13 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire.Maths import Vector as _Vector
-from Sire.Vol import TriclinicBox as _TriclinicBox
-from Sire.Units import degree as _degree
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy.Maths import Vector as _Vector
+from sire.legacy.Vol import TriclinicBox as _TriclinicBox
+
+from sire.units import degree as _degree
 
 from .. import _gmx_exe, _gmx_path
 from .. import _isVerbose
@@ -713,7 +714,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("editconf.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -746,7 +747,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("solvate.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
 
@@ -858,7 +859,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             stderr = open("grommp.err", "w")
 
             # Run grompp as a subprocess.
-            proc = _subprocess.run(_shlex.split(command), shell=False, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
 
@@ -913,7 +914,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
                 # Run genion as a subprocess.
                 proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_shlex.split(command), shell=False,
+                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
                     stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
                 proc.wait()
                 proc_echo.stdout.close()

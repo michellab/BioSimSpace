@@ -29,7 +29,6 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Equilibration"]
 
 import math as _math
-import pytest as _pytest
 import warnings as _warnings
 
 from .. import Types as _Types
@@ -287,7 +286,7 @@ class Equilibration(_HmrMixin, _Protocol):
         """
 
         if isinstance(temperature, _Types.Temperature):
-            if temperature.kelvin().value() == _pytest.approx(0):
+            if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
                 temperature._value = 0.01
             self._temperature_start = temperature
         else:
@@ -315,7 +314,7 @@ class Equilibration(_HmrMixin, _Protocol):
                The final temperature.
         """
         if isinstance(temperature, _Types.Temperature):
-            if temperature.kelvin().value() == _pytest.approx(0):
+            if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
                 temperature._value = 0.01
             self._temperature_end = temperature
         else:

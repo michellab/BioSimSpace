@@ -167,13 +167,13 @@ of ``PYTHONPATH``, e.g.
 
 .. code-block:: bash
 
-   PYTHONPATH=$HOME/Code/BioSimSpace/python $HOME/sire.app/bin/python script.py
+   PYTHONPATH=$HOME/Code/BioSimSpace/python python script.py
 
 or use the ``develop`` argument when running the ``setup.py`` script, i.e.
 
 .. code-block:: bash
 
-   PYTHONPATH=$HOME/sire.app/bin/python setup.py develop
+   python setup.py develop
 
 Testing
 -------
@@ -380,13 +380,13 @@ additional packages.
 
 .. code-block:: bash
 
-   $HOME/sire.app/bin/pip install sphinx sphinx_issues sphinx_rtd_theme
+   pip install sphinx sphinx_issues sphinx_rtd_theme
 
 Then move to the ``doc`` directory and run:
 
 .. code-block:: bash
 
-   SPHINXBUILD=$HOME/sire.app/bin/sphinx-build make html
+   sphinx-build make html
 
 When finished, point your browser to ``build/html/index.html``.
 

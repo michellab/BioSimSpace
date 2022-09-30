@@ -29,11 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Atom"]
 
-import os.path as _path
-import random as _random
-import string as _string
-
-from Sire import Mol as _SireMol
+from sire.legacy import Mol as _SireMol
 
 from ..Types import Coordinate as _Coordinate
 from ..Types import Length as _Length
@@ -55,7 +51,7 @@ class Atom(_SireWrapper):
         # Check that the atom is valid.
 
         # A Sire Atom object.
-        if isinstance(atom, _SireMol.Atom):
+        if isinstance(atom, _SireMol._Mol.Atom):
             sire_object = atom
 
         # Another BioSimSpace Atom object.

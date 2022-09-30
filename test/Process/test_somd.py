@@ -37,22 +37,21 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
-@pytest.mark.parametrize("morph, pert",
-    [("test/input/morphs/morph01.pickle", "test/input/morphs/morph01.pert")])
-def test_pert_file(morph, pert):
+def test_pert_file():
     """Test the perturbation file writer."""
 
-    import pickle
-
-    # Unpickle the molecule.
-    with open(morph, "rb") as file:
-        mol = pickle.load(file)
+    # Load the perturbable molecule.
+    mol = BSS.IO.readPerturbableSystem(
+            "test/input/morphs/morph0.prm7",
+            "test/input/morphs/morph0.rst7",
+            "test/input/morphs/morph1.prm7",
+            "test/input/morphs/morph1.rst7")[0]
 
     # Create the perturbation file.
     BSS.Process._somd._to_pert_file(mol)
 
     # Check that the files are the same.
-    assert filecmp.cmp("MORPH.pert", pert)
+    assert filecmp.cmp("MORPH.pert", "test/input/morphs/morph.pert")
 
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
@@ -61,11 +60,13 @@ def test_pert_res_num():
     """Test that the perturbable residue number is correct when
        the molecules in the system are re-ordered.
     """
-    import pickle
 
-    # Unpickle the system.
-    with open("test/input/morphs/perturbable_system.pickle", "rb") as file:
-        system = pickle.load(file)
+    # Load the perturbable system.
+    system = BSS.IO.readPerturbableSystem(
+            "test/input/morphs/perturbable_system0.prm7",
+            "test/input/morphs/perturbable_system0.rst7",
+            "test/input/morphs/perturbable_system1.prm7",
+            "test/input/morphs/perturbable_system1.rst7")
 
     # Create a default free energy protocol.
     protocol = BSS.Protocol.FreeEnergy()

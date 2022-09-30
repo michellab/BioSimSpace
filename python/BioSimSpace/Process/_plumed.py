@@ -38,10 +38,10 @@ import shutil as _shutil
 import subprocess as _subprocess
 import warnings as _warnings
 
-from Sire.Base import findExe as _findExe
-from Sire.Maths import Vector as _Vector
-from Sire.Mol import MolNum as _MolNum
-import Sire.Vol as _SireVol
+from sire.legacy.Base import findExe as _findExe
+from sire.legacy.Maths import Vector as _Vector
+from sire.legacy.Mol import MolNum as _MolNum
+import sire.legacy.Vol as _SireVol
 
 from .._SireWrappers import System as _System
 from ..Metadynamics import CollectiveVariable as _CollectiveVariable
@@ -86,7 +86,7 @@ class Plumed():
 
         # Run a PLUMED as a background process to query the version number.
         command = "%s info --version" % self._exe
-        process = _subprocess.run(_shlex.split(command), shell=False, stdout=_subprocess.PIPE)
+        process = _subprocess.run(_Utils.command_split(command), shell=False, stdout=_subprocess.PIPE)
 
         if process.returncode == 0:
             self._plumed_version = float(process.stdout.decode("ascii").strip())
@@ -1343,7 +1343,7 @@ class Plumed():
         with _Utils.cd(self._work_dir + "/fes"):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+            proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
             if proc.returncode != 0:

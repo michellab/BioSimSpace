@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -381,7 +381,7 @@ class Temperature(_Type):
            Returns
            -------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self.kelvin().value() * _SireUnits.kelvin
@@ -393,7 +393,7 @@ class Temperature(_Type):
            Parameters
            ----------
 
-           sire_unit : Sire.Units.GeneralUnit, Sire.Units.Celsius, Sire.Units.Fahrenheit
+           sire_unit : sire.units.GeneralUnit, sire.units.Celsius, sire.units.Fahrenheit
                The temperature as a Sire Units object.
         """
 
@@ -424,8 +424,8 @@ class Temperature(_Type):
             return cls(sire_unit.value(), cls._default_unit)
 
         else:
-            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit', "
-                            "'Sire.Units.Celsius', or 'Sire.Units.Fahrenheit'")
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit', "
+                            "'Sire.Units.Celsius', or 'sire.units.Fahrenheit'")
 
     @staticmethod
     def _to_sire_format(unit):
