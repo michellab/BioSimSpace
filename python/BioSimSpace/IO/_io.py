@@ -378,6 +378,20 @@ def readMolecules(files, property_map={}):
         system = _SireIO.MoleculeParser.read(files, property_map)
     except Exception as e:
         if "There are no lead parsers!" in str(e):
+            # First check to see if the failure was due to the presence
+            # of CMAP records.
+            for file in files:
+                try:
+                    amber_prm = _SireIO.AmberPrm(file)
+                except Exception as e:
+                    if "CMAP" in str(e).upper():
+                        msg = ("Unable to parse topology file, CMAP "
+                              "records are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
             msg = ("Failed to read molecules from %s. "
                    "It looks like you failed to include a topology file."
                   ) % files
