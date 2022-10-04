@@ -41,7 +41,7 @@ import shlex as _shlex
 import sys as _sys
 import tempfile as _tempfile
 
-from BioSimSpace._Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
 # Suppress numpy warnings from RDKit import.
@@ -67,19 +67,20 @@ with _warnings.catch_warnings():
         _rdFMCS = _rdkit
         _RDLogger = _rdkit
 
-from Sire import Base as _SireBase
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import Units as _SireUnits
+from sire.legacy import Base as _SireBase
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
 
-from BioSimSpace import _is_notebook, _isVerbose
-from BioSimSpace._Exceptions import AlignmentError as _AlignmentError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from sire import units as _SireUnits
 
-from BioSimSpace import IO as _IO
-from BioSimSpace import Units as _Units
-from BioSimSpace import _Utils
+from .. import _is_notebook, _isVerbose
+from .._Exceptions import AlignmentError as _AlignmentError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+
+from .. import IO as _IO
+from .. import Units as _Units
+from .. import _Utils
 
 # lomap depends on RDKit and networkx
 _networkx = _try_import("networkx")
@@ -91,16 +92,18 @@ elif _have_imported(_rdkit):
 elif _have_imported(_networkx):
     _lomap = _rdkit
 else:
-    from BioSimSpace._Utils import _module_stub
+    from .._Utils import _module_stub
     _lomap = _module_stub(name="rdkit, networkx")
 
 from ._merge import merge as _merge
 
-# Try to find the FKCOMBU program from KCOMBU: https://pdbj.org/kcombu
 try:
-    _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
+    _fkcombu_exe = _SireBase.findExe("fkcombu_bss").absoluteFilePath()
 except:
-    _fkcombu_exe = None
+    try:
+        _fkcombu_exe = _SireBase.findExe("fkcombu").absoluteFilePath()
+    except:
+        _fkcombu_exe = None
 
 def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         links_file=None, property_map={}, n_edges_forced=None):
@@ -297,7 +300,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, (molecule, name) in enumerate(zip(molecules, names)):
                 file_name = f"{x:03d}_{name}.sdf"
                 links_names[name] = file_name
-                writer =  _Chem.SDWriter(work_dir/inputs/ + file_name)
+                writer =  _Chem.SDWriter(f"{work_dir}/inputs/{file_name}")
                 writer.write(molecule)
                 writer.close()
         else:
@@ -307,14 +310,44 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 writer.close()
     else:
         if names is not None:
-            for x, (molecule, name) in enumerate(zip(molecules, names)):
-                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                    molecule, "mol2", property_map=property_map)
-                links_names[name] = f"{x:03d}_{name}.mol2"
+            is_names = True
+            _names = names
         else:
-            for x, molecule in enumerate(molecules):
-                _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                    molecule, "mol2", property_map=property_map)
+            is_names = False
+            # Create a dummy names list so that we can handle everything in a
+            # single loop.
+            _names = ["txt" for x in range(len(molecules))]
+
+        for x, (molecule, name) in enumerate(zip(molecules, _names)):
+            # If the molecule came from an SDF file, then use
+            # that as the format as it's generally more reliable.
+            is_sdf = False
+            if molecule._sire_object.hasProperty("fileformat"):
+                if "SDF" in molecule._sire_object.property("fileformat").value():
+                    is_sdf = True
+                    if is_names:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule, "sdf", property_map=property_map)
+                        links_names[name] = f"{x:03d}_{name}.sdf"
+                    else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "sdf", property_map=property_map)
+                else:
+                    if is_names:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule, "mol2", property_map=property_map)
+                        links_names[name] = f"{x:03d}_{name}.mol2"
+                    else:
+                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                            molecule, "mol2", property_map=property_map)
+            else:
+                if is_names:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
+                        molecule,  "mol2", property_map=property_map)
+                    links_names[name] = f"{x:03d}_{name}.mol2"
+                else:
+                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
+                        molecule,  "mol2", property_map=property_map)
 
     # Create a local copy of the links file in the working directory,
     # replacing the original ligand names with their actual file names.
@@ -481,29 +514,45 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         try:
             rdmols = []
             if names is not None:
-                for x, name in zip(range(0, len(molecules)), names):
-                    try:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.mol2"
-                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-                    except OSError:
-                        file = f"{work_dir}/inputs/{x:03d}_{name}.sdf"
-                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+                is_names = True
+                _names = names
             else:
-                for x in range(0, len(molecules)):
-                    try:
-                        file = f"{work_dir}/inputs/{x:03d}.mol2"
-                        rdmols.append(_Chem.rdmolfiles.MolFromMol2File(file, sanitize=False, removeHs=False))
-                    except OSError:
-                        file = f"{work_dir}/inputs/{x:03d}.sdf"
-                        rdmols.append(_Chem.SDMolSupplier(file, sanitize=False, removeHs=False)[0])
+                is_names = False
+                # Create a dummy names list so that we can handle everything in a
+                # single loop.
+                _names = ["txt" for x in range(len(molecules))]
+
+            for x, name in zip(range(0, len(molecules)), _names):
+                if is_sdf:
+                    ext = "sdf"
+                else:
+                    ext = "mol2"
+
+                if is_names:
+                    file = f"{work_dir}/inputs/{x:03d}_{name}.{ext}"
+                else:
+                    file = f"{work_dir}/inputs/{x:03d}.{ext}"
+
+                if is_sdf:
+                    rdmol = _Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+                else:
+                    rdmol = _Chem.MolFromMol2File(file, sanitize=False, removeHs=False)
+
+                # RDKit doesn't thrown an exception, rather returns None and
+                # prints an error message.
+                if rdmol is None:
+                    raise OSError(f"RDKit was unable to read: {file}")
+
+                # Store the molecule.
+                rdmols.append(rdmol)
 
         except Exception as e:
-            msg = "Unable to load molecule into RDKit!"
+            msg = "RDKit was unable to load molecule!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _AlignmentError(msg) from e
             else:
-                raise _AlignmentError(msg) from None
+                raise _AlignmentError(str(e)) from None
 
         # 2) Find the MCS of the molecules to use as a template.
         try:
@@ -560,7 +609,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # Create a dictionary mapping the edges to their scores.
             edge_dict = {}
             for x, (node0, node1) in enumerate(edges):
-                edge_dict[(names[node0], names[node1])] = round(scores[x], 2)
+                edge_dict[(names[node0], names[node1])] = str(round(scores[x], 2))
 
             # Loop over the nodes and add to the graph.
             for node in nodes:
@@ -645,7 +694,7 @@ def matchAtoms(molecule0,
                  computing the above RMSD score.
              - "rmsd_flex_align"
                  Flexibly align molecule0 to molecule1 based on the mapping
-                 before computing the above RMSD score. (Requires the
+                 before computing the above RMSD score. (based on the
                  'fkcombu'. package: https://pdbj.org/kcombu)
 
        matches : int
@@ -1087,7 +1136,7 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that the output file exists.
@@ -1361,7 +1410,7 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
 
     # Add the molecules to the views.
     view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
-    view.addModel(_Chem.MolToMolBlock(rdmol0), "mol1", viewer=viewer1)
+    view.addModel(_Chem.MolToMolBlock(rdmol1), "mol1", viewer=viewer1)
 
     # Set the style.
     view.setStyle({"model": 0}, style, viewer=viewer0)

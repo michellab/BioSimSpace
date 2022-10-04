@@ -16,12 +16,12 @@ args = ["--bool=True",
         "--int=42",
         "--float=3.14",
         "--string=\"hello\"",
-        "--file=test/io/amber/ala/ala.crd",
-        "--fileset=test/io/amber/ala/ala.crd,test/io/amber/ala/ala.top",
+        "--file=test/input/amber/ala/ala.crd",
+        "--fileset=test/input/amber/ala/ala.crd,test/input/amber/ala/ala.top",
         "--temperature=\"298 kelvin\"",
         "--time=\"100 nanoseconds\"",
         "--length=\"10 angstroms\"",
-        "--area=\"256 nanometers squared\"",
+        "--area=\"256 nanometers**2\"",
         "--volume=\"1024 picometers cubed\"",
         "--angle=\"3.14 radians\"",
         "--charge=\"-1 electron charge\"",
@@ -35,7 +35,7 @@ def test_correct_args():
     command = "%s %s " % (exe, script_name) + " ".join(args)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -53,7 +53,7 @@ def test_optional_args():
     command = "%s %s " % (exe, script_name) + " ".join(local_args)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -70,7 +70,7 @@ def test_missing_args(value):
     command = command.replace(value, "")
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
@@ -86,7 +86,7 @@ def test_invalid_args():
     command = command.replace("3.14", "world")
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
@@ -98,16 +98,16 @@ def test_multi_args():
     command = "%s %s " % (exe, script_name) + " ".join(args)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
 
     # Now strip one of the files from the file-set string.
-    command = command.replace(" test/io/amber/ala/ala.top", "")
+    command = command.replace(" test/input/amber/ala/ala.top", "")
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -119,19 +119,19 @@ def test_missing_file():
     command = "%s %s " % (exe, script_name) + " ".join(args)
 
     # Replace with a missing file.
-    invalid_command = command.replace("file=test/io/amber/ala/ala.crd", "file=missing.txt")
+    invalid_command = command.replace("file=test/input/amber/ala/ala.crd", "file=missing.txt")
 
     # Run the command.
-    proc = subprocess.run(shlex.split(invalid_command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(invalid_command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
 
     # Replace with a missing file.
-    invalid_command = command.replace("test/io/amber/ala/ala.top", "file=missing.txt")
+    invalid_command = command.replace("test/input/amber/ala/ala.top", "file=missing.txt")
 
     # Run the command.
-    proc = subprocess.run(shlex.split(invalid_command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(invalid_command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command failed.
     assert proc.returncode != 0
@@ -155,7 +155,7 @@ def test_temperature(value):
     command = command.replace("298 kelvin", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -179,7 +179,7 @@ def test_time(value):
     command = command.replace("100 nanoseconds", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -203,7 +203,7 @@ def test_length(value):
     command = command.replace("10 angstroms", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -227,7 +227,7 @@ def test_area(value):
     command = command.replace("256 nanometers squared", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -251,7 +251,7 @@ def test_volume(value):
     command = command.replace("1024 picometers cubed", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -275,7 +275,7 @@ def test_charge(value):
     command = command.replace("-1 electron charge", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -299,7 +299,7 @@ def test_angle(value):
     command = command.replace("3.14 radians", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -323,7 +323,7 @@ def test_energy(value):
     command = command.replace("1000 kcal/mol", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0
@@ -343,7 +343,7 @@ def test_pressure(value):
     command = command.replace("1 atmosphere", value)
 
     # Run the command.
-    proc = subprocess.run(shlex.split(command), shell=False, stdout=subprocess.PIPE)
+    proc = subprocess.run(BSS._Utils.command_split(command), shell=False, stdout=subprocess.PIPE)
 
     # Make sure the command completed successfully.
     assert proc.returncode == 0

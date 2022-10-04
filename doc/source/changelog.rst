@@ -1,7 +1,26 @@
 Changelog
 =========
 
-`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.1.0>`_ - Mar 24 2022
+`2022.3.0 <https://github.com/michellab/BioSimSpace/compare/2022.2.1...2022.3.0>`_ - Sep 28 2022 (Pre-release)
+------------------------------------------------------------------------------------------------
+
+* Improved NAMD restraint implementation for consistency with other engines.
+* Make sure we wait for ``trjconv`` to finish when calling as a sub-process.
+* Added wrapper for ``Sire.Units.GeneralUnit``.
+* Improved interoperability of ``BioSimSpace.Trajectory`` sub-package.
+* Added ``BioSimSpace.Sandpit`` for experimental features from external collaborators.
+* Added functionality to check for molecules in a ``BioSimSpace.System``.
+* Added functionality to extract atoms and residues by absolute index.
+* Allow continuation for GROMACS equilibration simulations. (`@kexul <https://github.com/kexul>`_)
+* Update BioSimSpace to work with the new Sire 2023.0.0 Python API.
+
+`2022.2.1 <https://github.com/michellab/BioSimSpace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
+------------------------------------------------------------------------------------------------
+
+* Fix performance issues when ensuring unique molecule numbering when adding molecules to ``BioSimSpace._SireWrappers.System`` and ``BioSimSpace._SireWrappers.Molecules`` objects.
+* Fix extraction of box vector magnitudes for triclinic boxes.
+
+`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
 ------------------------------------------------------------------------------------------------
 
 * Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.

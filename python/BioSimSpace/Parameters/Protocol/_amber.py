@@ -39,17 +39,18 @@ import shlex as _shlex
 import subprocess as _subprocess
 import warnings as _warnings
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
-from BioSimSpace import _isVerbose
-from BioSimSpace import IO as _IO
-from BioSimSpace._Exceptions import ParameterisationError as _ParameterisationError
-from BioSimSpace._Exceptions import ThirdPartyError as _ThirdPartyError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace.Parameters._utils import formalCharge as _formalCharge
-from BioSimSpace.Types import Charge as _Charge
+from ... import _isVerbose
+from ... import IO as _IO
+from ... import _Utils
+from ..._Exceptions import ParameterisationError as _ParameterisationError
+from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Molecule as _Molecule
+from ...Parameters._utils import formalCharge as _formalCharge
+from ...Types import Charge as _Charge
 
 from . import _protocol
 
@@ -545,7 +546,7 @@ class GAFF(_protocol.Protocol):
         stderr = open(prefix + "antechamber.err", "w")
 
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
@@ -569,7 +570,7 @@ class GAFF(_protocol.Protocol):
             stderr = open(prefix + "parmchk.err", "w")
 
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+            proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
                 shell=False, stdout=stdout, stderr=stderr)
             stdout.close()
             stderr.close()
@@ -608,7 +609,7 @@ class GAFF(_protocol.Protocol):
                 stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+                proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
                     shell=False, stdout=stdout, stderr=stderr)
                 stdout.close()
                 stderr.close()
@@ -622,15 +623,6 @@ class GAFF(_protocol.Protocol):
                                                      "inconsistent with the original molecule. Please "
                                                      "make sure that your initial molecule has a "
                                                      "complete topology.")
-
-                    # If the original molecule was comprised of multiple chains, then we need
-                    # to add an ATOMS_PER_MOLECULE section to leap.top to prevent the
-                    # Sire.IO.AmberPrm parser splitting the molecule based on bonding.
-                    if new_mol.nChains() > 1:
-                        with open(prefix + "leap.top", "a") as file:
-                            file.write("%FLAG ATOMS_PER_MOLECULE\n")
-                            file.write("%FORMAT(10I8)\n")
-                            file.write("    %d\n" % new_mol.nAtoms())
 
                     # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
@@ -651,6 +643,21 @@ class GAFF(_protocol.Protocol):
                     # the new properties from 'par_mol' to 'mol'.
                     if is_smiles:
                         new_mol = par_mol
+
+                        # We'll now add MolName and ResName info to the molecule, since
+                        # this will be missing.
+
+                        # Rename the molecule with the original SMILES string.
+                        edit_mol = new_mol._sire_object.edit()
+                        edit_mol = edit_mol.rename(molecule).molecule()
+
+                        # Rename the residue LIG.
+                        resname = _SireMol.ResName("LIG")
+                        edit_mol = edit_mol.residue(_SireMol.ResIdx(0)).rename(resname).molecule()
+
+                        # Commit the changes.
+                        new_mol._sire_object = edit_mol.commit()
+
                     else:
                         new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
 

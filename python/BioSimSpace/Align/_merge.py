@@ -28,13 +28,14 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["merge"]
 
-from Sire import Base as _SireBase
-from Sire import MM as _SireMM
-from Sire import Mol as _SireMol
-from Sire import Units as _SireUnits
+from sire.legacy import Base as _SireBase
+from sire.legacy import MM as _SireMM
+from sire.legacy import Mol as _SireMol
 
-from BioSimSpace._Exceptions import IncompatibleError as _IncompatibleError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
+from sire import units as _SireUnits
+
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._SireWrappers import Molecule as _Molecule
 
 def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
         allow_ring_size_change=False, force=False,

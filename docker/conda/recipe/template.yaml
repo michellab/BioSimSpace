@@ -17,9 +17,11 @@ requirements:
     - pip
     - sire SIRE_VERSION
     - configargparse
+    - kcombu_bss
     - mdtraj
     - mdanalysis
     - nglview
+    - ipywidgets<8
     - openff-toolkit-base
     - parmed
     - pydot

@@ -42,23 +42,24 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
-from BioSimSpace import _gmx_exe
-from BioSimSpace import _is_notebook
-from BioSimSpace._Exceptions import AnalysisError as _AnalysisError
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
-from BioSimSpace._Utils import cd as _cd
-from BioSimSpace import Process as _Process
-from BioSimSpace import Protocol as _Protocol
-from BioSimSpace import Types as _Types
-from BioSimSpace import Units as _Units
+from .. import _gmx_exe
+from .. import _is_notebook
+from .._Exceptions import AnalysisError as _AnalysisError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
+from .._Utils import cd as _cd
+from .. import Process as _Process
+from .. import Protocol as _Protocol
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
@@ -444,7 +445,7 @@ class Relative():
         command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
 
         # Run the first command.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
             raise _AnalysisError("GROMACS free-energy analysis failed!")
@@ -529,7 +530,7 @@ class Relative():
         command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
         # Run the first command.
-        proc = _subprocess.run(_shlex.split(command), shell=False,
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
         if proc.returncode != 0:
             raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -541,7 +542,7 @@ class Relative():
                     _warnings.warn("Subsampling resulted in less than 50 samples, "
                                   f"re-running without subsampling for '{work_dir}'")
                     command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
-                    proc = _subprocess.run(_shlex.split(command), shell=False,
+                    proc = _subprocess.run(_Utils.command_split(command), shell=False,
                         stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                     if proc.returncode != 0:
                         raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -841,7 +842,7 @@ class Relative():
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+                proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Create a copy of the process and update the working

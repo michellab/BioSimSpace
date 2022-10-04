@@ -10,7 +10,7 @@ for var in dir(Types):
         continue
     elif var[0].upper() == var[0]:
         # Exclude non unit based types.
-        if var != "Vector" and var != "Coordinate":
+        if var != "Vector" and var != "Coordinate" and var != "GeneralUnit":
             types.append(getattr(Types, var))
 
 def insert_space(string, index):
@@ -93,3 +93,40 @@ def test_round_trip(Type):
         # Make sure the unit and value are correct.
         assert my_type.value() == pytest.approx(1.0)
         assert unit == my_type.unit()
+
+@pytest.mark.parametrize("Type", types)
+def test_from_sire_unit(Type):
+    """Test that types can be instantiated from their Sire unit equivalents."""
+
+    # Store a list of the supported Sire units.
+    sire_units = Type._supported_units.values()
+
+    # Loop over all units.
+    for sire_unit in Type._supported_units.values():
+        # Try to instantiate the type from the Sire unit.
+        my_type = Type(sire_unit)
+
+@pytest.mark.parametrize("Type", types)
+def test_container_mul(Type):
+    """Test that types can applied to containers."""
+
+    # Attempt to instantiate an object.
+    my_type = Type(1.0, Type._default_unit)
+
+    # Apply the type to a list.
+    container = [1, 2, 3] * my_type
+
+    # Make sure the container is a list.
+    assert isinstance(container, list)
+
+    # Assert we have a container of the original type.
+    assert all(isinstance(x, Type) for x in container)
+
+    # Apply the type to a tuple.
+    container = (1, 2, 3) * my_type
+
+    # Make sure the container is a tuple.
+    assert isinstance(container, tuple)
+
+    # Assert we have a container of the original type.
+    assert all(isinstance(x, Type) for x in container)

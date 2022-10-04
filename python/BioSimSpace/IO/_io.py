@@ -56,18 +56,19 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
-from BioSimSpace import _amber_home
-from BioSimSpace import _gromacs_path
-from BioSimSpace import _isVerbose
-from BioSimSpace._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from BioSimSpace._SireWrappers import Molecule as _Molecule
-from BioSimSpace._SireWrappers import Molecules as _Molecules
-from BioSimSpace._SireWrappers import System as _System
+from .. import _amber_home
+from .. import _gmx_path
+from .. import _isVerbose
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
+from .. import _Utils
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -277,7 +278,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
@@ -341,7 +342,7 @@ def readMolecules(files, property_map={}):
     """
 
     global _has_gmx_warned
-    if _gromacs_path is None and not _has_gmx_warned:
+    if _gmx_path is None and not _has_gmx_warned:
         _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
                        "for GROMACS topology file support.")
         _has_gmx_warned = True
@@ -364,8 +365,8 @@ def readMolecules(files, property_map={}):
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in property_map):
-        property_map["GROMACS_PATH"] = _gromacs_path
+    if _gmx_path is not None and ("GROMACS_PATH" not in property_map):
+        property_map["GROMACS_PATH"] = _gmx_path
 
     # Check that the files exist.
     for file in files:
@@ -377,6 +378,20 @@ def readMolecules(files, property_map={}):
         system = _SireIO.MoleculeParser.read(files, property_map)
     except Exception as e:
         if "There are no lead parsers!" in str(e):
+            # First check to see if the failure was due to the presence
+            # of CMAP records.
+            for file in files:
+                try:
+                    amber_prm = _SireIO.AmberPrm(file)
+                except Exception as e:
+                    if "CMAP" in str(e).upper():
+                        msg = ("Unable to parse topology file, CMAP "
+                              "records are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
             msg = ("Failed to read molecules from %s. "
                    "It looks like you failed to include a topology file."
                   ) % files
@@ -452,7 +467,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     """
 
     global _has_gmx_warned
-    if _gromacs_path is None and not _has_gmx_warned:
+    if _gmx_path is None and not _has_gmx_warned:
         _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
                        "for GROMACS topology file support.")
         _has_gmx_warned = True
@@ -516,8 +531,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     _property_map = property_map.copy()
 
     # Add the GROMACS topology file path.
-    if _gromacs_path is not None and ("GROMACS_PATH" not in _property_map):
-        _property_map["GROMACS_PATH"] = _gromacs_path
+    if _gmx_path is not None and ("GROMACS_PATH" not in _property_map):
+        _property_map["GROMACS_PATH"] = _gmx_path
 
     # Get the directory name.
     dirname = _os.path.dirname(filebase)
@@ -577,7 +592,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # CONECT record from the bonding information.
                 if system[0]._sire_object.hasProperty("is_perturbable") or \
                    system[0]._sire_object.hasProperty("was_perturbable"):
-                    bond = _property_map.get("bond", "bond")
+                    bond = _property_map.get("bond", "bond0")
                     conect = _bond_to_conect(system[0]._sire_object.property(bond),
                                              system[0]._sire_object.info())
 

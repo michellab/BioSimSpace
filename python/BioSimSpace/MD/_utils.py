@@ -37,5 +37,5 @@ def engines():
        engines : [str]
            The list of supported engines.
     """
-    from BioSimSpace.Process import engines as _engines
+    from ..Process import engines as _engines
     return _engines() + ["auto"]
