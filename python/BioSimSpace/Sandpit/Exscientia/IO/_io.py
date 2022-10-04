@@ -64,11 +64,11 @@ from sire.legacy import System as _SireSystem
 from .. import _amber_home
 from .. import _gmx_path
 from .. import _isVerbose
-from .. import _Utils
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
+from .. import _Utils
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -378,6 +378,20 @@ def readMolecules(files, property_map={}):
         system = _SireIO.MoleculeParser.read(files, property_map)
     except Exception as e:
         if "There are no lead parsers!" in str(e):
+            # First check to see if the failure was due to the presence
+            # of CMAP records.
+            for file in files:
+                try:
+                    amber_prm = _SireIO.AmberPrm(file)
+                except Exception as e:
+                    if "CMAP" in str(e).upper():
+                        msg = ("Unable to parse topology file, CMAP "
+                              "records are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
             msg = ("Failed to read molecules from %s. "
                    "It looks like you failed to include a topology file."
                   ) % files
