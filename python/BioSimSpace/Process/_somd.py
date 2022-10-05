@@ -340,7 +340,7 @@ class Somd(_process.Process):
                 except:
                     pass
             # GPU device ID.
-            config_options["gpu"] = gpu_id
+            # config_options["gpu"] = gpu_id
 
         if not isinstance(self._protocol, (_Protocol.Minimisation, _Protocol.Equilibration, _Protocol.Production)):
             raise _IncompatibleError(
