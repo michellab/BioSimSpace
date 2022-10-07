@@ -63,6 +63,7 @@ from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
+from ...Types import Length as _Length
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:
@@ -378,6 +379,10 @@ class Protocol():
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
 
+        # Check to see if any disulphide bonds are present.
+        disulphide_bonds = _get_disulphide_bonds(molecule._sire_object, self._tolerance,
+                                                 self._max_distance)
+
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
             file.write("source %s\n" % ff)
@@ -391,6 +396,9 @@ class Protocol():
                 for command in self._leap_commands:
                     file.write("%s\n" % command)
             file.write("mol = loadPdb leap.pdb\n")
+            # Add any disulphide bonds.
+            for bond in disulphide_bonds:
+                file.write("%s\n" % bond)
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")
 
@@ -557,3 +565,87 @@ def _find_force_field(forcefield):
 
     # Return the force field.
     return ff
+
+def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A")):
+    """Internal function to generate LEaP records for disulphide bonds.
+
+       Parameters
+       ----------
+
+       molecule : Sire.Mol.Molecule
+           The molecule of interest.
+
+       Returns
+       -------
+
+       bond_records : [str]
+           A list of LEaP formatted bond records.
+
+       tolerance : float
+           The tolerance to use when searching for bonds.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
+    """
+
+    if not isinstance(molecule, _SireMol.Molecule):
+        raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule'")
+
+    if not isinstance(tolerance, (int, float)):
+        raise TypeError("'tolerance' must be of type 'float'")
+    tolerance = float(tolerance)
+    if tolerance < 1:
+        raise ValueError("'tolerance' must be >= 1.0.")
+
+    if not isinstance(max_distance, _Length):
+        raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+    max_radius2 = max_distance.angstroms().value()**2
+
+    # Create a copy of the molecule.
+    mol = molecule.__deepcopy__()
+
+    # Get the connectivity of the molecule.
+    conn = _SireMol.Connectivity(mol, _SireMol.CovalentBondHunter(tolerance, max_radius2))
+
+    # Add this as a molecule property.
+    mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
+
+    # Get the bonds.
+    bonds = mol.bonds()
+
+    # Create a list to store the disulphide bonds.
+    disulphides = []
+
+    # Create a sulphur element.
+    S = _SireMol.Element("S")
+
+    # Loop over the bonds and check for disulphides.
+    for bond in bonds:
+        if bond.atom0().element() == S and bond.atom1().element() == S:
+            disulphides.append(bond)
+
+    # Create a list to store the LEaP bond record strings.
+    bond_records = []
+
+    # Loop over the disulphide bonds and generate the records.
+    for bond in disulphides:
+        # Get the atoms in the bond.
+        atom0 = bond.atom0()
+        atom1 = bond.atom1()
+
+        # Extract the residue numbers associated with the atoms.
+        res0 = atom0.residue().number().value()
+        res1 = atom1.residue().number().value()
+
+        # Extract the atom names.
+        name0 = atom0.name().value()
+        name1 = atom1.name().value()
+
+        # Create the record.
+        record = f"bond mol.{res0}.{name0} mol.{res1}.{name1}"
+
+        # Append to the list.
+        bond_records.append(record)
+
+    return bond_records

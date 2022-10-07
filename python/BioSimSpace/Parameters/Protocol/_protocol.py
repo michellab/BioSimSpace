@@ -63,6 +63,7 @@ from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
+from ...Types import Length as _Length
 
 # Set the tLEaP cmd directory.
 if _amber_home is not None:
@@ -379,7 +380,8 @@ class Protocol():
         ff = _find_force_field(self._forcefield)
 
         # Check to see if any disulphide bonds are present.
-        disulphide_bonds = _get_disulphide_bonds(molecule)
+        disulphide_bonds = _get_disulphide_bonds(molecule._sire_object, self._tolerance,
+                                                 self._max_distance)
 
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
@@ -564,7 +566,7 @@ def _find_force_field(forcefield):
     # Return the force field.
     return ff
 
-def _get_disulphide_bonds(molecule):
+def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A")):
     """Internal function to generate LEaP records for disulphide bonds.
 
        Parameters
@@ -578,16 +580,33 @@ def _get_disulphide_bonds(molecule):
 
        bond_records : [str]
            A list of LEaP formatted bond records.
+
+       tolerance : float
+           The tolerance to use when searching for bonds.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
     """
 
     if not isinstance(molecule, _SireMol.Molecule):
         raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule'")
 
+    if not isinstance(tolerance, (int, float)):
+        raise TypeError("'tolerance' must be of type 'float'")
+    tolerance = float(tolerance)
+    if tolerance < 1:
+        raise ValueError("'tolerance' must be >= 1.0.")
+
+    if not isinstance(max_distance, _Length):
+        raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+    max_radius2 = max_distance.angstroms().value()**2
+
     # Create a copy of the molecule.
     mol = molecule.__deepcopy__()
 
     # Get the connectivity of the molecule.
-    conn = _SireMol.Connectivity(mol)
+    conn = _SireMol.Connectivity(mol, _SireMol.CovalentBondHunter(tolerance, max_radius2))
 
     # Add this as a molecule property.
     mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
