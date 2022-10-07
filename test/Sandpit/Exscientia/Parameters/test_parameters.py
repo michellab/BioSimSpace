@@ -24,3 +24,7 @@ def test_disulphide():
     # disulphide bonds and add the appropriate bond records to the tLEaP input
     # script.
     molecule = BSS.Parameters.ff14SB(molecule).getMolecule()
+
+    # Check that we actually generate records for four disulphide bonds.
+    bonds = BSS.Parameters.Protocol._protocol._get_disulphide_bonds(molecule._sire_object)
+    assert len(bonds) == 4

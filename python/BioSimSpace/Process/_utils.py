@@ -60,7 +60,7 @@ def engines():
     """
     return _engines
 
-def createProcess(system, protocol, engine):
+def createProcess(system, protocol, engine, **kwargs):
     """Create a simulation process.
 
        Parameters
@@ -75,6 +75,9 @@ def createProcess(system, protocol, engine):
        engine : str
            The name of the simulation engine.
 
+       kwargs : dict
+           A dictionary of optional keyword arguments neeeded by the engine.
+
        Returns
        -------
 
@@ -88,4 +91,4 @@ def createProcess(system, protocol, engine):
     if _engine not in _engines_lower:
         raise KeyError("Unsupported engine '%s', supported engines are %s" % (engine, _engines))
 
-    return _engine_dict[_engine](system, protocol)
+    return _engine_dict[_engine](system, protocol, **kwargs)
