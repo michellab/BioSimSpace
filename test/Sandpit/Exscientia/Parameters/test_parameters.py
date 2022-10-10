@@ -28,3 +28,11 @@ def test_disulphide():
     # Check that we actually generate records for four disulphide bonds.
     bonds = BSS.Parameters.Protocol._protocol._get_disulphide_bonds(molecule._sire_object)
     assert len(bonds) == 4
+
+    # Now check that the bond parameters are present in the molecule.
+    bonds = molecule.search("bonds with element S")
+    num_disulphides = 0
+    for bond in bonds:
+        if bond.name() == "SG=SG":
+            num_disulphides += 1
+    assert num_disulphides == 4
