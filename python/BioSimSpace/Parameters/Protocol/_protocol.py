@@ -381,7 +381,7 @@ class Protocol():
 
         # Check to see if any disulphide bonds are present.
         disulphide_bonds = _get_disulphide_bonds(molecule._sire_object, self._tolerance,
-                                                 self._max_distance)
+                                                 self._max_distance, self._property_map)
 
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
@@ -566,7 +566,8 @@ def _find_force_field(forcefield):
     # Return the force field.
     return ff
 
-def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A")):
+def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+        property_map={}):
     """Internal function to generate LEaP records for disulphide bonds.
 
        Parameters
@@ -587,6 +588,11 @@ def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"))
        max_distance : :class:`Length <BioSimSpace.Types.Length>`
            The maximum distance between atoms when searching for disulphide
            bonds.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     if not isinstance(molecule, _SireMol.Molecule):
@@ -602,11 +608,16 @@ def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"))
         raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
     max_radius2 = max_distance.angstroms().value()**2
 
+    if not isinstance(property_map, dict):
+        raise ValueError("'property_map' must be of type 'dict'")
+
     # Create a copy of the molecule.
     mol = molecule.__deepcopy__()
 
     # Get the connectivity of the molecule.
-    conn = _SireMol.Connectivity(mol, _SireMol.CovalentBondHunter(tolerance, max_radius2))
+    conn = _SireMol.Connectivity(mol,
+                                 _SireMol.CovalentBondHunter(tolerance, max_radius2),
+                                 property_map)
 
     # Add this as a molecule property.
     mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
