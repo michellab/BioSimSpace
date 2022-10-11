@@ -23,7 +23,7 @@ if "BSS_CONDA_INSTALL=1" in sys.argv:
 
 if not os.getenv("BSS_CONDA_INSTALL"):
     # Set the minimum allowed Sire version.
-    min_ver = "2019.1.0"
+    min_ver = "2023.0.0"
     min_ver_int = int(min_ver.replace(".", ""))
 
     # Make sure we're using the Sire python interpreter.
