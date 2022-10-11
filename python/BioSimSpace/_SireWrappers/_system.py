@@ -1141,12 +1141,12 @@ class System(_SireWrapper):
             space = self._sire_object.property(property_map.get("space", "space"))
 
             # Periodic box.
-            if isinstance(space, _SireVol.PeriodicBox) or isinstance(space, _Sire.Vol.PeriodicBox):
+            if isinstance(space, _SireVol.PeriodicBox):
                 box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
                 angles = 3*[_Angle(90, "degrees")]
 
             # TriclinicBox box.
-            elif isinstance(space, _SireVol.TriclinicBox) or isinstance(space, _Sire.Vol.TriclinicBox):
+            elif isinstance(space, _SireVol.TriclinicBox):
                 box = [_Length(space.vector0().magnitude(), "Angstrom"),
                        _Length(space.vector1().magnitude(), "Angstrom"),
                        _Length(space.vector2().magnitude(), "Angstrom")]
@@ -1156,8 +1156,6 @@ class System(_SireWrapper):
 
             else:
                 raise TypeError(f"Unsupported box type: {space} - {type(space)}")
-        except TypeError:
-            raise
         except:
             box = None
             angles = None
