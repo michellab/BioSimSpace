@@ -1,0 +1,54 @@
+name: Sandpit_exs_CI
+
+on:
+  # run once a day at noon UTC
+  schedule:
+    - cron: "0 12 * * *"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macOS-latest",]
+        python-version: ["3.8", ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
+
+      - name: Install dependency
+        run: |
+          # gromacs=2022.2 as gromacs=2022.3 is not available on OSX ATM
+          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.8 ambertools gromacs=2022.2 "sire<2023.0.0"
+          python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
+          python -m pip install git+https://github.com/alchemistry/alchemlyb.git
+          # For the testing of BSS.FreeEnergy.Relative.analysis
+          python -m pip install https://github.com/alchemistry/alchemtest/archive/master.zip
+
+      - name: Install the dev version
+        run: |
+          conda remove --force biosimspace
+          cd python
+          python setup.py develop
+          cd ..
+
+      - name: Run tests
+        run: |
+          pytest -v --color=yes test/Sandpit/Exscientia/

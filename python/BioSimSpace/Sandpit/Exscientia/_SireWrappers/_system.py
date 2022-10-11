@@ -812,6 +812,34 @@ class System(_SireWrapper):
         """
         return len(self.getPerturbableMolecules())
 
+    def getDecoupledMolecules(self):
+        """Return a list containing all of the decoupled molecules in the system.
+
+           Returns
+           -------
+
+           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+               A list of decoupled molecules.
+        """
+
+        molecules = []
+
+        for mol in self:
+            if mol.isDecoupled():
+                molecules.append(_Molecule(mol))
+        return molecules
+
+    def nDecoupledMolecules(self):
+        """Return the number of decoupled molecules in the system.
+
+           Returns
+           -------
+
+           num_decoupled : int
+               The number of decoupled molecules in the system.
+        """
+        return len(self.getDecoupledMolecules())
+
     def repartitionHydrogenMass(self, factor=4, water="no",
             use_coordinates=False, property_map={}):
         """Redistrubute mass of heavy atoms connected to bonded hydrogens into

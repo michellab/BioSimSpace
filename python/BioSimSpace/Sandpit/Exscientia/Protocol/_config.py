@@ -14,7 +14,7 @@ class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
-    def __init__(self, system, protocol):
+    def __init__(self, system, protocol, squashed_system=None):
         """Constructor.
 
            Parameters
@@ -24,9 +24,13 @@ class ConfigFactory:
                The molecular system.
 
            protocol : :class:`Protocol <BioSimSpace.Protocol>`
+
+           squashed_system : :class:`System <BioSimSpace._SireWrappers.System>`
+               (Optional) an AMBER-compatible squashed system.
         """
         self.system = system
         self.protocol = protocol
+        self.squashed_system = squashed_system
 
     @property
     def _has_box(self):
@@ -105,7 +109,8 @@ class ConfigFactory:
         # separate contiguous blocks of indices, e.g. 1-23,34-47,...
 
         if atom_idxs:
-            atom_idxs = sorted(list(set(atom_idxs)))
+            # AMBER masks are 1-indexed, while BioSimSpace indices are 0-indexed.
+            atom_idxs = [x + 1 for x in sorted(list(set(atom_idxs)))]
             if not all(isinstance(x, int) for x in atom_idxs):
                 raise TypeError("'atom_idxs' must be a list of 'int' types.")
             groups = []
@@ -138,53 +143,40 @@ class ConfigFactory:
            option_dict : dict
                A dictionary of AMBER-compatible options.
         """
-
         # Squash the system into an AMBER-friendly format.
-        squashed_system = _squash(self.system)
+        if self.squashed_system is None:
+            self.squashed_system, _ = _squash(self.system)
 
-        # define whether HMR is used based on the timestep
-        # When HMR is used, there can be no X
-        if timestep >= 0.004:
-            HMR_on = True
-        else:
-            HMR_on = False
-
-        # Extract all perturbable molecules from both the squashed and the merged systems.
-        perturbable_mol_mask = []
-        mols_hybr = []
-        nondummy_indices0, nondummy_indices1 = [], []
-        for mol in self.system.getMolecules():
-            if mol._is_perturbable:
-                perturbable_mol_mask += [0, 1]
-                mols_hybr += [mol]
-                nondummy_indices0 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype0")]]
-                nondummy_indices1 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype1")]]
-            else:
-                perturbable_mol_mask += [None]
-        mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        mols1 = [squashed_system.getMolecule(i) for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
+        # Get the perturbed molecules and the corresponding squashed molecules.
+        pertmols = self.system.getPerturbableMolecules()
+        pertmol_offset = len(self.system) - len(pertmols)
+        squashed_pertmols = self.squashed_system[pertmol_offset:]
+        atom_offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in self.squashed_system.getMolecules()))
 
         # Find the perturbed atom indices withing the squashed system.
-        mols0_indices = [squashed_system.getIndex(atom) + 1 for mol in mols0 for atom in mol.getAtoms()]
-        mols1_indices = [squashed_system.getIndex(atom) + 1 for mol in mols1 for atom in mol.getAtoms()]
+        mols0_indices, mols1_indices = [], []
+        dummy0_indices, dummy1_indices = [], []
+        for i, pertmol in enumerate(pertmols):
+            mol0 = squashed_pertmols[2 * i]
+            mol1 = squashed_pertmols[2 * i + 1]
+            atom_offset0 = atom_offsets[pertmol_offset + 2 * i]
+            atom_offset1 = atom_offset0 + mol0.nAtoms()
+            mols0_indices += list(range(atom_offset0, atom_offset1))
+            mols1_indices += list(range(atom_offset1, atom_offset1 + mol1.nAtoms()))
+            nondummy_indices0 = [atom.index() for atom in pertmol.getAtoms()
+                                 if "du" not in atom._sire_object.property("ambertype0")]
+            nondummy_indices1 = [atom.index() for atom in pertmol.getAtoms()
+                                 if "du" not in atom._sire_object.property("ambertype1")]
+            dummy0_indices += [atom_offset0 + nondummy_indices0.index(atom.index())
+                               for atom in pertmol.getAtoms()
+                               if "du" in atom._sire_object.property("ambertype1")]
+            dummy1_indices += [atom_offset1 + nondummy_indices1.index(atom.index())
+                               for atom in pertmol.getAtoms()
+                               if "du" in atom._sire_object.property("ambertype0")]
 
-        # Find the dummy indices within the squashed system.
-        offsets = [0] + list(_it.accumulate(mol.nAtoms() for mol in squashed_system.getMolecules()))
-        offsets0 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        offsets1 = [offsets[i] for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
-        dummy0_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets0, nondummy_indices0)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype1")]
-        dummy1_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets1, nondummy_indices1)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype0")]
-
-        # If it is HMR
-        if HMR_on == True :
+        # Define whether HMR is used based on the timestep.
+        # When HMR is used, there can be no SHAKE.
+        if timestep >= 0.004:
             no_shake_mask = ""
         else:
             no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
@@ -407,7 +399,7 @@ class ConfigFactory:
         protocol_dict = {
             "nstlog": self._report_interval,                                        # Interval between writing to the log file.
             "nstenergy": self._restart_interval,                                    # Interval between writing to the energy file.
-            "nstxout": self._restart_interval,                                      # Interval between writing to the trajectory file.
+            "nstxout-compressed": self._restart_interval,                                      # Interval between writing to the trajectory file.
         }
 
         # Minimisation.
@@ -420,10 +412,7 @@ class ConfigFactory:
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            if timestep >= 0.004:
-                protocol_dict["constraints"] = "all-bonds"                          # If HMR, all constraints
-            else:
-                protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
+            protocol_dict["constraints"] = "h-bonds"                            # Rigid bonded hydrogens.
             protocol_dict["constraint-algorithm"] = "LINCS"                         # Linear constraint solver.
 
         # PBC.
@@ -450,17 +439,14 @@ class ConfigFactory:
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict["refcoord-scaling"] = "all"                               # The actual restraints need to be defined elsewhere.
+            protocol_dict["refcoord-scaling"] = "com"                               # The actual restraints need to be defined elsewhere.
 
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    if isinstance(self.protocol, _Protocol.Equilibration):
-                        protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
-                    else:
-                        protocol_dict["pcoupl"] = "parrinello-rahman"               # Barostat type.
+                    protocol_dict["pcoupl"] = "c-rescale"                       # Barostat type.
                     protocol_dict["tau-p"] = 1                                      # 1ps time constant for pressure coupling.
                     protocol_dict["ref-p"] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
                     protocol_dict["compressibility"] = "4.5e-5"                     # Compressibility of water.
@@ -469,41 +455,80 @@ class ConfigFactory:
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["integrator"] = "sd"                                      # Langevin dynamics.
+            protocol_dict["integrator"] = "md"                                      # leap-frog dynamics.
+            protocol_dict["tcoupl"] = "v-rescale"
             protocol_dict["tc-grps"] = "system"                                     # A single temperature group for the entire system.
             protocol_dict["tau-t"] = 2                                              # Collision frequency (ps).
 
-            if not isinstance(self.protocol, _Protocol.Equilibration):
+            if isinstance(self.protocol, _Protocol.Equilibration):
+                if self.protocol.isConstantTemp():
+                    temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
+                    protocol_dict["ref-t"] = temp
+                    protocol_dict["gen-vel"] = "yes"
+                    protocol_dict["gen-temp"] = temp
+                else:
+                    #still need a reference temperature for each group, even when heating/cooling
+                    protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
+                    # Work out the final time of the simulation.
+                    timestep = self.protocol.getTimeStep().picoseconds().value()
+                    end_time = _math.floor(timestep * self._steps)
+
+                    protocol_dict["annealing"] = "single"                               # Single sequence of annealing points.
+                    protocol_dict["annealing-npoints"] = 2                              # Two annealing points for "system" temperature group.
+
+                    # Linearly change temperature between start and end times.
+                    protocol_dict["annealing-time"] = "0 %d" % end_time
+                    protocol_dict["annealing-temp"] = "%.2f %.2f" % (
+                        self.protocol.getStartTemperature().kelvin().value(),
+                        self.protocol.getEndTemperature().kelvin().value(),
+                    )
+            else:
                 protocol_dict["ref-t"] = "%.2f" % self.protocol.getTemperature().kelvin().value()
-            elif self.protocol.isConstantTemp():
-                protocol_dict["ref-t"] = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
-
-            # Heating/cooling protocol.
-            elif not self.protocol.isConstantTemp():
-                #still need a reference temperature for each group, even when heating/cooling
-                protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
-                # Work out the final time of the simulation.
-                timestep = self.protocol.getTimeStep().picoseconds().value()
-                end_time = _math.floor(timestep * self._steps)
-
-                protocol_dict["annealing"] = "single"                               # Single sequence of annealing points.
-                protocol_dict["annealing-npoints"] = 2                              # Two annealing points for "system" temperature group.
-
-                # Linearly change temperature between start and end times.
-                protocol_dict["annealing-time"] = "0 %d" % end_time
-                protocol_dict["annealing-temp"] = "%.2f %.2f" % (
-                    self.protocol.getStartTemperature().kelvin().value(),
-                    self.protocol.getEndTemperature().kelvin().value(),
-                )
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
             protocol_dict["free-energy"] = "yes"                                    # Free energy mode.
+            nDecoupledMolecules = self.system.nDecoupledMolecules()
+            if nDecoupledMolecules == 1:
+                [mol, ] = self.system.getDecoupledMolecules()
+                decouple_dict = mol._sire_object.property("decouple")
+                protocol_dict["couple-moltype"] = mol._sire_object.name().value()
+                def tranform(charge, LJ):
+                    if charge and LJ:
+                        return 'vdw-q'
+                    elif charge and not LJ:
+                        return 'q'
+                    elif not charge and LJ:
+                        return 'vdw'
+                    else:
+                        return 'none'
+                protocol_dict["couple-lambda0"] = tranform(
+                    decouple_dict["charge"][0],
+                    decouple_dict["LJ"][0]
+                )
+                protocol_dict["couple-lambda1"] = tranform(
+                    decouple_dict["charge"][1],
+                    decouple_dict["LJ"][1]
+                )
+                # Add the soft-core parameters for the ABFE
+                protocol_dict['sc-alpha'] = 0.5
+                protocol_dict['sc-power'] = 1
+                protocol_dict['sc-sigma'] = 0.3
+                if decouple_dict['intramol'].value():
+                    # The intramol is being coupled to the lambda change and thus being annihilated.
+                    protocol_dict["couple-intramol"] = 'yes'
+                else:
+                    protocol_dict["couple-intramol"] = 'no'
+            elif nDecoupledMolecules > 1:
+                raise ValueError('Gromacs cannot handle more than one decoupled molecule.')
             protocol_dict["calc-lambda-neighbors"] = -1                             # Calculate MBAR energies.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
-            protocol_dict["fep-lambdas"] = " ".join(protocol)                       # Lambda values.
-            idx = self._protocol.getLambdaIndex()
-            protocol_dict["init-lambda-state"] = idx                                # Current lambda value.
+            LambdaValues = self.protocol.getLambdaValues(type='dataframe')
+            for name in ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
+                           'temperature']:
+                if name in LambdaValues:
+                    protocol_dict['{:<20}'.format("{}-lambdas".format(name))] = \
+                        ' '.join(list(map('{:.5f}'.format, LambdaValues[name].to_list())))
+            protocol_dict["init-lambda-state"] = self.protocol.getLambdaIndex()     # Current lambda value.
             protocol_dict["nstcalcenergy"] = 200                                    # Calculate energies every 200 steps.
             protocol_dict["nstdhdl"] = 200                                          # Write gradients every 200 steps.
 
