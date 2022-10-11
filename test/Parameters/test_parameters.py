@@ -30,9 +30,5 @@ def test_disulphide():
     assert len(bonds) == 4
 
     # Now check that the bond parameters are present in the molecule.
-    bonds = molecule.search("bonds with element S")
-    num_disulphides = 0
-    for bond in bonds:
-        if bond.name() == "SG=SG":
-            num_disulphides += 1
-    assert num_disulphides == 4
+    bonds = molecule.search("bonds from element S to element S")
+    assert len(bonds) == 4
