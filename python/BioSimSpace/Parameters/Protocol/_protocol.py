@@ -622,19 +622,14 @@ def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
     # Add this as a molecule property.
     mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
 
-    # Get the bonds.
-    bonds = mol.bonds()
+    # Create the search query.
+    query =_SireMol.Select("bonds from element S to element S")
 
-    # Create a list to store the disulphide bonds.
-    disulphides = []
-
-    # Create a sulphur element.
-    S = _SireMol.Element("S")
-
-    # Loop over the bonds and check for disulphides.
-    for bond in bonds:
-        if bond.atom0().element() == S and bond.atom1().element() == S:
-            disulphides.append(bond)
+    # Try searching for disulphide bonds.
+    try:
+        disulphides = query(mol, property_map)
+    except:
+        dispulphides = []
 
     # Create a list to store the LEaP bond record strings.
     bond_records = []
