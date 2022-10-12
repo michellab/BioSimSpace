@@ -1,5 +1,6 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
+import math
 import pytest
 
 @pytest.fixture
@@ -198,3 +199,43 @@ def test_restraint_atoms(system, restraint, expected):
 
     # Make sure the indices are as expected.
     assert atoms == expected
+
+def test_get_box(system):
+    # Get the box dimensions and angles from the system.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles.
+    expected_box = [31.3979, 34.1000, 29.2730] * BSS.Units.Length.angstrom
+    expected_angles = [90, 90, 90] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
+def test_set_box(system):
+    # Generate box dimensions and angles for a truncated octahedron.
+    box, angles = BSS.Box.truncatedOctahedron(30*BSS.Units.Length.angstrom)
+
+    # Set the box dimensions in the system.
+    system.setBox(box, angles)
+
+    # Get the updated box dimensions and angles.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles. These are different
+    # to the initial values (angles at least) due to the application
+    # of a lattice reduction.
+    expected_box = [30, 30, 30] * BSS.Units.Length.angstrom
+    expected_angles = [70.5288, 109.4712, 70.5288] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
