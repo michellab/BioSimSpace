@@ -385,8 +385,15 @@ def readMolecules(files, property_map={}):
                     amber_prm = _SireIO.AmberPrm(file)
                 except Exception as e1:
                     if "CMAP" in str(e1).upper():
-                        msg = ("Unable to parse topology file, CMAP "
+                        msg = ("Unable to parse AMBER topology file. CMAP "
                               "records are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e1
+                        else:
+                            raise IOError(msg) from None
+                    elif "CHAMBER" in str(e1).upper():
+                        msg = ("Unable to parse AMBER topology file. "
+                              "CHAMBER files are currently unsupported.")
                         if _isVerbose():
                             raise IOError(msg) from e1
                         else:
