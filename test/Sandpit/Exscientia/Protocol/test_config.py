@@ -71,6 +71,8 @@ class TestGromacsABFE():
         # Benzene.
         m0 = BSS.Parameters.openff_unconstrained_2_0_0(
             "c1ccccc1").getMolecule()
+        m0._sire_object = m0._sire_object.edit().rename(
+            "LIG").molecule().commit()
         protocol = FreeEnergyMinimisation(lam=0.0,
                  lam_vals=None,
                  min_lam=0.0,
@@ -87,7 +89,7 @@ class TestGromacsABFE():
         freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
-            assert 'couple-moltype = c1ccccc1' in mdp_text
+            assert 'couple-moltype = LIG' in mdp_text
             assert 'couple-lambda0 = vdw-q' in mdp_text
             assert 'couple-lambda1 = none' in mdp_text
             assert 'couple-intramol = yes' in mdp_text
@@ -100,7 +102,7 @@ class TestGromacsABFE():
         freenrg = BSS.FreeEnergy.Relative(mol.toSystem(), protocol, engine='GROMACS', )
         with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", 'r') as f:
             mdp_text = f.read()
-            assert 'couple-moltype = c1ccccc1' in mdp_text
+            assert 'couple-moltype = LIG' in mdp_text
             assert 'couple-lambda0 = vdw' in mdp_text
             assert 'couple-lambda1 = q' in mdp_text
             assert 'couple-intramol = no' in mdp_text
