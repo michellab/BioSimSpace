@@ -2539,6 +2539,32 @@ def _to_pert_file(molecule, filename="MORPH.pert", zero_dummy_dihedrals=False,
 
                         # End improper record.
                         file.write("    endimproper\n")
+        
+        # 6) scale factor. we need it since we need to calculate energy difference per lambda  
+
+        # Extract the pairs at lambda = 0 and 1 
+        scale0 = mol.property('intrascale0')
+        scale1 = mol.property('intrascale1')
+
+        for i in range(mol.nAtoms()):
+            for j in range(i+1, mol.nAtoms()):
+                idx0, idx1= _SireMol.AtomIdx(i), _SireMol.AtomIdx(j)
+                p0 = scale0.get(idx0, idx1)
+                p1 = scale1.get(idx0, idx1)
+                if p0 != p1:
+                    # Start clj record.
+                    file.write("    scale\n")
+
+                    # Bond data.
+                    file.write("        atom0          %s\n" % mol.atom(idx0).name().value())
+                    file.write("        atom1          %s\n" % mol.atom(idx1).name().value())
+                    file.write("        initial_csc    %.5f\n" % p0.coulomb())
+                    file.write("        initial_ljsc   %.5f\n" % p0.lj())
+                    file.write("        final_csc      %.5f\n" % p1.coulomb())
+                    file.write("        final_ljsc     %.5f\n" % p1.lj())
+
+                    # End bond record.
+                    file.write("    endscale\n")
 
         # End molecule record.
         file.write("endmolecule\n")
