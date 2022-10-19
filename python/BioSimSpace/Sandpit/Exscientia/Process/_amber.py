@@ -1073,7 +1073,7 @@ class Amber(_process.Process):
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
-        """Get the dihedral energy.
+        """Get the total dihedral energy (proper + improper)
 
            Parameters
            ----------
@@ -1088,12 +1088,12 @@ class Amber(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-              The dihedral energy.
+              The total dihedral energy.
         """
         return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
-        """Get the current dihedral energy.
+        """Get the current total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1105,7 +1105,7 @@ class Amber(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-              The dihedral energy.
+              The total dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
 
