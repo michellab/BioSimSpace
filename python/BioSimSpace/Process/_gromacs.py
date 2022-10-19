@@ -1456,7 +1456,7 @@ class Gromacs(_process.Process):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
-        return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        return self.getRecord("IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
