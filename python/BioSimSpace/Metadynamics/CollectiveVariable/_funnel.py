@@ -535,7 +535,7 @@ class Funnel(_CollectiveVariable):
         # Estimate the average area of the restraint (in Angstrom squared).
         area = (volume / proj_max).angstroms2()
 
-        # Compute the correction.
+        # Compute the correction. (1/1660 A-3 is the standard concentration.)
         correction = _Energy(_math.log((area / 1660).value()), "kt")
 
         return correction
