@@ -407,16 +407,16 @@ def readMolecules(files, property_map={}):
             else:
                 raise IOError(msg) from None
         else:
-            if "Incompatibility" in str(e):
+            if "Incompatibility" in str(e0):
                 msg = "Incompatibility between molecular information in files: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
             else:
                 msg = "Failed to read molecules from: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
 
