@@ -283,7 +283,7 @@ class ConfigFactory:
             protocol_dict["ntb"] = 0                # No periodic box.
             protocol_dict["cut"] = "999."           # Non-bonded cut-off.
         else:
-            protocol_dict["cut"] = "8.0"            # Non-bonded cut-off.
+            protocol_dict["cut"] = "10.0"           # Non-bonded cut-off.
             protocol_dict["iwrap"] = 1              # Wrap the coordinates.
 
         # Restraints.
@@ -490,14 +490,15 @@ class ConfigFactory:
             protocol_dict["ns-type"] = "grid"
             # Rebuild neighbour list every 20 steps. Recommended in the manual for parallel simulations and/or non-bonded force calculation on the GPU.
             protocol_dict["nstlist"] = "20"
-            # Set short-range cutoff.
-            protocol_dict["rlist"] = "0.8"
-            # Set van der Waals cutoff.
-            protocol_dict["rvdw"] = "0.8"
-            # Set Coulomb cutoff.
-            protocol_dict["rcoulomb"] = "0.8"
             # Fast smooth Particle-Mesh Ewald.
             protocol_dict["coulombtype"] = "PME"
+            # Set short-range cutoff.
+            # protocol_dict["rlist"] = "1.0" # this is set by default with dynamics
+            # Set van der Waals cutoff.
+            protocol_dict["rvdw"] = "1.0" # 10 Angstrom
+            # Set Coulomb cutoff.
+            protocol_dict["rcoulomb"] = "1.0" # 10 Angstrom
+
             # Dispersion corrections for energy and pressure.
             protocol_dict["DispCorr"] = "EnerPres"
         else:
@@ -714,7 +715,7 @@ class ConfigFactory:
             # Periodic box.
             protocol_dict["cutoff type"] = "cutoffperiodic"
         # Non-bonded cut-off.
-        protocol_dict["cutoff distance"] = "8 angstrom"
+        protocol_dict["cutoff distance"] = "12 angstrom"
 
         # Restraints.
         if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
