@@ -252,6 +252,9 @@ class ConfigFactory:
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
+            protocol_dict["imin"] = 1               # Minimisation simulation.
+            protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
+            protocol_dict["ntmin"] = 1 # steepest descent used for ncyc and then switched to conjugate
             # Work out the number of steepest descent cycles.
             # This is 1000 or 10% of the number of steps, whichever is larger.
             if self._steps <= 1000:
@@ -260,11 +263,6 @@ class ConfigFactory:
                 num_steep = _math.ceil(self._steps / 10)
                 if num_steep < 1000:
                     num_steep = 1000
-
-            protocol_dict["imin"] = 1               # Minimisation simulation.
-            # Set the minimisation method to XMIN
-            protocol_dict["ntmin"] = 2
-            protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
             # Set the number of steepest descent steps.
             protocol_dict["ncyc"] = num_steep
         else:
@@ -457,7 +455,12 @@ class ConfigFactory:
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
             # Minimisation simulation.
-            protocol_dict["integrator"] = "steep"
+            protocol_dict["integrator"] = "cg"
+            # define the frequency of steepest descent for with conjugate gradient
+            if protocol_dict["integrator"] == "cg":
+                # step frequency of performing 1 steepest descent step whilst doing conjugate gradient descent
+                num_steep = 1000 # default is 1000
+                protocol_dict["nstcgsteep"] = num_steep
         else:
             # Define the timestep in picoseconds
             timestep = self.protocol.getTimeStep().picoseconds().value()
