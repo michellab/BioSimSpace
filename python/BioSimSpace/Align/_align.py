@@ -357,14 +357,19 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         with open(links_file, "r") as lf:
             for line in lf:
                 records = line.split()
-                new_line = f"{links_names[records[0]]} {links_names[records[1]]}"
                 if len(records) > 2:
-                    new_line += " " + " ".join(records[2:])
-
+                    lf_data = " ".join(records[2:])
+                new_lines.append((links_names[records[0]],links_names[records[1]],lf_data))
+       
         # Write the updated lomap links file.
         with open(f"{work_dir}/inputs/lomap_links_file.txt", "w") as lf:
+            writer = _csv.writer(lf, delimiter=" ")
             for line in new_lines:
-                lf.write(line)
+                writer.writerow(line)        
+
+        # specify the file path
+        lf = f"{work_dir}/inputs/lomap_links_file.txt"
+        
     else:
         lf = None
 
