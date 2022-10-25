@@ -599,13 +599,73 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # Create a connectivty object and generate the CONECT record.
                 else:
                     conect = _SireMol.Connectivity(system[0]._sire_object,
-                                                   _SireMol.CovalentBondHunter(),
+                                                   _SireMol.CovalentBondHunter(1.2, 36),
                                                    _property_map).toCONECT()
+
+                    # A list of standard PDB residue names. (Taken from MDTraj.)
+                    standard_residues = ["ALA", "ASN", "CYS", "GLU", "HIS", "LEU", "MET", "PRO", "THR", "TYR",
+                                         "ARG", "ASP", "GLN", "GLY", "ILE", "LYS", "PHE", "SER", "TRP", "VAL",
+                                         "A", "G", "C", "U", "I", "DA", "DG", "DC", "DT", "DI", "HOH"]
+
+                    # Store a sulphur element.
+                    S = _SireMol.Element("S")
+
+                    # Store the element property name.
+                    if system[0].isPerturbable():
+                        elem_prop = "element0"
+                    else:
+                        elem_prop = property_map.get("element", "element")
+
+                    # Create a list to hold the pruned CONECT records.
+                    new_conect = []
+
+                    # Loop over the CONECT records.
+                    for line in conect.split("\n"):
+                        # Split the records, and ignore the CONECT prefix.
+                        records = line.split()[1:]
+
+                        # Store the index of the base atom. (This is a string.)
+                        idx0 = records[0]
+
+                        # Extract the atom.
+                        atom0 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx0)-1))
+
+                        # Store the residue name and element.
+                        res0 = atom0.residue().name().value().upper().replace(" ", "")
+                        elem0 = atom0.property(elem_prop)
+
+                        # Initialise the new record.
+                        new_line = f"CONECT {idx0.rjust(4)}"
+
+                        # The atom is in a non-standard residue, or is a sulphur
+                        if res0 not in standard_residues or elem0 == S:
+
+                            # Loop over the bonded atoms.
+                            for idx1 in records[1:]:
+                                # Extract the atom.
+                                atom1 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx1)-1))
+
+                                # Store the residue name and element.
+                                res1 = atom1.residue().name().value().upper().replace(" ", "")
+                                elem1 = atom1.property(elem_prop)
+
+                                # Both atoms are in non-standard residues.
+                                if (res0 not in standard_residues and
+                                    res1 not in standard_residues):
+                                    new_line += f" {idx1.rjust(4)}"
+
+                                # This is a disulphide bond.
+                                elif elem1 == S:
+                                    new_line += f" {idx1.rjust(4)}"
+
+                        # If there were records for this atom, then add the line.
+                        if new_line != f"CONECT {idx0.rjust(4)}":
+                            new_conect.append(new_line.ljust(80))
 
                 # Create the updated PDB file.
                 pdb_records = "\n".join(lines[:-2]) \
-                            + "\n" + conect + "\n"  \
-                            + "\n".join(lines[-2:])
+                            + "\n" + "\n".join(new_conect) \
+                            + "\n" + "\n".join(lines[-2:])
 
                 # Write the default file to get the full path.
                 file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
