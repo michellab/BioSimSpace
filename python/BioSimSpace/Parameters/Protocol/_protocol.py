@@ -629,7 +629,7 @@ def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
     try:
         disulphides = query(mol, property_map)
     except:
-        dispulphides = []
+        disulphides = []
 
     # Create a list to store the LEaP bond record strings.
     bond_records = []
