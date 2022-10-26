@@ -62,6 +62,7 @@ from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Atom as _Atom
 from ..._SireWrappers import Molecule as _Molecule
 from ...Types import Length as _Length
 
@@ -353,21 +354,12 @@ class Protocol():
         else:
             _molecule = molecule
 
-        # Create a new system and molecule group.
-        s = _SireSystem.System("BioSimSpace System")
-        m = _SireMol.MoleculeGroup("all")
-
-        # Add the molecule.
-        m.add(_molecule._getSireObject())
-        s.add(m)
-
         # Create the file prefix.
         prefix = work_dir + "/"
 
         # Write the system to a PDB file.
         try:
-            pdb = _SireIO.PDB2(s, self._property_map)
-            pdb.writeToFile(prefix + "leap.pdb")
+            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
@@ -379,9 +371,8 @@ class Protocol():
         # Try to find a force field file.
         ff = _find_force_field(self._forcefield)
 
-        # Check to see if any disulphide bonds are present.
-        disulphide_bonds = _get_disulphide_bonds(molecule._sire_object, self._tolerance,
-                                                 self._max_distance, self._property_map)
+        # Get any additional bond records.
+        bond_records = _generate_bond_records(molecule, self._bonds)
 
         # Write the LEaP input file.
         with open(prefix + "leap.txt", "w") as file:
@@ -396,8 +387,8 @@ class Protocol():
                 for command in self._leap_commands:
                     file.write("%s\n" % command)
             file.write("mol = loadPdb leap.pdb\n")
-            # Add any disulphide bonds.
-            for bond in disulphide_bonds:
+            # Add any additional bond records.
+            for bond in bond_records:
                 file.write("%s\n" % bond)
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")
@@ -471,21 +462,12 @@ class Protocol():
         else:
             _molecule = molecule
 
-        # Create a new system and molecule group.
-        s = _SireSystem.System("BioSimSpace System")
-        m = _SireMol.MoleculeGroup("all")
-
-        # Add the molecule.
-        m.add(_molecule._getSireObject())
-        s.add(m)
-
         # Create the file prefix.
         prefix = work_dir + "/"
 
         # Write the system to a PDB file.
         try:
-            pdb = _SireIO.PDB2(s, self._property_map)
-            pdb.writeToFile(prefix + "input.pdb")
+            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
@@ -566,9 +548,8 @@ def _find_force_field(forcefield):
     # Return the force field.
     return ff
 
-def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-        property_map={}):
-    """Internal function to generate LEaP records for disulphide bonds.
+def _generate_bond_records(molecule, bonds):
+    """Internal function to generate additional LEaP bond records.
 
        Parameters
        ----------
@@ -576,69 +557,54 @@ def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : Sire.Mol.Molecule
            The molecule of interest.
 
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
+
        Returns
        -------
 
        bond_records : [str]
            A list of LEaP formatted bond records.
-
-       tolerance : float
-           The tolerance to use when searching for bonds.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
-    if not isinstance(molecule, _SireMol.Molecule):
-        raise TypeError("'molecule' must be of type 'Sire.Mol.Molecule'")
+    if bonds is None:
+        return []
 
-    if not isinstance(tolerance, (int, float)):
-        raise TypeError("'tolerance' must be of type 'float'")
-    tolerance = float(tolerance)
-    if tolerance < 1:
-        raise ValueError("'tolerance' must be >= 1.0.")
+    if not isinstance(molecule, _Molecule):
+        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
 
-    if not isinstance(max_distance, _Length):
-        raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-    max_radius2 = max_distance.angstroms().value()**2
+    if not isinstance(bonds, (tuple, list)):
+            raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+    for bond in bonds:
+        if not isinstance(bond, (tuple, list)):
+            raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+        else:
+            if len(bond) != 2:
+                raise ValueError("Each 'bonds' entry must contain two items.")
+            else:
+                # Extract the atoms in the bond.
+                atom0, atom1 = bond
 
-    if not isinstance(property_map, dict):
-        raise ValueError("'property_map' must be of type 'dict'")
+                # Make sure these are atoms.
+                if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                    raise TypeError("'bonds' must contain tuples of "
+                                    "'BioSimSpace._SireWrappers.Atom' types.")
 
-    # Create a copy of the molecule.
-    mol = molecule.__deepcopy__()
-
-    # Get the connectivity of the molecule.
-    conn = _SireMol.Connectivity(mol,
-                                 _SireMol.CovalentBondHunter(tolerance, max_radius2),
-                                 property_map)
-
-    # Add this as a molecule property.
-    mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
-
-    # Create the search query.
-    query =_SireMol.Select("bonds from element S to element S")
-
-    # Try searching for disulphide bonds.
-    try:
-        disulphides = query(mol, property_map)
-    except:
-        disulphides = []
+                # Make sure that they belong to the molecule being parameterised.
+                if (not (atom0._sire_object.molecule() == molecule._sire_object) or
+                    not (atom1._sire_object.molecule() == molecule._sire_object)):
+                    raise ValueError("Atoms in 'bonds' don't belong to the 'molecule'.")
 
     # Create a list to store the LEaP bond record strings.
     bond_records = []
 
-    # Loop over the disulphide bonds and generate the records.
-    for bond in disulphides:
-        # Get the atoms in the bond.
-        atom0 = bond.atom0()
-        atom1 = bond.atom1()
+    # Loop over the bonds and generate the records.
+    for atom0, atom1 in bonds:
+        # Extract the Sire objects.
+        atom0 = atom0._sire_object
+        atom1 = atom1._sire_object
 
         # Extract the residue numbers associated with the atoms.
         res0 = atom0.residue().number().value()

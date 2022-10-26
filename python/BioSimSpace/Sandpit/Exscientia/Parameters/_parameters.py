@@ -42,6 +42,7 @@ from .. import _amber_home, _gmx_exe, _gmx_path, _isVerbose
 
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Atom as _Atom
 from .._SireWrappers import Molecule as _Molecule
 from ..Solvent import waterModels as _waterModels
 from ..Types import Charge as _Charge
@@ -96,8 +97,8 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
 
     return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map, **kwargs)
 
-def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, work_dir=None, property_map={}):
+def ff99(molecule, water_model=None, leap_commands=None,
+         bonds=None, work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Parameters
@@ -106,15 +107,6 @@ def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -126,6 +118,11 @@ def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
+
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
 
        work_dir : str
            The working directory for the process.
@@ -148,21 +145,21 @@ def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
                                     "GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        property_map=property_map)
+    _validate(molecule=molecule, water_model=water_model, check_ions=True,
+        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99(water_model=water_model,
                               leap_commands=leap_commands,
+                              bonds=bonds,
                               property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, work_dir=None, property_map={}):
+def ff99SB(molecule, water_model=None, leap_commands=None,
+           bonds=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Parameters
@@ -171,15 +168,6 @@ def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -191,6 +179,11 @@ def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
+
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
 
        work_dir : str
            The working directory for the process.
@@ -213,21 +206,21 @@ def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        property_map=property_map)
+    _validate(molecule=molecule, water_model=water_model, check_ions=True,
+        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SB(water_model=water_model,
                                 leap_commands=leap_commands,
+                                bonds=bonds,
                                 property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, work_dir=None, property_map={}):
+def ff99SBildn(molecule, water_model=None, leap_commands=None,
+               bonds=None, work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
 
        Parameters
@@ -236,15 +229,6 @@ def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -256,6 +240,11 @@ def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
+
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
 
        work_dir : str
            The working directory for the process.
@@ -278,21 +267,21 @@ def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        property_map=property_map)
+    _validate(molecule=molecule, water_model=water_model, check_ions=True,
+        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF99SBILDN(water_model=water_model,
                                     leap_commands=leap_commands,
+                                    bonds=bonds,
                                     property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, work_dir=None, property_map={}):
+def ff03(molecule, water_model=None, leap_commands=None,
+         bonds=None, work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Parameters
@@ -301,15 +290,6 @@ def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -321,6 +301,11 @@ def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
+
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
 
        work_dir : str
            The working directory for the process.
@@ -338,26 +323,26 @@ def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
     """
 
     if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff03' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        property_map=property_map)
+    _validate(molecule=molecule, water_model=water_model, check_ions=True,
+        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF03(water_model=water_model,
                               leap_commands=leap_commands,
+                              bonds=bonds,
                               property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, work_dir=None, property_map={}):
+def ff14SB(molecule, water_model=None, leap_commands=None,
+           bonds=None, work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Parameters
@@ -366,15 +351,6 @@ def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -386,6 +362,11 @@ def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            will be added after any default commands and can be used to, e.g.,
            load additional parameter files. When this option is set, we can no
            longer fall back on GROMACS's pdb2gmx.
+
+       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+           An optional tuple of atom pairs to specify additional atoms that
+           should be bonded. This is useful when the PDB CONECT record is
+           incomplete.
 
        work_dir : str
            The working directory for the process.
@@ -402,18 +383,19 @@ def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            The parameterised molecule.
     """
 
-    if _amber_home is None:
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff14SB' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org).")
+    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
+                                    "Please install AmberTools (http://ambermd.org) "
+                                    "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        property_map=property_map)
+    _validate(molecule=molecule, water_model=water_model, check_ions=True,
+        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
     protocol = _Protocol.FF14SB(water_model=water_model,
                                 leap_commands=leap_commands,
+                                bonds=bonds,
                                 property_map=property_map)
 
     # Run the parameterisation protocol in the background and return
@@ -950,9 +932,8 @@ def _has_ions(molecule, property_map={}):
     else:
         return False, ions
 
-def _validate(molecule=None, tolerance=None, max_distance=None,
-        water_model=None, check_ions=False, leap_commands=None,
-        work_dir=None, property_map=None):
+def _validate(molecule=None, water_model=None, check_ions=False,
+        leap_commands=None, bonds=None, work_dir=None, property_map=None):
     """
     Internal function to validate arguments.
 
@@ -962,15 +943,6 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
     molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
         The molecule to parameterise, either as a Molecule object or SMILES
         string.
-
-    tolerance : float
-        The tolerance used when searching for disulphide bonds. Atoms will
-        be considered to be bonded if they are a distance of less than
-        tolerance times the sum of the equilibrium bond radii apart.
-
-    max_distance : :class:`Length <BioSimSpace.Types.Length>`
-        The maximum distance between atoms when searching for disulphide
-        bonds.
 
     water_model : str
         The water model used to parameterise any structural ions.
@@ -987,6 +959,11 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
         load additional parameter files. When this option is set, we can no
         longer fall back on GROMACS's pdb2gmx.
 
+    bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+        An optional tuple of atom pairs to specify additional atoms that
+        should be bonded. This is useful when the PDB CONECT record is
+        incomplete.
+
     work_dir : str
         The working directory for the process.
 
@@ -999,16 +976,6 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
     if molecule is not None:
         if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
-
-    if tolerance is not None:
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'.")
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-
-    if max_distance is not None:
-        if not isinstance(max_distance, _Length):
-            raise TypeError("'max_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if water_model is not None:
         if not isinstance(water_model, str):
@@ -1029,6 +996,32 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
         else:
             if not all(isinstance(x, str) for x in leap_commands):
                 raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+
+    if bonds is not None:
+        if molecule is None:
+            raise ValueError("Cannot add bonds when no 'molecule' is specified!")
+        else:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+
+                        # Make sure that they belong to the molecule being parameterised.
+                        if (not (atom0._sire_object.molecule() == molecule._sire_object) or
+                            not (atom1._sire_object.molecule() == molecule._sire_object)):
+                            raise ValueError("Atoms in 'bonds' don't belong to the 'molecule'.")
 
     if property_map is not None:
         if not isinstance(property_map, dict):

@@ -48,6 +48,7 @@ from ... import IO as _IO
 from ... import _Utils
 from ..._Exceptions import ParameterisationError as _ParameterisationError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
+from ..._SireWrappers import Atom as _Atom
 from ..._SireWrappers import Molecule as _Molecule
 from ...Parameters._utils import formalCharge as _formalCharge
 from ...Types import Charge as _Charge
@@ -58,21 +59,12 @@ from . import _protocol
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None,
+                 bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
-
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
-
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -85,6 +77,11 @@ class FF03(_protocol.Protocol):
                will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
+
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -95,19 +92,6 @@ class FF03(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff03", property_map=property_map)
 
-        # Validate the tolerance.
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'")
-        tolerance = float(tolerance)
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-        self._tolerance = tolerance
-
-        # Validate the max distance.
-        if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        self._max_distance = max_distance
-
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
@@ -123,6 +107,26 @@ class FF03(_protocol.Protocol):
                     raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
         self._leap_commands = leap_commands
 
+        # Validate the bond records.
+        if bonds is not None:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+        self._bonds = bonds
+
         # Set the compatibility flags.
         self._tleap = True
         if self._leap_commands is None:
@@ -131,21 +135,12 @@ class FF03(_protocol.Protocol):
 class FF99(_protocol.Protocol):
     """A class for handling protocols for the FF99 force field model."""
 
-    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None,
+                 bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
-
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
-
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -158,6 +153,11 @@ class FF99(_protocol.Protocol):
                will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
+
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -168,19 +168,6 @@ class FF99(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99", property_map=property_map)
 
-        # Validate the tolerance.
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'")
-        tolerance = float(tolerance)
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-        self._tolerance = tolerance
-
-        # Validate the max distance.
-        if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        self._max_distance = max_distance
-
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
@@ -196,6 +183,26 @@ class FF99(_protocol.Protocol):
                     raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
         self._leap_commands = leap_commands
 
+        # Validate the bond records.
+        if bonds is not None:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+        self._bonds = bonds
+
         # Set the compatibility flags.
         self._tleap = True
         if self._leap_commands is None:
@@ -204,21 +211,12 @@ class FF99(_protocol.Protocol):
 class FF99SB(_protocol.Protocol):
     """A class for handling protocols for the FF99SB force field model."""
 
-    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None,
+                 bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
-
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
-
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -231,6 +229,11 @@ class FF99SB(_protocol.Protocol):
                will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
+
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -241,19 +244,6 @@ class FF99SB(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SB", property_map=property_map)
 
-        # Validate the tolerance.
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'")
-        tolerance = float(tolerance)
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-        self._tolerance = tolerance
-
-        # Validate the max distance.
-        if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        self._max_distance = max_distance
-
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
@@ -269,27 +259,38 @@ class FF99SB(_protocol.Protocol):
                     raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
         self._leap_commands = leap_commands
 
+        # Validate the bond records.
+        if bonds is not None:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+        self._bonds = bonds
+
         # Set the compatibility flags.
         self._tleap = True
 
 class FF99SBILDN(_protocol.Protocol):
     """A class for handling protocols for the FF99SBILDN force field model."""
 
-    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None,
+                 bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
-
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
-
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -302,6 +303,11 @@ class FF99SBILDN(_protocol.Protocol):
                will be added after any default commands and can be used to, e.g.,
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
+
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -312,19 +318,6 @@ class FF99SBILDN(_protocol.Protocol):
         # Call the base class constructor.
         super().__init__(forcefield="ff99SBildn", property_map=property_map)
 
-        # Validate the tolerance.
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'")
-        tolerance = float(tolerance)
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-        self._tolerance = tolerance
-
-        # Validate the max distance.
-        if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        self._max_distance = max_distance
-
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
             raise TypeError("'water_model' must be of type 'str'")
@@ -340,27 +333,38 @@ class FF99SBILDN(_protocol.Protocol):
                     raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
         self._leap_commands = leap_commands
 
+        # Validate the bond records.
+        if bonds is not None:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+        self._bonds = bonds
+
         # Set the compatibility flags.
         self._tleap = True
 
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, property_map={}):
+    def __init__(self, water_model=None, leap_commands=None,
+                 bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
-
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
-
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -374,6 +378,11 @@ class FF14SB(_protocol.Protocol):
                load additional parameter files. When this option is set, we can no
                longer fall back on GROMACS's pdb2gmx.
 
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
+
            property_map : dict
                A dictionary that maps system "properties" to their user defined
                values. This allows the user to refer to properties with their
@@ -382,19 +391,6 @@ class FF14SB(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff14SB", property_map=property_map)
-
-        # Validate the tolerance.
-        if not isinstance(tolerance, (int, float)):
-            raise TypeError("'tolerance' must be of type 'float'")
-        tolerance = float(tolerance)
-        if tolerance < 1:
-            raise ValueError("'tolerance' must be >= 1.0.")
-        self._tolerance = tolerance
-
-        # Validate the max distance.
-        if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
@@ -410,6 +406,26 @@ class FF14SB(_protocol.Protocol):
                 if not all(isinstance(x, str) for x in leap_commands):
                     raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
         self._leap_commands = leap_commands
+
+        # Validate the bond records.
+        if bonds is not None:
+            if not isinstance(bonds, (tuple, list)):
+                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            for bond in bonds:
+                if not isinstance(bond, (tuple, list)):
+                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                else:
+                    if len(bond) != 2:
+                        raise ValueError("Each 'bonds' entry must contain two items.")
+                    else:
+                        # Extract the atoms in the bond.
+                        atom0, atom1 = bond
+
+                        # Make sure these are atoms.
+                        if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
+                            raise TypeError("'bonds' must contain tuples of "
+                                            "'BioSimSpace._SireWrappers.Atom' types.")
+        self._bonds = bonds
 
         # Set the compatibility flags.
         self._tleap = True
@@ -626,18 +642,9 @@ class GAFF(_protocol.Protocol):
                            "formal charge")
                     raise _ParameterisationError(msg)
 
-        # Create a new system and molecule group.
-        s = _SireSystem.System("BioSimSpace System")
-        m = _SireMol.MoleculeGroup("all")
-
-        # Add the molecule.
-        m.add(new_mol._getSireObject())
-        s.add(m)
-
         # Write the system to a PDB file.
         try:
-            pdb = _SireIO.PDB2(s)
-            pdb.writeToFile(prefix + "antechamber.pdb")
+            _IO.saveMolecules(prefix + "antechamber", new_mol, "pdb", self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
