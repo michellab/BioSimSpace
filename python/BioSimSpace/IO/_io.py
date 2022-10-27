@@ -588,79 +588,86 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # Get the lines.
                 lines = pdb.toLines()
 
-                # For molecules that were perturbable, we must create the
-                # CONECT record from the bonding information.
-                if system[0]._sire_object.hasProperty("is_perturbable") or \
-                   system[0]._sire_object.hasProperty("was_perturbable"):
-                    bond = _property_map.get("bond", "bond0")
-                    conect = _bond_to_conect(system[0]._sire_object.property(bond),
-                                             system[0]._sire_object.info())
+                conect = _SireMol.Connectivity(system[0]._sire_object,
+                                               _SireMol.CovalentBondHunter(1.2, 36),
+                                               _property_map).toCONECT()
 
-                # Create a connectivty object and generate the CONECT record.
+                # A list of standard PDB residue names. (Taken from MDTraj.)
+                standard_residues = ["ALA", "ASN", "CYS", "GLU", "HIS", "LEU", "MET", "PRO", "THR", "TYR",
+                                     "ARG", "ASP", "GLN", "GLY", "ILE", "LYS", "PHE", "SER", "TRP", "VAL",
+                                     "A", "G", "C", "U", "I", "DA", "DG", "DC", "DT", "DI", "HOH"]
+
+                # Store a sulphur element.
+                S = _SireMol.Element("S")
+
+                # Store the element property name.
+                if system[0].isPerturbable():
+                    elem_prop = "element0"
                 else:
-                    conect = _SireMol.Connectivity(system[0]._sire_object,
-                                                   _SireMol.CovalentBondHunter(1.2, 36),
-                                                   _property_map).toCONECT()
+                    elem_prop = property_map.get("element", "element")
 
-                    # A list of standard PDB residue names. (Taken from MDTraj.)
-                    standard_residues = ["ALA", "ASN", "CYS", "GLU", "HIS", "LEU", "MET", "PRO", "THR", "TYR",
-                                         "ARG", "ASP", "GLN", "GLY", "ILE", "LYS", "PHE", "SER", "TRP", "VAL",
-                                         "A", "G", "C", "U", "I", "DA", "DG", "DC", "DT", "DI", "HOH"]
+                # Create a list to hold the pruned CONECT records.
+                new_conect = []
 
-                    # Store a sulphur element.
-                    S = _SireMol.Element("S")
+                # Loop over the CONECT records.
+                for line in conect.split("\n"):
+                    # Split the records, and ignore the CONECT prefix.
+                    records = line.split()[1:]
 
-                    # Store the element property name.
-                    if system[0].isPerturbable():
-                        elem_prop = "element0"
-                    else:
-                        elem_prop = property_map.get("element", "element")
+                    # Store the index of the base atom. (This is a string.)
+                    idx0 = records[0]
 
-                    # Create a list to hold the pruned CONECT records.
-                    new_conect = []
+                    # Extract the atom.
+                    atom0 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx0)-1))
 
-                    # Loop over the CONECT records.
-                    for line in conect.split("\n"):
-                        # Split the records, and ignore the CONECT prefix.
-                        records = line.split()[1:]
+                    # Store the residue name and element.
+                    res0 = atom0.residue().name().value().upper().replace(" ", "")
+                    elem0 = atom0.property(elem_prop)
 
-                        # Store the index of the base atom. (This is a string.)
-                        idx0 = records[0]
+                    # Find the matching atom number in the PDB file.
+                    num0 = _get_pdb_atom_num(atom0, lines)
+                    if num0 is None:
+                        num0 = idx0
 
-                        # Extract the atom.
-                        atom0 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx0)-1))
+                    # Initialise the new record.
+                    new_line = f"CONECT {num0.rjust(4)}"
 
-                        # Store the residue name and element.
-                        res0 = atom0.residue().name().value().upper().replace(" ", "")
-                        elem0 = atom0.property(elem_prop)
+                    # The atom is in a non-standard residue, or is a sulphur
+                    if res0 not in standard_residues or elem0 == S:
 
-                        # Initialise the new record.
-                        new_line = f"CONECT {idx0.rjust(4)}"
+                        # Loop over the bonded atoms.
+                        for idx1 in records[1:]:
+                            # Extract the atom.
+                            atom1 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx1)-1))
 
-                        # The atom is in a non-standard residue, or is a sulphur
-                        if res0 not in standard_residues or elem0 == S:
+                            # Store the residue name and element.
+                            res1 = atom1.residue().name().value().upper().replace(" ", "")
+                            elem1 = atom1.property(elem_prop)
 
-                            # Loop over the bonded atoms.
-                            for idx1 in records[1:]:
-                                # Extract the atom.
-                                atom1 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx1)-1))
+                            # Both atoms are in non-standard residues.
+                            if (res0 not in standard_residues and
+                                res1 not in standard_residues):
+                                # Find the matching atom number in the PDB file.
+                                num1 = _get_pdb_atom_num(atom1, lines)
+                                if num1 is None:
+                                    num1 = idx1
 
-                                # Store the residue name and element.
-                                res1 = atom1.residue().name().value().upper().replace(" ", "")
-                                elem1 = atom1.property(elem_prop)
+                                # Update the new record.
+                                new_line += f" {num1.rjust(4)}"
 
-                                # Both atoms are in non-standard residues.
-                                if (res0 not in standard_residues and
-                                    res1 not in standard_residues):
-                                    new_line += f" {idx1.rjust(4)}"
+                            # This is a disulphide bond.
+                            elif elem1 == S:
+                                # Find the matching atom number in the PDB file.
+                                num1 = _get_pdb_atom_num(atom1, lines)
+                                if num1 is None:
+                                    num1 = idx1
 
-                                # This is a disulphide bond.
-                                elif elem1 == S:
-                                    new_line += f" {idx1.rjust(4)}"
+                                # Update the new record.
+                                new_line += f" {num1.rjust(4)}"
 
-                        # If there were records for this atom, then add the line.
-                        if new_line != f"CONECT {idx0.rjust(4)}":
-                            new_conect.append(new_line.ljust(80))
+                    # If there were records for this atom, then add the line.
+                    if new_line != f"CONECT {idx0.rjust(4)}":
+                        new_conect.append(new_line.ljust(80))
 
                 # Create the updated PDB file.
                 pdb_records = "\n".join(lines[:-2]) \
@@ -955,60 +962,49 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
 
     return system0
 
-def _bond_to_conect(bonds, info):
-    """Helper function to create PDB CONECT records from bonding
-       information from a molecular potential.
+def _get_pdb_atom_num(atom, lines, property_map={}):
+    """Helper function to match a Sire Atom to a record in a PDB file using
+       the atomic coordinates, allowing a mapping between Sire index and
+       PDB atom number.
 
        Parameters
        ----------
 
-       bonds : Sire.MM._MM.TwoAtomFunctions
-           The bond potential property.
+       atom : Sire.Mol.Atom
+           The Sire atom.
 
-       info : Sire.Mol._Mol.MoleculeInfo
-           The molecule info object.
+       lines : [str]
+           A list of PDB records.
+
+       property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
 
        Returns
        -------
 
-       conect : str
-           The PDB CONECT records.
+       atom_num : str
+           The atom number in the PDB file as a string.
     """
 
-    # Initialise the CONECT dictionary.
-    conect_dict = {}
+    try:
+        coords = atom.property(property_map.get("coordinates", "coordinates"))
+    except:
+        return None
 
-    # Loop over each potential term and the bonded atoms to the dictionary,
-    # remembering that PDB atoms are one-indexed.
-    for b in bonds.potentials():
-        idx0 = info.atomIdx(b.atom0()).value() + 1
-        idx1 = info.atomIdx(b.atom1()).value() + 1
-        if idx0 in conect_dict:
-            conect_dict[idx0].append(idx1)
-        else:
-            conect_dict[idx0] = [idx1]
+    # Create the PDB coordinates record.
+    coord_string = f"{coords[0]:7.3f} {coords[1]:7.3f} {coords[2]:7.3f}"
 
-    # Now create the CONECT record string.
+    # Now try to find it in the file.
+    atom_num = None
+    for line in lines:
+        if coord_string in line:
+            atom_num = int(line.split()[1].lstrip())
+            break
 
-    # Initialise the string.
-    conect = ""
+    # Make sure we have amtch.
+    if atom_num is None:
+        raise ValueError(f"Unable to match coordinates for atom: {atom}")
 
-    # Sort keys in numerical order.
-    k = list(conect_dict.keys())
-    k.sort()
-
-    # Store the number of keys.
-    num_k = len(k)
-
-    # Add a record for each root index.
-    for x, idx0 in enumerate(k):
-        # Add bonds in numerical order.
-        v = conect_dict[idx0]
-        v.sort()
-        conect += f"CONECT{idx0:>5}"
-        for idx1 in v:
-            conect += f"{idx1:>5}"
-        if x < num_k - 1:
-            conect += "\n"
-
-    return conect
+    return str(atom_num)
