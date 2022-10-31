@@ -580,133 +580,31 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            # Add CONECT record for single molecule PDB files.
-            if format == "PDB" and system.nMolecules() == 1:
-                # Generate a PDB parser object.
-                pdb = _SireIO.PDB2(system._sire_object, _property_map)
-
-                # Get the lines.
-                lines = pdb.toLines()
-
-                conect = _SireMol.Connectivity(system[0]._sire_object,
-                                               _SireMol.CovalentBondHunter(1.2, 36),
-                                               _property_map).toCONECT()
-
-                # A list of standard PDB residue names. (Taken from MDTraj.)
-                standard_residues = ["ALA", "ASN", "CYS", "GLU", "HIS", "LEU", "MET", "PRO", "THR", "TYR",
-                                     "ARG", "ASP", "GLN", "GLY", "ILE", "LYS", "PHE", "SER", "TRP", "VAL",
-                                     "A", "G", "C", "U", "I", "DA", "DG", "DC", "DT", "DI", "HOH"]
-
-                # Store a sulphur element.
-                S = _SireMol.Element("S")
-
-                # Store the element property name.
-                if system[0].isPerturbable():
-                    elem_prop = "element0"
-                else:
-                    elem_prop = property_map.get("element", "element")
-
-                # Create a list to hold the pruned CONECT records.
-                new_conect = []
-
-                # Loop over the CONECT records.
-                for line in conect.split("\n"):
-                    # Split the records, and ignore the CONECT prefix.
-                    records = line.split()[1:]
-
-                    # Store the index of the base atom. (This is a string.)
-                    idx0 = records[0]
-
-                    # Extract the atom.
-                    atom0 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx0)-1))
-
-                    # Store the residue name and element.
-                    res0 = atom0.residue().name().value().upper().replace(" ", "")
-                    elem0 = atom0.property(elem_prop)
-
-                    # Find the matching atom number in the PDB file.
-                    num0 = _get_pdb_atom_num(atom0, lines)
-                    if num0 is None:
-                        num0 = idx0
-
-                    # Initialise the new record.
-                    new_line = f"CONECT {num0.rjust(4)}"
-
-                    # The atom is in a non-standard residue, or is a sulphur
-                    if res0 not in standard_residues or elem0 == S:
-
-                        # Loop over the bonded atoms.
-                        for idx1 in records[1:]:
-                            # Extract the atom.
-                            atom1 = system[0]._sire_object.atom(_SireMol.AtomIdx(int(idx1)-1))
-
-                            # Store the residue name and element.
-                            res1 = atom1.residue().name().value().upper().replace(" ", "")
-                            elem1 = atom1.property(elem_prop)
-
-                            # Both atoms are in non-standard residues.
-                            if (res0 not in standard_residues and
-                                res1 not in standard_residues):
-                                # Find the matching atom number in the PDB file.
-                                num1 = _get_pdb_atom_num(atom1, lines)
-                                if num1 is None:
-                                    num1 = idx1
-
-                                # Update the new record.
-                                new_line += f" {num1.rjust(4)}"
-
-                            # This is a disulphide bond.
-                            elif elem1 == S:
-                                # Find the matching atom number in the PDB file.
-                                num1 = _get_pdb_atom_num(atom1, lines)
-                                if num1 is None:
-                                    num1 = idx1
-
-                                # Update the new record.
-                                new_line += f" {num1.rjust(4)}"
-
-                    # If there were records for this atom, then add the line.
-                    if new_line != f"CONECT {idx0.rjust(4)}":
-                        new_conect.append(new_line.ljust(80))
-
-                # Create the updated PDB file.
-                pdb_records = "\n".join(lines[:-2]) \
-                            + "\n" + "\n".join(new_conect) \
-                            + "\n" + "\n".join(lines[-2:])
-
-                # Write the default file to get the full path.
+            # Make sure AMBER and GROMACS files have the expected water topology
+            # and save GROMACS files with an extension such that they can be run
+            # directly by GROMACS without needing to be renamed.
+            if format == "PRM7" or format == "RST7":
+                system = system.copy()
+                system._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
-
-                # Now overwrite the file the PDB file with the updated records.
-                with open(file[0], "w") as pdb_file:
-                    pdb_file.write(pdb_records)
-
+            elif format == "GroTop":
+                system = system.copy()
+                system._set_water_topology("GROMACS")
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                new_file = file.replace("grotop", "top")
+                _os.rename(file, new_file)
+                file = [new_file]
+            elif format == "Gro87":
+                # Write to 3dp by default, unless greater precision is
+                # requested by the user.
+                if "precision" not in _property_map:
+                    _property_map["precision"] = _SireBase.wrap(3)
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                new_file = file.replace("gro87", "gro")
+                _os.rename(file, new_file)
+                file = [new_file]
             else:
-                # Make sure AMBER and GROMACS files have the expected water topology
-                # and save GROMACS files with an extension such that they can be run
-                # directly by GROMACS without needing to be renamed.
-                if format == "PRM7" or format == "RST7":
-                    system = system.copy()
-                    system._set_water_topology("AMBER", _property_map)
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
-                elif format == "GroTop":
-                    system = system.copy()
-                    system._set_water_topology("GROMACS")
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
-                    new_file = file.replace("grotop", "top")
-                    _os.rename(file, new_file)
-                    file = [new_file]
-                elif format == "Gro87":
-                    # Write to 3dp by default, unless greater precision is
-                    # requested by the user.
-                    if "precision" not in _property_map:
-                        _property_map["precision"] = _SireBase.wrap(3)
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
-                    new_file = file.replace("gro87", "gro")
-                    _os.rename(file, new_file)
-                    file = [new_file]
-                else:
-                    file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
 
             files += file
 
@@ -961,50 +859,3 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
-
-def _get_pdb_atom_num(atom, lines, property_map={}):
-    """Helper function to match a Sire Atom to a record in a PDB file using
-       the atomic coordinates, allowing a mapping between Sire index and
-       PDB atom number.
-
-       Parameters
-       ----------
-
-       atom : Sire.Mol.Atom
-           The Sire atom.
-
-       lines : [str]
-           A list of PDB records.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
-
-       Returns
-       -------
-
-       atom_num : str
-           The atom number in the PDB file as a string.
-    """
-
-    try:
-        coords = atom.property(property_map.get("coordinates", "coordinates"))
-    except:
-        return None
-
-    # Create the PDB coordinates record.
-    coord_string = f"{coords[0]:7.3f} {coords[1]:7.3f} {coords[2]:7.3f}"
-
-    # Now try to find it in the file.
-    atom_num = None
-    for line in lines:
-        if coord_string in line:
-            atom_num = int(line.split()[1].lstrip())
-            break
-
-    # Make sure we have amtch.
-    if atom_num is None:
-        raise ValueError(f"Unable to match coordinates for atom: {atom}")
-
-    return str(atom_num)

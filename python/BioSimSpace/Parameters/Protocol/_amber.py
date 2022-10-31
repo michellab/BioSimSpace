@@ -59,12 +59,21 @@ from . import _protocol
 class FF03(_protocol.Protocol):
     """A class for handling protocols for the FF03 force field model."""
 
-    def __init__(self, water_model=None, leap_commands=None,
-                 bonds=None, property_map={}):
+    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
+                 water_model=None, leap_commands=None, bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -91,6 +100,19 @@ class FF03(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff03", property_map=property_map)
+
+        # Validate the tolerance.
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'")
+        tolerance = float(tolerance)
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+        self._tolerance = tolerance
+
+        # Validate the max distance.
+        if not isinstance(max_distance, _Length):
+            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
@@ -142,6 +164,15 @@ class FF99(_protocol.Protocol):
            Parameters
            ----------
 
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
+
            water_model : str
                The water model used to parameterise any structural ions. This
                will be ignored when it is not supported by the chosen force field.
@@ -167,6 +198,19 @@ class FF99(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff99", property_map=property_map)
+
+        # Validate the tolerance.
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'")
+        tolerance = float(tolerance)
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+        self._tolerance = tolerance
+
+        # Validate the max distance.
+        if not isinstance(max_distance, _Length):
+            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
@@ -218,6 +262,15 @@ class FF99SB(_protocol.Protocol):
            Parameters
            ----------
 
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
+
            water_model : str
                The water model used to parameterise any structural ions. This
                will be ignored when it is not supported by the chosen force field.
@@ -243,6 +296,19 @@ class FF99SB(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff99SB", property_map=property_map)
+
+        # Validate the tolerance.
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'")
+        tolerance = float(tolerance)
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+        self._tolerance = tolerance
+
+        # Validate the max distance.
+        if not isinstance(max_distance, _Length):
+            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
@@ -292,6 +358,15 @@ class FF99SBILDN(_protocol.Protocol):
            Parameters
            ----------
 
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
+
            water_model : str
                The water model used to parameterise any structural ions. This
                will be ignored when it is not supported by the chosen force field.
@@ -317,6 +392,19 @@ class FF99SBILDN(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff99SBildn", property_map=property_map)
+
+        # Validate the tolerance.
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'")
+        tolerance = float(tolerance)
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+        self._tolerance = tolerance
+
+        # Validate the max distance.
+        if not isinstance(max_distance, _Length):
+            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):
@@ -359,12 +447,21 @@ class FF99SBILDN(_protocol.Protocol):
 class FF14SB(_protocol.Protocol):
     """A class for handling protocols for the FF14SB force field model."""
 
-    def __init__(self, water_model=None, leap_commands=None,
-                 bonds=None, property_map={}):
+    def __init__(self, tolerance=1.2, max_distance=_Length(6, "A"),
+                 water_model=None, leap_commands=None, bonds=None, property_map={}):
         """Constructor.
 
            Parameters
            ----------
+
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
 
            water_model : str
                The water model used to parameterise any structural ions. This
@@ -391,6 +488,19 @@ class FF14SB(_protocol.Protocol):
 
         # Call the base class constructor.
         super().__init__(forcefield="ff14SB", property_map=property_map)
+
+        # Validate the tolerance.
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'")
+        tolerance = float(tolerance)
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+        self._tolerance = tolerance
+
+        # Validate the max distance.
+        if not isinstance(max_distance, _Length):
+            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+        self._max_distance = max_distance
 
         # Validate the water model.
         if water_model is not None and not isinstance(water_model, str):

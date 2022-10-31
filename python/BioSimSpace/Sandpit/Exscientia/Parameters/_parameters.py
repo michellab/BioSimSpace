@@ -97,8 +97,9 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
 
     return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map, **kwargs)
 
-def ff99(molecule, water_model=None, leap_commands=None,
-         bonds=None, work_dir=None, property_map={}):
+def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+         water_model=None, leap_commands=None, bonds=None,
+         work_dir=None, property_map={}):
     """Parameterise using the ff99 force field.
 
        Parameters
@@ -107,6 +108,15 @@ def ff99(molecule, water_model=None, leap_commands=None,
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
+
+       tolerance : float
+           The tolerance used when searching for disulphide bonds. Atoms will
+           be considered to be bonded if they are a distance of less than
+           tolerance times the sum of the equilibrium bond radii apart.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -145,11 +155,14 @@ def ff99(molecule, water_model=None, leap_commands=None,
                                     "GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, water_model=water_model, check_ions=True,
-        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
+    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
+        water_model=water_model, check_ions=True, leap_commands=leap_commands,
+        bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
-    protocol = _Protocol.FF99(water_model=water_model,
+    protocol = _Protocol.FF99(tolerance=tolerance,
+                              water_model=water_model,
+                              max_distance=max_distance,
                               leap_commands=leap_commands,
                               bonds=bonds,
                               property_map=property_map)
@@ -158,8 +171,9 @@ def ff99(molecule, water_model=None, leap_commands=None,
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SB(molecule, water_model=None, leap_commands=None,
-           bonds=None, work_dir=None, property_map={}):
+def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+           water_model=None, leap_commands=None, bonds=None,
+           work_dir=None, property_map={}):
     """Parameterise using the ff99SB force field.
 
        Parameters
@@ -168,6 +182,15 @@ def ff99SB(molecule, water_model=None, leap_commands=None,
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
+
+       tolerance : float
+           The tolerance used when searching for disulphide bonds. Atoms will
+           be considered to be bonded if they are a distance of less than
+           tolerance times the sum of the equilibrium bond radii apart.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
 
        water_model : str
            The water model used to parameterise any structural ions.
@@ -206,11 +229,14 @@ def ff99SB(molecule, water_model=None, leap_commands=None,
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, water_model=water_model, check_ions=True,
-        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
+    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
+        water_model=water_model, check_ions=True, leap_commands=leap_commands,
+        bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SB(water_model=water_model,
+    protocol = _Protocol.FF99SB(tolerance=tolerance,
+                                max_distance=max_distance,
+                                water_model=water_model,
                                 leap_commands=leap_commands,
                                 bonds=bonds,
                                 property_map=property_map)
@@ -219,8 +245,9 @@ def ff99SB(molecule, water_model=None, leap_commands=None,
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff99SBildn(molecule, water_model=None, leap_commands=None,
-               bonds=None, work_dir=None, property_map={}):
+def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+               water_model=None, leap_commands=None, bonds=None,
+               work_dir=None, property_map={}):
     """Parameterise using the ff99SBildn force field.
 
        Parameters
@@ -230,6 +257,15 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None,
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
 
+       tolerance : float
+           The tolerance used when searching for disulphide bonds. Atoms will
+           be considered to be bonded if they are a distance of less than
+           tolerance times the sum of the equilibrium bond radii apart.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
+
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
@@ -267,11 +303,14 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None,
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, water_model=water_model, check_ions=True,
-        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
+    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
+        water_model=water_model, check_ions=True, leap_commands=leap_commands,
+        bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
-    protocol = _Protocol.FF99SBILDN(water_model=water_model,
+    protocol = _Protocol.FF99SBILDN(tolerance=tolerance,
+                                    max_distance=max_distance,
+                                    water_model=water_model,
                                     leap_commands=leap_commands,
                                     bonds=bonds,
                                     property_map=property_map)
@@ -280,8 +319,9 @@ def ff99SBildn(molecule, water_model=None, leap_commands=None,
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff03(molecule, water_model=None, leap_commands=None,
-         bonds=None, work_dir=None, property_map={}):
+def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+         water_model=None, leap_commands=None, bonds=None,
+         work_dir=None, property_map={}):
     """Parameterise using the ff03 force field.
 
        Parameters
@@ -291,6 +331,15 @@ def ff03(molecule, water_model=None, leap_commands=None,
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
 
+       tolerance : float
+           The tolerance used when searching for disulphide bonds. Atoms will
+           be considered to be bonded if they are a distance of less than
+           tolerance times the sum of the equilibrium bond radii apart.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
+
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
@@ -328,11 +377,14 @@ def ff03(molecule, water_model=None, leap_commands=None,
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, water_model=water_model, check_ions=True,
-        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
+    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
+        water_model=water_model, check_ions=True, leap_commands=leap_commands,
+        bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
-    protocol = _Protocol.FF03(water_model=water_model,
+    protocol = _Protocol.FF03(tolerance=tolerance,
+                              max_distance=max_distance,
+                              water_model=water_model,
                               leap_commands=leap_commands,
                               bonds=bonds,
                               property_map=property_map)
@@ -341,8 +393,9 @@ def ff03(molecule, water_model=None, leap_commands=None,
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def ff14SB(molecule, water_model=None, leap_commands=None,
-           bonds=None, work_dir=None, property_map={}):
+def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+           water_model=None, leap_commands=None, bonds=None,
+           work_dir=None, property_map={}):
     """Parameterise using the ff14SB force field.
 
        Parameters
@@ -352,6 +405,15 @@ def ff14SB(molecule, water_model=None, leap_commands=None,
            The molecule to parameterise, either as a Molecule object or SMILES
            string.
 
+       tolerance : float
+           The tolerance used when searching for disulphide bonds. Atoms will
+           be considered to be bonded if they are a distance of less than
+           tolerance times the sum of the equilibrium bond radii apart.
+
+       max_distance : :class:`Length <BioSimSpace.Types.Length>`
+           The maximum distance between atoms when searching for disulphide
+           bonds.
+
        water_model : str
            The water model used to parameterise any structural ions.
            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
@@ -389,11 +451,14 @@ def ff14SB(molecule, water_model=None, leap_commands=None,
                                     "or GROMACS (http://www.gromacs.org).")
 
     # Validate arguments.
-    _validate(molecule=molecule, water_model=water_model, check_ions=True,
-        leap_commands=leap_commands, bonds=bonds, property_map=property_map)
+    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
+        water_model=water_model, check_ions=True, leap_commands=leap_commands,
+        bonds=bonds, property_map=property_map)
 
     # Create a default protocol.
-    protocol = _Protocol.FF14SB(water_model=water_model,
+    protocol = _Protocol.FF14SB(tolerance=tolerance,
+                                max_distance=max_distance,
+                                water_model=water_model,
                                 leap_commands=leap_commands,
                                 bonds=bonds,
                                 property_map=property_map)
@@ -932,8 +997,9 @@ def _has_ions(molecule, property_map={}):
     else:
         return False, ions
 
-def _validate(molecule=None, water_model=None, check_ions=False,
-        leap_commands=None, bonds=None, work_dir=None, property_map=None):
+def _validate(molecule=None, tolerance=None, max_distance=None,
+        water_model=None, check_ions=False, leap_commands=None,
+        bonds=None, work_dir=None, property_map=None):
     """
     Internal function to validate arguments.
 
@@ -943,6 +1009,15 @@ def _validate(molecule=None, water_model=None, check_ions=False,
     molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
         The molecule to parameterise, either as a Molecule object or SMILES
         string.
+
+    tolerance : float
+        The tolerance used when searching for disulphide bonds. Atoms will
+        be considered to be bonded if they are a distance of less than
+        tolerance times the sum of the equilibrium bond radii apart.
+
+    max_distance : :class:`Length <BioSimSpace.Types.Length>`
+        The maximum distance between atoms when searching for disulphide
+        bonds.
 
     water_model : str
         The water model used to parameterise any structural ions.
@@ -976,6 +1051,16 @@ def _validate(molecule=None, water_model=None, check_ions=False,
     if molecule is not None:
         if not isinstance(molecule, (_Molecule, str)):
             raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+
+    if tolerance is not None:
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError("'tolerance' must be of type 'float'.")
+        if tolerance < 1:
+            raise ValueError("'tolerance' must be >= 1.0.")
+
+    if max_distance is not None:
+        if not isinstance(max_distance, _Length):
+            raise TypeError("'max_distance' must be of type 'BioSimSpace.Types.Length'.")
 
     if water_model is not None:
         if not isinstance(water_model, str):
