@@ -2131,18 +2131,21 @@ class Gromacs(_process.Process):
                             for atom_idx in restrained_atoms:
                                 file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
+                        # Work out the offset.
+                        offset = num_restraint - 1
+
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1]-1]
+                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
                         new_top_lines.append('#include "%s"' % restraint_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1]:])
+                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
@@ -2207,18 +2210,21 @@ class Gromacs(_process.Process):
                             for atom_idx in atom_idxs:
                                 file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
+                        # Work out the offset.
+                        offset = num_restraint - 1
+
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1]-1]
+                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
                         new_top_lines.append('#include "%s"' % restraint_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1]:])
+                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
