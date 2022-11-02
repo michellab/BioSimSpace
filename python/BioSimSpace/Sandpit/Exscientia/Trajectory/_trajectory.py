@@ -32,6 +32,7 @@ from .._Utils import _try_import
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+import copy as _copy
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile
@@ -214,7 +215,7 @@ class Trajectory():
     """A class for reading a manipulating biomolecular trajectories."""
 
     def __init__(self, process=None, trajectory=None,
-            topology=None, system=None, property_map={}):
+                 topology=None, system=None, property_map={}):
         """Constructor.
 
            Parameters

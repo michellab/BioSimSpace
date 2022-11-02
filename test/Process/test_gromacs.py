@@ -78,6 +78,25 @@ def test_vacuum_water(system):
     # Run the process and check that it finishes without error.
     assert run_process(new_system, protocol)
 
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.parametrize("restraint", ["backbone", "heavy"])
+def test_restraints(restraint):
+    """Regression test for correct injection of restraint file into GROMACS topology."""
+
+    # Load the perturbable system.
+    system = BSS.IO.readPerturbableSystem(
+        "test/input/morphs/complex_vac0.prm7",
+        "test/input/morphs/complex_vac0.rst7",
+        "test/input/morphs/complex_vac1.prm7",
+        "test/input/morphs/complex_vac1.rst7"
+    )
+
+    # Create an equilibration protocol with backbone restraints.
+    protocol = BSS.Protocol.Equilibration(restraint=restraint)
+
+    # Create the simulation process.
+    process = BSS.Process.Gromacs(system, protocol)
+
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
@@ -92,6 +111,11 @@ def run_process(system, protocol):
 
     # Wait for the process to end.
     process.wait()
+
+    print()
+    print(process.getProperEnergy(time_series=True))
+    print(process.getImproperEnergy(time_series=True))
+    print(process.getDihedralEnergy(time_series=True))
 
     # Return the process exit code.
     return not process.isError()

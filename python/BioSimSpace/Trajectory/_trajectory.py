@@ -32,6 +32,7 @@ from .._Utils import _try_import
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+import copy as _copy
 import os as _os
 import shutil as _shutil
 import tempfile as _tempfile

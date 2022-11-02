@@ -376,19 +376,26 @@ def readMolecules(files, property_map={}):
     # Try to read the files and return a molecular system.
     try:
         system = _SireIO.MoleculeParser.read(files, property_map)
-    except Exception as e:
-        if "There are no lead parsers!" in str(e):
+    except Exception as e0:
+        if "There are no lead parsers!" in str(e0):
             # First check to see if the failure was due to the presence
             # of CMAP records.
             for file in files:
                 try:
                     amber_prm = _SireIO.AmberPrm(file)
-                except Exception as e:
-                    if "CMAP" in str(e).upper():
-                        msg = ("Unable to parse topology file, CMAP "
+                except Exception as e1:
+                    if "CMAP" in str(e1).upper():
+                        msg = ("Unable to parse AMBER topology file. CMAP "
                               "records are currently unsupported.")
                         if _isVerbose():
-                            raise IOError(msg) from e
+                            raise IOError(msg) from e1
+                        else:
+                            raise IOError(msg) from None
+                    elif "CHAMBER" in str(e1).upper():
+                        msg = ("Unable to parse AMBER topology file. "
+                              "CHAMBER files are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e1
                         else:
                             raise IOError(msg) from None
 
@@ -396,20 +403,20 @@ def readMolecules(files, property_map={}):
                    "It looks like you failed to include a topology file."
                   ) % files
             if _isVerbose():
-                raise IOError(msg) from e
+                raise IOError(msg) from e0
             else:
                 raise IOError(msg) from None
         else:
-            if "Incompatibility" in str(e):
+            if "Incompatibility" in str(e0):
                 msg = "Incompatibility between molecular information in files: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
             else:
                 msg = "Failed to read molecules from: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
 
