@@ -1,5 +1,6 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
+import math
 import pytest
 
 @pytest.fixture
@@ -34,11 +35,12 @@ def test_iterators(system):
 
     # Iterate over the search result and make sure we match all molecules.
     for idx, mol in enumerate(search_result):
-        # Single residue molecules will have been converted to a Residue object.
-        if type(mol) is BSS._SireWrappers.Residue:
-            assert mol.toMolecule() == system[idx] == molecules[idx] == system.getMolecule(idx)
-        else:
-            assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
+        # Sire automatically converts objects to their smallest types
+        # (e.g. residue, atom etc.)
+        if hasattr(mol, "toMolecule"):
+            mol = mol.toMolecule()
+
+        assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
 
 def test_atom_reindexing(system):
     # Search for all oxygen atoms in water molecules water molecules within
@@ -178,3 +180,62 @@ def test_molecule_reordering(system):
 
     # Make sure the molecules match.
     assert new_system[0] == system[-1]
+
+# Parameterise the function with a set of molecule indices.
+@pytest.mark.parametrize("restraint, expected",
+                       [("backbone", [4, 5, 6, 8, 14, 15, 16]),
+                        ("heavy", [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]),
+                        ("all", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+                       ])
+def test_restraint_atoms(system, restraint, expected):
+    # Get the restraint atoms for the specicied restraint.
+    atoms = system.getRestraintAtoms(restraint)
+
+    # Make sure the indices are as expected.
+    assert atoms == expected
+
+    # Execute the restraint search at the molecular level.
+    atoms = system.getRestraintAtoms(restraint, 0)
+
+    # Make sure the indices are as expected.
+    assert atoms == expected
+
+def test_get_box(system):
+    # Get the box dimensions and angles from the system.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles.
+    expected_box = [31.3979, 34.1000, 29.2730] * BSS.Units.Length.angstrom
+    expected_angles = [90, 90, 90] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
+def test_set_box(system):
+    # Generate box dimensions and angles for a truncated octahedron.
+    box, angles = BSS.Box.truncatedOctahedron(30*BSS.Units.Length.angstrom)
+
+    # Set the box dimensions in the system.
+    system.setBox(box, angles)
+
+    # Get the updated box dimensions and angles.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles. These are different
+    # to the initial values (angles at least) due to the application
+    # of a lattice reduction.
+    expected_box = [30, 30, 30] * BSS.Units.Length.angstrom
+    expected_angles = [70.5288, 109.4712, 70.5288] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)

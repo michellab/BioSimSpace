@@ -385,7 +385,7 @@ molecule LIG
         initial_LJ     3.04812 0.14630
         final_LJ       0.00000 0.00000
         initial_charge -0.65680
-        final_charge   -0.00000
+        final_charge   0.00000
     endatom
     atom
         name           S1

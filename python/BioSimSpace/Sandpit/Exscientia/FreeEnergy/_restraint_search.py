@@ -66,8 +66,8 @@ from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
 from numpy.linalg import norm as _norm
 import matplotlib.pyplot as _plt
 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
 from .. import _gmx_exe
 from .. import _is_notebook

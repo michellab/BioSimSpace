@@ -24,10 +24,10 @@ A class for holding restraints.
 """
 
 import numpy as np
-from Sire.Units import k_boltz
-from Sire.Units import meter3 as Sire_meter3
-from Sire.Units import nanometer3 as Sire_nanometer3
-from Sire.Units import mole as Sire_mole
+from sire.legacy.Units import k_boltz
+from sire.legacy.Units import meter3 as Sire_meter3
+from sire.legacy.Units import nanometer3 as Sire_nanometer3
+from sire.legacy.Units import mole as Sire_mole
 
 from .._SireWrappers import Atom
 from ..Types import Length, Angle, Temperature

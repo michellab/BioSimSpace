@@ -60,9 +60,9 @@ except:
     is_alchemlyb = False
 
 import numpy as _np
-import pandas as _pd 
-from Sire.Base import getBinDir as _getBinDir
-from Sire.Base import getShareDir as _getShareDir
+import pandas as _pd
+from sire.legacy.Base import getBinDir as _getBinDir
+from sire.legacy.Base import getShareDir as _getShareDir
 
 from .. import _gmx_exe
 from .. import _is_notebook
@@ -74,6 +74,7 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
+from .. import _Utils
 from ._restraint import Restraint as _Restraint
 
 from ..MD._md import _find_md_engines
@@ -148,7 +149,7 @@ class Relative():
 
            extra_lines : list
                A list of extra lines to be put at the end of the script.
-           
+
            estimator : str
                Estimator used for the analysis - must be either 'MBAR' or 'TI'.
 
@@ -937,7 +938,7 @@ class Relative():
             command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
 
             # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
+            proc = _subprocess.run(_Utils.command_split(command), shell=False,
                 stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
                 raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -949,7 +950,7 @@ class Relative():
                         _warnings.warn("Subsampling resulted in less than 50 samples, "
                                     f"re-running without subsampling for '{work_dir}'")
                         command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
-                        proc = _subprocess.run(_shlex.split(command), shell=False,
+                        proc = _subprocess.run(_Utils.command_split(command), shell=False,
                             stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
                         if proc.returncode != 0:
                             raise _AnalysisError("SOMD free-energy analysis failed!")
@@ -1258,7 +1259,7 @@ class Relative():
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(_shlex.split(command), shell=False, text=True,
+                proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
                     stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
                 # Create a copy of the process and update the working

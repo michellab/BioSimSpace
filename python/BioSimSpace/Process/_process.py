@@ -43,7 +43,7 @@ import sys as _sys
 import tempfile as _tempfile
 import zipfile as _zipfile
 
-from Sire import Mol as _SireMol
+from sire.legacy import Mol as _SireMol
 
 from .. import _is_interactive, _is_notebook
 from .._Exceptions import IncompatibleError as _IncompatibleError

@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Vector"]
 
-from Sire.Maths import Vector as _Vector
+from sire.legacy.Maths import Vector as _Vector
 
 from ._angle import Angle as _Angle
 

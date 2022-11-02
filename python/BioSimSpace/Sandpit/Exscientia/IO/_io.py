@@ -56,10 +56,10 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from .. import _amber_home
 from .. import _gmx_path
@@ -68,6 +68,7 @@ from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
+from .. import _Utils
 
 # Context manager for capturing stdout.
 # Taken from:
@@ -277,7 +278,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(_shlex.split(command), cwd=work_dir,
+        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
             shell=False, stdout=stdout, stderr=stderr)
         stdout.close()
         stderr.close()
@@ -377,6 +378,20 @@ def readMolecules(files, property_map={}):
         system = _SireIO.MoleculeParser.read(files, property_map)
     except Exception as e:
         if "There are no lead parsers!" in str(e):
+            # First check to see if the failure was due to the presence
+            # of CMAP records.
+            for file in files:
+                try:
+                    amber_prm = _SireIO.AmberPrm(file)
+                except Exception as e:
+                    if "CMAP" in str(e).upper():
+                        msg = ("Unable to parse topology file, CMAP "
+                              "records are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
             msg = ("Failed to read molecules from %s. "
                    "It looks like you failed to include a topology file."
                   ) % files

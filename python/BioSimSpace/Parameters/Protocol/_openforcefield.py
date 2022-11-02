@@ -88,9 +88,9 @@ else:
 _sys.stderr = _sys.__stderr__
 del _sys
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
 
 from ... import _isVerbose
 from ... import IO as _IO
@@ -197,40 +197,59 @@ class OpenForceField(_protocol.Protocol):
                 else:
                     raise IOError(msg) from None
         else:
-            # Write the molecule to a PDB file.
-            try:
-                _IO.saveMolecules(prefix + "molecule", molecule, "pdb")
-            except Exception as e:
-                msg = "Failed to write the molecule to 'PDB' format."
-                if _isVerbose():
-                    msg += ": " + getattr(e, "message", repr(e))
-                    raise IOError(msg) from e
-                else:
-                    raise IOError(msg) from None
+            # If the molecule was originally loaded from an SDF format file,
+            # then write back to the same format.
+            fileformat_prop = self._property_map.get("fileformat", "fileformat")
+            if (molecule._sire_object.hasProperty(fileformat_prop) and
+                "SDF" in molecule._sire_object.property("fileformat").value()):
+                    # Write the molecule to SDF format.
+                    try:
+                        _IO.saveMolecules(prefix + "molecule", molecule, "sdf")
+                    except Exception as e:
+                        msg = "Failed to write the molecule to 'SDF' format."
+                        if _isVerbose():
+                            msg += ": " + getattr(e, "message", repr(e))
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
 
-            # Create an RDKit molecule from the PDB file.
-            try:
-                rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
-            except Exception as e:
-                msg = "RDKit was unable to read the molecular PDB file!"
-                if _isVerbose():
-                    msg += ": " + getattr(e, "message", repr(e))
-                    raise _ThirdPartyError(msg) from e
-                else:
-                    raise _ThirdPartyError(msg) from None
+            # Otherwise, go via an intermediate PDB file and use RDKit to try
+            # to recover stereochemistry.
+            else:
+                # Write the molecule to a PDB file.
+                try:
+                    _IO.saveMolecules(prefix + "molecule", molecule, "pdb")
+                except Exception as e:
+                    msg = "Failed to write the molecule to 'PDB' format."
+                    if _isVerbose():
+                        msg += ": " + getattr(e, "message", repr(e))
+                        raise IOError(msg) from e
+                    else:
+                        raise IOError(msg) from None
 
-            # Use RDKit to write back to SDF format.
-            try:
-                writer = _Chem.SDWriter(prefix + "molecule.sdf")
-                writer.write(rdmol)
-                writer.close()
-            except Exception as e:
-                msg = "RDKit was unable to write the molecular SDF file!"
-                if _isVerbose():
-                    msg += ": " + getattr(e, "message", repr(e))
-                    raise _ThirdPartyError(msg) from e
-                else:
-                    raise _ThirdPartyError(msg) from None
+                # Create an RDKit molecule from the PDB file.
+                try:
+                    rdmol = _Chem.MolFromPDBFile(prefix + "molecule.pdb", removeHs=False)
+                except Exception as e:
+                    msg = "RDKit was unable to read the molecular PDB file!"
+                    if _isVerbose():
+                        msg += ": " + getattr(e, "message", repr(e))
+                        raise _ThirdPartyError(msg) from e
+                    else:
+                        raise _ThirdPartyError(msg) from None
+
+                # Use RDKit to write back to SDF format.
+                try:
+                    writer = _Chem.SDWriter(prefix + "molecule.sdf")
+                    writer.write(rdmol)
+                    writer.close()
+                except Exception as e:
+                    msg = "RDKit was unable to write the molecular SDF file!"
+                    if _isVerbose():
+                        msg += ": " + getattr(e, "message", repr(e))
+                        raise _ThirdPartyError(msg) from e
+                    else:
+                        raise _ThirdPartyError(msg) from None
 
             # Create the Open Forcefield Molecule from the intermediate SDF file,
             # as recommended by @j-wags and @mattwthompson.
@@ -291,11 +310,7 @@ class OpenForceField(_protocol.Protocol):
 
         # Convert the OpenMM System to a ParmEd structure.
         try:
-            if is_smiles:
-                parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, off_molecule.conformers[0])
-            else:
-                pdbfile = _PDBFile(prefix + "molecule.pdb")
-                parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, pdbfile.positions)
+            parmed_structure = _parmed.openmm.load_topology(omm_topology, omm_system, off_molecule.conformers[0])
         except Exception as e:
             msg = "Unable to convert OpenMM System to ParmEd structure!"
             if _isVerbose():

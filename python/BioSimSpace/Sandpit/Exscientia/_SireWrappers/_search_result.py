@@ -29,7 +29,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["SearchResult"]
 
-from Sire import Mol as _SireMol
+import sire.legacy as _Sire
 
 class SearchResult():
     """A thin wrapper around Sire.Mol.SelectResult."""
@@ -40,19 +40,14 @@ class SearchResult():
            Parameters
            ----------
 
-           select_result : Sire.Mol.SelectResult
-               The Sire select result object.
+           select_result : Output of a Sire search
+               The Sire result object.
         """
 
-        # Check that the select_result is valid.
-
-        if isinstance(select_result, SearchResult):
-            select_result = select_result._sire_object
-        elif isinstance(select_result, _SireMol.SelectResult):
-            pass
-        else:
-            raise TypeError("'select_result' must be of type 'BioSimSpace._SireWrappers.SearchResult' "
-                            "or 'Sire.Mol.SelectResult'")
+        # Note that the type of a sire search will now be
+        # whatever makes most sense for the result, e.g.
+        # SelectorMol if this is a list of molecules,
+        # SelectorBond if this is a list of bonds etc.
 
         # Store the Sire select result.
         self._sire_object = select_result.__deepcopy__()
@@ -137,13 +132,13 @@ class SearchResult():
             result = self._sire_object[key]
 
             # Atom.
-            if isinstance(result, _SireMol.Atom):
+            if isinstance(result, _Sire.Mol._Mol.Atom):
                 return _Atom(result)
             # Residue.
-            if isinstance(result, _SireMol.Residue):
+            elif isinstance(result, _Sire.Mol._Mol.Residue):
                 return _Residue(result)
             # Molecule.
-            if isinstance(result, _SireMol.Molecule):
+            elif isinstance(result, _Sire.Mol._Mol.Molecule):
                 # If the molecule contains a single atom, then convert to an atom.
                 if result.nAtoms() == 1:
                     return _Atom(result.atom())
@@ -153,8 +148,12 @@ class SearchResult():
                 # Otherwise, append the molecule.
                 else:
                     return _Molecule(result)
+            # Bond
+            elif isinstance(result, _Sire.MM._MM.Bond):
+                return _Bond(result)
             # Unsupported.
             else:
+                print(f"WARNING: Type {type(result)} is not supported.")
                 return None
 
     def __setitem__(self, key, value):
@@ -194,6 +193,87 @@ class SearchResult():
         """
         return SearchResult(self)
 
+    def atoms(self):
+        """Return all of the atoms that contain the results of this
+           search.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its atoms.
+        """
+        return SearchResult(self._sire_object.atoms())
+
+    def residues(self):
+        """Return all of the residues that contain the results of this
+           search.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its residues.
+        """
+        return SearchResult(self._sire_object.residues())
+
+    def chains(self):
+        """Return all of the chains that contain the results of this
+           search.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its chains.
+        """
+        return SearchResult(self._sire_object.chains())
+
+    def segments(self):
+        """Return all of the segments that contain the results of this
+           search.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its segments.
+        """
+        return SearchResult(self._sire_object.segments())
+
+    def molecules(self):
+        """Return all of the molecules that contain the results of this
+           search.
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its molecules.
+        """
+        try:
+            return SearchResult(self._sire_object.molecules())
+        except Exception:
+            # this is a single molecule view
+            from sire.mol import SelectorMol
+            return SearchResult(SelectorMol(self._sire_object.molecule()))
+
+    def bonds(self):
+        """Return all of the bonds in this result
+
+           Returns
+           -------
+
+           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+               A copy of the object viewed via its bonds.
+        """
+        try:
+            from sire.mm import SelectorMBond
+            return SearchResult(SelectorMBond(self._sire_object))
+        except Exception:
+            from sire.mm import SelectorBond
+            return SearchResult(SelectorBond(self._sire_object))
+
     def nResults(self):
         """Return the number of results.
 
@@ -222,7 +302,8 @@ class SearchResult():
 
            result : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
                     :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                    :class:`Bond <BioSimSpace._SireWrappers.Bond>`
         """
         return self[index]
 
@@ -240,3 +321,4 @@ class SearchResult():
 from ._atom import Atom as _Atom
 from ._molecule import Molecule as _Molecule
 from ._residue import Residue as _Residue
+from ._bond import Bond as _Bond

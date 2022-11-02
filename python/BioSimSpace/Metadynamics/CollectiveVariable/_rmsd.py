@@ -31,8 +31,8 @@ __all__ = ["RMSD"]
 from math import ceil as _ceil
 from math import sqrt as _sqrt
 
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._SireWrappers import Molecule as _Molecule
