@@ -770,8 +770,8 @@ class Gromacs(_process.Process):
             command += " --maxwarn 1000"
 
         # Run the command.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
+            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
@@ -2119,8 +2119,9 @@ class Gromacs(_process.Process):
 
                     # Write the position restraint file for this molecule.
                     if len(restrained_atoms) > 0:
-                        # Create the file name.
-                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+                        # Create the file names.
+                        include_file = "posre_%04d.itp" % num_restraint
+                        restraint_file = "%s/%s" % (self._work_dir, include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
@@ -2141,7 +2142,7 @@ class Gromacs(_process.Process):
                         new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
-                        new_top_lines.append('#include "%s"' % restraint_file)
+                        new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
@@ -2198,8 +2199,9 @@ class Gromacs(_process.Process):
 
                     # Write the position restraint file for this molecule.
                     if len(atom_idxs) > 0:
-                        # Create the file name.
-                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+                        # Create the file names.
+                        include_file = "posre_%04d.itp" % num_restraint
+                        restraint_file = "%s/%s" % (self._work_dir, include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
@@ -2220,7 +2222,7 @@ class Gromacs(_process.Process):
                         new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
-                        new_top_lines.append('#include "%s"' % restraint_file)
+                        new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
