@@ -377,7 +377,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                                 output=True,
                                 output_no_graph=True,
                                 output_no_images=True,
-                                threed=True,
+                                threed=False,
                                 max3d=3.0,
                                 time=3,
                                 parallel=10)
