@@ -36,9 +36,8 @@ jobs:
       - name: Install dependency
         run: |
           # gromacs=2022.2 as gromacs=2022.3 is not available on OSX ATM
-          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.8 ambertools gromacs=2022.2 "sire<2023.0.0"
+          mamba install -c conda-forge -c michellab/label/dev biosimspace python=3.8 ambertools gromacs=2022.2 "sire>=2023.0.0" alchemlyb pytest
           python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
-          python -m pip install git+https://github.com/alchemistry/alchemlyb.git
           # For the testing of BSS.FreeEnergy.Relative.analysis
           python -m pip install https://github.com/alchemistry/alchemtest/archive/master.zip
 

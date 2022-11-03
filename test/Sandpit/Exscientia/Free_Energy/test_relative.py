@@ -130,7 +130,7 @@ class TestRelativeAnalysis():
 
     @pytest.mark.parametrize('fixture,length,energy',
                              [('gmx_ligand',  20, 7.654472744451637),
-                              ('gmx_complex', 30, 21.646667),
+                              ('gmx_complex', 30, 21.819752),
                               ('amber_complex_decharge', 5, -5.25352),
                               ('amber_solvated_vdw', 12, 2.261816)])
     def test_pmf(self, fixture, length, energy, request):
@@ -144,4 +144,4 @@ class TestRelativeAnalysis():
     def test_difference(self, gmx_complex, gmx_ligand):
         dG, error = BSS.FreeEnergy.Relative.difference(gmx_complex, gmx_ligand)
         np.testing.assert_allclose(dG / BSS.Units.Energy.kcal_per_mol,
-                                   13.9921942555, atol=0.1)
+                                   14.216101, atol=0.1)

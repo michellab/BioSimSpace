@@ -19,7 +19,7 @@ has_gromacs = BSS._gmx_exe is not None
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ubiquitin/*")
+    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ubiquitin/*")
 
 @pytest.mark.skipif(has_amber is False or has_gromacs is False,
     reason="Requires that both AMBER and GROMACS are installed.")
@@ -69,7 +69,7 @@ def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""
 
     # Swap the space for a triclinic cell (truncated octahedron).
-    from Sire.Vol import TriclinicBox
+    from sire.legacy.Vol import TriclinicBox
     triclinic_box = TriclinicBox.truncatedOctahedron(50)
     system._sire_object.setProperty("space", triclinic_box)
 

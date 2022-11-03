@@ -29,8 +29,8 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Torsion"]
 
 from math import ceil as _ceil
+from math import isclose as _isclose
 from math import pi as _pi
-from pytest import approx as _approx
 
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from ...Types import Angle as _Angle
@@ -235,9 +235,9 @@ class Torsion(_CollectiveVariable):
             # Torsion is a periodic collective variable, so the grid must be defined
             # from -pi to pi. PLUMED allows no other grid, regardless of lower or
             # upper walls.
-            if (self._grid.getMinimum().value() / _pi) != _approx(-1.0):
+            if not _isclose(self._grid.getMinimum().value() / _pi, -1.0, rel_tol=1e-6):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians.")
-            if (self._grid.getMaximum().value() / _pi) != _approx(1.0):
+            if not _isclose(self._grid.getMaximum().value() / _pi, 1.0, rel_tol=1e-6):
                 raise ValueError("'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians.")
 
             if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():

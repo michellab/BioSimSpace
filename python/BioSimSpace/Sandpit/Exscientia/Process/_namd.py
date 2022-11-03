@@ -36,10 +36,10 @@ _pygtail = _try_import("pygtail")
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
-from Sire.Maths import Vector as _Vector
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+from sire.legacy.Maths import Vector as _Vector
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -1110,7 +1110,7 @@ class Namd(_process.Process):
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
-        """Get the dihedral energy.
+        """Get the total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1125,12 +1125,27 @@ class Namd(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dihedral energy.
+               The total dihedral energy.
         """
-        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
+        # Get the proper and improper energies.
+        proper = self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
+        improper = self.getRecord("IMPRP", time_series, _Units.Energy.kcal_per_mol, block)
+
+        # No records.
+        if proper is None and improper is None:
+            return None
+        elif proper is None:
+            return improper
+        elif improper is None:
+            return proper
+        else:
+            if time_series:
+                return [x + y for x, y in zip(proper, improper)]
+            else:
+                return proper + improper
 
     def getCurrentDihedralEnergy(self, time_series=False):
-        """Get the current dihedral energy.
+        """Get the current total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1145,6 +1160,43 @@ class Namd(_process.Process):
                The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
+
+    def getProperEnergy(self, time_series=False, block="AUTO"):
+        """Get the proper dihedral energy.
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The proper dihedral energy.
+        """
+        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
+
+    def getCurrentProperEnergy(self, time_series=False):
+        """Get the current proper dihedral energy.
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The proper dihedral energy.
+        """
+        return self.getProperEnergy(time_series, block=False)
 
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.

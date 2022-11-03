@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 from ._type import Type as _Type
 
@@ -372,8 +372,11 @@ class Temperature(_Type):
             return unit
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
+        elif len(unit) == 0:
+            raise ValueError(f"Unit is not given. You must supply the unit.")
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError("Unsupported unit '%s'. Supported units are: '%s'" % (
+                    unit, list(self._supported_units.keys())))
 
     def _to_sire_unit(self):
         """Return the internal Sire Unit object to which this type corresponds.
@@ -381,7 +384,7 @@ class Temperature(_Type):
            Returns
            -------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self.kelvin().value() * _SireUnits.kelvin
@@ -393,7 +396,7 @@ class Temperature(_Type):
            Parameters
            ----------
 
-           sire_unit : Sire.Units.GeneralUnit, Sire.Units.Celsius, Sire.Units.Fahrenheit
+           sire_unit : sire.units.GeneralUnit, sire.units.Celsius, sire.units.Fahrenheit
                The temperature as a Sire Units object.
         """
 
@@ -424,8 +427,8 @@ class Temperature(_Type):
             return cls(sire_unit.value(), cls._default_unit)
 
         else:
-            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit', "
-                            "'Sire.Units.Celsius', or 'Sire.Units.Fahrenheit'")
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit', "
+                            "'sire.units.Celsius', or 'sire.units.Fahrenheit'")
 
     @staticmethod
     def _to_sire_format(unit):

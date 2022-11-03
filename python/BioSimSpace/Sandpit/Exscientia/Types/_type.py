@@ -30,7 +30,7 @@ __all__ = ["Type"]
 
 import re as _re
 
-from Sire import Units as _SireUnits
+from sire import units as _SireUnits
 
 class Type():
     """A base class for custom types."""
@@ -61,6 +61,9 @@ class Type():
         if len(args) > 1:
             value = args[0]
             unit = args[1]
+
+            if hasattr(value, "to_default"):
+                value = value.to_default()
 
             # Check that the value is valid.
             if type(value) is int:
@@ -94,12 +97,12 @@ class Type():
 
             else:
                 raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'Sire.Units.GeneralUnit'")
+                                "'string' or 'sire.units.GeneralUnit'")
 
         # No arguments.
         else:
             raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'Sire.Units.GeneralUnit'")
+                            "or 'string' or 'sire.units.GeneralUnit'")
 
         # Set the documentation string.
         self.__doc__ = self._doc_strings[self._unit]
@@ -550,7 +553,7 @@ class Type():
            Returns
            -------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                The internal Sire Unit object that is being wrapped.
         """
         return self._value * self._supported_units[self._unit]
@@ -562,12 +565,12 @@ class Type():
            Parameters
            ----------
 
-           sire_unit : Sire.Units.GeneralUnit
+           sire_unit : sire.units.GeneralUnit
                A Sire GeneralUnit object.
         """
 
         if not isinstance(sire_unit, _SireUnits.GeneralUnit):
-            raise TypeError("'sire_unit' must be of type 'Sire.Units.GeneralUnit'")
+            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'")
 
         # Create a mask for the dimensions of the object.
         dimensions = (sire_unit.ANGLE(),
@@ -579,10 +582,15 @@ class Type():
                       sire_unit.TIME()
                      )
 
+        # Make sure that this isn't zero.
+        if hasattr(sire_unit, "is_zero"):
+            if sire_unit.is_zero():
+                dimensions = cls._dimensions
+
         # Make sure the dimensions match.
         if dimensions != cls._dimensions:
-            raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
-                            f"'{cls.__name__}'")
+            raise ValueError(f"The dimensions of the passed 'sire_unit' {sire_unit} are incompatible with "
+                             f"'{cls.__name__}'")
 
         # Get the value in the default Sire unit for this type.
         value = sire_unit.to(cls._supported_units[cls._default_unit])

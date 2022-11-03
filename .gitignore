@@ -26,6 +26,13 @@ output.yaml
 
 # Trajectory artifacts.
 *_offsets.npz
+*.lock
 
 # Scratch space.
 .idea/
+
+# VSCode config
+.vscode/
+
+# Conda recipe (it is auto-generated)
+recipes/biosimspace/meta.yaml

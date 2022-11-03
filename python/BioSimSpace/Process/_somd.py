@@ -39,11 +39,11 @@ import sys as _sys
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import CAS as _SireCAS
-from Sire import IO as _SireIO
-from Sire import MM as _SireMM
-from Sire import Mol as _SireMol
+from sire.legacy import Base as _SireBase
+from sire.legacy import CAS as _SireCAS
+from sire.legacy import IO as _SireIO
+from sire.legacy import MM as _SireMM
+from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -579,7 +579,7 @@ class Somd(_process.Process):
                 % self._protocol.getLambda())                                       # The value of lambda.
 
             res_num = _System(self._renumbered_system) \
-                .search("perturbable")[0]._sire_object.number().value()
+                .search("perturbable").residues()[0]._sire_object.number().value()
             self.addToConfig("perturbed residue number = %s" % res_num)             # Perturbed residue number.
 
         else:

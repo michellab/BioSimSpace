@@ -29,13 +29,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Maths as _SireMaths
-from Sire import Mol as _SireMol
-from Sire import System as _SireSystem
-from Sire import Units as _SireUnits
-from Sire import Vol as _SireVol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Mol as _SireMol
+from sire.legacy import System as _SireSystem
+from sire.legacy import Vol as _SireVol
+from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -44,6 +43,8 @@ from ..Types import Length as _Length
 from .. import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
+
+from sire.mol import Select as _Select
 
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
@@ -107,7 +108,8 @@ class System(_SireWrapper):
         else:
             raise TypeError("'system' must be of type 'Sire.System.System', 'BioSimSpace._SireWrappers.System', "
                             " Sire.Mol.Molecule', 'BioSimSpace._SireWrappers.Molecule', "
-                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types.")
+                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types. "
+                            f"The type {type(system)} is not supported.")
 
         # Flag that this object holds multiple atoms.
         self._is_multi_atom = True
@@ -771,9 +773,9 @@ class System(_SireWrapper):
            -------
 
            molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
-               A container of water molecule objects.
+               A container of water molecule objects. The container will be
+               empty if no water molecules are present.
         """
-
         return _Molecules(self._sire_object.search("water").toGroup())
 
     def nWaterMolecules(self):
@@ -793,16 +795,11 @@ class System(_SireWrapper):
            Returns
            -------
 
-           molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
-               A list of perturbable molecules.
+           molecules : :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`
+               A container of perturbable molecule objects. The container will
+               be empty if no perturbable molecules are present.
         """
-
-        molecules = []
-
-        for mol in self._sire_object.search("perturbable"):
-            molecules.append(_Molecule(mol))
-
-        return molecules
+        return _Molecules(self._sire_object.search("perturbable").toGroup())
 
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
@@ -949,10 +946,10 @@ class System(_SireWrapper):
 
         try:
             # Query the Sire system.
-            search_result = _SireMol.Select(query)(self._sire_object, property_map)
+            search_result = _Select(query)(self._sire_object, property_map)
 
         except Exception as e:
-            msg = "'Invalid search query: %r" % query
+            msg = "'Invalid search query: %r : %s" % (query, e)
             if _isVerbose():
                 raise ValueError(msg) from e
             else:
@@ -989,6 +986,8 @@ class System(_SireWrapper):
 
         # Loop over all of the items.
         for x in item:
+            if x is None:
+                continue
             # Atom.
             if isinstance(x, _Atom):
                 # Create the MolNum to atom index mapping dictionary.
@@ -1040,7 +1039,7 @@ class System(_SireWrapper):
 
             # Unsupported.
             else:
-                raise TypeError("'item' must be of type 'BioSimSpace._SireWrappers.Atom' "
+                raise TypeError(f"'item' (class {type(x)}) must be of type 'BioSimSpace._SireWrappers.Atom' "
                                 "or 'BioSimSpace._SireWrappers.Residue'")
 
         # If this was a single object, then return a single index.
@@ -1154,6 +1153,9 @@ class System(_SireWrapper):
                 angles = [_Angle(space.alpha(), "degree"),
                           _Angle(space.beta(), "degree"),
                           _Angle(space.gamma(), "degree")]
+
+            else:
+                raise TypeError(f"Unsupported box type: {space} - {type(space)}")
         except:
             box = None
             angles = None
@@ -1312,22 +1314,31 @@ class System(_SireWrapper):
                 # Backbone restraints.
                 if restraint == "backbone":
                     # Find all N, CA, C, and O atoms in protein residues.
-                    string = "(atoms in not water) and (atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O)"
-                    search = self.search(string, property_map)
+                    string = "(not water) and (resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
                 elif restraint == "heavy":
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
-                    string = f"(atoms in not water) and not element {ion_string}"
-                    search = self.search(string, property_map)
+                    string = f"(not water) and (not element {ion_string})"
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
                 elif restraint == "all":
                     # Convert to a formatted string for the search.
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
-                    string = f"(atoms in not water) and not element {ion_string}"
-                    search = self.search(string, property_map)
+                    string = f"(not water) and (not element {ion_string})"
+                    try:
+                        search = self.search(string, property_map)
+                    except:
+                        search = []
 
             # Search each molecule individually, using the property map to specify the
             # correct name for the "element" property in any perturble molecules.
@@ -1353,8 +1364,11 @@ class System(_SireWrapper):
                     if restraint == "backbone":
                         if not mol.isWater():
                             # Find all N, CA, C, and O atoms in protein residues.
-                            string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                            search = mol.search(string, _property_map)
+                            string = "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     elif restraint == "heavy":
                         if not mol.isWater():
@@ -1362,7 +1376,10 @@ class System(_SireWrapper):
                             ion_string = ",".join(ions + ["H,Xx"])
                             # Find all non-water, non-hydrogen, non-ion elements.
                             string = f"not element {ion_string}"
-                            search = mol.search(string, _property_map)
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     elif restraint == "all":
                         if not mol.isWater():
@@ -1370,7 +1387,10 @@ class System(_SireWrapper):
                             ion_string = ",".join(ions)
                             # Find all non-water, non-ion elements.
                             string = f"not element {ion_string}"
-                            search = mol.search(string, _property_map)
+                            try:
+                                search = mol.search(string, _property_map)
+                            except:
+                                search = []
 
                     # Append the search result for this molecule.
                     if len(search) > 0:
@@ -1396,8 +1416,11 @@ class System(_SireWrapper):
             if restraint == "backbone":
                 if not mol.isWater():
                     # Find all N, CA, C, and O atoms in protein residues.
-                    string = "atoms in resname " + ",".join(prot_res) + " and atomname N,CA,C,O"
-                    search = mol.search(string, _property_map)
+                    string = "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
             elif restraint == "heavy":
                 if not mol.isWater():
@@ -1405,7 +1428,10 @@ class System(_SireWrapper):
                     ion_string = ",".join(ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string, _property_map)
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
             elif restraint == "all":
                 if not mol.isWater():
@@ -1413,7 +1439,10 @@ class System(_SireWrapper):
                     ion_string = ",".join(ions)
                     # Find all non-water, non-ion elements.
                     string = f"not element {ion_string}"
-                    search = mol.search(string, _property_map)
+                    try:
+                        search = mol.search(string, _property_map)
+                    except:
+                        search = []
 
         if is_perturbable_system:
             # Raise an exception if no atoms match the restraint.

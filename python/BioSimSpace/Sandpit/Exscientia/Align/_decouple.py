@@ -1,6 +1,6 @@
 import warnings
 
-from Sire import Base as _SireBase
+from sire.legacy import Base as _SireBase
 
 from .._SireWrappers import Molecule as _Molecule
 from .._Exceptions import IncompatibleError as _IncompatibleError

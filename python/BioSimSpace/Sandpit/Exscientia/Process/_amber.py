@@ -46,9 +46,9 @@ import shutil as _shutil
 import timeit as _timeit
 import warnings as _warnings
 
-from Sire import Base as _SireBase
-from Sire import IO as _SireIO
-from Sire import Mol as _SireMol
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
 from ..Align._merge import _squash, _unsquash
@@ -986,7 +986,7 @@ class Amber(_process.Process):
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
-        """Get the dihedral energy.
+        """Get the total dihedral energy (proper + improper)
 
            Parameters
            ----------
@@ -1001,12 +1001,12 @@ class Amber(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-              The dihedral energy.
+              The total dihedral energy.
         """
         return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentDihedralEnergy(self, time_series=False):
-        """Get the current dihedral energy.
+        """Get the current total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1018,7 +1018,7 @@ class Amber(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-              The dihedral energy.
+              The total dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
 

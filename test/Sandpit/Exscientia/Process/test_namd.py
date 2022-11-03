@@ -1,6 +1,6 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from Sire.Base import findExe
+from sire.legacy.Base import findExe
 
 import pytest
 
@@ -14,7 +14,7 @@ except:
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/namd/alanin/*")
+    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/namd/alanin/*")
 
 @pytest.mark.skipif(has_namd is False, reason="Requires NAMD to be installed.")
 def test_minimise(system):

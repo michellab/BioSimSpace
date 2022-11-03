@@ -1,0 +1,22 @@
+# BioSimSpace runtime requirements.
+
+sire ~=2023.0.0   # this matches >= 2023.0.0 && < 2023.1.0
+
+configargparse
+kcombu_bss
+ipywidgets<8
+lomap2
+mdtraj
+mdanalysis
+networkx
+nglview
+openff-interchange-base
+openff-toolkit-base
+parmed
+py3dmol
+pydot
+pygtail
+pypdb
+pyyaml
+rdkit
+watchdog

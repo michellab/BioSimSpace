@@ -18,7 +18,7 @@ else:
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_minimise(system):

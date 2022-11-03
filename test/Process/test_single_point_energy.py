@@ -69,7 +69,7 @@ def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""
 
     # Swap the space for a triclinic cell (truncated octahedron).
-    from Sire.Vol import TriclinicBox
+    from sire.legacy.Vol import TriclinicBox
     triclinic_box = TriclinicBox.truncatedOctahedron(50)
     system._sire_object.setProperty("space", triclinic_box)
 
