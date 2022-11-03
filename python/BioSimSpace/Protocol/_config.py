@@ -254,17 +254,18 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["imin"] = 1               # Minimisation simulation.
             protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
-            protocol_dict["ntmin"] = 1 # steepest descent used for ncyc and then switched to conjugate
-            # Work out the number of steepest descent cycles.
-            # This is 1000 or 10% of the number of steps, whichever is larger.
-            if self._steps <= 1000:
-                num_steep = self._steps
-            else:
-                num_steep = _math.ceil(self._steps / 10)
-                if num_steep < 1000:
-                    num_steep = 1000
-            # Set the number of steepest descent steps.
-            protocol_dict["ncyc"] = num_steep
+            protocol_dict["ntmin"] = 1 
+            if protocol_dict["ntmin"] == 1: # steepest descent used for ncyc and then switched to conjugate
+                # Work out the number of steepest descent cycles.
+                # This is 1000 or 10% of the number of steps, whichever is larger.
+                if self._steps <= 1000:
+                    num_steep = self._steps
+                else:
+                    num_steep = _math.ceil(self._steps / 10)
+                    if num_steep < 1000:
+                        num_steep = 1000
+                # Set the number of steepest descent steps.
+                protocol_dict["ncyc"] = num_steep
         else:
             # Define the timestep
             timestep = self.protocol.getTimeStep().picoseconds().value()  # Get the time step in ps
@@ -455,7 +456,7 @@ class ConfigFactory:
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
             # Minimisation simulation.
-            protocol_dict["integrator"] = "cg"
+            protocol_dict["integrator"] = "steep" # low-memory Broyden-Fletcher-Goldfarb-Shanno
             # define the frequency of steepest descent for with conjugate gradient
             if protocol_dict["integrator"] == "cg":
                 # step frequency of performing 1 steepest descent step whilst doing conjugate gradient descent
