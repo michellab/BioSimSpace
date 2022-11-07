@@ -372,7 +372,7 @@ def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
     """
 
     if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff03' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")
 
@@ -445,8 +445,8 @@ def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
+    if _amber_home is None:
+        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff14SB' is not supported. "
                                     "Please install AmberTools (http://ambermd.org) "
                                     "or GROMACS (http://www.gromacs.org).")
 
