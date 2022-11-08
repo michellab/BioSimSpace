@@ -371,64 +371,63 @@ class Trajectory():
 
         # Set the location of the trajectory and topology files.
         if self._process is not None:
-            traj_file = self._process._traj_file
+            self._traj_file = self._process._traj_file
 
             if self._process._package_name == "GROMACS":
                 if format == "mdtraj":
-                    top_file = self._process._gro_file
+                    self._top_file = self._process._gro_file
                 else:
-                    top_file = self._process._tpr_file
+                    self._top_file = self._process._tpr_file
                     self._backend = "MDANALYSIS"
                     format = "MDANALYSIS"
             else:
-                top_file = self._process._top_file
-        else:
-            traj_file = self._traj_file
-            top_file = self._top_file
+                self._top_file = self._process._top_file
 
         # Check that the trajectory and topology files exist.
-        if not _os.path.isfile(traj_file):
-            raise IOError("Trajectory file doesn't exist: '%s'" % traj_file)
+        if not _os.path.isfile(self._traj_file):
+            raise IOError("Trajectory file doesn't exist: '%s'" % self._traj_file)
 
-        if not _os.path.isfile(top_file):
-            raise IOError("Topology file doesn't exist: '%s'" % top_file)
+        if not _os.path.isfile(self._top_file):
+            raise IOError("Topology file doesn't exist: '%s'" % self._top_file)
 
         # Return an MDTraj object.
         if format in ["MDTRAJ", "AUTO"]:
             try:
-                traj = _mdtraj.load(traj_file, top=top_file)
+                traj = _mdtraj.load(self._traj_file, top=self._top_file)
                 if self._backend is None:
                     self._backend = "MDTRAJ"
                 return traj
             except:
                 if format == "MDTRAJ":
-                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
                     return None
 
         # Return an MDAnalysis Universe.
         if format in ["MDANALYSIS", "AUTO"]:
             # Check the file extension.
-            _, extension = _os.path.splitext(top_file)
+            _, extension = _os.path.splitext(self._top_file)
 
             # If this is a PRM7 file, copy to PARM7.
             if extension == ".prm7":
                 # Set the path to the temporary topology file.
-                new_top_file = self._work_dir + f"/{str(_uuid.uuid4())}.parm7"
+                top_file = self._work_dir + f"/{str(_uuid.uuid4())}.parm7"
 
                 # Copy the topology to a file with the correct extension.
-                _shutil.copyfile(top_file, new_top_file)
-                top_file = new_top_file
+                _shutil.copyfile(self._top_file, top_file)
+
+            else:
+                top_file = self._top_file
 
             try:
-                universe = _mdanalysis.Universe(top_file, traj_file)
+                universe = _mdanalysis.Universe(top_file, self._traj_file)
                 if self._backend is None:
                     self._backend = "MDANALYSIS"
 
             except:
                 if format == "MDANALYSIS":
-                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
                 else:
-                    _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (traj_file, top_file))
+                    _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
                 universe = None
 
             return universe
@@ -593,9 +592,9 @@ class Trajectory():
             else:
                 try:
                     if self._backend == "MDANALYSIS":
-                        new_system = _System(_SireIO.MoleculeParser.read(frame_file))
+                        new_system = _System(_SireIO.MoleculeParser.read([frame_file], self._property_map))
                     else:
-                        new_system = _System(_SireIO.MoleculeParser.read([frame_file, self._top_file]))
+                        new_system = _System(_SireIO.MoleculeParser.read([frame_file, self._top_file], self._property_map))
                 except Exception as e:
                     msg = "Failed to read trajectory frame: '%s'" % frame_file
                     if _isVerbose():
