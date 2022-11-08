@@ -28,7 +28,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from .._Utils import _try_import
+from BioSimSpace._Utils import _try_import
 
 mm = _try_import("openmm")
 unit = _try_import("simtk.unit", "conda install simtk")

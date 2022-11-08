@@ -108,7 +108,7 @@ class OpenMM(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map=property_map)
 
         # Set the package name.
         self._package_name = "OPENMM"
@@ -1668,7 +1668,7 @@ class OpenMM(_process.Process):
         """
         # We should verify that openmm is available to prevent
         # difficult-to-debug errors in the run script
-        from .._Utils import _try_import, _assert_imported
+        from BioSimSpace._Utils import _try_import, _assert_imported
 
         _openmm = _try_import("openmm")
         _assert_imported(_openmm)
