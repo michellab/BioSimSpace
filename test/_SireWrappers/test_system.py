@@ -240,3 +240,37 @@ def test_set_box(system):
     # Check that the angles match.
     for a0, a1 in zip(angles, expected_angles):
         assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
+def test_molecule_replace(system):
+    # Make sure that molecule ordering is preserved when a molecule is
+    # replaced by another with a different MolNum.
+
+    # Extract the first molecule.
+    mol0 = system[0]
+
+    # Store the current molecule numbers.
+    mol_nums0 = system._mol_nums
+
+    # Update (replace) the first molecule with a renumbered
+    # version.
+    system.updateMolecule(0, mol0.copy())
+
+    # Get the first molecule in the updated system.
+    mol1 = system[0]
+
+    # Store the updated molecule numbers.
+    mol_nums1 = system._mol_nums
+
+    # Make sure the molecules have different numbers.
+    assert mol0.number() != mol1.number()
+
+    # Make sure the molecules have the same number of atoms and residues.
+    assert mol0.nAtoms() == mol1.nAtoms()
+    assert mol0.nResidues() == mol1.nResidues()
+
+    # Make sure that the first MolNum in the array is different.
+    assert mol_nums0[0] != mol_nums1[0]
+
+    # Make sure the rest match.
+    for num0, num1 in zip(mol_nums0[1:], mol_nums1[1:]):
+        assert num0 == num1
