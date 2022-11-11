@@ -244,18 +244,18 @@ def test_molecule_replace(system):
     # Make sure that molecule ordering is preserved when a molecule is
     # replaced by another with a different MolNum.
 
-    # Extract the first molecule.
-    mol0 = system[0]
+    # Extract the third molecule.
+    mol0 = system[3]
 
     # Store the current molecule numbers.
     mol_nums0 = system._mol_nums
 
-    # Update (replace) the first molecule with a renumbered
+    # Update (replace) the third molecule with a renumbered
     # version.
-    system.updateMolecule(0, mol0.copy())
+    system.updateMolecule(3, mol0.copy())
 
-    # Get the first molecule in the updated system.
-    mol1 = system[0]
+    # Get the third molecule in the updated system.
+    mol1 = system[3]
 
     # Store the updated molecule numbers.
     mol_nums1 = system._mol_nums
@@ -267,9 +267,11 @@ def test_molecule_replace(system):
     assert mol0.nAtoms() == mol1.nAtoms()
     assert mol0.nResidues() == mol1.nResidues()
 
-    # Make sure that the first MolNum in the array is different.
-    assert mol_nums0[0] != mol_nums1[0]
+    # Make sure that the third MolNum in the array is different.
+    assert mol_nums0[3] != mol_nums1[3]
 
     # Make sure the rest match.
-    for num0, num1 in zip(mol_nums0[1:], mol_nums1[1:]):
+    for num0, num1 in zip(mol_nums0[0:2], mol_nums1[0:2]):
+        assert num0 == num1
+    for num0, num1 in zip(mol_nums0[4:], mol_nums1[4:]):
         assert num0 == num1
