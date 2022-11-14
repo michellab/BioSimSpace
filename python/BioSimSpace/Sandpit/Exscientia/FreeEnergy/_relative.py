@@ -46,7 +46,7 @@ from .._Utils import _try_import, _have_imported, _assert_imported
 
 # alchemlyb isn't available on all variants of Python that we support, so we
 # need to try_import it.
-_alchemlyb = _try_import(alchemlyb)
+_alchemlyb = _try_import("alchemlyb")
 
 if _have_imported(_alchemlyb):
     from alchemlyb.workflows import ABFE
