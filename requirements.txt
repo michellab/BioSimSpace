@@ -2,6 +2,7 @@
 
 sire ~=2023.0.0   # this matches >= 2023.0.0 && < 2023.1.0
 
+alchemlyb
 configargparse
 kcombu_bss
 ipywidgets<8
