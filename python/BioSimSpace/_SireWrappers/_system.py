@@ -547,10 +547,17 @@ class System(_SireWrapper):
             # Create a copy of the system.
             system = self.copy()._sire_object
 
+            # Create a copy of the molecule.
+            molecule = molecule.copy()._sire_object
+
+            # Renumber the molecule to match the original.
+            edit_mol = molecule.edit()
+            edit_mol.renumber(self[index]._sire_object.number())
+            molecule = edit_mol.commit()
+
             # Update the molecule in the system, preserving the
             # original molecular ordering.
-            system = _SireIO.updateAndPreserveOrder(
-                    system, molecule._sire_object, index)
+            system = _SireIO.updateAndPreserveOrder(system, molecule, index)
 
             # Update the Sire object.
             self._sire_object = system
@@ -617,6 +624,8 @@ class System(_SireWrapper):
                     # original molecular ordering.
                     system = _SireIO.updateAndPreserveOrder(
                             system, mol._sire_object, idx)
+            else:
+                raise ValueError(f"System doesn't contain molecule: {mol}")
 
         # Update the Sire object.
         self._sire_object = system
