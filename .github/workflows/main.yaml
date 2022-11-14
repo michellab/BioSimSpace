@@ -56,11 +56,11 @@ jobs:
           use-mamba: true
 #
       - name: Clone the devel branch (push to devel)
-        run: git clone https://github.com/michellab/BioSimSpace
+        run: git clone ${{ github.repositoryUrl }}
         if: github.event_name != 'pull_request'
 #
       - name: Clone the feature branch (pull request to devel)
-        run: git clone -b ${{ github.head_ref }} --single-branch https://github.com/michellab/BioSimSpace
+        run: git clone -b ${{ github.head_ref }} --single-branch ${{ github.repositoryUrl }}
         if: github.event_name == 'pull_request'
 #
       - name: Setup Conda
