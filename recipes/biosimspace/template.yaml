@@ -26,8 +26,8 @@ test:
     - SIRE_SILENT_PHONEHOME
   requires:
     - pytest
-    - ambertools
-    - gromacs
+    - ambertools  # [not win]
+    - gromacs     # [not win]
   imports:
     - BioSimSpace
   source_files:
