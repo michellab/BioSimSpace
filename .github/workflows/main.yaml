@@ -55,6 +55,9 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
 #
+      - name: Use HTTPS git
+        run: git config --global url.https://github.com/.insteadOf git@github.com:
+#
       - name: Clone the devel branch (push to devel)
         run: git clone ${{ github.repositoryUrl }}
         if: github.event_name != 'pull_request'
