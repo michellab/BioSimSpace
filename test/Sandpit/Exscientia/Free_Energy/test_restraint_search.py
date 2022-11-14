@@ -10,6 +10,12 @@ from BioSimSpace.Sandpit.Exscientia.Trajectory import Trajectory
 from BioSimSpace.Sandpit.Exscientia.Units.Length import nanometer
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import degree
 
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
+_MDRestraintsGenerator = _try_import("MDRestraintsGenerator",
+                                     install_command='pip install MDRestraintsGenerator')
+
+is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
+
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -34,7 +40,6 @@ class Trajectory(Trajectory):
             "test/Sandpit/Exscientia/input/protein_ligand/complex.tpr",
             "test/Sandpit/Exscientia/input/protein_ligand/traj.xtc")
 
-is_MDRestraintsGenerator = BSS.FreeEnergy._restraint_search.is_MDRestraintsGenerator is not None
 @pytest.mark.skipif((is_MDRestraintsGenerator is False or has_gromacs is False),
                     reason="Requires MDRestraintsGenerator and Gromacs to be installed.")
 class TestMDRestraintsGenerator_analysis():
@@ -56,7 +61,7 @@ class TestMDRestraintsGenerator_analysis():
                                                           work_dir=str(outdir))
         restraint_search._process.getTrajectory = lambda: Trajectory()
         restraint = restraint_search.analyse(method='MDRestraintsGenerator',
-                                             rest_type='Boresch',
+                                             restraint_type='Boresch',
                                              block=False)
         return restraint, outdir
 

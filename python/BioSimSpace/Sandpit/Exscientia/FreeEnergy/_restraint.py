@@ -24,19 +24,23 @@ A class for holding restraints.
 """
 
 import numpy as np
-from sire.legacy.Units import k_boltz
-from sire.legacy.Units import meter3 as Sire_meter3
-from sire.legacy.Units import nanometer3 as Sire_nanometer3
-from sire.legacy.Units import mole as Sire_mole
+from sire.legacy.Units import k_boltz as _k_boltz
+from sire.legacy.Units import meter3 as _meter3
+from sire.legacy.Units import nanometer3 as _nanometer3
+from sire.legacy.Units import mole as _mole
 
-from .._SireWrappers import Atom
-from ..Types import Length, Angle, Temperature
+from .._SireWrappers import Atom as _Atom
+from ..Types import Length as _Length
+from ..Types import Angle as _Angle
+from ..Types import Temperature as _Temperature
 from .._SireWrappers import System as _System
-from ..Units.Length import nanometer
-from ..Units.Area import nanometer2
-from ..Units.Temperature import kelvin
-from ..Units.Angle import degree, radian
-from ..Units.Energy import kj_per_mol, kcal_per_mol
+from ..Units.Length import nanometer as _nanometer
+from ..Units.Area import nanometer2 as _nanometer2
+from ..Units.Temperature import kelvin as _kelvin
+from ..Units.Angle import degree as _degree
+from ..Units.Angle import radian as _radian
+from ..Units.Energy import kj_per_mol as _kj_per_mol
+from ..Units.Energy import kcal_per_mol as _kcal_per_mol
 
 class Restraint():
     '''The Restraint class which holds the restraint information for the ABFE
@@ -76,7 +80,7 @@ class Restraint():
                            "kphiC": BioSimSpace.Types.Energy / (BioSimSpace.Types.Area * BioSimSpace.Types.Area)}}
 
     '''
-    def __init__(self, system, restraint_dict, temperature, rest_type='Boresch'):
+    def __init__(self, system, restraint_dict, temperature, restraint_type='Boresch'):
         """Constructor.
 
            Parameters
@@ -91,34 +95,34 @@ class Restraint():
            temperature : :class:`System <BioSimSpace.Types.Temperature>`
                The temperature of the system
 
-           rest_type : str
+           restraint_type : str
                The type of the restraint. (`Boresch`, )
         """
-        if not isinstance(temperature, Temperature):
+        if not isinstance(temperature, _Temperature):
             raise ValueError(
                 "temperature must be of type 'BioSimSpace.Types.Temperature'")
         else:
             self.T = temperature
 
-        if rest_type.lower() == 'boresch':
-            self._rest_type = 'boresch'
+        if restraint_type.lower() == 'boresch':
+            self._restraint_type = 'boresch'
             # Test if the atoms are of BioSimSpace._SireWrappers.Atom
             for key in ['r3', 'r2', 'r1', 'l1', 'l2', 'l3']:
-                if not isinstance(restraint_dict['anchor_points'][key], Atom):
+                if not isinstance(restraint_dict['anchor_points'][key], _Atom):
                     raise ValueError(f"restraint_dict['anchor_points']['{key}'] "
                                      f"must be of type "
                                      f"'BioSimSpace._SireWrappers.Atom'")
 
             # Test if the equilibrium length of the bond r1-l1 is a length unit
             # Such as angstrom or nanometer
-            if not isinstance(restraint_dict['equilibrium_values']['r0'], Length):
+            if not isinstance(restraint_dict['equilibrium_values']['r0'], _Length):
                 raise ValueError(
                     "restraint_dict['equilibrium_values']['r0'] must be of type 'BioSimSpace.Types.Length'")
 
             # Test if the equilibrium length of the angle and dihedral is a
             # angle unit such as radian or degree
             for key in ["thetaA0", "thetaB0", "phiA0", "phiB0", "phiC0"]:
-                if not isinstance(restraint_dict['equilibrium_values'][key], Angle):
+                if not isinstance(restraint_dict['equilibrium_values'][key], _Angle):
                     raise ValueError(
                         f"restraint_dict['equilibrium_values']['{key}'] must be "
                         f"of type 'BioSimSpace.Types.Angle'")
@@ -163,7 +167,7 @@ class Restraint():
         if not isinstance(system, _System):
             raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
         else:
-            if self._rest_type == 'boresch':
+            if self._restraint_type == 'boresch':
                 # Check if the ligand atoms are decoupled.
                 # Find the decoupled molecule, assume that only one can be
                 # decoupled.
@@ -200,10 +204,10 @@ class Restraint():
         def format_bond(equilibrium_values, force_constants):
             converted_equ_val = \
                 self._restraint_dict['equilibrium_values'][
-                    equilibrium_values] / nanometer
+                    equilibrium_values] / _nanometer
             converted_fc = \
                 self._restraint_dict['force_constants'][force_constants] / (
-                            kj_per_mol / nanometer ** 2)
+                            _kj_per_mol / _nanometer ** 2)
             return parameters_string.format(
                 eq0='{:.3f}'.format(converted_equ_val),
                 fc0='{:.2f}'.format(0),
@@ -215,10 +219,10 @@ class Restraint():
         def format_angle(equilibrium_values, force_constants):
             converted_equ_val = \
                 self._restraint_dict['equilibrium_values'][
-                    equilibrium_values] / degree
+                    equilibrium_values] / _degree
             converted_fc = \
                 self._restraint_dict['force_constants'][force_constants] / (
-                            kj_per_mol / (radian * radian))
+                            _kj_per_mol / (_radian * _radian))
             return parameters_string.format(
                 eq0='{:.3f}'.format(converted_equ_val),
                 fc0='{:.2f}'.format(0),
@@ -301,12 +305,12 @@ class Restraint():
                is omitted then BioSimSpace will choose an appropriate engine
                for you.
         """
-        if engine.lower() == 'gromacs':
-            if self._rest_type == 'boresch':
+        if engine.strip().lower() == 'gromacs':
+            if self._restraint_type == 'boresch':
                 return self._gromacs_boresch()
             else:
                 raise NotImplementedError(
-                    f'Restraint type {self.rest_type} not implemented '
+                    f'Restraint type {self.restraint_type} not implemented '
                     f'yet. Only boresch restraint is supported.')
         else:
             raise NotImplementedError(f'MD Engine {engine} not implemented '
@@ -315,21 +319,21 @@ class Restraint():
     @property
     def correction(self):
         '''Give the free energy of removing the restraint.'''
-        if self._rest_type == 'boresch':
-            K = k_boltz * (kcal_per_mol / kelvin) / (kj_per_mol / kelvin) # Gas constant in kJ/mol/K
-            V = ((Sire_meter3 / 1000 / Sire_mole) / Sire_nanometer3).value() # standard volume in nm^3 (liter/N_A)
+        if self._restraint_type == 'boresch':
+            K = _k_boltz * (_kcal_per_mol / _kelvin) / (_kj_per_mol / _kelvin) # Gas constant in kJ/mol/K
+            V = ((_meter3 / 1000 / _mole) / _nanometer3).value() # standard volume in nm^3 (liter/N_A)
 
-            T = self.T / kelvin # Temperature in Kelvin
-            r0 = self._restraint_dict['equilibrium_values']['r0'] / nanometer # Distance in nm
-            thA = self._restraint_dict['equilibrium_values']['thetaA0'] / radian # Angle in radians
-            thB = self._restraint_dict['equilibrium_values']['thetaB0'] / radian  # Angle in radians
+            T = self.T / _kelvin # Temperature in Kelvin
+            r0 = self._restraint_dict['equilibrium_values']['r0'] / _nanometer # Distance in nm
+            thA = self._restraint_dict['equilibrium_values']['thetaA0'] / _radian # Angle in radians
+            thB = self._restraint_dict['equilibrium_values']['thetaB0'] / _radian  # Angle in radians
 
-            K_r = self._restraint_dict['force_constants']['kr'] / (kj_per_mol / nanometer2) # force constant for distance (kJ/mol/nm^2)
-            K_thA = self._restraint_dict['force_constants']['kthetaA'] / (kj_per_mol / (radian * radian))  # force constant for angle (kJ/mol/rad^2)
-            K_thB = self._restraint_dict['force_constants']['kthetaB'] / (kj_per_mol / (radian * radian))  # force constant for angle (kJ/mol/rad^2)
-            K_phiA = self._restraint_dict['force_constants']['kphiA'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
-            K_phiB = self._restraint_dict['force_constants']['kphiB'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
-            K_phiC = self._restraint_dict['force_constants']['kphiC'] / (kj_per_mol / (radian * radian))  # force constant for dihedral (kJ/mol/rad^2)
+            K_r = self._restraint_dict['force_constants']['kr'] / (_kj_per_mol / _nanometer2) # force constant for distance (kJ/mol/nm^2)
+            K_thA = self._restraint_dict['force_constants']['kthetaA'] / (_kj_per_mol / (_radian * _radian))  # force constant for angle (kJ/mol/rad^2)
+            K_thB = self._restraint_dict['force_constants']['kthetaB'] / (_kj_per_mol / (_radian * _radian))  # force constant for angle (kJ/mol/rad^2)
+            K_phiA = self._restraint_dict['force_constants']['kphiA'] / (_kj_per_mol / (_radian * _radian))  # force constant for dihedral (kJ/mol/rad^2)
+            K_phiB = self._restraint_dict['force_constants']['kphiB'] / (_kj_per_mol / (_radian * _radian))  # force constant for dihedral (kJ/mol/rad^2)
+            K_phiC = self._restraint_dict['force_constants']['kphiC'] / (_kj_per_mol / (_radian * _radian))  # force constant for dihedral (kJ/mol/rad^2)
 
             # Convert all the units to float before this calculation as BSS cannot handle root
             arg = ((8.0 * np.pi ** 2 * V) /
@@ -339,5 +343,5 @@ class Restraint():
 
             dG = - K * T * np.log(arg)
             # Attach unit
-            dG *= kj_per_mol
+            dG *= _kj_per_mol
             return dG

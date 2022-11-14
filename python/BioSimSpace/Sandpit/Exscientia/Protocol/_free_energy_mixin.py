@@ -2,8 +2,8 @@ __all__ = ["_FreeEnergyMixin"]
 
 import warnings
 
-import numpy as np
-import pandas as pd
+import numpy as _np
+import pandas as _pd
 
 from ._protocol import Protocol as _Protocol
 
@@ -125,13 +125,13 @@ class _FreeEnergyMixin(_Protocol):
         '''Check if the dataframe or series has the right column name.'''
         permitted_names = ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
                            'temperature']
-        if isinstance(df, pd.Series):
+        if isinstance(df, _pd.Series):
             for name in df.index:
                 if not name in permitted_names:
                     warnings.warn(f'{name} not in the list of permitted names, '
                                   f'so may not be supported by the MD Engine '
                                   f'({" ".join(permitted_names)}).')
-        elif isinstance(df, pd.DataFrame):
+        elif isinstance(df, _pd.DataFrame):
             for name in df.columns:
                 if not name in permitted_names:
                     warnings.warn(f'{name} not in the list of permitted names, '
@@ -216,10 +216,10 @@ class _FreeEnergyMixin(_Protocol):
                The perturbation parameter: [0.0, 1.0]
 
         """
-        if not isinstance(lam, pd.Series):
+        if not isinstance(lam, _pd.Series):
             # For pandas < 1.4, TypeError won't be raised if the type cannot
             # be converted to float
-            lam = pd.Series(data={'fep': lam}, dtype=float)
+            lam = _pd.Series(data={'fep': lam}, dtype=float)
         else:
             self._check_column_name(lam)
 
@@ -256,10 +256,10 @@ class _FreeEnergyMixin(_Protocol):
         """
         # A list of lambda values takes precedence.
         if lam_vals is not None:
-            if not isinstance(lam_vals, pd.DataFrame):
+            if not isinstance(lam_vals, _pd.DataFrame):
                 # For pandas < 1.4, TypeError won't be raised if the type
                 # cannot be converted to float
-                lam_vals = pd.DataFrame(data={'fep': lam_vals},
+                lam_vals = _pd.DataFrame(data={'fep': lam_vals},
                                             dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
@@ -281,17 +281,17 @@ class _FreeEnergyMixin(_Protocol):
 
         else:
             # Convert int to float.
-            if not isinstance(min_lam, pd.Series):
+            if not isinstance(min_lam, _pd.Series):
                 # For pandas < 1.4, TypeError won't be raised if the type cannot
                 # be converted to float
-                min_lam = pd.Series(data={'fep': min_lam}, dtype=float)
+                min_lam = _pd.Series(data={'fep': min_lam}, dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
 
-            if not isinstance(max_lam, pd.Series):
+            if not isinstance(max_lam, _pd.Series):
                 # For pandas < 1.4, TypeError won't be raised if the type cannot
                 # be converted to float
-                max_lam = pd.Series(data={'fep': max_lam}, dtype=float)
+                max_lam = _pd.Series(data={'fep': max_lam}, dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
 
@@ -315,8 +315,8 @@ class _FreeEnergyMixin(_Protocol):
                 raise ValueError("'min_lam' must be less than 'max_lam'!")
 
             # Set values.
-            lambda_vals = pd.DataFrame(
-                data=np.linspace(min_lam, max_lam, num_lam),
+            lambda_vals = _pd.DataFrame(
+                data=_np.linspace(min_lam, max_lam, num_lam),
                 columns=min_lam.index)
 
             lam_vals = lambda_vals.round(5)

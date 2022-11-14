@@ -4,11 +4,7 @@ import pytest
 import pandas as pd
 import numpy as np
 import bz2
-try:
-    from alchemlyb.parsing.gmx import extract_u_nk
-    is_alchemlyb = True
-except ModuleNotFoundError:
-    is_alchemlyb = False
+from alchemlyb.parsing.gmx import extract_u_nk
 
 try:
     from alchemtest.gmx import load_ABFE
@@ -52,7 +48,6 @@ class Test_gmx_ABFE():
         for i in range(5):
             assert (path / f'lambda_{i}' / 'gromacs.xvg').is_file()
 
-    @pytest.mark.skipif(is_alchemlyb is False, reason='Need alchemlyb.')
     def test_lambda(self, freenrg):
         '''Test if the xvg files contain the correct lambda.'''
         path = pathlib.Path(freenrg._work_dir)
@@ -63,7 +58,7 @@ class Test_gmx_ABFE():
             assert np.isclose(u_nk.index.values[0][1], coul)
             assert np.isclose(u_nk.index.values[0][2], vdw)
 
-@pytest.mark.skipif((is_alchemtest and is_alchemlyb) is False,
+@pytest.mark.skipif(is_alchemtest is False,
                     reason="Requires alchemtest and alchemlyb to be installed.")
 class TestRelativeAnalysis():
     @staticmethod

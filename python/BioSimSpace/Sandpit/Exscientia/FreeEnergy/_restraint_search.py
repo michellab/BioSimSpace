@@ -34,31 +34,6 @@ import os as _os
 import tempfile as _tempfile
 import warnings as _warnings
 
-try:
-    import alchemlyb as _alchemlyb
-    from alchemlyb.postprocessors.units import R_kJmol, kJ2kcal
-    from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-    from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
-    from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
-    from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
-    from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-    from alchemlyb.estimators import TI as _TI
-    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-    is_alchemlyb = True
-except:
-    print('Please install alchemlyb via pip for analysis using it.')
-    is_alchemlyb = False
-
-try:
-    import MDRestraintsGenerator
-    from MDRestraintsGenerator import search as _search
-    from MDRestraintsGenerator.restraints import FindBoreschRestraint as _FindBoreschRestraint
-    is_MDRestraintsGenerator = True
-except:
-    print('Please install MDRestraintsGenerator for analysis using it.')
-    is_MDRestraintsGenerator = False
-
 import numpy as _np
 import MDAnalysis as _mda 
 from MDAnalysis.analysis.distances import dist as _dist
@@ -78,18 +53,27 @@ from ..Trajectory._trajectory import Trajectory as _Trajectory
 from .. import Process as _Process
 from .. import Protocol as _Protocol
 from ..Types import Temperature as _Temperature
+from ..Types import Length as _Length
 from .. import Units as _Units
 from ..Units.Length import angstrom as _angstrom
 from ..Units.Angle import radian as _radian
 from ..Units.Angle import degree as _degree
 from ..Units.Energy import kcal_per_mol as _kcal_per_mol
+from .._Utils import _try_import, _have_imported
+from .... import _isVerbose
 
 from ..MD._md import _find_md_engines
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
-from ._restraint import Restraint
+_MDRestraintsGenerator = _try_import("MDRestraintsGenerator",
+                                     install_command='pip install MDRestraintsGenerator')
+if _have_imported(_MDRestraintsGenerator):
+    from MDRestraintsGenerator import search as _search
+    from MDRestraintsGenerator.restraints import FindBoreschRestraint as _FindBoreschRestraint
+
+from ._restraint import Restraint as _Restraint
 
 # Check that the analyse_freenrg script exists.
 if _sys.platform != "win32":
@@ -178,8 +162,19 @@ class RestraintSearch():
         else:
             self._protocol = _Protocol.Production()
 
-        self._extra_options = extra_options if extra_options is not None else {}
-        self._extra_lines = extra_lines if extra_lines is not None else []
+        if extra_options is None:
+            self._extra_options = {}
+        elif not isinstance(extra_options, dict):
+            raise ValueError("'extra_options' should be a dict.")
+        else:
+            self._extra_options = extra_options
+
+        if extra_lines is None:
+            self._extra_lines = []
+        elif not isinstance(extra_lines, list):
+            raise ValueError("'extra_lines' should be a list.")
+        else:
+            self._extra_lines = extra_lines
 
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
@@ -283,11 +278,11 @@ class RestraintSearch():
         """
         return self._work_dir
 
-    def _analyse(self, rest_type='Boresch',
+    def _analyse(self, restraint_type='Boresch',
                 method='MDRestraintsGenerator',
-                append_to_lig_selection="",
-                recept_selection_str='protein and name CA C N',
-                cutoff=10, # In Angstrom
+                append_to_ligand_selection="",
+                receptor_selection_str='protein and name CA C N',
+                cutoff=10 * _angstrom, # In Angstrom
                 block='AUTO'):
         """Analyse trajectory and select restraints which best mimic strongest
         receptor-ligand interactions.
@@ -295,7 +290,7 @@ class RestraintSearch():
            Parameters
            ----------
 
-           rest_type: str
+           restraint_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is 'Boresch'.
 
@@ -303,21 +298,22 @@ class RestraintSearch():
                The method to use to derive the restraints. Currently only 'MDRestraintsGenerator'
                is supported.
 
-           append_to_lig_selection: str
+           append_to_ligand_selection: str
                Appends the supplied string to the default atom selection which chooses
                the atoms in the ligand to consider as potential anchor points. The default
                atom selection is f'resname {ligand_resname} and not name H*'. Uses the
                mdanalysis atom selection language. For example, 'not name O*' will result
                in an atom selection of f'resname {ligand_resname} and not name H* and not
-               name O*'.
+               name O*'. The f'{ligand_resname}' comes from the residue name of the
+               decoupled molecule.
 
-           recept_selection_str: str
+           receptor_selection_str: str
                The selection string for the atoms in the receptor to consider
                as potential anchor points. The default atom selection is
                'protein and name CA C N'. Uses the mdanalysis atom selection
                language.
 
-           cutoff: float
+           cutoff: BioSimSpace.Types.Length
                The greatest distance between ligand and receptor anchor atoms, in
                Angstrom. Receptor anchors further than cutoff Angstroms from the closest
                ligand anchors will not be included in the search for potential anchor points.
@@ -329,7 +325,7 @@ class RestraintSearch():
            -------
 
            restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
-               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               The restraints of `restraint_type` which best mimic the strongest receptor-ligand
                interactions.
         """
         # Wait for the process to finish.
@@ -341,10 +337,10 @@ class RestraintSearch():
         return RestraintSearch.analyse(self._work_dir, self._system,
                 self._process.getTrajectory(),
                 self._protocol.getTemperature(),
-                rest_type=rest_type,
+                restraint_type=restraint_type,
                 method=method,
-                append_to_lig_selection=append_to_lig_selection,
-                recept_selection_str=recept_selection_str,
+                append_to_ligand_selection=append_to_ligand_selection,
+                receptor_selection_str=receptor_selection_str,
                 cutoff=cutoff)
 
     def _initialise_process(self, system, gpu_support, **kwargs):
@@ -401,11 +397,11 @@ class RestraintSearch():
 
 
     @staticmethod
-    def analyse(work_dir, system, traj, temperature, rest_type='Boresch',
+    def analyse(work_dir, system, traj, temperature, restraint_type='Boresch',
                 method='MDRestraintsGenerator',
-                append_to_lig_selection="",
-                recept_selection_str='protein and name CA C N',
-                cutoff=10): # In Angstrom
+                append_to_ligand_selection="",
+                receptor_selection_str='protein and name CA C N',
+                cutoff=10 * _angstrom): # In Angstrom
         """Analyse existing trajectory from a simulation working directory and
         select restraints which best mimic the strongest receptor-ligand
         interactions.
@@ -427,7 +423,7 @@ class RestraintSearch():
            temperature : :class:`System <BioSimSpace.Types.Temperature>`
                The temperature of the system
 
-           rest_type: str
+           restraint_type: str
                The type of restraints to select (currently only Boresch is available).
                Default is ``Boresch``.
            
@@ -435,7 +431,7 @@ class RestraintSearch():
                 The method to use to derive the restraints. 'BSS' or 'MDRestraintsGenerator'. 
                 BSS uses the native BioSimSpace derivation.
 
-           append_to_lig_selection: str
+           append_to_ligand_selection: str
                Appends the supplied string to the default atom selection which chooses
                the atoms in the ligand to consider as potential anchor points. The default
                atom selection is f'resname {ligand_resname} and not name H*'. Uses the
@@ -443,13 +439,13 @@ class RestraintSearch():
                in an atom selection of f'resname {ligand_resname} and not name H* and not 
                name O*'.
 
-           recept_selection_str: str
+           receptor_selection_str: str
                The selection string for the atoms in the receptor to consider
                as potential anchor points. The default atom selection is
                'protein and name CA C N'. Uses the mdanalysis atom selection
                language.
 
-           cutoff: float
+           cutoff: BioSimSpace.Types.Length
                The greatest distance between ligand and receptor anchor atoms, in
                Angstrom. Receptor anchors further than cutoff Angstroms from the closest
                ligand anchors will not be included in the search for potential anchor points.
@@ -458,7 +454,7 @@ class RestraintSearch():
            -------
 
            restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
-               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               The restraints of `restraint_type` which best mimic the strongest receptor-ligand
                interactions.
 
         """
@@ -482,9 +478,9 @@ class RestraintSearch():
             raise ValueError(
                 f"temperature {type(temperature)} must be of type 'BioSimSpace.Types.Temperature'")
 
-        if not isinstance(rest_type, str):
-            raise TypeError(f"rest_type {type(rest_type)} must be of type 'str'.")
-        if not rest_type.lower() == 'boresch':
+        if not isinstance(restraint_type, str):
+            raise TypeError(f"restraint_type {type(restraint_type)} must be of type 'str'.")
+        if not restraint_type.lower() == 'boresch':
             raise NotImplementedError("Only Boresch restraints are currently implemented")
         
         if not isinstance(method, str):
@@ -493,14 +489,14 @@ class RestraintSearch():
             raise NotImplementedError("Deriving restraints using 'MDRestraintsGenerator'"
                                       "or 'BSS' are the only options implemented.")
                             
-        if not isinstance(append_to_lig_selection, str):
-            raise TypeError(f"append_to_lig_selection {type(append_to_lig_selection)} must be of type 'str'.")
+        if not isinstance(append_to_ligand_selection, str):
+            raise TypeError(f"append_to_ligand_selection {type(append_to_ligand_selection)} must be of type 'str'.")
 
-        if not isinstance(recept_selection_str, str):
-            raise TypeError(f"append_to_recept_selection {type(recept_selection_str)} must be of type 'str'.")
+        if not isinstance(receptor_selection_str, str):
+            raise TypeError(f"append_to_recept_selection {type(receptor_selection_str)} must be of type 'str'.")
         
-        if not isinstance(cutoff, (int, float)):
-            raise TypeError(f"cutoff {type(cutoff)} must be of type 'int' or 'float'.")
+        if not isinstance(cutoff, _Length):
+            raise TypeError(f"cutoff {type(cutoff)} must be of type 'BioSimSpace.Types.Length'.")
         
         # There must be a single molecule to be decoupled (or annihilated).
         if system.nDecoupledMolecules() != 1:
@@ -516,19 +512,19 @@ class RestraintSearch():
         decoupled_mol = _system.getDecoupledMolecules()[0]
         decoupled_resname = decoupled_mol.getResidues()[0].name()
 
-        lig_selection_str = f'((resname {decoupled_resname}) and (not name H*))'
-        if append_to_lig_selection:
-            lig_selection_str += ' and '
-            lig_selection_str += append_to_lig_selection
+        ligand_selection_str = f'((resname {decoupled_resname}) and (not name H*))'
+        if append_to_ligand_selection:
+            ligand_selection_str += ' and '
+            ligand_selection_str += append_to_ligand_selection
 
-        if rest_type.lower() == 'boresch':
+        if restraint_type.lower() == 'boresch':
             return RestraintSearch._boresch_restraint(
-                u, system, temperature, lig_selection_str,
-                recept_selection_str, method, work_dir, cutoff)
+                u, system, temperature, ligand_selection_str,
+                receptor_selection_str, method, work_dir, cutoff)
 
     @staticmethod
-    def _boresch_restraint(u, system, temperature, lig_selection_str,
-                           recept_selection_str, method, work_dir, cutoff):
+    def _boresch_restraint(u, system, temperature, ligand_selection_str,
+                           receptor_selection_str, method, work_dir, cutoff):
         """Generate the Boresch Restraint.
 
            Parameters
@@ -546,11 +542,11 @@ class RestraintSearch():
            temperature : :class:`System <BioSimSpace.Types.Temperature>`
                The temperature of the system
 
-           lig_selection_str: str
+           ligand_selection_str: str
                The selection string for the atoms in the ligand to consider
                as potential anchor points.
 
-           recept_selection_str: str
+           receptor_selection_str: str
                The selection string for the atoms in the receptor to consider
                as potential anchor points. Uses the mdanalysis atom selection
                language.
@@ -562,7 +558,7 @@ class RestraintSearch():
            work_dir : str
                The working directory for the simulation.
 
-           cutoff: float
+           cutoff: BioSimSpace.Types.Length
                The greatest distance between ligand and receptor anchor atoms, in
                Angstrom. Receptor anchors further than cutoff Angstroms from the closest
                ligand anchors will not be included in the search for potential anchor points.
@@ -571,26 +567,35 @@ class RestraintSearch():
            -------
 
            restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
-               The restraints of `rest_type` which best mimic the strongest receptor-ligand
+               The restraints of `restraint_type` which best mimic the strongest receptor-ligand
                interactions.
 
         """
         if method == "MDRestraintsGenerator":
-            if is_MDRestraintsGenerator:
-                return RestraintSearch._boresch_restraint_MDRestraintsGenerator(
-                    u, system, temperature, lig_selection_str,
-                    recept_selection_str, work_dir)
+            if _have_imported(_MDRestraintsGenerator):
+                try:
+                    return RestraintSearch._boresch_restraint_MDRestraintsGenerator(
+                        u, system, temperature, ligand_selection_str,
+                        receptor_selection_str, work_dir)
+                except Exception as e:
+                    msg = "Failed to generate the restraint using MDRestraintsGenerator."
+                    if _isVerbose():
+                        msg += ": " + getattr(e, "message", repr(e))
+                        raise IOError(msg) from e
+                    else:
+                        raise IOError(msg) from None
+
             else:
                 raise ImportError('MDRestraintsGenerator not available.')
         # No need to review this part as Finlay is still working on it.
         elif method == "BSS":
             return RestraintSearch._boresch_restraint_BSS(
-                u, system, temperature, lig_selection_str,
-                recept_selection_str, work_dir, cutoff)
+                u, system, temperature, ligand_selection_str,
+                receptor_selection_str, work_dir, cutoff)
 
     @staticmethod
-    def _boresch_restraint_MDRestraintsGenerator(u, system, temperature, lig_selection_str,
-                           recept_selection_str, work_dir):
+    def _boresch_restraint_MDRestraintsGenerator(u, system, temperature, ligand_selection_str,
+                           receptor_selection_str, work_dir):
         """Generate the Boresch Restraint using MDRestraintsGenerator.
 
        Parameters
@@ -608,11 +613,11 @@ class RestraintSearch():
        temperature : :class:`System <BioSimSpace.Types.Temperature>`
            The temperature of the system
 
-       lig_selection_str: str
+       ligand_selection_str: str
            The selection string for the atoms in the ligand to consider
            as potential anchor points.
 
-       recept_selection_str: str
+       receptor_selection_str: str
            The selection string for the protein in the ligand to consider
            as potential anchor points.
 
@@ -623,20 +628,20 @@ class RestraintSearch():
        -------
 
        restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
-           The restraints of `rest_type` which best mimic the strongest receptor-ligand
+           The restraints of `restraint_type` which best mimic the strongest receptor-ligand
            interactions.
         """
         ligand_atoms = _search.find_ligand_atoms(
             u,
-            l_selection=lig_selection_str,
-            p_align=recept_selection_str)
+            l_selection=ligand_selection_str,
+            p_align=receptor_selection_str)
         # find protein atoms
         atom_set = []
         for l_atoms in ligand_atoms:
             psearch = _search.FindHostAtoms(
                 u,
                 l_atoms[0],
-                p_selection=recept_selection_str)
+                p_selection=receptor_selection_str)
             psearch.run()
             atom_set.extend(
                 [(l_atoms, p) for p in psearch.host_atoms])
@@ -713,14 +718,14 @@ class RestraintSearch():
         # Waiting for the BSS to fix the getFrames
         # best_frame = traj.getFrames(index)
         best_frame = system
-        restraint = Restraint(best_frame, restraint_dict,
+        restraint = _Restraint(best_frame, restraint_dict,
                               temperature,
-                              rest_type='Boresch')
+                              restraint_type='Boresch')
         return restraint
 
     @staticmethod
-    def _boresch_restraint_BSS(u, system, temperature, lig_selection_str,
-                           recept_selection_str, work_dir, cutoff):
+    def _boresch_restraint_BSS(u, system, temperature, ligand_selection_str,
+                           receptor_selection_str, work_dir, cutoff):
         """Generate the Boresch Restraint.
 
        Parameters
@@ -738,11 +743,11 @@ class RestraintSearch():
        temperature : :class:`System <BioSimSpace.Types.Temperature>`
            The temperature of the system
 
-       lig_selection_str: str
+       ligand_selection_str: str
            The selection string for the atoms in the ligand to consider
            as potential anchor points.
 
-       recept_selection_str: str
+       receptor_selection_str: str
            The selection string for the protein in the ligand to consider
            as potential anchor points.
 
@@ -758,12 +763,12 @@ class RestraintSearch():
        -------
 
        restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
-           The restraints of `rest_type` which best mimic the strongest receptor-ligand
+           The restraints of `restraint_type` which best mimic the strongest receptor-ligand
            interactions.
         """
         # Please don't review this part yet as Finlay is working on it.
         # TODO Tidy this up and improve. Change algorithm to fit to match that discussed.
-        lig_selection = u.select_atoms(lig_selection_str)
+        lig_selection = u.select_atoms(ligand_selection_str)
 
         # anchors dict of dict. For each ligand heavy atom there is a dictionary of protein heavy atoms,
         # for each of which there is a dictionary of average distances and standard deviation
@@ -771,7 +776,7 @@ class RestraintSearch():
         anchors_dict = {}
         for lig_atom in lig_selection:
             for prot_atom in u.select_atoms(
-                    f"{recept_selection_str} and (around {cutoff} index {lig_atom.index})"):
+                    f"{receptor_selection_str} and (around {cutoff} index {lig_atom.index})"):
                 anchors_dict[(lig_atom.index, prot_atom.index)] = {}
                 anchors_dict[(lig_atom.index, prot_atom.index)]["dists"] = []
 
@@ -1105,7 +1110,7 @@ class RestraintSearch():
                                     "kphiC": kphiC * _kcal_per_mol / (
                                                 _radian * _radian)}}
 
-            return Restraint(system, restraint_dict, type='Boresch')
+            return _Restraint(system, restraint_dict, type='Boresch')
 
         restraint = getBoreschRestraint(selected_pairs_boresch[0])
         normal_frame = None
