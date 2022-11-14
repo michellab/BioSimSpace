@@ -56,7 +56,7 @@ jobs:
           use-mamba: true
 #
       - name: Use HTTPS git protocol
-        run: git config --global url."https://github.com/".insteadOf 'git@github.com:'
+        run: git config --global url."https://github".insteadOf git://github
 #
       - name: Clone the devel branch (push to devel)
         run: git clone ${{ github.repositoryUrl }}
