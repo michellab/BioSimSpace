@@ -42,7 +42,7 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
-from ..Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _try_import, _have_imported, _assert_imported
 
 # alchemlyb isn't available on all variants of Python that we support, so we
 # need to try_import it.
