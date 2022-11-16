@@ -1166,6 +1166,7 @@ class Relative():
         # For the older gromacs versions and native use the gmx bar analysis.
         elif method == "native":
             _warnings.warn("using 'native' for GROMACS does not return an overlap/dHdl.")
+            _warnings.warn("using 'native' for GROMACS uses BAR.")
             # Create the command.
             command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (
                 _gmx_exe, work_dir, work_dir)
@@ -1548,7 +1549,7 @@ class Relative():
         return Relative.checkOverlap(overlap, estimator=self._estimator)
 
     @staticmethod
-    def plot(overlap_dhdl, estimator=None, work_dir=None):
+    def plot(overlap_dhdl, estimator=None, work_dir=None, file_name=None):
         """Plot either the overlap or the dhdl of the transformation. 
 
            Parameters
@@ -1565,6 +1566,10 @@ class Relative():
                The working directory for the free-energy perturbation simulation.
                If this is specified, the plot will be saved there.
 
+           file_name : str
+               The name for the saved file.
+               If this is None, the file name will be either "overlap_MBAR.png" or "dHdl_TI.png".
+
            Returns
            -------
            the plot : matplotlib.axes._subplots.AxesSubplot
@@ -1578,7 +1583,7 @@ class Relative():
                 raise ValueError("'work_dir' doesn't exist!")
         else:
             pass
-      
+
         # estimator must be MBAR for overlap matrix or TI for dhdl plot.
         if estimator not in ['MBAR', 'TI', None]:
             raise ValueError("'estimator' must be 'MBAR' or 'TI'. If 'None, data type will be inferred.")
@@ -1591,6 +1596,15 @@ class Relative():
             else:
                 raise TypeError("Data type for estimator = 'None' could not be inferred / does not match allowed data types.")
 
+        if file_name:
+            if not isinstance(file_name, str):
+                raise TypeError("'file_name' must be of type 'str'.")
+        else:
+            if estimator == "MBAR":
+                file_name = "overlap_MBAR"
+            elif estimator == "TI":
+                file_name = "dHdl_TI"
+
         if estimator == "MBAR":
             if not isinstance(overlap_dhdl, _np.matrix):
                         raise TypeError("'overlap' must be of type 'numpy.matrix' for 'MBAR'.\
@@ -1602,7 +1616,7 @@ class Relative():
 
             if work_dir is not None:
                 ax.figure.savefig(
-                    f"{work_dir}/overlap_MBAR.png", bbox_inches='tight', pad_inches=0.0)      
+                    f"{work_dir}/{file_name}.png", bbox_inches='tight', pad_inches=0.0)      
 
         elif estimator == 'TI':
             if not isinstance(overlap_dhdl, _alchemlyb.estimators.ti_.TI):
@@ -1615,7 +1629,7 @@ class Relative():
             
             if work_dir is not None:
                 ax.figure.savefig(
-                    f"{work_dir}/dHdl_TI.png")
+                    f"{work_dir}/{file_name}.png")
             
         return(ax)
 
