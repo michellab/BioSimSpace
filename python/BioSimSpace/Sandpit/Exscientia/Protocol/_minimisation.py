@@ -31,12 +31,18 @@ __all__ = ["Minimisation"]
 import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
+from ._protocol import _PositionRestrain
 
 
-class Minimisation(_Protocol):
+class Minimisation(_Protocol, _PositionRestrain):
     """A class for storing minimisation protocols."""
 
-    def __init__(self, steps=10000):
+    def __init__(
+        self,
+        steps=10000,
+        restraint=None,
+        force_constant=None,
+    ):
         """Constructor.
 
         Parameters
@@ -47,7 +53,8 @@ class Minimisation(_Protocol):
         """
 
         # Call the base class constructor.
-        super().__init__()
+        _Protocol.__init__(self)
+        _PositionRestrain.__init__(self, restraint, force_constant)
 
         # Set the number of steps.
         self.setSteps(steps)
