@@ -34,7 +34,7 @@ import warnings as _warnings
 from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
-from . import _PositionRestrain
+from ._position_restraint import _PositionRestrain
 
 
 class Production(_Protocol, _PositionRestrain):
@@ -105,7 +105,7 @@ class Production(_Protocol, _PositionRestrain):
         """
 
         # Call the base class constructor.
-        super().__init__()
+        _Protocol.__init__(self)
 
         # Set the time step.
         self.setTimeStep(timestep)

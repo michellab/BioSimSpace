@@ -35,7 +35,7 @@ from .. import Types as _Types
 from .. import Units as _Units
 
 from ._protocol import Protocol as _Protocol
-from . import _PositionRestrain
+from ._position_restraint import _PositionRestrain
 
 
 class Equilibration(_Protocol, _PositionRestrain):
@@ -116,7 +116,7 @@ class Equilibration(_Protocol, _PositionRestrain):
         """
 
         # Call the base class constructor.
-        super().__init__()
+        _Protocol.__init__(self)
 
         # Set the time step.
         self.setTimeStep(timestep)

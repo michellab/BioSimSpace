@@ -31,7 +31,7 @@ __all__ = ["Minimisation"]
 import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
-from . import _PositionRestrain
+from ._position_restraint import _PositionRestrain
 
 
 class Minimisation(_Protocol, _PositionRestrain):

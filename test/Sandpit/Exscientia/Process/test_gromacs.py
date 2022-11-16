@@ -2,7 +2,7 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
-from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
+from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol, kj_per_mol
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
@@ -26,6 +26,7 @@ def test_minimise(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_equilibrate(system):
     """Test an equilibration protocol."""
@@ -36,29 +37,38 @@ def test_equilibrate(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_heat(system):
     """Test a heating protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(0, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(300, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(0, "kelvin"),
+        temperature_end=BSS.Types.Temperature(300, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_cool(system):
     """Test a cooling protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(300, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(0, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(300, "kelvin"),
+        temperature_end=BSS.Types.Temperature(0, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
-    assert run_process(system, protocol, extra_options={'verlet-buffer-tolerance': '2e-07'})
+    assert run_process(
+        system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"}
+    )
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_production(system):
@@ -69,6 +79,7 @@ def test_production(system):
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_vacuum_water(system):
@@ -84,6 +95,7 @@ def test_vacuum_water(system):
     # Run the process and check that it finishes without error.
     assert run_process(new_system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.parametrize("restraint", ["backbone", "heavy"])
 def test_restraints(restraint):
@@ -94,7 +106,7 @@ def test_restraints(restraint):
         "test/Sandpit/Exscientia/input/morphs/complex_vac0.prm7",
         "test/Sandpit/Exscientia/input/morphs/complex_vac0.rst7",
         "test/Sandpit/Exscientia/input/morphs/complex_vac1.prm7",
-        "test/Sandpit/Exscientia/input/morphs/complex_vac1.rst7"
+        "test/Sandpit/Exscientia/input/morphs/complex_vac1.rst7",
     )
 
     # Create an equilibration protocol with backbone restraints.
@@ -107,42 +119,51 @@ def test_restraints(restraint):
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
     correctly."""
-    ligand = ligand = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*")).getMolecule(0)
+    ligand = ligand = BSS.IO.readMolecules(
+        BSS.IO.glob("test/input/ligands/ligand01*")
+    ).getMolecule(0)
     decoupled_ligand = decouple(ligand)
     l1 = decoupled_ligand.getAtoms()[0]
     l2 = decoupled_ligand.getAtoms()[1]
     l3 = decoupled_ligand.getAtoms()[2]
-    ligand_2 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand04*")).getMolecule(0)
+    ligand_2 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/input/ligands/ligand04*")
+    ).getMolecule(0)
     r1 = ligand_2.getAtoms()[0]
     r2 = ligand_2.getAtoms()[1]
     r3 = ligand_2.getAtoms()[2]
-    system = (decoupled_ligand+ligand_2).toSystem()
+    system = (decoupled_ligand + ligand_2).toSystem()
 
     restraint_dict = {
-        "anchor_points":{"r1":r1, "r2":r2, "r3":r3,
-                         "l1":l1, "l2":l2, "l3":l3},
-        "equilibrium_values":{"r0":7.84 * angstrom,
-                              "thetaA0":0.81 * radian,
-                              "thetaB0":1.74 * radian,
-                              "phiA0":2.59 * radian,
-                              "phiB0":-1.20 * radian,
-                              "phiC0":2.63 * radian},
-        "force_constants":{"kr":10 * kcal_per_mol / angstrom ** 2,
-                           "kthetaA":10 * kcal_per_mol / (radian * radian),
-                           "kthetaB":10 * kcal_per_mol / (radian * radian),
-                           "kphiA":10 * kcal_per_mol / (radian * radian),
-                           "kphiB":10 * kcal_per_mol / (radian * radian),
-                           "kphiC":10 * kcal_per_mol / (radian * radian)}}
-    restraint = Restraint(system, restraint_dict, 300 * kelvin, restraint_type='Boresch')
+        "anchor_points": {"r1": r1, "r2": r2, "r3": r3, "l1": l1, "l2": l2, "l3": l3},
+        "equilibrium_values": {
+            "r0": 7.84 * angstrom,
+            "thetaA0": 0.81 * radian,
+            "thetaB0": 1.74 * radian,
+            "phiA0": 2.59 * radian,
+            "phiB0": -1.20 * radian,
+            "phiC0": 2.63 * radian,
+        },
+        "force_constants": {
+            "kr": 10 * kcal_per_mol / angstrom**2,
+            "kthetaA": 10 * kcal_per_mol / (radian * radian),
+            "kthetaB": 10 * kcal_per_mol / (radian * radian),
+            "kphiA": 10 * kcal_per_mol / (radian * radian),
+            "kphiB": 10 * kcal_per_mol / (radian * radian),
+            "kphiC": 10 * kcal_per_mol / (radian * radian),
+        },
+    }
+    restraint = Restraint(
+        system, restraint_dict, 300 * kelvin, restraint_type="Boresch"
+    )
 
     # Create a short production protocol.
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.0001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(system, protocol, restraint=restraint,
-                       work_dir=str(tmp_path))
-    with open(tmp_path / 'test.top', 'r') as f:
-        assert 'intermolecular_interactions' in f.read()
+    assert run_process(system, protocol, restraint=restraint, work_dir=str(tmp_path))
+    with open(tmp_path / "test.top", "r") as f:
+        assert "intermolecular_interactions" in f.read()
 
 
 def run_process(system, protocol, **kwargs):
@@ -163,3 +184,46 @@ def run_process(system, protocol, **kwargs):
 
     # Return the process exit code.
     return not process.isError()
+
+
+class TestPositionRestrain:
+    @staticmethod
+    @pytest.fixture
+    def restraint():
+        return {
+            "restraint": "backbone",
+            "force_constant": 1000 * kj_per_mol / angstrom**2,
+        }
+
+    @staticmethod
+    @pytest.fixture
+    def Minimisation(restraint):
+        return BSS.Protocol.Minimisation(steps=100, **restraint)
+
+    @staticmethod
+    @pytest.fixture
+    def Equilibration(restraint):
+        return BSS.Protocol.Equilibration(
+            runtime=BSS.Types.Time(0.001, "nanoseconds"),
+            temperature_start=BSS.Types.Temperature(300, "kelvin"),
+            temperature_end=BSS.Types.Temperature(0, "kelvin"),
+            **restraint,
+        )
+
+    @staticmethod
+    @pytest.fixture
+    def Production(restraint):
+        return BSS.Protocol.Production(
+            runtime=BSS.Types.Time(0.001, "nanoseconds"), **restraint
+        )
+
+    @staticmethod
+    @pytest.fixture(params=["Minimisation", "Equilibration", "Production"])
+    def protocol(request):
+        return request.getfixturevalue(request.param)
+
+    def test_posre_itp(self, protocol, system, tmp_path):
+        process = BSS.Process.Gromacs(system, protocol, work_dir=str(tmp_path))
+        assert (tmp_path / "posre_0001.itp").is_file()
+        with open(tmp_path / "gromacs.top", "r") as f:
+            assert "posre_0001.itp" in f.read()

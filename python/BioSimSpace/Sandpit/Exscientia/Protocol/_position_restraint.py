@@ -7,7 +7,7 @@ from .. import Units as _Units
 from ._protocol import Protocol as _Protocol
 
 
-class _PositionRestrain(_Protocol):
+class _PositionRestrain:
     """A class for storing position restrain."""
 
     # Supported restraint keywords.
@@ -45,10 +45,6 @@ class _PositionRestrain(_Protocol):
             be used.
 
         """
-
-        # Call the base class constructor.
-        super().__init__()
-
         # Set the restraint.
         if restraint is not None:
             self.setRestraint(restraint)
