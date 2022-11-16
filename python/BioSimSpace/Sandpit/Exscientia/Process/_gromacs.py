@@ -294,7 +294,7 @@ class Gromacs(_process.Process):
                 seed = -1
             config_options["ld-seed"] = seed
 
-        if isinstance(self._protocol, _Protocol.Equilibration):
+        if isinstance(self._protocol, _Protocol._PositionRestrain):
             if self._checkpoint_file is not None:
                 config_options["continuation"] = "yes"
 

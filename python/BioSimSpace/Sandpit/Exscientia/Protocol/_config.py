@@ -268,7 +268,7 @@ class ConfigFactory:
             protocol_dict["iwrap"] = 1              # Wrap the coordinates.
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
+        if isinstance(self.protocol, _Protocol._PositionRestrain):
             # Restrain the backbone.
             restraint = self.protocol.getRestraint()
 
@@ -437,10 +437,6 @@ class ConfigFactory:
             protocol_dict["coulombtype"] = "Cut-off"                                # Plain cut-off.
         protocol_dict["vdwtype"] = "Cut-off"                                        # Twin-range van der Waals cut-off.
 
-        # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict["refcoord-scaling"] = "com"                               # The actual restraints need to be defined elsewhere.
-
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
@@ -464,8 +460,9 @@ class ConfigFactory:
                 if self.protocol.isConstantTemp():
                     temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
                     protocol_dict["ref-t"] = temp
-                    protocol_dict["gen-vel"] = "yes"
-                    protocol_dict["gen-temp"] = temp
+                    if not self.protocol.isRestart():
+                        protocol_dict["gen-vel"] = "yes"
+                        protocol_dict["gen-temp"] = temp
                 else:
                     #still need a reference temperature for each group, even when heating/cooling
                     protocol_dict["ref-t"] = "%.2f" % self.protocol.getEndTemperature().kelvin().value()

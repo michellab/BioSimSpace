@@ -58,31 +58,26 @@ class _PositionRestrain(_Protocol):
             self._restraint = None
             self._force_constant = None
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"restraint={self._restraint}, "
+            f"force_constant={self._force_constant / (_Units.Energy.kcal_per_mol / _Units.Area.angstrom2)} kcal_per_mol/angstrom**2"
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol._PositionRestrain: restraint=%r, force_constant=%3.2f kcal_per_mol/angstrom**2>"
-            ) % (
-                self._restraint,
-                self._force_constant
-                / (_Units.Energy.kcal_per_mol / _Units.Area.angstrom2),
-            )
+            return f"<BioSimSpace.Protocol._PositionRestrain: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "<BioSimSpace.Protocol._PositionRestrain: restraint=%r, force_constant=%3.2f kcal_per_mol/angstrom**2>"
-            ) % (
-                self._restraint,
-                self._force_constant
-                / (_Units.Energy.kcal_per_mol / _Units.Area.angstrom2),
-            )
+            return f"BioSimSpace.Protocol._PositionRestrain({self._get_parm()})"
 
     def getRestraint(self):
         """Return the type of restraint..
