@@ -112,10 +112,9 @@ def run_process(system, protocol):
     # Wait for the process to end.
     process.wait()
 
-    print()
-    print(process.getProperEnergy(time_series=True))
-    print(process.getImproperEnergy(time_series=True))
-    print(process.getDihedralEnergy(time_series=True))
+    # Wait for the process to end.
+    system = process.getSystem(block=True)
+    assert system is not None
 
     # Return the process exit code.
     return not process.isError()
