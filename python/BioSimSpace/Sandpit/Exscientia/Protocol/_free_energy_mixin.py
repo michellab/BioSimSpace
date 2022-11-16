@@ -7,48 +7,50 @@ import pandas as _pd
 
 from ._protocol import Protocol as _Protocol
 
+
 class _FreeEnergyMixin(_Protocol):
     """A mixin for storing free energy protocols."""
 
-    def __init__(self,
-                 lam=0.0,
-                 lam_vals=None,
-                 min_lam=0.0,
-                 max_lam=1.0,
-                 num_lam=11,
-                 perturbation_type="full"
-                ):
+    def __init__(
+        self,
+        lam=0.0,
+        lam_vals=None,
+        min_lam=0.0,
+        max_lam=1.0,
+        num_lam=11,
+        perturbation_type="full",
+    ):
         """Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           lam : float or pandas.Series
-               The perturbation parameter: [0.0, 1.0]
+        lam : float or pandas.Series
+            The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [float] or pandas.DataFrame
-               A list of lambda values.
+        lam_vals : [float] or pandas.DataFrame
+            A list of lambda values.
 
-           min_lam : float or pandas.Series
-               The minimum lambda value.
+        min_lam : float or pandas.Series
+            The minimum lambda value.
 
-           max_lam : float or pandas.Series
-               The maximum lambda value.
+        max_lam : float or pandas.Series
+            The maximum lambda value.
 
-           num_lam : int
-               The number of lambda values.
+        num_lam : int
+            The number of lambda values.
 
-           perturbation_type : str
-               The type of perturbation to perform. Options are:
-                "full" : A full perturbation of all terms (default option).
-                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
-                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-                "flip" : Perturb all hard atom terms as well as bonds/angles.
-                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
-                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+             "full" : A full perturbation of all terms (default option).
+             "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+             "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+             "flip" : Perturb all hard atom terms as well as bonds/angles.
+             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
 
-                Currently perturubation_type != "full" is only supported by
-                BioSimSpace.Process.Somd.
+             Currently perturubation_type != "full" is only supported by
+             BioSimSpace.Process.Somd.
         """
 
         # Call the base class constructor.
@@ -60,47 +62,52 @@ class _FreeEnergyMixin(_Protocol):
         # Set the perturbation type. Default is "full", i.e. onestep protocol.
         self.setPerturbationType(perturbation_type)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"lam={self._lambda.to_string()}, "
+            f"lam_vals={self._lambda_vals.to_string()}"
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-                   ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return ("<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-                    ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
     def getPerturbationType(self):
         """Get the perturbation type.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           perturbation_type : str
-               The perturbation type.
+        perturbation_type : str
+            The perturbation type.
         """
         return self._perturbation_type
 
     def setPerturbationType(self, perturbation_type):
         """Set the perturbation type.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           perturbation_type : str
-               The type of perturbation to perform. Options are:
-                "full" : A full perturbation of all terms (default option).
-                "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
-                "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-                "flip" : Perturb all hard atom terms as well as bonds/angles.
-                "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
-                "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+             "full" : A full perturbation of all terms (default option).
+             "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+             "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+             "flip" : Perturb all hard atom terms as well as bonds/angles.
+             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
         """
         if type(perturbation_type) is not str:
             raise TypeError("'perturbation_type' must be of type 'str'")
@@ -108,90 +115,108 @@ class _FreeEnergyMixin(_Protocol):
         # Convert to lower case and strip whitespace.
         perturbation_type = perturbation_type.lower().replace(" ", "")
 
-        allowed_perturbation_types = ["full",
-                                      "discharge_soft",
-                                      "vanish_soft",
-                                      "flip",
-                                      "grow_soft",
-                                      "charge_soft"]
+        allowed_perturbation_types = [
+            "full",
+            "discharge_soft",
+            "vanish_soft",
+            "flip",
+            "grow_soft",
+            "charge_soft",
+        ]
 
         if perturbation_type not in allowed_perturbation_types:
-            raise ValueError(f"'perturbation_type' must be one of: {allowed_perturbation_types}")
+            raise ValueError(
+                f"'perturbation_type' must be one of: {allowed_perturbation_types}"
+            )
 
         self._perturbation_type = perturbation_type
 
     @staticmethod
     def _check_column_name(df):
-        '''Check if the dataframe or series has the right column name.'''
-        permitted_names = ['fep', 'bonded', 'coul', 'vdw', 'restraint', 'mass',
-                           'temperature']
+        """Check if the dataframe or series has the right column name."""
+        permitted_names = [
+            "fep",
+            "bonded",
+            "coul",
+            "vdw",
+            "restraint",
+            "mass",
+            "temperature",
+        ]
         if isinstance(df, _pd.Series):
             for name in df.index:
                 if not name in permitted_names:
-                    warnings.warn(f'{name} not in the list of permitted names, '
-                                  f'so may not be supported by the MD Engine '
-                                  f'({" ".join(permitted_names)}).')
+                    warnings.warn(
+                        f"{name} not in the list of permitted names, "
+                        f"so may not be supported by the MD Engine "
+                        f'({" ".join(permitted_names)}).'
+                    )
         elif isinstance(df, _pd.DataFrame):
             for name in df.columns:
                 if not name in permitted_names:
-                    warnings.warn(f'{name} not in the list of permitted names, '
-                                  f'so may not be supported by the MD Engine '
-                                  f'({" ".join(permitted_names)}).')
+                    warnings.warn(
+                        f"{name} not in the list of permitted names, "
+                        f"so may not be supported by the MD Engine "
+                        f'({" ".join(permitted_names)}).'
+                    )
 
-    def getLambda(self, type='float'):
+    def getLambda(self, type="float"):
         """Get the value of the perturbation parameter.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           type : string
-               The type of lambda to be returned. ('float', 'series')
+        type : string
+            The type of lambda to be returned. ('float', 'series')
 
-           Returns
-           -------
+        Returns
+        -------
 
-           lam : float or pd.Series
-               The value of the perturbation parameter.
+        lam : float or pd.Series
+            The value of the perturbation parameter.
         """
-        if type.lower() == 'float':
+        if type.lower() == "float":
             if len(self._lambda) == 1:
                 return float(self._lambda)
             else:
                 warnings.warn(
-                    f'The {self._lambda} has more than one value, return as pd.Series.')
+                    f"The {self._lambda} has more than one value, return as pd.Series."
+                )
                 return self._lambda
-        elif type.lower() == 'series':
+        elif type.lower() == "series":
             return self._lambda
         else:
             raise ValueError(f"{type} could only be 'float' or 'series'.")
 
     def getLambdaIndex(self):
-        '''Get the index of the lambda value within the lambda array.
+        """Get the index of the lambda value within the lambda array.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           index : int
-               The index of the lambda value in teh lambda array.
-        '''
-        return self._lambda_vals.index[(self._lambda_vals==self._lambda).all(axis=1)].tolist()[0]
+        index : int
+            The index of the lambda value in teh lambda array.
+        """
+        return self._lambda_vals.index[
+            (self._lambda_vals == self._lambda).all(axis=1)
+        ].tolist()[0]
 
-    def getLambdaValues(self, type='list'):
+    def getLambdaValues(self, type="list"):
         """Get the lambda values.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           type : string
-               The type of lambda values to be returned. ('list', 'dataframe')
+        type : string
+            The type of lambda values to be returned. ('list', 'dataframe')
 
-           Returns
-           -------
+        Returns
+        -------
 
-           lam_vals : [float, ] or pd.DataFrame
-               The lambda values.
+        lam_vals : [float, ] or pd.DataFrame
+            The lambda values.
         """
-        if type.lower() == 'list':
+        if type.lower() == "list":
             lambda_list = self._lambda_vals.values.tolist()
             if len(lambda_list[0]) == 1:
                 # Ensure that return [float, ] when lambda_list only has one
@@ -199,9 +224,10 @@ class _FreeEnergyMixin(_Protocol):
                 return [lam[0] for lam in lambda_list]
             else:
                 warnings.warn(
-                    f'The {self._lambda_vals} has more than one column, return as pd.DataFrame.')
+                    f"The {self._lambda_vals} has more than one column, return as pd.DataFrame."
+                )
                 return self._lambda_vals
-        elif type.lower() == 'dataframe':
+        elif type.lower() == "dataframe":
             return self._lambda_vals
         else:
             raise ValueError(f"{type} could only be 'list' or 'dataframe'.")
@@ -209,17 +235,17 @@ class _FreeEnergyMixin(_Protocol):
     def setLambda(self, lam):
         """Set the current lambda.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           lam : float or pandas.Series
-               The perturbation parameter: [0.0, 1.0]
+        lam : float or pandas.Series
+            The perturbation parameter: [0.0, 1.0]
 
         """
         if not isinstance(lam, _pd.Series):
             # For pandas < 1.4, TypeError won't be raised if the type cannot
             # be converted to float
-            lam = _pd.Series(data={'fep': lam}, dtype=float)
+            lam = _pd.Series(data={"fep": lam}, dtype=float)
         else:
             self._check_column_name(lam)
 
@@ -233,25 +259,25 @@ class _FreeEnergyMixin(_Protocol):
     def checkLambdaValues(lam_vals, min_lam=None, max_lam=None, num_lam=None):
         """Sanity check of the list of lambda values.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           lam_vals : [float] or pandas.DataFrame
-               A list of lambda values.
+        lam_vals : [float] or pandas.DataFrame
+            A list of lambda values.
 
-           min_lam : float or pandas.Series
-               The minimum lambda value.
+        min_lam : float or pandas.Series
+            The minimum lambda value.
 
-           max_lam : float or pandas.Series
-               The maximum lambda value.
+        max_lam : float or pandas.Series
+            The maximum lambda value.
 
-           num_lam : int
-               The number of lambda values.
+        num_lam : int
+            The number of lambda values.
 
-           Returns
-           -------
-           lam_vals : pandas.DataFrame
-               The pd.DataFrame representing the checked lambda values.
+        Returns
+        -------
+        lam_vals : pandas.DataFrame
+            The pd.DataFrame representing the checked lambda values.
 
         """
         # A list of lambda values takes precedence.
@@ -259,15 +285,13 @@ class _FreeEnergyMixin(_Protocol):
             if not isinstance(lam_vals, _pd.DataFrame):
                 # For pandas < 1.4, TypeError won't be raised if the type
                 # cannot be converted to float
-                lam_vals = _pd.DataFrame(data={'fep': lam_vals},
-                                            dtype=float)
+                lam_vals = _pd.DataFrame(data={"fep": lam_vals}, dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
 
             # Make sure all values are in range [0.0, 1.0]
             if not ((lam_vals <= 1).all(axis=None) and (lam_vals >= 0).all(axis=None)):
-                raise ValueError(
-                    "'lam_vals' must contain values in range [0.0, 1.0]")
+                raise ValueError("'lam_vals' must contain values in range [0.0, 1.0]")
 
             # Sort the values.
             lam_vals.sort_values(lam_vals.columns.values.tolist(), inplace=True)
@@ -284,14 +308,14 @@ class _FreeEnergyMixin(_Protocol):
             if not isinstance(min_lam, _pd.Series):
                 # For pandas < 1.4, TypeError won't be raised if the type cannot
                 # be converted to float
-                min_lam = _pd.Series(data={'fep': min_lam}, dtype=float)
+                min_lam = _pd.Series(data={"fep": min_lam}, dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
 
             if not isinstance(max_lam, _pd.Series):
                 # For pandas < 1.4, TypeError won't be raised if the type cannot
                 # be converted to float
-                max_lam = _pd.Series(data={'fep': max_lam}, dtype=float)
+                max_lam = _pd.Series(data={"fep": max_lam}, dtype=float)
             else:
                 _FreeEnergyMixin._check_column_name(lam_vals)
 
@@ -305,7 +329,7 @@ class _FreeEnergyMixin(_Protocol):
             if (max_lam < 0).any() or (max_lam > 1).any():
                 raise ValueError("'max_lam' must be in range [0.0, 1.0]")
 
-            if num_lam <=2:
+            if num_lam <= 2:
                 raise ValueError("'num_lam' must be greater than 2!")
 
             if not (min_lam.index == max_lam.index).all():
@@ -316,35 +340,34 @@ class _FreeEnergyMixin(_Protocol):
 
             # Set values.
             lambda_vals = _pd.DataFrame(
-                data=_np.linspace(min_lam, max_lam, num_lam),
-                columns=min_lam.index)
+                data=_np.linspace(min_lam, max_lam, num_lam), columns=min_lam.index
+            )
 
             lam_vals = lambda_vals.round(5)
         return lam_vals
 
-    def setLambdaValues(self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None):
+    def setLambdaValues(
+        self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None
+    ):
         """Set the list of lambda values.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           lam : float or pandas.Series
-               The perturbation parameter: [0.0, 1.0]
+        lam : float or pandas.Series
+            The perturbation parameter: [0.0, 1.0]
 
-           lam_vals : [float] or pandas.DataFrame
-               A list of lambda values.
+        lam_vals : [float] or pandas.DataFrame
+            A list of lambda values.
 
-           min_lam : float or pandas.Series
-               The minimum lambda value.
+        min_lam : float or pandas.Series
+            The minimum lambda value.
 
-           max_lam : float or pandas.Series
-               The maximum lambda value.
+        max_lam : float or pandas.Series
+            The maximum lambda value.
 
-           num_lam : int
-               The number of lambda values.
+        num_lam : int
+            The number of lambda values.
         """
-        self._lambda_vals = self.checkLambdaValues(lam_vals, min_lam, max_lam,
-                                                    num_lam)
+        self._lambda_vals = self.checkLambdaValues(lam_vals, min_lam, max_lam, num_lam)
         self.setLambda(lam)
-
-

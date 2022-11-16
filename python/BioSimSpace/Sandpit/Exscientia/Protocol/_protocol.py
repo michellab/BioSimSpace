@@ -41,6 +41,24 @@ class Protocol():
         # Flag that the protocol hasn't been customised.
         self._is_customised = False
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return ""
+
+    def __str__(self):
+        """Return a human readable string representation of the object."""
+        if self._is_customised:
+            return "<BioSimSpace.Protocol.Custom>"
+        else:
+            return f"<BioSimSpace.Protocol.Protocol: {self._get_parm()}>"
+
+    def __repr__(self):
+        """Return a string showing how to instantiate the object."""
+        if self._is_customised:
+            return "BioSimSpace.Protocol.Custom"
+        else:
+            return f"BioSimSpace.Protocol.Protocol({self._get_parm()})"
+
     def _setCustomised(self, is_customised):
         """Internal function to flag whether a protocol has been customised.
 

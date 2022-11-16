@@ -32,17 +32,18 @@ import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
+
 class Minimisation(_Protocol):
     """A class for storing minimisation protocols."""
 
     def __init__(self, steps=10000):
         """Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           steps : int
-               The maximum number of steps to perform.
+        steps : int
+            The maximum number of steps to perform.
         """
 
         # Call the base class constructor.
@@ -51,45 +52,51 @@ class Minimisation(_Protocol):
         # Set the number of steps.
         self.setSteps(steps)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return f"steps={self._steps}"
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return "<BioSimSpace.Protocol.Minimisation: steps=%d>" % self._steps
+            return f"<BioSimSpace.Protocol.Minimisation: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
+            return f"BioSimSpace.Protocol.Minimisation({self._get_parm()})"
 
     def getSteps(self):
         """Return the maximum number of steps.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         return self._steps
 
     def setSteps(self, steps):
         """Set the maximum number of steps.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         if not type(steps) is int:
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:
-            _warnings.warn("Number of steps must be greater than zero. Using default (10000).")
+            _warnings.warn(
+                "Number of steps must be greater than zero. Using default (10000)."
+            )
             self._steps = 10000
 
         else:

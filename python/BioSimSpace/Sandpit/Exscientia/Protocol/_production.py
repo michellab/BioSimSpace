@@ -35,47 +35,49 @@ from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
 
+
 class Production(_Protocol):
     """A class for storing production protocols."""
 
-    def __init__(self,
-                 timestep=_Types.Time(2, "femtosecond"),
-                 runtime=_Types.Time(1, "nanosecond"),
-                 temperature=_Types.Temperature(300, "kelvin"),
-                 pressure=_Types.Pressure(1, "atmosphere"),
-                 report_interval=200,
-                 restart_interval=1000,
-                 first_step=0,
-                 restart=False
-                ):
+    def __init__(
+        self,
+        timestep=_Types.Time(2, "femtosecond"),
+        runtime=_Types.Time(1, "nanosecond"),
+        temperature=_Types.Temperature(300, "kelvin"),
+        pressure=_Types.Pressure(1, "atmosphere"),
+        report_interval=200,
+        restart_interval=1000,
+        first_step=0,
+        restart=False,
+    ):
         """Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration timestep.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration timestep.
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The running time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The running time.
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature.
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure. Pass pressure=None to use the NVT ensemble.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure. Pass pressure=None to use the NVT ensemble.
 
-           report_interval : int
-               The frequency at which statistics are recorded. (In integration steps.)
+        report_interval : int
+            The frequency at which statistics are recorded. (In integration steps.)
 
-           restart_interval : int
-               The frequency at which restart configurations and trajectory
+        restart_interval : int
+            The frequency at which restart configurations and trajectory
 
-           first_step : int
-               The initial time step (for restart simulations).
+        first_step : int
+            The initial time step (for restart simulations).
 
-           restart : bool
-               Whether this is a continuation of a previous simulation.
+        restart : bool
+            Whether this is a continuation of a previous simulation.
         """
 
         # Call the base class constructor.
@@ -108,47 +110,52 @@ class Production(_Protocol):
         # Set the first time step.
         self.setFirstStep(first_step)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"timestep={self._timestep}, "
+            f"runtime={self._runtime}, "
+            f"temperature={self._temperature}, "
+            f"pressure={self._pressure}, "
+            f"report_interval={self._report_interval}, "
+            f"restart_interval={self._restart_interval}, "
+            f"first_step={self._first_step}, "
+            f"restart={self._restart}"
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return ("<BioSimSpace.Protocol.Production: timestep=%s, runtime=%s, "
-                    "temperature=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, first_step=%d, restart=%r>"
-                   ) % (self._timestep, self._runtime, self._temperature, self._pressure,
-                        self._report_interval, self._restart_interval, self._first_step, self._restart)
+            return f"<BioSimSpace.Protocol.Production: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return ("BioSimSpace.Protocol.Production(timestep=%s, runtime=%s, "
-                    "temperature=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, first_step=%d, restart=%r)"
-                   ) % (self._timestep, self._runtime, self._temperature, self._pressure,
-                        self._report_interval, self._restart_interval, self._first_step, self._restart)
+            return f"BioSimSpace.Protocol.Production({self._get_parm()})"
 
     def getTimeStep(self):
         """Return the time step.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         return self._timestep
 
     def setTimeStep(self, timestep):
         """Set the time step.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         if isinstance(timestep, _Types.Time):
             self._timestep = timestep
@@ -158,22 +165,22 @@ class Production(_Protocol):
     def getRunTime(self):
         """Return the running time.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         return self._runtime
 
     def setRunTime(self, runtime):
         """Set the running time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         if isinstance(runtime, _Types.Time):
             self._runtime = runtime
@@ -183,47 +190,49 @@ class Production(_Protocol):
     def getTemperature(self):
         """Return temperature.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         return self._temperature
 
     def setTemperature(self, temperature):
         """Set the temperature.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
-            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
+            raise TypeError(
+                "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
+            )
 
     def getPressure(self):
         """Return the pressure.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         return self._pressure
 
     def setPressure(self, pressure):
         """Set the pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
@@ -233,22 +242,22 @@ class Production(_Protocol):
     def getReportInterval(self):
         """Return the interval between reporting statistics. (In integration steps.)
 
-           Returns
-           -------
+        Returns
+        -------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         return self._report_interval
 
     def setReportInterval(self, report_interval):
         """Set the interval at which statistics are reported. (In integration steps.)
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
@@ -261,27 +270,27 @@ class Production(_Protocol):
 
     def getRestartInterval(self):
         """Return the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.)
 
-           Returns
-           -------
+        Returns
+        -------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         return self._restart_interval
 
     def setRestartInterval(self, restart_interval):
         """Set the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.)
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
@@ -295,22 +304,22 @@ class Production(_Protocol):
     def getFirstStep(self):
         """Return the first time step.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           step : int
-               The first time step.
+        step : int
+            The first time step.
         """
         return self._first_step
 
     def setFirstStep(self, first_step):
         """Set the initial time step.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           step : int
-               The first time step.
+        step : int
+            The first time step.
         """
         if not type(first_step) is int:
             raise TypeError("'first_step' must be of type 'int'")
@@ -324,22 +333,22 @@ class Production(_Protocol):
     def isRestart(self):
         """Return whether this restart simulation.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_restart : bool
-               Whether this is a restart simulation.
+        is_restart : bool
+            Whether this is a restart simulation.
         """
         return self._restart
 
     def setRestart(self, restart):
         """Set the restart flag.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           restart : bool
-               Whether this is a restart simulation.
+        restart : bool
+            Whether this is a restart simulation.
         """
         if isinstance(restart, bool):
             self._restart = restart
