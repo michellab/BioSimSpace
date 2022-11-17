@@ -457,6 +457,7 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             # Minimisation simulation.
             protocol_dict["integrator"] = "steep" # low-memory Broyden-Fletcher-Goldfarb-Shanno
+            protocol_dict["emstep"] = "0.001" # maximum step size in nm
             # define the frequency of steepest descent for with conjugate gradient
             if protocol_dict["integrator"] == "cg":
                 # step frequency of performing 1 steepest descent step whilst doing conjugate gradient descent
@@ -520,8 +521,7 @@ class ConfigFactory:
         protocol_dict["vdwtype"] = "Cut-off"
 
         # Restraints.
-        # The actual restraints are added in _gromacs.py
-        # TODO check for min if need refcoord
+        # The actual position restraints are added in _gromacs.py
         if isinstance(self.protocol, _Protocol.Equilibration) or isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["refcoord-scaling"] = "all"
 
