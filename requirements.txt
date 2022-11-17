@@ -1,7 +1,8 @@
 # BioSimSpace runtime requirements.
 
-sire ~=2023.0.0   # this matches >= 2023.0.0 && < 2023.1.0
+sire ~=2023.0.1   # this matches >= 2023.0.1 && < 2023.1.0
 
+alchemlyb ; python_version >= '3.8'
 configargparse
 kcombu_bss
 ipywidgets<8

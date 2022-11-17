@@ -4,7 +4,12 @@ import pytest
 import pandas as pd
 import numpy as np
 import bz2
-from alchemlyb.parsing.gmx import extract_u_nk
+
+try:
+    from alchemlyb.parsing.gmx import extract_u_nk
+    is_alchemlyb = True
+except ModuleNotFoundError:
+    is_alchemlyb = False
 
 try:
     from alchemtest.gmx import load_ABFE
@@ -22,6 +27,7 @@ from BioSimSpace.Sandpit.Exscientia import Types as _Types
 has_gromacs = BSS._gmx_exe is not None
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
 class Test_gmx_ABFE():
     @staticmethod
     @pytest.fixture(scope='class')

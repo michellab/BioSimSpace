@@ -5,6 +5,9 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyMinimisation
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
+# Make sure GROMSCS is installed.
+has_gromacs = BSS._gmx_exe is not None
+
 class TestGromacsRBFE():
     @staticmethod
     @pytest.fixture(scope='class')
@@ -16,6 +19,7 @@ class TestGromacsRBFE():
         merged = BSS.Align.merge(m0, m1)
         return merged.toSystem()
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_fep(self, system):
         '''Test if the default config writer will write the expected thing'''
         protocol = FreeEnergyMinimisation(lam=0.0,
@@ -31,6 +35,7 @@ class TestGromacsRBFE():
             assert 'fep-lambdas          = 0.00000 0.10000 0.20000 0.30000 0.40000 0.50000 0.60000 0.70000 0.80000 0.90000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_fep_df(self, system):
         '''Test if the default config writer configured with the pd.DataFrame
         will write the expected thing.'''
@@ -47,6 +52,7 @@ class TestGromacsRBFE():
             assert 'fep-lambdas          = 0.00000 0.10000 0.20000 0.30000 0.40000 0.50000 0.60000 0.70000 0.80000 0.90000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_staged_fep_df(self, system):
         '''Test if the multi-stage lambda will be written correctly'''
         protocol = FreeEnergyMinimisation(
@@ -82,6 +88,7 @@ class TestGromacsABFE():
                  perturbation_type="full")
         return m0, protocol
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_decouple_vdw_q(self, system):
         m, protocol = system
         '''Test the decoupling where lambda0 = vdw-q and lambda1=none'''
@@ -94,6 +101,7 @@ class TestGromacsABFE():
             assert 'couple-lambda1 = none' in mdp_text
             assert 'couple-intramol = yes' in mdp_text
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_annihilate_vdw2q(self, system):
         '''Test the annihilation where lambda0 = vdw-q and lambda1=none'''
         m, protocol = system
@@ -107,6 +115,7 @@ class TestGromacsABFE():
             assert 'couple-lambda1 = q' in mdp_text
             assert 'couple-intramol = no' in mdp_text
 
+    @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
     def test_sc_parameters(self, system):
         '''Test if the soft core parameters have been written.
         The default sc-alpha is 0, which means the soft-core of the vdw is not

@@ -1,7 +1,17 @@
+import os
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
+# Make sure AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
 
 @pytest.fixture
 def perturbed_system():
@@ -12,6 +22,7 @@ def perturbed_system():
     return system
 
 
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_squash(perturbed_system):
     squashed_system, mapping = BSS.Align._merge._squash(perturbed_system)
     assert len(squashed_system) == 6
@@ -21,6 +32,7 @@ def test_squash(perturbed_system):
     assert python_mapping == {0: 0, 2: 1}
 
 
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_unsquash(perturbed_system):
     squashed_system, mapping = BSS.Align._merge._squash(perturbed_system)
     new_perturbed_system = BSS.Align._merge._unsquash(perturbed_system, squashed_system, mapping)
