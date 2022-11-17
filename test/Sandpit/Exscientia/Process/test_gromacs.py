@@ -103,7 +103,7 @@ def test_restraints(restraint):
     # Create the simulation process.
     process = BSS.Process.Gromacs(system, protocol)
 
-
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
     correctly."""
@@ -143,7 +143,6 @@ def test_write_restraint(system, tmp_path):
                        work_dir=str(tmp_path))
     with open(tmp_path / 'test.top', 'r') as f:
         assert 'intermolecular_interactions' in f.read()
-
 
 def run_process(system, protocol, **kwargs):
     """Helper function to run various simulation protocols."""

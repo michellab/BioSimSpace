@@ -42,14 +42,20 @@ import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
-import alchemlyb as _alchemlyb
-from alchemlyb.workflows import ABFE
-from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
-from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
-from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
-from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-from alchemlyb.estimators import TI as _TI
-from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
+from .._Utils import _try_import, _have_imported, _assert_imported
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.workflows import ABFE
+    from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
+    from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
+    from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    from alchemlyb.estimators import TI as _TI
+    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
 import numpy as _np
 import pandas as _pd
@@ -454,6 +460,8 @@ class Relative():
                The overlap matrix. This gives the overlap between each lambda
                window.
         """
+
+        _assert_imported(_alchemlyb)
 
         if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")

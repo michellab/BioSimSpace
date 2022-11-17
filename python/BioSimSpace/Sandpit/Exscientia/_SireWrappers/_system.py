@@ -795,7 +795,7 @@ class System(_SireWrapper):
                A container of perturbable molecule objects. The container will
                be empty if no perturbable molecules are present.
         """
-        return _Molecules(self._sire_object.search("perturbable").toGroup())
+        return _Molecules(self._sire_object.search("property is_perturbable").toGroup())
 
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
@@ -817,13 +817,7 @@ class System(_SireWrapper):
            molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of decoupled molecules.
         """
-
-        molecules = []
-
-        for mol in self:
-            if mol.isDecoupled():
-                molecules.append(_Molecule(mol))
-        return molecules
+        return _Molecules(self._sire_object.search("property decouple").toGroup())
 
     def nDecoupledMolecules(self):
         """Return the number of decoupled molecules in the system.
