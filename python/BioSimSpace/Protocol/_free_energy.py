@@ -51,7 +51,7 @@ class FreeEnergy(_Production, _FreeEnergyMixin, _HmrMixin):
                  temperature=_Types.Temperature(300, "kelvin"),
                  pressure=_Types.Pressure(1, "atmosphere"),
                  report_interval=200,
-                 restart_interval=1000,
+                 restart_interval=2000,
                  first_step=0,
                  restart=False,
                  perturbation_type="full",

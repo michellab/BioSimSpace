@@ -25,7 +25,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin, _HmrMixin):
                  temperature=None,
                  pressure=None,
                  report_interval=200,
-                 restart_interval=1000,
+                 restart_interval=2000,
                  restraint=None,
                  force_constant=10*_Units.Energy.kcal_per_mol/_Units.Area.angstrom2,
                  restart=False,
