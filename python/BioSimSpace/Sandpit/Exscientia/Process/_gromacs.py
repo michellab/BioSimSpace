@@ -46,7 +46,7 @@ from sire.legacy import Vol as _SireVol
 
 from sire import units as _SireUnits
 
-from .. import _gmx_exe
+from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
@@ -68,8 +68,8 @@ class Gromacs(_process.Process):
 
     def __init__(self, system, protocol, exe=None, name="gromacs",
             work_dir=None, seed=None, extra_options=None,
-            extra_lines=None, property_map={}, ignore_warnings=False,
-            show_errors=True, checkpoint_file=None):
+            extra_lines=None, property_map={}, restraint=None,
+            ignore_warnings=False, show_errors=True, checkpoint_file=None):
         """Constructor.
 
            Parameters
@@ -104,6 +104,10 @@ class Gromacs(_process.Process):
                values. This allows the user to refer to properties with their
                own naming scheme, e.g. { "charge" : "my-charge" }
 
+           restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+               The Restraint object that contains information for the ABFE
+               calculations.
+
            ignore_warnings : bool
                Whether to ignore warnings when generating the binary run file
                with 'gmx grompp'. By default, these warnings are elevated to
@@ -120,7 +124,7 @@ class Gromacs(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, extra_options, extra_lines, property_map, restraint)
 
         # Set the package name.
         self._package_name = "GROMACS"
@@ -164,6 +168,9 @@ class Gromacs(_process.Process):
         # The name of the trajectory file.
         self._traj_file = "%s/%s.trr" % (self._work_dir, name)
 
+        # The name of the output coordinate file.
+        self._crd_file = "%s/%s_out.gro" % (self._work_dir, name)
+
         # Set the path for the GROMACS configuration file.
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
@@ -197,7 +204,8 @@ class Gromacs(_process.Process):
 
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
-            if self._system.nPerturbableMolecules() == 0:
+            if self._system.nPerturbableMolecules() == 0 \
+                    and system.nDecoupledMolecules() == 0:
                 raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
                                  "perturbable molecule!")
 
@@ -222,6 +230,11 @@ class Gromacs(_process.Process):
         # TOP file.
         top = _SireIO.GroTop(system._sire_object, self._property_map)
         top.writeToFile(self._top_file)
+        # Write the restraint to the topology file
+        if self._restraint:
+            with open(self._top_file, 'a') as f:
+                f.write('\n')
+                f.write(self._restraint.toString(engine='GROMACS'))
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
@@ -256,15 +269,13 @@ class Gromacs(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        # The list of configuration strings.
-        # We don't repeatedly call addToConfig since this will run grommp
-        # to re-compile the binary run input file each time.
-        config = []
-
         # Deal with PBC.
         if not has_box or not self._has_water:
             # Create a copy of the system.
             system = self._system.copy()
+
+            # Convert the water model topology so that it matches the GROMACS naming convention.
+            system._set_water_topology("GROMACS")
 
             # Create a 999.9 nm periodic box and apply to the system.
             space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
@@ -283,336 +294,15 @@ class Gromacs(_process.Process):
                 seed = -1
             config_options["ld-seed"] = seed
 
-        # Perform vacuum simulations by implementing pseudo-PBC conditions,
-        # i.e. run calculation in a near-infinite box (333.3 nm).
-        # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-        if not (has_box and self._has_water):
-            # Create a copy of the system.
-            system = self._system.copy()
-
-            # Convert the water model topology so that it matches the GROMACS naming convention.
-            system._set_water_topology("GROMACS")
-
-            # Create a 999.9 nm periodic box and apply to the system.
-            space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-            system._sire_object.setProperty(self._property_map.get("space", "space"), space)
-
-            # Re-write the GRO file.
-            gro = _SireIO.Gro87(system._sire_object, self._property_map)
-            gro.writeToFile(self._gro_file)
-
         if isinstance(self._protocol, _Protocol.Equilibration):
+            if self._checkpoint_file is not None:
+                config_options["continuation"] = "yes"
+
             # Add any position restraints.
-            self._add_position_restraints(config)
+            self._add_position_restraints(config_options)
 
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, _Protocol.Metadynamics):
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
-            if self._checkpoint_file is not None:
-                config.append("continuation=yes")
-            if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
-            else:
-                # Perform vacuum simulations by implementing pseudo-PBC conditions,
-                # i.e. run calculation in a near-infinite box (333.3 nm).
-                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
-
-            # Temperature control.
-            # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().value())
-
-            # Heating/cooling protocol.
-            if not self._protocol.isConstantTemp():
-                # Work out the final time of the simulation.
-                end_time = _math.floor(timestep*steps)
-
-                config.append("annealing = single")         # Single sequence of annealing points.
-                config.append("annealing-npoints = 2")      # Two annealing points for "system" temperature group.
-
-                # Linearly change temperature between start and end times.
-                config.append("annealing-time = 0 %d" % end_time)
-                config.append("annealing-temp = %.2f %.2f"
-                    % (self._protocol.getStartTemperature().kelvin().value(),
-                       self._protocol.getEndTemperature().kelvin().value()))
-
-            # Pressure control.
-            if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
-
-            # Add any position restraints.
-            self._add_position_restraints(config)
-
-        # Add configuration variables for a production simulation.
-        elif isinstance(self._protocol, _Protocol.Production):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("init-step = %d"
-                % self._protocol.getFirstStep())                # First time step.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
-            if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
-            else:
-                # Perform vacuum simulations by implementing pseudo-PBC conditions,
-                # i.e. run calculation in a near-infinite box (333.3 nm).
-                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
-
-            # Temperature control.
-            # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
-
-            # Pressure control.
-            if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
-
-        elif isinstance(self._protocol, _Protocol.FreeEnergy):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
-            if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
-            else:
-                # Perform vacuum simulations by implementing pseudo-PBC conditions,
-                # i.e. run calculation in a near-infinite box (333.3 nm).
-                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
-
-            # Temperature control.
-            # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
-
-            # Pressure control.
-            if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
-
-            # Extract the lambda array.
-            lam_vals = self._protocol.getLambdaValues()
-
-            # Determine the index of the lambda value.
-            idx = self._protocol.getLambdaIndex()
-
-            # Free energy parameters.
-            config.append("free-energy = yes")              # Free energy simulation.
-            config.append("init-lambda-state = %d" % idx)   # Index of the lambda value.
-            config.append("fep-lambdas = %s" \
-                % " ".join([str(x) for x in lam_vals]))
-            config.append("couple-lambda0 = vdw-q")         # All interactions on at lambda = 0
-            config.append("couple-lambda1 = vdw-q")         # All interactions on at lambda = 1
-            config.append("calc-lambda-neighbors = -1")     # Write all lambda values.
-            config.append("nstcalcenergy = 250")            # Calculate energies every 250 steps.
-            config.append("nstdhdl = 250")                  # Write gradients every 250 steps.
-
-        # Add configuration variables for a metadynamics simulation.
-        elif isinstance(self._protocol, _Protocol.Metadynamics):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
-            if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
-            else:
-                # Perform vacuum simulations by implementing pseudo-PBC conditions,
-                # i.e. run calculation in a near-infinite box (333.3 nm).
-                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
-
-            # Temperature control.
-            # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
-
-            # Pressure control.
-            if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
-
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
             plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
@@ -636,77 +326,6 @@ class Gromacs(_process.Process):
 
         # Add configuration variables for a steered molecular dynamics protocol.
         elif isinstance(self._protocol, _Protocol.Steering):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
-            if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
-            else:
-                # Perform vacuum simulations by implementing pseudo-PBC conditions,
-                # i.e. run calculation in a near-infinite box (333.3 nm).
-                # c.f.: https://pubmed.ncbi.nlm.nih.gov/29678588
-
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
-
-            # Temperature control.
-            # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
-
-            # Pressure control.
-            if self._protocol.getPressure() is not None and has_box and self._has_water:
-                config.append("pcoupl = berendsen")         # Berendsen barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
-
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
             plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
@@ -743,6 +362,7 @@ class Gromacs(_process.Process):
         # Add the default arguments.
         self.setArg("mdrun", True)          # Use mdrun.
         self.setArg("-deffnm", self._name)  # Output file prefix.
+        self.setArg("-c", self._crd_file)   # Output out coordinate file.
 
         # Metadynamics and steered MD arguments.
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
@@ -767,11 +387,11 @@ class Gromacs(_process.Process):
 
         # Warnings don't trigger an error. Set to a suitably large number.
         if self._ignore_warnings:
-            command += " --maxwarn 1000"
+            command += " --maxwarn -1"
 
         # Run the command.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(_Utils.command_split(command), shell=False,
+            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
@@ -932,20 +552,24 @@ class Gromacs(_process.Process):
             self.wait()
         elif block == "AUTO" and self._is_blocked:
             self.wait()
+            block = True
 
         # Warn the user if the process has exited with an error.
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        # Minimisation trajectories have a single frame, i.e. the final state.
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            time = 0*_Units.Time.nanosecond
-        # Get the current simulation time.
+        if block is True and not self.isError():
+            return self._getFinalFrame()
         else:
-            time = self.getTime()
+            # Minimisation trajectories have a single frame, i.e. the final state.
+            if isinstance(self._protocol, _Protocol.Minimisation):
+                time = 0*_Units.Time.nanosecond
+            # Get the current simulation time.
+            else:
+                time = self.getTime()
 
-        # Grab the most recent frame from the trajectory file.
-        return self._getFrame(time)
+            # Grab the most recent frame from the trajectory file.
+            return self._getFrame(time)
 
     def getCurrentSystem(self):
         """Get the latest molecular system.
@@ -1302,7 +926,7 @@ class Gromacs(_process.Process):
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
-        """Get the dihedral energy.
+        """Get the total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1317,12 +941,27 @@ class Gromacs(_process.Process):
            -------
 
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dihedral energy.
+               The total dihedral energy.
         """
-        return self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        # Get the proper and improper energies.
+        proper = self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        improper = self.getRecord("IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+
+        # No records.
+        if proper is None and improper is None:
+            return None
+        elif proper is None:
+            return improper
+        elif improper is None:
+            return proper
+        else:
+            if time_series:
+                return [x + y for x, y in zip(proper, improper)]
+            else:
+                return proper + improper
 
     def getCurrentDihedralEnergy(self, time_series=False):
-        """Get the current dihedral energy.
+        """Get the current total dihedral energy (proper + improper).
 
            Parameters
            ----------
@@ -1337,6 +976,43 @@ class Gromacs(_process.Process):
                The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
+
+    def getProperEnergy(self, time_series=False, block="AUTO"):
+        """Get the proper dihedral energy.
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           block : bool
+               Whether to block until the process has finished running.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The proper dihedral energy.
+        """
+        return self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+
+    def getCurrentProperEnergy(self, time_series=False):
+        """Get the current proper dihedral energy.
+
+           Parameters
+           ----------
+
+           time_series : bool
+               Whether to return a list of time series records.
+
+           Returns
+           -------
+
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
+               The proper dihedral energy.
+        """
+        return self.getProperEnergy(time_series, block=False)
 
     def getImproperEnergy(self, time_series=False, block="AUTO"):
         """Get the improper energy.
@@ -1356,7 +1032,7 @@ class Gromacs(_process.Process):
            energy : :class:`Energy <BioSimSpace.Types.Energy>`
                The improper energy.
         """
-        return self.getRecord("IMPRPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        return self.getRecord("IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentImproperEnergy(self, time_series=False):
         """Get the current improper energy.
@@ -1964,14 +1640,14 @@ class Gromacs(_process.Process):
         for x in range(start, num_lines):
             print(self._stdout[x])
 
-    def _add_position_restraints(self, config):
+    def _add_position_restraints(self, config_options):
         """Helper function to add position restraints.
 
            Parameters
            ----------
 
-           config : [str]
-               The list of configuration strings.
+           config_options : dict
+               The dictionary of configuration options.
         """
 
         # Get the restraint type.
@@ -1984,7 +1660,7 @@ class Gromacs(_process.Process):
             force_constant = force_constant.to(_SireUnits.kJ_per_mol/_SireUnits.nanometer2)
 
             # Scale reference coordinates with the scaling matrix of the pressure coupling.
-            config.append("refcoord-scaling = all")
+            config_options["refcoord-scaling"] = "com"
 
             # Copy the user property map.
             property_map = self._property_map.copy()
@@ -2067,8 +1743,9 @@ class Gromacs(_process.Process):
 
                     # Write the position restraint file for this molecule.
                     if len(restrained_atoms) > 0:
-                        # Create the file name.
-                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+                        # Create the file names.
+                        include_file = "posre_%04d.itp" % num_restraint
+                        restraint_file = "%s/%s" % (self._work_dir, include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
@@ -2079,18 +1756,21 @@ class Gromacs(_process.Process):
                             for atom_idx in restrained_atoms:
                                 file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
+                        # Work out the offset.
+                        offset = num_restraint - 1
+
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1]-1]
+                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
-                        new_top_lines.append('#include "%s"' % restraint_file)
+                        new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1]:])
+                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
@@ -2143,8 +1823,9 @@ class Gromacs(_process.Process):
 
                     # Write the position restraint file for this molecule.
                     if len(atom_idxs) > 0:
-                        # Create the file name.
-                        restraint_file = "%s/posre_%04d.itp" % (self._work_dir, num_restraint)
+                        # Create the file names.
+                        include_file = "posre_%04d.itp" % num_restraint
+                        restraint_file = "%s/%s" % (self._work_dir, include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
@@ -2155,18 +1836,21 @@ class Gromacs(_process.Process):
                             for atom_idx in atom_idxs:
                                 file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
 
+                        # Work out the offset.
+                        offset = num_restraint - 1
+
                         # Include the position restraint file in the correct place within
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1]-1]
+                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
 
                         # Append the additional information.
-                        new_top_lines.append('#include "%s"' % restraint_file)
+                        new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1]:])
+                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
@@ -2376,6 +2060,63 @@ class Gromacs(_process.Process):
 
             except KeyError:
                 return None
+
+    def _getFinalFrame(self):
+        """Get the frame from the GRO file generated at the end of the
+        simulation.
+
+           Returns
+           -------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system from the final frame.
+        """
+        # Grab the last frame from the GRO file.
+        with _Utils.cd(self._work_dir):
+
+            # Do we need to get coordinates for the lambda=1 state.
+            if "is_lambda1" in self._property_map:
+                is_lambda1 = True
+            else:
+                is_lambda1 = False
+
+            # Locate the coordinate file.
+            if not _os.path.isfile(self._crd_file):
+                _warnings.warn("Invalid coordinate file! "
+                               "%s gro file not found."
+                               % (self._crd_file))
+                return None
+
+            # Read the frame file.
+            new_system = _IO.readMolecules([self._crd_file, self._top_file],
+                                           property_map=self._property_map)
+
+            # Create a copy of the existing system object.
+            old_system = self._system.copy()
+
+            # Update the coordinates and velocities and return a mapping between
+            # the molecule indices in the two systems.
+            sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map)
+
+            # Update the underlying Sire object.
+            old_system._sire_object = sire_system
+
+            # Store the mapping between the MolIdx in both systems so we don't
+            # need to recompute it next time.
+            self._mapping = mapping
+
+            # Update the box information in the original system.
+            if "space" in new_system._sire_object.propertyKeys():
+                box = new_system._sire_object.property("space")
+                old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+
+            return old_system
 
     def _getFrame(self, time):
         """Get the trajectory frame closest to a specific time value.

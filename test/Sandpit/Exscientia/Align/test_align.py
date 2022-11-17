@@ -5,6 +5,26 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
+def test_flex_align():
+    # Load the ligands.
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+
+    # Extract the molecules.
+    m0 = s0.getMolecules()[0]
+    m1 = s1.getMolecules()[0]
+
+    # Get the best mapping between the molecules that contains the prematch.
+    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
+                                   scoring_function="rmsd_flex_align")
+
+    # I don't know what the mapping should be. For the moment,
+    # I will assume that what came out is correct, i.e.
+    expect = {28: 12, 0: 13, 29: 14, 1: 15, 3: 16, 4: 21, 5: 20, 6: 19, 26: 18, 27: 17, 49: 38, 48: 39, 31: 40, 30: 41, 2: 37}
+
+    for key, value in mapping.items():
+        assert value == expect[key]
+
 # Parameterise the function with a set of valid atom pre-matches.
 @pytest.mark.parametrize("prematch", [{3 : 1},
                                       {5 : 9},

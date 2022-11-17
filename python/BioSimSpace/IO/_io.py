@@ -416,19 +416,26 @@ def readMolecules(files, property_map={}):
     # Try to read the files and return a molecular system.
     try:
         system = _SireIO.MoleculeParser.read(files, property_map)
-    except Exception as e:
-        if "There are no lead parsers!" in str(e):
+    except Exception as e0:
+        if "There are no lead parsers!" in str(e0):
             # First check to see if the failure was due to the presence
             # of CMAP records.
             for file in files:
                 try:
                     amber_prm = _SireIO.AmberPrm(file)
-                except Exception as e:
-                    if "CMAP" in str(e).upper():
-                        msg = ("Unable to parse topology file, CMAP "
+                except Exception as e1:
+                    if "CMAP" in str(e1).upper():
+                        msg = ("Unable to parse AMBER topology file. CMAP "
                               "records are currently unsupported.")
                         if _isVerbose():
-                            raise IOError(msg) from e
+                            raise IOError(msg) from e1
+                        else:
+                            raise IOError(msg) from None
+                    elif "CHAMBER" in str(e1).upper():
+                        msg = ("Unable to parse AMBER topology file. "
+                              "CHAMBER files are currently unsupported.")
+                        if _isVerbose():
+                            raise IOError(msg) from e1
                         else:
                             raise IOError(msg) from None
 
@@ -436,20 +443,20 @@ def readMolecules(files, property_map={}):
                    "It looks like you failed to include a topology file."
                    ) % files
             if _isVerbose():
-                raise IOError(msg) from e
+                raise IOError(msg) from e0
             else:
                 raise IOError(msg) from None
         else:
-            if "Incompatibility" in str(e):
+            if "Incompatibility" in str(e0):
                 msg = "Incompatibility between molecular information in files: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
             else:
                 msg = "Failed to read molecules from: %s" % files
                 if _isVerbose():
-                    raise IOError(msg) from e
+                    raise IOError(msg) from e0
                 else:
                     raise IOError(msg) from None
 
@@ -623,71 +630,31 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
         # Write the file.
         try:
-            # Add CONECT record for single molecule PDB files.
-            if format == "PDB" and system.nMolecules() == 1:
-                # Generate a PDB parser object.
-                pdb = _SireIO.PDB2(system._sire_object, _property_map)
-
-                # Get the lines.
-                lines = pdb.toLines()
-
-                # For molecules that were perturbable, we must create the
-                # CONECT record from the bonding information.
-                if system[0]._sire_object.hasProperty("is_perturbable") or \
-                   system[0]._sire_object.hasProperty("was_perturbable"):
-                    bond = _property_map.get("bond", "bond0")
-                    conect = _bond_to_conect(system[0]._sire_object.property(bond),
-                                             system[0]._sire_object.info())
-
-                # Create a connectivty object and generate the CONECT record.
-                else:
-                    conect = _SireMol.Connectivity(system[0]._sire_object,
-                                                   _SireMol.CovalentBondHunter(),
-                                                   _property_map).toCONECT()
-
-                # Create the updated PDB file.
-                pdb_records = "\n".join(lines[:-2]) \
-                    + "\n" + conect + "\n"  \
-                    + "\n".join(lines[-2:])
-
-                # Write the default file to get the full path.
-                file = _SireIO.MoleculeParser.save(
-                    system._sire_object, filebase, _property_map)
-
-                # Now overwrite the file the PDB file with the updated records.
-                with open(file[0], "w") as pdb_file:
-                    pdb_file.write(pdb_records)
-
+            # Make sure AMBER and GROMACS files have the expected water topology
+            # and save GROMACS files with an extension such that they can be run
+            # directly by GROMACS without needing to be renamed.
+            if format == "PRM7" or format == "RST7":
+                system = system.copy()
+                system._set_water_topology("AMBER", _property_map)
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+            elif format == "GroTop":
+                system = system.copy()
+                system._set_water_topology("GROMACS")
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                new_file = file.replace("grotop", "top")
+                _os.rename(file, new_file)
+                file = [new_file]
+            elif format == "Gro87":
+                # Write to 3dp by default, unless greater precision is
+                # requested by the user.
+                if "precision" not in _property_map:
+                    _property_map["precision"] = _SireBase.wrap(3)
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                new_file = file.replace("gro87", "gro")
+                _os.rename(file, new_file)
+                file = [new_file]
             else:
-                # Make sure AMBER and GROMACS files have the expected water topology
-                # and save GROMACS files with an extension such that they can be run
-                # directly by GROMACS without needing to be renamed.
-                if format == "PRM7" or format == "RST7":
-                    system = system.copy()
-                    system._set_water_topology("AMBER", _property_map)
-                    file = _SireIO.MoleculeParser.save(
-                        system._sire_object, filebase, _property_map)
-                elif format == "GroTop":
-                    system = system.copy()
-                    system._set_water_topology("GROMACS")
-                    file = _SireIO.MoleculeParser.save(
-                        system._sire_object, filebase, _property_map)[0]
-                    new_file = file.replace("grotop", "top")
-                    _os.rename(file, new_file)
-                    file = [new_file]
-                elif format == "Gro87":
-                    # Write to 3dp by default, unless greater precision is
-                    # requested by the user.
-                    if "precision" not in _property_map:
-                        _property_map["precision"] = _SireBase.wrap(3)
-                    file = _SireIO.MoleculeParser.save(
-                        system._sire_object, filebase, _property_map)[0]
-                    new_file = file.replace("gro87", "gro")
-                    _os.rename(file, new_file)
-                    file = [new_file]
-                else:
-                    file = _SireIO.MoleculeParser.save(
-                        system._sire_object, filebase, _property_map)
+                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
 
             files += file
 
@@ -948,61 +915,3 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
 
     return system0
 
-
-def _bond_to_conect(bonds, info):
-    """Helper function to create PDB CONECT records from bonding
-       information from a molecular potential.
-
-       Parameters
-       ----------
-
-       bonds : Sire.MM._MM.TwoAtomFunctions
-           The bond potential property.
-
-       info : Sire.Mol._Mol.MoleculeInfo
-           The molecule info object.
-
-       Returns
-       -------
-
-       conect : str
-           The PDB CONECT records.
-    """
-
-    # Initialise the CONECT dictionary.
-    conect_dict = {}
-
-    # Loop over each potential term and the bonded atoms to the dictionary,
-    # remembering that PDB atoms are one-indexed.
-    for b in bonds.potentials():
-        idx0 = info.atomIdx(b.atom0()).value() + 1
-        idx1 = info.atomIdx(b.atom1()).value() + 1
-        if idx0 in conect_dict:
-            conect_dict[idx0].append(idx1)
-        else:
-            conect_dict[idx0] = [idx1]
-
-    # Now create the CONECT record string.
-
-    # Initialise the string.
-    conect = ""
-
-    # Sort keys in numerical order.
-    k = list(conect_dict.keys())
-    k.sort()
-
-    # Store the number of keys.
-    num_k = len(k)
-
-    # Add a record for each root index.
-    for x, idx0 in enumerate(k):
-        # Add bonds in numerical order.
-        v = conect_dict[idx0]
-        v.sort()
-        conect += f"CONECT{idx0:>5}"
-        for idx1 in v:
-            conect += f"{idx1:>5}"
-        if x < num_k - 1:
-            conect += "\n"
-
-    return conect
