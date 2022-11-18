@@ -1,5 +1,6 @@
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
 from sire.legacy.Mol import AtomIdx, PartialMolecule
+from sire.legacy.Maths import Vector
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
@@ -87,7 +88,7 @@ def test_merge():
     # Store the number of atoms in m0.
     n0 = m0._sire_object.nAtoms()
 
-    # Test that the intramolecular energies area the same.
+    # Test that the intramolecular energies are the same.
 
     # IntraCLJFF:
     #  Old interface. Uses the "intrascale" matrix. Validate that this
@@ -193,6 +194,190 @@ def test_merge():
     internalff2.add(amber_mol._sire_object)
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
+
+
+@pytest.fixture(scope="module")
+def roi_mol0():
+    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/wild*"))[0]
+
+
+@pytest.fixture(scope="module")
+def roi_mol1():
+    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/mutated*"))[0]
+
+
+@pytest.fixture(scope="module")
+def roi_merged_mol(roi_mol0, roi_mol1):
+    # Extract the residue name and index
+    def get_res_info(mol):
+        mol_res_name = []
+        mol_res_idx = []
+        for bss_res in mol.getResidues():
+            mol_res_name.append(bss_res.name())
+            mol_res_idx.append([x.index() for x in bss_res.getAtoms()])
+        return mol_res_name, mol_res_idx
+
+    def recover_mapping(mut1_idx, mut2_idx, mapping):
+        new_mapping = {}
+        for k, v in mapping.items():
+            new_mapping[mut1_idx[k]] = mut2_idx[v]
+        return new_mapping
+
+    def update_coordinate(mol, coord_dict):
+        edit_mol = mol._sire_object.edit()
+        for idx in range(0, mol.nAtoms()):
+            if idx in coord_dict:
+                vec = coord_dict[idx]
+                vec = Vector(vec.x().angstroms().value(),
+                             vec.y().angstroms().value(),
+                             vec.z().angstroms().value())
+                edit_mol = edit_mol.atom(AtomIdx(idx)).setProperty("coordinates", vec).molecule()
+        mol._sire_object = edit_mol.commit()
+
+    mol0_res_name, mol0_res_idx = get_res_info(roi_mol0)
+    mol1_res_name, mol1_res_idx = get_res_info(roi_mol1)
+
+    # Get the best mapping between the molecules.
+    mapping = {}
+    for i in range(len(mol0_res_name)):
+        # The mutated residue would have different name
+        if mol0_res_name[i] == mol1_res_name[i]:
+            for k, v in zip(mol0_res_idx[i], mol1_res_idx[i]):
+                mapping[k] = v
+        else:
+            # Assume the atom order is kept during conversion
+            mut0 = roi_mol0.getResidues()[i].toMolecule()
+            mut1 = roi_mol1.getResidues()[i].toMolecule()
+            mut0_idx = [x.index() for x in roi_mol0.getResidues()[i].getAtoms()]
+            mut1_idx = [x.index() for x in roi_mol1.getResidues()[i].getAtoms()]
+
+            mapping_mut = BSS.Align.matchAtoms(mut0, mut1)
+
+            # We should also translate the moelcule according to the mapping
+            # or there will be odd dummy atom in the merged topology
+            mut0 = BSS.Align.rmsdAlign(mut0, mut1, mapping=mapping_mut)
+            aligned_coordinates = mut0.coordinates()
+            coord_dict = dict(zip(mut0_idx, aligned_coordinates))
+
+            mapping_recovered = recover_mapping(mut0_idx, mut1_idx, mapping_mut)
+    mapping.update(mapping_recovered)
+    update_coordinate(roi_mol0, coord_dict)
+
+    # Create the merged molecule.
+    merged_mol = BSS.Align.merge(roi_mol0, roi_mol1, mapping=mapping, roi=[mut0_idx, mut1_idx])
+
+    return merged_mol
+
+
+# IntraCLJFF:
+#  Old interface. Uses the "intrascale" matrix. Validate that this
+#  is consistent.
+# IntraFF:
+#  New interface. Uses atom "connectivity". Validate that the bonding
+#  is consistent.
+@pytest.fixture(scope="module")
+def roi_intraclj0(roi_mol0):
+    res = IntraCLJFF("intraclj")
+    res.add(roi_mol0._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_intraclj1(roi_mol1):
+    res = IntraCLJFF("intraclj")
+    res.add(roi_mol1._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_intraff0(roi_mol0):
+    res = IntraFF("intraclj")
+    res.add(roi_mol0._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_intraff1(roi_mol1):
+    res = IntraFF("intraclj")
+    res.add(roi_mol1._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_internal0(roi_mol0):
+    res = InternalFF("internal")
+    res.setStrict(True)
+    res.add(roi_mol0._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_internal1(roi_mol1):
+    res = InternalFF("internal")
+    res.setStrict(True)
+    res.add(roi_mol1._sire_object)
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_pmap0(roi_merged_mol):
+    res = {}
+    for prop in roi_merged_mol._sire_object.propertyKeys():
+        if prop[-1] == "0":
+            res[prop[:-1]] = prop
+    return res
+
+
+@pytest.fixture(scope="module")
+def roi_pmap1(roi_merged_mol):
+    res = {}
+    for prop in roi_merged_mol._sire_object.propertyKeys():
+        if prop[-1] == "1":
+            res[prop[:-1]] = prop
+    return res
+
+
+def test_roi_nonbonded0(roi_merged_mol, roi_intraclj0, roi_intraff0, roi_pmap0):
+    # Test that the nonbonded energies are the same in mol0.
+    intraclj_merged = IntraCLJFF("intraclj")
+    intraff_merged = IntraFF("intraclj")
+    intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap0)
+    intraff_merged.add(roi_merged_mol._sire_object, roi_pmap0)
+    assert roi_intraclj0.energy().value() == pytest.approx(intraclj_merged.energy().value())
+    assert roi_intraff0.energy().value() == pytest.approx(intraff_merged.energy().value())
+
+
+def test_roi_nonbonded1(roi_merged_mol, roi_intraclj1, roi_intraff1, roi_pmap1):
+    # Test that the nonbonded energies are the same in mol1.
+    intraclj_merged = IntraCLJFF("intraclj")
+    intraff_merged = IntraFF("intraclj")
+    intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap1)
+    intraff_merged.add(roi_merged_mol._sire_object, roi_pmap1)
+    assert roi_intraclj1.energy().value() == pytest.approx(intraclj_merged.energy().value())
+    assert roi_intraff1.energy().value() == pytest.approx(intraff_merged.energy().value())
+
+
+def test_roi_bonded0(roi_mol0, roi_merged_mol, roi_pmap0, roi_internal0):
+    # Test that the internal energies are consistent. This will validate that
+    # bond, angle, dihedral, and improper energies are correct.
+    # In this test, we extract the original molecule for the lambda=0 end state.
+    amber_mol, _ = roi_merged_mol._extractMolecule()
+    roi_internal_merged = InternalFF("internal")
+    roi_internal_merged.setStrict(True)
+    roi_internal_merged.add(amber_mol._sire_object)
+    assert roi_internal0.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+
+
+def test_roi_bonded1(roi_mol1, roi_merged_mol, roi_pmap1, roi_internal1):
+    # Test that the internal energies are consistent. This will validate that
+    # bond, angle, dihedral, and improper energies are correct.
+    # In this test, we extract the original molecule for the lambda=1 end state.
+    amber_mol, _ = roi_merged_mol._extractMolecule(is_lambda1=True)
+    roi_internal_merged = InternalFF("internal")
+    roi_internal_merged.setStrict(True)
+    roi_internal_merged.add(amber_mol._sire_object)
+    assert roi_internal1.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+
 
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_three_membered():

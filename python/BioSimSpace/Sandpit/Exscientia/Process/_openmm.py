@@ -1672,7 +1672,7 @@ class OpenMM(_process.Process):
         """
         # We should verify that openmm is available to prevent
         # difficult-to-debug errors in the run script
-        from BioSimSpace._Utils import _try_import, _assert_imported
+        from ...._Utils import _try_import, _assert_imported
 
         _openmm = _try_import("openmm")
         _assert_imported(_openmm)

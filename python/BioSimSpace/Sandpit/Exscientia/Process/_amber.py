@@ -51,7 +51,7 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
-from ..Align._merge import _squash, _unsquash
+from ..Align._squash import _squash, _unsquash
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
@@ -439,7 +439,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol, squashed_system=self._squashed_system)
+        config = _Protocol.ConfigFactory(self._system, self._protocol)
         self.addToConfig(config.generateAmberConfig(extra_options={**config_options, **self._extra_options},
                                                     extra_lines=self._extra_lines))
 

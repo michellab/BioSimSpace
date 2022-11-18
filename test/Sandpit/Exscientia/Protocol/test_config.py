@@ -2,10 +2,34 @@ import pandas as pd
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyMinimisation
+from BioSimSpace.Sandpit.Exscientia.Protocol import ConfigFactory, FreeEnergyMinimisation
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
-# Make sure GROMSCS is installed.
+
+class TestAmberRBFE:
+    @pytest.fixture(scope='class')
+    def system(self):
+        m0 = BSS.IO.readMolecules("test/input/ligands/CAT-13c*").getMolecule(0)
+        m1 = BSS.IO.readMolecules("test/input/ligands/CAT-13a*").getMolecule(0)
+        atom_mapping = BSS.Align.matchAtoms(m0, m1)
+        m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
+        merged = BSS.Align.merge(m0, m1)
+        return merged.toSystem()
+
+    def test_generate_fep_masks(self, system):
+        config = ConfigFactory(system, FreeEnergyMinimisation())
+        res = config._generate_amber_fep_masks(0.004)
+        expected_res = {
+            "noshakemask": '""',
+            "scmask1": '"@25-27,29-31"',
+            "scmask2": '""',
+            "timask1": '"@1-45"',
+            "timask2": '"@46-84"',
+        }
+        assert res == expected_res
+
+
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 class TestGromacsRBFE():
@@ -70,7 +94,8 @@ class TestGromacsRBFE():
             assert 'vdw-lambdas          = 0.00000 0.00000 0.00000 0.00000 0.00000 0.50000 1.00000' in mdp_text
             assert 'init-lambda-state = 6' in mdp_text
 
-class TestGromacsABFE():
+
+class TestGromacsABFE:
     @staticmethod
     @pytest.fixture(scope='class')
     def system():
