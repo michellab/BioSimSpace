@@ -254,7 +254,10 @@ class ConfigFactory:
         if isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["imin"] = 1               # Minimisation simulation.
             protocol_dict["maxcyc"] = self._steps   # Set the number of steps.
-            protocol_dict["ntmin"] = 1 
+            if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                protocol_dict["ntmin"] = 2 # if using sc potentials (ifsc=1) as with free energies, must be steepest descent
+            else:
+                protocol_dict["ntmin"] = 1
             if protocol_dict["ntmin"] == 1: # steepest descent used for ncyc and then switched to conjugate
                 # Work out the number of steepest descent cycles.
                 # This is 1000 or 10% of the number of steps, whichever is larger.
