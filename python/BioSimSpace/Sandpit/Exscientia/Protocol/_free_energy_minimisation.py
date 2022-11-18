@@ -2,6 +2,7 @@ __all__ = ["FreeEnergyMinimisation"]
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._minimisation import Minimisation as _Minimisation
+from .. import Units as _Units
 
 
 class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
@@ -16,6 +17,8 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         num_lam=11,
         steps=10000,
         perturbation_type="full",
+        restraint=None,
+        force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
     ):
         """Constructor.
 
@@ -51,10 +54,36 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.
+
+        restraint : str, [int]
+            The type of restraint to perform. This should be one of the
+            following options:
+                "backbone"
+                     Protein backbone atoms. The matching is done by a name
+                     template, so is unreliable on conversion between
+                     molecular file formats.
+                "heavy"
+                     All non-hydrogen atoms that aren't part of water
+                     molecules or free ions.
+                "all"
+                     All atoms that aren't part of water molecules or free
+                     ions.
+            Alternatively, the user can pass a list of atom indices for
+            more fine-grained control. If None, then no restraints are used.
+
+        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+            The force constant for the restraint potential. If a 'float' is
+            passed, then default units of 'kcal_per_mol / angstrom**2' will
+            be used.
         """
 
         # Call the base class constructors.
-        _Minimisation.__init__(self, steps=steps)
+        _Minimisation.__init__(
+            self,
+            steps=steps,
+            restraint=restraint,
+            force_constant=force_constant,
+        )
 
         _FreeEnergyMixin.__init__(
             self,

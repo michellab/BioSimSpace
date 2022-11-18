@@ -34,9 +34,11 @@ import warnings as _warnings
 from .. import Types as _Types
 
 from ._protocol import Protocol as _Protocol
+from ._position_restraint import _PositionRestraintMixin
+from .. import Units as _Units
 
 
-class Production(_Protocol):
+class Production(_Protocol, _PositionRestraintMixin):
     """A class for storing production protocols."""
 
     def __init__(
@@ -49,6 +51,8 @@ class Production(_Protocol):
         restart_interval=1000,
         first_step=0,
         restart=False,
+        restraint=None,
+        force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
     ):
         """Constructor.
 
@@ -78,10 +82,31 @@ class Production(_Protocol):
 
         restart : bool
             Whether this is a continuation of a previous simulation.
+
+        restraint : str, [int]
+            The type of restraint to perform. This should be one of the
+            following options:
+                "backbone"
+                     Protein backbone atoms. The matching is done by a name
+                     template, so is unreliable on conversion between
+                     molecular file formats.
+                "heavy"
+                     All non-hydrogen atoms that aren't part of water
+                     molecules or free ions.
+                "all"
+                     All atoms that aren't part of water molecules or free
+                     ions.
+            Alternatively, the user can pass a list of atom indices for
+            more fine-grained control. If None, then no restraints are used.
+
+        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+            The force constant for the restraint potential. If a 'float' is
+            passed, then default units of 'kcal_per_mol / angstrom**2' will
+            be used.
         """
 
         # Call the base class constructor.
-        super().__init__()
+        _Protocol.__init__(self)
 
         # Set the time step.
         self.setTimeStep(timestep)
@@ -110,6 +135,9 @@ class Production(_Protocol):
         # Set the first time step.
         self.setFirstStep(first_step)
 
+        # Set the restraint.
+        _PositionRestraintMixin.__init__(self, restraint, force_constant)
+
     def _get_parm(self):
         """Return a string representation of the parameters."""
         return (
@@ -120,7 +148,7 @@ class Production(_Protocol):
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             f"first_step={self._first_step}, "
-            f"restart={self._restart}"
+            f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
         )
 
     def __str__(self):
