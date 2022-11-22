@@ -8,7 +8,6 @@ from ..Align._squash import _squash, _squashed_atom_mapping, _amber_mask_from_in
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
-
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
@@ -360,7 +359,7 @@ class ConfigFactory:
         # Define some miscellaneous defaults.
         protocol_dict = {
             "nstlog": self._report_interval,  # Interval between writing to the log file.
-            "nstenergy": self._restart_interval,  # Interval between writing to the energy file.
+            "nstenergy": self._report_interval,  # Interval between writing to the energy file.
             "nstxout-compressed": self._restart_interval,  # Interval between writing to the trajectory file.
         }
 
