@@ -959,18 +959,10 @@ def merge(molecule0, molecule1, mapping, allow_ring_breaking=False,
     # Create the CLJNBPairs matrices.
     ff = molecule0.property(ff0)
 
-    if roi is None:
-        clj_nb_pairs0 = _SireMM.CLJNBPairs(edit_mol.info(),
-                                           _SireMM.CLJScaleFactor(0, 0))
-        clj_nb_pairs1 = _SireMM.CLJNBPairs(edit_mol.info(),
-                                           _SireMM.CLJScaleFactor(0, 0))
-    # When merging proteins, initilize the clj_nb_pairs from the
-    # connection information of molecule0 and molecule1
-    else:
-        scale_factor_14 = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
-                                                 ff.vdw14ScaleFactor())
-        clj_nb_pairs0 = _SireMM.CLJNBPairs(conn0, scale_factor_14)
-        clj_nb_pairs1 = _SireMM.CLJNBPairs(conn1, scale_factor_14)
+    scale_factor_14 = _SireMM.CLJScaleFactor(ff.electrostatic14ScaleFactor(),
+                                             ff.vdw14ScaleFactor())
+    clj_nb_pairs0 = _SireMM.CLJNBPairs(conn0, scale_factor_14)
+    clj_nb_pairs1 = _SireMM.CLJNBPairs(conn1, scale_factor_14)
 
     # Loop over all atoms unique to molecule0.
     for idx0 in atoms0_idx:

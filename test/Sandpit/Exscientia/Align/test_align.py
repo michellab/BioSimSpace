@@ -67,6 +67,49 @@ def test_invalid_prematch(prematch):
         mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
                                        prematch=prematch)
 
+
+@pytest.fixture()
+def propane():
+    return BSS.Parameters.parameterise("CCC", "openff_unconstrained-2.0.0").getMolecule()
+
+
+@pytest.fixture()
+def butane():
+    return BSS.Parameters.parameterise("CCCC", "openff_unconstrained-2.0.0").getMolecule()
+
+
+@pytest.fixture()
+def propane_butane(propane, butane):
+    mapping = BSS.Align.matchAtoms(propane, butane)
+    # We make sure we have a dummy atom in both endstates
+    mapping.pop(3)
+    return BSS.Align.merge(propane, butane, mapping)
+
+
+def test_propane_butane_1_4(propane_butane, tmp_path_factory):
+    # This is a regression test for a bug introduced in a recent commit
+    # I don't know of a more rational way of checking it so I am doing it the old-fashioned way
+    tmpdir = tmp_path_factory.mktemp("TestMerge")
+    BSS.IO.saveMolecules(str(tmpdir / "propane_butane"), propane_butane, "grotop")
+    contents = open(tmpdir / "propane_butane.top").readlines()
+    n_nb = 0
+    reached_nb = False
+
+    # Get the number of 1-4 interactions
+    for line in contents:
+        if line[0] == ";":
+            continue
+        if reached_nb:
+            if line.strip():
+                n_nb += 1
+            else:
+                break
+        if "[ pairs ]" in line:
+            reached_nb = True
+
+    assert n_nb == 33
+
+
 def test_merge():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
