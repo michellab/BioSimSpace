@@ -8,7 +8,6 @@ from ..Align._squash import _squash, _squashed_atom_mapping, _amber_mask_from_in
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
-
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
@@ -49,7 +48,10 @@ class ConfigFactory:
             report_interval = 100
         else:
             report_interval = self.protocol.getReportInterval()
-            if report_interval > self._steps:
+            if self._steps == 0:
+                # Deal with the case where we just want single point energy.
+                report_interval = 1
+            elif report_interval > self._steps:
                 report_interval = self._steps
         return report_interval
 
@@ -360,7 +362,7 @@ class ConfigFactory:
         # Define some miscellaneous defaults.
         protocol_dict = {
             "nstlog": self._report_interval,  # Interval between writing to the log file.
-            "nstenergy": self._restart_interval,  # Interval between writing to the energy file.
+            "nstenergy": self._report_interval,  # Interval between writing to the energy file.
             "nstxout-compressed": self._restart_interval,  # Interval between writing to the trajectory file.
         }
 
@@ -531,8 +533,12 @@ class ConfigFactory:
             protocol_dict[
                 "init-lambda-state"
             ] = self.protocol.getLambdaIndex()  # Current lambda value.
-            protocol_dict["nstcalcenergy"] = 200  # Calculate energies every 200 steps.
-            protocol_dict["nstdhdl"] = 200  # Write gradients every 200 steps.
+            protocol_dict[
+                "nstcalcenergy"
+            ] = self._report_interval  # Calculate energies every report_interval steps.
+            protocol_dict[
+                "nstdhdl"
+            ] = self._report_interval  # Write gradients every report_interval steps.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}

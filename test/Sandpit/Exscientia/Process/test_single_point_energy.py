@@ -16,13 +16,17 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ubiquitin/*")
 
-@pytest.mark.skipif(has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.")
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False,
+    reason="Requires that both AMBER and GROMACS are installed.",
+)
 def test_amber_gromacs(system):
     """Single point energy comparison between AMBER and GROMACS."""
 
@@ -37,7 +41,13 @@ def test_amber_gromacs(system):
 
     # Modify the GROMACS configuration to run zero steps.
     config = process_gmx.getConfig()
-    config[2] = "nsteps = 0"
+    new_config = []
+    for line in config:
+        if "nsteps" not in line:
+            new_config.append(line)
+        else:
+            new_config.append("nsteps = 0")
+    config = new_config
     process_gmx.setConfig(config)
 
     # Run the AMBER process and wait for it to finish.
@@ -63,13 +73,17 @@ def test_amber_gromacs(system):
     nrg_gmx = process_gmx.getDihedralEnergy().kj_per_mol().value()
     assert nrg_amb == pytest.approx(nrg_gmx, rel=1e-2)
 
-@pytest.mark.skipif(has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.")
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False,
+    reason="Requires that both AMBER and GROMACS are installed.",
+)
 def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""
 
     # Swap the space for a triclinic cell (truncated octahedron).
     from sire.legacy.Vol import TriclinicBox
+
     triclinic_box = TriclinicBox.truncatedOctahedron(50)
     system._sire_object.setProperty("space", triclinic_box)
 
@@ -84,7 +98,13 @@ def test_amber_gromacs_triclinic(system):
 
     # Modify the GROMACS configuration to run zero steps.
     config = process_gmx.getConfig()
-    config[2] = "nsteps = 0"
+    new_config = []
+    for line in config:
+        if "nsteps" not in line:
+            new_config.append(line)
+        else:
+            new_config.append("nsteps = 0")
+    config = new_config
     process_gmx.setConfig(config)
 
     # Run the AMBER process and wait for it to finish.
