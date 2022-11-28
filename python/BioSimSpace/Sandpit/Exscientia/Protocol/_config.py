@@ -226,12 +226,19 @@ class ConfigFactory:
                 else:
                     atom_idxs = restraint
 
+                # Convert to a squashed representation, if needed
+                if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                    atom_mapping0 = _squashed_atom_mapping(self.system, is_lambda1=False)
+                    atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
+                    atom_idxs = sorted(
+                        {atom_mapping0[x] for x in atom_idxs if x in atom_mapping0} |
+                        {atom_mapping1[x] for x in atom_idxs if x in atom_mapping1}
+                    )
+
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = _amber_mask_from_indices(
-                        [i + 1 for i in atom_idxs]
-                    )
+                    restraint_mask = _amber_mask_from_indices(atom_idxs)
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:

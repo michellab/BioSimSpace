@@ -4,8 +4,6 @@ __all__ = ["_PositionRestraintMixin"]
 from .. import Types as _Types
 from .. import Units as _Units
 
-from ._protocol import Protocol as _Protocol
-
 
 class _PositionRestraintMixin:
     """A class for storing position restrain."""
@@ -160,7 +158,7 @@ class _PositionRestraintMixin:
 
         if isinstance(force_constant, float):
             # Use default units.
-            force_constant *= Units.Energy.kcal_per_mol / Units.Area.angstrom2
+            force_constant *= _Units.Energy.kcal_per_mol / _Units.Area.angstrom2
 
         elif isinstance(force_constant, _Types._GeneralUnit):
             # Validate the dimensions.

@@ -464,8 +464,8 @@ class Amber(_process.Process):
         # Skip if the user has passed a custom protocol.
         if not isinstance(self._protocol, _Protocol.Custom):
 
-            # Append a reference file if this a restrained equilibration.
-            if isinstance(self._protocol, _Protocol.Equilibration):
+            # Append a reference file if this a restrained simulation.
+            if isinstance(self._protocol, _Protocol._PositionRestraintMixin):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 

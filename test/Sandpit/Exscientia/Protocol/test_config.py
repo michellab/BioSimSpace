@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia.Protocol import ConfigFactory, FreeEnergyMinimisation
+from BioSimSpace.Sandpit.Exscientia.Protocol import ConfigFactory, FreeEnergyMinimisation, FreeEnergyEquilibration
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
 
@@ -27,6 +27,13 @@ class TestAmberRBFE:
             "timask2": '"@46-84"',
         }
         assert res == expected_res
+
+    def test_generate_restraint_masks(self, system):
+        protocol = FreeEnergyEquilibration(restraint=[0, 24], force_constant=4.3)
+        config = ConfigFactory(system, protocol)
+        res = [x.strip().strip(",") for x in config.generateAmberConfig()]
+        expected_res = {"ntr=1", "restraintmask=\"@1,25,46\"", "restraint_wt=4.3"}
+        assert expected_res.issubset(res)
 
 
 # Make sure GROMACS is installed.
