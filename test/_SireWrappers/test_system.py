@@ -1,5 +1,6 @@
 import BioSimSpace as BSS
 
+import math
 import pytest
 
 @pytest.fixture
@@ -199,3 +200,79 @@ def test_restraint_atoms(system, restraint, expected):
 
     # Make sure the indices are as expected.
     assert atoms == expected
+
+def test_get_box(system):
+    # Get the box dimensions and angles from the system.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles.
+    expected_box = [31.3979, 34.1000, 29.2730] * BSS.Units.Length.angstrom
+    expected_angles = [90, 90, 90] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
+def test_set_box(system):
+    # Generate box dimensions and angles for a truncated octahedron.
+    box, angles = BSS.Box.truncatedOctahedron(30*BSS.Units.Length.angstrom)
+
+    # Set the box dimensions in the system.
+    system.setBox(box, angles)
+
+    # Get the updated box dimensions and angles.
+    box, angles = system.getBox()
+
+    # Store the expected box dimensions and angles. These are different
+    # to the initial values (angles at least) due to the application
+    # of a lattice reduction.
+    expected_box = [30, 30, 30] * BSS.Units.Length.angstrom
+    expected_angles = [70.5288, 109.4712, 70.5288] * BSS.Units.Angle.degree
+
+    # Check that the box dimensions match.
+    for b0, b1 in zip(box, expected_box):
+        assert math.isclose(b0.value(), b1.value(), rel_tol=1e-4)
+
+    # Check that the angles match.
+    for a0, a1 in zip(angles, expected_angles):
+        assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
+def test_molecule_replace(system):
+    # Make sure that molecule ordering is preserved when a molecule is
+    # replaced by another with a different MolNum.
+
+    # Extract the third molecule.
+    mol0 = system[3]
+
+    # Store the current molecule numbers.
+    mol_nums0 = system._mol_nums
+
+    # Update (replace) the third molecule with a renumbered
+    # version.
+    system.updateMolecule(3, mol0.copy())
+
+    # Get the third molecule in the updated system.
+    mol1 = system[3]
+
+    # Store the updated molecule numbers.
+    mol_nums1 = system._mol_nums
+
+    # Make sure the molecules have different numbers.
+    assert mol0.number() != mol1.number()
+
+    # Make sure the molecules have the same number of atoms and residues.
+    assert mol0.nAtoms() == mol1.nAtoms()
+    assert mol0.nResidues() == mol1.nResidues()
+
+    # Make sure that the third MolNum in the array is different.
+    assert mol_nums0[3] != mol_nums1[3]
+
+    # Make sure the rest match.
+    for num0, num1 in zip(mol_nums0[0:2], mol_nums1[0:2]):
+        assert num0 == num1
+    for num0, num1 in zip(mol_nums0[4:], mol_nums1[4:]):
+        assert num0 == num1

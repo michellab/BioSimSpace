@@ -108,11 +108,11 @@ class Molecule(_SireWrapper):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
 
     def __add__(self, other):
         """Addition operator."""

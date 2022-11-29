@@ -108,7 +108,7 @@ class OpenMM(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(system, protocol, name, work_dir, seed, property_map=property_map)
 
         # Set the package name.
         self._package_name = "OPENMM"
@@ -907,9 +907,13 @@ class OpenMM(_process.Process):
             self.addToConfig(f"start_cycles = total_cycles - remaining_cycles")
             self.addToConfig( "checkpoint = 100")
             self.addToConfig( "if is_restart:")
-            self.addToConfig( "    percent_complete = 100 * (step / total_steps)")
+            self.addToConfig( "    fraction_complete = step / total_steps")
+            self.addToConfig( "    percent_complete = 100 * fraction_complete")
             self.addToConfig( "    print('Loaded state from an existing simulation.')")
             self.addToConfig( "    print(f'Simulation is {percent_complete}% complete.')")
+            self.addToConfig( "    if fraction_complete > 1.0:")
+            self.addToConfig( "        start_cycles = math.ceil(fraction_complete * total_cycles)")
+            self.addToConfig( "        total_cycles = start_cycles + total_cycles")
             self.addToConfig( "for x in range(start_cycles, total_cycles):")
             self.addToConfig( "    meta.step(simulation, steps_per_cycle)")
             self.addToConfig( "    current_cvs = np.array(list(meta.getCollectiveVariables(simulation)) + [meta.getHillHeight(simulation)])")
@@ -1668,7 +1672,7 @@ class OpenMM(_process.Process):
         """
         # We should verify that openmm is available to prevent
         # difficult-to-debug errors in the run script
-        from .._Utils import _try_import, _assert_imported
+        from BioSimSpace._Utils import _try_import, _assert_imported
 
         _openmm = _try_import("openmm")
         _assert_imported(_openmm)

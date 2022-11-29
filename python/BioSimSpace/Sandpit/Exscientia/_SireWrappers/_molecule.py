@@ -108,11 +108,11 @@ class Molecule(_SireWrapper):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Molecule: nAtoms=%d, nResidues=%d>" % (self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
 
     def __add__(self, other):
         """Addition operator."""
@@ -452,6 +452,21 @@ class Molecule(_SireWrapper):
                Whether the molecule is perturbable.
         """
         return self._is_perturbable
+
+    def isDecoupled(self):
+        """Whether this molecule is decoupled, i.e. it can be used in a
+           free-energy decoupling simulation.
+
+           Returns
+           -------
+
+           is_decoupled : bool
+               Whether the molecule is decoupled.
+        """
+        if self._sire_object.hasProperty('decouple'):
+            return True
+        else:
+            return False
 
     def isWater(self, property_map={}):
         """Whether this is a water molecule.

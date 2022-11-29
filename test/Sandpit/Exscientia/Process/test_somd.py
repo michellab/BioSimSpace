@@ -8,7 +8,7 @@ import warnings as _warnings
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
 
 def test_minimise(system):
     """Test a minimisation protocol."""

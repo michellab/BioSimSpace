@@ -544,22 +544,16 @@ class System(_SireWrapper):
 
         # The molecule numbers don't match.
         else:
-            # Store the original molecule number.
-            mol_num = self[index]._sire_object.number()
+            # Create a copy of the system.
+            system = self.copy()._sire_object
 
-            # Store a copy of the passed molecule.
-            mol_copy = molecule._sire_object.__deepcopy__()
+            # Update the molecule in the system, preserving the
+            # original molecular ordering.
+            system = _SireIO.updateAndPreserveOrder(
+                    system, molecule._sire_object, index)
 
-            # Delete the existing molecule.
-            self._sire_object.remove(mol_num)
-
-            # Renumber the new molecule.
-            edit_mol = mol_copy.edit()
-            edit_mol.renumber(mol_num)
-            mol_copy = edit_mol.commit()
-
-            # Add the renumbered molecule to the system.
-            self._sire_object.add(mol_copy, _SireMol.MGName("all"))
+            # Update the Sire object.
+            self._sire_object = system
 
             # Reset the index mappings.
             self._reset_mappings()
@@ -623,6 +617,8 @@ class System(_SireWrapper):
                     # original molecular ordering.
                     system = _SireIO.updateAndPreserveOrder(
                             system, mol._sire_object, idx)
+            else:
+                raise ValueError(f"System doesn't contain molecule: {mol}")
 
         # Update the Sire object.
         self._sire_object = system
@@ -799,7 +795,7 @@ class System(_SireWrapper):
                A container of perturbable molecule objects. The container will
                be empty if no perturbable molecules are present.
         """
-        return _Molecules(self._sire_object.search("perturbable").toGroup())
+        return _Molecules(self._sire_object.search("property is_perturbable").toGroup())
 
     def nPerturbableMolecules(self):
         """Return the number of perturbable molecules in the system.
@@ -1141,12 +1137,12 @@ class System(_SireWrapper):
             space = self._sire_object.property(property_map.get("space", "space"))
 
             # Periodic box.
-            if isinstance(space, _SireVol.PeriodicBox) or isinstance(space, _Sire.Vol.PeriodicBox):
+            if isinstance(space, _SireVol.PeriodicBox):
                 box = [ _Length(x, "Angstrom") for x in space.dimensions() ]
                 angles = 3*[_Angle(90, "degrees")]
 
             # TriclinicBox box.
-            elif isinstance(space, _SireVol.TriclinicBox) or isinstance(space, _Sire.Vol.TriclinicBox):
+            elif isinstance(space, _SireVol.TriclinicBox):
                 box = [_Length(space.vector0().magnitude(), "Angstrom"),
                        _Length(space.vector1().magnitude(), "Angstrom"),
                        _Length(space.vector2().magnitude(), "Angstrom")]
@@ -1156,8 +1152,6 @@ class System(_SireWrapper):
 
             else:
                 raise TypeError(f"Unsupported box type: {space} - {type(space)}")
-        except TypeError:
-            raise
         except:
             box = None
             angles = None
